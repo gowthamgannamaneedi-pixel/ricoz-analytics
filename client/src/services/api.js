@@ -48,28 +48,48 @@ export async function apiRequest(endpoint, options = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
 
-  const data = await response.json().catch(() => ({
-    success: false,
-    message: 'Failed to parse response JSON'
-  }));
-
-  if (!response.ok) {
-    // If token expired or invalid (401), automatically clear token
-    if (response.status === 401 && endpoint !== '/auth/login' && endpoint !== '/auth/register') {
-      removeAuthToken();
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type') || '';
+    let data;
+    if (contentType.includes('application/json')) {
+      data = await response.json().catch(() => ({
+        success: false,
+        message: 'Failed to parse response JSON'
+      }));
+    } else {
+      // Non-JSON response (e.g. HTML 404 from static host like Vercel)
+      const text = await response.text().catch(() => '');
+      data = {
+        success: false,
+        isOfflineOrHtml: true,
+        message: `Backend API route not available (${response.status})`
+      };
     }
-    const error = new Error(data.message || `Request failed with status ${response.status}`);
-    error.statusCode = response.status;
-    error.data = data;
-    throw error;
-  }
 
-  return data;
+    if (!response.ok) {
+      if (response.status === 401 && endpoint !== '/auth/login' && endpoint !== '/auth/register') {
+        removeAuthToken();
+      }
+      const error = new Error(data.message || `Request failed with status ${response.status}`);
+      error.statusCode = response.status;
+      error.data = data;
+      throw error;
+    }
+
+    return data;
+  } catch (err) {
+    // Gracefully annotate connection failures
+    if (!err.statusCode) {
+      err.isOffline = true;
+    }
+    throw err;
+  }
 }
 
 /**
