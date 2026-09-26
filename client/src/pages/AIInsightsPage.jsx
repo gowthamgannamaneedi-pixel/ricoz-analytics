@@ -300,9 +300,22 @@ export default function AIInsightsPage() {
               Executive AI Briefing
             </h2>
           </div>
-          <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-800/80 text-slate-400 border border-slate-700/60">
-            Ground-Truth Evidence Verified
-          </span>
+          {insights.length > 0 && insights.every(i => i.evidence?.verified) ? (
+            <span className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              100% Ground-Truth Evidence Verified
+            </span>
+          ) : insights.length > 0 && insights.some(i => i.evidence?.verified) ? (
+            <span className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">
+              <Activity className="w-3.5 h-3.5 text-indigo-400" />
+              {insights.filter(i => i.evidence?.verified).length} of {insights.length} Ground-Truth Verified
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-800/80 text-slate-400 border border-slate-700/60">
+              <Activity className="w-3.5 h-3.5 text-slate-400" />
+              Dataset Telemetry Verified
+            </span>
+          )}
         </div>
 
         <div className="text-sm text-slate-200 leading-relaxed font-normal whitespace-pre-line space-y-2">
@@ -447,17 +460,113 @@ export default function AIInsightsPage() {
                     </button>
                   </div>
 
-                  {/* Collapsible Evidence JSON / Metrics */}
+                  {/* Collapsible Evidence Telemetry & Verification Panel */}
                   {isEvidenceOpen && (
-                    <div className="bg-slate-950/90 border border-slate-800/80 rounded-xl p-3 text-[11px] font-mono text-slate-300 overflow-x-auto space-y-1.5">
-                      <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                        Calculated Ground-Truth Telemetry
+                    <div className="bg-slate-950/90 border border-slate-800/80 rounded-xl p-3.5 text-xs text-slate-300 space-y-3">
+                      {/* Verification Status Header */}
+                      <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
+                        <div className="flex items-center gap-1.5 font-semibold">
+                          {ins.evidence?.verified ? (
+                            <span className="flex items-center gap-1.5 text-emerald-400">
+                              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                              Ground-Truth Verified
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1.5 text-amber-400">
+                              <AlertTriangle className="w-4 h-4 text-amber-400" />
+                              Unverified Telemetry
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-mono">
+                          {ins.evidence?.recordsAnalyzed ?? ins.evidence?.records_analyzed ?? 0} rows analyzed
+                        </span>
                       </div>
-                      <pre className="text-indigo-200">
-                        {JSON.stringify(ins.evidence || {}, null, 2)}
-                      </pre>
+
+                      {/* Evidence Verification Description */}
+                      {ins.evidence?.verificationReason && (
+                        <p className="text-[11px] text-slate-400 leading-relaxed italic">
+                          {ins.evidence.verificationReason}
+                        </p>
+                      )}
+
+                      {/* Structured Telemetry Grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
+                        <div className="bg-slate-900/60 p-2 rounded-lg border border-slate-800">
+                          <span className="text-[10px] text-slate-500 block uppercase font-medium">Dataset</span>
+                          <span className="font-semibold text-slate-200 truncate block">
+                            {ins.evidence?.datasetName || ins.source_metadata?.dataset_name || 'Telemetry'}
+                          </span>
+                        </div>
+
+                        <div className="bg-slate-900/60 p-2 rounded-lg border border-slate-800">
+                          <span className="text-[10px] text-slate-500 block uppercase font-medium">Metric</span>
+                          <span className="font-semibold text-purple-300 truncate block font-mono">
+                            {ins.evidence?.metric || 'primary_metric'}
+                          </span>
+                        </div>
+
+                        <div className="bg-slate-900/60 p-2 rounded-lg border border-slate-800">
+                          <span className="text-[10px] text-slate-500 block uppercase font-medium">Current Value</span>
+                          <span className="font-semibold text-emerald-400 font-mono">
+                            {ins.evidence?.currentValue !== undefined 
+                              ? (typeof ins.evidence.currentValue === 'number' ? ins.evidence.currentValue.toLocaleString() : ins.evidence.currentValue)
+                              : (ins.evidence?.current_value !== undefined ? ins.evidence.current_value.toLocaleString() : 'N/A')}
+                          </span>
+                        </div>
+
+                        <div className="bg-slate-900/60 p-2 rounded-lg border border-slate-800">
+                          <span className="text-[10px] text-slate-500 block uppercase font-medium">Comparison</span>
+                          <span className="font-semibold text-slate-300 font-mono">
+                            {ins.evidence?.comparisonValue !== undefined 
+                              ? (typeof ins.evidence.comparisonValue === 'number' ? ins.evidence.comparisonValue.toLocaleString() : ins.evidence.comparisonValue)
+                              : (ins.evidence?.previous_value !== undefined ? ins.evidence.previous_value.toLocaleString() : 'N/A')}
+                          </span>
+                        </div>
+
+                        <div className="bg-slate-900/60 p-2 rounded-lg border border-slate-800">
+                          <span className="text-[10px] text-slate-500 block uppercase font-medium">Change %</span>
+                          <span className={`font-semibold font-mono ${
+                            (ins.evidence?.changePercent || ins.evidence?.change_percent || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                          }`}>
+                            {ins.evidence?.changePercent !== undefined 
+                              ? `${ins.evidence.changePercent >= 0 ? '+' : ''}${ins.evidence.changePercent}%`
+                              : (ins.evidence?.change_percent !== undefined ? `${ins.evidence.change_percent >= 0 ? '+' : ''}${ins.evidence.change_percent}%` : 'N/A')}
+                          </span>
+                        </div>
+
+                        <div className="bg-slate-900/60 p-2 rounded-lg border border-slate-800">
+                          <span className="text-[10px] text-slate-500 block uppercase font-medium">Period</span>
+                          <span className="font-semibold text-slate-300 truncate block">
+                            {ins.evidence?.period || ins.evidence?.currentPeriod || 'Latest'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Source Fields */}
+                      {(ins.evidence?.sourceFields || ins.evidence?.source_fields)?.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                          <span className="text-[10px] text-slate-500 uppercase font-medium mr-1">Source Fields:</span>
+                          {(ins.evidence?.sourceFields || ins.evidence?.source_fields).map((sf, idx) => (
+                            <span key={idx} className="bg-indigo-950/60 text-indigo-300 border border-indigo-800/40 text-[10px] font-mono px-1.5 py-0.5 rounded">
+                              {sf}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Calculation Formula */}
+                      {ins.evidence?.calculation && (
+                        <div className="pt-1 border-t border-slate-900">
+                          <span className="text-[10px] text-slate-500 uppercase font-medium block mb-0.5">Calculation:</span>
+                          <code className="text-[10px] text-slate-400 font-mono bg-slate-900/90 px-2 py-1 rounded block overflow-x-auto">
+                            {ins.evidence.calculation}
+                          </code>
+                        </div>
+                      )}
                     </div>
                   )}
+
 
                   {/* Recommendation Action Pill */}
                   {ins.recommendation?.action && (

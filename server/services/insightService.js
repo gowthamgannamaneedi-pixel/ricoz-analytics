@@ -10,6 +10,7 @@ const analyticsService = require('./analyticsService');
 const dataQualityService = require('./dataQualityService');
 const geminiService = require('./geminiService');
 const auditService = require('./auditService');
+const evidenceBuilderService = require('./evidenceBuilderService');
 
 /**
  * Enterprise AI Automated Insights Engine Service
@@ -103,19 +104,22 @@ class InsightService {
 
             // Significant Growth (>= +10%)
             if (changePct >= 10) {
+              const evidence = evidenceBuilderService.buildGrowthOrDeclineEvidence({
+                dataset: ds,
+                records,
+                dimensions: dims,
+                prevPoint,
+                currPoint,
+                targetMetric: dims.primaryMetric
+              });
+
               detectedInsights.push({
                 type: 'growth',
                 title: `${metricName.toUpperCase()} grew by ${changePct}%`,
                 summary: `${metricName.charAt(0).toUpperCase() + metricName.slice(1)} increased by ${changePct}% (from ${this._formatNumber(prevVal)} to ${this._formatNumber(currVal)}) in the latest period.`,
                 severity: 'positive',
                 confidence: 0.96,
-                evidence: {
-                  metric: dims.primaryMetric || 'revenue',
-                  current_value: currVal,
-                  previous_value: prevVal,
-                  change_percent: changePct,
-                  period: currPoint.date || 'Latest'
-                },
+                evidence,
                 source_metadata: {
                   dataset_id: ds.id,
                   dataset_name: ds.name
@@ -129,19 +133,22 @@ class InsightService {
             } else if (changePct <= -10) {
               // Significant Decline (<= -10%)
               const isCritical = changePct <= -25;
+              const evidence = evidenceBuilderService.buildGrowthOrDeclineEvidence({
+                dataset: ds,
+                records,
+                dimensions: dims,
+                prevPoint,
+                currPoint,
+                targetMetric: dims.primaryMetric
+              });
+
               detectedInsights.push({
                 type: 'decline',
                 title: `${metricName.toUpperCase()} dropped by ${Math.abs(changePct)}%`,
                 summary: `${metricName.charAt(0).toUpperCase() + metricName.slice(1)} contracted by ${Math.abs(changePct)}% compared with previous period.`,
                 severity: isCritical ? 'critical' : 'warning',
                 confidence: 0.95,
-                evidence: {
-                  metric: dims.primaryMetric || 'revenue',
-                  current_value: currVal,
-                  previous_value: prevVal,
-                  change_percent: changePct,
-                  period: currPoint.date || 'Latest'
-                },
+                evidence,
                 source_metadata: {
                   dataset_id: ds.id,
                   dataset_name: ds.name
@@ -162,17 +169,21 @@ class InsightService {
             const isFalling = recent.every((pt, idx) => idx === 0 || Number(pt.revenue || pt.value) <= Number(recent[idx - 1].revenue || recent[idx - 1].value));
 
             if (isRising) {
+              const evidence = evidenceBuilderService.buildTrendEvidence({
+                dataset: ds,
+                records,
+                dimensions: dims,
+                recentPoints: recent,
+                direction: 'expansion'
+              });
+
               detectedInsights.push({
                 type: 'trend',
                 title: `Sustained positive trajectory on ${ds.name}`,
                 summary: `${dims.primaryMetric || 'Telemetry'} has exhibited continuous expansion across 4 consecutive observation intervals.`,
                 severity: 'positive',
                 confidence: 0.94,
-                evidence: {
-                  consecutive_periods: 4,
-                  starting_value: Number(recent[0].revenue || recent[0].value),
-                  latest_value: Number(recent[3].revenue || recent[3].value)
-                },
+                evidence,
                 source_metadata: {
                   dataset_id: ds.id,
                   dataset_name: ds.name
@@ -183,17 +194,21 @@ class InsightService {
                 }
               });
             } else if (isFalling) {
+              const evidence = evidenceBuilderService.buildTrendEvidence({
+                dataset: ds,
+                records,
+                dimensions: dims,
+                recentPoints: recent,
+                direction: 'contraction'
+              });
+
               detectedInsights.push({
                 type: 'trend',
                 title: `Sustained downward trend detected on ${ds.name}`,
                 summary: `${dims.primaryMetric || 'Telemetry'} has declined for 4 consecutive observation periods.`,
                 severity: 'warning',
                 confidence: 0.94,
-                evidence: {
-                  consecutive_periods: 4,
-                  starting_value: Number(recent[0].revenue || recent[0].value),
-                  latest_value: Number(recent[3].revenue || recent[3].value)
-                },
+                evidence,
                 source_metadata: {
                   dataset_id: ds.id,
                   dataset_name: ds.name
@@ -212,6 +227,13 @@ class InsightService {
         try {
           const quality = await dataQualityService.getQualityProfile(ds.id, organizationId);
           if (quality && quality.quality_score !== undefined) {
+            const evidence = evidenceBuilderService.buildDataQualityEvidence({
+              dataset: ds,
+              records,
+              schema,
+              qualityProfile: quality
+            });
+
             if (quality.quality_score < 75) {
               detectedInsights.push({
                 type: 'data_quality',
@@ -219,12 +241,7 @@ class InsightService {
                 summary: `Dataset health score is at ${quality.quality_score}/100 with status "${quality.status || 'warning'}". Detected ${quality.issues?.length || 0} quality anomalies.`,
                 severity: quality.quality_score < 60 ? 'critical' : 'warning',
                 confidence: 0.98,
-                evidence: {
-                  quality_score: quality.quality_score,
-                  completeness_score: quality.dimensions?.completeness?.score || 100,
-                  validity_score: quality.dimensions?.validity?.score || 100,
-                  issues_count: quality.issues?.length || 0
-                },
+                evidence,
                 source_metadata: {
                   dataset_id: ds.id,
                   dataset_name: ds.name
@@ -242,12 +259,7 @@ class InsightService {
                 summary: `Dataset passes data health audit with ${quality.quality_score}/100 composite score. Completeness and validity within optimal thresholds.`,
                 severity: 'positive',
                 confidence: 0.95,
-                evidence: {
-                  quality_score: quality.quality_score,
-                  completeness_score: quality.dimensions?.completeness?.score || 100,
-                  validity_score: quality.dimensions?.validity?.score || 100,
-                  issues_count: quality.issues?.length || 0
-                },
+                evidence,
                 source_metadata: {
                   dataset_id: ds.id,
                   dataset_name: ds.name
@@ -261,16 +273,20 @@ class InsightService {
             }
 
             if (quality.dimensions?.freshness?.status === 'stale') {
+              const staleEvidence = {
+                ...evidence,
+                metric: 'dataset_freshness',
+                age_hours: quality.dimensions?.freshness?.age_hours,
+                status: 'stale'
+              };
+
               detectedInsights.push({
                 type: 'data_quality',
                 title: `Dataset ${ds.name} is stale`,
                 summary: `Dataset refresh interval exceeded. Last updated ${quality.dimensions?.freshness?.age_hours || 'N/A'} hours ago.`,
                 severity: 'warning',
                 confidence: 0.95,
-                evidence: {
-                  age_hours: quality.dimensions?.freshness?.age_hours,
-                  status: 'stale'
-                },
+                evidence: staleEvidence,
                 source_metadata: {
                   dataset_id: ds.id,
                   dataset_name: ds.name
@@ -284,6 +300,7 @@ class InsightService {
           }
         } catch (_) {}
 
+
       } catch (dsErr) {
         console.warn(`[InsightService] Error processing dataset #${ds.id}:`, dsErr.message);
       }
@@ -294,24 +311,27 @@ class InsightService {
       try {
         const predictions = Array.isArray(fc.predictions) ? fc.predictions : [];
         const anomalies = Array.isArray(fc.anomalies) ? fc.anomalies : [];
+        const linkedDs = fc.dataset_id ? datasets.find(d => Number(d.id) === Number(fc.dataset_id)) : null;
 
         // A. Detected Anomalies
         if (anomalies.length > 0) {
+          const evidence = evidenceBuilderService.buildAnomalyEvidence({
+            forecast: fc,
+            dataset: linkedDs,
+            anomalies
+          });
+
           detectedInsights.push({
             type: 'anomaly',
             title: `Detected ${anomalies.length} ML statistical anomalies in ${fc.target_column || 'forecast'}`,
             summary: `Automated ML anomaly detector flagged ${anomalies.length} time-series data points exceeding standard dispersion thresholds.`,
             severity: 'warning',
             confidence: 0.92,
-            evidence: {
-              target_column: fc.target_column,
-              model_name: fc.model_name,
-              anomaly_count: anomalies.length,
-              sample_anomaly: anomalies[0]
-            },
+            evidence,
             source_metadata: {
               forecast_id: fc.id,
-              target_column: fc.target_column
+              target_column: fc.target_column,
+              dataset_id: linkedDs?.id || null
             },
             recommendation: {
               action: `Review anomaly timestamps in predictive dashboard`,
@@ -326,6 +346,13 @@ class InsightService {
           const lastPred = Number(predictions[predictions.length - 1].predicted || 0);
           if (firstPred > 0) {
             const predChange = Number((((lastPred - firstPred) / firstPred) * 100).toFixed(1));
+            const evidence = evidenceBuilderService.buildForecastEvidence({
+              forecast: fc,
+              dataset: linkedDs,
+              predictions,
+              anomalies
+            });
+
             if (predChange <= -10) {
               detectedInsights.push({
                 type: 'forecast',
@@ -333,15 +360,10 @@ class InsightService {
                 summary: `${fc.model_name || 'ML Model'} projects a downward trajectory for ${fc.target_column || 'target metric'}.`,
                 severity: predChange <= -20 ? 'critical' : 'warning',
                 confidence: 0.89,
-                evidence: {
-                  model: fc.model_name,
-                  horizon_periods: fc.horizon_periods,
-                  predicted_change_percent: predChange,
-                  start_predicted: firstPred,
-                  end_predicted: lastPred
-                },
+                evidence,
                 source_metadata: {
-                  forecast_id: fc.id
+                  forecast_id: fc.id,
+                  dataset_id: linkedDs?.id || null
                 },
                 recommendation: {
                   action: `Inspect forecast horizon and adjust strategic targets`,
@@ -355,15 +377,10 @@ class InsightService {
                 summary: `${fc.model_name || 'ML Model'} projects continued upward expansion for ${fc.target_column || 'target metric'}.`,
                 severity: 'positive',
                 confidence: 0.90,
-                evidence: {
-                  model: fc.model_name,
-                  horizon_periods: fc.horizon_periods,
-                  predicted_change_percent: predChange,
-                  start_predicted: firstPred,
-                  end_predicted: lastPred
-                },
+                evidence,
                 source_metadata: {
-                  forecast_id: fc.id
+                  forecast_id: fc.id,
+                  dataset_id: linkedDs?.id || null
                 },
                 recommendation: {
                   action: `Review capacity constraints for projected demand growth`,
@@ -407,6 +424,14 @@ class InsightService {
           if (relationalRes.rows && relationalRes.rows.length > 0) {
             const topRow = relationalRes.rows[0];
             const topKey = Object.keys(topRow)[0];
+            const evidence = evidenceBuilderService.buildRelationalEvidence({
+              baseDataset: srcDs,
+              targetDataset: tgtDs,
+              baseRecords: srcRecords,
+              targetRecords: tgtRecords,
+              relationalResult: relationalRes,
+              rel
+            });
 
             detectedInsights.push({
               type: 'relationship',
@@ -414,14 +439,11 @@ class InsightService {
               summary: `Cross-dataset relational query indicates high volume concentration associated with primary relational key "${topKey}".`,
               severity: 'info',
               confidence: 0.93,
-              evidence: {
-                source_dataset: srcDs.name,
-                target_dataset: tgtDs.name,
-                join_type: rel.relationship_type,
-                total_joined_records: relationalRes.totalCount
-              },
+              evidence,
               source_metadata: {
-                relationship_id: rel.id
+                relationship_id: rel.id,
+                source_dataset_id: srcDs.id,
+                target_dataset_id: tgtDs.id
               },
               recommendation: {
                 action: `Explore multi-dataset schema modeling`,
@@ -441,21 +463,39 @@ class InsightService {
         const trigDate = new Date(alert.last_triggered_at);
         const hoursAgo = (Date.now() - trigDate.getTime()) / (1000 * 60 * 60);
         if (hoursAgo <= 48 || isNaN(hoursAgo)) {
+          // Link to tenant dataset if specified or available to calculate real metrics
+          const linkedDs = alert.dataset_id 
+            ? datasets.find(d => Number(d.id) === Number(alert.dataset_id))
+            : (datasets.length > 0 ? datasets[0] : null);
+          let linkedRecords = [];
+          let linkedDims = {};
+
+          if (linkedDs && linkedDs.file_path) {
+            try {
+              linkedRecords = await analyticsService.loadDatasetRecords(linkedDs.file_path);
+              const schema = Array.isArray(linkedDs.schema) ? linkedDs.schema : [];
+              linkedDims = analyticsService.detectDatasetDimensions(schema, linkedRecords.slice(0, 20));
+            } catch (_) {}
+          }
+
+          const evidence = evidenceBuilderService.buildOperationalAlertEvidence({
+            alert,
+            dataset: linkedDs,
+            records: linkedRecords,
+            dimensions: linkedDims
+          });
+
           detectedInsights.push({
             type: 'operational',
             title: `Operational Alert Triggered: "${alert.name}"`,
             summary: `Threshold alert "${alert.name}" recently breached configured condition (${alert.condition} ${alert.threshold}).`,
             severity: alert.severity === 'critical' ? 'critical' : 'warning',
             confidence: 0.99,
-            evidence: {
-              alert_id: alert.id,
-              condition: alert.condition,
-              threshold: alert.threshold,
-              last_triggered_at: alert.last_triggered_at
-            },
+            evidence,
             source_metadata: {
               alert_id: alert.id,
-              metric_id: alert.metric_id
+              metric_id: alert.metric_id,
+              dataset_id: linkedDs?.id || null
             },
             recommendation: {
               action: `Acknowledge and resolve active alert incident`,
@@ -465,6 +505,7 @@ class InsightService {
         }
       }
     }
+
 
     // 6. Synthesize Executive Summary
     const executiveSummary = this._synthesizeExecutiveSummary(detectedInsights);
