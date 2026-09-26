@@ -507,86 +507,187 @@ class InsightService {
     }
 
 
-    // 6. Synthesize Executive Summary
-    const executiveSummary = this._synthesizeExecutiveSummary(detectedInsights);
+    // 6. Grounded Gemini AI Insights & Persistence Pipeline
+    // Gemini is an explanation layer, NOT the source of truth.
+    // Factual metrics (currentValue, comparisonValue, changePercent, recordsAnalyzed, datasetId, sourceFields, calculation, verified)
+    // are strictly preserved and can NEVER be overwritten by LLM text.
+    const cooldownMinutes = options.forceFresh ? 0 : (options.cooldownMinutes || this.cooldownMinutes || 60);
+    const processedInsights = [];
 
-    // 7. Persist generated insights with strict deduplication & cooldown enforcement
-    const persistedInsights = [];
-    if (options.persist !== false && detectedInsights.length > 0) {
-      const cooldownMinutes = options.forceFresh ? 0 : (options.cooldownMinutes || this.cooldownMinutes || 60);
+    for (const ins of detectedInsights) {
+      try {
+        // Step A: Deduplication & Cooldown check
+        const existing = await InsightModel.findActiveDuplicate({
+          organizationId,
+          type: ins.type,
+          title: ins.title,
+          alertId: ins.source_metadata?.alert_id || null,
+          datasetId: ins.source_metadata?.dataset_id || null,
+          cooldownMinutes
+        });
 
-      for (const ins of detectedInsights) {
-        try {
-          // Check for existing active duplicate within cooldown window or matching natural key
-          const existing = await InsightModel.findActiveDuplicate({
-            organizationId,
-            type: ins.type,
-            title: ins.title,
-            alertId: ins.source_metadata?.alert_id || null,
-            datasetId: ins.source_metadata?.dataset_id || null,
-            cooldownMinutes
-          });
+        // Step B: Active duplicate exists within cooldown window
+        if (existing && !options.forceFresh) {
+          // Do NOT call Gemini repeatedly for active duplicate insights (Cost & Rate limit optimization)
+          const existingEv = typeof existing.evidence === 'string' ? JSON.parse(existing.evidence || '{}') : (existing.evidence || {});
+          const factualSnapshot = this._extractFactualEvidence(ins.evidence);
 
-          if (existing && !options.forceFresh) {
-            // Update existing insight evidence & telemetry instead of creating duplicate UUID row
+          ins.evidence = {
+            ...ins.evidence,
+            ai_grounded: Boolean(existingEv.ai_grounded),
+            ai_explanation: existingEv.ai_explanation || null,
+            business_impact: existingEv.business_impact || null,
+            model_confidence: existingEv.model_confidence || null,
+            ...factualSnapshot
+          };
+
+          if (options.persist !== false) {
             const updated = await InsightModel.updateInsight(existing.id, organizationId, {
               summary: ins.summary,
               severity: ins.severity || existing.severity,
               confidence: ins.confidence || existing.confidence,
-              evidence: ins.evidence || existing.evidence,
+              evidence: ins.evidence,
               sourceMetadata: ins.source_metadata || existing.source_metadata,
               recommendation: ins.recommendation || existing.recommendation
             });
-            persistedInsights.push(updated || existing);
+            processedInsights.push(updated || existing);
           } else {
-            // If forceFresh was requested and an active duplicate exists, archive it first
-            if (existing && options.forceFresh) {
-              await InsightModel.updateStatus(existing.id, organizationId, 'archived').catch(() => {});
-            }
-
-            const saved = await InsightModel.create({
-              organizationId,
-              userId: options.userId || null,
-              datasetId: ins.source_metadata?.dataset_id || null,
-              metricId: ins.source_metadata?.metric_id || null,
-              dashboardId: ins.source_metadata?.dashboard_id || null,
-              type: ins.type,
-              title: ins.title,
-              summary: ins.summary,
-              severity: ins.severity || 'info',
-              confidence: ins.confidence || 0.95,
-              evidence: ins.evidence || {},
-              sourceMetadata: ins.source_metadata || {},
-              recommendation: ins.recommendation || {},
-              status: 'active'
-            });
-            persistedInsights.push(saved);
+            processedInsights.push({ ...existing, ...ins, evidence: ins.evidence });
           }
-        } catch (dbErr) {
-          console.warn('[InsightService] Insight persistence notice:', dbErr.message);
-          persistedInsights.push({ id: crypto.randomUUID(), ...ins });
+          continue;
         }
-      }
 
-      // Log audit event
+        // Step C: A new insight needs generation (or forceFresh is active)
+        const isVerified = Boolean(ins.evidence && ins.evidence.verified === true);
+        let aiResult = null;
+
+        if (isVerified) {
+          // Send ONLY verified evidence to Gemini
+          aiResult = await geminiService.generateGroundedInsight({
+            type: ins.type,
+            title: ins.title,
+            summary: ins.summary,
+            evidence: ins.evidence,
+            recommendation: ins.recommendation,
+            context: {
+              organizationId,
+              datasetName: ins.source_metadata?.dataset_name
+            }
+          });
+        } else {
+          // Unverified evidence is NEVER sent to Gemini! Fallback to deterministic
+          aiResult = geminiService._buildDeterministicInsightExplanation({
+            type: ins.type,
+            title: ins.title,
+            summary: ins.summary,
+            evidence: ins.evidence,
+            recommendation: ins.recommendation
+          });
+        }
+
+        // Step D: Combine Gemini explanation with existing evidence
+        // Crucial: Gemini-generated text must NEVER overwrite factual metrics
+        const factualSnapshot = this._extractFactualEvidence(ins.evidence);
+        ins.evidence = {
+          ...ins.evidence,
+          ai_grounded: Boolean(aiResult.aiGenerated && !aiResult.fallback),
+          ai_explanation: aiResult.explanation,
+          business_impact: aiResult.businessImpact,
+          model_confidence: aiResult.confidence,
+          ...factualSnapshot // Absolute guarantee that factual keys are preserved
+        };
+
+        if (aiResult.aiGenerated && !aiResult.fallback && aiResult.summary) {
+          ins.summary = aiResult.summary;
+        }
+        if (aiResult.recommendedAction) {
+          ins.recommendation = {
+            ...ins.recommendation,
+            action: aiResult.recommendedAction
+          };
+        }
+
+        // Step E: Persist or return
+        if (options.persist !== false) {
+          // If forceFresh was requested and an active duplicate exists, archive it first
+          if (existing && options.forceFresh) {
+            await InsightModel.updateStatus(existing.id, organizationId, 'archived').catch(() => {});
+          }
+
+          const saved = await InsightModel.create({
+            organizationId,
+            userId: options.userId || null,
+            datasetId: ins.source_metadata?.dataset_id || null,
+            metricId: ins.source_metadata?.metric_id || null,
+            dashboardId: ins.source_metadata?.dashboard_id || null,
+            type: ins.type,
+            title: ins.title,
+            summary: ins.summary,
+            severity: ins.severity || 'info',
+            confidence: ins.confidence || 0.95,
+            evidence: ins.evidence || {},
+            sourceMetadata: ins.source_metadata || {},
+            recommendation: ins.recommendation || {},
+            status: 'active'
+          });
+          processedInsights.push(saved);
+        } else {
+          processedInsights.push({ id: crypto.randomUUID(), ...ins });
+        }
+      } catch (insErr) {
+        console.warn('[InsightService] Insight processing notice:', insErr.message);
+        processedInsights.push({ id: crypto.randomUUID(), ...ins });
+      }
+    }
+
+    // 7. Synthesize Executive Summary
+    const executiveSummary = this._synthesizeExecutiveSummary(processedInsights.length > 0 ? processedInsights : detectedInsights);
+
+    // 8. Log audit event if persisted
+    if (options.persist !== false && processedInsights.length > 0) {
       auditService.log({
         organizationId,
         userId: options.userId || null,
         action: 'INSIGHTS_GENERATED',
         resourceType: 'ai_insights',
         resourceId: String(organizationId),
-        description: `Generated ${detectedInsights.length} automated AI insights and executive summary.`,
-        metadata: { count: detectedInsights.length, severities: detectedInsights.map(i => i.severity) },
+        description: `Generated ${processedInsights.length} automated AI insights and executive summary.`,
+        metadata: { count: processedInsights.length, severities: processedInsights.map(i => i.severity) },
         ipAddress: options.ipAddress || null,
         userAgent: options.userAgent || null
       }).catch(() => {});
     }
 
     return {
-      insights: persistedInsights.length > 0 ? persistedInsights : detectedInsights,
+      insights: processedInsights.length > 0 ? processedInsights : detectedInsights,
       executive_summary: executiveSummary,
-      count: detectedInsights.length,
+      count: processedInsights.length > 0 ? processedInsights.length : detectedInsights.length,
       generated_at: new Date()
+    };
+  }
+
+  /**
+   * Extract factual evidence snapshot to ensure immutability against LLM hallucinations
+   */
+  _extractFactualEvidence(evidence = {}) {
+    return {
+      currentValue: evidence.currentValue,
+      current_value: evidence.current_value,
+      comparisonValue: evidence.comparisonValue,
+      previous_value: evidence.previous_value,
+      changePercent: evidence.changePercent,
+      change_percent: evidence.change_percent,
+      recordsAnalyzed: evidence.recordsAnalyzed,
+      records_analyzed: evidence.records_analyzed,
+      datasetId: evidence.datasetId,
+      dataset_id: evidence.dataset_id,
+      datasetName: evidence.datasetName,
+      dataset_name: evidence.dataset_name,
+      sourceFields: evidence.sourceFields,
+      source_fields: evidence.source_fields,
+      calculation: evidence.calculation,
+      verified: evidence.verified,
+      verificationReason: evidence.verificationReason
     };
   }
 

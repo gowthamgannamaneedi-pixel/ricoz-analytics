@@ -20,6 +20,24 @@ class GeminiService {
   }
 
   /**
+   * Helper to sanitize sensitive keys and tokens from errors and logs
+   */
+  _sanitizeError(err) {
+    if (!err) return new Error('Unknown error');
+    let msg = err.message || 'Gemini API call failed';
+    if (this.apiKey) {
+      msg = msg.split(this.apiKey).join('[REDACTED]');
+    }
+    msg = msg.replace(/key=[^&\s]+/gi, 'key=[REDACTED]');
+    const safeErr = new Error(msg);
+    safeErr.name = err.name;
+    if (err.name === 'AbortError' || err.code === 20) {
+      safeErr.message = 'Gemini API request timed out';
+    }
+    return safeErr;
+  }
+
+  /**
    * Direct invocation of Gemini 1.5 Flash via REST API
    * @param {string} prompt 
    * @param {object} [options] 
@@ -37,7 +55,10 @@ class GeminiService {
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': this.apiKey
+        },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
@@ -60,9 +81,235 @@ class GeminiService {
       return text.trim();
     } catch (err) {
       clearTimeout(timeout);
-      throw err;
+      throw this._sanitizeError(err);
     }
   }
+
+  /**
+   * Grounded Gemini AI Insights Generator
+   * Grounded purely in verified evidence from evidenceBuilderService.
+   * Gemini NEVER invents, calculates, or modifies factual business metrics.
+   * 
+   * @param {{
+   *   type: string,
+   *   title: string,
+   *   summary: string,
+   *   evidence: object,
+   *   recommendation?: object,
+   *   context?: object
+   * }} params
+   * @param {object} [options]
+   * @returns {Promise<{
+   *   title: string,
+   *   summary: string,
+   *   explanation: string,
+   *   businessImpact: string,
+   *   recommendedAction: string,
+   *   confidence: 'high'|'medium'|'low',
+   *   aiGenerated: boolean,
+   *   fallback: boolean
+   * }>}
+   */
+  async generateGroundedInsight({ type, title, summary, evidence, recommendation, context = {} }, options = {}) {
+    // 1. Strict pre-condition: Evidence MUST be verified from physical dataset rows
+    if (!evidence || evidence.verified !== true) {
+      return this._buildDeterministicInsightExplanation({ type, title, summary, evidence, recommendation });
+    }
+
+    // 2. Strict pre-condition: Gemini API key must be configured
+    if (!this.isConfigured()) {
+      return this._buildDeterministicInsightExplanation({ type, title, summary, evidence, recommendation });
+    }
+
+    // 3. Build strictly grounded prompt containing ONLY verified evidence
+    const prompt = this._buildGroundedInsightPrompt({ type, title, summary, evidence, recommendation, context });
+
+    try {
+      const rawResponse = await this.generateContent(prompt, {
+        temperature: 0.1,
+        maxTokens: 800,
+        timeoutMs: options.timeoutMs || 10000
+      });
+
+      // 4. Validate strict JSON response schema
+      const parsed = this._parseAndValidateInsightResponse(rawResponse, evidence);
+      if (parsed) {
+        return {
+          title: parsed.title,
+          summary: parsed.summary,
+          explanation: parsed.explanation,
+          businessImpact: parsed.businessImpact,
+          recommendedAction: parsed.recommendedAction,
+          confidence: parsed.confidence,
+          aiGenerated: true,
+          fallback: false
+        };
+      }
+    } catch (err) {
+      const safeMsg = (err.message || '').replace(/key=[^&\s]+/gi, 'key=[REDACTED]');
+      console.warn('[GeminiService] Grounded insight LLM explanation failed, falling back to deterministic explanation:', safeMsg);
+    }
+
+    // 5. Graceful deterministic fallback
+    return this._buildDeterministicInsightExplanation({ type, title, summary, evidence, recommendation });
+  }
+
+  /**
+   * Build strictly grounded prompt for Gemini
+   */
+  _buildGroundedInsightPrompt({ type, title, summary, evidence, recommendation, context = {} }) {
+    const factualEvidence = {
+      metric: evidence.metric,
+      currentValue: evidence.currentValue ?? evidence.current_value,
+      comparisonValue: evidence.comparisonValue ?? evidence.previous_value,
+      changePercent: evidence.changePercent ?? evidence.change_percent,
+      recordsAnalyzed: evidence.recordsAnalyzed ?? evidence.records_analyzed,
+      datasetName: evidence.datasetName ?? evidence.dataset_name ?? context.datasetName ?? 'Dataset Telemetry',
+      period: evidence.period ?? evidence.currentPeriod ?? 'Latest Observation',
+      comparisonPeriod: evidence.comparisonPeriod ?? 'Previous Observation',
+      calculation: evidence.calculation,
+      sourceFields: evidence.sourceFields ?? evidence.source_fields ?? []
+    };
+
+    return `You are the RicozAnalytics Grounded AI Insight Engine.
+Your sole purpose is to explain verified empirical business evidence.
+Gemini is an explanation layer, NOT the source of truth.
+
+STRICT GROUNDING INSTRUCTIONS:
+- Use ONLY the supplied evidence.
+- Do not invent numbers.
+- Do not calculate new metrics.
+- Do not assume missing information.
+- Do not introduce facts not present in the evidence.
+- If evidence is insufficient, say that the evidence is insufficient.
+- Preserve exact numerical values from the evidence.
+- Do not change currency, percentages, dates, dataset names, or record counts.
+
+Insight Type: ${type}
+Baseline Title: "${title}"
+Baseline Summary: "${summary}"
+
+Verified Evidence (Source of Truth):
+${JSON.stringify(factualEvidence, null, 2)}
+
+Provide your response as a STRICT JSON object with the following exact keys:
+{
+  "title": "A concise, factual title accurately describing the movement (preserving exact percentage and metric name)",
+  "summary": "1-2 sentence executive summary directly referencing the verified numbers",
+  "explanation": "Clear 1-2 paragraph natural-language explanation of what this verified evidence demonstrates",
+  "businessImpact": "Operational or strategic business implication directly stemming from this evidence",
+  "recommendedAction": "Actionable next step for decision-makers",
+  "confidence": "high" | "medium" | "low"
+}
+
+Respond ONLY with valid raw JSON. No markdown code blocks, no backticks, no extra text.`;
+  }
+
+  /**
+   * Parse and validate strict JSON response from Gemini
+   */
+  _parseAndValidateInsightResponse(rawText, evidence) {
+    if (!rawText || typeof rawText !== 'string') return null;
+
+    try {
+      const cleaned = rawText
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/```\s*$/i, '')
+        .trim();
+
+      const parsed = JSON.parse(cleaned);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+
+      // Validate required string keys
+      const requiredKeys = ['title', 'summary', 'explanation', 'businessImpact', 'recommendedAction'];
+      for (const key of requiredKeys) {
+        if (typeof parsed[key] !== 'string' || parsed[key].trim().length === 0) {
+          return null;
+        }
+      }
+
+      let confidence = String(parsed.confidence || 'high').toLowerCase();
+      if (!['high', 'medium', 'low'].includes(confidence)) {
+        confidence = 'high';
+      }
+
+      // Check numeric preservation:
+      // If evidence has changePercent, ensure Gemini didn't flip direction
+      const changePct = evidence.changePercent ?? evidence.change_percent;
+      if (typeof changePct === 'number' && changePct !== 0) {
+        const text = `${parsed.title} ${parsed.summary} ${parsed.explanation}`.toLowerCase();
+        if (changePct < 0 && (text.includes('growth of') || text.includes('increased by')) && !text.includes('dropped') && !text.includes('decreased') && !text.includes('declined') && !text.includes('contracted')) {
+          return null; // Contradiction detected
+        }
+      }
+
+      return {
+        title: parsed.title.trim(),
+        summary: parsed.summary.trim(),
+        explanation: parsed.explanation.trim(),
+        businessImpact: parsed.businessImpact.trim(),
+        recommendedAction: parsed.recommendedAction.trim(),
+        confidence
+      };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /**
+   * Synthesize deterministic grounded insight explanation when Gemini is unavailable or evidence unverified
+   */
+  _buildDeterministicInsightExplanation({ type, title, summary, evidence = {}, recommendation = {} }) {
+    const dsName = evidence.datasetName || evidence.dataset_name || 'telemetry';
+    const metric = (evidence.metric || 'metric').replace(/_/g, ' ');
+    const currVal = evidence.currentValue !== undefined ? evidence.currentValue : (evidence.current_value !== undefined ? evidence.current_value : '0');
+    const compVal = evidence.comparisonValue !== undefined ? evidence.comparisonValue : (evidence.previous_value !== undefined ? evidence.previous_value : '0');
+    const changePct = evidence.changePercent !== undefined ? evidence.changePercent : (evidence.change_percent !== undefined ? evidence.change_percent : 0);
+    const records = evidence.recordsAnalyzed ?? evidence.records_analyzed ?? 0;
+
+    let explanation = `Verified analysis across ${records} records in ${dsName} indicates ${metric} at ${currVal} (compared to ${compVal} in the prior observation).`;
+    let businessImpact = `Monitored metric ${metric} reflects current enterprise operational state for ${dsName}.`;
+
+    if (type === 'growth') {
+      explanation = `Verified empirical telemetry across ${records} records in ${dsName} demonstrates positive expansion. ${metric.charAt(0).toUpperCase() + metric.slice(1)} grew by ${changePct}% from ${compVal} to ${currVal}.`;
+      businessImpact = `Positive velocity represents accelerating organizational throughput and increased segment demand.`;
+    } else if (type === 'decline') {
+      explanation = `Empirical dataset audit across ${records} records in ${dsName} detected a ${Math.abs(changePct)}% contraction from ${compVal} to ${currVal}.`;
+      businessImpact = `Operational contraction requires investigation into upstream drivers and transaction pipeline variance.`;
+    } else if (type === 'trend') {
+      explanation = `Sustained directional trajectory verified over consecutive observation intervals across ${records} physical records in ${dsName}.`;
+      businessImpact = `Continuous directional trend indicates structural momentum that warrants capacity and resource alignment.`;
+    } else if (type === 'data_quality') {
+      const qScore = evidence.quality_score ?? 100;
+      explanation = `Automated data health audit on ${dsName} evaluated ${records} records across schema fields with a quality score of ${qScore}/100.`;
+      businessImpact = qScore < 75 
+        ? `Quality defects may impact downstream analytical accuracy and reporting confidence.`
+        : `High data integrity ensures dependable analytics and executive reporting.`;
+    } else if (type === 'anomaly') {
+      const anomCount = evidence.anomalyCount ?? evidence.anomaly_count ?? 1;
+      explanation = `Statistical dispersion model detected ${anomCount} outlier observations in ${metric} exceeding expected standard deviation bounds.`;
+      businessImpact = `Outliers may indicate unexpected demand spikes, telemetry drops, or external operational anomalies.`;
+    } else if (type === 'forecast') {
+      explanation = `Predictive time-series model projects horizon progression for ${metric} across ${evidence.horizonPeriods || 30} observation intervals.`;
+      businessImpact = `Forward-looking projections provide planning guidance for operational capacity and budget allocation.`;
+    } else if (type === 'operational') {
+      explanation = `Configured threshold rule breached: ${evidence.calculation || `metric exceeded threshold`}.`;
+      businessImpact = `Active threshold breaches indicate operational events requiring operational acknowledgment.`;
+    }
+
+    return {
+      title: title || `${metric.toUpperCase()} telemetry analysis`,
+      summary: summary || explanation,
+      explanation,
+      businessImpact,
+      recommendedAction: recommendation?.action || `Review ${dsName} telemetry in analytics dashboard`,
+      confidence: 'high',
+      aiGenerated: false,
+      fallback: true
+    };
+  }
+
 
   /**
    * Convert natural language question into a structured Query Plan

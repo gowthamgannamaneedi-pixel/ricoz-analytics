@@ -430,9 +430,34 @@ export default function AIInsightsPage() {
                     {ins.title}
                   </h3>
 
+                  {ins.evidence?.ai_grounded && (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/25 text-indigo-300 text-[11px] font-medium">
+                      <Sparkles className="w-3 h-3 text-indigo-400" />
+                      <span>AI Explanation • Grounded in verified dataset evidence</span>
+                    </div>
+                  )}
+
                   <p className="text-xs text-slate-300 leading-relaxed">
                     {ins.summary}
                   </p>
+
+                  {ins.evidence?.ai_explanation && (
+                    <div className="bg-slate-950/70 border border-indigo-500/20 rounded-xl p-3 text-xs text-slate-300 space-y-1.5 mt-2">
+                      <div className="flex items-center gap-1.5 text-indigo-300 font-semibold text-[11px]">
+                        <Lightbulb className="w-3.5 h-3.5 text-indigo-400" />
+                        <span>AI Grounded Explanation</span>
+                      </div>
+                      <p className="text-slate-300 leading-relaxed text-xs">
+                        {ins.evidence.ai_explanation}
+                      </p>
+                      {ins.evidence?.business_impact && (
+                        <div className="text-[11px] text-slate-400 pt-1.5 border-t border-slate-800/80 flex items-start gap-1.5">
+                          <span className="font-semibold text-slate-200">Business Impact:</span>
+                          <span className="text-slate-300">{ins.evidence.business_impact}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Source Metadata & Evidence Section */}
