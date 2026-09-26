@@ -8,7 +8,7 @@ const config = require('../config');
 class GeminiService {
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || config.geminiApiKey || '';
-    this.modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+    this.modelName = process.env.GEMINI_MODEL || config.geminiModel || 'gemini-2.5-flash';
     this.timeoutMs = 12000;
   }
 

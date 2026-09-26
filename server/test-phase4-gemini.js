@@ -100,7 +100,7 @@ async function runPhase4GeminiTests() {
     // -------------------------------------------------------------------------
     // Test 1: Gemini Service Configuration
     // -------------------------------------------------------------------------
-    await test('1. Gemini service configuration detects key presence accurately', async () => {
+    await test('1. Gemini service configuration detects key presence and GEMINI_MODEL accurately', async () => {
       geminiService.apiKey = 'test-mock-gemini-key-123';
       assert.strictEqual(geminiService.isConfigured(), true, 'Expected isConfigured to be true when key is set');
 
@@ -109,6 +109,8 @@ async function runPhase4GeminiTests() {
 
       geminiService.apiKey = '   ';
       assert.strictEqual(geminiService.isConfigured(), false, 'Expected isConfigured to be false when key is whitespace');
+
+      assert.strictEqual(geminiService.modelName, 'gemini-2.5-flash', 'Expected modelName to be gemini-2.5-flash');
     });
 
     // -------------------------------------------------------------------------
@@ -475,7 +477,7 @@ async function runPhase4GeminiTests() {
     await test('14. Sensitive API keys and tokens are never leaked in errors or logs', async () => {
       geminiService.apiKey = 'AIzaSySecretApiKeyDoNotExpose12345';
 
-      const mockErr = new Error(`Connection failed to https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSySecretApiKeyDoNotExpose12345: Network timeout`);
+      const mockErr = new Error(`Connection failed to https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSySecretApiKeyDoNotExpose12345: Network timeout`);
       const sanitized = geminiService._sanitizeError(mockErr);
 
       assert(!sanitized.message.includes('AIzaSySecretApiKeyDoNotExpose12345'), 'Raw API key must be scrubbed');
