@@ -36,6 +36,8 @@ import {
   getDatasets
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import RootCauseDrawer from '../components/RootCauseDrawer';
+import ScenarioSimulatorModal from '../components/ScenarioSimulatorModal';
 
 export default function AIInsightsPage() {
   const { user } = useAuth();
@@ -43,6 +45,8 @@ export default function AIInsightsPage() {
 
   const [insights, setInsights] = useState([]);
   const [executiveSummary, setExecutiveSummary] = useState('');
+  const [rootCauseInsight, setRootCauseInsight] = useState(null);
+  const [simulatorData, setSimulatorData] = useState(null);
   const [datasets, setDatasets] = useState([]);
   const [selectedDatasetId, setSelectedDatasetId] = useState('');
   const [severityFilter, setSeverityFilter] = useState('all');
@@ -787,21 +791,56 @@ export default function AIInsightsPage() {
                       </button>
                     </div>
 
-                    {/* Dismiss Action */}
-                    {ins.status !== 'dismissed' && (
-                      <button
-                        onClick={() => handleDismiss(ins.id)}
-                        className="text-[11px] text-slate-500 hover:text-slate-300 font-medium transition-colors cursor-pointer"
-                      >
-                        Dismiss
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {/* Phase 6: Investigate Drivers Button */}
+                      {(ins.dataset_id || ins.evidence?.datasetId || ins.evidence?.dataset_id || ins.source_metadata?.dataset_id) && (
+                        <button
+                          onClick={() => setRootCauseInsight(ins)}
+                          className="px-2.5 py-1 text-[11px] font-semibold bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+                          title="Investigate dimensional root-cause drivers"
+                        >
+                          <Layers className="w-3 h-3 text-indigo-400" />
+                          <span>Investigate Drivers</span>
+                        </button>
+                      )}
+
+                      {/* Dismiss Action */}
+                      {ins.status !== 'dismissed' && (
+                        <button
+                          onClick={() => handleDismiss(ins.id)}
+                          className="text-[11px] text-slate-500 hover:text-slate-300 font-medium transition-colors cursor-pointer"
+                        >
+                          Dismiss
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* Phase 6: Root-Cause Driver Breakdown Drawer */}
+      <RootCauseDrawer
+        isOpen={Boolean(rootCauseInsight)}
+        onClose={() => setRootCauseInsight(null)}
+        insight={rootCauseInsight}
+        onLaunchSimulator={(ins, attr) => {
+          setRootCauseInsight(null);
+          setSimulatorData({ insight: ins, attribution: attr });
+        }}
+      />
+
+      {/* Phase 6: Counterfactual Scenario Simulator Modal */}
+      {simulatorData && (
+        <ScenarioSimulatorModal
+          isOpen={Boolean(simulatorData)}
+          onClose={() => setSimulatorData(null)}
+          insight={simulatorData.insight}
+          attribution={simulatorData.attribution}
+        />
       )}
     </div>
   );

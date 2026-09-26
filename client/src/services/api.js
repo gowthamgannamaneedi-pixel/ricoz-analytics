@@ -1139,6 +1139,36 @@ export async function submitAIInsightFeedback(id, feedback) {
 }
 
 /**
+ * Phase 6: Retrieve Root-Cause Driver Breakdown for an insight
+ * @param {string} insightId
+ * @param {{ dimension?: string, limit?: number }} [params={}]
+ */
+export async function getRootCauseAttribution(insightId, params = {}) {
+  const query = new URLSearchParams(params).toString();
+  return apiRequest(`/insights/${insightId}/root-cause${query ? `?${query}` : ''}`);
+}
+
+/**
+ * Phase 6: Run What-If Counterfactual Scenario Simulation
+ * @param {string} insightId
+ * @param {{ dimension?: string, adjustments: Array<{ segment: string, deltaPercent?: number, deltaAbsolute?: number }> }} body
+ */
+export async function simulateWhatIfScenario(insightId, body = {}) {
+  return apiRequest(`/insights/${insightId}/simulate-scenario`, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  });
+}
+
+/**
+ * Phase 6: Get available categorical dimensions for an insight dataset
+ * @param {string} insightId
+ */
+export async function getInsightDimensions(insightId) {
+  return apiRequest(`/insights/${insightId}/dimensions`);
+}
+
+/**
  * Get URL for exporting AI insights report
  * @param {'pdf'|'excel'|'csv'|'json'} [format='json']
  */

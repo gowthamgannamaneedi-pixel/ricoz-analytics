@@ -50,4 +50,26 @@ router.post(
   insightController.submitFeedback
 );
 
+// Phase 6: Decision Intelligence & Root-Cause Attribution
+const decisionIntelligenceController = require('../controllers/decisionIntelligenceController');
+
+router.get(
+  '/:id/root-cause',
+  requirePermission('insights.view'),
+  decisionIntelligenceController.getRootCause
+);
+
+router.post(
+  '/:id/simulate-scenario',
+  requirePermission('insights.view'),
+  decisionIntelligenceController.simulateScenario
+);
+
+router.get(
+  '/:id/dimensions',
+  requirePermission('insights.view'),
+  decisionIntelligenceController.getAvailableDimensions
+);
+
 module.exports = router;
+

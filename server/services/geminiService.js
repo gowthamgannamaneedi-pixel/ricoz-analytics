@@ -1290,6 +1290,208 @@ Respond ONLY with valid raw JSON. No markdown code blocks, no backticks, no extr
       fallback: true
     };
   }
+
+  /**
+   * Phase 6: Grounded Root-Cause Driver Explanation
+   * Synthesizes an executive-grade narrative of pre-calculated dimensional variance drivers.
+   * Gemini NEVER invents numbers or infers causation.
+   * 
+   * @param {{ attribution: object, context?: object }} params
+   * @returns {Promise<{ explanation: string, aiGenerated: boolean, fallback: boolean }>}
+   */
+  async generateDriverExplanation({ attribution, context = {} }, options = {}) {
+    if (!attribution || !attribution.drivers) {
+      return {
+        explanation: 'Driver breakdown analysis is unavailable for this insight.',
+        aiGenerated: false,
+        fallback: true
+      };
+    }
+
+    const deterministicText = this._buildDeterministicDriverExplanation(attribution);
+
+    if (!this.isConfigured()) {
+      return {
+        explanation: deterministicText,
+        aiGenerated: false,
+        fallback: true
+      };
+    }
+
+    const topDrivers = (attribution.drivers || []).slice(0, 4).map(d => ({
+      segment: d.segment,
+      delta: d.segmentDelta,
+      contributionPercent: d.contributionPercent,
+      absoluteMovementShare: d.absoluteMovementShare,
+      classification: d.classification
+    }));
+
+    const prompt = `You are RicozAnalytics Decision Intelligence Engine powered by Gemini 2.5 Flash.
+Your task is to provide an executive explanation of verified dimensional variance drivers.
+
+CRITICAL RULES:
+1. Ground every sentence in the provided pre-calculated numbers. Do NOT calculate, invent, or adjust numbers.
+2. NEVER claim causation. Do NOT say "segment X caused the change", "due to X", or "because of X".
+3. Use strictly observational phrasing: "The X segment accounted for Y% of the observed net change."
+4. Be concise and executive-level (2 paragraphs maximum).
+
+Context & Verified Numbers:
+- Metric: ${attribution.metric}
+- Dimension: ${attribution.dimension}
+- Total Net Delta: ${attribution.totalDelta} (${attribution.totalDeltaPercent}%)
+- Movement Concentration: ${attribution.concentration?.type || 'dispersed'} (HHI: ${attribution.concentration?.hhi})
+- Verified Drivers:
+${JSON.stringify(topDrivers, null, 2)}
+
+Provide a structured, factual explanation of these pre-calculated drivers:`;
+
+    try {
+      const rawText = await this.generateContent(prompt, {
+        temperature: 0.1,
+        maxTokens: 500,
+        timeoutMs: options.timeoutMs || 8000
+      });
+
+      if (rawText && rawText.length > 25) {
+        // Enforce causation guardrail
+        let sanitized = rawText.trim();
+        const causationRegex = /\b(caused by|caused|due to|led to|resulted in)\b/gi;
+        if (causationRegex.test(sanitized)) {
+          sanitized = sanitized.replace(causationRegex, 'associated with');
+        }
+
+        return {
+          explanation: sanitized,
+          aiGenerated: true,
+          fallback: false
+        };
+      }
+    } catch (err) {
+      const safeMsg = (err.message || '').replace(/key=[^&\s]+/gi, 'key=[REDACTED]');
+      console.warn('[GeminiService] Driver LLM synthesis failed, using deterministic fallback:', safeMsg);
+    }
+
+    return {
+      explanation: deterministicText,
+      aiGenerated: false,
+      fallback: true
+    };
+  }
+
+  /**
+   * Deterministic fallback explanation for root-cause drivers
+   */
+  _buildDeterministicDriverExplanation(attribution) {
+    if (!attribution || !attribution.drivers || attribution.drivers.length === 0) {
+      return 'Attribution metrics reflect stable operational baseline across analyzed segments.';
+    }
+
+    const top = attribution.drivers[0];
+    const metric = attribution.metric || 'metric';
+    const dim = attribution.dimension || 'dimension';
+    const totalDelta = attribution.totalDelta || 0;
+    const directionStr = totalDelta < 0 ? 'contraction' : (totalDelta > 0 ? 'expansion' : 'variance');
+
+    let text = `Dimensional decomposition across ${dim} indicates that the ${top.segment} segment accounted for ${Math.abs(top.contributionPercent)}% of the observed net ${directionStr} in ${metric} (${top.segmentDelta > 0 ? '+' : ''}${top.segmentDelta.toLocaleString()}).`;
+
+    if (attribution.primarySustainer && totalDelta < 0) {
+      text += ` Meanwhile, the ${attribution.primarySustainer.segment} segment exhibited positive delta (+${attribution.primarySustainer.delta.toLocaleString()}), partially offsetting net decline.`;
+    }
+
+    if (attribution.concentration?.type === 'concentrated') {
+      text += ` Movement concentration index (HHI: ${attribution.concentration.hhi}) indicates variance is concentrated within primary segments.`;
+    } else {
+      text += ` Overall variance is distributed across multiple segments rather than an isolated outlier.`;
+    }
+
+    return text;
+  }
+
+  /**
+   * Phase 6: Grounded What-If Scenario Explanation
+   * Synthesizes an executive narrative of counterfactual simulation results.
+   * Explicitly labeled as COUNTERFACTUAL / PROJECTED.
+   * 
+   * @param {{ simulation: object, context?: object }} params
+   * @returns {Promise<{ explanation: string, aiGenerated: boolean, fallback: boolean }>}
+   */
+  async generateScenarioExplanation({ simulation, context = {} }, options = {}) {
+    if (!simulation || !simulation.segmentBreakdown) {
+      return {
+        explanation: 'Counterfactual simulation data is unavailable.',
+        aiGenerated: false,
+        fallback: true
+      };
+    }
+
+    const deterministicText = this._buildDeterministicScenarioExplanation(simulation);
+
+    if (!this.isConfigured()) {
+      return {
+        explanation: deterministicText,
+        aiGenerated: false,
+        fallback: true
+      };
+    }
+
+    const prompt = `You are RicozAnalytics Decision Intelligence Engine powered by Gemini 2.5 Flash.
+Your task is to provide an executive summary of a COUNTERFACTUAL WHAT-IF SIMULATION.
+
+CRITICAL RULES:
+1. Clearly state that this is a COUNTERFACTUAL / PROJECTED scenario, NOT a historical fact.
+2. Ground every figure strictly in the pre-calculated numbers. Do NOT calculate or invent numbers.
+3. Be concise and professional (1-2 short paragraphs).
+
+Pre-Calculated Simulation Numbers:
+- Metric: ${simulation.metric}
+- Dimension: ${simulation.dimension}
+- Baseline Total: ${simulation.baselineTotal}
+- Simulated Total: ${simulation.simulatedTotal}
+- Net Projected Delta: ${simulation.netProjectedDelta} (${simulation.netProjectedPercent}%)
+- Adjusted Segments Count: ${simulation.adjustmentsApplied}
+- Clamped at Zero: ${simulation.anyClampedAtZero ? 'Yes (bounded at 0)' : 'No'}
+
+Synthesize the counterfactual scenario:`;
+
+    try {
+      const rawText = await this.generateContent(prompt, {
+        temperature: 0.1,
+        maxTokens: 400,
+        timeoutMs: options.timeoutMs || 8000
+      });
+
+      if (rawText && rawText.length > 25) {
+        return {
+          explanation: rawText.trim(),
+          aiGenerated: true,
+          fallback: false
+        };
+      }
+    } catch (err) {
+      const safeMsg = (err.message || '').replace(/key=[^&\s]+/gi, 'key=[REDACTED]');
+      console.warn('[GeminiService] Scenario LLM synthesis failed, using deterministic fallback:', safeMsg);
+    }
+
+    return {
+      explanation: deterministicText,
+      aiGenerated: false,
+      fallback: true
+    };
+  }
+
+  /**
+   * Deterministic fallback explanation for what-if scenarios
+   */
+  _buildDeterministicScenarioExplanation(simulation) {
+    if (!simulation) return 'No simulation projection available.';
+    const metric = simulation.metric || 'metric';
+    const sign = simulation.netProjectedDelta >= 0 ? '+' : '';
+    let text = `Counterfactual projection across ${simulation.adjustmentsApplied} adjusted segment(s) yields a simulated total ${metric} of ${simulation.simulatedTotal.toLocaleString()} (${sign}${simulation.netProjectedPercent}% net projected difference over baseline).`;
+    if (simulation.anyClampedAtZero) {
+      text += ` Note: One or more downward adjustments reached zero and were bounded to prevent negative values.`;
+    }
+    return text;
+  }
 }
 
 module.exports = new GeminiService();
