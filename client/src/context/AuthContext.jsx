@@ -5,36 +5,25 @@ import {
   removeAuthToken, 
   loginUser, 
   registerUser, 
-  getCurrentUser 
+  getCurrentUser,
+  logoutUser
 } from '../services/api';
 
 const AuthContext = createContext(null);
 
-// Default demo user when backend is offline or during preview deployment
-const DEMO_USER = {
-  id: 1,
-  name: 'Gowtham (Admin)',
-  email: 'gowthamgannamaneedi@gmail.com',
-  role: 'admin'
-};
-
-const DEMO_TOKEN = 'demo_enterprise_auth_token_preview';
-
 export function AuthProvider({ children }) {
-  // Initialize with demo user by default so user can access the analytics dashboard directly
-  const [user, setUser] = useState(DEMO_USER);
-  const [token, setToken] = useState(getAuthToken() || DEMO_TOKEN);
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(getAuthToken() || null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Initialize and verify authentication state if real backend is reachable
+  // Initialize and verify authentication state on startup against /api/auth/me
   useEffect(() => {
     async function loadUser() {
       const storedToken = getAuthToken();
       if (!storedToken) {
-        // Keep demo user active
-        setUser(DEMO_USER);
-        setToken(DEMO_TOKEN);
+        setUser(null);
+        setToken(null);
         setIsLoading(false);
         return;
       }
@@ -44,12 +33,16 @@ export function AuthProvider({ children }) {
         if (data && data.user) {
           setUser(data.user);
           setToken(storedToken);
+        } else {
+          removeAuthToken();
+          setUser(null);
+          setToken(null);
         }
       } catch (err) {
-        console.warn('Backend authentication not connected, running in preview/demo mode:', err.message);
-        // Fall back gracefully to demo user rather than locking the user out
-        setUser(DEMO_USER);
-        setToken(DEMO_TOKEN);
+        console.warn('Session verification failed on startup:', err.message);
+        removeAuthToken();
+        setUser(null);
+        setToken(null);
       } finally {
         setIsLoading(false);
       }
@@ -58,75 +51,80 @@ export function AuthProvider({ children }) {
     loadUser();
   }, []);
 
+  // Listen for 401 session expiry events dispatched by apiRequest
+  useEffect(() => {
+    const handleSessionExpired = (e) => {
+      removeAuthToken();
+      setToken(null);
+      setUser(null);
+      setError(e.detail?.message || 'Your session has expired. Please sign in again.');
+    };
+
+    window.addEventListener('auth:session_expired', handleSessionExpired);
+    return () => {
+      window.removeEventListener('auth:session_expired', handleSessionExpired);
+    };
+  }, []);
+
   /**
-   * Log in user with credentials (with graceful demo fallback if backend is offline)
+   * Log in user with credentials — strictly verified against server
    */
   const login = async (credentials) => {
     setError(null);
-    try {
-      const data = await loginUser(credentials);
-      setAuthToken(data.token);
-      setToken(data.token);
-      setUser(data.user);
-      return data.user;
-    } catch (err) {
-      console.warn('Login endpoint offline or returned non-JSON, falling back to demo user:', err.message);
-      // If backend is not available, accept any credentials in demo mode
-      setAuthToken(DEMO_TOKEN);
-      setToken(DEMO_TOKEN);
-      setUser({
-        ...DEMO_USER,
-        email: credentials.email || DEMO_USER.email,
-        name: credentials.email ? credentials.email.split('@')[0] : DEMO_USER.name
-      });
-      return DEMO_USER;
+    const data = await loginUser(credentials);
+    if (!data || !data.token || !data.user) {
+      throw new Error(data?.message || 'Login failed. Invalid response from server.');
     }
+    setAuthToken(data.token);
+    setToken(data.token);
+    setUser(data.user);
+    return data.user;
   };
 
   /**
-   * Register new user (with graceful demo fallback if backend is offline)
+   * Register new user (server strictly assigns 'viewer' role per security policy)
    */
   const register = async (userData) => {
     setError(null);
-    try {
-      const data = await registerUser(userData);
-      setAuthToken(data.token);
-      setToken(data.token);
-      setUser(data.user);
-      return data.user;
-    } catch (err) {
-      console.warn('Register endpoint offline or returned non-JSON, falling back to demo user:', err.message);
-      setAuthToken(DEMO_TOKEN);
-      setToken(DEMO_TOKEN);
-      const newUser = {
-        id: Date.now(),
-        name: userData.name || 'Enterprise Analyst',
-        email: userData.email || 'user@ricozanalytics.com',
-        role: userData.role || 'admin'
-      };
-      setUser(newUser);
-      return newUser;
+    const data = await registerUser(userData);
+    if (!data || !data.token || !data.user) {
+      throw new Error(data?.message || 'Registration failed. Invalid response from server.');
     }
+    setAuthToken(data.token);
+    setToken(data.token);
+    setUser(data.user);
+    return data.user;
   };
 
   /**
-   * Log out user and reset to demo or cleared state
+   * Log out user and clear stored tokens
    */
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await logoutUser();
+    } catch (_) {
+      // Continue cleanup
+    }
     removeAuthToken();
     setToken(null);
     setUser(null);
     setError(null);
   };
 
+  // RBAC Permission Check Helpers
+  const currentRole = user?.role || 'viewer';
+  const isAdmin = currentRole === 'admin';
+  const isManager = currentRole === 'manager' || isAdmin;
+  const isAnalyst = currentRole === 'analyst' || isManager;
+  const isViewer = currentRole === 'viewer';
+
   /**
-   * Reset to active demo session
+   * Check if current user has any of the required roles
+   * @param  {...string} roles 
    */
-  const enterDemoMode = () => {
-    setAuthToken(DEMO_TOKEN);
-    setToken(DEMO_TOKEN);
-    setUser(DEMO_USER);
-    setError(null);
+  const hasRole = (...roles) => {
+    if (isAdmin) return true;
+    return roles.includes(currentRole);
   };
 
   const value = {
@@ -138,7 +136,13 @@ export function AuthProvider({ children }) {
     login,
     register,
     logout,
-    enterDemoMode
+    // RBAC
+    currentRole,
+    isAdmin,
+    isManager,
+    isAnalyst,
+    isViewer,
+    hasRole
   };
 
   return (

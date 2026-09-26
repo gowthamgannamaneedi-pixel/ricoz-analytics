@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, FileSpreadsheet, FileCode, Database, CheckCircle2, AlertCircle, Loader2, ArrowRight, Server } from 'lucide-react';
 import FileUpload from './FileUpload';
 import UploadProgress from './UploadProgress';
+import { API_BASE_URL } from '../services/api';
 
 /**
  * Enterprise Add Data Source Modal
@@ -72,7 +73,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
     setError('');
 
     try {
-      const res = await fetch('/api/data-sources/test-connection', {
+      const res = await fetch(`${API_BASE_URL}/data-sources/test-connection`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,7 +120,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
     setError('');
 
     try {
-      const res = await fetch('/api/data-sources', {
+      const res = await fetch(`${API_BASE_URL}/data-sources`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -213,7 +214,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
         });
       }, 150);
 
-      const res = await fetch('/api/data-sources/upload', {
+      const res = await fetch(`${API_BASE_URL}/data-sources/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

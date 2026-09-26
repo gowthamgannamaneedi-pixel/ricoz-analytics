@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { getHealthStatus } = require('../controllers/healthController');
+const { getHealthStatus, getReadinessStatus, getMetricsStatus } = require('../controllers/healthController');
 
-// GET /api/health - Check if backend API service is running
+// Health & Readiness Endpoints
 router.get('/health', getHealthStatus);
+router.get('/ready', getReadinessStatus);
+router.get('/health/metrics', getMetricsStatus);
 
 module.exports = router;

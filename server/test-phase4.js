@@ -342,10 +342,15 @@ async function runTests() {
     );
 
     // -------------------------------------------------------------
-    // Test 13: File deletion/cleanup works safely
+    // Test 13: File deletion/cleanup works safely (Authorized Admin)
     // -------------------------------------------------------------
-    const deleteRes = await request('DELETE', `/api/datasets/${user1DatasetId}`, null, { Authorization: `Bearer ${token1}` });
-    const verifyDeleteRes = await request('GET', `/api/datasets/${user1DatasetId}`, null, { Authorization: `Bearer ${token1}` });
+    const adminLoginRes = await request('POST', '/api/auth/login', {
+      email: 'admin@ricoz.test',
+      password: 'admin123'
+    });
+    const adminToken = adminLoginRes.data.token;
+    const deleteRes = await request('DELETE', `/api/datasets/${user1DatasetId}`, null, { Authorization: `Bearer ${adminToken}` });
+    const verifyDeleteRes = await request('GET', `/api/datasets/${user1DatasetId}`, null, { Authorization: `Bearer ${adminToken}` });
 
     if (verifyDeleteRes.status !== 404) {
       console.log('DEBUG verifyDeleteRes:', JSON.stringify(verifyDeleteRes));

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Table2, RefreshCw, AlertCircle, Loader2, Plus, Database, FileSpreadsheet, FileCode, CheckCircle2 } from 'lucide-react';
+import { Table2, RefreshCw, AlertCircle, Loader2, Plus, Database, FileSpreadsheet, FileCode, CheckCircle2, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import DatasetTable from '../components/DatasetTable';
 import DatasetPreviewModal from '../components/DatasetPreviewModal';
 import AddDataSourceModal from '../components/AddDataSourceModal';
+
+import { getDatasetsApi, deleteDatasetApi } from '../services/api';
 
 /**
  * Real Datasets Explorer & Preview Page
@@ -27,48 +29,15 @@ const FALLBACK_DATASETS = [
       { name: 'profit', type: 'number' },
       { name: 'order_date', type: 'date' }
     ]
-  },
-  {
-    id: 2,
-    name: 'Product Inventory & Logistics',
-    type: 'json',
-    row_count: 8400,
-    column_count: 6,
-    created_at: '2025-01-18T14:15:00Z',
-    schema: [
-      { name: 'product_id', type: 'string' },
-      { name: 'category', type: 'string' },
-      { name: 'units', type: 'number' },
-      { name: 'is_stock', type: 'boolean' },
-      { name: 'reorder_level', type: 'number' },
-      { name: 'updated_at', type: 'date' }
-    ]
-  },
-  {
-    id: 3,
-    name: 'Production PostgreSQL Transactions',
-    type: 'postgresql',
-    row_count: 125000,
-    column_count: 9,
-    created_at: '2025-01-20T09:00:00Z',
-    schema: [
-      { name: 'tx_id', type: 'string' },
-      { name: 'account_id', type: 'number' },
-      { name: 'amount', type: 'number' },
-      { name: 'currency', type: 'string' },
-      { name: 'status', type: 'string' },
-      { name: 'is_verified', type: 'boolean' },
-      { name: 'tx_timestamp', type: 'date' }
-    ]
   }
 ];
 
 export default function DatasetsPage() {
-  const { token } = useAuth();
+  const { token, isViewer, currentRole } = useAuth();
   const navigate = useNavigate();
 
-  const [datasets, setDatasets] = useState(FALLBACK_DATASETS);
-  const [isLoading, setIsLoading] = useState(false);
+  const [datasets, setDatasets] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -77,29 +46,23 @@ export default function DatasetsPage() {
   const [previewDatasetId, setPreviewDatasetId] = useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
+  // Delete Confirmation Modal State (Step 20 & 21)
+  const [datasetToDelete, setDatasetToDelete] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(null);
 
   const fetchDatasets = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
     setError('');
 
     try {
-      const res = await fetch('/api/datasets', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const contentType = res.headers.get('content-type') || '';
-      if (res.ok && contentType.includes('application/json')) {
-        const data = await res.json();
-        if (data.data && data.data.length > 0) {
-          setDatasets(data.data);
-          return;
-        }
-      }
-      setDatasets(FALLBACK_DATASETS);
-    } catch (_) {
-      setDatasets(FALLBACK_DATASETS);
+      const res = await getDatasetsApi();
+      const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+      setDatasets(list);
+    } catch (err) {
+      setError(err.message || 'Failed to load datasets.');
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -120,19 +83,38 @@ export default function DatasetsPage() {
     setIsPreviewOpen(true);
   };
 
-  const handleDelete = async (id) => {
+  const handleDeleteClick = (datasetOrId) => {
+    if (isViewer) {
+      setError('Viewers do not have permission to delete datasets.');
+      return;
+    }
+    const target = typeof datasetOrId === 'object' && datasetOrId !== null
+      ? datasetOrId
+      : datasets.find(d => d.id === datasetOrId);
+
+    if (target) {
+      setDatasetToDelete(target);
+      setDeleteError(null);
+      setShowDeleteConfirm(true);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!datasetToDelete) return;
+    const id = datasetToDelete.id;
     setIsDeleting(id);
+    setDeleteError(null);
+
     try {
-      await fetch(`/api/datasets/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      }).catch(() => null);
-      
+      await deleteDatasetApi(id);
+      setDeleteSuccess('Dataset deleted successfully.');
       setDatasets(prev => prev.filter(d => d.id !== id));
+      setShowDeleteConfirm(false);
+      setDatasetToDelete(null);
+      await fetchDatasets(false);
+      setTimeout(() => setDeleteSuccess(null), 3000);
     } catch (err) {
-      setDatasets(prev => prev.filter(d => d.id !== id));
+      setDeleteError(err.message || 'Failed to delete dataset.');
     } finally {
       setIsDeleting(null);
     }
@@ -156,9 +138,18 @@ export default function DatasetsPage() {
       {/* Top Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-1">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-            Datasets
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              Datasets
+            </h1>
+            <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+              isViewer
+                ? 'bg-slate-100 text-slate-600 border border-slate-200'
+                : 'bg-blue-50 text-blue-700 border border-blue-200'
+            }`}>
+              {currentRole.toUpperCase()} MODE
+            </span>
+          </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
             Explore schema, preview records, and manage imported business telemetry.
           </p>
@@ -174,16 +165,27 @@ export default function DatasetsPage() {
             <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
           </button>
 
-          <button
-            onClick={() => setIsUploadModalOpen(true)}
-            id="open-import-dataset-btn"
-            className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
-          >
-            <Plus className="h-4 w-4" />
-            <span>+ Ingest New Dataset</span>
-          </button>
+          {!isViewer && (
+            <button
+              onClick={() => setIsUploadModalOpen(true)}
+              id="open-import-dataset-btn"
+              className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
+            >
+              <Plus className="h-4 w-4" />
+              <span>+ Ingest New Dataset</span>
+            </button>
+          )}
         </div>
       </div>
+
+      {isViewer && (
+        <div className="flex items-center justify-between gap-2.5 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-600">
+          <span className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-slate-400" />
+            <span><strong>View-Only Mode:</strong> Your role ({currentRole}) has dataset inspection and 50-row preview access. Ingestion and deletion require Analyst or Admin privileges.</span>
+          </span>
+        </div>
+      )}
 
       {/* Error Alert */}
       {error && (
@@ -193,6 +195,14 @@ export default function DatasetsPage() {
             <p className="font-bold">Failed to load datasets</p>
             <p className="mt-0.5">{error}</p>
           </div>
+        </div>
+      )}
+
+      {/* Delete Success Alert */}
+      {deleteSuccess && (
+        <div className="flex items-center gap-2.5 rounded-md border border-emerald-200 bg-emerald-50 p-3.5 text-xs text-emerald-800">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+          <span>{deleteSuccess}</span>
         </div>
       )}
 
@@ -255,7 +265,7 @@ export default function DatasetsPage() {
         <DatasetTable
           datasets={datasets}
           onPreview={handleOpenPreview}
-          onDelete={handleDelete}
+          onDelete={handleDeleteClick}
           isDeleting={isDeleting}
         />
       )}
@@ -275,6 +285,69 @@ export default function DatasetsPage() {
         onSuccess={handleUploadSuccess}
         token={token}
       />
+
+      {/* Delete Confirmation Modal (Step 20 & 21) */}
+      {showDeleteConfirm && datasetToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Delete Dataset?</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  This will remove the dataset and its associated data.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 mb-4 text-xs space-y-1">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Dataset Name:</span>
+                <span className="font-semibold text-slate-800">{datasetToDelete.name}</span>
+              </div>
+              {datasetToDelete.row_count !== undefined && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Records:</span>
+                  <span className="font-mono text-slate-700">{Number(datasetToDelete.row_count || 0).toLocaleString()} rows</span>
+                </div>
+              )}
+            </div>
+
+            {deleteError && (
+              <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                <span>{deleteError}</span>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setDatasetToDelete(null);
+                  setDeleteError(null);
+                }}
+                disabled={isDeleting !== null}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting !== null}
+                className="px-4 py-2 text-xs font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50 transition flex items-center gap-1.5"
+              >
+                {isDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                <span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

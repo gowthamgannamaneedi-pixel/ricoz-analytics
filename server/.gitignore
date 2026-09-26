@@ -1,0 +1,15 @@
+# Dependency directories
+node_modules/
+build/
+coverage/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs and runtime artifacts
+logs/
+*.log
+uploads/
+test_output.pdf

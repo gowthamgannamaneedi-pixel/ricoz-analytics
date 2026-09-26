@@ -16,10 +16,22 @@ const {
  */
 
 /**
- * Helper to fetch dataset and verify authenticated user ownership
+ * Helper to fetch dataset and verify authenticated user access (Tenant isolation enforced)
  */
-async function getVerifiedDataset(datasetId, userId) {
-  const dataset = await Dataset.findByIdAndUserId(datasetId, userId);
+async function getVerifiedDataset(datasetId, user) {
+  const userId = user?.id;
+  const organizationId = user?.organization_id;
+
+  // 1. Direct user ownership check
+  let dataset = await Dataset.findByIdAndUserId(datasetId, userId);
+
+  // 2. Organization-level dataset access (Enterprise dataset 1 or admin/manager role)
+  if (!dataset && organizationId) {
+    if (Number(datasetId) === 1 || user?.role === 'admin' || user?.role === 'manager') {
+      dataset = await Dataset.findByIdAndOrgId(datasetId, organizationId);
+    }
+  }
+
   if (!dataset) {
     const error = new Error('Dataset not found or you do not have permission to access it.');
     error.status = 404;
@@ -37,7 +49,7 @@ const getDatasetSummary = async (req, res, next) => {
     const userId = req.user.id;
     const { id } = req.params;
 
-    const dataset = await getVerifiedDataset(id, userId);
+    const dataset = await getVerifiedDataset(id, req.user);
     const records = await loadDatasetRecords(dataset.file_path);
 
     const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : dataset.schema || [];
@@ -79,7 +91,7 @@ const getDatasetKpis = async (req, res, next) => {
     const userId = req.user.id;
     const { id } = req.params;
 
-    const dataset = await getVerifiedDataset(id, userId);
+    const dataset = await getVerifiedDataset(id, req.user);
     const records = await loadDatasetRecords(dataset.file_path);
 
     const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : dataset.schema || [];
@@ -115,7 +127,7 @@ const getDatasetTrends = async (req, res, next) => {
     const userId = req.user.id;
     const { id } = req.params;
 
-    const dataset = await getVerifiedDataset(id, userId);
+    const dataset = await getVerifiedDataset(id, req.user);
     const records = await loadDatasetRecords(dataset.file_path);
 
     const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : dataset.schema || [];
@@ -150,7 +162,7 @@ const getDatasetBreakdowns = async (req, res, next) => {
     const { id } = req.params;
     const { groupBy } = req.query;
 
-    const dataset = await getVerifiedDataset(id, userId);
+    const dataset = await getVerifiedDataset(id, req.user);
     const records = await loadDatasetRecords(dataset.file_path);
 
     const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : dataset.schema || [];
@@ -185,7 +197,7 @@ const getDatasetRows = async (req, res, next) => {
     const userId = req.user.id;
     const { id } = req.params;
 
-    const dataset = await getVerifiedDataset(id, userId);
+    const dataset = await getVerifiedDataset(id, req.user);
     const records = await loadDatasetRecords(dataset.file_path);
 
     const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : dataset.schema || [];

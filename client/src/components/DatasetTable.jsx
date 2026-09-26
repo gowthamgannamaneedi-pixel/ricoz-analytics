@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Table2,
   FileSpreadsheet,
@@ -12,7 +13,8 @@ import {
   Calendar,
   Hash,
   Type,
-  ToggleLeft
+  ToggleLeft,
+  ShieldCheck
 } from 'lucide-react';
 
 /**
@@ -30,6 +32,7 @@ export default function DatasetTable({
   onDelete,
   isDeleting = null
 }) {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
@@ -57,24 +60,34 @@ export default function DatasetTable({
   };
 
   const filteredDatasets = React.useMemo(() => {
-    let result = [...datasets];
+    let result = Array.isArray(datasets) ? [...datasets] : [];
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(d =>
-        d.name.toLowerCase().includes(q) ||
-        (d.description && d.description.toLowerCase().includes(q)) ||
-        (d.data_source_name && d.data_source_name.toLowerCase().includes(q))
+        (d?.name && String(d.name).toLowerCase().includes(q)) ||
+        (d?.description && String(d.description).toLowerCase().includes(q)) ||
+        (d?.data_source_name && String(d.data_source_name).toLowerCase().includes(q))
       );
     }
 
     if (sortKey) {
       result.sort((a, b) => {
-        let valA = a[sortKey];
-        let valB = b[sortKey];
-        if (typeof valA === 'string') {
-          return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        const valA = a?.[sortKey];
+        const valB = b?.[sortKey];
+
+        // Handle null / undefined safely without throwing
+        if (valA === valB) return 0;
+        if (valA === undefined || valA === null) return 1;
+        if (valB === undefined || valB === null) return -1;
+
+        if (typeof valA === 'string' || typeof valB === 'string') {
+          const strA = String(valA ?? '');
+          const strB = String(valB ?? '');
+          return sortOrder === 'asc' ? strA.localeCompare(strB) : strB.localeCompare(strA);
         }
-        return sortOrder === 'asc' ? (valA || 0) - (valB || 0) : (valB || 0) - (valA || 0);
+        return sortOrder === 'asc'
+          ? (Number(valA) || 0) - (Number(valB) || 0)
+          : (Number(valB) || 0) - (Number(valA) || 0);
       });
     }
 
@@ -211,16 +224,25 @@ export default function DatasetTable({
 
                   {/* Created Date */}
                   <td className="py-3.5 px-4 text-slate-500 font-mono text-[11px]">
-                    {new Date(dataset.created_at).toLocaleDateString('en-US', {
+                    {dataset.created_at ? new Date(dataset.created_at).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
                       year: 'numeric'
-                    })}
+                    }) : '—'}
                   </td>
 
                   {/* Actions: Preview & Delete */}
                   <td className="py-3.5 px-4 text-right">
                     <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        onClick={() => navigate(`/data-quality?datasetId=${dataset.id}`)}
+                        className="flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition"
+                        title="View Data Quality & Observability profile"
+                      >
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                        <span>Quality</span>
+                      </button>
+
                       <button
                         onClick={() => onPreview(dataset.id)}
                         id={`preview-dataset-${dataset.id}`}
@@ -232,11 +254,7 @@ export default function DatasetTable({
                       </button>
 
                       <button
-                        onClick={() => {
-                          if (window.confirm(`Are you sure you want to delete dataset "${dataset.name}"?`)) {
-                            onDelete(dataset.id);
-                          }
-                        }}
+                        onClick={() => onDelete(dataset)}
                         disabled={isDeleting === dataset.id}
                         className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition disabled:opacity-40"
                         title="Delete Dataset"

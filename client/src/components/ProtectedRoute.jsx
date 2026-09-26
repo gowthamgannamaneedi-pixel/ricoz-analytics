@@ -13,7 +13,7 @@ export default function ProtectedRoute() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Authenticating session..." />
+        <LoadingSpinner size="lg" text="Checking session..." />
       </div>
     );
   }

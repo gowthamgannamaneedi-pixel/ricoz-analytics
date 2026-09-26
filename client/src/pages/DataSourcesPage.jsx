@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import DataSourceCard from '../components/DataSourceCard';
 import DataSourceTable from '../components/DataSourceTable';
 import AddDataSourceModal from '../components/AddDataSourceModal';
+import { API_BASE_URL } from '../services/api';
 
 /**
  * Real Data Sources Management Page
@@ -39,7 +40,7 @@ const FALLBACK_SOURCES = [
 ];
 
 export default function DataSourcesPage() {
-  const { token } = useAuth();
+  const { token, isViewer, currentRole } = useAuth();
 
   const [sources, setSources] = useState(FALLBACK_SOURCES);
   const [isLoading, setIsLoading] = useState(false);
@@ -54,7 +55,7 @@ export default function DataSourcesPage() {
     setError('');
 
     try {
-      const res = await fetch('/api/data-sources', {
+      const res = await fetch(`${API_BASE_URL}/data-sources`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -86,9 +87,10 @@ export default function DataSourcesPage() {
   };
 
   const handleDelete = async (id) => {
+    if (isViewer) return;
     setIsDeleting(id);
     try {
-      await fetch(`/api/data-sources/${id}`, {
+      await fetch(`${API_BASE_URL}/data-sources/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -127,11 +129,20 @@ export default function DataSourcesPage() {
       {/* Top Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-1">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-            Data Sources
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              Data Sources
+            </h1>
+            <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+              isViewer
+                ? 'bg-slate-100 text-slate-600 border border-slate-200'
+                : 'bg-blue-50 text-blue-700 border border-blue-200'
+            }`}>
+              {currentRole.toUpperCase()} MODE
+            </span>
+          </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Connect and manage your business data.
+            Connect and manage your business data pipelines.
           </p>
         </div>
 
@@ -145,16 +156,27 @@ export default function DataSourcesPage() {
             <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
           </button>
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            id="open-add-source-modal-btn"
-            className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
-          >
-            <Plus className="h-4 w-4" />
-            <span>+ Add Data Source</span>
-          </button>
+          {!isViewer && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              id="open-add-source-modal-btn"
+              className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
+            >
+              <Plus className="h-4 w-4" />
+              <span>+ Add Data Source</span>
+            </button>
+          )}
         </div>
       </div>
+
+      {isViewer && (
+        <div className="flex items-center justify-between gap-2.5 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-600">
+          <span className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-slate-400" />
+            <span><strong>View-Only Mode:</strong> Your role ({currentRole}) has read access. Data source creation and deletion require Analyst or Admin privileges.</span>
+          </span>
+        </div>
+      )}
 
       {/* Error Alert */}
       {error && (

@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const storage = require('../storage');
 const { parseDatasetFile } = require('./fileParserService');
@@ -16,6 +17,13 @@ const { parseDatasetFile } = require('./fileParserService');
 async function loadDatasetRecords(filePath) {
   if (!filePath) {
     throw new Error('Dataset has no attached file.');
+  }
+
+  if (path.isAbsolute(filePath) && fs.existsSync(filePath)) {
+    const buffer = await fs.promises.readFile(filePath);
+    const ext = path.extname(filePath).toLowerCase();
+    const parsed = parseDatasetFile(buffer, ext, 1000000);
+    return parsed.preview || [];
   }
 
   const exists = await storage.exists(filePath);
@@ -57,12 +65,13 @@ function detectDatasetDimensions(schema = [], sampleRecords = []) {
     const colName = col.name.toLowerCase();
     const type = col.type;
 
+    const isNum = type === 'number' || type === 'numeric' || type === 'integer' || type === 'float' || type === 'double' || type === 'decimal';
     if (type === 'date' || colName.includes('date') || colName.includes('time') || colName === 'created_at') {
       result.dateColumns.push(col.name);
       if (!result.dateColumn) result.dateColumn = col.name;
-    } else if (type === 'number') {
+    } else if (isNum) {
       result.numericColumns.push(col.name);
-    } else if (type === 'string') {
+    } else if (type === 'string' || type === 'text') {
       result.categoricalColumns.push(col.name);
     }
   });
@@ -556,6 +565,327 @@ function getDatasetFilterOptions(records = [], dimensions = {}) {
   return filterOptions;
 }
 
+/**
+ * Validate dataset relationship compatibility and column contracts
+ * @param {object} sourceDataset 
+ * @param {string} sourceCol 
+ * @param {object} targetDataset 
+ * @param {string} targetCol 
+ * @param {string} relationshipType 
+ * @returns {{ valid: boolean, error?: string }}
+ */
+function validateRelationshipDefinition(sourceDataset, sourceCol, targetDataset, targetCol, relationshipType = 'many_to_one') {
+  if (!sourceDataset || !targetDataset) {
+    return { valid: false, error: 'Both source and target datasets must exist and be accessible.' };
+  }
+
+  // Parse schemas
+  let srcSchema = sourceDataset.schema || [];
+  if (typeof srcSchema === 'string') {
+    try { srcSchema = JSON.parse(srcSchema); } catch (_) { srcSchema = []; }
+  }
+
+  let tgtSchema = targetDataset.schema || [];
+  if (typeof tgtSchema === 'string') {
+    try { tgtSchema = JSON.parse(tgtSchema); } catch (_) { tgtSchema = []; }
+  }
+
+  const srcField = srcSchema.find(c => c.name.toLowerCase() === sourceCol.trim().toLowerCase());
+  if (!srcField) {
+    return { valid: false, error: `Source column "${sourceCol}" does not exist in dataset "${sourceDataset.name}".` };
+  }
+
+  const tgtField = tgtSchema.find(c => c.name.toLowerCase() === targetCol.trim().toLowerCase());
+  if (!tgtField) {
+    return { valid: false, error: `Target column "${targetCol}" does not exist in dataset "${targetDataset.name}".` };
+  }
+
+  // Type compatibility check
+  const normalizeType = (t) => {
+    const clean = (t || 'string').toLowerCase();
+    if (clean === 'integer' || clean === 'float' || clean === 'decimal' || clean === 'numeric' || clean === 'bigint') return 'number';
+    if (clean === 'timestamp' || clean === 'timestamptz' || clean === 'datetime') return 'date';
+    if (clean === 'varchar' || clean === 'text' || clean === 'char') return 'string';
+    return clean;
+  };
+
+  const srcType = normalizeType(srcField.type);
+  const tgtType = normalizeType(tgtField.type);
+
+  if (srcType !== tgtType) {
+    return {
+      valid: false,
+      error: `Cannot create relationship: "${sourceCol}" is ${srcField.type || 'unknown'} in ${sourceDataset.name} but "${targetCol}" is ${tgtField.type || 'unknown'} in ${targetDataset.name}. Column data types must be compatible.`
+    };
+  }
+
+  const validTypes = ['one_to_one', 'one_to_many', 'many_to_one', 'many_to_many'];
+  if (relationshipType && !validTypes.includes(relationshipType.toLowerCase())) {
+    return { valid: false, error: `Invalid relationship type "${relationshipType}". Allowed types: ${validTypes.join(', ')}.` };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Execute a multi-dataset relational query with hash joins and aggregation
+ * @param {{
+ *   baseDataset: object,
+ *   baseRecords: any[],
+ *   joins: Array<{
+ *     targetDataset: object,
+ *     targetRecords: any[],
+ *     sourceColumn: string,
+ *     targetColumn: string,
+ *     type?: 'inner'|'left',
+ *     relationshipType?: string
+ *   }>,
+ *   dimensions?: string[],
+ *   metrics?: Array<{ column: string, aggregation: 'SUM'|'AVG'|'COUNT'|'MIN'|'MAX', alias?: string }>,
+ *   filters?: object,
+ *   limit?: number,
+ *   page?: number
+ * }} params
+ * @returns {Promise<{ rows: any[], totalCount: number, kpis?: object, executionTimeMs: number }>}
+ */
+async function executeRelationalQuery({
+  baseDataset,
+  baseRecords = [],
+  joins = [],
+  dimensions = [],
+  metrics = [],
+  filters = {},
+  limit = 5000,
+  page = 1
+}) {
+  const startTime = Date.now();
+  const maxJoinsAllowed = 4;
+  if (joins.length > maxJoinsAllowed) {
+    throw new Error(`Exceeded maximum allowed joins per query (${maxJoinsAllowed}).`);
+  }
+
+  const maxRowsAllowed = 10000;
+  const effectiveLimit = Math.min(maxRowsAllowed, Math.max(1, Number(limit) || 100));
+  const effectivePage = Math.max(1, Number(page) || 1);
+
+  // Disambiguate base records with dataset prefix
+  const baseName = (baseDataset.name || 'base').replace(/[^a-zA-Z0-9_]/g, '_');
+
+  let currentWorkingSet = baseRecords.map(row => {
+    const disambiguated = {};
+    for (const [k, v] of Object.entries(row)) {
+      disambiguated[k] = v; // keep raw key
+      disambiguated[`${baseName}.${k}`] = v; // also key by dataset.column
+    }
+    return disambiguated;
+  });
+
+  // Execute each join sequentially using in-memory hash indexing
+  for (const join of joins) {
+    const {
+      targetDataset,
+      targetRecords = [],
+      sourceColumn,
+      targetColumn,
+      type = 'left'
+    } = join;
+
+    const targetName = (targetDataset.name || 'target').replace(/[^a-zA-Z0-9_]/g, '_');
+    const isInner = (type || 'left').toLowerCase() === 'inner';
+
+    // 1. Build Hash Index on target dataset
+    const targetHashIndex = new Map();
+    for (const tgtRow of targetRecords) {
+      const joinKeyVal = tgtRow[targetColumn];
+      if (joinKeyVal !== undefined && joinKeyVal !== null) {
+        const key = String(joinKeyVal).trim().toLowerCase();
+        if (!targetHashIndex.has(key)) {
+          targetHashIndex.set(key, []);
+        }
+        targetHashIndex.get(key).push(tgtRow);
+      }
+    }
+
+    // 2. Perform Hash Join
+    const joinedResults = [];
+
+    for (const baseRow of currentWorkingSet) {
+      // Lookup matching source column value
+      const rawSourceVal = baseRow[sourceColumn] !== undefined ? baseRow[sourceColumn] : baseRow[`${baseName}.${sourceColumn}`];
+      const lookupKey = rawSourceVal !== undefined && rawSourceVal !== null ? String(rawSourceVal).trim().toLowerCase() : null;
+
+      const matchingTargetRows = lookupKey ? targetHashIndex.get(lookupKey) : null;
+
+      if (matchingTargetRows && matchingTargetRows.length > 0) {
+        for (const tgtMatch of matchingTargetRows) {
+          const mergedRow = { ...baseRow };
+          for (const [tk, tv] of Object.entries(tgtMatch)) {
+            mergedRow[`${targetName}.${tk}`] = tv;
+            // Provide root access if not already colliding
+            if (mergedRow[tk] === undefined) {
+              mergedRow[tk] = tv;
+            }
+          }
+          joinedResults.push(mergedRow);
+        }
+      } else if (!isInner) {
+        // Left join preservation: fill target columns with null
+        const mergedRow = { ...baseRow };
+        let tgtSchema = targetDataset.schema || [];
+        if (typeof tgtSchema === 'string') {
+          try { tgtSchema = JSON.parse(tgtSchema); } catch (_) { tgtSchema = []; }
+        }
+        tgtSchema.forEach(col => {
+          mergedRow[`${targetName}.${col.name}`] = null;
+        });
+        joinedResults.push(mergedRow);
+      }
+    }
+
+    currentWorkingSet = joinedResults;
+  }
+
+  // 3. Apply Multi-Dataset Filters
+  let filteredSet = currentWorkingSet;
+  if (filters && typeof filters === 'object') {
+    const filterKeys = Object.keys(filters).filter(k => !['page', 'limit', 'sortKey', 'sortOrder'].includes(k));
+    for (const fKey of filterKeys) {
+      const fVal = filters[fKey];
+      if (fVal !== undefined && fVal !== null && fVal !== 'all' && fVal !== 'ALL' && fVal !== '') {
+        const cleanVal = String(fVal).trim().toLowerCase();
+        filteredSet = filteredSet.filter(r => {
+          const rowVal = r[fKey] !== undefined ? r[fKey] : r[fKey.split('.').pop()];
+          if (rowVal === undefined || rowVal === null) return false;
+          return String(rowVal).trim().toLowerCase() === cleanVal;
+        });
+      }
+    }
+  }
+
+  // 4. Aggregation and Grouping (if dimensions or metrics specified)
+  if (dimensions.length > 0 || metrics.length > 0) {
+    const groupMap = new Map();
+
+    const resolveVal = (row, colKey) => {
+      if (row[colKey] !== undefined) return row[colKey];
+      const bare = colKey.includes('.') ? colKey.split('.').pop() : colKey;
+      if (row[bare] !== undefined) return row[bare];
+      const matchedKey = Object.keys(row).find(k => k.toLowerCase() === colKey.toLowerCase() || k.toLowerCase().endsWith(`.${bare.toLowerCase()}`));
+      return matchedKey ? row[matchedKey] : undefined;
+    };
+
+    for (const r of filteredSet) {
+      // Build composite group key
+      const dimVals = dimensions.map(d => {
+        const val = resolveVal(r, d);
+        return val !== undefined && val !== null ? String(val) : 'Other';
+      });
+      const groupKey = dimVals.join(' | ') || 'All';
+
+      if (!groupMap.has(groupKey)) {
+        const initialGroup = {
+          groupKey,
+          _count: 0
+        };
+        dimensions.forEach((d, idx) => {
+          initialGroup[d] = dimVals[idx];
+          if (idx === 0) initialGroup.name = dimVals[0];
+        });
+        metrics.forEach((m, mIdx) => {
+          const alias = m.alias || `${m.aggregation || 'SUM'}_${m.column}`;
+          initialGroup[alias] = 0;
+          initialGroup[`_${alias}_sum`] = 0;
+          initialGroup[`_${alias}_count`] = 0;
+          initialGroup[`_${alias}_min`] = Infinity;
+          initialGroup[`_${alias}_max`] = -Infinity;
+        });
+        groupMap.set(groupKey, initialGroup);
+      }
+
+      const g = groupMap.get(groupKey);
+      g._count++;
+
+      metrics.forEach((m) => {
+        const alias = m.alias || `${m.aggregation || 'SUM'}_${m.column}`;
+        const rawNum = Number(resolveVal(r, m.column));
+        if (!isNaN(rawNum) && isFinite(rawNum)) {
+          g[`_${alias}_sum`] += rawNum;
+          g[`_${alias}_count`]++;
+          if (rawNum < g[`_${alias}_min`]) g[`_${alias}_min`] = rawNum;
+          if (rawNum > g[`_${alias}_max`]) g[`_${alias}_max`] = rawNum;
+        }
+      });
+    }
+
+    // Finalize metric calculations for all groups
+    const groupedRows = Array.from(groupMap.values()).map(g => {
+      const finalRow = { ...g };
+      metrics.forEach((m) => {
+        const alias = m.alias || `${m.aggregation || 'SUM'}_${m.column}`;
+        const agg = (m.aggregation || 'SUM').toUpperCase();
+        let computed = 0;
+
+        if (agg === 'COUNT') {
+          computed = g[`_${alias}_count`];
+        } else if (agg === 'AVG') {
+          computed = g[`_${alias}_count`] > 0 ? (g[`_${alias}_sum`] / g[`_${alias}_count`]) : 0;
+        } else if (agg === 'MIN') {
+          computed = g[`_${alias}_min`] !== Infinity ? g[`_${alias}_min`] : 0;
+        } else if (agg === 'MAX') {
+          computed = g[`_${alias}_max`] !== -Infinity ? g[`_${alias}_max`] : 0;
+        } else {
+          computed = g[`_${alias}_sum`];
+        }
+
+        finalRow[alias] = Math.round(computed * 100) / 100;
+        if (metrics.length === 1) {
+          finalRow.value = finalRow[alias];
+        }
+
+        delete finalRow[`_${alias}_sum`];
+        delete finalRow[`_${alias}_count`];
+        delete finalRow[`_${alias}_min`];
+        delete finalRow[`_${alias}_max`];
+      });
+
+      return finalRow;
+    });
+
+    // Sort descending by first metric value if available
+    if (metrics.length > 0) {
+      const firstMetricAlias = metrics[0].alias || `${metrics[0].aggregation || 'SUM'}_${metrics[0].column}`;
+      groupedRows.sort((a, b) => (Number(b[firstMetricAlias]) || 0) - (Number(a[firstMetricAlias]) || 0));
+    }
+
+    const totalCount = groupedRows.length;
+    const startIndex = (effectivePage - 1) * effectiveLimit;
+    const paginatedRows = groupedRows.slice(startIndex, startIndex + effectiveLimit);
+
+    return {
+      rows: paginatedRows,
+      totalCount,
+      page: effectivePage,
+      limit: effectiveLimit,
+      totalPages: Math.ceil(totalCount / effectiveLimit) || 1,
+      executionTimeMs: Date.now() - startTime
+    };
+  }
+
+  // 5. Raw Paginated Joined Rows
+  const totalCount = filteredSet.length;
+  const startIndex = (effectivePage - 1) * effectiveLimit;
+  const paginatedRows = filteredSet.slice(startIndex, startIndex + effectiveLimit);
+
+  return {
+    rows: paginatedRows,
+    totalCount,
+    page: effectivePage,
+    limit: effectiveLimit,
+    totalPages: Math.ceil(totalCount / effectiveLimit) || 1,
+    executionTimeMs: Date.now() - startTime
+  };
+}
+
 module.exports = {
   loadDatasetRecords,
   detectDatasetDimensions,
@@ -564,5 +894,8 @@ module.exports = {
   computeDatasetTrends,
   computeDatasetBreakdown,
   getPaginatedDatasetRows,
-  getDatasetFilterOptions
+  getDatasetFilterOptions,
+  validateRelationshipDefinition,
+  executeRelationalQuery
 };
+

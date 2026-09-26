@@ -16,6 +16,7 @@ const Dataset = {
         d.data_source_id,
         d.name,
         d.description,
+        d.file_path,
         d.row_count,
         d.column_count,
         d.schema,
@@ -30,6 +31,36 @@ const Dataset = {
       ORDER BY d.created_at DESC
     `;
     const res = await db.query(sql, [userId]);
+    return res.rows;
+  },
+
+  /**
+   * List all datasets belonging to an organization
+   */
+  async findByOrganizationId(organizationId) {
+    const sql = `
+      SELECT 
+        d.id,
+        d.user_id,
+        d.data_source_id,
+        d.name,
+        d.description,
+        d.file_path,
+        d.row_count,
+        d.column_count,
+        d.schema,
+        d.created_at,
+        d.updated_at,
+        u.organization_id,
+        ds.name AS data_source_name,
+        ds.type AS data_source_type
+      FROM datasets d
+      JOIN users u ON u.id = d.user_id
+      LEFT JOIN data_sources ds ON ds.id = d.data_source_id
+      WHERE u.organization_id = $1
+      ORDER BY d.created_at DESC
+    `;
+    const res = await db.query(sql, [organizationId]);
     return res.rows;
   },
 
@@ -57,6 +88,64 @@ const Dataset = {
       WHERE d.id = $1 AND d.user_id = $2
     `;
     const res = await db.query(sql, [id, userId]);
+    return res.rows[0] || null;
+  },
+
+  /**
+   * Find single dataset by ID and Organization ID (Tenant isolation guaranteed)
+   */
+  async findByIdAndOrgId(id, organizationId) {
+    const sql = `
+      SELECT 
+        d.id,
+        d.user_id,
+        d.data_source_id,
+        d.name,
+        d.description,
+        d.file_path,
+        d.row_count,
+        d.column_count,
+        d.schema,
+        d.created_at,
+        d.updated_at,
+        u.organization_id,
+        ds.name AS data_source_name,
+        ds.type AS data_source_type
+      FROM datasets d
+      JOIN users u ON u.id = d.user_id
+      LEFT JOIN data_sources ds ON ds.id = d.data_source_id
+      WHERE d.id = $1 AND u.organization_id = $2
+      LIMIT 1
+    `;
+    const res = await db.query(sql, [id, organizationId]);
+    return res.rows[0] || null;
+  },
+
+  /**
+   * Find single dataset by ID
+   */
+  async findById(id) {
+    const sql = `
+      SELECT 
+        d.id,
+        d.user_id,
+        d.data_source_id,
+        d.name,
+        d.description,
+        d.file_path,
+        d.row_count,
+        d.column_count,
+        d.schema,
+        d.created_at,
+        d.updated_at,
+        ds.name AS data_source_name,
+        ds.type AS data_source_type
+      FROM datasets d
+      LEFT JOIN data_sources ds ON ds.id = d.data_source_id
+      WHERE d.id = $1
+      LIMIT 1
+    `;
+    const res = await db.query(sql, [id]);
     return res.rows[0] || null;
   },
 
@@ -117,6 +206,32 @@ const Dataset = {
       RETURNING id, user_id, name, file_path, data_source_id
     `;
     const res = await db.query(sql, [id, userId]);
+    return res.rows[0] || null;
+  },
+
+  /**
+   * Delete dataset by id and organization_id (Tenant isolation guaranteed)
+   */
+  async deleteByIdAndOrgId(id, organizationId) {
+    const sql = `
+      DELETE FROM datasets
+      WHERE id = $1 AND (organization_id = $2 OR user_id IN (SELECT id FROM users WHERE organization_id = $2))
+      RETURNING id, user_id, name, file_path, data_source_id
+    `;
+    const res = await db.query(sql, [id, organizationId]);
+    return res.rows[0] || null;
+  },
+
+  /**
+   * Delete dataset by id
+   */
+  async deleteById(id) {
+    const sql = `
+      DELETE FROM datasets
+      WHERE id = $1
+      RETURNING id, user_id, name, file_path, data_source_id
+    `;
+    const res = await db.query(sql, [id]);
     return res.rows[0] || null;
   }
 };

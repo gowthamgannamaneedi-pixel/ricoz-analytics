@@ -14,6 +14,7 @@ import {
   Calendar,
   ToggleLeft
 } from 'lucide-react';
+import { API_BASE_URL } from '../services/api';
 
 /**
  * Enterprise Dataset Preview Modal
@@ -82,7 +83,7 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
     setIsLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/datasets/${id}/preview`, {
+      const res = await fetch(`${API_BASE_URL}/datasets/${id}/preview`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -12,8 +12,17 @@ export default function LoginPage() {
     email: '',
     password: ''
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState(
+    location.state?.sessionExpired 
+      ? 'Your session has expired. Please sign in again.' 
+      : (location.state?.message || '')
+  );
   const [isLoading, setIsLoading] = useState(false);
+
+  // Development-only authentication helper (strictly disabled in production)
+  const isDevAuthEnabled = Boolean(
+    import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEV_AUTH === 'true'
+  );
 
   const from = location.state?.from?.pathname || '/dashboard';
 
@@ -139,19 +148,48 @@ export default function LoginPage() {
                 </>
               )}
             </button>
-
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard', { replace: true })}
-              id="bypass-demo-btn"
-              className="w-full flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-50/80 py-2 px-4 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition shadow-2xs"
-            >
-              <span>Explore Analytics Dashboard (Direct Access)</span>
-              <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
-            </button>
           </form>
 
-          <div className="pt-4 border-t border-slate-100 text-center text-xs text-slate-500">
+          {/* Development-Only Test Credentials Helper (Guarded by VITE_ENABLE_DEV_AUTH) */}
+          {isDevAuthEnabled && (
+            <div className="pt-4 border-t border-slate-100">
+              <p className="text-[11px] font-semibold text-amber-700 mb-1.5 font-mono">
+                [DEV ONLY] Pre-fill Test Credentials:
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ email: 'admin@ricoz.test', password: 'admin123' })}
+                  className="py-1 px-2 text-[10px] font-bold rounded bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition"
+                >
+                  Admin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ email: 'manager@ricoz.test', password: 'manager123' })}
+                  className="py-1 px-2 text-[10px] font-bold rounded bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition"
+                >
+                  Manager
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ email: 'analyst@ricoz.test', password: 'analyst123' })}
+                  className="py-1 px-2 text-[10px] font-bold rounded bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition"
+                >
+                  Analyst
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ email: 'viewer@ricoz.test', password: 'viewer123' })}
+                  className="py-1 px-2 text-[10px] font-bold rounded bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 transition"
+                >
+                  Viewer
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="pt-3 border-t border-slate-100 text-center text-xs text-slate-500">
             Need an enterprise account?{' '}
             <Link to="/register" className="font-semibold text-blue-600 hover:text-blue-700 transition">
               Register here
@@ -161,7 +199,7 @@ export default function LoginPage() {
 
         {/* Security Tag */}
         <p className="mt-6 text-center font-mono text-[11px] text-slate-400">
-          TLS 1.3 End-to-End Encrypted Session · Standalone Preview Mode Active
+          TLS 1.3 End-to-End Encrypted Session · Standalone Production Auth
         </p>
       </div>
     </div>

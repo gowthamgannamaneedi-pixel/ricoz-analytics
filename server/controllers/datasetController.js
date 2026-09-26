@@ -1,6 +1,8 @@
 const path = require('path');
+const db = require('../config/database');
 const Dataset = require('../models/datasetModel');
 const storage = require('../storage');
+const auditService = require('../services/auditService');
 const { parseDatasetFile } = require('../services/fileParserService');
 
 /**
@@ -10,12 +12,15 @@ const { parseDatasetFile } = require('../services/fileParserService');
 
 /**
  * GET /api/datasets
- * List all datasets for authenticated user
+ * List all datasets for authenticated organization
  */
 const getDatasets = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const datasets = await Dataset.findByUserId(userId);
+    const organizationId = req.user.organization_id;
+    const datasets = organizationId
+      ? await Dataset.findByOrganizationId(organizationId)
+      : await Dataset.findByUserId(userId);
 
     return res.status(200).json({
       success: true,
@@ -29,14 +34,24 @@ const getDatasets = async (req, res, next) => {
 
 /**
  * GET /api/datasets/:id
- * Get single dataset by ID (Ownership enforced)
+ * Get single dataset by ID (Tenant isolation enforced)
  */
 const getDatasetById = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const organizationId = req.user.organization_id;
+    const userRole = (req.user.role || 'viewer').toLowerCase();
     const { id } = req.params;
 
-    const dataset = await Dataset.findByIdAndUserId(id, userId);
+    let dataset;
+    if (['admin', 'manager'].includes(userRole)) {
+      dataset = organizationId
+        ? await Dataset.findByIdAndOrgId(id, organizationId)
+        : await Dataset.findByIdAndUserId(id, userId);
+    } else {
+      dataset = await Dataset.findByIdAndUserId(id, userId);
+    }
+
     if (!dataset) {
       return res.status(404).json({
         success: false,
@@ -60,9 +75,19 @@ const getDatasetById = async (req, res, next) => {
 const getDatasetPreview = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const organizationId = req.user.organization_id;
+    const userRole = (req.user.role || 'viewer').toLowerCase();
     const { id } = req.params;
 
-    const dataset = await Dataset.findByIdAndUserId(id, userId);
+    let dataset;
+    if (['admin', 'manager'].includes(userRole)) {
+      dataset = organizationId
+        ? await Dataset.findByIdAndOrgId(id, organizationId)
+        : await Dataset.findByIdAndUserId(id, userId);
+    } else {
+      dataset = await Dataset.findByIdAndUserId(id, userId);
+    }
+
     if (!dataset) {
       return res.status(404).json({
         success: false,
@@ -119,14 +144,19 @@ const getDatasetPreview = async (req, res, next) => {
 
 /**
  * DELETE /api/datasets/:id
- * Delete dataset and remove underlying stored file
+ * Delete dataset, verify dependencies, clean up storage, and remove orphaned records
  */
 const deleteDataset = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const organizationId = req.user.organization_id;
     const { id } = req.params;
 
-    const dataset = await Dataset.findByIdAndUserId(id, userId);
+    // Verify dataset exists and belongs to authenticated user's organization (Tenant isolation)
+    const dataset = organizationId
+      ? await Dataset.findByIdAndOrgId(id, organizationId)
+      : await Dataset.findByIdAndUserId(id, userId);
+
     if (!dataset) {
       return res.status(404).json({
         success: false,
@@ -134,12 +164,50 @@ const deleteDataset = async (req, res, next) => {
       });
     }
 
-    // Cleanup stored file
+    // Step 19: Check for blocking dependencies (e.g. Dashboard widgets)
+    const widgetCountRes = await db.query(
+      'SELECT COUNT(*)::int AS count FROM dashboard_widgets WHERE dataset_id = $1',
+      [id]
+    );
+    const widgetCount = Number(widgetCountRes?.rows?.[0]?.count || 0);
+    if (widgetCount > 0) {
+      return res.status(409).json({
+        success: false,
+        message: `Dataset cannot be deleted because it is used by ${widgetCount} dashboard widget${widgetCount > 1 ? 's' : ''}.`
+      });
+    }
+
+    // Cascade delete any dependent metrics, forecasts, alerts, quality snapshots/rules, relationships
+    await db.query('DELETE FROM metrics WHERE dataset_id = $1', [id]).catch(() => null);
+    await db.query('DELETE FROM alerts WHERE dataset_id = $1', [id]).catch(() => null);
+    await db.query('DELETE FROM forecasts WHERE dataset_id = $1', [id]).catch(() => null);
+    await db.query('DELETE FROM dataset_quality_snapshots WHERE dataset_id = $1', [id]).catch(() => null);
+    await db.query('DELETE FROM dataset_quality_rules WHERE dataset_id = $1', [id]).catch(() => null);
+    await db.query('DELETE FROM dataset_relationships WHERE dataset_id_1 = $1 OR dataset_id_2 = $1', [id]).catch(() => null);
+
+    // Cleanup physical file on storage
     if (dataset.file_path) {
       await storage.deleteFile(dataset.file_path);
     }
 
-    await Dataset.deleteByIdAndUserId(id, userId);
+    // Delete dataset record
+    if (organizationId) {
+      await Dataset.deleteByIdAndOrgId(id, organizationId);
+    } else {
+      await Dataset.deleteByIdAndUserId(id, userId);
+    }
+
+    // Log audit event
+    await auditService.logAuditEvent({
+      organizationId: organizationId || '00000000-0000-0000-0000-000000000001',
+      userId,
+      action: 'DATASET_DELETED',
+      resourceType: 'dataset',
+      resourceId: id,
+      description: `Deleted dataset "${dataset.name}".`,
+      metadata: { datasetId: id, name: dataset.name },
+      req
+    }).catch(() => null);
 
     return res.status(200).json({
       success: true,

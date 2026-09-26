@@ -4,11 +4,14 @@ import {
   LayoutDashboard,
   Database,
   Table2,
+  Network,
+  ShieldCheck,
   Gauge,
   FileBarChart,
   TrendingUp,
   Bell,
   Sparkles,
+  Users2,
   Settings,
   LogOut,
   X
@@ -19,11 +22,15 @@ const navItems = [
   { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { name: 'Data Sources', path: '/data-sources', icon: Database },
   { name: 'Datasets', path: '/datasets', icon: Table2 },
+  { name: 'Data Model', path: '/data-model', icon: Network },
+  { name: 'Data Quality', path: '/data-quality', icon: ShieldCheck },
   { name: 'KPIs', path: '/kpis', icon: Gauge },
   { name: 'Reports', path: '/reports', icon: FileBarChart },
   { name: 'Forecasts', path: '/forecasts', icon: TrendingUp },
   { name: 'Alerts', path: '/alerts', icon: Bell },
-  { name: 'AI Insights', path: '/ai-insights', icon: Sparkles, badge: 'AI' },
+  { name: 'AI Insights', path: '/ai-insights', icon: Sparkles, badge: 'AUTO' },
+  { name: 'AI Assistant', path: '/ai-assistant', icon: Network, badge: 'AI' },
+  { name: 'Collaboration', path: '/collaboration', icon: Users2 },
   { name: 'Settings', path: '/settings', icon: Settings },
 ];
 
@@ -149,9 +156,22 @@ export default function Sidebar({ isOpen, onClose }) {
                 <p className="text-xs font-semibold text-slate-800 truncate leading-tight">
                   {user?.name || 'Admin User'}
                 </p>
-                <p className="text-[10px] text-slate-500 truncate leading-tight font-medium">
-                  {user?.role ? user.role.toUpperCase() : 'ENTERPRISE'}
-                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className={`text-[8.5px] font-mono font-bold uppercase tracking-wider px-1 py-0.2 rounded inline-block leading-tight ${
+                    user?.role === 'admin'
+                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                      : user?.role === 'manager'
+                      ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                      : user?.role === 'analyst'
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                      : 'bg-slate-100 text-slate-600 border border-slate-200'
+                  }`}>
+                    {user?.role ? user.role.toUpperCase() : 'VIEWER'}
+                  </span>
+                  <span className="text-[9px] text-slate-400 truncate max-w-[80px]">
+                    {user?.organization_name?.split(' ')[0] || 'Ricoz'}
+                  </span>
+                </div>
               </div>
             </div>
 
