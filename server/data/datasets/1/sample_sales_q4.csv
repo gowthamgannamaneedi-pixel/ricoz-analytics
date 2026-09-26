@@ -1,0 +1,21 @@
+order_id,region,category,channel,product,sales_amount,units_sold,profit,is_discounted,order_date
+ORD-1001,Bengaluru,Hardware,Direct Online,Laptop Stand,45000.5,12,6500.0,false,2026-09-01
+ORD-1002,Mumbai,Software,Retail Partners,Enterprise Suite,125000.0,5,35000.0,true,2026-09-02
+ORD-1003,Delhi NCR,Cloud SaaS,B2B Enterprise,Cloud Compute,89000.0,20,22000.0,false,2026-09-03
+ORD-1004,Hyderabad,Hardware,Direct Online,Mechanical Keyboard,62000.0,18,9400.0,true,2026-09-04
+ORD-1005,Chennai,Services,B2B Enterprise,Support Contract,34000.0,8,7100.0,false,2026-09-05
+ORD-1006,Bengaluru,Software,Direct Online,Developer Tools,195000.0,10,48000.0,false,2026-09-06
+ORD-1007,Mumbai,Cloud SaaS,B2B Enterprise,Database Cluster,142000.0,25,38000.0,true,2026-09-07
+ORD-1008,Delhi NCR,Services,Retail Partners,Consulting Audit,48000.0,15,11200.0,false,2026-09-08
+ORD-1009,Hyderabad,Hardware,Direct Online,Monitor 24 inch,78000.0,22,14500.0,true,2026-09-09
+ORD-1010,Chennai,Software,Retail Partners,Security Suite,110000.0,7,29000.0,false,2026-09-10
+ORD-1011,Pune,Hardware,Direct Online,USB-C Hub,52000.0,14,8300.0,false,2026-09-11
+ORD-1012,Bengaluru,Cloud SaaS,B2B Enterprise,AI Analytics Add-on,168000.0,16,42000.0,true,2026-09-12
+ORD-1013,Mumbai,Hardware,Retail Partners,Wireless Mouse,39000.0,30,6200.0,false,2026-09-13
+ORD-1014,Hyderabad,Services,B2B Enterprise,Migration Service,86000.0,6,19500.0,false,2026-09-14
+ORD-1015,Delhi NCR,Software,Direct Online,Endpoint Protection,94000.0,12,21000.0,true,2026-09-15
+ORD-1016,Chennai,Hardware,Direct Online,Webcam Pro,58000.0,19,9800.0,false,2026-09-16
+ORD-1017,Bengaluru,Services,B2B Enterprise,Training Workshop,41000.0,4,12000.0,false,2026-09-17
+ORD-1018,Pune,Cloud SaaS,Retail Partners,Storage Bucket 50TB,115000.0,20,28500.0,true,2026-09-18
+ORD-1019,Mumbai,Hardware,Direct Online,Laptop Stand,47000.0,13,7200.0,false,2026-09-19
+ORD-1020,Hyderabad,Software,Retail Partners,Enterprise Suite,130000.0,6,36000.0,true,2026-09-20

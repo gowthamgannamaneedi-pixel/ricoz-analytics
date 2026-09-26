@@ -56,11 +56,39 @@ class LocalStorageProvider extends StorageProvider {
   }
 
   async readFile(filePath) {
+    try {
+      const safePath = this._getSafePath(filePath);
+      if (fs.existsSync(safePath)) {
+        return await fs.promises.readFile(safePath);
+      }
+    } catch (err) {
+      // Check seed fallback
+    }
+
+    const seedPath = path.resolve(__dirname, '../data/datasets', filePath);
+    if (fs.existsSync(seedPath)) {
+      return await fs.promises.readFile(seedPath);
+    }
+
     const safePath = this._getSafePath(filePath);
     return await fs.promises.readFile(safePath);
   }
 
   getFileStream(filePath) {
+    try {
+      const safePath = this._getSafePath(filePath);
+      if (fs.existsSync(safePath)) {
+        return fs.createReadStream(safePath);
+      }
+    } catch (err) {
+      // Check seed fallback
+    }
+
+    const seedPath = path.resolve(__dirname, '../data/datasets', filePath);
+    if (fs.existsSync(seedPath)) {
+      return fs.createReadStream(seedPath);
+    }
+
     const safePath = this._getSafePath(filePath);
     return fs.createReadStream(safePath);
   }
@@ -82,10 +110,15 @@ class LocalStorageProvider extends StorageProvider {
   async exists(filePath) {
     try {
       const safePath = this._getSafePath(filePath);
-      return fs.existsSync(safePath);
+      if (fs.existsSync(safePath)) return true;
     } catch (err) {
-      return false;
+      // Check seed fallback
     }
+
+    const seedPath = path.resolve(__dirname, '../data/datasets', filePath);
+    if (fs.existsSync(seedPath)) return true;
+
+    return false;
   }
 }
 

@@ -4,6 +4,8 @@ const config = require('./index');
 const supabaseUrl = config.supabase?.url || process.env.SUPABASE_URL || '';
 const supabaseAnonKey = config.supabase?.anonKey || process.env.SUPABASE_ANON_KEY || '';
 
+const supabaseServiceRoleKey = config.supabase?.serviceRoleKey || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
 const isConfigured = Boolean(
   supabaseUrl &&
   supabaseAnonKey &&
@@ -20,6 +22,16 @@ const supabase = isConfigured
       }
     })
   : null;
+
+// Supabase admin client instance (using service role key if available, otherwise anon key)
+const supabaseAdmin = (isConfigured && supabaseServiceRoleKey)
+  ? createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false
+      }
+    })
+  : supabase;
 
 /**
  * Health check & connection verification for Supabase
@@ -97,6 +109,7 @@ async function checkSupabaseConnection() {
 
 module.exports = {
   supabase,
+  supabaseAdmin,
   isConfigured,
   checkSupabaseConnection
 };
