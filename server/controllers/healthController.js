@@ -1,5 +1,5 @@
 const db = require('../config/database');
-const { isConfigured, checkConnection } = require('../config/supabase');
+const { isConfigured, checkSupabaseConnection: checkConnection } = require('../config/supabase');
 const metricsCollector = require('../utils/metricsCollector');
 
 /**
