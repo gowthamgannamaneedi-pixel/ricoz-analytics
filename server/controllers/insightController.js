@@ -30,6 +30,8 @@ const insightController = {
         data: result.insights,
         insights: result.insights,
         executive_summary: result.executive_summary,
+        briefing: result.briefing || null,
+        relationships: result.relationships || [],
         count: result.count,
         generated_at: result.generated_at
       });
@@ -102,6 +104,8 @@ const insightController = {
         success: true,
         summary: result.executive_summary,
         executive_summary: result.executive_summary,
+        briefing: result.briefing || null,
+        relationships: result.relationships || [],
         insights_count: result.count,
         generated_at: result.generated_at
       });

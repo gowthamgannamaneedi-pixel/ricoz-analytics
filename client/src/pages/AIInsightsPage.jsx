@@ -54,6 +54,8 @@ export default function AIInsightsPage() {
   const [exporting, setExporting] = useState(false);
   const [feedbackState, setFeedbackState] = useState({}); // { [id]: 'useful' | 'not_useful' }
   const [expandedEvidence, setExpandedEvidence] = useState({});
+  const [briefing, setBriefing] = useState(null);
+  const [relationships, setRelationships] = useState([]);
 
   // Load initial data
   useEffect(() => {
@@ -75,6 +77,8 @@ export default function AIInsightsPage() {
       const insList = insightsRes.insights || insightsRes.data || [];
       setInsights(insList);
       setExecutiveSummary(summaryRes.summary || summaryRes.executive_summary || '');
+      setBriefing(summaryRes.briefing || null);
+      setRelationships(summaryRes.relationships || []);
       setDatasets(datasetsRes.datasets || datasetsRes.data || []);
 
       // Prepopulate feedback state
@@ -100,6 +104,8 @@ export default function AIInsightsPage() {
       });
       setInsights(res.insights || res.data || []);
       setExecutiveSummary(res.executive_summary || '');
+      setBriefing(res.briefing || null);
+      setRelationships(res.relationships || []);
     } catch (err) {
       console.error('[AIInsightsPage] Generation failed:', err);
     } finally {
@@ -157,6 +163,36 @@ export default function AIInsightsPage() {
     }
     return true;
   });
+
+  const getPriorityBadge = (priority) => {
+    const p = String(priority || 'medium').toLowerCase();
+    switch (p) {
+      case 'critical':
+        return (
+          <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 uppercase tracking-wider flex items-center gap-1">
+            <XCircle className="w-3 h-3" /> Critical Priority
+          </span>
+        );
+      case 'high':
+        return (
+          <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-wider flex items-center gap-1">
+            <AlertTriangle className="w-3 h-3" /> High Priority
+          </span>
+        );
+      case 'medium':
+        return (
+          <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 uppercase tracking-wider flex items-center gap-1">
+            <Activity className="w-3 h-3" /> Medium Priority
+          </span>
+        );
+      default:
+        return (
+          <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-800 text-slate-400 border border-slate-700 uppercase tracking-wider flex items-center gap-1">
+            <Activity className="w-3 h-3" /> Low Priority
+          </span>
+        );
+    }
+  };
 
   const getSeverityBadge = (severity) => {
     switch (severity) {
@@ -289,16 +325,21 @@ export default function AIInsightsPage() {
       </div>
 
       {/* Executive Summary Hero Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-950/40 via-slate-900/90 to-purple-950/30 border border-indigo-500/20 p-6 shadow-2xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-950/40 via-slate-900/90 to-purple-950/30 border border-indigo-500/20 p-6 shadow-2xl space-y-4">
         <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="flex items-start justify-between gap-4 mb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-300">
-              <Lightbulb className="w-4 h-4" />
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              <Lightbulb className="w-5 h-5 text-indigo-400" />
             </div>
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-indigo-300">
-              Executive AI Briefing
-            </h2>
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-400 block">
+                Executive AI Intelligence
+              </span>
+              <h2 className="text-lg font-bold text-white tracking-tight">
+                {briefing?.headline || 'Enterprise Operations & Telemetry Overview'}
+              </h2>
+            </div>
           </div>
           {insights.length > 0 && insights.every(i => i.evidence?.verified) ? (
             <span className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
@@ -318,9 +359,69 @@ export default function AIInsightsPage() {
           )}
         </div>
 
-        <div className="text-sm text-slate-200 leading-relaxed font-normal whitespace-pre-line space-y-2">
-          {executiveSummary || 'No significant changes detected. Enterprise telemetry, forecasts, and data quality metrics remain stable within expected parameters.'}
+        {/* Executive Summary Narrative */}
+        <div className="text-sm text-slate-200 leading-relaxed font-normal whitespace-pre-line bg-slate-950/40 p-4 rounded-xl border border-slate-800/80">
+          {briefing?.summary || executiveSummary || 'No significant changes detected. Enterprise telemetry, forecasts, and data quality metrics remain stable within expected parameters.'}
         </div>
+
+        {/* Verified Cross-Metric Relationships Section */}
+        {((briefing?.relationships && briefing.relationships.length > 0) || relationships.length > 0) && (
+          <div className="pt-2 border-t border-indigo-500/20 space-y-2">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-300">
+              <Layers className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Verified Cross-Metric Empirical Relationships</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {(briefing?.relationships || relationships).map((rel, idx) => (
+                <div key={idx} className="bg-slate-950/70 border border-indigo-500/20 rounded-xl p-3 flex items-center justify-between gap-3 text-xs">
+                  <span className="text-slate-200 leading-relaxed font-medium">{rel.relationship}</span>
+                  <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono font-semibold flex-shrink-0 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    <ShieldCheck className="w-3 h-3" /> Verified
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Business Implications & Recommended Actions Grid */}
+        {(briefing?.businessImplications?.length > 0 || briefing?.recommendedActions?.length > 0) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-indigo-500/20">
+            {briefing?.businessImplications?.length > 0 && (
+              <div className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-3.5 space-y-2">
+                <div className="text-xs font-semibold text-indigo-300 flex items-center gap-1.5">
+                  <Lightbulb className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Business Implications</span>
+                </div>
+                <div className="space-y-1.5 text-xs text-slate-300">
+                  {briefing.businessImplications.map((imp, idx) => (
+                    <div key={idx} className="flex items-start gap-2">
+                      <span className="text-indigo-400 font-bold">•</span>
+                      <span className="leading-relaxed">{imp}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {briefing?.recommendedActions?.length > 0 && (
+              <div className="bg-purple-950/20 border border-purple-500/20 rounded-xl p-3.5 space-y-2">
+                <div className="text-xs font-semibold text-purple-300 flex items-center gap-1.5">
+                  <Compass className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Recommended Strategic Actions</span>
+                </div>
+                <div className="space-y-1.5 text-xs text-slate-300">
+                  {briefing.recommendedActions.map((act, idx) => (
+                    <div key={idx} className="flex items-start gap-2">
+                      <span className="text-purple-400 font-bold">•</span>
+                      <span className="leading-relaxed">{act}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Filter and Search Bar */}
@@ -418,11 +519,14 @@ export default function AIInsightsPage() {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                      {getPriorityBadge(ins.priority || ins.evidence?.priority)}
                       {getSeverityBadge(ins.severity)}
-                      <span className="text-[10px] font-mono text-slate-500" title="Statistical Confidence Score">
-                        {Math.round((ins.confidence || 0.95) * 100)}% conf
-                      </span>
+                      {((ins.impactScore ?? ins.impact_score ?? ins.evidence?.impactScore ?? ins.evidence?.impact_score) !== undefined) && (
+                        <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-slate-950/80 text-indigo-300 border border-indigo-500/30">
+                          Impact: {ins.impactScore ?? ins.impact_score ?? ins.evidence?.impactScore ?? ins.evidence?.impact_score}/100
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -430,10 +534,46 @@ export default function AIInsightsPage() {
                     {ins.title}
                   </h3>
 
+                  {/* Priority Reason Derivation */}
+                  {(ins.priorityReason || ins.evidence?.priorityReason) && (
+                    <div className="text-[11px] text-slate-400 bg-slate-950/60 border border-slate-800/80 rounded-xl p-2.5 flex items-start gap-1.5">
+                      <span className="font-semibold text-indigo-300 flex-shrink-0">Priority Basis:</span>
+                      <span className="text-slate-300 leading-relaxed">{ins.priorityReason || ins.evidence?.priorityReason}</span>
+                    </div>
+                  )}
+
+                  {/* Cross-Metric Relationship Details if present */}
+                  {ins.type === 'relationship' && ins.evidence?.evidence && (
+                    <div className="bg-indigo-950/20 border border-indigo-500/20 rounded-xl p-3 text-xs space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-indigo-300 flex items-center gap-1.5 text-[11px]">
+                          <Layers className="w-3.5 h-3.5 text-indigo-400" />
+                          <span>Cross-Metric Empirical Co-Movement</span>
+                        </span>
+                        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-200 border border-indigo-500/30">
+                          {ins.evidence.direction}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-[11px]">
+                        {ins.evidence.evidence.map((ev, idx) => (
+                          <div key={idx} className="bg-slate-950/60 p-2 rounded-lg border border-slate-800/80">
+                            <span className="text-[10px] text-slate-400 uppercase font-mono block">{ev.metric}</span>
+                            <span className="font-semibold text-slate-200">
+                              {ev.previousValue} → {ev.currentValue}
+                            </span>
+                            <span className={`block text-[10px] font-mono font-bold ${ev.changePercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {ev.changePercent >= 0 ? '+' : ''}{ev.changePercent}%
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {ins.evidence?.ai_grounded && (
                     <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/25 text-indigo-300 text-[11px] font-medium">
                       <Sparkles className="w-3 h-3 text-indigo-400" />
-                      <span>AI Explanation • Grounded in verified dataset evidence</span>
+                      <span>AI Interpretation • Grounded in verified dataset evidence</span>
                     </div>
                   )}
 
@@ -441,11 +581,17 @@ export default function AIInsightsPage() {
                     {ins.summary}
                   </p>
 
+                  {/* AI Grounded Explanation Section */}
                   {ins.evidence?.ai_explanation && (
                     <div className="bg-slate-950/70 border border-indigo-500/20 rounded-xl p-3 text-xs text-slate-300 space-y-1.5 mt-2">
-                      <div className="flex items-center gap-1.5 text-indigo-300 font-semibold text-[11px]">
-                        <Lightbulb className="w-3.5 h-3.5 text-indigo-400" />
-                        <span>AI Grounded Explanation</span>
+                      <div className="flex items-center justify-between text-[11px]">
+                        <div className="flex items-center gap-1.5 text-indigo-300 font-semibold">
+                          <Lightbulb className="w-3.5 h-3.5 text-indigo-400" />
+                          <span>AI Grounded Explanation (Gemini 2.5 Flash)</span>
+                        </div>
+                        <span className="text-[10px] font-mono text-indigo-400 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800/40">
+                          AI Interpretation
+                        </span>
                       </div>
                       <p className="text-slate-300 leading-relaxed text-xs">
                         {ins.evidence.ai_explanation}
@@ -494,7 +640,7 @@ export default function AIInsightsPage() {
                           {ins.evidence?.verified ? (
                             <span className="flex items-center gap-1.5 text-emerald-400">
                               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                              Ground-Truth Verified
+                              Ground-Truth Verified Evidence
                             </span>
                           ) : (
                             <span className="flex items-center gap-1.5 text-amber-400">
@@ -503,9 +649,14 @@ export default function AIInsightsPage() {
                             </span>
                           )}
                         </div>
-                        <span className="text-[10px] text-slate-500 font-mono">
-                          {ins.evidence?.recordsAnalyzed ?? ins.evidence?.records_analyzed ?? 0} rows analyzed
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40 font-semibold">
+                            Source of Truth
+                          </span>
+                          <span className="text-[10px] text-slate-500 font-mono">
+                            {ins.evidence?.recordsAnalyzed ?? ins.evidence?.records_analyzed ?? 0} rows analyzed
+                          </span>
+                        </div>
                       </div>
 
                       {/* Evidence Verification Description */}

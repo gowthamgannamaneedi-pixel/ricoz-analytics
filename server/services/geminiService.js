@@ -1027,9 +1027,270 @@ Ask me a question about your data to get started!`;
       }
 
       default:
-        return `Calculated analytical findings for **${question}** based on verified ${datasetName} telemetry records.`;
+        return `Analytics evaluation computed for **${metricName}** across **${datasetName}**.`;
     }
+  }
+
+  // ==========================================================================
+  // Phase 5: Grounded Executive AI Briefing
+  // ==========================================================================
+
+  /**
+   * Synthesize Grounded Executive AI Briefing from prioritized insights and verified relationships
+   * @param {{
+   *   insights: Array<object>,
+   *   relationships?: Array<object>,
+   *   context?: object
+   * }} params
+   * @param {object} [options]
+   * @returns {Promise<{
+   *   headline: string,
+   *   summary: string,
+   *   keyInsights: Array<{ insightId: string, title: string, priority: string, summary: string }>,
+   *   relationships: Array<{ relationship: string, verified: boolean }>,
+   *   businessImplications: string[],
+   *   recommendedActions: string[],
+   *   aiGenerated: boolean,
+   *   fallback: boolean
+   * }>}
+   */
+  async generateExecutiveBriefing({ insights = [], relationships = [], context = {} }, options = {}) {
+    if (!Array.isArray(insights) || insights.length === 0) {
+      return this._buildDeterministicExecutiveBriefing({ insights, relationships, context });
+    }
+
+    if (!this.isConfigured()) {
+      return this._buildDeterministicExecutiveBriefing({ insights, relationships, context });
+    }
+
+    const prompt = this._buildExecutiveBriefingPrompt({ insights, relationships, context });
+
+    try {
+      const rawText = await this.generateContent(prompt, {
+        temperature: 0.1,
+        maxTokens: 1000,
+        timeoutMs: options.timeoutMs || 10000
+      });
+
+      const parsed = this._parseAndValidateExecutiveBriefingResponse(rawText, insights, relationships);
+      if (parsed) {
+        return {
+          ...parsed,
+          aiGenerated: true,
+          fallback: false
+        };
+      }
+    } catch (err) {
+      const safeMsg = (err.message || '').replace(/key=[^&\s]+/gi, 'key=[REDACTED]');
+      console.warn('[GeminiService] Executive briefing LLM synthesis failed, using deterministic fallback:', safeMsg);
+    }
+
+    return this._buildDeterministicExecutiveBriefing({ insights, relationships, context });
+  }
+
+  /**
+   * Build strictly grounded prompt for Executive AI Briefing
+   */
+  _buildExecutiveBriefingPrompt({ insights = [], relationships = [], context = {} }) {
+    const sanitizedInsights = insights.slice(0, 6).map(i => ({
+      insightId: String(i.id || ''),
+      type: i.type,
+      title: i.title,
+      priority: i.priority || i.evidence?.priority || 'medium',
+      severity: i.severity || 'info',
+      summary: i.summary,
+      metric: i.evidence?.metric,
+      currentValue: i.evidence?.currentValue ?? i.evidence?.current_value,
+      comparisonValue: i.evidence?.comparisonValue ?? i.evidence?.previous_value,
+      changePercent: i.evidence?.changePercent ?? i.evidence?.change_percent,
+      recordsAnalyzed: i.evidence?.recordsAnalyzed ?? i.evidence?.records_analyzed,
+      datasetName: i.evidence?.datasetName ?? i.source_metadata?.dataset_name
+    }));
+
+    const sanitizedRelationships = (relationships || []).map(r => ({
+      relationship: r.relationship,
+      metrics: r.metrics,
+      direction: r.direction,
+      verified: Boolean(r.verified),
+      evidence: r.evidence
+    }));
+
+    return `You are the RicozAnalytics Executive Briefing Engine powered by Gemini 2.5 Flash.
+Your task is to synthesize an executive-level briefing from verified insights and relationships.
+Gemini is an explanation layer, NOT the source of truth.
+
+CRITICAL GROUNDING & ACCURACY RULES:
+1. Use ONLY the supplied verified insights and relationships.
+2. DO NOT invent metrics or numbers.
+3. DO NOT calculate new metrics.
+4. DO NOT create unsupported relationships.
+5. DO NOT claim causation (never say "X caused Y" or "because of X, Y grew"; use strictly observational language: "X and Y both increased").
+6. DO NOT modify evidence.
+7. DO NOT invent recommendations unsupported by the evidence.
+
+Verified Prioritized Insights:
+${JSON.stringify(sanitizedInsights, null, 2)}
+
+Verified Cross-Metric Relationships:
+${JSON.stringify(sanitizedRelationships, null, 2)}
+
+Provide your response as a STRICT JSON object matching this exact schema:
+{
+  "headline": "A concise, high-level executive headline accurately reflecting top priority findings",
+  "summary": "A 1-2 paragraph executive briefing summarizing overall performance and key highlights",
+  "keyInsights": [
+    {
+      "insightId": "Exact ID of the insight from the list above",
+      "title": "Exact title of the insight",
+      "priority": "critical | high | medium | low",
+      "summary": "Concise summary of the verified finding"
+    }
+  ],
+  "relationships": [
+    {
+      "relationship": "Exact observational description from the supplied relationships",
+      "verified": true
+    }
+  ],
+  "businessImplications": [
+    "Direct operational or commercial implication 1 grounded in the evidence",
+    "Direct operational or commercial implication 2 grounded in the evidence"
+  ],
+  "recommendedActions": [
+    "Actionable next step 1 directly addressing a verified finding",
+    "Actionable next step 2 directly addressing a verified finding"
+  ]
+}
+
+Respond ONLY with valid raw JSON. No markdown code blocks, no backticks, no extra text.`;
+  }
+
+  /**
+   * Validate strict JSON response for Executive AI Briefing
+   */
+  _parseAndValidateExecutiveBriefingResponse(rawText, insights = [], relationships = []) {
+    if (!rawText || typeof rawText !== 'string') return null;
+
+    try {
+      const cleaned = rawText
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/```\s*$/i, '')
+        .trim();
+
+      const parsed = JSON.parse(cleaned);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+
+      // Validate required string and array keys
+      if (typeof parsed.headline !== 'string' || !parsed.headline.trim()) return null;
+      if (typeof parsed.summary !== 'string' || !parsed.summary.trim()) return null;
+      if (!Array.isArray(parsed.keyInsights) || parsed.keyInsights.length === 0) return null;
+      if (!Array.isArray(parsed.relationships)) return null;
+      if (!Array.isArray(parsed.businessImplications) || parsed.businessImplications.length === 0) return null;
+      if (!Array.isArray(parsed.recommendedActions) || parsed.recommendedActions.length === 0) return null;
+
+      // Validate causation ban: Check for prohibited causation claims
+      const fullText = `${parsed.headline} ${parsed.summary} ${parsed.relationships.map(r => r.relationship).join(' ')}`.toLowerCase();
+      const forbiddenCausationWords = [
+        ' caused ', ' is caused by ', ' was caused by ', ' leading to revenue ', ' which caused '
+      ];
+      for (const forbidden of forbiddenCausationWords) {
+        if (fullText.includes(forbidden)) {
+          console.warn('[GeminiService] Briefing rejected due to prohibited causation claim:', forbidden);
+          return null;
+        }
+      }
+
+      return {
+        headline: parsed.headline.trim(),
+        summary: parsed.summary.trim(),
+        keyInsights: parsed.keyInsights.map(k => ({
+          insightId: String(k.insightId || ''),
+          title: String(k.title || '').trim(),
+          priority: String(k.priority || 'medium').toLowerCase(),
+          summary: String(k.summary || '').trim()
+        })),
+        relationships: parsed.relationships.map(r => ({
+          relationship: String(r.relationship || '').trim(),
+          verified: Boolean(r.verified)
+        })),
+        businessImplications: parsed.businessImplications.map(b => String(b).trim()).filter(Boolean),
+        recommendedActions: parsed.recommendedActions.map(a => String(a).trim()).filter(Boolean)
+      };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /**
+   * Deterministic fallback executive briefing when Gemini is offline or unconfigured
+   */
+  _buildDeterministicExecutiveBriefing({ insights = [], relationships = [], context = {} }) {
+    const topInsights = insights.slice(0, 4);
+    const criticalOrHigh = insights.filter(i => ['critical', 'high'].includes(String(i.priority || i.evidence?.priority).toLowerCase()));
+    const positive = insights.find(i => i.severity === 'positive' || i.type === 'growth');
+
+    let headline = 'Enterprise Operations & Telemetry Overview';
+    if (criticalOrHigh.length > 0) {
+      headline = `${criticalOrHigh.length} Priority Alert(s) and Telemetry Events Detected`;
+    } else if (positive) {
+      headline = 'Positive Organizational Expansion and Stable Data Telemetry';
+    }
+
+    const summaryParts = [];
+    summaryParts.push(`Evaluated ${insights.length} verified automated insight(s) and ${relationships.length} cross-metric relationship(s) across organization telemetry.`);
+    if (criticalOrHigh.length > 0) {
+      summaryParts.push(`Identified ${criticalOrHigh.length} critical or high-priority operational item(s) requiring attention: ${criticalOrHigh.map(i => i.title).join('; ')}.`);
+    }
+    if (relationships.length > 0) {
+      summaryParts.push(`Cross-metric analysis verified ${relationships.length} empirical co-movement pattern(s): ${relationships.map(r => r.relationship).join('; ')}.`);
+    }
+
+    const keyInsights = topInsights.map(i => ({
+      insightId: String(i.id || ''),
+      title: i.title || 'Insight',
+      priority: i.priority || i.evidence?.priority || 'medium',
+      summary: i.summary || ''
+    }));
+
+    const verifiedRels = relationships.map(r => ({
+      relationship: r.relationship,
+      verified: Boolean(r.verified)
+    }));
+
+    const businessImplications = [];
+    if (criticalOrHigh.length > 0) {
+      businessImplications.push('Active operational variance or metric contraction warrants investigation into underlying transaction pipeline.');
+    }
+    if (relationships.some(r => r.direction === 'divergent')) {
+      businessImplications.push('Divergent metric trends indicate basket size or margin shifts across transaction segments.');
+    } else {
+      businessImplications.push('Empirical telemetry indicates aligned operational throughput across recorded categories.');
+    }
+
+    const recommendedActions = [];
+    for (const ins of topInsights) {
+      if (ins.recommendation?.action && !recommendedActions.includes(ins.recommendation.action)) {
+        recommendedActions.push(ins.recommendation.action);
+      }
+    }
+    if (recommendedActions.length === 0) {
+      recommendedActions.push('Monitor scheduled data quality rules and operational thresholds');
+      recommendedActions.push('Review driver segments in analytics dashboard');
+    }
+
+    return {
+      headline,
+      summary: summaryParts.join(' '),
+      keyInsights,
+      relationships: verifiedRels,
+      businessImplications,
+      recommendedActions: recommendedActions.slice(0, 3),
+      aiGenerated: false,
+      fallback: true
+    };
   }
 }
 
 module.exports = new GeminiService();
+

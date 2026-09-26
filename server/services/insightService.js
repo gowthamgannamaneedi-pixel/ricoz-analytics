@@ -11,6 +11,8 @@ const dataQualityService = require('./dataQualityService');
 const geminiService = require('./geminiService');
 const auditService = require('./auditService');
 const evidenceBuilderService = require('./evidenceBuilderService');
+const insightPrioritizationService = require('./insightPrioritizationService');
+const insightRelationshipService = require('./insightRelationshipService');
 
 /**
  * Enterprise AI Automated Insights Engine Service
@@ -66,6 +68,7 @@ class InsightService {
     }
 
     const detectedInsights = [];
+    const allRelationships = [];
 
     // 1. Gather all tenant data concurrently with error boundaries
     const [datasets, metrics, forecasts, alerts, relationships] = await Promise.all([
@@ -300,7 +303,50 @@ class InsightService {
           }
         } catch (_) {}
 
+        // E. Cross-Metric Relationship Intelligence (Phase 5)
+        try {
+          const dsRelationships = insightRelationshipService.detectRelationships({
+            dataset: ds,
+            records,
+            dimensions: dims
+          });
+          allRelationships.push(...dsRelationships);
 
+          for (const rel of dsRelationships) {
+            detectedInsights.push({
+              type: 'relationship',
+              title: rel.relationship,
+              summary: rel.summary,
+              severity: rel.direction === 'divergent' ? 'warning' : 'positive',
+              confidence: 0.95,
+              evidence: {
+                metric: rel.metrics.join(' & '),
+                relationshipId: rel.id,
+                direction: rel.direction,
+                evidence: rel.evidence,
+                verified: Boolean(rel.verified),
+                recordsAnalyzed: records.length,
+                records_analyzed: records.length,
+                datasetId: ds.id,
+                datasetName: ds.name,
+                source_dataset: ds.name,
+                target_dataset: ds.name,
+                sourceDataset: ds.name,
+                targetDataset: ds.name
+              },
+              source_metadata: {
+                dataset_id: ds.id,
+                dataset_name: ds.name
+              },
+              recommendation: {
+                action: `Examine ${rel.metrics.join(' and ')} trajectory in analytics dashboard`,
+                target_page: `/analytics`
+              }
+            });
+          }
+        } catch (relErr) {
+          console.warn(`[InsightService] Relationship detection notice on dataset #${ds.id}:`, relErr.message);
+        }
       } catch (dsErr) {
         console.warn(`[InsightService] Error processing dataset #${ds.id}:`, dsErr.message);
       }
@@ -513,8 +559,11 @@ class InsightService {
     // are strictly preserved and can NEVER be overwritten by LLM text.
     const cooldownMinutes = options.forceFresh ? 0 : (options.cooldownMinutes || this.cooldownMinutes || 60);
     const processedInsights = [];
+    let hasNewAIGeneration = Boolean(options.forceFresh);
 
-    for (const ins of detectedInsights) {
+    for (const rawIns of detectedInsights) {
+      const ins = insightPrioritizationService.enrichInsight(rawIns);
+
       try {
         // Step A: Deduplication & Cooldown check
         const existing = await InsightModel.findActiveDuplicate({
@@ -550,9 +599,9 @@ class InsightService {
               sourceMetadata: ins.source_metadata || existing.source_metadata,
               recommendation: ins.recommendation || existing.recommendation
             });
-            processedInsights.push(updated || existing);
+            processedInsights.push(insightPrioritizationService.enrichInsight(updated || existing));
           } else {
-            processedInsights.push({ ...existing, ...ins, evidence: ins.evidence });
+            processedInsights.push(insightPrioritizationService.enrichInsight({ ...existing, ...ins, evidence: ins.evidence }));
           }
           continue;
         }
@@ -574,6 +623,9 @@ class InsightService {
               datasetName: ins.source_metadata?.dataset_name
             }
           });
+          if (aiResult.aiGenerated) {
+            hasNewAIGeneration = true;
+          }
         } else {
           // Unverified evidence is NEVER sent to Gemini! Fallback to deterministic
           aiResult = geminiService._buildDeterministicInsightExplanation({
@@ -614,6 +666,16 @@ class InsightService {
             await InsightModel.updateStatus(existing.id, organizationId, 'archived').catch(() => {});
           }
 
+          // Maintain compatibility with DB CHECK constraint (info, positive, warning, critical)
+          const validDbSeverities = ['info', 'positive', 'warning', 'critical'];
+          let dbSeverity = String(ins.severity || 'info').toLowerCase();
+          if (!validDbSeverities.includes(dbSeverity)) {
+            if (dbSeverity === 'high') dbSeverity = 'warning';
+            else if (dbSeverity === 'medium') dbSeverity = 'info';
+            else if (dbSeverity === 'low') dbSeverity = 'info';
+            else dbSeverity = 'info';
+          }
+
           const saved = await InsightModel.create({
             organizationId,
             userId: options.userId || null,
@@ -623,45 +685,79 @@ class InsightService {
             type: ins.type,
             title: ins.title,
             summary: ins.summary,
-            severity: ins.severity || 'info',
+            severity: dbSeverity,
             confidence: ins.confidence || 0.95,
             evidence: ins.evidence || {},
             sourceMetadata: ins.source_metadata || {},
             recommendation: ins.recommendation || {},
             status: 'active'
           });
-          processedInsights.push(saved);
+          processedInsights.push(insightPrioritizationService.enrichInsight(saved));
         } else {
-          processedInsights.push({ id: crypto.randomUUID(), ...ins });
+          processedInsights.push(insightPrioritizationService.enrichInsight({ id: crypto.randomUUID(), ...ins }));
         }
       } catch (insErr) {
         console.warn('[InsightService] Insight processing notice:', insErr.message);
-        processedInsights.push({ id: crypto.randomUUID(), ...ins });
+        processedInsights.push(insightPrioritizationService.enrichInsight({ id: crypto.randomUUID(), ...ins }));
       }
     }
 
-    // 7. Synthesize Executive Summary
-    const executiveSummary = this._synthesizeExecutiveSummary(processedInsights.length > 0 ? processedInsights : detectedInsights);
+    // 7. Deterministic Insight Ranking & Grounded Executive AI Briefing
+    const rawList = processedInsights.length > 0 ? processedInsights : detectedInsights;
+    const rankedInsights = insightPrioritizationService.rankInsights(
+      rawList.map(i => insightPrioritizationService.enrichInsight(i))
+    );
+
+    let briefing = null;
+    if (hasNewAIGeneration || options.forceFresh) {
+      try {
+        briefing = await geminiService.generateExecutiveBriefing({
+          insights: rankedInsights,
+          relationships: allRelationships,
+          context: { organizationId }
+        });
+      } catch (briefingErr) {
+        console.warn('[InsightService] Executive briefing generation notice, fallback to deterministic:', briefingErr.message);
+        briefing = geminiService._buildDeterministicExecutiveBriefing({
+          insights: rankedInsights,
+          relationships: allRelationships,
+          context: { organizationId }
+        });
+      }
+    } else {
+      briefing = geminiService._buildDeterministicExecutiveBriefing({
+        insights: rankedInsights,
+        relationships: allRelationships,
+        context: { organizationId }
+      });
+    }
+
+    const baseSummary = briefing?.summary || this._synthesizeExecutiveSummary(rankedInsights);
+    const executiveSummary = baseSummary.includes('Executive Summary')
+      ? baseSummary
+      : `### Enterprise AI Executive Summary\n\n${baseSummary}`;
 
     // 8. Log audit event if persisted
-    if (options.persist !== false && processedInsights.length > 0) {
+    if (options.persist !== false && rankedInsights.length > 0) {
       auditService.log({
         organizationId,
         userId: options.userId || null,
         action: 'INSIGHTS_GENERATED',
         resourceType: 'ai_insights',
         resourceId: String(organizationId),
-        description: `Generated ${processedInsights.length} automated AI insights and executive summary.`,
-        metadata: { count: processedInsights.length, severities: processedInsights.map(i => i.severity) },
+        description: `Generated ${rankedInsights.length} automated AI insights and executive summary.`,
+        metadata: { count: rankedInsights.length, severities: rankedInsights.map(i => i.severity) },
         ipAddress: options.ipAddress || null,
         userAgent: options.userAgent || null
       }).catch(() => {});
     }
 
     return {
-      insights: processedInsights.length > 0 ? processedInsights : detectedInsights,
+      insights: rankedInsights,
       executive_summary: executiveSummary,
-      count: processedInsights.length > 0 ? processedInsights.length : detectedInsights.length,
+      briefing,
+      relationships: allRelationships,
+      count: rankedInsights.length,
       generated_at: new Date()
     };
   }
@@ -687,7 +783,13 @@ class InsightService {
       source_fields: evidence.source_fields,
       calculation: evidence.calculation,
       verified: evidence.verified,
-      verificationReason: evidence.verificationReason
+      verificationReason: evidence.verificationReason,
+      priority: evidence.priority,
+      severity: evidence.severity,
+      impactScore: evidence.impactScore ?? evidence.impact_score,
+      impact_score: evidence.impact_score ?? evidence.impactScore,
+      priorityReason: evidence.priorityReason ?? evidence.priority_reason,
+      priority_reason: evidence.priority_reason ?? evidence.priorityReason
     };
   }
 
@@ -742,7 +844,9 @@ class InsightService {
    */
   async getInsights(organizationId, filters = {}) {
     if (!organizationId) throw new Error('Organization ID is required.');
-    return InsightModel.findByOrganizationId(organizationId, filters);
+    const insights = await InsightModel.findByOrganizationId(organizationId, filters);
+    const enriched = (insights || []).map(ins => insightPrioritizationService.enrichInsight(ins));
+    return insightPrioritizationService.rankInsights(enriched);
   }
 
   /**
@@ -750,7 +854,8 @@ class InsightService {
    */
   async getInsightById(id, organizationId) {
     if (!id || !organizationId) throw new Error('ID and Organization ID are required.');
-    return InsightModel.findByIdAndOrgId(id, organizationId);
+    const insight = await InsightModel.findByIdAndOrgId(id, organizationId);
+    return insight ? insightPrioritizationService.enrichInsight(insight) : null;
   }
 
   /**
