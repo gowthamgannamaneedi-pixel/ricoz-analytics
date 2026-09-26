@@ -131,6 +131,172 @@ const InsightModel = {
    * }} [filters={}]
    * @returns {Promise<Array<any>>}
    */
+  /**
+   * Find an active duplicate insight for deduplication and cooldown
+   * @param {{
+   *   organizationId: string,
+   *   type: string,
+   *   title: string,
+   *   alertId?: string|null,
+   *   datasetId?: number|null,
+   *   cooldownMinutes?: number
+   * }} criteria
+   * @returns {Promise<any|null>}
+   */
+  async findActiveDuplicate({
+    organizationId,
+    type,
+    title,
+    alertId = null,
+    datasetId = null,
+    cooldownMinutes = 60
+  }) {
+    if (!organizationId || !title) return null;
+
+    // Fetch existing active insights for this tenant and type
+    const activeInsights = await this.findByOrganizationId(organizationId, {
+      status: 'active',
+      type: type ? type.toLowerCase() : undefined,
+      dedup: false,
+      limit: 100
+    });
+
+    if (!activeInsights || activeInsights.length === 0) return null;
+
+    const cleanTitle = String(title).trim().toLowerCase();
+    const cleanAlertId = alertId ? String(alertId) : null;
+    const numDatasetId = datasetId ? Number(datasetId) : null;
+
+    // Natural identity match:
+    // 1. Alert-derived operational match (by alert_id)
+    // 2. Dataset-specific match: dataset_id must match if present on either candidate
+    // 3. Exact type + title match for global/tenant-level insights
+    const match = activeInsights.find(i => {
+      if (i.status !== 'active') return false;
+
+      const meta = typeof i.source_metadata === 'string' ? JSON.parse(i.source_metadata || '{}') : (i.source_metadata || {});
+
+      // Alert-specific match
+      if (cleanAlertId && (meta.alert_id === cleanAlertId || meta.alertId === cleanAlertId)) {
+        return true;
+      }
+
+      // Dataset-scoped match: if either has a dataset_id, they must match exactly
+      if (numDatasetId || i.dataset_id) {
+        return Number(i.dataset_id) === numDatasetId &&
+               String(i.type).toLowerCase() === String(type).toLowerCase() &&
+               String(i.title).trim().toLowerCase() === cleanTitle;
+      }
+
+      // Global non-dataset match
+      return String(i.type).toLowerCase() === String(type).toLowerCase() &&
+             String(i.title).trim().toLowerCase() === cleanTitle;
+    });
+
+    if (!match) return null;
+
+    // Enforce cooldown if configured
+    if (cooldownMinutes && cooldownMinutes > 0) {
+      const createdTime = new Date(match.created_at).getTime();
+      const elapsedMinutes = (Date.now() - createdTime) / (1000 * 60);
+      if (elapsedMinutes < cooldownMinutes) {
+        return match;
+      }
+    }
+
+    if (match.status === 'active') {
+      return match;
+    }
+
+    return null;
+  },
+
+  /**
+   * Update existing insight evidence / summary / recommendation
+   * @param {string} id 
+   * @param {string} organizationId 
+   * @param {{
+   *   summary?: string,
+   *   severity?: string,
+   *   confidence?: number,
+   *   evidence?: object,
+   *   sourceMetadata?: object,
+   *   recommendation?: object
+   * }} updateData 
+   * @returns {Promise<any|null>}
+   */
+  async updateInsight(id, organizationId, {
+    summary,
+    severity,
+    confidence,
+    evidence,
+    sourceMetadata,
+    recommendation
+  } = {}) {
+    const fields = [];
+    const params = [];
+    let paramIndex = 1;
+
+    if (summary !== undefined) {
+      fields.push(`summary = $${paramIndex++}`);
+      params.push(String(summary).trim());
+    }
+    if (severity !== undefined) {
+      fields.push(`severity = $${paramIndex++}`);
+      params.push(String(severity).toLowerCase());
+    }
+    if (confidence !== undefined && confidence !== null) {
+      fields.push(`confidence = $${paramIndex++}`);
+      params.push(Number(confidence));
+    }
+    if (evidence !== undefined) {
+      fields.push(`evidence = $${paramIndex++}`);
+      params.push(typeof evidence === 'string' ? evidence : JSON.stringify(evidence));
+    }
+    if (sourceMetadata !== undefined) {
+      fields.push(`source_metadata = $${paramIndex++}`);
+      params.push(typeof sourceMetadata === 'string' ? sourceMetadata : JSON.stringify(sourceMetadata));
+    }
+    if (recommendation !== undefined) {
+      fields.push(`recommendation = $${paramIndex++}`);
+      params.push(typeof recommendation === 'string' ? recommendation : JSON.stringify(recommendation));
+    }
+
+    if (fields.length === 0) {
+      return this.findByIdAndOrgId(id, organizationId);
+    }
+
+    const whereIdParam = paramIndex++;
+    const whereOrgParam = paramIndex++;
+    params.push(String(id), String(organizationId));
+
+    const sql = `
+      UPDATE ai_insights
+      SET ${fields.join(', ')}
+      WHERE id = $${whereIdParam} AND organization_id = $${whereOrgParam}
+      RETURNING *;
+    `;
+
+    const result = await db.query(sql, params);
+    return result.rows && result.rows[0] ? result.rows[0] : null;
+  },
+
+  /**
+   * Find filtered insights for an organization
+   * @param {string} organizationId 
+   * @param {{
+   *   status?: 'active'|'dismissed'|'archived'|'all',
+   *   type?: string,
+   *   severity?: string,
+   *   datasetId?: number|string,
+   *   metricId?: string,
+   *   limit?: number,
+   *   page?: number,
+   *   dedup?: boolean,
+   *   includeDuplicates?: boolean
+   * }} [filters={}]
+   * @returns {Promise<Array<any>>}
+   */
   async findByOrganizationId(organizationId, filters = {}) {
     const conditions = ['i.organization_id = $1'];
     const params = [String(organizationId)];
@@ -165,18 +331,38 @@ const InsightModel = {
     const page = Math.max(1, Number(filters.page) || 1);
     const offset = (page - 1) * limit;
 
-    const sql = `
-      SELECT 
-        i.*,
-        d.name AS dataset_name,
-        m.name AS metric_name
-      FROM ai_insights i
-      LEFT JOIN datasets d ON d.id = i.dataset_id
-      LEFT JOIN metrics m ON m.id = i.metric_id
-      WHERE ${conditions.join(' AND ')}
-      ORDER BY i.created_at DESC
-      LIMIT $${paramIndex++} OFFSET $${paramIndex++};
-    `;
+    let sql;
+    if (filters.dedup === false || filters.includeDuplicates === true) {
+      sql = `
+        SELECT 
+          i.*,
+          d.name AS dataset_name,
+          m.name AS metric_name
+        FROM ai_insights i
+        LEFT JOIN datasets d ON d.id = i.dataset_id
+        LEFT JOIN metrics m ON m.id = i.metric_id
+        WHERE ${conditions.join(' AND ')}
+        ORDER BY i.created_at DESC
+        LIMIT $${paramIndex++} OFFSET $${paramIndex++};
+      `;
+    } else {
+      // Deduplicate: return only the latest relevant active insight for the same logical alert/insight
+      sql = `
+        SELECT * FROM (
+          SELECT DISTINCT ON (i.type, COALESCE(i.dataset_id, 0), i.title)
+            i.*,
+            d.name AS dataset_name,
+            m.name AS metric_name
+          FROM ai_insights i
+          LEFT JOIN datasets d ON d.id = i.dataset_id
+          LEFT JOIN metrics m ON m.id = i.metric_id
+          WHERE ${conditions.join(' AND ')}
+          ORDER BY i.type, COALESCE(i.dataset_id, 0), i.title, i.created_at DESC
+        ) deduplicated
+        ORDER BY deduplicated.created_at DESC
+        LIMIT $${paramIndex++} OFFSET $${paramIndex++};
+      `;
+    }
 
     params.push(limit, offset);
 

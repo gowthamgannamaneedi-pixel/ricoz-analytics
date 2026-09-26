@@ -2730,6 +2730,21 @@ function handleFallbackQuery(text, params = []) {
       }
     }
 
+    // Deduplicate when DISTINCT ON / deduplicated is specified in query
+    if (normalizedSql.includes('distinct on') || normalizedSql.includes('deduplicated')) {
+      const seen = new Set();
+      const deduped = [];
+      const sorted = [...list].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      for (const item of sorted) {
+        const key = `${item.type}:::${item.dataset_id || 0}:::${String(item.title).trim().toLowerCase()}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          deduped.push(item);
+        }
+      }
+      list = deduped;
+    }
+
     const enriched = list.map(ins => {
       const ds = fallbackDatasets.find(d => Number(d.id) === Number(ins.dataset_id));
       const m = fallbackMetrics.find(met => String(met.id) === String(ins.metric_id));
@@ -2762,6 +2777,18 @@ function handleFallbackQuery(text, params = []) {
       const [id, orgId] = params.slice(-2);
       const ins = fallbackInsights.find(i => String(i.id) === String(id) && String(i.organization_id) === String(orgId));
       if (ins) {
+        const setPart = normalizedSql.split('set ')[1]?.split(' where ')[0] || '';
+        const setClauses = setPart.split(',').map(s => s.trim());
+        setClauses.forEach((clause, idx) => {
+          const col = clause.split('=')[0]?.trim();
+          if (col && params[idx] !== undefined) {
+            if (col === 'evidence' || col === 'source_metadata' || col === 'recommendation') {
+              ins[col] = typeof params[idx] === 'string' ? JSON.parse(params[idx]) : params[idx];
+            } else {
+              ins[col] = params[idx];
+            }
+          }
+        });
         return Promise.resolve({ rows: [{ ...ins }], rowCount: 1 });
       }
     }

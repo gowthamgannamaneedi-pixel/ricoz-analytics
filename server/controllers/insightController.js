@@ -13,12 +13,13 @@ const insightController = {
   async generateInsights(req, res) {
     try {
       const organizationId = req.user.organization_id;
-      const { datasetId, persist } = req.body;
+      const { datasetId, persist, forceFresh } = req.body;
 
       const result = await insightService.generateInsights(organizationId, {
         userId: req.user.id,
         datasetId: datasetId ? Number(datasetId) : null,
         persist: persist !== false,
+        forceFresh: Boolean(forceFresh),
         ipAddress: req.ip,
         userAgent: req.headers['user-agent']
       });
@@ -50,7 +51,7 @@ const insightController = {
   async getInsights(req, res) {
     try {
       const organizationId = req.user.organization_id;
-      const { status, type, severity, datasetId, metricId, limit, page } = req.query;
+      const { status, type, severity, datasetId, metricId, limit, page, dedup } = req.query;
 
       const insights = await insightService.getInsights(organizationId, {
         status: status || 'active',
@@ -59,7 +60,8 @@ const insightController = {
         datasetId,
         metricId,
         limit,
-        page
+        page,
+        dedup: dedup === undefined ? true : (dedup !== 'false' && dedup !== false)
       });
 
       return res.status(200).json({

@@ -469,29 +469,60 @@ class InsightService {
     // 6. Synthesize Executive Summary
     const executiveSummary = this._synthesizeExecutiveSummary(detectedInsights);
 
-    // 7. Persist generated insights if requested (with deduplication)
+    // 7. Persist generated insights with strict deduplication & cooldown enforcement
     const persistedInsights = [];
     if (options.persist !== false && detectedInsights.length > 0) {
+      const cooldownMinutes = options.forceFresh ? 0 : (options.cooldownMinutes || this.cooldownMinutes || 60);
+
       for (const ins of detectedInsights) {
         try {
-          const saved = await InsightModel.create({
+          // Check for existing active duplicate within cooldown window or matching natural key
+          const existing = await InsightModel.findActiveDuplicate({
             organizationId,
-            userId: options.userId || null,
-            datasetId: ins.source_metadata?.dataset_id || null,
-            metricId: ins.source_metadata?.metric_id || null,
-            dashboardId: ins.source_metadata?.dashboard_id || null,
             type: ins.type,
             title: ins.title,
-            summary: ins.summary,
-            severity: ins.severity || 'info',
-            confidence: ins.confidence || 0.95,
-            evidence: ins.evidence || {},
-            sourceMetadata: ins.source_metadata || {},
-            recommendation: ins.recommendation || {},
-            status: 'active'
+            alertId: ins.source_metadata?.alert_id || null,
+            datasetId: ins.source_metadata?.dataset_id || null,
+            cooldownMinutes
           });
-          persistedInsights.push(saved);
+
+          if (existing && !options.forceFresh) {
+            // Update existing insight evidence & telemetry instead of creating duplicate UUID row
+            const updated = await InsightModel.updateInsight(existing.id, organizationId, {
+              summary: ins.summary,
+              severity: ins.severity || existing.severity,
+              confidence: ins.confidence || existing.confidence,
+              evidence: ins.evidence || existing.evidence,
+              sourceMetadata: ins.source_metadata || existing.source_metadata,
+              recommendation: ins.recommendation || existing.recommendation
+            });
+            persistedInsights.push(updated || existing);
+          } else {
+            // If forceFresh was requested and an active duplicate exists, archive it first
+            if (existing && options.forceFresh) {
+              await InsightModel.updateStatus(existing.id, organizationId, 'archived').catch(() => {});
+            }
+
+            const saved = await InsightModel.create({
+              organizationId,
+              userId: options.userId || null,
+              datasetId: ins.source_metadata?.dataset_id || null,
+              metricId: ins.source_metadata?.metric_id || null,
+              dashboardId: ins.source_metadata?.dashboard_id || null,
+              type: ins.type,
+              title: ins.title,
+              summary: ins.summary,
+              severity: ins.severity || 'info',
+              confidence: ins.confidence || 0.95,
+              evidence: ins.evidence || {},
+              sourceMetadata: ins.source_metadata || {},
+              recommendation: ins.recommendation || {},
+              status: 'active'
+            });
+            persistedInsights.push(saved);
+          }
         } catch (dbErr) {
+          console.warn('[InsightService] Insight persistence notice:', dbErr.message);
           persistedInsights.push({ id: crypto.randomUUID(), ...ins });
         }
       }

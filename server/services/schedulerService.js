@@ -77,14 +77,18 @@ class SchedulerService {
     this.isStarted = true;
     console.log(' SchedulerService: Initializing enterprise report scheduler...');
 
-    // Master polling loop runs every minute to sync and trigger scheduled reports, alerts & insights
+    // Master polling loop runs every minute to sync and trigger scheduled reports and active alerts
     this.masterTask = cron.schedule('* * * * *', async () => {
       await this.evaluateDueReports();
       await this.evaluateAlerts();
+    });
+
+    // Proactive enterprise AI insights generation runs hourly instead of every minute
+    this.insightsTask = cron.schedule('0 * * * *', async () => {
       await this.evaluateScheduledInsights();
     });
 
-    console.log(' SchedulerService: Background cron daemon running (1-minute polling resolution).');
+    console.log(' SchedulerService: Background cron daemon running (1-minute polling, hourly insights).');
   }
 
   /**
@@ -121,6 +125,9 @@ class SchedulerService {
   stop() {
     if (this.masterTask) {
       this.masterTask.stop();
+    }
+    if (this.insightsTask) {
+      this.insightsTask.stop();
     }
     this.activeTasks.forEach((task) => task.stop());
     this.activeTasks.clear();
