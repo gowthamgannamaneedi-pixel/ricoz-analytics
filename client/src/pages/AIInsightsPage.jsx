@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Sparkles,
   TrendingUp,
@@ -24,7 +24,9 @@ import {
   Cpu,
   Database,
   BarChart3,
-  Lightbulb
+  Lightbulb,
+  Star,
+  Share2
 } from 'lucide-react';
 import {
   generateAIInsights,
@@ -33,15 +35,21 @@ import {
   dismissAIInsight,
   submitAIInsightFeedback,
   exportAIInsights,
-  getDatasets
+  getDatasets,
+  toggleFavoriteApi,
+  getFavoritesApi,
+  recordRecentlyViewedApi
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import RootCauseDrawer from '../components/RootCauseDrawer';
 import ScenarioSimulatorModal from '../components/ScenarioSimulatorModal';
+import ShareModal from '../components/ShareModal';
 
 export default function AIInsightsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const targetInsightId = searchParams.get('id');
 
   const [insights, setInsights] = useState([]);
   const [executiveSummary, setExecutiveSummary] = useState('');
@@ -60,6 +68,10 @@ export default function AIInsightsPage() {
   const [expandedEvidence, setExpandedEvidence] = useState({});
   const [briefing, setBriefing] = useState(null);
   const [relationships, setRelationships] = useState([]);
+
+  // Collaboration State
+  const [favorites, setFavorites] = useState(new Set());
+  const [shareModalConfig, setShareModalConfig] = useState({ isOpen: false, insightId: null, title: '' });
 
   // Load initial data
   useEffect(() => {
@@ -91,6 +103,24 @@ export default function AIInsightsPage() {
         if (item.feedback) initialFeedback[item.id] = item.feedback;
       });
       setFeedbackState(initialFeedback);
+
+      // Load user favorites
+      try {
+        const favsRes = await getFavoritesApi();
+        if (favsRes?.data) {
+          const insightFavs = new Set(
+            favsRes.data
+              .filter(f => f.resource_type === 'ai_insight' || f.resource_type === 'insight')
+              .map(f => String(f.resource_id))
+          );
+          setFavorites(insightFavs);
+        }
+      } catch (_) {}
+
+      // Record recently viewed if target ID opened via URL
+      if (targetInsightId) {
+        recordRecentlyViewedApi('ai_insight', targetInsightId).catch(() => {});
+      }
     } catch (err) {
       console.error('[AIInsightsPage] Failed loading insights:', err);
     } finally {
@@ -126,6 +156,23 @@ export default function AIInsightsPage() {
       console.error('[AIInsightsPage] Dismiss failed:', err);
     }
   }
+
+  // Handle favorite toggle
+  const handleToggleFavorite = async (e, insightId) => {
+    e.stopPropagation();
+    try {
+      const res = await toggleFavoriteApi('ai_insight', insightId);
+      const isFav = Boolean(res.data?.isFavorite);
+      setFavorites(prev => {
+        const next = new Set(prev);
+        if (isFav) next.add(String(insightId));
+        else next.delete(String(insightId));
+        return next;
+      });
+    } catch (err) {
+      console.error('Failed to toggle favorite:', err);
+    }
+  };
 
   // Handle feedback
   async function handleFeedback(id, feedbackType) {
@@ -531,6 +578,26 @@ export default function AIInsightsPage() {
                           Impact: {ins.impactScore ?? ins.impact_score ?? ins.evidence?.impactScore ?? ins.evidence?.impact_score}/100
                         </span>
                       )}
+
+                      {/* Favorite & Share Buttons */}
+                      <button
+                        onClick={(e) => handleToggleFavorite(e, ins.id)}
+                        title={favorites.has(String(ins.id)) ? 'Remove favorite' : 'Add to favorites'}
+                        className="text-slate-400 hover:text-amber-400 p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                      >
+                        <Star className={`w-3.5 h-3.5 ${favorites.has(String(ins.id)) ? 'fill-amber-400 text-amber-400' : ''}`} />
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShareModalConfig({ isOpen: true, insightId: ins.id, title: ins.title });
+                        }}
+                        title="Share AI insight"
+                        className="text-slate-400 hover:text-indigo-400 p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
 
@@ -842,6 +909,15 @@ export default function AIInsightsPage() {
           attribution={simulatorData.attribution}
         />
       )}
+
+      {/* Resource Share Modal */}
+      <ShareModal
+        isOpen={shareModalConfig.isOpen}
+        onClose={() => setShareModalConfig({ isOpen: false, insightId: null, title: '' })}
+        resourceType="insight"
+        resourceId={shareModalConfig.insightId}
+        resourceTitle={shareModalConfig.title}
+      />
     </div>
   );
 }

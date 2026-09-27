@@ -40,7 +40,7 @@ import {
   MessageSquare,
   Bookmark
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import StatCard from '../components/StatCard';
 import ChartCard from '../components/ChartCard';
@@ -155,10 +155,11 @@ const FALLBACK_ROWS = [
 export default function DashboardPage() {
   const { token, isViewer } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // Multi-Dashboard Management State
   const [dashboards, setDashboards] = useState([]);
-  const [activeDashboardId, setActiveDashboardId] = useState('overview'); // 'overview' or dashboard UUID
+  const [activeDashboardId, setActiveDashboardId] = useState(searchParams.get('id') || 'overview'); // 'overview' or dashboard UUID
   const [activeDashboardData, setActiveDashboardData] = useState(null);
   const [isDashboardsLoading, setIsDashboardsLoading] = useState(false);
 
@@ -326,25 +327,42 @@ export default function DashboardPage() {
     fetchSavedMetrics();
   }, [token]);
 
+  // Sync URL search params if changed
+  useEffect(() => {
+    const urlId = searchParams.get('id');
+    if (urlId && urlId !== activeDashboardId) {
+      setActiveDashboardId(urlId);
+    }
+  }, [searchParams]);
+
+  // Effective dashboard ID for collaboration (fallback to first available dashboard if on overview)
+  const effectiveDashboardId = (activeDashboardId && activeDashboardId !== 'overview')
+    ? activeDashboardId
+    : (dashboards[0]?.id || null);
+
   useEffect(() => {
     if (activeDashboardId && activeDashboardId !== 'overview') {
       fetchActiveDashboard(activeDashboardId);
-      recordRecentlyViewedApi('dashboard', activeDashboardId).catch(() => {});
       getSavedViewsApi(activeDashboardId).then(res => setSavedViews(res.data || [])).catch(() => {});
+    } else {
+      setSavedViews([]);
+    }
+
+    if (effectiveDashboardId) {
+      recordRecentlyViewedApi('dashboard', effectiveDashboardId).catch(() => {});
       getFavoritesApi().then(res => {
-        const isFav = res.data?.some(f => f.resource_type === 'dashboard' && String(f.resource_id) === String(activeDashboardId));
+        const isFav = res.data?.some(f => f.resource_type === 'dashboard' && String(f.resource_id) === String(effectiveDashboardId));
         setIsFavorite(Boolean(isFav));
       }).catch(() => {});
     } else {
       setIsFavorite(false);
-      setSavedViews([]);
     }
-  }, [activeDashboardId]);
+  }, [activeDashboardId, dashboards]);
 
   const handleToggleFavorite = async () => {
-    if (activeDashboardId === 'overview') return;
+    if (!effectiveDashboardId) return;
     try {
-      const res = await toggleFavoriteApi('dashboard', activeDashboardId);
+      const res = await toggleFavoriteApi('dashboard', effectiveDashboardId);
       setIsFavorite(Boolean(res.data?.isFavorite));
     } catch (_) {}
   };

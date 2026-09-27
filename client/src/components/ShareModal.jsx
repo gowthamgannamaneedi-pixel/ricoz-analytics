@@ -19,6 +19,7 @@ import {
   revokeReportShareApi,
   shareInsightApi,
   getInsightSharesApi,
+  revokeInsightShareApi,
   getTeamsApi,
   getUsers
 } from '../services/api';
@@ -125,6 +126,8 @@ export default function ShareModal({
         await revokeDashboardShareApi(resourceId, shareId);
       } else if (resourceType === 'report') {
         await revokeReportShareApi(resourceId, shareId);
+      } else if (resourceType === 'insight' || resourceType === 'ai_insight') {
+        await revokeInsightShareApi(resourceId, shareId);
       }
       setShares(shares.filter(s => s.id !== shareId));
       setSuccessMsg('Access revoked.');

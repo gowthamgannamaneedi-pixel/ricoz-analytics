@@ -56,6 +56,12 @@ router.get(
   collaborationController.getInsightShares
 );
 
+router.delete(
+  '/insights/:id/shares/:shareId',
+  requirePermission('collaboration.manage'),
+  collaborationController.revokeInsightShare
+);
+
 router.get(
   '/shared-with-me',
   requirePermission('collaboration.view'),

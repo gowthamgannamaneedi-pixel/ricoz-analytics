@@ -42,7 +42,7 @@ export default function CollaborationPage() {
   const [activeTab, setActiveTab] = useState('favorites'); // 'favorites' | 'recent' | 'shared' | 'teams'
   const [favorites, setFavorites] = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
-  const [sharedWithMe, setSharedWithMe] = useState({ dashboards: [], reports: [] });
+  const [sharedWithMe, setSharedWithMe] = useState({ dashboards: [], reports: [], insights: [] });
   const [teams, setTeams] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [allUsers, setAllUsers] = useState([]);
@@ -83,7 +83,7 @@ export default function CollaborationPage() {
         setRecentlyViewed(Array.isArray(res?.data) ? res.data : []);
       } else if (activeTab === 'shared') {
         const res = await getSharedWithMeApi();
-        setSharedWithMe(res?.data || { dashboards: [], reports: [] });
+        setSharedWithMe(res?.data || { dashboards: [], reports: [], insights: [] });
       } else if (activeTab === 'teams') {
         const teamsRes = await getTeamsApi();
         const teamList = Array.isArray(teamsRes?.data) ? teamsRes.data : [];
@@ -236,9 +236,13 @@ export default function CollaborationPage() {
   };
 
   const handleNavigateResource = (type, id) => {
-    if (type === 'dashboard') navigate('/dashboard');
-    else if (type === 'report') navigate('/reports');
-    else if (type === 'ai_insight' || type === 'insight') navigate('/ai-insights');
+    if (type === 'dashboard') {
+      navigate(id ? `/dashboard?id=${encodeURIComponent(id)}` : '/dashboard');
+    } else if (type === 'report') {
+      navigate(id ? `/reports?id=${encodeURIComponent(id)}` : '/reports');
+    } else if (type === 'ai_insight' || type === 'insight') {
+      navigate(id ? `/ai-insights?id=${encodeURIComponent(id)}` : '/ai-insights');
+    }
   };
 
   return (
@@ -333,12 +337,32 @@ export default function CollaborationPage() {
           {activeTab === 'favorites' && (
             <div>
               {favorites.length === 0 ? (
-                <div className="py-16 text-center text-xs text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <div className="py-16 text-center text-xs text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200 p-8">
                   <Star className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                  <p className="font-semibold text-slate-700">No favorites yet</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Click the star icon on any dashboard, report, or AI insight to bookmark it here.
+                  <p className="font-semibold text-slate-700 text-sm">No favorites yet</p>
+                  <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                    Click the star icon on any dashboard, report, or AI insight to bookmark it here for quick access.
                   </p>
+                  <div className="flex items-center justify-center gap-2 mt-5">
+                    <button
+                      onClick={() => navigate('/dashboard')}
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-medium cursor-pointer transition shadow-2xs"
+                    >
+                      Browse Dashboards
+                    </button>
+                    <button
+                      onClick={() => navigate('/reports')}
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-medium cursor-pointer transition shadow-2xs"
+                    >
+                      Browse Reports
+                    </button>
+                    <button
+                      onClick={() => navigate('/ai-insights')}
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-medium cursor-pointer transition shadow-2xs"
+                    >
+                      Explore AI Insights
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -355,7 +379,7 @@ export default function CollaborationPage() {
                           </span>
                           <button
                             onClick={() => handleUnfavorite(fav.resource_type, fav.resource_id)}
-                            className="text-amber-500 hover:text-slate-300 transition"
+                            className="text-amber-500 hover:text-slate-300 transition cursor-pointer"
                             title="Remove favorite"
                           >
                             <Star className="h-4 w-4 fill-amber-400" />
@@ -373,7 +397,7 @@ export default function CollaborationPage() {
                         </span>
                         <button
                           onClick={() => handleNavigateResource(fav.resource_type, fav.resource_id)}
-                          className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700"
+                          className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
                         >
                           <span>Open</span>
                           <ExternalLink className="h-3 w-3" />
@@ -390,12 +414,32 @@ export default function CollaborationPage() {
           {activeTab === 'recent' && (
             <div>
               {recentlyViewed.length === 0 ? (
-                <div className="py-16 text-center text-xs text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <div className="py-16 text-center text-xs text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200 p-8">
                   <Clock className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                  <p className="font-semibold text-slate-700">No recent activity</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Dashboards, reports, and insights you open will appear in your recently viewed history.
+                  <p className="font-semibold text-slate-700 text-sm">No recent activity</p>
+                  <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                    Dashboards, reports, and AI insights you open will automatically appear in your chronological access history.
                   </p>
+                  <div className="flex items-center justify-center gap-2 mt-5">
+                    <button
+                      onClick={() => navigate('/dashboard')}
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-medium cursor-pointer transition shadow-2xs"
+                    >
+                      Open Dashboard
+                    </button>
+                    <button
+                      onClick={() => navigate('/reports')}
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-medium cursor-pointer transition shadow-2xs"
+                    >
+                      Open Reports
+                    </button>
+                    <button
+                      onClick={() => navigate('/ai-insights')}
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-medium cursor-pointer transition shadow-2xs"
+                    >
+                      Open AI Insights
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100 rounded-xl bg-white border border-slate-200 shadow-2xs overflow-hidden">
@@ -431,95 +475,163 @@ export default function CollaborationPage() {
           {/* TAB 3: SHARED WITH ME */}
           {activeTab === 'shared' && (
             <div className="space-y-6">
-              {/* Shared Dashboards */}
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-                  Shared Dashboards ({sharedWithMe.dashboards.length})
-                </h3>
-                {sharedWithMe.dashboards.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                    No dashboards have been shared with you directly yet.
+              {(!sharedWithMe.dashboards?.length && !sharedWithMe.reports?.length && !sharedWithMe.insights?.length) ? (
+                <div className="py-16 text-center text-xs text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200 p-8">
+                  <Share2 className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                  <p className="font-semibold text-slate-700 text-sm">No items shared with you yet</p>
+                  <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                    When team members grant you or your teams access to dashboards, reports, or automated AI insights, they will appear here with assigned permissions.
+                  </p>
+                  <div className="flex items-center justify-center gap-2 mt-5">
+                    <button
+                      onClick={() => navigate('/dashboard')}
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-medium cursor-pointer transition shadow-2xs"
+                    >
+                      Explore Workspace Dashboards
+                    </button>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {sharedWithMe.dashboards.map(dash => (
-                      <div
-                        key={dash.share_id}
-                        className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between"
-                      >
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 font-bold uppercase">
-                              {dash.permission}
-                            </span>
-                            <span className="text-[10px] text-slate-400">By {dash.shared_by_name}</span>
-                          </div>
-                          <h4 className="font-semibold text-slate-900 text-sm mt-2">{dash.title}</h4>
-                          <p className="text-xs text-slate-500 mt-1 line-clamp-2">{dash.description || 'No description provided.'}</p>
-                        </div>
-
-                        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                          <span className="text-[10px] text-slate-400">
-                            {new Date(dash.shared_at).toLocaleDateString()}
-                          </span>
-                          <button
-                            onClick={() => navigate('/dashboard')}
-                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                          >
-                            <span>Open Dashboard</span>
-                            <ExternalLink className="h-3 w-3" />
-                          </button>
-                        </div>
+                </div>
+              ) : (
+                <>
+                  {/* Shared Dashboards */}
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
+                      <LayoutDashboard className="h-3.5 w-3.5 text-blue-600" />
+                      <span>Shared Dashboards ({sharedWithMe.dashboards?.length || 0})</span>
+                    </h3>
+                    {(!sharedWithMe.dashboards || sharedWithMe.dashboards.length === 0) ? (
+                      <div className="p-5 text-center text-xs text-slate-400 bg-slate-50/70 rounded-xl border border-slate-200">
+                        No dashboards shared with you yet.
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Shared Reports */}
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-                  Shared Reports ({sharedWithMe.reports.length})
-                </h3>
-                {sharedWithMe.reports.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                    No reports shared with you.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {sharedWithMe.reports.map(rep => (
-                      <div
-                        key={rep.share_id}
-                        className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between"
-                      >
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-bold uppercase">
-                              {rep.permission}
-                            </span>
-                            <span className="text-[10px] text-slate-400">By {rep.shared_by_name}</span>
-                          </div>
-                          <h4 className="font-semibold text-slate-900 text-sm mt-2">{rep.title}</h4>
-                          <p className="text-xs text-slate-500 mt-1 line-clamp-2">{rep.description || 'Scheduled digest report'}</p>
-                        </div>
-
-                        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                          <span className="text-[10px] text-slate-400">
-                            {new Date(rep.shared_at).toLocaleDateString()}
-                          </span>
-                          <button
-                            onClick={() => navigate('/reports')}
-                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {sharedWithMe.dashboards.map(dash => (
+                          <div
+                            key={dash.share_id}
+                            className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between hover:shadow-md transition"
                           >
-                            <span>View Report</span>
-                            <ExternalLink className="h-3 w-3" />
-                          </button>
-                        </div>
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-bold uppercase">
+                                  {dash.permission}
+                                </span>
+                                <span className="text-[10px] text-slate-400">By {dash.shared_by_name}</span>
+                              </div>
+                              <h4 className="font-semibold text-slate-900 text-sm mt-2">{dash.title}</h4>
+                              <p className="text-xs text-slate-500 mt-1 line-clamp-2">{dash.description || 'No description provided.'}</p>
+                            </div>
+
+                            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                              <span className="text-[10px] text-slate-400">
+                                {new Date(dash.shared_at).toLocaleDateString()}
+                              </span>
+                              <button
+                                onClick={() => handleNavigateResource('dashboard', dash.resource_id)}
+                                className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
+                              >
+                                <span>Open Dashboard</span>
+                                <ExternalLink className="h-3 w-3" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
-                )}
-              </div>
+
+                  {/* Shared Reports */}
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
+                      <FileBarChart className="h-3.5 w-3.5 text-purple-600" />
+                      <span>Shared Reports ({sharedWithMe.reports?.length || 0})</span>
+                    </h3>
+                    {(!sharedWithMe.reports || sharedWithMe.reports.length === 0) ? (
+                      <div className="p-5 text-center text-xs text-slate-400 bg-slate-50/70 rounded-xl border border-slate-200">
+                        No reports shared with you yet.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {sharedWithMe.reports.map(rep => (
+                          <div
+                            key={rep.share_id}
+                            className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between hover:shadow-md transition"
+                          >
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 font-bold uppercase">
+                                  {rep.permission}
+                                </span>
+                                <span className="text-[10px] text-slate-400">By {rep.shared_by_name}</span>
+                              </div>
+                              <h4 className="font-semibold text-slate-900 text-sm mt-2">{rep.title}</h4>
+                              <p className="text-xs text-slate-500 mt-1 line-clamp-2">{rep.description || 'Scheduled digest report'}</p>
+                            </div>
+
+                            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                              <span className="text-[10px] text-slate-400">
+                                {new Date(rep.shared_at).toLocaleDateString()}
+                              </span>
+                              <button
+                                onClick={() => handleNavigateResource('report', rep.resource_id)}
+                                className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
+                              >
+                                <span>View Report</span>
+                                <ExternalLink className="h-3 w-3" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Shared AI Insights */}
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
+                      <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                      <span>Shared AI Insights ({sharedWithMe.insights?.length || 0})</span>
+                    </h3>
+                    {(!sharedWithMe.insights || sharedWithMe.insights.length === 0) ? (
+                      <div className="p-5 text-center text-xs text-slate-400 bg-slate-50/70 rounded-xl border border-slate-200">
+                        No AI insights shared with you yet.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {sharedWithMe.insights.map(ins => (
+                          <div
+                            key={ins.share_id}
+                            className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between hover:shadow-md transition"
+                          >
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-bold uppercase">
+                                  {ins.permission}
+                                </span>
+                                <span className="text-[10px] text-slate-400">By {ins.shared_by_name}</span>
+                              </div>
+                              <h4 className="font-semibold text-slate-900 text-sm mt-2">{ins.title}</h4>
+                              <p className="text-xs text-slate-500 mt-1 line-clamp-2">{ins.description || 'AI telemetry insight'}</p>
+                            </div>
+
+                            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                              <span className="text-[10px] text-slate-400">
+                                {new Date(ins.shared_at).toLocaleDateString()}
+                              </span>
+                              <button
+                                onClick={() => handleNavigateResource('ai_insight', ins.resource_id)}
+                                className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
+                              >
+                                <span>Open Insight</span>
+                                <ExternalLink className="h-3 w-3" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
 

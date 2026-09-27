@@ -390,6 +390,42 @@ class CollaborationService {
     return share;
   }
 
+  async revokeInsightShare({ organizationId, userId, userRole, insightId, shareId, req = null }) {
+    const access = await this.resolveResourceAccess({
+      organizationId,
+      userId,
+      userRole,
+      resourceType: 'ai_insight',
+      resourceId: insightId
+    });
+
+    if (!access.hasAccess || (access.permission !== 'owner' && userRole !== 'admin' && userRole !== 'manager')) {
+      const err = new Error('You do not have permission to revoke insight shares.');
+      err.status = 403;
+      throw err;
+    }
+
+    const removed = await ShareModel.removeInsightShare(shareId, organizationId);
+    if (!removed) {
+      const err = new Error('Share record not found.');
+      err.status = 404;
+      throw err;
+    }
+
+    await auditService.logAuditEvent({
+      organizationId,
+      userId,
+      action: 'INSIGHT_ACCESS_REVOKED',
+      resourceType: 'ai_insight',
+      resourceId: insightId,
+      description: `Revoked insight share #${shareId}.`,
+      metadata: { shareId },
+      req
+    });
+
+    return removed;
+  }
+
   // -------------------------------------------------------------
   // Threaded Comments & @Mentions
   // -------------------------------------------------------------

@@ -175,8 +175,22 @@ let nextDatasetId = 2;
 const fallbackMetrics = [];
 let nextMetricId = 1;
 
-const fallbackDashboards = [];
-let nextDashboardId = 1;
+const fallbackDashboards = [
+  {
+    id: '00000000-0000-0000-0000-000000000001',
+    organization_id: '00000000-0000-0000-0000-000000000001',
+    created_by: 1,
+    title: 'Executive Sales Command',
+    description: 'Core executive sales performance, channel telemetry, and regional revenue breakdown.',
+    is_default: true,
+    is_public: true,
+    layout: [],
+    filters: {},
+    created_at: new Date('2026-01-01T00:00:00Z'),
+    updated_at: new Date('2026-01-01T00:00:00Z')
+  }
+];
+let nextDashboardId = 2;
 
 const fallbackDashboardWidgets = [];
 let nextWidgetId = 1;
@@ -314,8 +328,29 @@ let nextQualitySnapshotId = 1;
 const fallbackQualityRules = [];
 let nextQualityRuleId = 1;
 
-const fallbackInsights = [];
-let nextInsightId = 1;
+const fallbackInsights = [
+  {
+    id: '20b03e6d-14ec-49b3-b9e4-a33476b437fe',
+    organization_id: '00000000-0000-0000-0000-000000000001',
+    user_id: 1,
+    dataset_id: 1,
+    metric_id: null,
+    dashboard_id: '00000000-0000-0000-0000-000000000001',
+    type: 'trend',
+    title: 'Revenue Surge Detected in APAC Telemetry',
+    summary: 'Direct enterprise online conversions increased by +24.8% week-over-week.',
+    severity: 'positive',
+    confidence: 0.94,
+    evidence: { metric: 'sales_amount', delta: 0.248 },
+    source_metadata: { segment: 'Enterprise Sales' },
+    recommendation: { action: 'Allocate additional inventory buffers' },
+    status: 'active',
+    feedback: null,
+    created_at: new Date('2026-01-15T12:00:00Z'),
+    expires_at: null
+  }
+];
+let nextInsightId = 2;
 
 const fallbackTeams = [
   {
@@ -3092,6 +3127,106 @@ function handleFallbackQuery(text, params = []) {
     return Promise.resolve({ rows: [], rowCount: 0 });
   }
 
+  // ----------------- PHASE 17: SHARED WITH USER JOINS -----------------
+  if (normalizedSql.startsWith('select') && normalizedSql.includes('from dashboard_shares ds') && normalizedSql.includes('join dashboards d on')) {
+    const orgId = String(params[0]);
+    const userId = Number(params[1]);
+    const teamIds = params.slice(2).map(String);
+
+    const matchingShares = fallbackDashboardShares.filter(ds => {
+      if (String(ds.organization_id) !== orgId) return false;
+      const isDirect = ds.user_id && Number(ds.user_id) === userId;
+      const isTeam = ds.team_id && teamIds.includes(String(ds.team_id));
+      return isDirect || isTeam;
+    });
+
+    const rows = [];
+    for (const ds of matchingShares) {
+      const d = fallbackDashboards.find(dash => String(dash.id) === String(ds.dashboard_id) && String(dash.organization_id) === orgId);
+      if (d) {
+        const sb = fallbackUsers.find(u => Number(u.id) === Number(ds.shared_by));
+        rows.push({
+          share_id: ds.id,
+          permission: ds.permission,
+          shared_at: ds.created_at,
+          resource_id: d.id,
+          resource_type: 'dashboard',
+          title: d.title,
+          description: d.description,
+          shared_by_name: sb ? sb.name : 'Team Member'
+        });
+      }
+    }
+    rows.sort((a, b) => new Date(b.shared_at) - new Date(a.shared_at));
+    return Promise.resolve({ rows, rowCount: rows.length });
+  }
+
+  if (normalizedSql.startsWith('select') && normalizedSql.includes('from report_shares rs') && normalizedSql.includes('join reports r on')) {
+    const orgId = String(params[0]);
+    const userId = Number(params[1]);
+    const teamIds = params.slice(2).map(String);
+
+    const matchingShares = fallbackReportShares.filter(rs => {
+      if (String(rs.organization_id) !== orgId) return false;
+      const isDirect = rs.user_id && Number(rs.user_id) === userId;
+      const isTeam = rs.team_id && teamIds.includes(String(rs.team_id));
+      return isDirect || isTeam;
+    });
+
+    const rows = [];
+    for (const rs of matchingShares) {
+      const r = fallbackReports.find(rep => String(rep.id) === String(rs.report_id) && String(rep.organization_id) === orgId);
+      if (r) {
+        const sb = fallbackUsers.find(u => Number(u.id) === Number(rs.shared_by));
+        rows.push({
+          share_id: rs.id,
+          permission: rs.permission,
+          shared_at: rs.created_at,
+          resource_id: r.id,
+          resource_type: 'report',
+          title: r.title,
+          description: r.description,
+          shared_by_name: sb ? sb.name : 'Team Member'
+        });
+      }
+    }
+    rows.sort((a, b) => new Date(b.shared_at) - new Date(a.shared_at));
+    return Promise.resolve({ rows, rowCount: rows.length });
+  }
+
+  if (normalizedSql.startsWith('select') && normalizedSql.includes('from insight_shares ins') && normalizedSql.includes('join ai_insights i on')) {
+    const orgId = String(params[0]);
+    const userId = Number(params[1]);
+    const teamIds = params.slice(2).map(String);
+
+    const matchingShares = fallbackInsightShares.filter(ins => {
+      if (String(ins.organization_id) !== orgId) return false;
+      const isDirect = ins.user_id && Number(ins.user_id) === userId;
+      const isTeam = ins.team_id && teamIds.includes(String(ins.team_id));
+      return isDirect || isTeam;
+    });
+
+    const rows = [];
+    for (const ins of matchingShares) {
+      const i = fallbackInsights.find(insight => String(insight.id) === String(ins.insight_id) && String(insight.organization_id) === orgId);
+      if (i) {
+        const sb = fallbackUsers.find(u => Number(u.id) === Number(ins.shared_by));
+        rows.push({
+          share_id: ins.id,
+          permission: ins.permission,
+          shared_at: ins.created_at,
+          resource_id: i.id,
+          resource_type: 'insight',
+          title: i.title,
+          description: i.summary,
+          shared_by_name: sb ? sb.name : 'Team Member'
+        });
+      }
+    }
+    rows.sort((a, b) => new Date(b.shared_at) - new Date(a.shared_at));
+    return Promise.resolve({ rows, rowCount: rows.length });
+  }
+
   // ----------------- PHASE 17: COMMENTS -----------------
   if (normalizedSql.startsWith('insert into comments')) {
     const [organization_id, user_id, resource_type, resource_id, parent_comment_id = null, content, mentions = []] = params;
@@ -3464,6 +3599,19 @@ module.exports = {
     });
     fallbackMetrics.length = 0;
     fallbackDashboards.length = 0;
+    fallbackDashboards.push({
+      id: '00000000-0000-0000-0000-000000000001',
+      organization_id: '00000000-0000-0000-0000-000000000001',
+      created_by: 1,
+      title: 'Executive Sales Command',
+      description: 'Core executive sales performance, channel telemetry, and regional revenue breakdown.',
+      is_default: true,
+      is_public: true,
+      layout: [],
+      filters: {},
+      created_at: new Date('2026-01-01T00:00:00Z'),
+      updated_at: new Date('2026-01-01T00:00:00Z')
+    });
     fallbackDashboardWidgets.length = 0;
     fallbackReports.length = 0;
     fallbackReportExecutions.length = 0;
@@ -3477,6 +3625,26 @@ module.exports = {
     fallbackQualitySnapshots.length = 0;
     fallbackQualityRules.length = 0;
     fallbackInsights.length = 0;
+    fallbackInsights.push({
+      id: '20b03e6d-14ec-49b3-b9e4-a33476b437fe',
+      organization_id: '00000000-0000-0000-0000-000000000001',
+      user_id: 1,
+      dataset_id: 1,
+      metric_id: null,
+      dashboard_id: '00000000-0000-0000-0000-000000000001',
+      type: 'trend',
+      title: 'Revenue Surge Detected in APAC Telemetry',
+      summary: 'Direct enterprise online conversions increased by +24.8% week-over-week.',
+      severity: 'positive',
+      confidence: 0.94,
+      evidence: { metric: 'sales_amount', delta: 0.248 },
+      source_metadata: { segment: 'Enterprise Sales' },
+      recommendation: { action: 'Allocate additional inventory buffers' },
+      status: 'active',
+      feedback: null,
+      created_at: new Date('2026-01-15T12:00:00Z'),
+      expires_at: null
+    });
     fallbackTeams.length = 0;
     fallbackTeams.push({
       id: '00000000-0000-0000-0000-000000000001',

@@ -24,10 +24,14 @@ import {
   Layers,
   Sparkles,
   Lock,
-  ExternalLink
+  ExternalLink,
+  Star,
+  Share2
 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ReportModal from '../components/ReportModal';
+import ShareModal from '../components/ShareModal';
 import {
   getReports,
   getDashboards,
@@ -37,12 +41,17 @@ import {
   runReport,
   getReportExecutions,
   getAllExecutions,
-  downloadReportExecution
+  downloadReportExecution,
+  toggleFavoriteApi,
+  getFavoritesApi,
+  recordRecentlyViewedApi
 } from '../services/api';
 
 export default function ReportsPage() {
   const { user } = useAuth();
   const isViewer = user?.role === 'viewer';
+  const [searchParams] = useSearchParams();
+  const targetReportId = searchParams.get('id');
 
   const [activeTab, setActiveTab] = useState('reports'); // 'reports' | 'history'
   const [reports, setReports] = useState([]);
@@ -52,6 +61,10 @@ export default function ReportsPage() {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  // Collaboration State
+  const [favorites, setFavorites] = useState(new Set());
+  const [shareModalConfig, setShareModalConfig] = useState({ isOpen: false, reportId: null, title: '' });
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -114,6 +127,24 @@ export default function ReportsPage() {
       if (executionsData.executions) {
         setExecutions(executionsData.executions);
       }
+
+      // Load user favorites
+      try {
+        const favsRes = await getFavoritesApi();
+        if (favsRes?.data) {
+          const reportFavs = new Set(
+            favsRes.data
+              .filter(f => f.resource_type === 'report')
+              .map(f => String(f.resource_id))
+          );
+          setFavorites(reportFavs);
+        }
+      } catch (_) {}
+
+      // Record recently viewed if target ID opened via URL
+      if (targetReportId) {
+        recordRecentlyViewedApi('report', targetReportId).catch(() => {});
+      }
     } catch (err) {
       console.error('Failed to load reports pipeline:', err);
       setError('Could not connect to the backend reports service.');
@@ -171,8 +202,26 @@ export default function ReportsPage() {
     }
   };
 
+  const handleToggleFavorite = async (e, reportId) => {
+    e.stopPropagation();
+    try {
+      const res = await toggleFavoriteApi('report', reportId);
+      const isFav = Boolean(res.data?.isFavorite);
+      setFavorites(prev => {
+        const next = new Set(prev);
+        if (isFav) next.add(String(reportId));
+        else next.delete(String(reportId));
+        return next;
+      });
+      showToast(isFav ? 'Added to favorites.' : 'Removed from favorites.');
+    } catch (err) {
+      showToast('Failed to update favorite.');
+    }
+  };
+
   const handleRunReportNow = async (report) => {
     setRunningReportId(report.id);
+    recordRecentlyViewedApi('report', report.id).catch(() => {});
     try {
       const result = await runReport(report.id, report.format);
       if (result.success) {
@@ -464,10 +513,16 @@ export default function ReportsPage() {
                   : (typeof r.recipients === 'string' ? JSON.parse(r.recipients || '[]') : []);
                 const isRunning = runningReportId === r.id;
 
+                const isFavorited = favorites.has(String(r.id));
+                const isTargetHighlighted = targetReportId === String(r.id);
+
                 return (
                   <div
                     key={r.id}
-                    className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs hover:border-slate-300 transition flex flex-col justify-between"
+                    onClick={() => recordRecentlyViewedApi('report', r.id).catch(() => {})}
+                    className={`rounded-xl border bg-white p-5 shadow-2xs hover:border-slate-300 transition flex flex-col justify-between ${
+                      isTargetHighlighted ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200'
+                    }`}
                   >
                     <div>
                       {/* Top Meta Line */}
@@ -476,9 +531,28 @@ export default function ReportsPage() {
                           {getFormatBadge(r.format)}
                           {getStatusBadge(r.status)}
                         </div>
-                        <span className="text-[10px] font-mono text-slate-400">
-                          {formatScheduleText(r.schedule_cron)}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => handleToggleFavorite(e, r.id)}
+                            title={isFavorited ? 'Remove favorite' : 'Add to favorites'}
+                            className="text-slate-400 hover:text-amber-500 transition cursor-pointer p-0.5"
+                          >
+                            <Star className={`h-4 w-4 ${isFavorited ? 'fill-amber-400 text-amber-500' : ''}`} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShareModalConfig({ isOpen: true, reportId: r.id, title: r.title });
+                            }}
+                            title="Share report"
+                            className="text-slate-400 hover:text-blue-600 transition cursor-pointer p-0.5"
+                          >
+                            <Share2 className="h-4 w-4" />
+                          </button>
+                          <span className="text-[10px] font-mono text-slate-400 ml-1">
+                            {formatScheduleText(r.schedule_cron)}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Title & Description */}
@@ -678,6 +752,15 @@ export default function ReportsPage() {
         onSave={handleCreateOrUpdateReport}
         report={selectedReport}
         dashboards={dashboards}
+      />
+
+      {/* Resource Share Modal */}
+      <ShareModal
+        isOpen={shareModalConfig.isOpen}
+        onClose={() => setShareModalConfig({ isOpen: false, reportId: null, title: '' })}
+        resourceType="report"
+        resourceId={shareModalConfig.reportId}
+        resourceTitle={shareModalConfig.title}
       />
     </div>
   );

@@ -178,6 +178,32 @@ async function getInsightShares(req, res, next) {
   }
 }
 
+async function revokeInsightShare(req, res, next) {
+  try {
+    const { id, shareId } = req.params;
+    const organizationId = req.user.organization_id;
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    const removed = await collaborationService.revokeInsightShare({
+      organizationId,
+      userId,
+      userRole,
+      insightId: id,
+      shareId,
+      req
+    });
+
+    res.json({
+      success: true,
+      data: removed,
+      message: 'AI Insight share revoked.'
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function getSharedWithMe(req, res, next) {
   try {
     const organizationId = req.user.organization_id;
@@ -574,6 +600,7 @@ module.exports = {
   revokeReportShare,
   shareInsight,
   getInsightShares,
+  revokeInsightShare,
   getSharedWithMe,
   postComment,
   getComments,

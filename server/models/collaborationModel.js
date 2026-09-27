@@ -339,9 +339,30 @@ const ShareModel = {
     const repParams = teamIds.length > 0 ? [organizationId, userId, ...teamIds] : [organizationId, userId];
     const repRes = await db.query(repSql, repParams);
 
+    // 4. Fetch shared insights
+    const insSql = `
+      SELECT 
+        ins.id as share_id,
+        ins.permission,
+        ins.created_at as shared_at,
+        i.id as resource_id,
+        'insight' as resource_type,
+        i.title,
+        i.summary as description,
+        sb.name as shared_by_name
+      FROM insight_shares ins
+      JOIN ai_insights i ON i.id = ins.insight_id
+      LEFT JOIN users sb ON sb.id = ins.shared_by
+      WHERE ins.organization_id = $1 AND (ins.user_id = $2 ${teamIds.length > 0 ? `OR ins.team_id IN (${teamIds.map((_, i) => `$${i + 3}`).join(',')})` : ''})
+      ORDER BY ins.created_at DESC;
+    `;
+    const insParams = teamIds.length > 0 ? [organizationId, userId, ...teamIds] : [organizationId, userId];
+    const insRes = await db.query(insSql, insParams);
+
     return {
       dashboards: dashRes.rows || [],
-      reports: repRes.rows || []
+      reports: repRes.rows || [],
+      insights: insRes.rows || []
     };
   }
 };
