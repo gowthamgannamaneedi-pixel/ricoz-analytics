@@ -4,19 +4,9 @@ import {
   Plus, 
   RefreshCw, 
   Search, 
-  Filter, 
-  TrendingUp, 
-  TrendingDown, 
-  CheckCircle2, 
-  AlertTriangle, 
-  AlertOctagon, 
-  Layers, 
   Trash2, 
   Edit3, 
-  Table2, 
-  Sparkles, 
-  Loader2, 
-  Sliders 
+  Loader2 
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import MetricModal from '../components/MetricModal';
@@ -196,20 +186,20 @@ export default function KpisPage() {
     fetchData(false);
   };
 
-  // Status badge helper
+  // Status badge helper (subtle, accessible enterprise indicator)
   const renderStatusBadge = (status) => {
     switch (status) {
       case 'on_track':
         return (
-          <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
             <span>ON TRACK</span>
           </span>
         );
       case 'at_risk':
         return (
-          <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-            <AlertTriangle className="h-3 w-3 text-amber-600" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase bg-amber-50 text-amber-700 border border-amber-200/60">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
             <span>AT RISK</span>
           </span>
         );
@@ -217,9 +207,9 @@ export default function KpisPage() {
       case 'critical':
       default:
         return (
-          <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
-            <AlertOctagon className="h-3 w-3 text-rose-600" />
-            <span>BEHIND</span>
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase bg-rose-50 text-rose-700 border border-rose-200/60">
+            <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" />
+            <span>BEHIND TARGET</span>
           </span>
         );
     }
@@ -248,7 +238,13 @@ export default function KpisPage() {
       if (!matchName && !matchFormula && !matchDesc) return false;
     }
     if (typeFilter !== 'all' && m.type !== typeFilter) return false;
-    if (statusFilter !== 'all' && m.status !== statusFilter) return false;
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'behind') {
+        if (m.status !== 'behind' && m.status !== 'critical') return false;
+      } else if (m.status !== statusFilter) {
+        return false;
+      }
+    }
     return true;
   });
 
@@ -259,32 +255,32 @@ export default function KpisPage() {
   const behindCount = metrics.filter(m => m.status === 'behind' || m.status === 'critical').length;
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-5 font-sans">
       {/* Top Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-0.5">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-              Key Performance Indicators (KPIs)
+              Key Performance Indicators
             </h1>
-            <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+            <span className={`text-[10px] font-mono font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md ${
               isViewer
                 ? 'bg-slate-100 text-slate-600 border border-slate-200'
-                : 'bg-blue-50 text-blue-700 border border-blue-200'
+                : 'bg-blue-50 text-blue-700 border border-blue-200/60'
             }`}>
-              {currentRole.toUpperCase()} MODE
+              {currentRole?.toUpperCase() || 'ANALYST'} MODE
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal">
             Define, customize, and monitor business metrics with dynamic formulas and threshold targets.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 shrink-0">
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-40 shadow-2xs"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition disabled:opacity-40 shadow-2xs"
           >
             <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
             <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
@@ -294,7 +290,7 @@ export default function KpisPage() {
             <button
               onClick={handleCreateNew}
               id="open-create-metric-btn"
-              className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
+              className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-2xs"
             >
               <Plus className="h-4 w-4" />
               <span>+ Define New Metric</span>
@@ -305,101 +301,102 @@ export default function KpisPage() {
 
       {/* Viewer Mode Banner */}
       {isViewer && (
-        <div className="flex items-center justify-between gap-2.5 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-600">
+        <div className="flex items-center justify-between gap-2.5 rounded-lg border border-slate-200/80 bg-slate-50 px-3.5 py-2 text-xs text-slate-600">
           <span className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-slate-400" />
+            <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
             <span><strong>View-Only Mode:</strong> Your role ({currentRole}) has read access to metrics and target telemetry. Metric creation, modification, and deletion require Analyst or Admin privileges.</span>
           </span>
         </div>
       )}
 
       {/* KPI Summary Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-            Total Monitored KPIs
-          </span>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-mono text-2xl font-bold tracking-tight text-slate-900">
-              {totalCount}
-            </span>
-            <span className="text-xs text-slate-400 font-medium">metrics defined</span>
+      <div className="bg-white border border-slate-200/90 rounded-xl px-4 py-3 shadow-2xs">
+        <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 gap-y-3 sm:gap-y-0">
+          {/* Total KPIs */}
+          <div className="flex items-center gap-3 sm:pr-4">
+            <span className="h-2 w-2 rounded-full bg-slate-400 shrink-0" />
+            <div className="min-w-0">
+              <span className="text-[11px] font-medium text-slate-500 block leading-tight">Total KPIs</span>
+              <span className="text-lg font-bold text-slate-900 tracking-tight leading-none mt-0.5 block font-mono">
+                {totalCount}
+              </span>
+            </div>
           </div>
-          <p className="mt-1.5 text-xs text-slate-500">
-            Linked to live telemetry datasets
-          </p>
-        </div>
 
-        <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/40 p-4 shadow-2xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
-            On Track Objectives
-          </span>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-mono text-2xl font-bold tracking-tight text-emerald-700">
-              {onTrackCount}
-            </span>
-            <span className="text-xs font-semibold text-emerald-600">
-              ({totalCount > 0 ? Math.round((onTrackCount / totalCount) * 100) : 0}%)
-            </span>
+          {/* On Track */}
+          <div className="flex items-center gap-3 sm:px-4">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 leading-tight">
+                <span className="text-[11px] font-medium text-slate-500">On Track</span>
+                {totalCount > 0 && (
+                  <span className="text-[10px] font-semibold text-emerald-600">
+                    {Math.round((onTrackCount / totalCount) * 100)}%
+                  </span>
+                )}
+              </div>
+              <span className="text-lg font-bold text-slate-900 tracking-tight leading-none mt-0.5 block font-mono">
+                {onTrackCount}
+              </span>
+            </div>
           </div>
-          <p className="mt-1.5 text-xs text-emerald-700">
-            Exceeding &gt;90% target velocity
-          </p>
-        </div>
 
-        <div className="rounded-xl border border-amber-200/80 bg-amber-50/40 p-4 shadow-2xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800">
-            At Risk (Warning)
-          </span>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-mono text-2xl font-bold tracking-tight text-amber-700">
-              {atRiskCount}
-            </span>
-            <span className="text-xs font-semibold text-amber-600">
-              ({totalCount > 0 ? Math.round((atRiskCount / totalCount) * 100) : 0}%)
-            </span>
+          {/* At Risk */}
+          <div className="flex items-center gap-3 pt-3 sm:pt-0 sm:px-4">
+            <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 leading-tight">
+                <span className="text-[11px] font-medium text-slate-500">At Risk</span>
+                {totalCount > 0 && (
+                  <span className="text-[10px] font-semibold text-amber-600">
+                    {Math.round((atRiskCount / totalCount) * 100)}%
+                  </span>
+                )}
+              </div>
+              <span className="text-lg font-bold text-slate-900 tracking-tight leading-none mt-0.5 block font-mono">
+                {atRiskCount}
+              </span>
+            </div>
           </div>
-          <p className="mt-1.5 text-xs text-amber-700">
-            Approaching threshold tolerance
-          </p>
-        </div>
 
-        <div className="rounded-xl border border-rose-200/80 bg-rose-50/40 p-4 shadow-2xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-rose-800">
-            Behind Targets
-          </span>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-mono text-2xl font-bold tracking-tight text-rose-700">
-              {behindCount}
-            </span>
-            <span className="text-xs font-semibold text-rose-600">
-              ({totalCount > 0 ? Math.round((behindCount / totalCount) * 100) : 0}%)
-            </span>
+          {/* Behind Target */}
+          <div className="flex items-center gap-3 pt-3 sm:pt-0 sm:pl-4">
+            <span className="h-2 w-2 rounded-full bg-rose-500 shrink-0" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 leading-tight">
+                <span className="text-[11px] font-medium text-slate-500">Behind Target</span>
+                {totalCount > 0 && (
+                  <span className="text-[10px] font-semibold text-rose-600">
+                    {Math.round((behindCount / totalCount) * 100)}%
+                  </span>
+                )}
+              </div>
+              <span className="text-lg font-bold text-slate-900 tracking-tight leading-none mt-0.5 block font-mono">
+                {behindCount}
+              </span>
+            </div>
           </div>
-          <p className="mt-1.5 text-xs text-rose-700">
-            Requires executive operational intervention
-          </p>
         </div>
       </div>
 
-      {/* Filter & Search Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white border border-slate-200 rounded-xl shadow-2xs">
-        <div className="relative flex-1 min-w-[240px] max-w-md">
+      {/* Filter & Search Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
           <input
             type="text"
             placeholder="Search KPIs by name, formula, or description..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50/70 py-1.5 pl-9 pr-3 text-xs text-slate-900 placeholder-slate-400 transition hover:border-slate-300 focus:border-blue-600 focus:bg-white focus:outline-none"
+            className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-xs text-slate-900 placeholder-slate-400 transition hover:border-slate-300 focus:border-blue-600 focus:outline-none shadow-2xs"
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white py-1.5 px-2.5 text-xs text-slate-700 transition hover:border-slate-300 focus:border-blue-600 focus:outline-none"
+            className="rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-700 transition hover:border-slate-300 focus:border-blue-600 focus:outline-none shadow-2xs"
           >
             <option value="all">All Metric Types</option>
             <option value="currency">Currency (₹)</option>
@@ -412,43 +409,54 @@ export default function KpisPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white py-1.5 px-2.5 text-xs text-slate-700 transition hover:border-slate-300 focus:border-blue-600 focus:outline-none"
+            className="rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-700 transition hover:border-slate-300 focus:border-blue-600 focus:outline-none shadow-2xs"
           >
             <option value="all">All Statuses</option>
             <option value="on_track">On Track</option>
             <option value="at_risk">At Risk</option>
-            <option value="behind">Behind</option>
+            <option value="behind">Behind Target</option>
           </select>
         </div>
       </div>
 
       {/* KPI Cards Grid */}
       {isLoading ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-12 flex flex-col items-center justify-center space-y-3">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          <p className="text-xs font-medium text-slate-500">
+        <div className="rounded-xl border border-slate-200/90 bg-white p-12 flex flex-col items-center justify-center space-y-3 shadow-2xs">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+          <p className="text-xs text-slate-500">
             Calculating dynamic metric aggregations against dataset records...
           </p>
         </div>
       ) : filteredMetrics.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-12 text-center space-y-3">
-          <Gauge className="h-10 w-10 text-slate-300 mx-auto" />
-          <h3 className="text-sm font-bold text-slate-800">No matching KPI metrics found</h3>
+        <div className="rounded-xl border border-slate-200/90 bg-white p-12 text-center space-y-3 shadow-2xs">
+          <Gauge className="h-8 w-8 text-slate-300 mx-auto" />
+          <h3 className="text-sm font-semibold text-slate-800">No matching KPI metrics found</h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
             Try adjusting your search filters or define a new metric formula linked to your datasets.
           </p>
-          {!isViewer && (
+          {(searchQuery || typeFilter !== 'all' || statusFilter !== 'all') ? (
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setTypeFilter('all');
+                setStatusFilter('all');
+              }}
+              className="mt-1 text-xs text-blue-600 hover:text-blue-700 font-medium inline-block"
+            >
+              Reset filters
+            </button>
+          ) : !isViewer ? (
             <button
               onClick={handleCreateNew}
-              className="mt-2 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition"
+              className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-2xs"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>Define Metric</span>
             </button>
-          )}
+          ) : null}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
           {filteredMetrics.map((metric) => {
             const target = Number(metric.target_value);
             const current = Number(metric.current_value);
@@ -457,19 +465,18 @@ export default function KpisPage() {
             return (
               <div
                 key={metric.id}
-                className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs hover:shadow-xs transition flex flex-col justify-between space-y-4"
+                className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-2xs hover:border-slate-300 hover:shadow-xs transition-all flex flex-col justify-between h-full"
               >
                 <div>
-                  {/* Top Bar: Name & Status */}
-                  <div className="flex items-start justify-between gap-2">
+                  {/* 1. KPI Name & Status Badge */}
+                  <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-bold text-slate-900 truncate">
-                          {metric.name}
-                        </h3>
-                      </div>
-                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
-                        {metric.description || 'No business description provided.'}
+                      <h3 className="text-sm font-semibold text-slate-900 truncate" title={metric.name}>
+                        {metric.name}
+                      </h3>
+                      {/* 2. Short Description */}
+                      <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                        {metric.description || 'No description provided.'}
                       </p>
                     </div>
 
@@ -478,39 +485,26 @@ export default function KpisPage() {
                     </div>
                   </div>
 
-                  {/* Calculated Value Display */}
-                  <div className="mt-4 flex items-baseline justify-between">
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-mono">
-                        Live Calculated Value
-                      </span>
-                      <span className="font-mono text-2xl font-bold tracking-tight text-slate-900 mt-0.5 block">
-                        {formatValue(metric.current_value, metric.type, metric.unit)}
-                      </span>
+                  {/* 3. Large Current Value & 4. Subtle Target */}
+                  <div className="mt-4">
+                    <div className="font-mono text-2xl font-bold tracking-tight text-slate-900">
+                      {formatValue(metric.current_value, metric.type, metric.unit)}
                     </div>
-
-                    {target > 0 && (
-                      <div className="text-right">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-mono">
-                          Target
-                        </span>
-                        <span className="font-mono text-xs font-semibold text-slate-600 mt-0.5 block">
-                          {formatValue(metric.target_value, metric.type, metric.unit)}
-                        </span>
-                      </div>
-                    )}
+                    <div className="text-xs text-slate-500 font-normal mt-0.5">
+                      {target > 0 ? (
+                        <span>Target {formatValue(metric.target_value, metric.type, metric.unit)}</span>
+                      ) : (
+                        <span className="text-slate-400">No target defined</span>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Target Progress Bar */}
-                  {target > 0 && (
-                    <div className="mt-3 space-y-1">
-                      <div className="flex justify-between text-[10px] font-mono font-medium text-slate-500">
-                        <span>Target Progress</span>
-                        <span>{progress}%</span>
-                      </div>
-                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  {/* 5. Thin Progress Indicator with Percentage */}
+                  {target > 0 ? (
+                    <div className="mt-3.5 flex items-center gap-2.5">
+                      <div className="h-1.5 flex-1 bg-slate-100 rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all duration-500 ${
+                          className={`h-full rounded-full transition-all duration-300 ${
                             metric.status === 'on_track'
                               ? 'bg-emerald-500'
                               : metric.status === 'at_risk'
@@ -520,36 +514,38 @@ export default function KpisPage() {
                           style={{ width: `${Math.min(progress, 100)}%` }}
                         />
                       </div>
+                      <span className="text-xs font-semibold text-slate-600 shrink-0 font-mono">
+                        {progress}%
+                      </span>
                     </div>
-                  )}
-
-                  {/* Formula String Tag */}
-                  <div className="mt-4 p-2 bg-slate-50 rounded-lg border border-slate-100 font-mono text-[11px] text-slate-700 flex items-center justify-between">
-                    <span className="text-slate-400 text-[10px] uppercase font-bold">Formula:</span>
-                    <span className="font-semibold text-blue-700 truncate max-w-[180px]">{metric.formula}</span>
-                  </div>
-
-                  {/* Attached Dataset Tag */}
-                  {metric.dataset_name && (
-                    <div className="mt-2 flex items-center gap-1.5 text-[10.5px] text-slate-500">
-                      <Table2 className="h-3 w-3 text-slate-400 shrink-0" />
-                      <span className="truncate">{metric.dataset_name}</span>
-                    </div>
+                  ) : (
+                    <div className="mt-3.5 h-1.5" />
                   )}
                 </div>
 
-                {/* Card Footer: Metadata & Actions */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-slate-400">
-                    Type: {metric.type ? metric.type.toUpperCase() : 'NUMERIC'}
-                  </span>
+                {/* 6. Formula + Dataset Compact Metadata & 7. Actions */}
+                <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <div className="min-w-0 flex items-center gap-1.5 text-[11px] text-slate-500">
+                    <span className="font-mono text-slate-600 font-medium shrink-0" title={metric.formula}>
+                      {metric.formula}
+                    </span>
+                    {metric.dataset_name && (
+                      <>
+                        <span className="text-slate-300 shrink-0">·</span>
+                        <span className="truncate text-slate-400" title={metric.dataset_name}>
+                          {metric.dataset_name}
+                        </span>
+                      </>
+                    )}
+                  </div>
 
                   {!isViewer && (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-0.5 shrink-0">
                       <button
                         onClick={() => handleEdit(metric)}
-                        className="p-1.5 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition"
-                        title="Edit Metric Configuration"
+                        className="p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                        title="Edit Metric"
+                        aria-label={`Edit ${metric.name}`}
                       >
                         <Edit3 className="h-3.5 w-3.5" />
                       </button>
@@ -559,6 +555,7 @@ export default function KpisPage() {
                         disabled={isDeleting === metric.id}
                         className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition disabled:opacity-40"
                         title="Delete Metric"
+                        aria-label={`Delete ${metric.name}`}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
