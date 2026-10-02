@@ -1506,14 +1506,16 @@ export default function DashboardPage() {
       {/* 4. OVERVIEW MODE: Built-in Single Dataset Analytics Engine (Phase 5)  */}
       {/* -------------------------------------------------------------------- */}
       {activeDashboardId === 'overview' && (
-        <div className="space-y-6">
+        <section className="max-w-7xl mx-auto space-y-8">
           {/* Header Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-4 pb-1">
+          <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200">
             <div>
               <div className="flex flex-wrap items-center gap-3">
                 <h2 className="text-xl font-bold tracking-tight text-slate-900">
                   Analytics Overview
                 </h2>
+                <p className="text-sm text-slate-600">Comprehensive view of your selected dataset with key metrics and insights.</p>
+
                 <DatasetSelector
                   datasets={datasets}
                   selectedDatasetId={selectedDatasetId}
@@ -1538,19 +1540,21 @@ export default function DashboardPage() {
           </div>
 
           {/* Global Filter Strip */}
-          <DynamicFilterBar
-            filters={filters}
-            filterOptions={summaryData?.filterOptions || {}}
-            dimensions={summaryData?.dimensions || {}}
-            onFilterChange={handleFilterChange}
-            onResetFilters={handleResetFilters}
-            onRefresh={handleRefresh}
-            isRefreshing={isRefreshing}
-          />
+          <section className="my-6 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+            <DynamicFilterBar
+              filters={filters}
+              filterOptions={summaryData?.filterOptions || {}}
+              dimensions={summaryData?.dimensions || {}}
+              onFilterChange={handleFilterChange}
+              onResetFilters={handleResetFilters}
+              onRefresh={handleRefresh}
+              isRefreshing={isRefreshing}
+            />
+          </section>
 
-          {/* Dynamic KPI Section */}
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">Key Performance Indicators</h2>
           {kpiData ? (
-            <section className="rounded-xl border border-slate-200/90 bg-white divide-y sm:divide-y-0 sm:divide-x divide-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 overflow-hidden shadow-2xs">
+            <section className="rounded-xl border border-slate-200/90 bg-white divide-y sm:divide-y-0 sm:divide-x divide-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 overflow-hidden shadow-md p-4 gap-4">
               <StatCard
                 title={summaryData?.dimensions?.primaryMetric ? `Total ${formatMetricLabel(summaryData.dimensions.primaryMetric)}` : 'Total Revenue'}
                 value={formatCurrency(kpiData.totalSales)}
@@ -1588,6 +1592,7 @@ export default function DashboardPage() {
           )}
 
           {/* Visualizations Row 1: Time-Series Trend + Regional Commercial Hubs */}
+          <h3 className="col-span-full text-lg font-semibold text-slate-800 mb-2">Revenue & Regional Overview</h3>
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <ChartCard
               title={summaryData?.dimensions?.primaryMetric ? `${formatMetricLabel(summaryData.dimensions.primaryMetric)} Trend` : 'Revenue Trend'}
@@ -1645,6 +1650,7 @@ export default function DashboardPage() {
           </section>
 
           {/* Visualizations Row 2: Sales Channel Breakdown + Product Performance */}
+          <h3 className="col-span-full text-lg font-semibold text-slate-800 mb-2">Channel & Product Insights</h3>
           <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ChartCard
               title="Channel Distribution"
@@ -1690,7 +1696,8 @@ export default function DashboardPage() {
           </section>
 
           {/* Dynamic Paginated Data Table */}
-          <section>
+          <section className="mt-8 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+            <h3 className="text-lg font-semibold text-slate-800 mb-4">Detailed Records</h3>
             <DynamicDataTable
               columns={summaryData?.dataset?.schema || []}
               rows={tableData.rows}

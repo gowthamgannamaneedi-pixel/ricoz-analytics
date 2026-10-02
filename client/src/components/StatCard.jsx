@@ -23,7 +23,7 @@ export default function StatCard({
   isPrimary = false
 }) {
   return (
-    <div className="relative p-4 sm:p-5 bg-white transition-colors hover:bg-slate-50/50">
+    <div className={`relative p-4 sm:p-5 bg-white border border-slate-200 rounded-xl shadow-sm transition-colors hover:bg-slate-50/50 ${isPrimary ? 'bg-brand-50 border-brand-200' : ''}`}>
       {/* Metric Label */}
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold text-slate-600">

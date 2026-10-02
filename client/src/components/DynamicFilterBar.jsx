@@ -50,7 +50,7 @@ export default function DynamicFilterBar({
   const products = filterOptions.products || [];
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-y border-slate-200/90 py-2.5 bg-white font-sans">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-y border-slate-200/90 py-2.5 bg-white rounded-xl shadow-sm font-sans">
       {/* Left: Dynamic Filter Controls */}
       <div className="flex flex-wrap items-center gap-2.5">
         {/* Date Range Selector (only if dataset has dates) */}
@@ -65,7 +65,7 @@ export default function DynamicFilterBar({
                   onClick={() => onFilterChange('dateRange', opt.value)}
                   className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                     isActive
-                      ? 'bg-white text-blue-700 font-semibold shadow-2xs'
+                      ? 'bg-brand-50 text-brand-700 font-semibold shadow-sm'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -78,7 +78,7 @@ export default function DynamicFilterBar({
 
         {/* Region Filter */}
         {regionCol && regions.length > 0 && (
-          <div className="flex items-center gap-1.5 rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-xs text-slate-700 hover:border-slate-300 transition shadow-2xs">
+          <div className="flex items-center gap-1.5 rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-xs text-slate-700 hover:border-slate-300 transition shadow-sm">
             <MapPin className="h-3.5 w-3.5 text-slate-400" />
             <select
               id="dynamic-filter-region"
@@ -99,7 +99,7 @@ export default function DynamicFilterBar({
 
         {/* Channel Filter */}
         {channelCol && channels.length > 0 && (
-          <div className="flex items-center gap-1.5 rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-xs text-slate-700 hover:border-slate-300 transition shadow-2xs">
+          <div className="flex items-center gap-1.5 rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-xs text-slate-700 hover:border-slate-300 transition shadow-sm">
             <Layers className="h-3.5 w-3.5 text-slate-400" />
             <select
               id="dynamic-filter-channel"
@@ -120,7 +120,7 @@ export default function DynamicFilterBar({
 
         {/* Category Filter */}
         {categoryCol && categories.length > 0 && (
-          <div className="flex items-center gap-1.5 rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-xs text-slate-700 hover:border-slate-300 transition shadow-2xs">
+          <div className="flex items-center gap-1.5 rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-xs text-slate-700 hover:border-slate-300 transition shadow-sm">
             <ShoppingBag className="h-3.5 w-3.5 text-slate-400" />
             <select
               id="dynamic-filter-category"
@@ -144,7 +144,7 @@ export default function DynamicFilterBar({
           <button
             type="button"
             onClick={onResetFilters}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition shadow-2xs"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-brand-600 hover:bg-brand-50 border border-brand-200 transition shadow-sm"
           >
             <X className="h-3.5 w-3.5" />
             <span>Reset Filters</span>
@@ -159,9 +159,9 @@ export default function DynamicFilterBar({
           onClick={onRefresh}
           disabled={isRefreshing}
           id="dashboard-refresh-btn"
-          className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 shadow-2xs"
+          className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 shadow-sm"
         >
-          <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
+          <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-brand-600' : ''}`} />
           <span>{isRefreshing ? 'Recalculating...' : 'Refresh'}</span>
         </button>
       </div>

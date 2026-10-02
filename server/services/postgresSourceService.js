@@ -1,4 +1,5 @@
 const { Client } = require('pg');
+const { validateUrl } = require('../utils/urlSecurity');
 
 /**
  * PostgreSQL Data Source Service
@@ -35,7 +36,8 @@ async function testPostgresConnection({ host, port = 5432, database, user, passw
   if (!host || !database || !user) {
     throw new Error('Host, database name, and username are required.');
   }
-
+  // Validate host to prevent SSRF/internal connections
+  try { await validateUrl(`http://${host}`); } catch (e) { throw new Error(`Disallowed PostgreSQL host: ${e.message}`); }
   const client = new Client({
     host,
     port: Number(port) || 5432,

@@ -109,7 +109,7 @@ export default function DynamicDataTable({
   };
 
   return (
-    <div className="rounded-xl border border-slate-200/90 bg-white overflow-hidden shadow-2xs font-sans">
+    <div className="rounded-xl border border-slate-200/90 bg-white overflow-hidden shadow-md font-sans">
       {/* Table Header / Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-slate-100 bg-white">
         <div>

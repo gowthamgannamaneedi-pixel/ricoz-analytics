@@ -69,7 +69,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
       {/* Sidebar Shell */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 flex w-60 flex-col border-r border-slate-200 bg-white transition-transform duration-200 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-50 flex w-60 flex-col border-r border-slate-200 bg-slate-50 transition-transform duration-200 ease-in-out lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -107,7 +107,7 @@ export default function Sidebar({ isOpen, onClose }) {
                 className={({ isActive }) =>
                   `group relative flex items-center justify-between rounded-md px-3 py-2 text-xs font-medium transition-all ${
                     isActive
-                      ? 'bg-blue-50 text-blue-700 font-semibold'
+                      ? 'bg-brand-100 text-brand-700 font-semibold'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`
                 }

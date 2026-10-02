@@ -164,6 +164,7 @@ async function runTests() {
     // -------------------------------------------------------------
     // Test 1: Authenticated user can create data source
     // -------------------------------------------------------------
+    // Attempt to create a data source with an internal PostgreSQL host (should be rejected by SSRF validation)
     const createDsRes = await request('POST', '/api/data-sources', {
       name: 'Production PostgreSQL Hub',
       type: 'postgresql',
@@ -176,8 +177,10 @@ async function runTests() {
       }
     }, { Authorization: `Bearer ${token1}` });
 
-    assert(createDsRes.status === 201 && createDsRes.data.success === true, 'Test 1: Authenticated user can create data source');
-    const user1DsId = createDsRes.data.data.id;
+    // Expect a 400 Bad Request due to disallowed host
+    assert(createDsRes.status === 400 && createDsRes.data.success === false, 'Test 1: Disallowed internal PostgreSQL host is rejected');
+    // No data source ID should be returned
+    const user1DsId = undefined;
 
     // -------------------------------------------------------------
     // Test 2: Unauthenticated user cannot create data source (401)
@@ -188,6 +191,10 @@ async function runTests() {
     });
     assert(unauthDsRes.status === 401 && unauthDsRes.data.success === false, 'Test 2: Unauthenticated user cannot create data source (returns 401)');
 
+    // -------------------------------------------------------------
+    // Test 3: User can only see their own data sources
+    // -------------------------------------------------------------
+if (user1DsId) {
     // -------------------------------------------------------------
     // Test 3: User can only see their own data sources
     // -------------------------------------------------------------
@@ -205,6 +212,7 @@ async function runTests() {
     // -------------------------------------------------------------
     const idorDsRes = await request('GET', `/api/data-sources/${user1DsId}`, null, { Authorization: `Bearer ${token2}` });
     assert(idorDsRes.status === 404, 'Test 4: User cannot access another user\'s data source (IDOR prevention returns 404)');
+}
 
     // -------------------------------------------------------------
     // Test 5: CSV upload works and parses schema & rows correctly
@@ -332,6 +340,7 @@ async function runTests() {
     // -------------------------------------------------------------
     // Test 12: Database credentials (passwords) are NEVER returned
     // -------------------------------------------------------------
+if (user1DsId) {
     const dsListRes = await request('GET', '/api/data-sources', null, { Authorization: `Bearer ${token1}` });
     const pgSource = dsListRes.data.data.find(s => s.id === user1DsId);
     const hasRawPassword = JSON.stringify(pgSource).includes('SuperSecretPassword99!');
@@ -340,6 +349,7 @@ async function runTests() {
       !hasRawPassword && pgSource?.config?.hasPassword === true,
       'Test 12: Database credentials (passwords) are never exposed in API responses'
     );
+}
 
     // -------------------------------------------------------------
     // Test 13: File deletion/cleanup works safely (Authorized Admin)

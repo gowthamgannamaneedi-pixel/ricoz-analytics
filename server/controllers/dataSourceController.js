@@ -1,4 +1,5 @@
 const path = require('path');
+const { validateUrl } = require('../utils/urlSecurity');
 const DataSource = require('../models/dataSourceModel');
 const Dataset = require('../models/datasetModel');
 const storage = require('../storage');
@@ -126,11 +127,23 @@ const createDataSource = async (req, res, next) => {
         });
       }
 
-      // Ensure url is explicitly set on config
+        // SSRF protection: validate URL safety
+        try {
+          await validateUrl(url);
+        } catch (e) {
+          return res.status(400).json({ success: false, message: e.message });
+        }
+        // Ensure url is explicitly set on config
       config.url = url;
       config.endpoint_url = url;
 
       try {
+        // SSRF protection: validate URL safety
+        try {
+          await validateUrl(url);
+        } catch (e) {
+          return res.status(400).json({ success: false, message: e.message });
+        }
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 10000);
         const apiRes = await fetch(url, {
@@ -234,6 +247,12 @@ const testApiConnection = async (req, res, next) => {
         success: false,
         message: 'A valid HTTP or HTTPS URL is required.'
       });
+    }
+    // SSRF protection: validate URL safety
+    try {
+      await validateUrl(url);
+    } catch (e) {
+      return res.status(400).json({ success: false, message: e.message });
     }
 
     const controller = new AbortController();

@@ -90,7 +90,7 @@ export default function Navbar({ onOpenSidebar }) {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-15 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-slate-50 shadow-sm px-4 sm:px-6">
       {/* Left: Mobile Toggle & Breadcrumb */}
       <div className="flex items-center gap-3">
         <button
@@ -107,7 +107,7 @@ export default function Navbar({ onOpenSidebar }) {
           <ChevronRight className="h-3 w-3 text-slate-300 hidden sm:inline" />
           <span className="text-slate-500 hidden sm:inline font-medium">Production</span>
           <ChevronRight className="h-3 w-3 text-slate-300 hidden sm:inline" />
-          <span className="font-semibold text-slate-900">{currentTitle}</span>
+          <span className="font-semibold text-brand-700">{currentTitle}</span>
         </nav>
       </div>
 
@@ -127,7 +127,7 @@ export default function Navbar({ onOpenSidebar }) {
             placeholder="Search metrics, reports..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-52 lg:w-64 rounded-lg border border-slate-200 bg-slate-50/80 py-1.5 pl-9 pr-12 text-xs text-slate-800 placeholder-slate-400 transition hover:border-slate-300 focus:border-blue-600 focus:bg-white focus:outline-none"
+            className="w-52 lg:w-64 rounded-lg border border-slate-200 bg-slate-100 py-1.5 pl-9 pr-12 text-xs text-slate-800 placeholder-slate-400 transition hover:border-brand-500 focus:border-brand-500 focus:bg-white focus:outline-none"
           />
           <kbd className="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[9px] text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-2xs">
             Ctrl+K
@@ -143,7 +143,7 @@ export default function Navbar({ onOpenSidebar }) {
           >
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 font-mono text-[9px] font-bold text-white ring-2 ring-white">
+              <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-600 font-mono text-[9px] font-bold text-white ring-2 ring-white">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -214,11 +214,11 @@ export default function Navbar({ onOpenSidebar }) {
         <div className="relative">
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="flex items-center gap-2 rounded-lg p-1 text-left transition hover:bg-slate-50"
+            className="flex items-center gap-2 rounded-lg p-1 text-left transition hover:bg-brand-50"
             id="navbar-profile-btn"
           >
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 border border-blue-200 font-mono text-[11px] font-bold text-blue-700">
-              {getInitials(user?.name)}
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-50 border border-brand-200 font-mono text-[11px] font-bold text-brand-700 relative">
+              {getInitials(user?.name)}<span className="absolute bottom-0 right-0 block h-2 w-2 rounded-full bg-emerald-500 border-2 border-white"></span>
             </div>
             <div className="hidden sm:block">
               <span className="text-xs font-semibold text-slate-800 block leading-tight max-w-[110px] truncate">
