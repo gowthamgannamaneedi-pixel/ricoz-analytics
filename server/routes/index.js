@@ -16,6 +16,7 @@ const relationshipRoutes = require('./relationshipRoutes');
 const dataQualityRoutes = require('./dataQualityRoutes');
 const insightRoutes = require('./insightRoutes');
 const collaborationRoutes = require('./collaborationRoutes');
+const demoRequestRoutes = require('./demoRequestRoutes');
 
 // Mount routes onto /api prefix
 router.use('/', healthRoutes);
@@ -33,6 +34,8 @@ router.use('/forecasts', forecastRoutes);
 router.use('/ai', aiRoutes);
 router.use('/insights', insightRoutes);
 router.use('/collaboration', collaborationRoutes);
+router.use('/demo-request', demoRequestRoutes);
+router.use('/demo-requests', demoRequestRoutes);
 router.use('/admin', adminRoutes);
 
 module.exports = router;

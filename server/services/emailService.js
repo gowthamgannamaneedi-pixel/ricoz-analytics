@@ -247,6 +247,165 @@ class EmailService {
       };
     }
   }
+
+  /**
+   * Send Enterprise Demo Request Notification Email to the Ricoz Team
+   * @param {{
+   *   fullName: string,
+   *   workEmail: string,
+   *   company: string,
+   *   teamSize: string,
+   *   primaryDataSource: string,
+   *   phone?: string,
+   *   notes?: string,
+   *   requestedAt?: Date|string
+   * }} options
+   * @returns {Promise<{ attempted: boolean, success: boolean, messageId?: string, error?: string, recipient: string }>}
+   */
+  async sendDemoRequestEmail({
+    fullName,
+    workEmail,
+    company,
+    teamSize,
+    primaryDataSource,
+    phone = null,
+    notes = null,
+    requestedAt = new Date()
+  }) {
+    const recipient = process.env.DEMO_REQUEST_EMAIL || 'care@ricoz.in';
+    const fromEmail = process.env.REPORT_FROM_EMAIL || 'notifications@ricozanalytics.com';
+    const formattedDate = new Date(requestedAt).toLocaleString('en-US', {
+      timeZone: 'Asia/Kolkata',
+      dateStyle: 'full',
+      timeStyle: 'long'
+    }) + ` (${new Date(requestedAt).toUTCString()})`;
+
+    const htmlContent = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 24px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b;">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 24px; border-radius: 8px; color: #ffffff; text-align: left; border-bottom: 3px solid #dc2626;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <h1 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">
+                <span style="color: #ef4444;">RICOZ</span> ANALYTICS
+              </h1>
+              <p style="margin: 4px 0 0 0; font-size: 13px; color: #94a3b8; font-weight: 500;">
+                Enterprise Architecture Inbound Lead
+              </p>
+            </div>
+            <span style="background-color: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase;">
+              New Inbound Demo
+            </span>
+          </div>
+        </div>
+
+        <!-- Headline -->
+        <div style="padding: 24px 0 12px 0;">
+          <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">
+            New RicozAnalytics Demo Request
+          </h2>
+          <p style="font-size: 14px; color: #64748b; margin: 0; line-height: 1.5;">
+            A prospective enterprise lead has requested a guided architecture walkthrough and live cockpit consultation.
+          </p>
+        </div>
+
+        <!-- Details Card -->
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin: 16px 0;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <tr>
+              <td style="padding: 10px 0; color: #64748b; font-weight: 600; width: 40%; border-bottom: 1px solid #f1f5f9;">Full Name</td>
+              <td style="padding: 10px 0; color: #0f172a; font-weight: 700; border-bottom: 1px solid #f1f5f9;">${fullName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; color: #64748b; font-weight: 600; border-bottom: 1px solid #f1f5f9;">Work Email</td>
+              <td style="padding: 10px 0; color: #dc2626; font-weight: 700; font-family: monospace; font-size: 14px; border-bottom: 1px solid #f1f5f9;">
+                <a href="mailto:${workEmail}" style="color: #dc2626; text-decoration: none;">${workEmail}</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; color: #64748b; font-weight: 600; border-bottom: 1px solid #f1f5f9;">Company / Organization</td>
+              <td style="padding: 10px 0; color: #0f172a; font-weight: 600; border-bottom: 1px solid #f1f5f9;">${company}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; color: #64748b; font-weight: 600; border-bottom: 1px solid #f1f5f9;">Team / Branch Size</td>
+              <td style="padding: 10px 0; color: #0f172a; font-weight: 600; border-bottom: 1px solid #f1f5f9;">${teamSize}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; color: #64748b; font-weight: 600; border-bottom: 1px solid #f1f5f9;">Primary Data Source</td>
+              <td style="padding: 10px 0; color: #0f172a; font-weight: 600; border-bottom: 1px solid #f1f5f9;">${primaryDataSource}</td>
+            </tr>
+            ${phone ? `
+            <tr>
+              <td style="padding: 10px 0; color: #64748b; font-weight: 600; border-bottom: 1px solid #f1f5f9;">Phone Number</td>
+              <td style="padding: 10px 0; color: #0f172a; font-weight: 600; border-bottom: 1px solid #f1f5f9;">${phone}</td>
+            </tr>
+            ` : ''}
+            ${notes ? `
+            <tr>
+              <td style="padding: 10px 0; color: #64748b; font-weight: 600; border-bottom: 1px solid #f1f5f9;">Inquiry Notes</td>
+              <td style="padding: 10px 0; color: #334155; border-bottom: 1px solid #f1f5f9;">${notes}</td>
+            </tr>
+            ` : ''}
+            <tr>
+              <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Request Date / Time</td>
+              <td style="padding: 10px 0; color: #64748b; font-size: 13px;">${formattedDate}</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Direct Reply Box -->
+        <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 14px 16px; border-radius: 4px; margin-bottom: 20px;">
+          <p style="margin: 0; font-size: 13px; color: #991b1b; line-height: 1.4;">
+            <strong>Pro-tip:</strong> You can click <strong>Reply</strong> in your email client to respond directly to <strong>${fullName}</strong> at <span style="font-family: monospace;">${workEmail}</span>.
+          </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; font-size: 12px; color: #94a3b8; text-align: center;">
+          <p style="margin: 0;">Sent automatically by RicozAnalytics Inbound Notification Engine</p>
+          <p style="margin: 4px 0 0 0;">Recipient: ${recipient}</p>
+        </div>
+      </div>
+    `;
+
+    const mailOptions = {
+      from: `"RicozAnalytics Demo Portal" <${fromEmail}>`,
+      to: recipient,
+      replyTo: `"${fullName}" <${workEmail}>`,
+      subject: `New RicozAnalytics Demo Request: ${fullName} (${company})`,
+      html: htmlContent
+    };
+
+    if (!this.transporter) {
+      console.log(`[Demo Notification Notice] SMTP not configured. Simulating dispatch to ${recipient}:`);
+      console.log(`  Lead: ${fullName} <${workEmail}> | Company: ${company} | Source: ${primaryDataSource} | Team: ${teamSize}`);
+      return {
+        attempted: false,
+        success: false,
+        recipient,
+        error: 'SMTP transport not configured in environment variables (SMTP_HOST, SMTP_USER, SMTP_PASSWORD).'
+      };
+    }
+
+    try {
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log(` Demo request notification email sent successfully (${info.messageId}) to: ${recipient} [Reply-To: ${workEmail}]`);
+      return {
+        attempted: true,
+        success: true,
+        recipient,
+        messageId: info.messageId
+      };
+    } catch (err) {
+      console.error(` Failed to dispatch demo notification email to ${recipient}:`, err.message);
+      return {
+        attempted: true,
+        success: false,
+        recipient,
+        error: err.message
+      };
+    }
+  }
 }
 
 module.exports = new EmailService();

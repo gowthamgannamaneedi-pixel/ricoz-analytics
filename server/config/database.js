@@ -400,6 +400,9 @@ let nextSavedViewId = 1;
 const fallbackNotifications = [];
 let nextNotificationId = 1;
 
+const fallbackDemoRequests = [];
+let nextDemoRequestId = 1;
+
 /**
  * Initialize PostgreSQL connection pool
  */
@@ -3506,6 +3509,37 @@ function handleFallbackQuery(text, params = []) {
     return Promise.resolve({ rows: updated, rowCount: updated.length });
   }
 
+  // ----------------- DEMO REQUESTS -----------------
+  if (normalizedSql.startsWith('insert into demo_requests')) {
+    const [id, fullName, workEmail, company, teamSize, primaryDataSource, phone, notes, metadata] = params;
+    const newDemo = {
+      id: id || `00000000-0000-0000-0000-${String(nextDemoRequestId++).padStart(12, '0')}`,
+      full_name: fullName,
+      work_email: workEmail,
+      company,
+      team_size: teamSize,
+      primary_data_source: primaryDataSource,
+      phone: phone || null,
+      notes: notes || null,
+      status: 'pending',
+      metadata: typeof metadata === 'string' ? JSON.parse(metadata) : (metadata || {}),
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+    fallbackDemoRequests.push(newDemo);
+    return Promise.resolve({
+      rows: [{ ...newDemo }],
+      rowCount: 1
+    });
+  }
+
+  if (normalizedSql.startsWith('select') && normalizedSql.includes('from demo_requests')) {
+    return Promise.resolve({
+      rows: fallbackDemoRequests.map(d => ({ ...d })),
+      rowCount: fallbackDemoRequests.length
+    });
+  }
+
   // Schema creation or other generic commands
   return Promise.resolve({ rows: [], rowCount: 0 });
 }
@@ -3699,5 +3733,7 @@ module.exports = {
     nextRecentlyViewedId = 1;
     nextSavedViewId = 1;
     nextNotificationId = 1;
+    fallbackDemoRequests.length = 0;
+    nextDemoRequestId = 1;
   }
 };
