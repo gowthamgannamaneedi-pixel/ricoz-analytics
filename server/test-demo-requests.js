@@ -25,7 +25,19 @@ async function runDemoRequestTestSuite() {
   const sbStatus = await checkSupabaseConnection();
   assert(sbStatus.configured === true && sbStatus.success === true, 'Supabase credentials and connection verified');
 
-  // Test 2: Demo Request Model Persistence
+  // Test 2: SMTP Diagnostic Status Inspector
+  const smtpStatus = emailService.getSmtpStatus();
+  console.log('\n--- SMTP Gateway Configuration Status ---');
+  console.log(`  Configured: ${smtpStatus.configured ? 'YES (Live SMTP active)' : 'NO (Missing environment variables)'}`);
+  console.log(`  Target Recipient: ${smtpStatus.demoRecipient}`);
+  console.log(`  Sender Email: ${smtpStatus.fromEmail}`);
+  console.log(`  Host: ${smtpStatus.host || '(not set)'}`);
+  console.log(`  Port: ${smtpStatus.port || '(not set)'}`);
+  console.log(`  Missing Vars: ${smtpStatus.missingVars.length > 0 ? smtpStatus.missingVars.join(', ') : 'None'}\n`);
+
+  assert(smtpStatus.demoRecipient === 'care@ricoz.in', 'Notification email target is strictly set to care@ricoz.in');
+
+  // Test 3: Demo Request Model Persistence
   const testPayload = {
     fullName: 'Rajesh Kumar Enterprise',
     workEmail: 'rajesh.kumar@enterprise-retail.com',
@@ -46,11 +58,11 @@ async function runDemoRequestTestSuite() {
     'DemoRequestModel successfully persists and returns record with UUID'
   );
 
-  // Test 3: Querying Demo Requests
+  // Test 4: Querying Demo Requests
   const list = await demoRequestModel.listDemoRequests({ limit: 5 });
   assert(Array.isArray(list) && list.length > 0, 'DemoRequestModel retrieves stored demo requests');
 
-  // Test 4: Email Notification Dispatch Service
+  // Test 5: Email Notification Dispatch Handling
   const emailResult = await emailService.sendDemoRequestEmail({
     fullName: testPayload.fullName,
     workEmail: testPayload.workEmail,
@@ -68,7 +80,7 @@ async function runDemoRequestTestSuite() {
     `Email service routes notification to configured recipient: ${emailResult.recipient}`
   );
 
-  // Test 5: HTTP API Endpoint POST /api/demo-request
+  // Test 6: HTTP API Endpoint POST /api/demo-request
   const httpPayload = JSON.stringify({
     fullName: 'Sunita Sharma',
     workEmail: 'sunita@techhub.in',
@@ -113,7 +125,6 @@ async function runDemoRequestTestSuite() {
 
   if (apiResult.error) {
     console.warn('  HTTP server test note:', apiResult.error);
-    // Test direct controller if server was not running on that port
     assert(true, 'HTTP endpoint logic verified via model and service layer');
   } else {
     assert(
@@ -124,7 +135,7 @@ async function runDemoRequestTestSuite() {
     );
   }
 
-  // Test 6: Validation Rejection on Invalid Email
+  // Test 7: Validation Rejection on Invalid Email
   const invalidPayload = JSON.stringify({
     fullName: 'Invalid User',
     workEmail: 'not-an-email',

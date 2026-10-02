@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, CheckCircle2, PhoneCall, ArrowRight, ShieldCheck, Mail, Building, User, AlertCircle, Loader2 } from 'lucide-react';
+import { API_BASE_URL } from '../../services/api';
 
 export default function DemoModal({ isOpen, onClose }) {
   const [submitted, setSubmitted] = useState(false);
@@ -44,7 +45,7 @@ export default function DemoModal({ isOpen, onClose }) {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/demo-request', {
+      const response = await fetch(`${API_BASE_URL}/demo-request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

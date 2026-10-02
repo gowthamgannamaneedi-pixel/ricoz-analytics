@@ -86,21 +86,25 @@ class DemoRequestController {
         }
       });
 
-      // 3. Dispatch Email Notification to care@ricoz.in (non-blocking for resilience)
-      let emailResult = null;
-      try {
-        emailResult = await emailService.sendDemoRequestEmail({
-          fullName: resolvedName,
-          workEmail: resolvedEmail,
-          company: resolvedCompany,
-          teamSize: resolvedTeamSize,
-          primaryDataSource: resolvedDataSource,
-          phone: resolvedPhone || null,
-          notes: resolvedNotes || null,
-          requestedAt: createdRecord.created_at || new Date()
-        });
-      } catch (mailErr) {
-        console.warn(' Email notification dispatch warning:', mailErr.message);
+      // 3. Dispatch Email Notification to care@ricoz.in
+      console.log(`[DemoRequestController] Processing inquiry for "${resolvedName}" <${resolvedEmail}> (${resolvedCompany})`);
+      const emailResult = await emailService.sendDemoRequestEmail({
+        fullName: resolvedName,
+        workEmail: resolvedEmail,
+        company: resolvedCompany,
+        teamSize: resolvedTeamSize,
+        primaryDataSource: resolvedDataSource,
+        phone: resolvedPhone || null,
+        notes: resolvedNotes || null,
+        requestedAt: createdRecord.created_at || new Date()
+      });
+
+      if (emailResult.attempted && !emailResult.success) {
+        console.error(`[DemoRequestController] ❌ Email dispatch failed for inquiry [${createdRecord.id}]:`, emailResult.error);
+      } else if (emailResult.success) {
+        console.log(`[DemoRequestController] ✅ Email dispatched for inquiry [${createdRecord.id}] (Message ID: ${emailResult.messageId})`);
+      } else {
+        console.warn(`[DemoRequestController] ⚠️ Email dispatch skipped for inquiry [${createdRecord.id}] — SMTP not configured.`);
       }
 
       return res.status(201).json({
@@ -114,15 +118,59 @@ class DemoRequestController {
           teamSize: createdRecord.team_size,
           primaryDataSource: createdRecord.primary_data_source,
           created_at: createdRecord.created_at,
-          email_dispatched: emailResult ? emailResult.success : false,
+          email_delivery: {
+            attempted: emailResult.attempted || false,
+            success: emailResult.success || false,
+            recipient: emailResult.recipient || 'care@ricoz.in',
+            messageId: emailResult.messageId || null,
+            note: !emailResult.attempted ? 'SMTP transport unconfigured in environment' : undefined
+          },
           supabase_stored: createdRecord.supabase_stored || false
         }
       });
     } catch (error) {
-      console.error(' Error handling demo request submission:', error);
+      console.error('[DemoRequestController] ❌ Error handling demo request submission:', error);
       return res.status(500).json({
         success: false,
         message: 'Something went wrong while submitting your request. Please try again.'
+      });
+    }
+  }
+
+  /**
+   * Safe SMTP Status & Diagnostics
+   * GET /api/demo-request/smtp-status
+   */
+  async getSmtpStatus(req, res) {
+    try {
+      const status = emailService.getSmtpStatus();
+      return res.status(200).json({
+        success: true,
+        data: status
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  /**
+   * Test SMTP Connection Verification
+   * POST /api/demo-request/verify-smtp
+   */
+  async verifySmtp(req, res) {
+    try {
+      const result = await emailService.verifyConnection();
+      return res.status(result.success ? 200 : 503).json({
+        success: result.success,
+        data: result
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message
       });
     }
   }

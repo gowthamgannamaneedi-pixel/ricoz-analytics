@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
 /**
- * Enterprise Email Dispatch Service for Scheduled Reports & Alerts
+ * Enterprise Email Dispatch Service for Scheduled Reports, Alerts & Inbound Demo Inquiries
  */
 class EmailService {
   constructor() {
@@ -14,25 +14,34 @@ class EmailService {
     const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASSWORD;
+    const secure = process.env.SMTP_SECURE === 'true' || port === 465;
 
     if (host && user && pass) {
       try {
         this.transporter = nodemailer.createTransport({
           host,
           port,
-          secure: port === 465,
+          secure,
           auth: {
             user,
             pass
+          },
+          tls: {
+            rejectUnauthorized: process.env.NODE_ENV === 'production'
           }
         });
-        console.log(` EmailService initialized with host: ${host}:${port}`);
+        const maskedUser = user.length > 4 ? `${user.slice(0, 2)}***${user.slice(-2)}` : '***';
+        console.log(`[EmailService] ✅ SMTP transporter initialized successfully (Host: ${host}:${port}, Secure: ${secure}, Sender User: ${maskedUser})`);
       } catch (err) {
-        console.warn(' EmailService transport initialization warning:', err.message);
+        console.error('[EmailService] ❌ SMTP transport initialization exception:', err.message);
         this.transporter = null;
       }
     } else {
-      // Unconfigured SMTP - will log warnings rather than throwing runtime failures
+      const missing = [];
+      if (!host) missing.push('SMTP_HOST');
+      if (!user) missing.push('SMTP_USER');
+      if (!pass) missing.push('SMTP_PASSWORD');
+      console.warn(`[EmailService] ⚠️ SMTP transport not configured. Missing environment variables: ${missing.join(', ')}. Notification emails will be simulated.`);
       this.transporter = null;
     }
   }
@@ -42,7 +51,73 @@ class EmailService {
    * @returns {boolean}
    */
   isConfigured() {
+    if (!this.transporter && process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
+      this._initTransporter();
+    }
     return this.transporter !== null;
+  }
+
+  /**
+   * Safe Diagnostic Status Inspector
+   * @returns {{ configured: boolean, host?: string, port?: number, secure?: boolean, senderUser?: string, fromEmail: string, demoRecipient: string, missingVars: Array<string> }}
+   */
+  getSmtpStatus() {
+    const host = process.env.SMTP_HOST;
+    const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASSWORD;
+    const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+    const fromEmail = process.env.SMTP_FROM || process.env.REPORT_FROM_EMAIL || 'care@ricoz.in';
+    const demoRecipient = process.env.DEMO_REQUEST_EMAIL || 'care@ricoz.in';
+
+    const missingVars = [];
+    if (!host) missingVars.push('SMTP_HOST');
+    if (!user) missingVars.push('SMTP_USER');
+    if (!pass) missingVars.push('SMTP_PASSWORD');
+
+    const maskedUser = user ? (user.length > 4 ? `${user.slice(0, 2)}***${user.slice(-2)}` : '***') : null;
+
+    return {
+      configured: missingVars.length === 0,
+      host: host || null,
+      port: host ? port : null,
+      secure: host ? secure : null,
+      senderUser: maskedUser,
+      fromEmail,
+      demoRecipient,
+      missingVars
+    };
+  }
+
+  /**
+   * Test live SMTP handshake connection
+   * @returns {Promise<{ configured: boolean, success: boolean, message: string, details?: any }>}
+   */
+  async verifyConnection() {
+    if (!this.isConfigured()) {
+      const status = this.getSmtpStatus();
+      return {
+        configured: false,
+        success: false,
+        message: `SMTP not configured. Missing: ${status.missingVars.join(', ')}`
+      };
+    }
+
+    try {
+      await this.transporter.verify();
+      return {
+        configured: true,
+        success: true,
+        message: 'SMTP handshake and authentication verified successfully.'
+      };
+    } catch (err) {
+      return {
+        configured: true,
+        success: false,
+        message: `SMTP connection verification failed: ${err.message}`,
+        errorCode: err.code || null
+      };
+    }
   }
 
   /**
@@ -71,9 +146,9 @@ class EmailService {
       return { attempted: false, success: false, error: 'No recipients provided' };
     }
 
-    const fromEmail = process.env.REPORT_FROM_EMAIL || 'reports@ricozanalytics.com';
+    const fromEmail = process.env.SMTP_FROM || process.env.REPORT_FROM_EMAIL || 'reports@ricozanalytics.com';
 
-    if (!this.transporter) {
+    if (!this.isConfigured()) {
       console.log(`[Email Notice] SMTP not configured. Skipped dispatching report "${reportTitle}" to: ${recipients.join(', ')}`);
       return {
         attempted: false,
@@ -117,14 +192,14 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(` Report email sent successfully (${info.messageId}) to: ${recipients.join(', ')}`);
+      console.log(`[EmailService] Report email sent successfully (${info.messageId}) to: ${recipients.join(', ')}`);
       return {
         attempted: true,
         success: true,
         messageId: info.messageId
       };
     } catch (err) {
-      console.error(` Failed to dispatch report email to ${recipients.join(', ')}:`, err.message);
+      console.error(`[EmailService] Failed to dispatch report email to ${recipients.join(', ')}:`, err.message);
       return {
         attempted: true,
         success: false,
@@ -163,10 +238,10 @@ class EmailService {
       return { attempted: false, success: false, error: 'No recipients provided' };
     }
 
-    const fromEmail = process.env.ALERT_FROM_EMAIL || process.env.REPORT_FROM_EMAIL || 'alerts@ricozanalytics.com';
+    const fromEmail = process.env.SMTP_FROM || process.env.ALERT_FROM_EMAIL || process.env.REPORT_FROM_EMAIL || 'alerts@ricozanalytics.com';
 
-    if (!this.transporter) {
-      console.log(`[Alert Notice] SMTP not configured. Skipped dispatching alert "${alertTitle}" (${severity.toUpperCase()}) to: ${recipients.join(', ')}`);
+    if (!this.isConfigured()) {
+      console.log(`[Email Notice] SMTP not configured. Skipped dispatching alert "${alertTitle}" (${severity.toUpperCase()}) to: ${recipients.join(', ')}`);
       return {
         attempted: false,
         success: false,
@@ -232,14 +307,14 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(` Alert email sent successfully (${info.messageId}) to: ${recipients.join(', ')}`);
+      console.log(`[EmailService] Alert email sent successfully (${info.messageId}) to: ${recipients.join(', ')}`);
       return {
         attempted: true,
         success: true,
         messageId: info.messageId
       };
     } catch (err) {
-      console.error(` Failed to dispatch alert email to ${recipients.join(', ')}:`, err.message);
+      console.error(`[EmailService] Failed to dispatch alert email to ${recipients.join(', ')}:`, err.message);
       return {
         attempted: true,
         success: false,
@@ -260,7 +335,7 @@ class EmailService {
    *   notes?: string,
    *   requestedAt?: Date|string
    * }} options
-   * @returns {Promise<{ attempted: boolean, success: boolean, messageId?: string, error?: string, recipient: string }>}
+   * @returns {Promise<{ attempted: boolean, success: boolean, messageId?: string, response?: string, error?: string, recipient: string, missingVars?: Array<string> }>}
    */
   async sendDemoRequestEmail({
     fullName,
@@ -273,7 +348,7 @@ class EmailService {
     requestedAt = new Date()
   }) {
     const recipient = process.env.DEMO_REQUEST_EMAIL || 'care@ricoz.in';
-    const fromEmail = process.env.REPORT_FROM_EMAIL || 'notifications@ricozanalytics.com';
+    const fromEmail = process.env.SMTP_FROM || process.env.REPORT_FROM_EMAIL || 'care@ricoz.in';
     const formattedDate = new Date(requestedAt).toLocaleString('en-US', {
       timeZone: 'Asia/Kolkata',
       dateStyle: 'full',
@@ -376,33 +451,57 @@ class EmailService {
       html: htmlContent
     };
 
-    if (!this.transporter) {
-      console.log(`[Demo Notification Notice] SMTP not configured. Simulating dispatch to ${recipient}:`);
-      console.log(`  Lead: ${fullName} <${workEmail}> | Company: ${company} | Source: ${primaryDataSource} | Team: ${teamSize}`);
+    console.log('[EmailService] 📨 Attempting demo notification dispatch:');
+    console.log(`  -> Recipient: ${recipient}`);
+    console.log(`  -> Reply-To: "${fullName}" <${workEmail}>`);
+    console.log(`  -> Company: ${company} | Source: ${primaryDataSource} | Team: ${teamSize}`);
+    console.log(`  -> SMTP Configured: ${this.isConfigured() ? 'YES' : 'NO'}`);
+
+    if (!this.isConfigured()) {
+      const status = this.getSmtpStatus();
+      console.warn(`[EmailService] ⚠️ SMTP transport is NOT configured. Missing: ${status.missingVars.join(', ')}.`);
+      console.warn(`[EmailService] ⚠️ To deliver real emails to ${recipient}, please set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, and SMTP_FROM in the production/server environment variables.`);
       return {
         attempted: false,
         success: false,
         recipient,
-        error: 'SMTP transport not configured in environment variables (SMTP_HOST, SMTP_USER, SMTP_PASSWORD).'
+        missingVars: status.missingVars,
+        error: `SMTP transport not configured. Missing environment variables: ${status.missingVars.join(', ')}`
       };
     }
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(` Demo request notification email sent successfully (${info.messageId}) to: ${recipient} [Reply-To: ${workEmail}]`);
+      console.log(`[EmailService] ✅ SMTP Dispatch SUCCESS:`);
+      console.log(`  -> Recipient: ${recipient}`);
+      console.log(`  -> Message ID: ${info.messageId}`);
+      console.log(`  -> SMTP Response: ${info.response || 'OK'}`);
+      console.log(`  -> Accepted: ${info.accepted ? info.accepted.join(', ') : 'none'}`);
+      if (info.rejected && info.rejected.length > 0) {
+        console.warn(`  -> Rejected: ${info.rejected.join(', ')}`);
+      }
+
       return {
         attempted: true,
         success: true,
         recipient,
-        messageId: info.messageId
+        messageId: info.messageId,
+        response: info.response,
+        accepted: info.accepted,
+        rejected: info.rejected
       };
     } catch (err) {
-      console.error(` Failed to dispatch demo notification email to ${recipient}:`, err.message);
+      console.error(`[EmailService] ❌ SMTP Dispatch FAILED:`);
+      console.error(`  -> Recipient: ${recipient}`);
+      console.error(`  -> Error Code: ${err.code || 'UNKNOWN'}`);
+      console.error(`  -> Error Message: ${err.message}`);
+
       return {
         attempted: true,
         success: false,
         recipient,
-        error: err.message
+        error: err.message,
+        code: err.code || 'SMTP_ERROR'
       };
     }
   }
