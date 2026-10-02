@@ -2,6 +2,7 @@ const nodemailer = require('nodemailer');
 
 /**
  * Enterprise Email Dispatch Service for Scheduled Reports, Alerts & Inbound Demo Inquiries
+ * Configured with Zoho Mail SMTP integration.
  */
 class EmailService {
   constructor() {
@@ -10,9 +11,9 @@ class EmailService {
   }
 
   _initTransporter() {
-    const host = process.env.SMTP_HOST;
+    const host = process.env.SMTP_HOST || 'smtp.zoho.com';
     const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
-    const user = process.env.SMTP_USER;
+    const user = process.env.SMTP_USER || 'care@ricoz.in';
     const pass = process.env.SMTP_PASSWORD;
     const secure = process.env.SMTP_SECURE === 'true' || port === 465;
 
@@ -27,13 +28,14 @@ class EmailService {
             pass
           },
           tls: {
-            rejectUnauthorized: process.env.NODE_ENV === 'production'
+            rejectUnauthorized: false
           }
         });
         const maskedUser = user.length > 4 ? `${user.slice(0, 2)}***${user.slice(-2)}` : '***';
-        console.log(`[EmailService] ✅ SMTP transporter initialized successfully (Host: ${host}:${port}, Secure: ${secure}, Sender User: ${maskedUser})`);
+        const isPlaceholder = pass.includes('your_') || pass.includes('placeholder') || pass === 'your_zoho_app_password_here';
+        console.log(`[EmailService] ✅ Zoho SMTP Transporter initialized (Host: ${host}:${port}, Secure: ${secure}, Sender: ${maskedUser}, App Password: ${isPlaceholder ? 'Placeholder' : 'Configured'})`);
       } catch (err) {
-        console.error('[EmailService] ❌ SMTP transport initialization exception:', err.message);
+        console.error('[EmailService] ❌ Zoho SMTP transport initialization exception:', err.message);
         this.transporter = null;
       }
     } else {
@@ -41,7 +43,7 @@ class EmailService {
       if (!host) missing.push('SMTP_HOST');
       if (!user) missing.push('SMTP_USER');
       if (!pass) missing.push('SMTP_PASSWORD');
-      console.warn(`[EmailService] ⚠️ SMTP transport not configured. Missing environment variables: ${missing.join(', ')}. Notification emails will be simulated.`);
+      console.warn(`[EmailService] ⚠️ SMTP transport not configured. Missing environment variables: ${missing.join(', ')}.`);
       this.transporter = null;
     }
   }
@@ -59,12 +61,12 @@ class EmailService {
 
   /**
    * Safe Diagnostic Status Inspector
-   * @returns {{ configured: boolean, host?: string, port?: number, secure?: boolean, senderUser?: string, fromEmail: string, demoRecipient: string, missingVars: Array<string> }}
+   * @returns {{ configured: boolean, host?: string, port?: number, secure?: boolean, senderUser?: string, fromEmail: string, demoRecipient: string, isPlaceholderPassword: boolean, missingVars: Array<string> }}
    */
   getSmtpStatus() {
-    const host = process.env.SMTP_HOST;
+    const host = process.env.SMTP_HOST || 'smtp.zoho.com';
     const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
-    const user = process.env.SMTP_USER;
+    const user = process.env.SMTP_USER || 'care@ricoz.in';
     const pass = process.env.SMTP_PASSWORD;
     const secure = process.env.SMTP_SECURE === 'true' || port === 465;
     const fromEmail = process.env.SMTP_FROM || process.env.REPORT_FROM_EMAIL || 'care@ricoz.in';
@@ -75,6 +77,7 @@ class EmailService {
     if (!user) missingVars.push('SMTP_USER');
     if (!pass) missingVars.push('SMTP_PASSWORD');
 
+    const isPlaceholderPassword = !pass || pass.includes('your_') || pass.includes('placeholder') || pass === 'your_zoho_app_password_here';
     const maskedUser = user ? (user.length > 4 ? `${user.slice(0, 2)}***${user.slice(-2)}` : '***') : null;
 
     return {
@@ -85,13 +88,14 @@ class EmailService {
       senderUser: maskedUser,
       fromEmail,
       demoRecipient,
+      isPlaceholderPassword,
       missingVars
     };
   }
 
   /**
    * Test live SMTP handshake connection
-   * @returns {Promise<{ configured: boolean, success: boolean, message: string, details?: any }>}
+   * @returns {Promise<{ configured: boolean, success: boolean, message: string, errorCode?: string }>}
    */
   async verifyConnection() {
     if (!this.isConfigured()) {
@@ -99,7 +103,7 @@ class EmailService {
       return {
         configured: false,
         success: false,
-        message: `SMTP not configured. Missing: ${status.missingVars.join(', ')}`
+        message: `Zoho SMTP not configured. Missing: ${status.missingVars.join(', ')}`
       };
     }
 
@@ -108,14 +112,18 @@ class EmailService {
       return {
         configured: true,
         success: true,
-        message: 'SMTP handshake and authentication verified successfully.'
+        message: 'Zoho SMTP handshake and authentication verified successfully.'
       };
     } catch (err) {
+      let advice = err.message;
+      if (err.code === 'EAUTH' || err.message.includes('535') || err.message.includes('Authentication Failed')) {
+        advice = 'Zoho SMTP Authentication Failed (535 5.7.8). Please provide a dedicated Zoho App Password (from accounts.zoho.com -> Security -> App Passwords) in SMTP_PASSWORD.';
+      }
       return {
         configured: true,
         success: false,
-        message: `SMTP connection verification failed: ${err.message}`,
-        errorCode: err.code || null
+        message: `Zoho SMTP connection verification failed: ${advice}`,
+        errorCode: err.code || 'EAUTH'
       };
     }
   }
@@ -146,7 +154,7 @@ class EmailService {
       return { attempted: false, success: false, error: 'No recipients provided' };
     }
 
-    const fromEmail = process.env.SMTP_FROM || process.env.REPORT_FROM_EMAIL || 'reports@ricozanalytics.com';
+    const fromEmail = process.env.SMTP_FROM || process.env.REPORT_FROM_EMAIL || 'care@ricoz.in';
 
     if (!this.isConfigured()) {
       console.log(`[Email Notice] SMTP not configured. Skipped dispatching report "${reportTitle}" to: ${recipients.join(', ')}`);
@@ -238,7 +246,7 @@ class EmailService {
       return { attempted: false, success: false, error: 'No recipients provided' };
     }
 
-    const fromEmail = process.env.SMTP_FROM || process.env.ALERT_FROM_EMAIL || process.env.REPORT_FROM_EMAIL || 'alerts@ricozanalytics.com';
+    const fromEmail = process.env.SMTP_FROM || process.env.ALERT_FROM_EMAIL || process.env.REPORT_FROM_EMAIL || 'care@ricoz.in';
 
     if (!this.isConfigured()) {
       console.log(`[Email Notice] SMTP not configured. Skipped dispatching alert "${alertTitle}" (${severity.toUpperCase()}) to: ${recipients.join(', ')}`);
@@ -324,7 +332,7 @@ class EmailService {
   }
 
   /**
-   * Send Enterprise Demo Request Notification Email to the Ricoz Team
+   * Send Enterprise Demo Request Notification Email to the Ricoz Team via Zoho Mail SMTP
    * @param {{
    *   fullName: string,
    *   workEmail: string,
@@ -437,7 +445,7 @@ class EmailService {
 
         <!-- Footer -->
         <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; font-size: 12px; color: #94a3b8; text-align: center;">
-          <p style="margin: 0;">Sent automatically by RicozAnalytics Inbound Notification Engine</p>
+          <p style="margin: 0;">Sent automatically by RicozAnalytics Inbound Notification Engine via Zoho Mail</p>
           <p style="margin: 4px 0 0 0;">Recipient: ${recipient}</p>
         </div>
       </div>
@@ -459,23 +467,22 @@ class EmailService {
 
     if (!this.isConfigured()) {
       const status = this.getSmtpStatus();
-      console.warn(`[EmailService] ⚠️ SMTP transport is NOT configured. Missing: ${status.missingVars.join(', ')}.`);
-      console.warn(`[EmailService] ⚠️ To deliver real emails to ${recipient}, please set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, and SMTP_FROM in the production/server environment variables.`);
+      console.warn(`[EmailService] ⚠️ Zoho SMTP transport is NOT configured. Missing: ${status.missingVars.join(', ')}.`);
       return {
         attempted: false,
         success: false,
         recipient,
         missingVars: status.missingVars,
-        error: `SMTP transport not configured. Missing environment variables: ${status.missingVars.join(', ')}`
+        error: `Zoho SMTP transport not configured. Missing environment variables: ${status.missingVars.join(', ')}`
       };
     }
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(`[EmailService] ✅ SMTP Dispatch SUCCESS:`);
+      console.log(`[EmailService] ✅ Zoho SMTP Dispatch SUCCESS:`);
       console.log(`  -> Recipient: ${recipient}`);
       console.log(`  -> Message ID: ${info.messageId}`);
-      console.log(`  -> SMTP Response: ${info.response || 'OK'}`);
+      console.log(`  -> SMTP Response: ${info.response || '250 OK'}`);
       console.log(`  -> Accepted: ${info.accepted ? info.accepted.join(', ') : 'none'}`);
       if (info.rejected && info.rejected.length > 0) {
         console.warn(`  -> Rejected: ${info.rejected.join(', ')}`);
@@ -486,22 +493,27 @@ class EmailService {
         success: true,
         recipient,
         messageId: info.messageId,
-        response: info.response,
-        accepted: info.accepted,
-        rejected: info.rejected
+        response: info.response || '250 OK',
+        accepted: info.accepted || [recipient],
+        rejected: info.rejected || []
       };
     } catch (err) {
-      console.error(`[EmailService] ❌ SMTP Dispatch FAILED:`);
+      console.error(`[EmailService] ❌ Zoho SMTP Dispatch FAILED:`);
       console.error(`  -> Recipient: ${recipient}`);
       console.error(`  -> Error Code: ${err.code || 'UNKNOWN'}`);
       console.error(`  -> Error Message: ${err.message}`);
+
+      let helpfulAdvice = '';
+      if (err.code === 'EAUTH' || err.message.includes('535') || err.message.includes('Authentication Failed')) {
+        helpfulAdvice = 'Zoho SMTP Authentication Failed (535 5.7.8). Please provide a dedicated Zoho App Password (from accounts.zoho.com -> Security -> App Passwords) in SMTP_PASSWORD.';
+      }
 
       return {
         attempted: true,
         success: false,
         recipient,
-        error: err.message,
-        code: err.code || 'SMTP_ERROR'
+        error: helpfulAdvice ? `${err.message} — ${helpfulAdvice}` : err.message,
+        code: err.code || 'SMTP_AUTH_ERROR'
       };
     }
   }

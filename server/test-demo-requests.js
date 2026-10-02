@@ -1,3 +1,4 @@
+require('dotenv').config();
 const http = require('http');
 const demoRequestModel = require('./models/demoRequestModel');
 const emailService = require('./services/emailService');
