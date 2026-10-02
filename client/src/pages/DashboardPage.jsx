@@ -1715,7 +1715,7 @@ export default function DashboardPage() {
               datasetName={activeDataset?.name}
             />
           </section>
-        </div>
+          </section>
       )}
 
       {/* Modals */}
