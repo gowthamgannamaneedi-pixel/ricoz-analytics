@@ -1174,6 +1174,40 @@ export function getQualityExportUrl(datasetId, format = 'json') {
   return `${API_BASE_URL}/data-quality/datasets/${datasetId}/export?format=${format}`;
 }
 
+/**
+ * Export Data Quality report with authentication, returning a Blob and proper filename.
+ * @param {number|string} datasetId
+ * @param {'pdf'|'excel'|'json'} format
+ * @returns {Promise<{blob: Blob, filename: string}>}
+ */
+export async function exportDataQuality(datasetId, format = 'json') {
+  const url = getQualityExportUrl(datasetId, format);
+  const token = getAuthToken();
+  const headers = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
+  const response = await fetch(url, { headers });
+  if (!response.ok) {
+    const err = new Error(`Export failed with status ${response.status}`);
+    err.statusCode = response.status;
+    throw err;
+  }
+  const blob = await response.blob();
+  // Determine filename from Content-Disposition or fallback
+  const disposition = response.headers.get('content-disposition') || '';
+  let filename = '';
+  const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/i);
+  if (match && match[1]) {
+    filename = match[1].replace(/['\"]/g, '').trim();
+  }
+  if (!filename) {
+    const extMap = { pdf: 'pdf', excel: 'xlsx', json: 'json' };
+    const ext = extMap[format] || format;
+    filename = `data_quality_${datasetId}.${ext}`;
+  }
+  return { blob, filename };
+}
+
 // ==========================================
 // PHASE 16: ADVANCED AI & AUTOMATED INSIGHTS
 // ==========================================

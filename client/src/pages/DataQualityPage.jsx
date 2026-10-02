@@ -31,7 +31,7 @@ import {
   getDataQualityRules,
   createDataQualityRule,
   deleteDataQualityRule,
-  getQualityExportUrl
+  getQualityExportUrl, exportDataQuality
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -63,6 +63,24 @@ export default function DataQualityPage() {
   const [creatingRule, setCreatingRule] = useState(false);
 
   // Load all user/org datasets on mount
+  // Helper to download export with authentication
+  const handleExport = async (format) => {
+    if (!selectedDatasetId) return;
+    try {
+      const { blob, filename } = await exportDataQuality(selectedDatasetId, format);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert(err.message || 'Failed to export data quality report');
+    }
+  };
   useEffect(() => {
     async function loadDatasets() {
       try {
@@ -284,33 +302,27 @@ export default function DataQualityPage() {
           {/* Export Dropdown / Buttons */}
           {selectedDatasetId && (
             <div className="flex items-center gap-1.5">
-              <a
-                href={getQualityExportUrl(selectedDatasetId, 'pdf')}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                onClick={() => handleExport('pdf')}
                 className="px-3 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-medium rounded-xl text-slate-300 hover:text-white transition-all flex items-center gap-1.5"
                 title="Export PDF Audit Report"
               >
                 <FileDown className="w-3.5 h-3.5 text-rose-400" /> PDF
-              </a>
-              <a
-                href={getQualityExportUrl(selectedDatasetId, 'excel')}
-                target="_blank"
-                rel="noreferrer"
+              </button>
+              <button
+                onClick={() => handleExport('excel')}
                 className="px-3 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-medium rounded-xl text-slate-300 hover:text-white transition-all flex items-center gap-1.5"
                 title="Export Excel Audit Workbook"
               >
                 <FileDown className="w-3.5 h-3.5 text-emerald-400" /> Excel
-              </a>
-              <a
-                href={getQualityExportUrl(selectedDatasetId, 'json')}
-                target="_blank"
-                rel="noreferrer"
+              </button>
+              <button
+                onClick={() => handleExport('json')}
                 className="px-3 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-medium rounded-xl text-slate-300 hover:text-white transition-all flex items-center gap-1.5"
                 title="Export JSON Telemetry"
               >
                 <FileDown className="w-3.5 h-3.5 text-blue-400" /> JSON
-              </a>
+              </button>
             </div>
           )}
         </div>
