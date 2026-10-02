@@ -233,6 +233,31 @@ const Dataset = {
     `;
     const res = await db.query(sql, [id]);
     return res.rows[0] || null;
+  },
+
+  /**
+   * Update dataset schema, row count, column count, or file path
+   */
+  async update(id, { name, description, filePath, rowCount, columnCount, schema } = {}) {
+    const fields = [];
+    const values = [];
+    let idx = 1;
+    if (name !== undefined) { fields.push(`name = $${idx++}`); values.push(name.trim()); }
+    if (description !== undefined) { fields.push(`description = $${idx++}`); values.push(description); }
+    if (filePath !== undefined) { fields.push(`file_path = $${idx++}`); values.push(filePath); }
+    if (rowCount !== undefined) { fields.push(`row_count = $${idx++}`); values.push(rowCount); }
+    if (columnCount !== undefined) { fields.push(`column_count = $${idx++}`); values.push(columnCount); }
+    if (schema !== undefined) { fields.push(`schema = $${idx++}`); values.push(typeof schema === 'object' ? JSON.stringify(schema) : schema); }
+    fields.push(`updated_at = CURRENT_TIMESTAMP`);
+    values.push(id);
+    const sql = `
+      UPDATE datasets
+      SET ${fields.join(', ')}
+      WHERE id = $${idx}
+      RETURNING *
+    `;
+    const res = await db.query(sql, values);
+    return res.rows[0] || null;
   }
 };
 

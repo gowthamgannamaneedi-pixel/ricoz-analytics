@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { X, FileSpreadsheet, FileCode, Database, CheckCircle2, AlertCircle, Loader2, ArrowRight, Server } from 'lucide-react';
 import FileUpload from './FileUpload';
 import UploadProgress from './UploadProgress';
-import { API_BASE_URL } from '../services/api';
+import { API_BASE_URL, testApiDataSource, createDataSource } from '../services/api';
 
 /**
  * Enterprise Add Data Source Modal
- * Supports CSV/JSON file ingestion and PostgreSQL database connections
+ * Supports CSV/JSON file ingestion, PostgreSQL databases, and REST API connectors
  * @param {{
  *   isOpen: boolean,
  *   onClose: () => void,
@@ -15,7 +15,7 @@ import { API_BASE_URL } from '../services/api';
  * }} props
  */
 export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }) {
-  const [activeTab, setActiveTab] = useState('csv'); // 'csv' | 'json' | 'postgresql'
+  const [activeTab, setActiveTab] = useState('csv'); // 'csv' | 'json' | 'postgresql' | 'rest_api'
   
   // File Upload State
   const [selectedFile, setSelectedFile] = useState(null);
@@ -39,6 +39,17 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
   });
   const [isTestingPg, setIsTestingPg] = useState(false);
   const [pgTestResult, setPgTestResult] = useState(null);
+
+  // REST API Connector State (Phase 14)
+  const [apiForm, setApiForm] = useState({
+    name: '',
+    url: '',
+    method: 'GET',
+    dataKey: '',
+    headers: ''
+  });
+  const [isTestingApi, setIsTestingApi] = useState(false);
+  const [apiTestResult, setApiTestResult] = useState(null);
 
   if (!isOpen) return null;
 
@@ -176,6 +187,93 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
     }
   };
 
+  // REST API Handlers (Phase 14)
+  const handleApiChange = (e) => {
+    const { name, value } = e.target;
+    setApiForm(prev => ({ ...prev, [name]: value }));
+    setApiTestResult(null);
+    setError('');
+  };
+
+  const handleTestApi = async () => {
+    if (!apiForm.url || (!apiForm.url.startsWith('http://') && !apiForm.url.startsWith('https://'))) {
+      setError('Please provide a valid HTTP/HTTPS endpoint URL to test.');
+      return;
+    }
+    setIsTestingApi(true);
+    setApiTestResult(null);
+    setError('');
+    try {
+      let parsedHeaders = {};
+      if (apiForm.headers.trim()) {
+        try {
+          parsedHeaders = JSON.parse(apiForm.headers);
+        } catch (_) {
+          setError('Headers must be valid JSON format (e.g. {"Authorization": "Bearer ..."})');
+          setIsTestingApi(false);
+          return;
+        }
+      }
+      const res = await testApiDataSource({
+        url: apiForm.url.trim(),
+        method: apiForm.method,
+        headers: parsedHeaders,
+        dataKey: apiForm.dataKey.trim() || undefined
+      });
+      if (res && res.success) {
+        setApiTestResult(res);
+      } else {
+        setError(res?.message || 'Failed to connect to API endpoint.');
+      }
+    } catch (err) {
+      setError(err.message || 'API connection test failed.');
+    } finally {
+      setIsTestingApi(false);
+    }
+  };
+
+  const handleApiSubmit = async (e) => {
+    e.preventDefault();
+    if (!apiForm.name.trim() || !apiForm.url.trim()) {
+      setError('Data Source Name and Endpoint URL are required.');
+      return;
+    }
+    setIsProcessing(true);
+    setError('');
+    try {
+      let parsedHeaders = {};
+      if (apiForm.headers.trim()) {
+        try {
+          parsedHeaders = JSON.parse(apiForm.headers);
+        } catch (_) {
+          setError('Headers must be valid JSON format.');
+          setIsProcessing(false);
+          return;
+        }
+      }
+      const res = await createDataSource({
+        name: apiForm.name.trim(),
+        type: 'rest_api',
+        config: {
+          url: apiForm.url.trim(),
+          method: apiForm.method,
+          headers: parsedHeaders,
+          dataKey: apiForm.dataKey.trim() || undefined
+        }
+      });
+      if (res && res.success) {
+        onSuccess(res.data);
+        handleClose();
+      } else {
+        setError(res?.message || 'Failed to create REST API data source.');
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to create REST API data source.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   // Submit File Upload (CSV/JSON)
   const handleFileUploadSubmit = async (e) => {
     e.preventDefault();
@@ -288,33 +386,42 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
     setIsProcessing(false);
     setError('');
     setPgTestResult(null);
+    setApiTestResult(null);
+    setIsTestingApi(false);
+    setApiForm({
+      name: '',
+      url: '',
+      method: 'GET',
+      dataKey: '',
+      headers: ''
+    });
     onClose();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs font-sans">
-      <div className="w-full max-w-xl rounded-lg border border-slate-200 bg-white shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="w-full max-w-xl rounded-2xl border border-slate-200/90 bg-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-white shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white shrink-0">
           <div>
             <h2 className="text-sm sm:text-base font-bold text-slate-900">
-              Add New Data Source
+              Connect Data Source
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Connect external databases or upload structured tabular files
+              Upload business data files or establish a live database pipeline
             </p>
           </div>
           <button
             onClick={handleClose}
             disabled={isProcessing}
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition disabled:opacity-40"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition disabled:opacity-40"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-200 bg-slate-50/70 px-5 shrink-0">
+        <div className="flex border-b border-slate-200/80 bg-slate-50/60 px-6 shrink-0 gap-1">
           <button
             type="button"
             onClick={() => { setActiveTab('csv'); setError(''); }}
@@ -356,12 +463,26 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
             <Database className="h-4 w-4 text-blue-600" />
             <span>PostgreSQL Database</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => { setActiveTab('rest_api'); setError(''); }}
+            disabled={isProcessing}
+            className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition ${
+              activeTab === 'rest_api'
+                ? 'border-blue-600 text-blue-700 bg-white'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Server className="h-4 w-4 text-purple-600" />
+            <span>REST API Endpoint</span>
+          </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-5 overflow-y-auto space-y-4 flex-1">
+        <div className="p-6 overflow-y-auto space-y-4 flex-1">
           {error && (
-            <div className="flex items-start gap-2.5 rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+            <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50/80 p-3.5 text-xs text-rose-700">
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600" />
               <span>{error}</span>
             </div>
@@ -377,10 +498,10 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                 onFileSelect={handleFileSelect}
               />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1" htmlFor="sourceName">
-                    Data Source Name
+                  <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="sourceName">
+                    Data Source Name *
                   </label>
                   <input
                     id="sourceName"
@@ -390,22 +511,22 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     value={sourceName}
                     onChange={(e) => setSourceName(e.target.value)}
                     disabled={isProcessing}
-                    className="w-full rounded-md border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1" htmlFor="description">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="description">
                     Description (Optional)
                   </label>
                   <input
                     id="description"
                     type="text"
-                    placeholder="e.g. Ingested from branch telemetry"
+                    placeholder="e.g. Ingested from sales ledger"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     disabled={isProcessing}
-                    className="w-full rounded-md border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
                   />
                 </div>
               </div>
@@ -418,12 +539,12 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                 />
               )}
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={handleClose}
                   disabled={isProcessing}
-                  className="rounded-md border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
+                  className="rounded-lg border border-slate-200/90 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
                 >
                   Cancel
                 </button>
@@ -431,7 +552,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   type="submit"
                   disabled={isProcessing || !selectedFile}
                   id="submit-file-source-btn"
-                  className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50 shadow-xs"
+                  className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50 shadow-2xs"
                 >
                   {isProcessing ? (
                     <>
@@ -453,7 +574,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
           {activeTab === 'postgresql' && (
             <form onSubmit={handlePostgresSubmit} className="space-y-4">
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1" htmlFor="pg-name">
+                <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="pg-name">
                   Connection Name *
                 </label>
                 <input
@@ -465,13 +586,13 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   value={pgForm.name}
                   onChange={handlePgChange}
                   disabled={isProcessing}
-                  className="w-full rounded-md border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
                 />
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-2">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1" htmlFor="pg-host">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="pg-host">
                     Host / Server Address *
                   </label>
                   <input
@@ -483,12 +604,12 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     value={pgForm.host}
                     onChange={handlePgChange}
                     disabled={isProcessing}
-                    className="w-full rounded-md border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1" htmlFor="pg-port">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="pg-port">
                     Port
                   </label>
                   <input
@@ -499,14 +620,14 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     value={pgForm.port}
                     onChange={handlePgChange}
                     disabled={isProcessing}
-                    className="w-full rounded-md border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none font-mono"
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none font-mono transition"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1" htmlFor="pg-database">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="pg-database">
                     Database Name *
                   </label>
                   <input
@@ -518,12 +639,12 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     value={pgForm.database}
                     onChange={handlePgChange}
                     disabled={isProcessing}
-                    className="w-full rounded-md border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1" htmlFor="pg-user">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="pg-user">
                     Database User *
                   </label>
                   <input
@@ -535,13 +656,13 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     value={pgForm.user}
                     onChange={handlePgChange}
                     disabled={isProcessing}
-                    className="w-full rounded-md border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1" htmlFor="pg-password">
+                <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="pg-password">
                   Database Password
                 </label>
                 <input
@@ -552,11 +673,11 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   value={pgForm.password}
                   onChange={handlePgChange}
                   disabled={isProcessing}
-                  className="w-full rounded-md border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
                 />
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 pt-1">
                 <input
                   id="pg-ssl"
                   name="ssl"
@@ -571,12 +692,16 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                 </label>
               </div>
 
+              <p className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-lg border border-slate-200/60">
+                🔒 <strong>Security Note:</strong> Passwords are encrypted in transit. We recommend using a read-only database user for analytics queries.
+              </p>
+
               {/* Connection Test Result Banner */}
               {pgTestResult && (
-                <div className={`p-3 rounded-md border text-xs flex items-start gap-2.5 ${
+                <div className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 ${
                   pgTestResult.success
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                    : 'bg-rose-50 border-rose-200 text-rose-800'
+                    ? 'bg-emerald-50 border-emerald-200/90 text-emerald-800'
+                    : 'bg-rose-50 border-rose-200/90 text-rose-800'
                 }`}>
                   {pgTestResult.success ? (
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -599,7 +724,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   type="button"
                   onClick={handleTestPostgres}
                   disabled={isTestingPg || isProcessing}
-                  className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
                 >
                   {isTestingPg ? (
                     <>
@@ -619,7 +744,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     type="button"
                     onClick={handleClose}
                     disabled={isProcessing}
-                    className="rounded-md border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
+                    className="rounded-lg border border-slate-200/90 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
                   >
                     Cancel
                   </button>
@@ -627,7 +752,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     type="submit"
                     disabled={isProcessing}
                     id="submit-pg-source-btn"
-                    className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50 shadow-xs"
+                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50 shadow-2xs"
                   >
                     {isProcessing ? (
                       <>
@@ -637,6 +762,173 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     ) : (
                       <>
                         <span>Connect Source</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
+          {/* REST API Connector Mode (Phase 14) */}
+          {activeTab === 'rest_api' && (
+            <form onSubmit={handleApiSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="api-name">
+                    Data Source Name *
+                  </label>
+                  <input
+                    id="api-name"
+                    name="name"
+                    type="text"
+                    required
+                    placeholder="e.g. Stripe Payments API"
+                    value={apiForm.name}
+                    onChange={handleApiChange}
+                    disabled={isProcessing}
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="api-method">
+                    HTTP Method
+                  </label>
+                  <select
+                    id="api-method"
+                    name="method"
+                    value={apiForm.method}
+                    onChange={handleApiChange}
+                    disabled={isProcessing}
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 focus:border-blue-600 focus:outline-none transition"
+                  >
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="api-url">
+                  Endpoint URL * (HTTP or HTTPS)
+                </label>
+                <input
+                  id="api-url"
+                  name="url"
+                  type="url"
+                  required
+                  placeholder="https://api.yourcompany.com/v1/telemetry"
+                  value={apiForm.url}
+                  onChange={handleApiChange}
+                  disabled={isProcessing}
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="api-dataKey">
+                  JSON Array Key (Optional)
+                </label>
+                <input
+                  id="api-dataKey"
+                  name="dataKey"
+                  type="text"
+                  placeholder="e.g. data or items (Leave blank if root response is array)"
+                  value={apiForm.dataKey}
+                  onChange={handleApiChange}
+                  disabled={isProcessing}
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="api-headers">
+                  Request Headers (Optional JSON format)
+                </label>
+                <textarea
+                  id="api-headers"
+                  name="headers"
+                  rows={2}
+                  placeholder='{"Authorization": "Bearer your_token_here"}'
+                  value={apiForm.headers}
+                  onChange={handleApiChange}
+                  disabled={isProcessing}
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs font-mono text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
+                />
+              </div>
+
+              <p className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-lg border border-slate-200/60">
+                🌐 <strong>Automated Ingestion:</strong> RicozAnalytics will connect to the remote endpoint, parse structured JSON records, infer column data types, and make the telemetry immediately available for dashboards & ML forecasts.
+              </p>
+
+              {/* Connection Test Result Banner */}
+              {apiTestResult && (
+                <div className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 ${
+                  apiTestResult.success
+                    ? 'bg-emerald-50 border-emerald-200/90 text-emerald-800'
+                    : 'bg-rose-50 border-rose-200/90 text-rose-800'
+                }`}>
+                  {apiTestResult.success ? (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <p className="font-semibold">{apiTestResult.message}</p>
+                    {apiTestResult.recordCount !== undefined && (
+                      <p className="font-mono text-[10px] text-emerald-600 mt-0.5">
+                        Sample preview verified: {apiTestResult.recordCount} rows detected
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={handleTestApi}
+                  disabled={isTestingApi || isProcessing}
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
+                >
+                  {isTestingApi ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
+                      <span>Testing API...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Server className="h-3.5 w-3.5 text-slate-500" />
+                      <span>Test Endpoint</span>
+                    </>
+                  )}
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    disabled={isProcessing}
+                    className="rounded-lg border border-slate-200/90 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isProcessing}
+                    id="submit-api-source-btn"
+                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50 shadow-2xs"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>Connecting & Ingesting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Connect & Ingest</span>
                         <ArrowRight className="h-3.5 w-3.5" />
                       </>
                     )}

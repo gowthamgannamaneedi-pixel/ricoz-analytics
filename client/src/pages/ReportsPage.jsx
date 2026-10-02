@@ -26,11 +26,15 @@ import {
   Lock,
   ExternalLink,
   Star,
-  Share2
+  Share2,
+  Eye,
+  User,
+  X
 } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ReportModal from '../components/ReportModal';
+import ReportViewerModal from '../components/ReportViewerModal';
 import ShareModal from '../components/ShareModal';
 import {
   getReports,
@@ -61,6 +65,7 @@ export default function ReportsPage() {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [sourceFilter, setSourceFilter] = useState('all');
 
   // Collaboration State
   const [favorites, setFavorites] = useState(new Set());
@@ -69,6 +74,12 @@ export default function ReportsPage() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
+  const [viewerReport, setViewerReport] = useState(null);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+
+  // Delete Confirmation State
+  const [deleteConfirmTarget, setDeleteConfirmTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Execution Running State
   const [runningReportId, setRunningReportId] = useState(null);
@@ -141,9 +152,14 @@ export default function ReportsPage() {
         }
       } catch (_) {}
 
-      // Record recently viewed if target ID opened via URL
+      // Open report directly if target ID in URL
       if (targetReportId) {
         recordRecentlyViewedApi('report', targetReportId).catch(() => {});
+        const match = reportsData?.reports?.find(r => String(r.id) === String(targetReportId));
+        if (match) {
+          setViewerReport(match);
+          setIsViewerOpen(true);
+        }
       }
     } catch (err) {
       console.error('Failed to load reports pipeline:', err);
@@ -151,7 +167,7 @@ export default function ReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [targetReportId]);
 
   useEffect(() => {
     loadData();
@@ -177,14 +193,22 @@ export default function ReportsPage() {
     loadData();
   };
 
-  const handleDeleteReport = async (id, title) => {
-    if (!window.confirm(`Are you sure you want to delete report "${title}"?`)) return;
+  const confirmDeleteReport = async () => {
+    if (!deleteConfirmTarget) return;
+    setIsDeleting(true);
     try {
-      await deleteReport(id);
-      showToast(`Report "${title}" was removed.`);
+      await deleteReport(deleteConfirmTarget.id);
+      showToast(`Report "${deleteConfirmTarget.title}" was removed.`);
+      setDeleteConfirmTarget(null);
+      if (viewerReport?.id === deleteConfirmTarget.id) {
+        setIsViewerOpen(false);
+        setViewerReport(null);
+      }
       loadData();
     } catch (err) {
       alert(err.message || 'Failed to delete report.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -235,6 +259,12 @@ export default function ReportsPage() {
     }
   };
 
+  const handleOpenViewer = (report) => {
+    recordRecentlyViewedApi('report', report.id).catch(() => {});
+    setViewerReport(report);
+    setIsViewerOpen(true);
+  };
+
   const handleDownloadExecution = async (exec) => {
     setDownloadingExecutionId(exec.id);
     try {
@@ -258,25 +288,31 @@ export default function ReportsPage() {
 
   // Filtered reports list
   const filteredReports = reports.filter((r) => {
-    const matchesSearch = r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch =
+      r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (r.description && r.description.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesSource =
+      sourceFilter === 'all' ||
+      (r.dashboard_title && r.dashboard_title.toLowerCase() === sourceFilter.toLowerCase()) ||
+      (!r.dashboard_title && sourceFilter === 'unlinked');
+
+    return matchesSearch && matchesStatus && matchesSource;
   });
 
   const getFormatBadge = (format) => {
     switch (format?.toLowerCase()) {
       case 'pdf':
-        return <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">PDF</span>;
+        return <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-rose-50 text-rose-700 border border-rose-200">PDF</span>;
       case 'excel':
       case 'xlsx':
-        return <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">XLSX</span>;
+        return <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">XLSX</span>;
       case 'csv':
-        return <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">CSV</span>;
+        return <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-amber-50 text-amber-700 border border-amber-200">CSV</span>;
       case 'json':
-        return <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">JSON</span>;
+        return <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-purple-50 text-purple-700 border border-purple-200">JSON</span>;
       default:
-        return <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">{format}</span>;
+        return <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-slate-100 text-slate-700 border border-slate-200">{format || 'FILE'}</span>;
     }
   };
 
@@ -284,14 +320,14 @@ export default function ReportsPage() {
     switch (status) {
       case 'active':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Active
           </span>
         );
       case 'paused':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
             <Pause className="h-2.5 w-2.5" />
             Paused
           </span>
@@ -299,7 +335,7 @@ export default function ReportsPage() {
       case 'draft':
       default:
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
             Draft
           </span>
         );
@@ -315,37 +351,54 @@ export default function ReportsPage() {
     return `Cron: ${cron}`;
   };
 
+  const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all' || sourceFilter !== 'all';
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+    setSourceFilter('all');
+  };
+
+  // Distinct Dashboard titles for filtering
+  const distinctSources = Array.from(
+    new Set(reports.map(r => r.dashboard_title).filter(Boolean))
+  );
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-lg bg-slate-900 text-white text-xs shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-900 text-white text-xs shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
           <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Top Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Automated Reports & Export Engine</h1>
-            <span className="inline-flex items-center gap-1 text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-              Phase 9
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              Reports
+            </h1>
+            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200/80">
+              {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Analyst'}
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Build scheduled KPI digests, on-demand document exports, and stakeholder email broadcasts.
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal">
+            Generate, schedule, and export business summaries across your organization's datasets and KPIs.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 shrink-0">
           <button
             onClick={loadData}
+            id="refresh-reports-btn"
             title="Refresh reports"
-            className="p-2 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 shadow-2xs transition"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 transition shadow-2xs cursor-pointer"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
           </button>
 
           {!isViewer ? (
@@ -354,13 +407,14 @@ export default function ReportsPage() {
                 setSelectedReport(null);
                 setIsModalOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-2xs hover:bg-blue-700 transition"
+              id="create-report-btn"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer"
             >
               <Plus className="h-4 w-4" />
-              Create Report
+              <span>+ Create Report</span>
             </button>
           ) : (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-100 text-slate-500 text-xs font-medium border border-slate-200">
+            <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 text-slate-500 text-xs font-medium border border-slate-200">
               <Lock className="h-3.5 w-3.5" />
               <span>Read-Only (Viewer)</span>
             </div>
@@ -368,136 +422,213 @@ export default function ReportsPage() {
         </div>
       </div>
 
+      {/* Product Purpose Info Banner */}
+      <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-blue-100 bg-blue-50/40 text-xs">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <FileBarChart className="h-4 w-4 text-blue-600 shrink-0" />
+          <span className="text-slate-700 truncate">
+            <strong className="font-semibold text-slate-900">Executive Summaries:</strong> Reports compile metrics and data tables into structured artifacts (PDF, Excel, CSV) for stakeholder review and scheduled broadcast.
+          </span>
+        </div>
+        <Link
+          to="/dashboard"
+          className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 hover:text-blue-900 shrink-0 transition"
+        >
+          <span>View Live Dashboards</span>
+          <ArrowUpRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+
       {/* Metric Cards Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs flex items-center justify-between">
+        <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Configured Reports</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Total Reports</p>
             <p className="text-2xl font-bold text-slate-900 mt-1 font-mono">{reports.length}</p>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
             <FileBarChart className="h-5 w-5" />
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs flex items-center justify-between">
+        <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Active Schedules</p>
             <p className="text-2xl font-bold text-emerald-600 mt-1 font-mono">
               {reports.filter(r => r.status === 'active' && r.schedule_cron).length}
             </p>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
             <Clock className="h-5 w-5" />
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs flex items-center justify-between">
+        <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Executions Logged</p>
-            <p className="text-2xl font-bold text-slate-900 mt-1 font-mono">{executions.length}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Draft Reports</p>
+            <p className="text-2xl font-bold text-slate-700 mt-1 font-mono">
+              {reports.filter(r => r.status === 'draft').length}
+            </p>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
-            <History className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 border border-slate-200">
+            <Edit3 className="h-5 w-5" />
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs flex items-center justify-between">
+        <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Export Engines</p>
-            <div className="flex items-center gap-1 mt-2">
-              <span className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">PDF</span>
-              <span className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">XLSX</span>
-              <span className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">CSV</span>
-              <span className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">JSON</span>
-            </div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Executions Logged</p>
+            <p className="text-2xl font-bold text-purple-600 mt-1 font-mono">{executions.length}</p>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
-            <FileType className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 border border-purple-100">
+            <History className="h-5 w-5" />
           </div>
         </div>
       </div>
 
-      {/* Tabs & Search Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+      {/* Tabs & Search Filter Toolbar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 pb-3">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveTab('reports')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold transition ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
               activeTab === 'reports'
-                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs'
                 : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
             <FileBarChart className="h-4 w-4" />
-            Report Pipelines ({reports.length})
+            <span>Report Pipelines ({reports.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('history')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold transition ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
               activeTab === 'history'
-                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs'
                 : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
             <History className="h-4 w-4" />
-            Execution Logs & Downloads ({executions.length})
+            <span>Execution Logs & Artifacts ({executions.length})</span>
           </button>
         </div>
 
         {activeTab === 'reports' && (
-          <div className="flex items-center gap-2.5">
-            <div className="relative">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="relative min-w-[200px] flex-1 sm:flex-initial">
               <Search className="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
+                id="search-reports-input"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search reports..."
-                className="pl-8 pr-3 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-blue-500"
+                className="w-full pl-8 pr-7 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-blue-500 transition shadow-2xs"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
 
             <select
+              id="filter-status-select"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-2.5 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-700 focus:outline-hidden"
+              className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-700 focus:outline-hidden focus:border-blue-500 cursor-pointer shadow-2xs"
             >
               <option value="all">All Statuses</option>
               <option value="active">Active Only</option>
               <option value="draft">Draft Only</option>
               <option value="paused">Paused Only</option>
             </select>
+
+            {distinctSources.length > 0 && (
+              <select
+                id="filter-source-select"
+                value={sourceFilter}
+                onChange={(e) => setSourceFilter(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-700 focus:outline-hidden focus:border-blue-500 cursor-pointer shadow-2xs max-w-[150px] truncate"
+              >
+                <option value="all">All Sources</option>
+                {distinctSources.map(src => (
+                  <option key={src} value={src}>{src}</option>
+                ))}
+              </select>
+            )}
+
+            {hasActiveFilters && (
+              <button
+                onClick={resetFilters}
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800 px-2 py-1 rounded transition cursor-pointer"
+              >
+                Reset
+              </button>
+            )}
           </div>
         )}
       </div>
 
-      {/* TAB 1: REPORTS LIST */}
+      {/* TAB 1: REPORTS PIPELINE LIST */}
       {activeTab === 'reports' && (
         <div className="space-y-4">
           {loading && (
-            <div className="flex items-center justify-center p-12 bg-white rounded-xl border border-slate-200">
-              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[1, 2].map((n) => (
+                <div key={n} className="rounded-xl border border-slate-200 bg-white p-5 animate-pulse space-y-4">
+                  <div className="h-4 bg-slate-200 rounded w-1/3" />
+                  <div className="h-6 bg-slate-200 rounded w-3/4" />
+                  <div className="h-4 bg-slate-100 rounded w-full" />
+                  <div className="h-10 bg-slate-50 rounded" />
+                </div>
+              ))}
             </div>
           )}
 
-          {!loading && filteredReports.length === 0 && (
-            <div className="rounded-xl border border-slate-200 bg-white p-12 text-center shadow-2xs">
+          {!loading && error && (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-center">
+              <AlertCircle className="h-8 w-8 text-rose-500 mx-auto mb-2" />
+              <h3 className="text-sm font-bold text-rose-900">Service Communication Error</h3>
+              <p className="text-xs text-rose-700 mt-1 max-w-md mx-auto">{error}</p>
+              <button
+                onClick={loadData}
+                className="mt-3.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-semibold hover:bg-rose-700 transition"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> Retry Connection
+              </button>
+            </div>
+          )}
+
+          {!loading && !error && filteredReports.length === 0 && (
+            <div className="rounded-xl border border-slate-200/90 bg-white p-12 text-center shadow-2xs">
               <FileBarChart className="h-10 w-10 text-slate-400 mx-auto mb-3" />
-              <h3 className="text-sm font-bold text-slate-900">No Reports Found</h3>
+              <h3 className="text-sm font-bold text-slate-900">
+                {hasActiveFilters ? 'No Matching Reports' : 'No Reports Configured Yet'}
+              </h3>
               <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 mb-4">
-                {searchQuery || statusFilter !== 'all'
-                  ? 'No reports match your search criteria. Try adjusting your filters.'
-                  : 'You have not configured any scheduled reports yet. Create one to automatically compile executive metrics.'}
+                {hasActiveFilters
+                  ? 'No reports match your selected search query and filters. Try clearing your search parameters.'
+                  : 'Automated reports summarize your business telemetry and export clean PDF, Excel, and CSV digests to team stakeholders.'}
               </p>
-              {!isViewer && (
+              {hasActiveFilters ? (
+                <button
+                  onClick={resetFilters}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Clear Filters
+                </button>
+              ) : !isViewer && (
                 <button
                   onClick={() => {
                     setSelectedReport(null);
                     setIsModalOpen(true);
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700"
                 >
                   <Plus className="h-4 w-4" /> Create First Report
                 </button>
@@ -505,115 +636,144 @@ export default function ReportsPage() {
             </div>
           )}
 
-          {!loading && filteredReports.length > 0 && (
+          {!loading && !error && filteredReports.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredReports.map((r) => {
                 const recipients = Array.isArray(r.recipients)
                   ? r.recipients
-                  : (typeof r.recipients === 'string' ? JSON.parse(r.recipients || '[]') : []);
+                  : (typeof r.recipients === 'string'
+                    ? (() => {
+                        try {
+                          return JSON.parse(r.recipients || '[]');
+                        } catch {
+                          return [];
+                        }
+                      })()
+                    : []);
                 const isRunning = runningReportId === r.id;
-
                 const isFavorited = favorites.has(String(r.id));
                 const isTargetHighlighted = targetReportId === String(r.id);
 
                 return (
                   <div
                     key={r.id}
-                    onClick={() => recordRecentlyViewedApi('report', r.id).catch(() => {})}
-                    className={`rounded-xl border bg-white p-5 shadow-2xs hover:border-slate-300 transition flex flex-col justify-between ${
-                      isTargetHighlighted ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200'
+                    onClick={() => handleOpenViewer(r)}
+                    className={`group rounded-xl border bg-white p-5 shadow-2xs hover:border-slate-300 hover:shadow-xs transition flex flex-col justify-between cursor-pointer ${
+                      isTargetHighlighted ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200/90'
                     }`}
                   >
                     <div>
-                      {/* Top Meta Line */}
-                      <div className="flex items-start justify-between gap-3">
+                      {/* Top Pill Row */}
+                      <div className="flex items-start justify-between gap-3 mb-2.5">
                         <div className="flex items-center gap-2">
                           {getFormatBadge(r.format)}
                           {getStatusBadge(r.status)}
                         </div>
-                        <div className="flex items-center gap-2">
+
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={(e) => handleToggleFavorite(e, r.id)}
                             title={isFavorited ? 'Remove favorite' : 'Add to favorites'}
-                            className="text-slate-400 hover:text-amber-500 transition cursor-pointer p-0.5"
+                            className="text-slate-400 hover:text-amber-500 transition cursor-pointer p-1 rounded-md hover:bg-slate-50"
                           >
                             <Star className={`h-4 w-4 ${isFavorited ? 'fill-amber-400 text-amber-500' : ''}`} />
                           </button>
+                          
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setShareModalConfig({ isOpen: true, reportId: r.id, title: r.title });
                             }}
-                            title="Share report"
-                            className="text-slate-400 hover:text-blue-600 transition cursor-pointer p-0.5"
+                            title="Share report with team"
+                            className="text-slate-400 hover:text-blue-600 transition cursor-pointer p-1 rounded-md hover:bg-slate-50"
                           >
                             <Share2 className="h-4 w-4" />
                           </button>
-                          <span className="text-[10px] font-mono text-slate-400 ml-1">
+
+                          <span className="text-[11px] font-medium text-slate-500 ml-1">
                             {formatScheduleText(r.schedule_cron)}
                           </span>
                         </div>
                       </div>
 
-                      {/* Title & Description */}
-                      <h3 className="text-sm font-bold text-slate-900 mt-2.5 mb-1 leading-snug">
+                      {/* Report Name - Strongest Visual Element */}
+                      <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
                         {r.title}
                       </h3>
-                      <p className="text-xs text-slate-500 line-clamp-2">
-                        {r.description || 'Automated reporting pipeline.'}
+
+                      {/* Description */}
+                      <p className="text-xs text-slate-600 line-clamp-2 mt-1 mb-3.5 leading-relaxed">
+                        {r.description || 'Configured enterprise report pipeline.'}
                       </p>
 
                       {/* Details Strip */}
-                      <div className="mt-3.5 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-slate-600">
-                        <div className="flex items-center gap-1.5">
-                          <Layers className="h-3.5 w-3.5 text-slate-400" />
-                          <span className="truncate max-w-[140px] font-medium">{r.dashboard_title || 'Executive Overview'}</span>
+                      <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-slate-600">
+                        <div className="flex items-center gap-1.5" title="Source Dashboard">
+                          <Layers className="h-3.5 w-3.5 text-blue-600" />
+                          <span className="truncate max-w-[140px] font-medium text-slate-800">
+                            {r.dashboard_title || 'Executive Overview'}
+                          </span>
                         </div>
 
                         {recipients.length > 0 && (
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 text-slate-500" title="Stakeholder recipients">
                             <Mail className="h-3.5 w-3.5 text-slate-400" />
                             <span>{recipients.length} Recipient{recipients.length > 1 ? 's' : ''}</span>
                           </div>
                         )}
 
-                        <div className="flex items-center gap-1.5 ml-auto text-slate-400 text-[10px]">
-                          <Clock className="h-3 w-3" />
+                        <div className="flex items-center gap-1.5 ml-auto text-slate-500 text-[11px]">
+                          <Clock className="h-3.5 w-3.5 text-slate-400" />
                           <span>
                             {r.last_generated_at
-                              ? `Last run: ${new Date(r.last_generated_at).toLocaleDateString()}`
-                              : 'Never executed'}
+                              ? `Run: ${new Date(r.last_generated_at).toLocaleDateString()}`
+                              : 'Never run'}
                           </span>
                         </div>
                       </div>
                     </div>
 
                     {/* Bottom Action Footer */}
-                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                      <button
-                        onClick={() => handleRunReportNow(r)}
-                        disabled={isRunning || isViewer}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold transition disabled:opacity-50"
-                      >
-                        {isRunning ? (
-                          <>
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            Generating...
-                          </>
-                        ) : (
-                          <>
-                            <Play className="h-3.5 w-3.5" />
-                            Run Now
-                          </>
-                        )}
-                      </button>
+                    <div
+                      className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleRunReportNow(r)}
+                          disabled={isRunning || isViewer}
+                          id={`run-report-${r.id}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold transition disabled:opacity-50 cursor-pointer"
+                        >
+                          {isRunning ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <Play className="h-3.5 w-3.5" />
+                              Run Now
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          onClick={() => handleOpenViewer(r)}
+                          id={`view-report-${r.id}`}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 text-xs font-medium transition cursor-pointer"
+                        >
+                          <Eye className="h-3.5 w-3.5 text-slate-400" />
+                          <span>View Details</span>
+                        </button>
+                      </div>
 
                       {!isViewer && (
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => handleTogglePause(r)}
                             title={r.status === 'active' ? 'Pause Schedule' : 'Resume Schedule'}
-                            className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
                           >
                             {r.status === 'active' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                           </button>
@@ -623,16 +783,18 @@ export default function ReportsPage() {
                               setSelectedReport(r);
                               setIsModalOpen(true);
                             }}
-                            title="Edit Report"
-                            className="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition"
+                            id={`edit-report-${r.id}`}
+                            title="Edit Report Configuration"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
                           >
                             <Edit3 className="h-4 w-4" />
                           </button>
 
                           <button
-                            onClick={() => handleDeleteReport(r.id, r.title)}
+                            onClick={() => setDeleteConfirmTarget(r)}
+                            id={`delete-report-${r.id}`}
                             title="Delete Report"
-                            className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -649,12 +811,17 @@ export default function ReportsPage() {
 
       {/* TAB 2: EXECUTION LOGS & ARTIFACT DOWNLOADS */}
       {activeTab === 'history' && (
-        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
+        <div className="rounded-xl border border-slate-200/90 bg-white overflow-hidden shadow-2xs">
           <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-              Recent Generation Logs & Download Artifacts
-            </h3>
-            <span className="text-[11px] text-slate-500 font-mono">
+            <div>
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                Execution Logs & Artifact Downloads
+              </h3>
+              <p className="text-[11px] text-slate-500">
+                Audit history of all scheduled triggers and on-demand report compiles
+              </p>
+            </div>
+            <span className="text-xs font-medium text-slate-600 font-mono">
               Total Runs: {executions.length}
             </span>
           </div>
@@ -664,7 +831,7 @@ export default function ReportsPage() {
               <History className="h-8 w-8 text-slate-300 mx-auto mb-2" />
               <p className="text-xs font-semibold text-slate-700">No Executions Recorded Yet</p>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Trigger on-demand runs or wait for scheduled cron triggers to populate history.
+                Trigger on-demand runs from the Pipelines tab or wait for scheduled cron triggers.
               </p>
             </div>
           ) : (
@@ -673,7 +840,7 @@ export default function ReportsPage() {
                 <thead className="border-b border-slate-200 bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                   <tr>
                     <th className="px-5 py-3">Report Name</th>
-                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Execution Status</th>
                     <th className="px-4 py-3">Format</th>
                     <th className="px-4 py-3">File Size</th>
                     <th className="px-4 py-3">Triggered By</th>
@@ -684,7 +851,7 @@ export default function ReportsPage() {
                 <tbody className="divide-y divide-slate-100 font-sans">
                   {executions.map((exec) => (
                     <tr key={exec.id} className="hover:bg-slate-50/80 transition">
-                      <td className="px-5 py-3 font-semibold text-slate-800">
+                      <td className="px-5 py-3 font-bold text-slate-900">
                         {exec.report_title || 'Analytics Digest'}
                       </td>
                       <td className="px-4 py-3">
@@ -706,7 +873,7 @@ export default function ReportsPage() {
                       <td className="px-4 py-3 font-mono text-[11px] text-slate-600">
                         {exec.file_size ? `${Math.round(exec.file_size / 1024)} KB` : '-'}
                       </td>
-                      <td className="px-4 py-3 text-slate-500 text-[11px]">
+                      <td className="px-4 py-3 text-slate-600 text-[11px]">
                         {exec.executed_by_name || 'System / Scheduler'}
                       </td>
                       <td className="px-4 py-3 text-slate-500 font-mono text-[10px]">
@@ -745,7 +912,28 @@ export default function ReportsPage() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Report Viewer Modal */}
+      <ReportViewerModal
+        isOpen={isViewerOpen}
+        onClose={() => {
+          setIsViewerOpen(false);
+          setViewerReport(null);
+        }}
+        report={viewerReport}
+        executions={executions}
+        onRunReport={handleRunReportNow}
+        onDownloadExecution={handleDownloadExecution}
+        onShare={(rep) => setShareModalConfig({ isOpen: true, reportId: rep.id, title: rep.title })}
+        onEdit={(rep) => {
+          setSelectedReport(rep);
+          setIsModalOpen(true);
+        }}
+        isRunning={runningReportId === viewerReport?.id}
+        downloadingId={downloadingExecutionId}
+        isViewer={isViewer}
+      />
+
+      {/* Create / Edit Modal */}
       <ReportModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -762,6 +950,53 @@ export default function ReportsPage() {
         resourceId={shareModalConfig.reportId}
         resourceTitle={shareModalConfig.title}
       />
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+          <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 p-6 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-200">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Delete Report</h3>
+                <p className="text-xs text-slate-500">This action cannot be undone.</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-700 leading-relaxed mb-4">
+              Are you sure you want to delete report <strong className="text-slate-900 font-semibold">"{deleteConfirmTarget.title}"</strong>? Any active schedules and delivery subscriptions for this report will be permanently terminated.
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmTarget(null)}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-lg border border-slate-300 text-xs font-medium text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteReport}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-600 text-white text-xs font-semibold hover:bg-rose-700 transition disabled:opacity-50 cursor-pointer shadow-xs"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <span>Delete Report</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -83,18 +83,22 @@ const createDataSource = async (req, res, next) => {
       });
     }
 
-    const validTypes = ['csv', 'json', 'postgresql'];
-    if (!type || !validTypes.includes(type.toLowerCase())) {
+    const validTypes = ['csv', 'json', 'postgresql', 'mysql', 'mongodb', 'rest_api', 'api'];
+    const normalizedType = type ? type.toLowerCase() : '';
+    if (!type || !validTypes.includes(normalizedType)) {
       return res.status(400).json({
         success: false,
         message: `Invalid data source type. Must be one of: ${validTypes.join(', ')}`
       });
     }
 
+    let effectiveType = normalizedType === 'api' ? 'rest_api' : normalizedType;
     let status = 'active';
+    let initialRecords = null;
+    let parsedMetadata = null;
 
-    // If type is postgresql, validate and test connection
-    if (type.toLowerCase() === 'postgresql') {
+    // 1. PostgreSQL Connector
+    if (effectiveType === 'postgresql') {
       const { host, port, database, user, password, ssl } = config;
       if (!host || !database || !user) {
         return res.status(400).json({
@@ -108,20 +112,91 @@ const createDataSource = async (req, res, next) => {
       status = testResult.success ? 'connected' : 'error';
     }
 
+    // 2. REST API Connector
+    if (effectiveType === 'rest_api') {
+      const url = config.url || config.endpoint_url || config.endpointUrl;
+      const method = config.method || 'GET';
+      const headers = config.headers || {};
+      const dataKey = config.dataKey || config.data_key;
+
+      if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) {
+        return res.status(400).json({
+          success: false,
+          message: 'REST API data source requires a valid HTTP or HTTPS endpoint URL.'
+        });
+      }
+
+      // Ensure url is explicitly set on config
+      config.url = url;
+      config.endpoint_url = url;
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const apiRes = await fetch(url, {
+          method: (method || 'GET').toUpperCase(),
+          headers: {
+            'Accept': 'application/json',
+            ...headers
+          },
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
+
+        if (apiRes.ok) {
+          const json = await apiRes.json().catch(() => null);
+          let records = Array.isArray(json) ? json : (dataKey && Array.isArray(json[dataKey]) ? json[dataKey] : (json?.data && Array.isArray(json.data) ? json.data : null));
+          if (records && Array.isArray(records) && records.length > 0) {
+            initialRecords = records;
+            status = 'active';
+          }
+        } else {
+          status = 'error';
+        }
+      } catch (err) {
+        status = 'error';
+      }
+    }
+
     const newSource = await DataSource.create({
       userId,
       name: name.trim(),
-      type: type.toLowerCase(),
+      type: effectiveType,
       status,
       config
     });
+
+    // If records were ingested from REST API, persist dataset file and create Dataset record
+    let createdDataset = null;
+    if (initialRecords && initialRecords.length > 0) {
+      try {
+        const filename = `${name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_')}_api.json`;
+        const buffer = Buffer.from(JSON.stringify(initialRecords, null, 2));
+        const saved = await storage.saveFile(userId, filename, buffer);
+        parsedMetadata = parseDatasetFile(buffer, '.json', 50);
+
+        createdDataset = await Dataset.create({
+          userId,
+          dataSourceId: newSource.id,
+          name: name.trim(),
+          description: `Auto-ingested from REST API (${config.url})`,
+          filePath: saved.filePath,
+          rowCount: parsedMetadata.rowCount,
+          columnCount: parsedMetadata.columnCount,
+          schema: parsedMetadata.schema
+        });
+      } catch (dsErr) {
+        console.warn('[DataSourceController] Auto dataset creation warning:', dsErr.message);
+      }
+    }
 
     return res.status(201).json({
       success: true,
       message: 'Data source created successfully.',
       data: {
         ...newSource,
-        config: sanitizePostgresConfig(newSource.config)
+        config: sanitizePostgresConfig(newSource.config),
+        dataset: createdDataset
       }
     });
   } catch (err) {
@@ -138,6 +213,194 @@ const testConnection = async (req, res, next) => {
     const { host, port, database, user, password, ssl } = req.body;
     const result = await testPostgresConnection({ host, port, database, user, password, ssl });
     return res.status(result.success ? 200 : 400).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/data-sources/test-api
+ * Test connection to external REST API endpoint and preview schema/records
+ */
+const testApiConnection = async (req, res, next) => {
+  try {
+    const url = req.body.url || req.body.endpoint_url || req.body.endpointUrl;
+    const method = req.body.method || 'GET';
+    const headers = req.body.headers || {};
+    const dataKey = req.body.dataKey || req.body.data_key;
+
+    if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) {
+      return res.status(400).json({
+        success: false,
+        message: 'A valid HTTP or HTTPS URL is required.'
+      });
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    const response = await fetch(url, {
+      method: (method || 'GET').toUpperCase(),
+      headers: {
+        'Accept': 'application/json',
+        ...headers
+      },
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      return res.status(400).json({
+        success: false,
+        status: response.status,
+        message: `Remote API returned HTTP ${response.status}: ${response.statusText}`
+      });
+    }
+
+    const json = await response.json();
+    let records = Array.isArray(json) ? json : (dataKey && Array.isArray(json[dataKey]) ? json[dataKey] : (json?.data && Array.isArray(json.data) ? json.data : null));
+
+    if (!records || !Array.isArray(records)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Endpoint returned JSON, but no records array was found. Please specify the data key (e.g. data, items).'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully connected. Retrieved ${records.length} records.`,
+      status: response.status,
+      recordCount: records.length,
+      preview: records.slice(0, 5)
+    });
+  } catch (err) {
+    return res.status(400).json({
+      success: false,
+      message: `Failed to connect to API: ${err.message}`
+    });
+  }
+};
+
+/**
+ * POST /api/data-sources/:id/sync
+ * Trigger manual or scheduled refresh of an external data source
+ */
+const syncDataSource = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const source = await DataSource.findByIdAndUserId(id, userId);
+    if (!source) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data source not found or you do not have permission to sync it.'
+      });
+    }
+
+    let config = source.config;
+    if (typeof config === 'string') {
+      try { config = JSON.parse(config); } catch (_) { config = {}; }
+    }
+
+    if (source.type === 'rest_api' || source.type === 'api') {
+      const url = config?.url || config?.endpoint_url || config?.endpointUrl;
+      const method = config?.method || 'GET';
+      const headers = config?.headers || {};
+      const dataKey = config?.dataKey || config?.data_key;
+
+      if (!url) {
+        return res.status(400).json({
+          success: false,
+          message: 'Data source has no URL configured.'
+        });
+      }
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 12000);
+
+      const response = await fetch(url, {
+        method: (method || 'GET').toUpperCase(),
+        headers: { 'Accept': 'application/json', ...headers },
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        await DataSource.updateStatus(id, 'error');
+        return res.status(502).json({
+          success: false,
+          message: `Sync failed: remote endpoint returned HTTP ${response.status}`
+        });
+      }
+
+      const json = await response.json();
+      let records = Array.isArray(json) ? json : (dataKey && Array.isArray(json[dataKey]) ? json[dataKey] : (json?.data && Array.isArray(json.data) ? json.data : null));
+
+      if (!records || !Array.isArray(records)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid data format returned by remote API.'
+        });
+      }
+
+      const filename = `${source.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_sync.json`;
+      const fileBuffer = Buffer.from(JSON.stringify(records, null, 2));
+      const saved = await storage.saveFile(userId, filename, fileBuffer);
+      const parsedMetadata = parseDatasetFile(fileBuffer, '.json', 50);
+
+      const datasets = await Dataset.findByDataSourceId(id, userId);
+      if (datasets && datasets.length > 0) {
+        for (const ds of datasets) {
+          await Dataset.update(ds.id, {
+            filePath: saved.filePath,
+            rowCount: parsedMetadata.rowCount,
+            columnCount: parsedMetadata.columnCount,
+            schema: parsedMetadata.schema
+          });
+        }
+      } else {
+        await Dataset.create({
+          userId,
+          dataSourceId: id,
+          name: source.name,
+          description: `Synced from ${url}`,
+          filePath: saved.filePath,
+          rowCount: parsedMetadata.rowCount,
+          columnCount: parsedMetadata.columnCount,
+          schema: parsedMetadata.schema
+        });
+      }
+
+      await DataSource.updateStatus(id, 'active');
+
+      return res.status(200).json({
+        success: true,
+        message: `Data source successfully synchronized (${records.length} records ingested).`,
+        rowCount: records.length,
+        status: 'active',
+        syncedAt: new Date().toISOString()
+      });
+    } else if (source.type === 'postgresql') {
+      const testRes = await testPostgresConnection(config);
+      await DataSource.updateStatus(id, testRes.success ? 'connected' : 'error');
+      return res.status(200).json({
+        success: testRes.success,
+        message: testRes.success ? 'PostgreSQL connection verified and synchronized.' : 'PostgreSQL connection failed during sync.',
+        status: testRes.success ? 'connected' : 'error',
+        syncedAt: new Date().toISOString()
+      });
+    } else {
+      // CSV/JSON file data sources
+      await DataSource.updateStatus(id, 'active');
+      return res.status(200).json({
+        success: true,
+        message: 'Static file data source verified and synchronized.',
+        status: 'active',
+        syncedAt: new Date().toISOString()
+      });
+    }
   } catch (err) {
     next(err);
   }
@@ -272,6 +535,8 @@ module.exports = {
   getDataSourceById,
   createDataSource,
   testConnection,
+  testApiConnection,
+  syncDataSource,
   uploadDataSource,
   deleteDataSource
 };

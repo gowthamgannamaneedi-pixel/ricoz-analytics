@@ -218,9 +218,131 @@ const deleteDataset = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/datasets/:id/refresh
+ * Refresh dataset ingestion, recalculate row/column counts, and update schema
+ */
+const refreshDataset = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const organizationId = req.user.organization_id;
+    const userRole = (req.user.role || 'viewer').toLowerCase();
+    const { id } = req.params;
+
+    let dataset;
+    if (['admin', 'manager', 'analyst'].includes(userRole)) {
+      dataset = organizationId
+        ? await Dataset.findByIdAndOrgId(id, organizationId)
+        : await Dataset.findByIdAndUserId(id, userId);
+    } else {
+      dataset = await Dataset.findByIdAndUserId(id, userId);
+    }
+
+    if (!dataset) {
+      return res.status(404).json({
+        success: false,
+        message: 'Dataset not found or you do not have permission to refresh it.'
+      });
+    }
+
+    let updatedRowCount = dataset.row_count;
+    let updatedColumnCount = dataset.column_count;
+    let updatedSchema = dataset.schema;
+
+    // 1. If connected to a Data Source
+    if (dataset.data_source_id) {
+      const DataSource = require('../models/dataSourceModel');
+      const source = await DataSource.findByIdAndUserId(dataset.data_source_id, dataset.user_id || userId);
+      if (source && (source.type === 'rest_api' || source.type === 'api')) {
+        let config = source.config;
+        if (typeof config === 'string') {
+          try { config = JSON.parse(config); } catch (_) { config = {}; }
+        }
+        if (config?.url) {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 12000);
+          const apiRes = await fetch(config.url, {
+            method: (config.method || 'GET').toUpperCase(),
+            headers: { 'Accept': 'application/json', ...(config.headers || {}) },
+            signal: controller.signal
+          });
+          clearTimeout(timeout);
+
+          if (apiRes.ok) {
+            const json = await apiRes.json();
+            const dataKey = config.dataKey;
+            let records = Array.isArray(json) ? json : (dataKey && Array.isArray(json[dataKey]) ? json[dataKey] : (json?.data && Array.isArray(json.data) ? json.data : null));
+            if (records && Array.isArray(records)) {
+              const filename = `${dataset.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_refresh.json`;
+              const fileBuffer = Buffer.from(JSON.stringify(records, null, 2));
+              const saved = await storage.saveFile(userId, filename, fileBuffer);
+              const meta = parseDatasetFile(fileBuffer, '.json', 50);
+
+              updatedRowCount = meta.rowCount;
+              updatedColumnCount = meta.columnCount;
+              updatedSchema = meta.schema;
+
+              await Dataset.update(dataset.id, {
+                filePath: saved.filePath,
+                rowCount: meta.rowCount,
+                columnCount: meta.columnCount,
+                schema: meta.schema
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // 2. If dataset has a file on storage, re-verify and update counts
+    if (dataset.file_path && await storage.exists(dataset.file_path)) {
+      const buffer = await storage.readFile(dataset.file_path);
+      const ext = path.extname(dataset.file_path).toLowerCase();
+      const meta = parseDatasetFile(buffer, ext, 50);
+      updatedRowCount = meta.rowCount;
+      updatedColumnCount = meta.columnCount;
+      updatedSchema = meta.schema;
+
+      await Dataset.update(dataset.id, {
+        rowCount: meta.rowCount,
+        columnCount: meta.columnCount,
+        schema: meta.schema
+      });
+    }
+
+    // Safe Audit Log
+    await auditService.logAuditEvent({
+      organizationId: organizationId || '00000000-0000-0000-0000-000000000001',
+      userId,
+      action: 'DATASET_REFRESHED',
+      resourceType: 'dataset',
+      resourceId: id,
+      description: `Refreshed dataset "${dataset.name}" (${updatedRowCount} rows).`,
+      metadata: { datasetId: id, rowCount: updatedRowCount, columnCount: updatedColumnCount },
+      req
+    }).catch(() => null);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Dataset refreshed successfully.',
+      data: {
+        id: dataset.id,
+        name: dataset.name,
+        rowCount: updatedRowCount,
+        columnCount: updatedColumnCount,
+        schema: updatedSchema,
+        refreshedAt: new Date().toISOString()
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getDatasets,
   getDatasetById,
   getDatasetPreview,
+  refreshDataset,
   deleteDataset
 };

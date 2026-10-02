@@ -60,7 +60,15 @@ export default function ReportModal({
 
       const existingRecipients = Array.isArray(report.recipients)
         ? report.recipients
-        : (typeof report.recipients === 'string' ? JSON.parse(report.recipients || '[]') : []);
+        : (typeof report.recipients === 'string'
+          ? (() => {
+              try {
+                return JSON.parse(report.recipients || '[]');
+              } catch {
+                return [];
+              }
+            })()
+          : []);
       setRecipients(existingRecipients);
 
       if (report.schedule_cron) {
@@ -158,25 +166,27 @@ export default function ReportModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="relative w-full max-w-2xl rounded-xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-8">
+      <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-150">
+        
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/70">
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/70">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white shadow-2xs">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs">
               <FileBarChart className="h-5 w-5" />
             </div>
             <div>
               <h2 className="text-sm font-bold text-slate-900">
                 {report ? 'Edit Report Configuration' : 'Create Automated Report'}
               </h2>
-              <p className="text-[11px] text-slate-500">
-                Configure data scopes, output formatting, and automated scheduling
+              <p className="text-xs text-slate-500">
+                Configure data scopes, output formatting, and automated delivery schedule
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200/70 hover:text-slate-700 transition cursor-pointer"
+            aria-label="Close modal"
           >
             <X className="h-5 w-5" />
           </button>
@@ -193,7 +203,7 @@ export default function ReportModal({
 
           {/* Title */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
               Report Title <span className="text-rose-500">*</span>
             </label>
             <input
@@ -201,14 +211,14 @@ export default function ReportModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Q4 Executive Performance Digest"
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 transition"
               required
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
               Description / Business Context
             </label>
             <textarea
@@ -216,40 +226,38 @@ export default function ReportModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Summary of KPIs, key focus metrics, and target stakeholders..."
               rows={2}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 transition"
             />
           </div>
 
           {/* Dashboard Scope & Status */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Dashboard Telemetry Source
               </label>
-              <div className="relative">
-                <select
-                  value={dashboardId}
-                  onChange={(e) => setDashboardId(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="">Executive Organization KPIs (All)</option>
-                  {dashboards.map((dash) => (
-                    <option key={dash.id} value={dash.id}>
-                      {dash.title} {dash.is_default ? '(Default)' : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <select
+                value={dashboardId}
+                onChange={(e) => setDashboardId(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="">Executive Organization KPIs (All)</option>
+                {dashboards.map((dash) => (
+                  <option key={dash.id} value={dash.id}>
+                    {dash.title} {dash.is_default ? '(Default)' : ''}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Report State / Pipeline Status
               </label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
               >
                 <option value="active">Active (Running on schedule)</option>
                 <option value="draft">Draft (On-demand only)</option>
@@ -271,18 +279,18 @@ export default function ReportModal({
                     key={opt.value}
                     type="button"
                     onClick={() => setFormat(opt.value)}
-                    className={`flex items-start gap-2.5 p-3 rounded-lg border text-left transition ${
+                    className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition cursor-pointer ${
                       isSelected
-                        ? 'border-blue-600 bg-blue-50/50 ring-1 ring-blue-600'
+                        ? 'border-blue-600 bg-blue-50/50 ring-1 ring-blue-600 shadow-2xs'
                         : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
                     <span className="text-xl shrink-0">{opt.icon}</span>
                     <div className="min-w-0">
-                      <p className={`text-xs font-semibold ${isSelected ? 'text-blue-900' : 'text-slate-800'}`}>
+                      <p className={`text-xs font-bold ${isSelected ? 'text-blue-900' : 'text-slate-800'}`}>
                         {opt.label}
                       </p>
-                      <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">{opt.desc}</p>
+                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">{opt.desc}</p>
                     </div>
                   </button>
                 );
@@ -292,13 +300,13 @@ export default function ReportModal({
 
           {/* Schedule Cadence */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
               Automated Schedule Cadence
             </label>
             <select
               value={schedulePreset}
               onChange={(e) => setSchedulePreset(e.target.value)}
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
             >
               {SCHEDULE_PRESETS.map((p) => (
                 <option key={p.value} value={p.value}>
@@ -308,13 +316,13 @@ export default function ReportModal({
             </select>
 
             {schedulePreset === 'custom' && (
-              <div className="mt-2">
+              <div className="mt-2.5">
                 <input
                   type="text"
                   value={customCron}
                   onChange={(e) => setCustomCron(e.target.value)}
                   placeholder="e.g. 0 18 * * 5 (Every Friday at 6:00 PM)"
-                  className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-xs font-mono text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-mono text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                 />
                 <p className="text-[10px] text-slate-500 mt-1">
                   Standard 5-field cron syntax: <code>minute hour day-of-month month day-of-week</code>
@@ -325,7 +333,7 @@ export default function ReportModal({
 
           {/* Email Delivery Recipients */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
               Stakeholder Email Recipients
             </label>
             <div className="flex gap-2">
@@ -340,12 +348,12 @@ export default function ReportModal({
                   }
                 }}
                 placeholder="colleague@company.com"
-                className="flex-1 rounded-md border border-slate-300 px-3 py-1.5 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
               />
               <button
                 type="button"
                 onClick={handleAddEmail}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition"
+                className="inline-flex items-center gap-1 px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer"
               >
                 <Plus className="h-3.5 w-3.5" /> Add
               </button>
@@ -356,14 +364,14 @@ export default function ReportModal({
                 {recipients.map((email) => (
                   <span
                     key={email}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-800 text-[11px] font-medium"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-800 text-xs font-medium"
                   >
                     <Mail className="h-3 w-3 text-blue-600" />
                     {email}
                     <button
                       type="button"
                       onClick={() => handleRemoveEmail(email)}
-                      className="text-blue-500 hover:text-rose-600 ml-0.5"
+                      className="text-blue-500 hover:text-rose-600 ml-0.5 cursor-pointer"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -378,14 +386,14 @@ export default function ReportModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-md border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+              className="px-4 py-2 rounded-lg border border-slate-300 text-xs font-medium text-slate-700 hover:bg-slate-50 transition cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-md bg-blue-600 text-white text-xs font-semibold shadow-2xs hover:bg-blue-700 disabled:opacity-50 transition"
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold shadow-xs hover:bg-blue-700 disabled:opacity-50 transition cursor-pointer"
             >
               {loading ? (
                 <>

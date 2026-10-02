@@ -72,6 +72,43 @@ const DataSource = {
   },
 
   /**
+   * Update data source status and last_synced_at
+   */
+  async updateStatus(id, status) {
+    const sql = `
+      UPDATE data_sources
+      SET status = $1, last_synced_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING *
+    `;
+    const res = await db.query(sql, [status, id]);
+    return res.rows[0] || null;
+  },
+
+  /**
+   * Update data source config and details
+   */
+  async update(id, userId, { name, config, status }) {
+    const fields = [];
+    const values = [];
+    let idx = 1;
+    if (name !== undefined) { fields.push(`name = $${idx++}`); values.push(name.trim()); }
+    if (config !== undefined) { fields.push(`config = $${idx++}`); values.push(typeof config === 'object' ? JSON.stringify(config) : config); }
+    if (status !== undefined) { fields.push(`status = $${idx++}`); values.push(status); }
+    fields.push(`updated_at = CURRENT_TIMESTAMP`);
+    values.push(id);
+    values.push(userId);
+    const sql = `
+      UPDATE data_sources
+      SET ${fields.join(', ')}
+      WHERE id = $${idx++} AND user_id = $${idx}
+      RETURNING *
+    `;
+    const res = await db.query(sql, values);
+    return res.rows[0] || null;
+  },
+
+  /**
    * Delete data source by id and user_id (Ownership guaranteed)
    */
   async deleteByIdAndUserId(id, userId) {

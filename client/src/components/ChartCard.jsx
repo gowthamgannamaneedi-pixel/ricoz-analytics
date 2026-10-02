@@ -18,15 +18,15 @@ export default function ChartCard({
   className = ''
 }) {
   return (
-    <div className={`flex flex-col rounded-md border border-slate-200 bg-white p-4 sm:p-5 ${className}`}>
+    <div className={`flex flex-col rounded-xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-2xs ${className}`}>
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3.5 border-b border-slate-100">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
         <div>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+          <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
             {title}
           </h3>
           {subtitle && (
-            <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
+            <p className="text-xs text-slate-500 font-normal mt-0.5">{subtitle}</p>
           )}
         </div>
         {action && (

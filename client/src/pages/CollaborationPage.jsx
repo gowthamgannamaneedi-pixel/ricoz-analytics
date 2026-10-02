@@ -246,26 +246,30 @@ export default function CollaborationPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5">
+    <div className="space-y-6 font-sans">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <Users2 className="h-6 w-6 text-blue-600" />
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Enterprise Collaboration</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              Collaboration
+            </h1>
+            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200/80">
+              {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Analyst'}
+            </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Seamlessly share dashboards, reports, and AI insights across teams with fine-grained access control.
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal">
+            Share dashboards, reports, and AI insights across teams with fine-grained access control.
           </p>
         </div>
 
         {activeTab === 'teams' && (user?.role === 'admin' || user?.role === 'manager') && (
           <button
             onClick={() => setShowCreateTeamModal(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer"
           >
             <Plus className="h-4 w-4" />
-            <span>Create Team</span>
+            <span>+ Create Team</span>
           </button>
         )}
       </div>
@@ -738,9 +742,21 @@ export default function CollaborationPage() {
       {/* CREATE TEAM MODAL */}
       {showCreateTeamModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200">
-            <h3 className="font-bold text-slate-900 text-sm mb-4">Create New Workspace Team</h3>
-            <form onSubmit={handleCreateTeam} className="space-y-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 flex flex-col">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-slate-100">
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">Create Team</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Add a new workspace collaboration group.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCreateTeamModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateTeam} className="p-6 pt-4 space-y-4">
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">Team Name</label>
                 <input
@@ -749,7 +765,7 @@ export default function CollaborationPage() {
                   placeholder="e.g. Finance Analytics, Sales Ops"
                   value={newTeamName}
                   onChange={(e) => setNewTeamName(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 p-2 text-xs focus:outline-none focus:border-blue-600"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 transition shadow-2xs"
                 />
               </div>
               <div>
@@ -758,7 +774,7 @@ export default function CollaborationPage() {
                   placeholder="Purpose and responsibilities of this team..."
                   value={newTeamDesc}
                   onChange={(e) => setNewTeamDesc(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 p-2 text-xs focus:outline-none focus:border-blue-600 resize-none"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 transition shadow-2xs resize-none"
                   rows={3}
                 />
               </div>
@@ -766,14 +782,14 @@ export default function CollaborationPage() {
                 <button
                   type="button"
                   onClick={() => setShowCreateTeamModal(false)}
-                  className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg"
+                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading || !newTeamName.trim()}
-                  className="px-4 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="px-4 py-2 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
                 >
                   {actionLoading ? 'Creating...' : 'Create Team'}
                 </button>

@@ -6,6 +6,7 @@ const {
   getDatasets,
   getDatasetById,
   getDatasetPreview,
+  refreshDataset,
   deleteDataset
 } = require('../controllers/datasetController');
 
@@ -16,6 +17,7 @@ router.use(authenticateToken);
 router.get('/', requirePermission('datasets.view'), getDatasets);
 router.get('/:id', requirePermission('datasets.view'), getDatasetById);
 router.get('/:id/preview', requirePermission('datasets.view'), getDatasetPreview);
+router.post('/:id/refresh', requirePermission('datasets.create'), refreshDataset);
 router.delete('/:id', requirePermission('datasets.delete'), deleteDataset);
 
 module.exports = router;

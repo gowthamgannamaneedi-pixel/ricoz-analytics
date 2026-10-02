@@ -200,10 +200,87 @@ export async function deleteDataset(id) {
   });
 }
 
+/**
+ * Refresh dataset ingestion, recalculating rows and schema
+ * @param {string|number} id
+ */
+export async function refreshDataset(id) {
+  return apiRequest(`/datasets/${id}/refresh`, {
+    method: 'POST'
+  });
+}
+
 export const getDatasetsApi = getDatasets;
 export const getDatasetByIdApi = getDatasetById;
 export const getDatasetPreviewApi = getDatasetPreview;
 export const deleteDatasetApi = deleteDataset;
+export const refreshDatasetApi = refreshDataset;
+
+// ============================================================================
+// DATA SOURCES API (Phase 14)
+// ============================================================================
+
+/**
+ * List all data sources
+ */
+export async function getDataSources() {
+  return apiRequest('/data-sources');
+}
+
+/**
+ * Get data source by ID
+ */
+export async function getDataSourceById(id) {
+  return apiRequest(`/data-sources/${id}`);
+}
+
+/**
+ * Create a new data source (PostgreSQL, REST API, etc.)
+ */
+export async function createDataSource(data) {
+  return apiRequest('/data-sources', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+}
+
+/**
+ * Test PostgreSQL database connection
+ */
+export async function testPostgresConnection(config) {
+  return apiRequest('/data-sources/test-connection', {
+    method: 'POST',
+    body: JSON.stringify(config)
+  });
+}
+
+/**
+ * Test REST API data source connection and preview records
+ */
+export async function testApiDataSource(config) {
+  return apiRequest('/data-sources/test-api', {
+    method: 'POST',
+    body: JSON.stringify(config)
+  });
+}
+
+/**
+ * Trigger sync/refresh of a data source
+ */
+export async function syncDataSource(id) {
+  return apiRequest(`/data-sources/${id}/sync`, {
+    method: 'POST'
+  });
+}
+
+/**
+ * Delete a data source
+ */
+export async function deleteDataSource(id) {
+  return apiRequest(`/data-sources/${id}`, {
+    method: 'DELETE'
+  });
+}
 
 // ============================================================================
 // METRICS & KPIS API
@@ -342,6 +419,28 @@ export async function updateWidget(dashboardId, widgetId, widgetData) {
 export async function deleteWidget(dashboardId, widgetId) {
   return apiRequest(`/dashboards/${dashboardId}/widgets/${widgetId}`, {
     method: 'DELETE'
+  });
+}
+
+/**
+ * Duplicate / clone an existing dashboard
+ * @param {string} dashboardId
+ */
+export async function duplicateDashboard(dashboardId) {
+  return apiRequest(`/dashboards/${dashboardId}/duplicate`, {
+    method: 'POST'
+  });
+}
+
+/**
+ * Batch update dashboard widget positions / layout
+ * @param {string} dashboardId
+ * @param {Array<{ widgetId: string, position: object }>} positions
+ */
+export async function updateDashboardLayout(dashboardId, positions) {
+  return apiRequest(`/dashboards/${dashboardId}/layout`, {
+    method: 'PUT',
+    body: JSON.stringify({ positions })
   });
 }
 

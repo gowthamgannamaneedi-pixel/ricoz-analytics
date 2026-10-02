@@ -23,6 +23,7 @@ const WIDGET_TYPES = [
   { id: 'bar_chart', label: 'Bar Chart', icon: BarChart3, desc: 'Categorical distribution and comparative volume' },
   { id: 'pie_chart', label: 'Pie / Donut', icon: PieChart, desc: 'Proportional commercial share of categories' },
   { id: 'area_chart', label: 'Area Chart', icon: AreaChartIcon, desc: 'Volume over timeline with smooth gradient fill' },
+  { id: 'forecast_chart', label: 'Predictive Forecast', icon: TrendingUp, desc: 'ML time-series projection with confidence interval & anomalies' },
   { id: 'table', label: 'Data Table', icon: Table2, desc: 'Compact scrollable table preview of dataset records' },
   { id: 'metric_gauge', label: 'Metric Gauge', icon: Gauge, desc: 'Target threshold dial with on-track status' }
 ];

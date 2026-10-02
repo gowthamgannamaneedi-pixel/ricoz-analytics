@@ -14,7 +14,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend
+  Legend,
+  ComposedChart
 } from 'recharts';
 import {
   Download,
@@ -38,7 +39,13 @@ import {
   Gauge,
   Share2,
   MessageSquare,
-  Bookmark
+  Bookmark,
+  Copy,
+  ChevronUp,
+  ChevronDown,
+  Maximize2,
+  Minimize2,
+  AlertTriangle
 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -57,6 +64,8 @@ import {
   createDashboard,
   updateDashboard,
   deleteDashboard,
+  duplicateDashboard,
+  updateDashboardLayout,
   addWidget,
   updateWidget,
   deleteWidget,
@@ -71,6 +80,15 @@ import {
 } from '../services/api';
 
 const PIE_COLORS = ['#2563eb', '#0891b2', '#0d9488', '#f59e0b', '#ec4899', '#8b5cf6', '#64748b'];
+
+const formatMetricLabel = (str) => {
+  if (!str) return '';
+  const s = String(str).toLowerCase().trim();
+  if (s === 'sales_amount' || s === 'sales') return 'Revenue';
+  if (s === 'units_sold' || s === 'units') return 'Units Sold';
+  if (s === 'profit_margin' || s === 'profit') return 'Profit Margin';
+  return str.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+};
 
 /**
  * High-Contrast Professional Tooltip Formatter
@@ -681,6 +699,67 @@ export default function DashboardPage() {
     }
   };
 
+  const handleDuplicateDashboard = async () => {
+    if (!activeDashboardId || activeDashboardId === 'overview') return;
+    try {
+      const res = await duplicateDashboard(activeDashboardId);
+      if (res.data) {
+        setDashboards(prev => [res.data, ...prev]);
+        setActiveDashboardId(res.data.id);
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to duplicate dashboard.');
+    }
+  };
+
+  const handleMoveWidget = async (widgetId, direction) => {
+    if (!widgets || widgets.length <= 1) return;
+    const currentIndex = widgets.findIndex(w => w.id === widgetId);
+    if (currentIndex === -1) return;
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= widgets.length) return;
+
+    const reordered = [...widgets];
+    const [moved] = reordered.splice(currentIndex, 1);
+    reordered.splice(targetIndex, 0, moved);
+
+    setActiveDashboardData(prev => ({
+      ...prev,
+      widgets: reordered
+    }));
+
+    const positions = reordered.map((w, idx) => ({
+      widgetId: w.id,
+      position: {
+        ...(typeof w.position === 'string' ? JSON.parse(w.position) : (w.position || { x: 0, y: 0, w: 6, h: 4 })),
+        y: idx * 4
+      }
+    }));
+
+    try {
+      await updateDashboardLayout(activeDashboardId, positions);
+    } catch (_) {}
+  };
+
+  const handleResizeWidget = async (widgetId, newWidth) => {
+    const target = widgets.find(w => w.id === widgetId);
+    if (!target) return;
+
+    const updatedPos = {
+      ...(typeof target.position === 'string' ? JSON.parse(target.position) : (target.position || { x: 0, y: 0, h: 4 })),
+      w: newWidth
+    };
+
+    setActiveDashboardData(prev => ({
+      ...prev,
+      widgets: prev.widgets.map(w => w.id === widgetId ? { ...w, position: updatedPos } : w)
+    }));
+
+    try {
+      await updateWidget(activeDashboardId, widgetId, { position: updatedPos });
+    } catch (_) {}
+  };
+
   // --------------------------------------------------------------------------
   // Dashboard Export Handler
   // --------------------------------------------------------------------------
@@ -731,7 +810,7 @@ export default function DashboardPage() {
               }`}
             >
               <LayoutDashboard className="h-3.5 w-3.5" />
-              <span>Telemetry Overview</span>
+              <span>Overview</span>
             </button>
 
             {/* Custom User / Org Dashboards */}
@@ -892,12 +971,25 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => navigate('/ai-insights')}
-              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:from-blue-700 hover:to-indigo-700 transition shadow-xs"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
               title="Query data with AI Analytics Assistant"
             >
-              <Sparkles className="h-3.5 w-3.5" />
+              <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
               <span>Ask AI</span>
             </button>
+
+            {/* Duplicate Dashboard (Phase 15) */}
+            {activeDashboardId !== 'overview' && !isViewer && (
+              <button
+                type="button"
+                onClick={handleDuplicateDashboard}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
+                title="Duplicate this dashboard and its widgets"
+              >
+                <Copy className="h-3.5 w-3.5 text-slate-500" />
+                <span>Duplicate</span>
+              </button>
+            )}
 
             {/* Export Dropdown Menu (Phase 9) */}
             <div className="relative">
@@ -957,7 +1049,8 @@ export default function DashboardPage() {
               type="button"
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50"
+              id="dashboard-refresh-btn"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50 shadow-2xs"
             >
               <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
               <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
@@ -1058,6 +1151,46 @@ export default function DashboardPage() {
                       </div>
                       {!isViewer && (
                         <div className="flex items-center gap-1.5">
+                          {/* Width Resize Pills */}
+                          <div className="hidden sm:flex items-center rounded-md border border-slate-200 bg-slate-50 p-0.5 text-[9px] font-mono mr-1">
+                            {[4, 6, 12].map(span => (
+                              <button
+                                key={span}
+                                type="button"
+                                onClick={() => handleResizeWidget(w.id, span)}
+                                className={`px-1.5 py-0.5 rounded transition ${
+                                  (w.position?.w || 6) === span
+                                    ? 'bg-white font-bold text-blue-600 shadow-2xs'
+                                    : 'text-slate-400 hover:text-slate-700'
+                                }`}
+                                title={`Resize to ${span} columns`}
+                              >
+                                {span}
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Reorder Up/Left */}
+                          <button
+                            type="button"
+                            onClick={() => handleMoveWidget(w.id, 'up')}
+                            className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                            title="Move widget backward"
+                          >
+                            <ChevronUp className="h-3.5 w-3.5" />
+                          </button>
+
+                          {/* Reorder Down/Right */}
+                          <button
+                            type="button"
+                            onClick={() => handleMoveWidget(w.id, 'down')}
+                            className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                            title="Move widget forward"
+                          >
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          </button>
+
+                          {/* Edit Widget */}
                           <button
                             type="button"
                             onClick={() => {
@@ -1069,6 +1202,8 @@ export default function DashboardPage() {
                           >
                             <Edit3 className="h-3.5 w-3.5" />
                           </button>
+
+                          {/* Delete Widget */}
                           <button
                             type="button"
                             onClick={() => handleDeleteWidget(w.id)}
@@ -1122,16 +1257,16 @@ export default function DashboardPage() {
 
                       {/* 1b. AI Automated Insights Card */}
                       {(w.type === 'ai_insights' || w.type === 'executive_insights') && (
-                        <div className="p-3 bg-gradient-to-br from-indigo-950/20 via-slate-50 to-purple-950/10 rounded-xl border border-indigo-200/60 space-y-2.5">
+                        <div className="p-3.5 bg-blue-50/40 rounded-xl border border-blue-100 space-y-2.5">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="font-bold text-indigo-900 flex items-center gap-1.5">
-                              <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+                            <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                              <Sparkles className="h-3.5 w-3.5 text-blue-600" />
                               <span>AI Telemetry Intelligence</span>
                             </span>
                             <button
                               type="button"
                               onClick={() => navigate('/ai-insights')}
-                              className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800"
+                              className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 transition cursor-pointer"
                             >
                               Explore Insights →
                             </button>
@@ -1290,6 +1425,74 @@ export default function DashboardPage() {
                           </table>
                         </div>
                       )}
+
+                      {/* 8. Predictive Forecast & Anomaly Detection Chart (Phase 11 & 15) */}
+                      {w.type === 'forecast_chart' && (
+                        <div className="space-y-2">
+                          {w.forecast_data?.predictions && w.forecast_data.predictions.length > 0 ? (
+                            <>
+                              <div className="flex items-center justify-between text-[11px] px-1 text-slate-500 font-medium">
+                                <span className="flex items-center gap-1.5">
+                                  <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                  <span>Model: <strong className="text-slate-700 capitalize">{(w.forecast_data.model || 'auto').replace('_', ' ')}</strong></span>
+                                </span>
+                                {w.forecast_data.anomalies && w.forecast_data.anomalies.length > 0 ? (
+                                  <span className="flex items-center gap-1 text-rose-600 font-bold text-[10px] px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200">
+                                    <AlertTriangle className="h-3 w-3" />
+                                    <span>{w.forecast_data.anomalies.length} Outlier{w.forecast_data.anomalies.length > 1 ? 's' : ''}</span>
+                                  </span>
+                                ) : (
+                                  <span className="text-emerald-600 text-[10px] font-bold">Stable Telemetry</span>
+                                )}
+                              </div>
+                              <div className="h-56 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <ComposedChart
+                                    data={[
+                                      ...(w.forecast_data.historical_series || []).map(p => ({
+                                        name: p.date,
+                                        historical: p.value,
+                                        predicted: null,
+                                        lower: null,
+                                        upper: null
+                                      })),
+                                      ...(w.forecast_data.predictions || []).map(p => ({
+                                        name: p.date,
+                                        historical: null,
+                                        predicted: p.predicted,
+                                        lower: p.lower_bound,
+                                        upper: p.upper_bound
+                                      }))
+                                    ]}
+                                    margin={{ top: 10, right: 10, left: -15, bottom: 0 }}
+                                  >
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                                    <XAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} />
+                                    <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
+                                    <Tooltip content={<EnterpriseTooltip prefix="₹" />} />
+                                    <Area type="monotone" dataKey="upper" stroke="none" fill="#93c5fd" fillOpacity={0.25} />
+                                    <Area type="monotone" dataKey="lower" stroke="none" fill="#ffffff" fillOpacity={1} />
+                                    <Line type="monotone" dataKey="historical" stroke="#2563eb" strokeWidth={2.2} dot={{ r: 2.5 }} name="Historical" />
+                                    <Line type="monotone" dataKey="predicted" stroke="#10b981" strokeWidth={2.2} strokeDasharray="4 4" dot={{ r: 2.5 }} name="Forecast" />
+                                  </ComposedChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center h-48 text-center p-4 text-slate-400 space-y-2">
+                              <TrendingUp className="h-8 w-8 text-slate-300" />
+                              <span className="text-xs">No active forecast model linked.</span>
+                              <button
+                                type="button"
+                                onClick={() => navigate('/forecasts')}
+                                className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 underline"
+                              >
+                                Configure in Forecast Studio →
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -1309,7 +1512,7 @@ export default function DashboardPage() {
             <div>
               <div className="flex flex-wrap items-center gap-3">
                 <h2 className="text-xl font-bold tracking-tight text-slate-900">
-                  Telemetry Overview
+                  Analytics Overview
                 </h2>
                 <DatasetSelector
                   datasets={datasets}
@@ -1347,14 +1550,14 @@ export default function DashboardPage() {
 
           {/* Dynamic KPI Section */}
           {kpiData ? (
-            <section className="rounded-xl border border-slate-200 bg-white divide-y sm:divide-y-0 sm:divide-x divide-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 overflow-hidden shadow-2xs">
+            <section className="rounded-xl border border-slate-200/90 bg-white divide-y sm:divide-y-0 sm:divide-x divide-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 overflow-hidden shadow-2xs">
               <StatCard
-                title={`Total ${summaryData?.dimensions?.primaryMetric || 'Sales'}`}
+                title={summaryData?.dimensions?.primaryMetric ? `Total ${formatMetricLabel(summaryData.dimensions.primaryMetric)}` : 'Total Revenue'}
                 value={formatCurrency(kpiData.totalSales)}
                 change={kpiData.comparison?.salesChange}
                 isPositive={kpiData.comparison?.isSalesPositive}
-                period={kpiData.comparison?.periodLabel || 'calculated sum'}
-                subtext={`Min: ${formatCurrency(kpiData.minSales)} · Max: ${formatCurrency(kpiData.maxSales)}`}
+                period={kpiData.comparison?.periodLabel || 'vs previous period'}
+                subtext=""
                 isPrimary={true}
               />
               <StatCard
@@ -1362,24 +1565,24 @@ export default function DashboardPage() {
                 value={kpiData.totalOrders.toLocaleString()}
                 change={kpiData.comparison?.ordersChange}
                 isPositive={kpiData.comparison?.isOrdersPositive}
-                period={kpiData.comparison?.periodLabel || 'volume count'}
-                subtext={`${kpiData.recordCount?.toLocaleString() || 0} total rows`}
+                period={kpiData.comparison?.periodLabel || 'vs previous period'}
+                subtext=""
               />
               <StatCard
-                title={`Total ${summaryData?.dimensions?.quantityMetric || 'Units'}`}
+                title={summaryData?.dimensions?.quantityMetric ? formatMetricLabel(summaryData.dimensions.quantityMetric) : 'Units Sold'}
                 value={kpiData.totalQuantity.toLocaleString()}
-                period="units processed"
-                subtext={`${summaryData?.dimensions?.quantityMetric ? 'Aggregated quantity' : 'Transaction count'}`}
+                period="total fulfilled"
+                subtext=""
               />
               <StatCard
                 title="Average Order Value"
                 value={formatCurrency(kpiData.averageOrderValue)}
                 period="per transaction"
-                subtext={`Avg across ${kpiData.totalOrders.toLocaleString()} orders`}
+                subtext=""
               />
             </section>
           ) : (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 text-center text-xs text-slate-400">
+            <div className="rounded-xl border border-slate-200/90 bg-white p-6 text-center text-xs text-slate-400 shadow-2xs">
               No numeric fields available for KPI analysis.
             </div>
           )}
@@ -1387,16 +1590,16 @@ export default function DashboardPage() {
           {/* Visualizations Row 1: Time-Series Trend + Regional Commercial Hubs */}
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <ChartCard
-              title={`${summaryData?.dimensions?.primaryMetric || 'Sales'} Realization Trend`}
-              subtitle="Time-series aggregation over reporting timeline"
+              title={summaryData?.dimensions?.primaryMetric ? `${formatMetricLabel(summaryData.dimensions.primaryMetric)} Trend` : 'Revenue Trend'}
+              subtitle="Daily performance vs baseline benchmark"
               className="lg:col-span-2"
               action={
                 <div className="flex items-center gap-4 text-xs font-medium text-slate-600">
                   <span className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-blue-600" /> Realized Metric
+                    <span className="h-2 w-2 rounded-full bg-blue-600" /> Revenue
                   </span>
-                  <span className="flex items-center gap-1.5 text-slate-500">
-                    <span className="h-2 w-2 rounded-xs border-2 border-dashed border-slate-400" /> Target Benchmark
+                  <span className="flex items-center gap-1.5 text-slate-400">
+                    <span className="h-2 w-2 rounded-xs border-2 border-dashed border-slate-400" /> Benchmark
                   </span>
                 </div>
               }
@@ -1412,8 +1615,8 @@ export default function DashboardPage() {
                     <XAxis dataKey="formattedDate" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
                     <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : `₹${val}`} />
                     <Tooltip content={<EnterpriseTooltip prefix="₹" />} />
-                    <Line type="monotone" dataKey="revenue" name={summaryData?.dimensions?.primaryMetric || 'Revenue'} stroke="#2563eb" strokeWidth={2.5} dot={{ r: 3.5, fill: '#2563eb', strokeWidth: 1.5, stroke: '#FFFFFF' }} activeDot={{ r: 5, fill: '#2563eb' }} />
-                    <Line type="monotone" dataKey="target" name="Baseline Benchmark" stroke="#94a3b8" strokeWidth={1.75} strokeDasharray="4 4" dot={false} />
+                    <Line type="monotone" dataKey="revenue" name={formatMetricLabel(summaryData?.dimensions?.primaryMetric) || 'Revenue'} stroke="#2563eb" strokeWidth={2.5} dot={{ r: 3.5, fill: '#2563eb', strokeWidth: 1.5, stroke: '#FFFFFF' }} activeDot={{ r: 5, fill: '#2563eb' }} />
+                    <Line type="monotone" dataKey="target" name="Benchmark" stroke="#94a3b8" strokeWidth={1.75} strokeDasharray="4 4" dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               )}
@@ -1421,7 +1624,7 @@ export default function DashboardPage() {
 
             <ChartCard
               title="Regional Performance"
-              subtitle={`Top ${summaryData?.dimensions?.regionColumn || 'regions'} by volume`}
+              subtitle="Revenue distribution by region"
             >
               {regionBreakdown.length === 0 ? (
                 <div className="flex items-center justify-center h-56 text-xs text-slate-400">
@@ -1434,7 +1637,7 @@ export default function DashboardPage() {
                     <XAxis type="number" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val) => val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : `₹${val}`} />
                     <YAxis type="category" dataKey="category" stroke="#475569" fontSize={11} tickLine={false} axisLine={false} width={80} />
                     <Tooltip content={<EnterpriseTooltip prefix="₹" />} />
-                    <Bar dataKey="value" name={summaryData?.dimensions?.primaryMetric || 'Revenue'} fill="#2563eb" radius={[0, 3, 3, 0]} />
+                    <Bar dataKey="value" name={formatMetricLabel(summaryData?.dimensions?.primaryMetric) || 'Revenue'} fill="#2563eb" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -1445,7 +1648,7 @@ export default function DashboardPage() {
           <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ChartCard
               title="Channel Distribution"
-              subtitle={`Commercial share across ${summaryData?.dimensions?.channelColumn || 'channels'}`}
+              subtitle="Revenue share across sales channels"
             >
               {channelBreakdown.length === 0 ? (
                 <div className="flex items-center justify-center h-56 text-xs text-slate-400">
@@ -1458,7 +1661,7 @@ export default function DashboardPage() {
                     <XAxis dataKey="category" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
                     <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : `₹${val}`} />
                     <Tooltip content={<EnterpriseTooltip prefix="₹" />} />
-                    <Bar dataKey="value" name={summaryData?.dimensions?.primaryMetric || 'Sales'} fill="#0891b2" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="value" name={formatMetricLabel(summaryData?.dimensions?.primaryMetric) || 'Revenue'} fill="#2563eb" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -1466,7 +1669,7 @@ export default function DashboardPage() {
 
             <ChartCard
               title="Product Breakdown"
-              subtitle={`Revenue distribution across ${summaryData?.dimensions?.productColumn || summaryData?.dimensions?.categoryColumn || 'products'}`}
+              subtitle="Revenue distribution by product"
             >
               {productBreakdown.length === 0 ? (
                 <div className="flex items-center justify-center h-56 text-xs text-slate-400">
@@ -1479,7 +1682,7 @@ export default function DashboardPage() {
                     <XAxis dataKey="category" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
                     <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : `₹${val}`} />
                     <Tooltip content={<EnterpriseTooltip prefix="₹" />} />
-                    <Bar dataKey="value" name={summaryData?.dimensions?.primaryMetric || 'Sales'} fill="#2563eb" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="value" name={formatMetricLabel(summaryData?.dimensions?.primaryMetric) || 'Revenue'} fill="#3b82f6" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}

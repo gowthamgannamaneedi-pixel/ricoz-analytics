@@ -14,7 +14,7 @@ import {
 import { simulateWhatIfScenario } from '../services/api';
 
 /**
- * Scenario Simulator Modal (Phase 6)
+ * Enterprise Scenario Simulator Modal
  * Interactive What-If Counterfactual Sensitivity Modeling.
  */
 export default function ScenarioSimulatorModal({
@@ -88,27 +88,27 @@ export default function ScenarioSimulatorModal({
   if (!isOpen || !attribution) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl shadow-2xl text-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
+      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-4xl shadow-2xl text-slate-900 overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
+        <div className="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+            <div className="p-2 rounded-xl bg-blue-50 border border-blue-100 text-blue-600">
               <Sliders className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                What-If Counterfactual Scenario Simulator
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                What-If Scenario Simulator
               </h2>
-              <p className="text-xs text-slate-400">
-                Simulate driver adjustments for <strong className="text-white">{attribution.metric}</strong> across <strong className="text-white">{attribution.dimension}</strong>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Simulate driver adjustments for <strong className="text-slate-800">{attribution.metric}</strong> across <strong className="text-slate-800">{attribution.dimension}</strong>
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -116,16 +116,16 @@ export default function ScenarioSimulatorModal({
         </div>
 
         {/* Counterfactual Notice Banner */}
-        <div className="bg-amber-500/10 border-b border-amber-500/20 px-6 py-2.5 flex items-center justify-between text-xs text-amber-300">
+        <div className="bg-amber-50 border-b border-amber-200/80 px-6 py-2.5 flex items-center justify-between text-xs text-amber-800">
           <div className="flex items-center gap-2">
-            <Info className="w-4 h-4 text-amber-400 shrink-0" />
+            <Info className="w-4 h-4 text-amber-600 shrink-0" />
             <span>
-              <strong>COUNTERFACTUAL / PROJECTED SIMULATION:</strong> Mathematical sensitivity modeling only. Does not alter underlying dataset.
+              <strong>Projected Scenario Simulation:</strong> Mathematical sensitivity modeling only. Does not alter underlying dataset records.
             </span>
           </div>
           <button
             onClick={handleReset}
-            className="flex items-center gap-1 text-[11px] font-semibold text-amber-400 hover:text-amber-200 transition"
+            className="flex items-center gap-1 text-[11px] font-semibold text-amber-700 hover:text-amber-900 transition cursor-pointer"
           >
             <RotateCcw className="w-3 h-3" />
             <span>Reset All</span>
@@ -138,45 +138,47 @@ export default function ScenarioSimulatorModal({
           {/* Diff Metric Cards */}
           {simulationResult && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                <span className="text-xs text-slate-400">Verified Baseline</span>
-                <div className="text-xl font-bold text-white mt-1">
+              <div className="p-4 rounded-xl bg-slate-50/80 border border-slate-200">
+                <span className="text-[11px] font-medium text-slate-500">Verified Baseline</span>
+                <div className="text-xl font-bold text-slate-900 mt-1 font-mono">
                   {simulationResult.baselineTotal.toLocaleString()}
                 </div>
-                <div className="text-[11px] text-slate-500 mt-1">Current verified row sum</div>
+                <div className="text-[11px] text-slate-400 mt-1">Current verified row sum</div>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/60">
-                <span className="text-xs text-slate-400">Counterfactual Projection</span>
-                <div className="text-xl font-bold text-indigo-400 mt-1">
+              <div className="p-4 rounded-xl bg-blue-50/40 border border-blue-100">
+                <span className="text-[11px] font-medium text-blue-700">Counterfactual Projection</span>
+                <div className="text-xl font-bold text-blue-700 mt-1 font-mono">
                   {simulationResult.simulatedTotal.toLocaleString()}
                 </div>
-                <div className="text-[11px] text-slate-500 mt-1">Simulated outcome</div>
+                <div className="text-[11px] text-blue-500 mt-1">Simulated outcome</div>
               </div>
 
               <div className={`p-4 rounded-xl border ${
                 simulationResult.netProjectedDelta >= 0
-                  ? 'bg-emerald-500/10 border-emerald-500/20'
-                  : 'bg-rose-500/10 border-rose-500/20'
+                  ? 'bg-emerald-50/60 border-emerald-200'
+                  : 'bg-rose-50/60 border-rose-200'
               }`}>
-                <span className="text-xs text-slate-400">Net Projected Variance</span>
-                <div className={`text-xl font-bold mt-1 flex items-center gap-1 ${
-                  simulationResult.netProjectedDelta >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                <span className="text-[11px] font-medium text-slate-500">Net Projected Variance</span>
+                <div className={`text-xl font-bold mt-1 flex items-center gap-1 font-mono ${
+                  simulationResult.netProjectedDelta >= 0 ? 'text-emerald-700' : 'text-rose-700'
                 }`}>
                   {simulationResult.netProjectedDelta >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                   {simulationResult.netProjectedDelta >= 0 ? '+' : ''}{simulationResult.netProjectedDelta.toLocaleString()} ({simulationResult.netProjectedPercent}%)
                 </div>
-                <div className="text-[11px] text-slate-400 mt-1">Difference over baseline</div>
+                <div className="text-[11px] text-slate-500 mt-1">Difference over baseline</div>
               </div>
             </div>
           )}
 
           {/* Interactive Sliders */}
           <div className="space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-              <span>Segment Adjustments (% Change)</span>
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-slate-800">
+                Segment Adjustments (% Change)
+              </h3>
               <span className="text-[11px] text-slate-500 font-normal">Bounded at 0 (cannot drop below zero)</span>
-            </h3>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {attribution.drivers?.map((d) => {
@@ -186,20 +188,20 @@ export default function ScenarioSimulatorModal({
                 return (
                   <div
                     key={d.segment}
-                    className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/50 space-y-3"
+                    className="p-4 rounded-xl bg-white border border-slate-200 space-y-3 shadow-2xs"
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-sm font-semibold text-white">{d.segment}</div>
-                        <div className="text-xs text-slate-400">
-                          Baseline: <span className="font-mono text-slate-300">{d.currentValue.toLocaleString()}</span>
+                        <div className="text-sm font-semibold text-slate-900">{d.segment}</div>
+                        <div className="text-xs text-slate-500">
+                          Baseline: <span className="font-mono text-slate-700">{d.currentValue.toLocaleString()}</span>
                         </div>
                       </div>
                       <div className="text-right">
                         <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${
                           currentVal > 0
-                            ? 'bg-emerald-500/10 text-emerald-400'
-                            : (currentVal < 0 ? 'bg-rose-500/10 text-rose-400' : 'bg-slate-700 text-slate-300')
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : (currentVal < 0 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-slate-100 text-slate-600 border border-slate-200')
                         }`}>
                           {currentVal > 0 ? `+${currentVal}%` : `${currentVal}%`}
                         </span>
@@ -215,9 +217,9 @@ export default function ScenarioSimulatorModal({
                         step="1"
                         value={currentVal}
                         onChange={(e) => handleSliderChange(d.segment, e.target.value)}
-                        className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                        className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                       />
-                      <div className="flex justify-between text-[10px] text-slate-500 font-mono">
+                      <div className="flex justify-between text-[10px] text-slate-400 font-mono">
                         <span>-50%</span>
                         <span>0%</span>
                         <span>+50%</span>
@@ -226,13 +228,13 @@ export default function ScenarioSimulatorModal({
 
                     {/* Projected Segment Delta */}
                     {segmentSim && segmentSim.isAdjusted && (
-                      <div className="pt-2 border-t border-slate-700/40 flex items-center justify-between text-xs">
-                        <span className="text-slate-400">Simulated:</span>
-                        <span className="font-mono font-medium text-slate-200">
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span className="text-slate-500">Simulated:</span>
+                        <span className="font-mono font-semibold text-slate-900">
                           {segmentSim.simulatedValue.toLocaleString()} ({segmentSim.netDelta >= 0 ? '+' : ''}{segmentSim.netDelta.toLocaleString()})
                         </span>
                         {segmentSim.clampedAtZero && (
-                          <span className="text-[10px] text-amber-400 font-semibold px-1.5 py-0.2 rounded bg-amber-500/10">
+                          <span className="text-[10px] text-amber-700 font-semibold px-1.5 py-0.2 rounded bg-amber-50 border border-amber-200">
                             Bounded at 0
                           </span>
                         )}
@@ -246,17 +248,17 @@ export default function ScenarioSimulatorModal({
 
           {/* Grounded AI Scenario Synthesis */}
           {simulationResult && (
-            <div className="p-4 rounded-xl bg-indigo-950/20 border border-indigo-500/20">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-4 h-4 text-indigo-400" />
-                <span className="text-xs font-bold uppercase tracking-wider text-indigo-300">
-                  AI INTERPRETATION • Grounded Scenario Synthesis
+            <div className="p-4 rounded-xl bg-blue-50/40 border border-blue-100 text-xs space-y-1.5">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-blue-600" />
+                <span className="font-bold text-blue-900">
+                  AI Scenario Synthesis
                 </span>
-                <span className="text-[10px] text-slate-500">
-                  ({simulationResult.aiGenerated ? 'Gemini 2.5 Flash' : 'Deterministic Rules'})
+                <span className="text-[10px] font-mono text-blue-600 bg-blue-100 px-2 py-0.2 rounded border border-blue-200">
+                  {simulationResult.aiGenerated ? 'Gemini' : 'Deterministic Engine'}
                 </span>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-slate-700 leading-relaxed">
                 {simulationResult.explanation || simulationResult.observationalSummary}
               </p>
             </div>
@@ -265,10 +267,10 @@ export default function ScenarioSimulatorModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-800 bg-slate-900/90 flex items-center justify-end space-x-3">
+        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/70 flex items-center justify-end space-x-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="px-4 py-2 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
           >
             Close Simulation
           </button>

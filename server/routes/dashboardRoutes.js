@@ -8,6 +8,8 @@ const {
   createDashboard,
   updateDashboard,
   deleteDashboard,
+  duplicateDashboard,
+  updateLayout,
   addWidget,
   updateWidget,
   deleteWidget
@@ -23,7 +25,9 @@ router.get('/', getDashboards);
 router.get('/:id', getDashboardById);
 
 router.post('/', requireRole('admin', 'manager', 'analyst'), createDashboard);
+router.post('/:id/duplicate', requireRole('admin', 'manager', 'analyst'), duplicateDashboard);
 router.put('/:id', requireRole('admin', 'manager', 'analyst'), updateDashboard);
+router.put('/:id/layout', requireRole('admin', 'manager', 'analyst'), updateLayout);
 router.delete('/:id', requireRole('admin', 'manager', 'analyst'), deleteDashboard);
 
 // Dashboard Widgets Management

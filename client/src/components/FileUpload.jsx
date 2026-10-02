@@ -108,13 +108,13 @@ export default function FileUpload({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className={`flex flex-col items-center justify-center rounded-md border-2 border-dashed p-6 sm:p-8 text-center cursor-pointer transition-colors ${
+          className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 sm:p-8 text-center cursor-pointer transition-all ${
             isDragging
               ? 'border-blue-500 bg-blue-50/50'
-              : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300'
+              : 'border-slate-200/90 bg-slate-50/40 hover:bg-slate-50/80 hover:border-slate-300'
           }`}
         >
-          <div className="rounded-full bg-white p-3 border border-slate-200 shadow-2xs text-blue-600 mb-3">
+          <div className="rounded-full bg-white p-3 border border-slate-200/90 shadow-2xs text-blue-600 mb-2.5">
             <UploadCloud className="h-6 w-6 text-blue-600" />
           </div>
 
@@ -122,29 +122,29 @@ export default function FileUpload({
             Click to browse or drag and drop your data file
           </p>
           <p className="text-[11px] text-slate-500 mt-1">
-            Supports CSV and JSON datasets up to {maxSizeMb}MB
+            Supports CSV and JSON files up to {maxSizeMb}MB
           </p>
 
-          <div className="flex items-center gap-2 mt-4">
-            <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-white text-emerald-700 border border-slate-200 shadow-2xs">
+          <div className="flex items-center gap-2 mt-3.5">
+            <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-white text-emerald-700 border border-emerald-200 shadow-2xs">
               .CSV
             </span>
-            <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-white text-amber-700 border border-slate-200 shadow-2xs">
+            <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-white text-amber-700 border border-amber-200 shadow-2xs">
               .JSON
             </span>
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-between rounded-md border border-slate-200 bg-white p-3.5 shadow-2xs">
+        <div className="flex items-center justify-between rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2 rounded bg-slate-50 border border-slate-100 shrink-0">
+            <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 shrink-0">
               {getFileIcon(selectedFile.name)}
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-slate-900 truncate">
                 {selectedFile.name}
               </p>
-              <p className="font-mono text-[11px] text-slate-400">
+              <p className="font-mono text-[11px] text-slate-500 mt-0.5">
                 {formatFileSize(selectedFile.size)} · Ready to ingest
               </p>
             </div>
@@ -153,7 +153,7 @@ export default function FileUpload({
           <button
             type="button"
             onClick={handleRemove}
-            className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
             title="Remove file"
           >
             <X className="h-4 w-4" />
@@ -162,7 +162,7 @@ export default function FileUpload({
       )}
 
       {displayError && (
-        <div className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-700">
+        <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50/80 p-3 text-xs text-rose-700">
           <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600" />
           <span>{displayError}</span>
         </div>

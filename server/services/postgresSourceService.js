@@ -12,10 +12,11 @@ const { Client } = require('pg');
  */
 function sanitizePostgresConfig(config = {}) {
   if (!config || typeof config !== 'object') return {};
-  const { password, ...safeConfig } = config;
+  const { password, auth_token, authToken, apiKey, api_key, token, ...safeConfig } = config;
   return {
     ...safeConfig,
-    hasPassword: Boolean(password)
+    hasPassword: Boolean(password),
+    hasAuthToken: Boolean(auth_token || authToken || apiKey || api_key || token)
   };
 }
 

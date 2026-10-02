@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Table2, RefreshCw, AlertCircle, Loader2, Plus, Database, FileSpreadsheet, FileCode, CheckCircle2, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Table2, RefreshCw, AlertCircle, Loader2, Plus, Database, FileSpreadsheet, FileCode, CheckCircle2, Trash2, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import DatasetTable from '../components/DatasetTable';
 import DatasetPreviewModal from '../components/DatasetPreviewModal';
 import AddDataSourceModal from '../components/AddDataSourceModal';
 
-import { getDatasetsApi, deleteDatasetApi } from '../services/api';
+import { getDatasetsApi, deleteDatasetApi, refreshDataset as refreshDatasetApi } from '../services/api';
 
 /**
- * Real Datasets Explorer & Preview Page
+ * Enterprise Datasets Explorer & Preview Page
+ * Answers: “What data can I analyze, what does it contain, and is it ready?”
  */
 const FALLBACK_DATASETS = [
   {
@@ -46,12 +47,14 @@ export default function DatasetsPage() {
   const [previewDatasetId, setPreviewDatasetId] = useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-  // Delete Confirmation Modal State (Step 20 & 21)
+  // Delete Confirmation Modal State
   const [datasetToDelete, setDatasetToDelete] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(null);
+  const [isRefreshingDataset, setIsRefreshingDataset] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
   const [deleteSuccess, setDeleteSuccess] = useState(null);
+  const [refreshSuccess, setRefreshSuccess] = useState(null);
 
   const fetchDatasets = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
@@ -120,6 +123,25 @@ export default function DatasetsPage() {
     }
   };
 
+  const handleRefreshDataset = async (datasetId) => {
+    if (isViewer) {
+      setError('Viewers do not have permission to refresh datasets.');
+      return;
+    }
+    setIsRefreshingDataset(datasetId);
+    setError('');
+    try {
+      const res = await refreshDatasetApi(datasetId);
+      setRefreshSuccess(res?.message || 'Dataset schema and row count successfully refreshed.');
+      await fetchDatasets(false);
+      setTimeout(() => setRefreshSuccess(null), 3500);
+    } catch (err) {
+      setError(err.message || 'Failed to refresh dataset.');
+    } finally {
+      setIsRefreshingDataset(null);
+    }
+  };
+
   const handleUploadSuccess = (data) => {
     if (data?.data?.dataset) {
       setDatasets(prev => [data.data.dataset, ...prev]);
@@ -132,26 +154,31 @@ export default function DatasetsPage() {
   // Metrics
   const totalRows = datasets.reduce((sum, d) => sum + (Number(d.row_count) || 0), 0);
   const totalColumns = datasets.reduce((sum, d) => sum + (Number(d.column_count) || 0), 0);
+  const readyCount = datasets.filter(d => {
+    const rowCount = Number(d.row_count);
+    return !isNaN(rowCount) && rowCount > 0 && d.data_source_status !== 'error' && d.status !== 'error';
+  }).length;
+  const processingCount = datasets.filter(d => {
+    return d.status === 'processing' || d.status === 'syncing' || d.status === 'pending' || d.data_source_status === 'pending' || d.data_source_status === 'syncing';
+  }).length;
 
   return (
     <div className="space-y-6 font-sans">
       {/* Top Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-1">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
               Datasets
             </h1>
-            <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-              isViewer
-                ? 'bg-slate-100 text-slate-600 border border-slate-200'
-                : 'bg-blue-50 text-blue-700 border border-blue-200'
-            }`}>
-              {currentRole.toUpperCase()} MODE
-            </span>
+            {currentRole && (
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200/80">
+                {currentRole.charAt(0).toUpperCase() + currentRole.slice(1)}
+              </span>
+            )}
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Explore schema, preview records, and manage imported business telemetry.
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal">
+            Explore schemas, preview records, and analyze curated data tables.
           </p>
         </div>
 
@@ -159,7 +186,7 @@ export default function DatasetsPage() {
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-40 shadow-2xs"
+            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-40 shadow-2xs"
           >
             <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
             <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
@@ -169,17 +196,18 @@ export default function DatasetsPage() {
             <button
               onClick={() => setIsUploadModalOpen(true)}
               id="open-import-dataset-btn"
-              className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
+              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-2xs"
             >
               <Plus className="h-4 w-4" />
-              <span>+ Ingest New Dataset</span>
+              <span>+ Upload Dataset</span>
             </button>
           )}
         </div>
       </div>
 
+      {/* Viewer Mode Alert */}
       {isViewer && (
-        <div className="flex items-center justify-between gap-2.5 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-600">
+        <div className="flex items-center justify-between gap-2.5 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-2.5 text-xs text-slate-600">
           <span className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-slate-400" />
             <span><strong>View-Only Mode:</strong> Your role ({currentRole}) has dataset inspection and 50-row preview access. Ingestion and deletion require Analyst or Admin privileges.</span>
@@ -189,7 +217,7 @@ export default function DatasetsPage() {
 
       {/* Error Alert */}
       {error && (
-        <div className="flex items-start gap-2.5 rounded-md border border-rose-200 bg-rose-50 p-3.5 text-xs text-rose-700">
+        <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-xs text-rose-700">
           <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600" />
           <div>
             <p className="font-bold">Failed to load datasets</p>
@@ -200,62 +228,124 @@ export default function DatasetsPage() {
 
       {/* Delete Success Alert */}
       {deleteSuccess && (
-        <div className="flex items-center gap-2.5 rounded-md border border-emerald-200 bg-emerald-50 p-3.5 text-xs text-emerald-800">
+        <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50/80 p-3.5 text-xs text-emerald-800">
           <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
           <span>{deleteSuccess}</span>
         </div>
       )}
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-2xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-            Total Datasets
+      {/* Refresh Success Alert */}
+      {refreshSuccess && (
+        <div className="flex items-center gap-2.5 rounded-xl border border-blue-200 bg-blue-50/80 p-3.5 text-xs text-blue-800">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-blue-600" />
+          <span>{refreshSuccess}</span>
+        </div>
+      )}
+
+      {/* Product Distinction Info Callout */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-xl border border-blue-100 bg-blue-50/30 text-xs text-slate-700">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="p-1 rounded-md bg-blue-100/70 text-blue-700 shrink-0">
+            <Table2 className="h-3.5 w-3.5" />
           </span>
-          <div className="mt-2 flex items-baseline gap-2">
+          <p className="text-slate-600 truncate sm:whitespace-normal">
+            <strong className="text-slate-900">Analysis-Ready Tables:</strong> Datasets are structured tables produced from your ingested files and database connectors. Query tables, inspect schema, or launch AI analytics.
+          </p>
+        </div>
+        <Link
+          to="/data-sources"
+          className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-700 shrink-0 text-xs transition"
+        >
+          <span>Manage Data Sources</span>
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+
+      {/* Compact Summary Section (4 Cards) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="rounded-xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-2xs">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-slate-600">
+              Total Datasets
+            </span>
+            <div className="p-2 rounded-lg bg-blue-50 border border-blue-100/80 text-blue-600">
+              <Table2 className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-2.5 flex items-baseline gap-2">
             <span className="font-mono text-2xl font-bold tracking-tight text-slate-900">
               {datasets.length}
             </span>
           </div>
-          <p className="mt-1.5 text-xs text-slate-500">
-            Ingested from CSV, JSON, and database sources
+          <p className="mt-1 text-xs text-slate-500 truncate">
+            Curated business tables
           </p>
         </div>
 
-        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-2xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-            Total Record Volume
-          </span>
-          <div className="mt-2 flex items-baseline gap-2">
+        <div className="rounded-xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-2xs">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-slate-600">
+              Ready for Analysis
+            </span>
+            <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-100/80 text-emerald-600">
+              <CheckCircle2 className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="font-mono text-2xl font-bold tracking-tight text-slate-900">
+              {readyCount}
+            </span>
+            <span className="text-xs text-emerald-600 font-semibold font-mono">active</span>
+          </div>
+          <p className="mt-1 text-xs text-slate-500 truncate">
+            Parsed & query-ready
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-2xs">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-slate-600">
+              Processing / Syncing
+            </span>
+            <div className="p-2 rounded-lg bg-amber-50 border border-amber-100/80 text-amber-600">
+              <RefreshCw className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="font-mono text-2xl font-bold tracking-tight text-slate-900">
+              {processingCount}
+            </span>
+            <span className="text-xs text-amber-600 font-semibold font-mono">syncing</span>
+          </div>
+          <p className="mt-1 text-xs text-slate-500 truncate">
+            Pipeline ingestion in progress
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-2xs">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-slate-600">
+              Total Record Volume
+            </span>
+            <div className="p-2 rounded-lg bg-slate-50 border border-slate-200/80 text-slate-600">
+              <Database className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-2.5 flex items-baseline gap-2">
             <span className="font-mono text-2xl font-bold tracking-tight text-slate-900">
               {totalRows.toLocaleString()}
             </span>
-            <span className="font-mono text-xs text-emerald-600 font-bold">rows</span>
+            <span className="text-xs text-slate-500 font-mono">rows</span>
           </div>
-          <p className="mt-1.5 text-xs text-slate-500">
-            Processed through parsing and schema validation
-          </p>
-        </div>
-
-        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-2xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-            Inferred Dimensions
-          </span>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-mono text-2xl font-bold tracking-tight text-slate-900">
-              {totalColumns}
-            </span>
-            <span className="font-mono text-xs text-blue-600 font-bold">fields</span>
-          </div>
-          <p className="mt-1.5 text-xs text-slate-500">
-            Numbers, strings, dates, and booleans
+          <p className="mt-1 text-xs text-slate-500 truncate">
+            Across {totalColumns} dimensions
           </p>
         </div>
       </div>
 
       {/* Datasets Table */}
       {isLoading ? (
-        <div className="rounded-md border border-slate-200 bg-white p-12 flex flex-col items-center justify-center space-y-3">
+        <div className="rounded-xl border border-slate-200/90 bg-white p-12 flex flex-col items-center justify-center space-y-3 shadow-2xs">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
           <p className="text-xs font-medium text-slate-500">
             Fetching dataset metadata and column schemas...
@@ -266,7 +356,11 @@ export default function DatasetsPage() {
           datasets={datasets}
           onPreview={handleOpenPreview}
           onDelete={handleDeleteClick}
+          onRefreshDataset={handleRefreshDataset}
+          isRefreshingDataset={isRefreshingDataset}
           isDeleting={isDeleting}
+          onOpenUploadModal={() => setIsUploadModalOpen(true)}
+          isViewer={isViewer}
         />
       )}
 
@@ -286,43 +380,43 @@ export default function DatasetsPage() {
         token={token}
       />
 
-      {/* Delete Confirmation Modal (Step 20 & 21) */}
+      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && datasetToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs font-sans">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200/90">
             <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+              <div className="h-10 w-10 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
                 <Trash2 className="h-5 w-5" />
               </div>
               <div>
                 <h3 className="font-bold text-slate-900 text-sm">Delete Dataset?</h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  This will remove the dataset and its associated data.
+                  This will remove the dataset and disconnect all associated reports.
                 </p>
               </div>
             </div>
 
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 mb-4 text-xs space-y-1">
-              <div className="flex justify-between">
+            <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200/70 mb-4 text-xs space-y-1.5">
+              <div className="flex justify-between items-center">
                 <span className="text-slate-500">Dataset Name:</span>
                 <span className="font-semibold text-slate-800">{datasetToDelete.name}</span>
               </div>
               {datasetToDelete.row_count !== undefined && (
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-slate-500">Records:</span>
-                  <span className="font-mono text-slate-700">{Number(datasetToDelete.row_count || 0).toLocaleString()} rows</span>
+                  <span className="font-mono text-slate-700 font-semibold">{Number(datasetToDelete.row_count || 0).toLocaleString()} rows</span>
                 </div>
               )}
             </div>
 
             {deleteError && (
-              <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 flex items-center gap-2">
+              <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
                 <span>{deleteError}</span>
               </div>
             )}
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => {
@@ -331,7 +425,7 @@ export default function DatasetsPage() {
                   setDeleteError(null);
                 }}
                 disabled={isDeleting !== null}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition"
+                className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition"
               >
                 Cancel
               </button>
@@ -339,10 +433,10 @@ export default function DatasetsPage() {
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={isDeleting !== null}
-                className="px-4 py-2 text-xs font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50 transition flex items-center gap-1.5"
+                className="px-4 py-2 text-xs font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50 transition flex items-center gap-1.5 shadow-2xs"
               >
                 {isDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                <span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
+                <span>{isDeleting ? 'Deleting...' : 'Delete Dataset'}</span>
               </button>
             </div>
           </div>

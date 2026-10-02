@@ -148,7 +148,9 @@ export default function ShareModal({
               <Share2 className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 text-sm">Share {resourceType.toUpperCase()}</h3>
+              <h3 className="font-semibold text-slate-900 text-sm">
+                Share {resourceType ? resourceType.charAt(0).toUpperCase() + resourceType.slice(1) : 'Resource'}
+              </h3>
               <p className="text-xs text-slate-500 truncate max-w-[280px]">{resourceTitle}</p>
             </div>
           </div>

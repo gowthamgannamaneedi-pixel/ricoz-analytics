@@ -18,24 +18,17 @@ export default function StatCard({
   value,
   change,
   isPositive,
-  period = 'vs last month',
+  period = 'vs previous period',
   subtext,
   isPrimary = false
 }) {
   return (
-    <div className={`relative p-4 sm:p-5 bg-white transition-colors hover:bg-slate-50/60 ${
-      isPrimary ? 'border-t-2 border-t-blue-600' : ''
-    }`}>
-      {/* Metric Label & Badge */}
+    <div className="relative p-4 sm:p-5 bg-white transition-colors hover:bg-slate-50/50">
+      {/* Metric Label */}
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <span className="text-xs font-semibold text-slate-600">
           {title}
         </span>
-        {isPrimary && (
-          <span className="text-[9px] uppercase font-mono font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-            Primary KPI
-          </span>
-        )}
       </div>
 
       {/* Main Metric Value */}

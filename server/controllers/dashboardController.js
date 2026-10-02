@@ -202,6 +202,42 @@ const getDashboardById = async (req, res, next) => {
           } catch (_) {}
         }
 
+        let forecastData = null;
+        if (w.type === 'forecast_chart') {
+          try {
+            const ForecastModel = require('../models/forecastModel');
+            const mlForecastService = require('../services/mlForecastService');
+            if (configuration?.forecastId) {
+              forecastData = await ForecastModel.findByIdAndOrgId(configuration.forecastId, orgId);
+            }
+            if (!forecastData && w.dataset_file_path) {
+              const records = await loadDatasetRecords(w.dataset_file_path).catch(() => []);
+              if (records && records.length >= 4) {
+                const catCol = configuration?.categoryColumn || configuration?.dateColumn || Object.keys(records[0])[0];
+                const valCol = configuration?.valueColumn || Object.keys(records[0]).find(k => !isNaN(Number(records[0][k])) && !k.toLowerCase().includes('id'));
+                const timeSeries = records.map(r => ({
+                  date: String(r[catCol] || ''),
+                  value: Number(r[valCol]) || 0
+                })).filter(r => r.date && !isNaN(r.value));
+                if (timeSeries.length >= 4) {
+                  const fc = await mlForecastService.forecastAndDetect(timeSeries.slice(-40), {
+                    horizon: configuration?.horizon || 14,
+                    interval: configuration?.interval || 'daily',
+                    model: configuration?.model || 'auto'
+                  });
+                  forecastData = {
+                    historical_series: timeSeries.slice(-14),
+                    predictions: fc.predictions,
+                    anomalies: fc.anomalies,
+                    model: fc.model,
+                    metrics: fc.metrics
+                  };
+                }
+              }
+            }
+          } catch (_) {}
+        }
+
         return {
           ...w,
           configuration,
@@ -211,7 +247,8 @@ const getDashboardById = async (req, res, next) => {
           status,
           chart_data: chartData,
           quality_profile: qualityProfile,
-          ai_insights: aiInsights
+          ai_insights: aiInsights,
+          forecast_data: forecastData
         };
       })
     );
@@ -562,12 +599,123 @@ const deleteWidget = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/dashboards/:id/duplicate
+ * Clone a dashboard with all associated widgets, layouts, and filters
+ */
+const duplicateDashboard = async (req, res, next) => {
+  try {
+    const orgId = req.user.organization_id || '00000000-0000-0000-0000-000000000001';
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const original = await Dashboard.findByIdAndOrgId(id, orgId);
+    if (!original) {
+      return res.status(404).json({
+        success: false,
+        message: 'Dashboard not found or access denied.'
+      });
+    }
+
+    const clonedTitle = `${original.title} (Copy)`;
+    const newDashboard = await Dashboard.create({
+      organizationId: orgId,
+      createdBy: userId,
+      title: clonedTitle,
+      description: original.description || '',
+      isDefault: false,
+      isPublic: Boolean(original.is_public),
+      layout: original.layout || [],
+      filters: original.filters || {}
+    });
+
+    // Copy all widgets
+    const widgets = await Dashboard.findWidgetsByDashboardId(id);
+    for (const w of widgets) {
+      await Dashboard.addWidget(newDashboard.id, {
+        datasetId: w.dataset_id,
+        metricId: w.metric_id,
+        title: w.title,
+        type: w.type,
+        configuration: typeof w.configuration === 'string' ? JSON.parse(w.configuration) : w.configuration,
+        position: typeof w.position === 'string' ? JSON.parse(w.position) : w.position
+      });
+    }
+
+    await logAuditEvent({
+      organizationId: orgId,
+      userId,
+      action: AUDIT_ACTIONS.DASHBOARD_CREATED,
+      resourceType: 'dashboard',
+      resourceId: newDashboard.id,
+      description: `Duplicated dashboard "${original.title}" as "${clonedTitle}"`,
+      metadata: { originalId: id, newDashboardId: newDashboard.id },
+      req
+    }).catch(() => null);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Dashboard duplicated successfully.',
+      data: newDashboard
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * PUT /api/dashboards/:id/layout
+ * Batch update layout and widget positions for responsive / drag-and-drop builder
+ */
+const updateLayout = async (req, res, next) => {
+  try {
+    const orgId = req.user.organization_id || '00000000-0000-0000-0000-000000000001';
+    const { id } = req.params;
+    const rawItems = req.body.layout || req.body.positions || [];
+
+    const dashboard = await Dashboard.findByIdAndOrgId(id, orgId);
+    if (!dashboard) {
+      return res.status(404).json({
+        success: false,
+        message: 'Dashboard not found or access denied.'
+      });
+    }
+
+    const updatedWidgets = [];
+    if (Array.isArray(rawItems)) {
+      for (const item of rawItems) {
+        const widgetId = item.widgetId || item.id;
+        const position = item.position || {
+          x: item.position_x ?? item.x ?? 0,
+          y: item.position_y ?? item.y ?? 0,
+          w: item.width ?? item.w ?? 6,
+          h: item.height ?? item.h ?? 4
+        };
+        if (widgetId) {
+          const upd = await Dashboard.updateWidget(widgetId, id, { position });
+          if (upd) updatedWidgets.push(upd);
+        }
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Dashboard layout updated successfully.',
+      data: updatedWidgets
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getDashboards,
   getDashboardById,
   createDashboard,
   updateDashboard,
   deleteDashboard,
+  duplicateDashboard,
+  updateLayout,
   addWidget,
   updateWidget,
   deleteWidget

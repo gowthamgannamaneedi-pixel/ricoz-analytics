@@ -17,6 +17,25 @@ import {
 import { API_BASE_URL } from '../services/api';
 
 /**
+ * Humanize database column names (e.g. sales_amount -> Sales Amount, order_id -> Order ID)
+ */
+function formatColumnHeader(key) {
+  if (!key) return '';
+  const acronyms = { id: 'ID', kpi: 'KPI', url: 'URL', api: 'API', ip: 'IP', sku: 'SKU', q4: 'Q4', q3: 'Q3', q2: 'Q2', q1: 'Q1', db: 'DB' };
+  return String(key)
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .map(word => {
+      const lower = word.toLowerCase();
+      if (acronyms[lower]) return acronyms[lower];
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+}
+
+/**
  * Enterprise Dataset Preview Modal
  * Displays strictly up to 50 sample rows with schema types and sticky header
  * @param {{
@@ -130,26 +149,26 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
     switch (type) {
       case 'number':
         return (
-          <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold px-1.5 py-0.2 rounded bg-sky-50 text-sky-700 border border-sky-200">
-            <Hash className="h-2.5 w-2.5" /> num
+          <span className="inline-flex items-center gap-1 font-mono text-[9px] font-semibold px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200/80">
+            <Hash className="h-2.5 w-2.5" /> Number
           </span>
         );
       case 'boolean':
         return (
-          <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200">
-            <ToggleLeft className="h-2.5 w-2.5" /> bool
+          <span className="inline-flex items-center gap-1 font-mono text-[9px] font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200/80">
+            <ToggleLeft className="h-2.5 w-2.5" /> Boolean
           </span>
         );
       case 'date':
         return (
-          <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 border border-amber-200">
-            <Calendar className="h-2.5 w-2.5" /> date
+          <span className="inline-flex items-center gap-1 font-mono text-[9px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200/80">
+            <Calendar className="h-2.5 w-2.5" /> Date
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
-            <Type className="h-2.5 w-2.5" /> str
+          <span className="inline-flex items-center gap-1 font-mono text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200/80">
+            <Type className="h-2.5 w-2.5" /> Text
           </span>
         );
     }
@@ -166,21 +185,21 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
     : [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/50 backdrop-blur-xs font-sans">
-      <div className="flex flex-col w-full max-w-6xl max-h-[92vh] rounded-lg border border-slate-200 bg-white shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/40 backdrop-blur-xs font-sans">
+      <div className="flex flex-col w-full max-w-6xl max-h-[92vh] rounded-2xl border border-slate-200/90 bg-white shadow-2xl overflow-hidden">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-md bg-blue-50 border border-blue-100 text-blue-700">
+            <div className="p-2 rounded-lg bg-blue-50 border border-blue-100 text-blue-600">
               <Table2 className="h-5 w-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <h2 className="text-sm sm:text-base font-bold text-slate-900">
                   {data?.name || 'Dataset Preview'}
                 </h2>
-                <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                  PREVIEW (50 ROWS MAX)
+                <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80">
+                  50-Row Sample Preview
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -193,7 +212,7 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
             {previewRows.length > 0 && (
               <button
                 onClick={handleExportSampleCsv}
-                className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                className="flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
               >
                 <Download className="h-3.5 w-3.5 text-slate-500" />
                 <span className="hidden sm:inline">Export Sample (50)</span>
@@ -201,7 +220,8 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
             )}
             <button
               onClick={onClose}
-              className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+              title="Close"
             >
               <X className="h-5 w-5" />
             </button>
@@ -210,14 +230,14 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
 
         {/* Schema Tag Strip */}
         {schemaList.length > 0 && (
-          <div className="flex items-center gap-2 px-6 py-2.5 bg-slate-50 border-b border-slate-200 overflow-x-auto shrink-0 text-xs">
-            <span className="font-mono text-[10px] uppercase font-bold text-slate-400 shrink-0">
-              Detected Schema:
+          <div className="flex items-center gap-2 px-6 py-2.5 bg-slate-50/70 border-b border-slate-200/80 overflow-x-auto shrink-0 text-xs">
+            <span className="text-[11px] font-semibold text-slate-500 shrink-0">
+              Inferred Schema:
             </span>
             <div className="flex items-center gap-1.5">
               {schemaList.map((col) => (
-                <div key={col.name} className="flex items-center gap-1 bg-white px-2 py-1 rounded border border-slate-200 shadow-2xs shrink-0">
-                  <span className="font-semibold text-slate-800 text-[11px]">{col.name}</span>
+                <div key={col.name} className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-slate-200/80 shadow-2xs shrink-0">
+                  <span className="font-semibold text-slate-800 text-xs">{formatColumnHeader(col.name)}</span>
                   {getTypeBadge(col.type)}
                 </div>
               ))}
@@ -226,7 +246,7 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
         )}
 
         {/* Table Content Area */}
-        <div className="flex-1 overflow-auto bg-slate-50/50 p-4">
+        <div className="flex-1 overflow-auto bg-slate-50/40 p-4">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-24 space-y-3">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
@@ -235,7 +255,7 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
               </p>
             </div>
           ) : error ? (
-            <div className="flex items-start gap-3 rounded-md border border-rose-200 bg-rose-50 p-4 text-xs text-rose-700 my-8 max-w-xl mx-auto">
+            <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-xs text-rose-700 my-8 max-w-xl mx-auto">
               <AlertCircle className="h-5 w-5 shrink-0 text-rose-600 mt-0.5" />
               <div>
                 <p className="font-bold">Failed to load preview</p>
@@ -249,14 +269,14 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
               </p>
             </div>
           ) : (
-            <div className="rounded-md border border-slate-200 bg-white shadow-2xs overflow-hidden">
+            <div className="rounded-xl border border-slate-200/90 bg-white shadow-2xs overflow-hidden">
               <div className="overflow-x-auto max-h-[58vh]">
                 <table className="w-full text-left border-collapse text-xs">
                   {/* Sticky Header */}
-                  <thead className="sticky top-0 z-20 bg-slate-100 border-b border-slate-200 shadow-2xs">
+                  <thead className="sticky top-0 z-20 bg-slate-50 border-b border-slate-200/90 shadow-2xs">
                     <tr>
                       {/* Row Index Column */}
-                      <th className="py-2.5 px-3 w-12 text-center text-[10px] font-mono font-bold uppercase text-slate-400 border-r border-slate-200 bg-slate-100 sticky left-0 z-30">
+                      <th className="py-2.5 px-3 w-12 text-center text-[10px] font-mono font-bold uppercase text-slate-400 border-r border-slate-200/80 bg-slate-50 sticky left-0 z-30 select-none">
                         #
                       </th>
                       {columnNames.map((colName) => {
@@ -264,10 +284,10 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
                         return (
                           <th
                             key={colName}
-                            className="py-2.5 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700 whitespace-nowrap bg-slate-100"
+                            className="py-2.5 px-4 text-xs font-semibold text-slate-700 whitespace-nowrap bg-slate-50"
                           >
                             <div className="flex items-center gap-2">
-                              <span>{colName}</span>
+                              <span>{formatColumnHeader(colName)}</span>
                               {colSchema && getTypeBadge(colSchema.type)}
                             </div>
                           </th>
@@ -277,11 +297,11 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
                   </thead>
 
                   {/* Table Body */}
-                  <tbody className="divide-y divide-slate-100 bg-white font-mono text-[11px]">
+                  <tbody className="divide-y divide-slate-100 bg-white text-xs">
                     {previewRows.map((row, rowIdx) => (
-                      <tr key={rowIdx} className="hover:bg-blue-50/40 transition-colors group">
+                      <tr key={rowIdx} className="hover:bg-blue-50/30 transition-colors group">
                         {/* Row Index */}
-                        <td className="py-2 px-3 text-center text-slate-400 border-r border-slate-100 font-mono text-[10px] bg-slate-50/70 group-hover:bg-blue-50/60 sticky left-0 z-10 select-none">
+                        <td className="py-2 px-3 text-center text-slate-400 border-r border-slate-100 font-mono text-[10px] bg-slate-50/60 group-hover:bg-blue-50/50 sticky left-0 z-10 select-none">
                           {rowIdx + 1}
                         </td>
 
@@ -298,17 +318,19 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
                               className="py-2 px-4 whitespace-nowrap text-slate-800"
                             >
                               {isNull ? (
-                                <span className="text-slate-300 italic font-sans text-[10px]">null</span>
+                                <span className="text-slate-300 italic font-sans text-[11px]">null</span>
                               ) : isBool ? (
-                                <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                                  val ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                                  val
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80'
+                                    : 'bg-slate-100 text-slate-600 border border-slate-200/80'
                                 }`}>
-                                  {val ? 'TRUE' : 'FALSE'}
+                                  {val ? 'True' : 'False'}
                                 </span>
                               ) : isNum ? (
-                                <span className="text-blue-700 font-semibold">{val.toLocaleString()}</span>
+                                <span className="font-mono text-slate-900 font-semibold">{val.toLocaleString()}</span>
                               ) : (
-                                <span className="font-sans text-xs">{String(val)}</span>
+                                <span className="text-slate-800">{String(val)}</span>
                               )}
                             </td>
                           );
@@ -323,13 +345,13 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-between px-6 py-3 border-t border-slate-200 bg-slate-50/80 text-xs text-slate-500 shrink-0">
+        <div className="flex items-center justify-between px-6 py-3 border-t border-slate-100 bg-slate-50/60 text-xs text-slate-500 shrink-0">
           <span className="font-mono text-[11px]">
             Showing sample 1–{previewRows.length} of {data?.rowCount?.toLocaleString() || 0} rows
           </span>
           <button
             onClick={onClose}
-            className="rounded-md border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition"
+            className="rounded-lg border border-slate-200/90 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition shadow-2xs"
           >
             Close Preview
           </button>
