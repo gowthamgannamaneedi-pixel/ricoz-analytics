@@ -45,6 +45,22 @@ function validateEnvironment() {
     warnings.push('CORS_ORIGIN or CLIENT_URL is not explicitly specified in production.');
   }
 
+  // Check Stripe Configuration in Production
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const stripeWebhook = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!stripeKey || stripeKey.includes('placeholder')) {
+    warnings.push('STRIPE_SECRET_KEY is not configured with live production credentials; running in test/sandbox mode.');
+  }
+  if (!stripeWebhook || stripeWebhook.includes('placeholder')) {
+    warnings.push('STRIPE_WEBHOOK_SECRET is not configured with live production webhook secret.');
+  }
+
+  // Check SMTP Configuration
+  const smtpPass = process.env.SMTP_PASSWORD;
+  if (!smtpPass || smtpPass.includes('placeholder') || smtpPass.includes('your_zoho')) {
+    warnings.push('SMTP_PASSWORD contains placeholder; live email dispatch requires real Zoho app password.');
+  }
+
   const isValid = errors.length === 0;
 
   return {

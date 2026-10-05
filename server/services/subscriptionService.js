@@ -114,6 +114,7 @@ class SubscriptionService {
       planDetails: planConfig,
       status: effectiveStatus,
       subscriptionStatus: effectiveStatus,
+      subscription_status: effectiveStatus,
       hasWorkspaceAccess: canAccessApp,
       paymentStatus: org.payment_status || 'unpaid',
       trialStartedAt,

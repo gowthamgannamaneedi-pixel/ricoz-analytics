@@ -235,11 +235,26 @@ const adminController = {
       }
 
       // Check self-demotion prevention
-      if (Number(req.user.id) === Number(targetUserId) && role.toLowerCase() !== 'admin') {
+      if (String(req.user.id) === String(targetUserId) && role.toLowerCase() !== 'admin') {
         return res.status(400).json({
           success: false,
           message: 'Admins cannot remove their own administrator privileges.'
         });
+      }
+
+      // Check last active admin safety: do not allow org to become ownerless or admin-less
+      if ((targetUser.role === 'admin' || targetUser.role === 'owner') && role.toLowerCase() !== 'admin') {
+        const remainingAdminsRes = await db.query(
+          `SELECT COUNT(*)::int as count FROM users WHERE organization_id = $1 AND role IN ('admin', 'owner') AND COALESCE(status, 'active') = 'active' AND id != $2`,
+          [orgId, targetUserId]
+        );
+        const remainingAdminsCount = Number(remainingAdminsRes.rows[0]?.count || 0);
+        if (remainingAdminsCount < 1) {
+          return res.status(400).json({
+            success: false,
+            message: 'Cannot demote the last remaining active administrator of the organization.'
+          });
+        }
       }
 
       const cleanRole = role.toLowerCase();
@@ -304,11 +319,26 @@ const adminController = {
       }
 
       // Prevent self-deactivation
-      if (Number(req.user.id) === Number(targetUserId) && status.toLowerCase() !== 'active') {
+      if (String(req.user.id) === String(targetUserId) && status.toLowerCase() !== 'active') {
         return res.status(400).json({
           success: false,
           message: 'You cannot deactivate your own administrative account.'
         });
+      }
+
+      // Prevent deactivating the last remaining active administrator
+      if ((targetUser.role === 'admin' || targetUser.role === 'owner') && status.toLowerCase() !== 'active') {
+        const remainingAdminsRes = await db.query(
+          `SELECT COUNT(*)::int as count FROM users WHERE organization_id = $1 AND role IN ('admin', 'owner') AND COALESCE(status, 'active') = 'active' AND id != $2`,
+          [orgId, targetUserId]
+        );
+        const remainingAdminsCount = Number(remainingAdminsRes.rows[0]?.count || 0);
+        if (remainingAdminsCount < 1) {
+          return res.status(400).json({
+            success: false,
+            message: 'Cannot deactivate the last remaining active administrator of the organization.'
+          });
+        }
       }
 
       const cleanStatus = status.toLowerCase();

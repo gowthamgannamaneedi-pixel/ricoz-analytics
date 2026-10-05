@@ -92,7 +92,14 @@ export async function apiRequest(endpoint, options = {}) {
         }
       }
 
-      if (response.status === 401 && endpoint !== '/auth/login' && endpoint !== '/auth/register' && endpoint !== '/auth/verify-otp' && endpoint !== '/auth/resend-otp' && endpoint !== '/auth/verify-email') {
+      if (response.status === 401 && 
+          endpoint !== '/auth/login' && 
+          endpoint !== '/auth/register' && 
+          endpoint !== '/auth/verify-otp' && 
+          endpoint !== '/auth/resend-otp' && 
+          endpoint !== '/auth/verify-email' &&
+          endpoint !== '/auth/forgot-password' &&
+          !endpoint.startsWith('/auth/reset-password')) {
         removeAuthToken();
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('auth:session_expired', {
@@ -237,6 +244,36 @@ export async function logoutUser() {
   return apiRequest('/auth/logout', {
     method: 'POST'
   }).catch(() => null);
+}
+
+/**
+ * Request password reset email
+ * @param {string} email 
+ */
+export async function forgotPasswordApi(email) {
+  return apiRequest('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email })
+  });
+}
+
+/**
+ * Verify validity of a password reset token
+ * @param {string} token 
+ */
+export async function verifyResetTokenApi(token) {
+  return apiRequest(`/auth/reset-password/${encodeURIComponent(token)}`);
+}
+
+/**
+ * Reset user password with token and new password
+ * @param {{ token: string, password: string }} data 
+ */
+export async function resetPasswordApi(data) {
+  return apiRequest('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
 }
 
 // ============================================================================

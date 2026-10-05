@@ -670,6 +670,79 @@ class EmailService {
       };
     }
   }
+
+  /**
+   * Send Password Reset Email
+   * @param {{ email: string, name?: string, token: string, resetUrl?: string }} options
+   */
+  async sendPasswordResetEmail({ email, name, token, resetUrl }) {
+    const fromEmail = process.env.SMTP_FROM || 'care@ricoz.in';
+    const link = resetUrl || `http://localhost:5173/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
+
+    const htmlContent = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;">
+        <div style="margin-bottom: 24px;">
+          <span style="font-weight: 800; font-size: 20px; color: #0f172a; letter-spacing: -0.5px;">ricoz<span style="color: #2563eb;">Analytics</span></span>
+          <span style="margin-left: 8px; font-size: 10px; font-weight: 700; background: #eff6ff; color: #2563eb; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">Security</span>
+        </div>
+        <h2 style="color: #0f172a; font-size: 22px; font-weight: 700; margin: 0 0 12px 0;">Reset your password</h2>
+        <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
+          Hi ${name || 'there'}, we received a request to reset your password for your RicozAnalytics account. Click the button below to choose a new password:
+        </p>
+
+        <div style="text-align: center; margin: 28px 0;">
+          <a href="${link}" style="display: inline-block; background: #2563eb; color: #ffffff; font-weight: 600; font-size: 14px; padding: 12px 28px; border-radius: 8px; text-decoration: none; box-shadow: 0 2px 4px rgba(37,99,235,0.2);">
+            Reset Password
+          </a>
+        </div>
+
+        <p style="color: #64748b; font-size: 12px; margin-top: 24px;">
+          This password reset link is single-use and will expire in 1 hour.<br>
+          If you did not request a password reset, you can safely ignore this email.<br>
+          <a href="${link}" style="color: #2563eb; word-break: break-all;">${link}</a>
+        </p>
+
+        <div style="border-top: 1px solid #f1f5f9; margin-top: 32px; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
+          © ${new Date().getFullYear()} RicozAnalytics Inc.
+        </div>
+      </div>
+    `;
+
+    console.log(`[EmailService] ✉️ Password Reset Email generated for: ${email}`);
+
+    if (!this.isConfigured()) {
+      return {
+        attempted: false,
+        success: true,
+        recipient: email,
+        token,
+        resetUrl: link
+      };
+    }
+
+    try {
+      const info = await this.transporter.sendMail({
+        from: `"RicozAnalytics Security" <${fromEmail}>`,
+        to: email,
+        subject: 'Reset your RicozAnalytics password',
+        html: htmlContent
+      });
+      return {
+        attempted: true,
+        success: true,
+        recipient: email,
+        messageId: info.messageId
+      };
+    } catch (err) {
+      console.warn(`[EmailService] Password reset email SMTP warning: ${err.message}`);
+      return {
+        attempted: true,
+        success: false,
+        recipient: email,
+        error: err.message
+      };
+    }
+  }
 }
 
 module.exports = new EmailService();

@@ -12,7 +12,9 @@
     "test:smtp": "node test-smtp-delivery.js",
     "test:saas": "node test-saas-trial-payment.js",
     "test:kpi": "node test-kpis-verification-suite.js",
-    "test:realworld": "node test-realworld-qa-e2e.js"
+    "test:realworld": "node test-realworld-qa-e2e.js",
+    "test:audit": "node test-production-audit.js",
+    "test:stripe": "node test-stripe-idempotency.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.0",

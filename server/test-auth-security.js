@@ -410,8 +410,14 @@ async function runAuthSecurityTests() {
     // -------------------------------------------------------------
     // Test 20: Session Restoration (/api/auth/me)
     // -------------------------------------------------------------
+    const reAdminLogin = await request('POST', '/api/auth/login', {
+      email: 'admin@ricoz.test',
+      password: 'admin123'
+    });
+    const freshAdminToken = reAdminLogin.body.token;
+
     const meRes = await request('GET', '/api/auth/me', null, {
-      'Authorization': `Bearer ${adminToken}`
+      'Authorization': `Bearer ${freshAdminToken}`
     });
 
     assert(

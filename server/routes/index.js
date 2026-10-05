@@ -33,9 +33,11 @@ router.use('/demo-requests', demoRequestRoutes);
 const protectedWorkspace = [authenticateToken, requireActiveSubscription];
 
 router.use('/data-sources', ...protectedWorkspace, dataSourceRoutes);
+router.use('/datasources', ...protectedWorkspace, dataSourceRoutes);
 router.use('/datasets', ...protectedWorkspace, datasetRoutes);
 router.use('/analytics', ...protectedWorkspace, analyticsRoutes);
 router.use('/dataset-relationships', ...protectedWorkspace, relationshipRoutes);
+router.use('/relationships', ...protectedWorkspace, relationshipRoutes);
 router.use('/data-quality', ...protectedWorkspace, dataQualityRoutes);
 router.use('/metrics', ...protectedWorkspace, metricRoutes);
 router.use('/dashboards', ...protectedWorkspace, dashboardRoutes);

@@ -27,6 +27,8 @@ const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'));
 const AcceptInvitePage = lazy(() => import('./pages/AcceptInvitePage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 
 /**
  * Main Application Routing Component with Authentication Guards & Error Boundary
@@ -47,6 +49,10 @@ export default function App() {
               <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
               <Route path="/accept-invite" element={<AcceptInvitePage />} />
               <Route path="/auth/accept-invite" element={<AcceptInvitePage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
               <Route path="/" element={<LandingPage />} />
 
               {/* Protected Application Routes */}

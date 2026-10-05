@@ -9,6 +9,7 @@ const InvitationModel = require('../models/invitationModel');
 const subscriptionService = require('../services/subscriptionService');
 const emailService = require('../services/emailService');
 const { logAuditEvent, AUDIT_ACTIONS } = require('../services/auditService');
+const tokenBlacklist = require('../utils/tokenBlacklist');
 
 // In-memory rate limiting map for verification resends: email -> lastSentTimestamp
 const resendRateLimits = new Map();
@@ -23,7 +24,8 @@ function generateToken(user) {
       email: user.email,
       name: user.name,
       role: user.role || 'viewer',
-      organization_id: user.organization_id
+      organization_id: user.organization_id,
+      jti: crypto.randomUUID()
     },
     config.jwtSecret,
     { expiresIn: '7d' }
@@ -243,21 +245,14 @@ const verifyOtp = async (req, res, next) => {
       });
     }
 
-    if (user.status === 'active') {
-      const authToken = generateToken(user);
-      return res.status(200).json({
-        success: true,
-        alreadyVerified: true,
-        token: authToken,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          organization_id: user.organization_id,
-          status: 'active'
+    if (user.status === 'active' || (!user.verification_otp && !user.verification_token)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'ALREADY_VERIFIED_OR_USED',
+          message: 'This email is already verified or the verification token has already been used. Please log in directly.'
         },
-        message: 'Your email address is already verified.'
+        message: 'This email is already verified or the verification token has already been used. Please log in directly.'
       });
     }
 
@@ -734,10 +729,16 @@ const acceptInvite = async (req, res, next) => {
 
 /**
  * POST /api/auth/logout
- * Terminate user session
+ * Terminate user session and revoke JWT token
  */
 const logout = async (req, res, next) => {
   try {
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1].trim();
+      tokenBlacklist.revoke(token);
+    }
+
     if (req.user) {
       await logAuditEvent({
         organizationId: req.user.organization_id,
@@ -763,6 +764,162 @@ const logout = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/auth/forgot-password
+ * Initiate secure password reset flow
+ */
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email || !isValidEmail(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'A valid email address is required.'
+      });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await UserModel.findByEmail(cleanEmail);
+
+    let devResetToken = null;
+
+    if (user) {
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+      await UserModel.setResetPasswordToken(cleanEmail, resetToken, expiresAt);
+      devResetToken = resetToken;
+
+      await emailService.sendPasswordResetEmail({
+        email: cleanEmail,
+        name: user.name,
+        token: resetToken,
+        resetUrl: `http://localhost:5173/reset-password?token=${resetToken}&email=${encodeURIComponent(cleanEmail)}`
+      });
+
+      await logAuditEvent({
+        organizationId: user.organization_id,
+        userId: user.id,
+        action: AUDIT_ACTIONS.USER_PASSWORD_RESET_REQUESTED,
+        resourceType: 'auth',
+        resourceId: user.id,
+        description: `Password reset requested for user ${user.email}`,
+        metadata: { email: user.email },
+        req
+      }).catch(() => null);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'If an account exists with this email address, a password reset link has been sent.',
+      ...(process.env.NODE_ENV !== 'production' && devResetToken ? { _devResetToken: devResetToken } : {})
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * GET /api/auth/reset-password/:token
+ * Verify whether password reset token is valid and unexpired
+ */
+const verifyResetToken = async (req, res, next) => {
+  try {
+    const { token } = req.params;
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password reset token is required.'
+      });
+    }
+
+    const user = await UserModel.findByResetPasswordToken(token);
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired password reset link.'
+      });
+    }
+
+    if (!user.reset_password_expires_at || new Date() > new Date(user.reset_password_expires_at)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password reset link has expired. Please request a new one.'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      valid: true,
+      email: user.email
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/auth/reset-password
+ * Complete password reset with new password
+ */
+const resetPassword = async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password reset token is required.'
+      });
+    }
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters.'
+      });
+    }
+
+    const user = await UserModel.findByResetPasswordToken(token);
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired password reset link.'
+      });
+    }
+
+    if (!user.reset_password_expires_at || new Date() > new Date(user.reset_password_expires_at)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password reset link has expired. Please request a new one.'
+      });
+    }
+
+    // Hash new password using modern bcrypt (10 rounds)
+    const passwordHash = await bcrypt.hash(password, 10);
+    await UserModel.updatePassword(user.email, passwordHash);
+
+    // Audit Log
+    await logAuditEvent({
+      organizationId: user.organization_id,
+      userId: user.id,
+      action: AUDIT_ACTIONS.USER_PASSWORD_RESET,
+      resourceType: 'auth',
+      resourceId: user.id,
+      description: `Password reset successfully completed for user ${user.email}`,
+      metadata: { email: user.email },
+      req
+    }).catch(() => null);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Your password has been successfully reset. You can now sign in with your new password.'
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   register,
   verifyOtp,
@@ -773,5 +930,8 @@ module.exports = {
   getMe,
   getInvitationDetails,
   acceptInvite,
-  logout
+  logout,
+  forgotPassword,
+  verifyResetToken,
+  resetPassword
 };

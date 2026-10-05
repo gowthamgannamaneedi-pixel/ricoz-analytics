@@ -48,6 +48,9 @@ let nextInvitationId = 1;
 const fallbackInvoices = [];
 let nextInvoiceId = 1;
 
+const fallbackWebhookEvents = [];
+let nextWebhookEventId = 1;
+
 const fallbackUsers = [
   {
     id: 1,
@@ -671,6 +674,87 @@ function handleFallbackQuery(text, params = []) {
     return Promise.resolve({ rows: list, rowCount: list.length });
   }
 
+  // ----------------- STRIPE WEBHOOK EVENTS -----------------
+  if (normalizedSql.startsWith('insert into stripe_webhook_events')) {
+    const [stripe_event_id, event_type, organization_id, payload] = params;
+    const existing = fallbackWebhookEvents.find(e => e.stripe_event_id === stripe_event_id);
+    if (existing) {
+      // ON CONFLICT (stripe_event_id) DO NOTHING -> returns 0 rows
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+    let status = 'processing';
+    let error_message = null;
+    if (normalizedSql.includes("'failed'")) {
+      status = 'failed';
+      error_message = 'Temporary network failure during payment processing';
+    } else if (normalizedSql.includes("'completed'")) {
+      status = 'completed';
+    }
+    const newEvent = {
+      id: `00000000-0000-0000-0000-00000000000${nextWebhookEventId++}`,
+      stripe_event_id,
+      event_type,
+      status,
+      organization_id: organization_id ? String(organization_id) : null,
+      payload: payload || null,
+      error_message,
+      processed_at: status === 'completed' ? new Date() : null,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+    fallbackWebhookEvents.push(newEvent);
+    return Promise.resolve({ rows: [{ ...newEvent }], rowCount: 1 });
+  }
+
+  if (normalizedSql.includes('from stripe_webhook_events where stripe_event_id = $1')) {
+    const eventId = String(params[0]);
+    const existing = fallbackWebhookEvents.find(e => e.stripe_event_id === eventId);
+    return Promise.resolve({ rows: existing ? [{ ...existing }] : [], rowCount: existing ? 1 : 0 });
+  }
+
+  if (normalizedSql.includes('update stripe_webhook_events') && normalizedSql.includes("status = 'processing'") && normalizedSql.includes("status = 'failed'")) {
+    const eventId = String(params[0]);
+    const existing = fallbackWebhookEvents.find(e => e.stripe_event_id === eventId && e.status === 'failed');
+    if (existing) {
+      existing.status = 'processing';
+      existing.error_message = null;
+      existing.updated_at = new Date();
+      return Promise.resolve({ rows: [{ ...existing }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
+  if (normalizedSql.includes('update stripe_webhook_events') && normalizedSql.includes("status = 'completed'")) {
+    const eventId = String(params[0]);
+    const orgId = params[1] ? String(params[1]) : null;
+    const existing = fallbackWebhookEvents.find(e => e.stripe_event_id === eventId);
+    if (existing) {
+      existing.status = 'completed';
+      if (orgId) existing.organization_id = orgId;
+      existing.processed_at = new Date();
+      existing.updated_at = new Date();
+      return Promise.resolve({ rows: [{ ...existing }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
+  if (normalizedSql.includes('update stripe_webhook_events') && (normalizedSql.includes("set status = 'failed'") || (normalizedSql.includes("status = 'failed'") && !normalizedSql.includes("status = 'processing'")))) {
+    const eventId = String(params[0]);
+    const errorMsg = params[1] ? String(params[1]) : null;
+    const existing = fallbackWebhookEvents.find(e => e.stripe_event_id === eventId);
+    if (existing) {
+      existing.status = 'failed';
+      existing.error_message = errorMsg;
+      existing.updated_at = new Date();
+      return Promise.resolve({ rows: [{ ...existing }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
+  if (normalizedSql.includes('from stripe_webhook_events')) {
+    return Promise.resolve({ rows: fallbackWebhookEvents.slice(0, 50), rowCount: fallbackWebhookEvents.length });
+  }
+
   if (normalizedSql.includes('from users where organization_id = $1') && normalizedSql.includes('as members_count')) {
     const orgId = String(params[0]);
     const membersCount = fallbackUsers.filter(u => String(u.organization_id) === orgId).length;
@@ -950,6 +1034,56 @@ function handleFallbackQuery(text, params = []) {
         created_at: newUser.created_at,
         updated_at: newUser.updated_at
       }],
+      rowCount: 1
+    });
+  }
+
+  if (normalizedSql.includes('from users where reset_password_token = $1')) {
+    const token = String(params[0]);
+    const user = fallbackUsers.find(u => u.reset_password_token === token);
+    return Promise.resolve({
+      rows: user ? [{ ...user }] : [],
+      rowCount: user ? 1 : 0
+    });
+  }
+
+  if (normalizedSql.includes('update users') && normalizedSql.includes('reset_password_token = $1') && normalizedSql.includes('reset_password_expires_at = $2')) {
+    const [token, expiresAt, email] = params;
+    const user = fallbackUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (user) {
+      user.reset_password_token = token;
+      user.reset_password_expires_at = expiresAt;
+      user.updated_at = new Date();
+      return Promise.resolve({ rows: [{ ...user }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
+  if (normalizedSql.includes('update users') && normalizedSql.includes('reset_password_token = null') && normalizedSql.includes('reset_password_expires_at = null')) {
+    const email = params[params.length - 1]?.toLowerCase();
+    const user = fallbackUsers.find(u => u.email.toLowerCase() === email);
+    if (user) {
+      if (normalizedSql.includes('password_hash = $1')) {
+        user.password_hash = params[0];
+      }
+      user.reset_password_token = null;
+      user.reset_password_expires_at = null;
+      user.updated_at = new Date();
+      return Promise.resolve({ rows: [{ ...user }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
+  if (normalizedSql.includes('from users') && normalizedSql.includes("role in ('admin', 'owner')") && normalizedSql.includes('id != $2')) {
+    const [orgId, excludeId] = params;
+    const matching = fallbackUsers.filter(u => 
+      String(u.organization_id) === String(orgId) && 
+      (u.role === 'admin' || u.role === 'owner') && 
+      Number(u.id) !== Number(excludeId) && 
+      (u.status || 'active') === 'active'
+    );
+    return Promise.resolve({
+      rows: [{ count: matching.length }],
       rowCount: 1
     });
   }
@@ -3860,6 +3994,23 @@ async function initDb() {
     );
     CREATE INDEX IF NOT EXISTS idx_datasets_user_id ON datasets(user_id);
     CREATE INDEX IF NOT EXISTS idx_datasets_data_source_id ON datasets(data_source_id);
+
+    CREATE TABLE IF NOT EXISTS stripe_webhook_events (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      stripe_event_id VARCHAR(255) UNIQUE NOT NULL,
+      event_type VARCHAR(100) NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'processing' CHECK (status IN ('processing', 'completed', 'failed')),
+      organization_id UUID REFERENCES organizations(id) ON DELETE SET NULL,
+      error_message TEXT,
+      payload JSONB,
+      processed_at TIMESTAMP WITH TIME ZONE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_stripe_webhook_events_event_id ON stripe_webhook_events(stripe_event_id);
+    CREATE INDEX IF NOT EXISTS idx_stripe_webhook_events_org_id ON stripe_webhook_events(organization_id);
+    CREATE INDEX IF NOT EXISTS idx_stripe_webhook_events_status ON stripe_webhook_events(status);
+    CREATE INDEX IF NOT EXISTS idx_stripe_webhook_events_created_at ON stripe_webhook_events(created_at DESC);
   `;
 
   try {
@@ -3880,6 +4031,7 @@ module.exports = {
   fallbackDatasets,
   fallbackInvitations,
   fallbackInvoices,
+  fallbackWebhookEvents,
   closeDb: async () => {
     if (pool) {
       try {

@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const config = require('../config');
 const { supabase, isConfigured } = require('../config/supabase');
 const UserModel = require('../models/userModel');
+const tokenBlacklist = require('../utils/tokenBlacklist');
 
 /**
  * Enterprise Authentication Middleware
@@ -49,6 +50,21 @@ const authenticateToken = async (req, res, next) => {
       request_id: req.id
     });
   }
+
+  // Check token revocation blacklist (post-logout protection)
+  if (tokenBlacklist.isRevoked(token)) {
+    return res.status(401).json({
+      success: false,
+      error: {
+        code: 'UNAUTHORIZED',
+        message: 'Session has been revoked or logged out. Please sign in again.'
+      },
+      message: 'Session has been revoked or logged out. Please sign in again.',
+      request_id: req.id
+    });
+  }
+
+  req.token = token;
 
   // 1. Try local/internal JWT verification first (standard server-signed session)
   try {

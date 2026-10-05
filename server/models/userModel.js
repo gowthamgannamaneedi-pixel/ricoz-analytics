@@ -13,6 +13,7 @@ const UserModel = {
     const sql = `
       SELECT id, name, email, password_hash, password_hash_alt, role, organization_id, avatar_url, status, 
              verification_token, verification_otp, verification_token_expires_at, email_verified_at,
+             reset_password_token, reset_password_expires_at,
              last_login_at, created_at, updated_at
       FROM users
       WHERE LOWER(email) = LOWER($1)
@@ -31,6 +32,7 @@ const UserModel = {
     const sql = `
       SELECT id, name, email, role, organization_id, avatar_url, status, 
              verification_token, verification_otp, verification_token_expires_at, email_verified_at,
+             reset_password_token, reset_password_expires_at,
              last_login_at, created_at, updated_at
       FROM users
       WHERE id = $1
@@ -275,7 +277,57 @@ const UserModel = {
   },
 
   /**
-   * Update user password hash
+   * Set password reset token and expiration
+   * @param {string} email 
+   * @param {string} token 
+   * @param {Date} expiresAt 
+   * @returns {Promise<any>}
+   */
+  async setResetPasswordToken(email, token, expiresAt) {
+    const sql = `
+      UPDATE users
+      SET reset_password_token = $1, reset_password_expires_at = $2, updated_at = CURRENT_TIMESTAMP
+      WHERE LOWER(email) = LOWER($3)
+      RETURNING id, name, email, role, organization_id, status, updated_at;
+    `;
+    const result = await db.query(sql, [token, expiresAt, email.trim()]);
+    return result.rows[0] || null;
+  },
+
+  /**
+   * Find user by password reset token
+   * @param {string} token 
+   * @returns {Promise<any | null>}
+   */
+  async findByResetPasswordToken(token) {
+    const sql = `
+      SELECT id, name, email, role, organization_id, status, reset_password_token, reset_password_expires_at
+      FROM users
+      WHERE reset_password_token = $1
+      LIMIT 1;
+    `;
+    const result = await db.query(sql, [token]);
+    return result.rows[0] || null;
+  },
+
+  /**
+   * Clear password reset token
+   * @param {string} email 
+   * @returns {Promise<any>}
+   */
+  async clearResetPasswordToken(email) {
+    const sql = `
+      UPDATE users
+      SET reset_password_token = NULL, reset_password_expires_at = NULL, updated_at = CURRENT_TIMESTAMP
+      WHERE LOWER(email) = LOWER($1)
+      RETURNING id, name, email, status, updated_at;
+    `;
+    const result = await db.query(sql, [email.trim()]);
+    return result.rows[0] || null;
+  },
+
+  /**
+   * Update user password hash and clear any reset tokens
    * @param {string} email 
    * @param {string} passwordHash 
    * @returns {Promise<any>}
@@ -283,7 +335,7 @@ const UserModel = {
   async updatePassword(email, passwordHash) {
     const sql = `
       UPDATE users
-      SET password_hash = $1, updated_at = CURRENT_TIMESTAMP
+      SET password_hash = $1, reset_password_token = NULL, reset_password_expires_at = NULL, updated_at = CURRENT_TIMESTAMP
       WHERE LOWER(email) = LOWER($2)
       RETURNING id, name, email, role, organization_id, status, updated_at;
     `;
