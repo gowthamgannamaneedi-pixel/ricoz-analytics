@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Table2,
@@ -10,33 +10,64 @@ import {
   Trash2,
   Search,
   ArrowUpDown,
-  Calendar,
-  Hash,
+  ArrowUp,
+  ArrowDown,
   ShieldCheck,
   X,
-  Filter,
   CheckCircle2,
   AlertCircle,
   Loader2,
   RefreshCw,
-  Server
+  Server,
+  MoreVertical,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Info
 } from 'lucide-react';
 
 /**
+ * Format relative time (e.g. 'Updated 2 hours ago')
+ */
+function formatRelativeTime(dateString) {
+  if (!dateString) return '—';
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  if (isNaN(diffMs) || diffMs < 0) return 'Recently';
+
+  const diffMinutes = Math.floor(diffMs / 60000);
+  if (diffMinutes < 1) return 'Updated just now';
+  if (diffMinutes < 60) return `Updated ${diffMinutes}m ago`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `Updated ${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 30) return `Updated ${diffDays}d ago`;
+  return `Updated on ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+}
+
+/**
+ * Format date (e.g. 'Jan 15, 2026')
+ */
+function formatDate(dateString) {
+  if (!dateString) return '—';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
+
+/**
  * Enterprise Datasets Table Component
- * Answers: “What data can I analyze, what does it contain, and is it ready?”
- * @param {{
- *   datasets: Array<any>,
- *   onPreview: (id: number) => void,
- *   onDelete: (dataset: any) => void,
- *   isDeleting?: number | null,
- *   onOpenUploadModal?: () => void,
- *   isViewer?: boolean
- * }} props
+ * Matches the reference layout, typography, controls, actions, and pagination
  */
 export default function DatasetTable({
   datasets = [],
   onPreview,
+  onViewDetails,
   onDelete,
   onRefreshDataset,
   isRefreshingDataset = null,
@@ -45,64 +76,39 @@ export default function DatasetTable({
   isViewer = false
 }) {
   const navigate = useNavigate();
+
+  // Filter & Search states
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sourceFilter, setSourceFilter] = useState('all');
+
+  // Sorting state
   const [sortKey, setSortKey] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
 
-  const getSourceIcon = (type) => {
-    switch (type) {
-      case 'csv':
-        return <FileSpreadsheet className="h-4 w-4 text-emerald-600" />;
-      case 'json':
-        return <FileCode className="h-4 w-4 text-amber-600" />;
-      case 'postgresql':
-        return <Database className="h-4 w-4 text-blue-600" />;
-      case 'rest_api':
-      case 'api':
-        return <Server className="h-4 w-4 text-purple-600" />;
-      default:
-        return <Layers className="h-4 w-4 text-slate-600" />;
-    }
-  };
+  // Selection state
+  const [selectedIds, setSelectedIds] = useState(new Set());
 
-  const getSourceBadge = (type) => {
-    switch (type) {
-      case 'csv':
-        return (
-          <span className="inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80">
-            CSV
-          </span>
-        );
-      case 'json':
-        return (
-          <span className="inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200/80">
-            JSON
-          </span>
-        );
-      case 'postgresql':
-        return (
-          <span className="inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/80">
-            Postgres
-          </span>
-        );
-      case 'rest_api':
-      case 'api':
-        return (
-          <span className="inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200/80">
-            REST API
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200/80">
-            {(type || 'Upload').toUpperCase()}
-          </span>
-        );
-    }
-  };
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
 
+  // Active Action Menu (dropdown)
+  const [openActionMenuId, setOpenActionMenuId] = useState(null);
+  const actionMenuRef = useRef(null);
+
+  // Close action dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target)) {
+        setOpenActionMenuId(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Compute status for a dataset
   const getDatasetStatus = (dataset) => {
     if (dataset?.status) {
       const s = String(dataset.status).toLowerCase();
@@ -118,25 +124,111 @@ export default function DatasetTable({
     return 'ready';
   };
 
+  // Source Icon
+  const getSourceIcon = (type) => {
+    const t = String(type || '').toLowerCase();
+    switch (t) {
+      case 'csv':
+        return (
+          <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 shrink-0">
+            <FileSpreadsheet className="h-4 w-4" />
+          </div>
+        );
+      case 'json':
+        return (
+          <div className="p-2 rounded-xl bg-amber-50 border border-amber-100 text-amber-600 shrink-0">
+            <FileCode className="h-4 w-4" />
+          </div>
+        );
+      case 'postgresql':
+      case 'postgres':
+      case 'mysql':
+        return (
+          <div className="p-2 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 shrink-0">
+            <Database className="h-4 w-4" />
+          </div>
+        );
+      case 'rest_api':
+      case 'api':
+        return (
+          <div className="p-2 rounded-xl bg-purple-50 border border-purple-100 text-purple-600 shrink-0">
+            <Server className="h-4 w-4" />
+          </div>
+        );
+      default:
+        return (
+          <div className="p-2 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 shrink-0">
+            <Database className="h-4 w-4" />
+          </div>
+        );
+    }
+  };
+
+  // Source Badge Pill
+  const renderSourceBadge = (type) => {
+    const t = String(type || 'csv').toLowerCase();
+    if (t === 'csv') {
+      return (
+        <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 whitespace-nowrap">
+          CSV Upload
+        </span>
+      );
+    }
+    if (t === 'postgresql' || t === 'postgres') {
+      return (
+        <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80 whitespace-nowrap">
+          PostgreSQL
+        </span>
+      );
+    }
+    if (t === 'mysql') {
+      return (
+        <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200/80 whitespace-nowrap">
+          MySQL
+        </span>
+      );
+    }
+    if (t === 'json') {
+      return (
+        <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/80 whitespace-nowrap">
+          JSON Upload
+        </span>
+      );
+    }
+    if (t === 'rest_api' || t === 'api') {
+      return (
+        <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200/80 whitespace-nowrap">
+          REST API
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200/80 whitespace-nowrap">
+        {String(type || 'Connector').toUpperCase()}
+      </span>
+    );
+  };
+
+  // Status Badge Pill with Dot
   const renderStatusBadge = (status) => {
     switch (status) {
       case 'ready':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/90 shadow-2xs whitespace-nowrap">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/90 whitespace-nowrap shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
             <span>Ready</span>
           </span>
         );
       case 'processing':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/90 shadow-2xs whitespace-nowrap">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/90 whitespace-nowrap shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
-            <span>Processing...</span>
+            <span>Processing</span>
           </span>
         );
       case 'error':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/90 shadow-2xs whitespace-nowrap">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200/90 whitespace-nowrap shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" />
             <span>Error</span>
           </span>
@@ -144,7 +236,7 @@ export default function DatasetTable({
       case 'empty':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-50 text-slate-600 border border-slate-200/90 shadow-2xs whitespace-nowrap">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200/90 whitespace-nowrap shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0" />
             <span>Empty</span>
           </span>
@@ -152,16 +244,31 @@ export default function DatasetTable({
     }
   };
 
+  // Handle Sort Toggle
   const handleSort = (key) => {
     if (sortKey === key) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortKey(key);
-      setSortOrder('desc');
+      setSortOrder(key === 'name' ? 'asc' : 'desc');
     }
+    setCurrentPage(1);
   };
 
-  const filteredDatasets = React.useMemo(() => {
+  // Render Sort Header Indicator
+  const renderSortIndicator = (key) => {
+    if (sortKey !== key) {
+      return <ArrowUpDown className="h-3 w-3 text-slate-400 opacity-60 group-hover:opacity-100 transition-opacity" />;
+    }
+    return sortOrder === 'asc' ? (
+      <ArrowUp className="h-3 w-3 text-blue-600" />
+    ) : (
+      <ArrowDown className="h-3 w-3 text-blue-600" />
+    );
+  };
+
+  // Filter & Sort datasets
+  const filteredAndSortedDatasets = useMemo(() => {
     let result = Array.isArray(datasets) ? [...datasets] : [];
 
     // Search query
@@ -182,7 +289,10 @@ export default function DatasetTable({
 
     // Source filter
     if (sourceFilter !== 'all') {
-      result = result.filter(d => (d?.data_source_type || 'csv').toLowerCase() === sourceFilter.toLowerCase());
+      result = result.filter(d => {
+        const type = String(d?.data_source_type || 'csv').toLowerCase();
+        return type === sourceFilter.toLowerCase();
+      });
     }
 
     // Sorting
@@ -200,14 +310,60 @@ export default function DatasetTable({
           const strB = String(valB ?? '');
           return sortOrder === 'asc' ? strA.localeCompare(strB) : strB.localeCompare(strA);
         }
-        return sortOrder === 'asc'
-          ? (Number(valA) || 0) - (Number(valB) || 0)
-          : (Number(valB) || 0) - (Number(valA) || 0);
+
+        const numA = Number(valA) || 0;
+        const numB = Number(valB) || 0;
+        return sortOrder === 'asc' ? numA - numB : numB - numA;
       });
     }
 
     return result;
   }, [datasets, searchQuery, statusFilter, sourceFilter, sortKey, sortOrder]);
+
+  // Pagination calculation
+  const totalItems = filteredAndSortedDatasets.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  
+  // Ensure current page is valid when dataset count changes
+  const validPage = Math.min(currentPage, totalPages);
+  if (validPage !== currentPage && totalPages > 0) {
+    setCurrentPage(validPage);
+  }
+
+  const startIndex = (validPage - 1) * pageSize;
+  const currentPaginatedDatasets = filteredAndSortedDatasets.slice(
+    startIndex,
+    startIndex + pageSize
+  );
+
+  // Checkbox handling
+  const isAllCurrentPageSelected =
+    currentPaginatedDatasets.length > 0 &&
+    currentPaginatedDatasets.every(d => selectedIds.has(d.id));
+
+  const toggleSelectAllCurrentPage = () => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (isAllCurrentPageSelected) {
+        currentPaginatedDatasets.forEach(d => next.delete(d.id));
+      } else {
+        currentPaginatedDatasets.forEach(d => next.add(d.id));
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectRow = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const hasActiveFilters = searchQuery.trim() !== '' || statusFilter !== 'all' || sourceFilter !== 'all';
 
@@ -215,72 +371,101 @@ export default function DatasetTable({
     setSearchQuery('');
     setStatusFilter('all');
     setSourceFilter('all');
+    setCurrentPage(1);
   };
 
   return (
-    <div className="rounded-xl border border-slate-200/90 bg-white overflow-hidden shadow-2xs font-sans">
-      {/* Table Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-slate-100 bg-white">
+    <div className="rounded-2xl border border-slate-200/90 bg-white shadow-2xs overflow-hidden font-sans">
+      {/* Table Card Header / Toolbar */}
+      <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white">
+        {/* Left: Datasets count title */}
         <div className="flex items-center gap-2.5">
-          <h2 className="text-xs font-bold text-slate-800 tracking-tight">
-            Curated Tables for Analysis
+          <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
+            <Database className="h-4 w-4" />
+          </div>
+          <h2 className="text-base font-bold text-slate-900 tracking-tight">
+            Datasets ({datasets.length})
           </h2>
-          <span className="font-mono text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200/60">
-            {filteredDatasets.length} {filteredDatasets.length === 1 ? 'dataset' : 'datasets'}
-          </span>
         </div>
 
-        {/* Search & Filters */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-          {/* Search */}
-          <div className="relative flex-1 sm:w-64 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+        {/* Right: Search + Status filter + Source filter */}
+        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+          {/* Search bar */}
+          <div className="relative flex-1 sm:w-80 min-w-[220px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search datasets..."
+              id="datasets-search-input"
+              placeholder="Search datasets by name, description, or tags..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50/70 py-1.5 pl-9 pr-7 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:outline-none transition-all"
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all"
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-slate-400 hover:text-slate-600 transition"
+                onClick={() => {
+                  setSearchQuery('');
+                  setCurrentPage(1);
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-slate-400 hover:text-slate-600 transition"
                 title="Clear search"
+                id="clear-search-btn"
               >
-                <X className="h-3 w-3" />
+                <X className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
 
-          {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-slate-50/70 py-1.5 px-2.5 text-xs text-slate-700 focus:bg-white focus:border-blue-600 focus:outline-none transition-all"
-          >
-            <option value="all">All Statuses</option>
-            <option value="ready">Ready</option>
-            <option value="processing">Processing</option>
-            <option value="empty">Empty</option>
-          </select>
+          {/* Status Dropdown */}
+          <div className="relative">
+            <select
+              id="datasets-status-filter"
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              aria-label="Filter datasets by status"
+              className="appearance-none rounded-xl border border-slate-200 bg-slate-50/70 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 hover:bg-slate-100/70 focus:bg-white focus:border-blue-600 focus:outline-none cursor-pointer transition-all"
+            >
+              <option value="all">All Statuses</option>
+              <option value="ready">Ready</option>
+              <option value="processing">Processing</option>
+              <option value="error">Error</option>
+              <option value="empty">Empty</option>
+            </select>
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+          </div>
 
-          {/* Source Filter */}
-          <select
-            value={sourceFilter}
-            onChange={(e) => setSourceFilter(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-slate-50/70 py-1.5 px-2.5 text-xs text-slate-700 focus:bg-white focus:border-blue-600 focus:outline-none transition-all"
-          >
-            <option value="all">All Sources</option>
-            <option value="csv">CSV Files</option>
-            <option value="json">JSON Files</option>
-            <option value="postgresql">PostgreSQL</option>
-          </select>
+          {/* Source Dropdown */}
+          <div className="relative">
+            <select
+              id="datasets-source-filter"
+              value={sourceFilter}
+              onChange={(e) => {
+                setSourceFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              aria-label="Filter datasets by source type"
+              className="appearance-none rounded-xl border border-slate-200 bg-slate-50/70 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 hover:bg-slate-100/70 focus:bg-white focus:border-blue-600 focus:outline-none cursor-pointer transition-all"
+            >
+              <option value="all">All Sources</option>
+              <option value="csv">CSV Upload</option>
+              <option value="postgresql">PostgreSQL</option>
+              <option value="json">JSON Upload</option>
+              <option value="rest_api">REST API</option>
+            </select>
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+          </div>
 
           {hasActiveFilters && (
             <button
               onClick={resetFilters}
-              className="text-xs font-semibold text-blue-600 hover:text-blue-700 px-2 py-1 transition"
+              id="reset-filters-btn"
+              className="text-xs font-semibold text-blue-600 hover:text-blue-700 px-2 py-1.5 rounded-lg hover:bg-blue-50 transition"
             >
               Reset
             </button>
@@ -288,92 +473,116 @@ export default function DatasetTable({
         </div>
       </div>
 
-      {/* Table Body */}
+      {/* Main Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse text-xs min-w-[860px]">
+        <table className="w-full text-left border-collapse text-xs min-w-[980px]">
           <thead>
-            <tr className="border-b border-slate-200/80 bg-slate-50/60">
+            <tr className="border-b border-slate-200/80 bg-slate-50/60 text-slate-600">
+              {/* Checkbox column */}
+              <th className="py-3 px-4 w-12 text-center select-none">
+                <input
+                  type="checkbox"
+                  checked={isAllCurrentPageSelected}
+                  onChange={toggleSelectAllCurrentPage}
+                  aria-label="Select all datasets on page"
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
+                />
+              </th>
+
+              {/* Dataset Name */}
               <th
                 onClick={() => handleSort('name')}
-                className="py-3 px-4 text-xs font-semibold text-slate-600 cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
+                className="py-3 px-4 font-semibold cursor-pointer hover:text-slate-900 select-none group whitespace-nowrap"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Dataset Name</span>
-                  <ArrowUpDown className="h-3 w-3 text-slate-400" />
+                  {renderSortIndicator('name')}
                 </div>
               </th>
 
-              <th className="py-3 px-4 text-xs font-semibold text-slate-600 whitespace-nowrap">
+              {/* Source Pipeline */}
+              <th className="py-3 px-4 font-semibold whitespace-nowrap">
                 Source Pipeline
               </th>
 
-              <th className="py-3 px-4 text-xs font-semibold text-slate-600 whitespace-nowrap">
+              {/* Status */}
+              <th className="py-3 px-4 font-semibold whitespace-nowrap">
                 Status
               </th>
 
+              {/* Record Count */}
               <th
                 onClick={() => handleSort('row_count')}
-                className="py-3 px-4 text-xs font-semibold text-slate-600 text-right cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
+                className="py-3 px-4 font-semibold cursor-pointer hover:text-slate-900 select-none group whitespace-nowrap"
               >
-                <div className="flex items-center justify-end gap-1.5">
+                <div className="flex items-center gap-1.5">
                   <span>Record Count</span>
-                  <ArrowUpDown className="h-3 w-3 text-slate-400" />
+                  {renderSortIndicator('row_count')}
                 </div>
               </th>
 
+              {/* Fields */}
               <th
                 onClick={() => handleSort('column_count')}
-                className="py-3 px-4 text-xs font-semibold text-slate-600 text-right cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
+                className="py-3 px-4 font-semibold cursor-pointer hover:text-slate-900 select-none group whitespace-nowrap"
               >
-                <div className="flex items-center justify-end gap-1.5">
+                <div className="flex items-center gap-1.5">
                   <span>Fields</span>
-                  <ArrowUpDown className="h-3 w-3 text-slate-400" />
+                  {renderSortIndicator('column_count')}
                 </div>
               </th>
 
+              {/* Created / Updated */}
               <th
                 onClick={() => handleSort('created_at')}
-                className="py-3 px-4 text-xs font-semibold text-slate-600 cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
+                className="py-3 px-4 font-semibold cursor-pointer hover:text-slate-900 select-none group whitespace-nowrap"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Created / Updated</span>
-                  <ArrowUpDown className="h-3 w-3 text-slate-400" />
+                  {renderSortIndicator('created_at')}
                 </div>
               </th>
 
-              <th className="py-3 px-4 text-xs font-semibold text-slate-600 text-right whitespace-nowrap">
+              {/* Actions */}
+              <th className="py-3 px-4 font-semibold text-right whitespace-nowrap">
                 Actions
               </th>
             </tr>
           </thead>
 
           <tbody className="divide-y divide-slate-100 bg-white">
-            {filteredDatasets.length === 0 ? (
+            {currentPaginatedDatasets.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-12 text-center text-xs text-slate-500">
+                <td colSpan={8} className="py-16 text-center text-xs text-slate-500">
                   {hasActiveFilters ? (
-                    <div className="space-y-2">
-                      <p>No datasets matched your filter criteria.</p>
+                    <div className="space-y-3 max-w-sm mx-auto">
+                      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mx-auto">
+                        <Search className="h-5 w-5" />
+                      </div>
+                      <p className="font-semibold text-slate-800">No matching datasets found</p>
+                      <p className="text-slate-500 text-[11px]">
+                        No datasets matched "{searchQuery}" with the selected filters.
+                      </p>
                       <button
                         onClick={resetFilters}
-                        className="text-xs font-medium text-blue-600 hover:text-blue-700 underline"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition"
                       >
-                        Reset search & filters
+                        Reset filters
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-3 max-w-sm mx-auto">
-                      <div className="mx-auto w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                        <Table2 className="h-5 w-5" />
+                      <div className="mx-auto w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100">
+                        <Table2 className="h-6 w-6" />
                       </div>
-                      <p className="font-semibold text-slate-800">No datasets available yet</p>
-                      <p className="text-[11px] text-slate-500">
-                        Datasets are structured tables created from uploaded or connected Data Sources.
+                      <p className="font-bold text-slate-900 text-sm">No datasets available yet</p>
+                      <p className="text-slate-500 text-xs">
+                        Ingest a CSV or connect a database source to create your first analysis-ready table.
                       </p>
                       {onOpenUploadModal && !isViewer && (
                         <button
                           onClick={onOpenUploadModal}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition"
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
                         >
                           + Upload Dataset
                         </button>
@@ -383,114 +592,173 @@ export default function DatasetTable({
                 </td>
               </tr>
             ) : (
-              filteredDatasets.map((dataset) => {
+              currentPaginatedDatasets.map((dataset) => {
                 const status = getDatasetStatus(dataset);
+                const isSelected = selectedIds.has(dataset.id);
+                const isMenuOpen = openActionMenuId === dataset.id;
 
                 return (
-                  <tr key={dataset.id} className="transition-colors hover:bg-slate-50/60 group">
-                    {/* Dataset Name (Strongest Visual Element) + Description */}
-                    <td className="py-3 px-4">
+                  <tr
+                    key={dataset.id}
+                    className={`transition-colors hover:bg-slate-50/70 group ${
+                      isSelected ? 'bg-blue-50/30' : ''
+                    }`}
+                  >
+                    {/* Checkbox */}
+                    <td className="py-3 px-4 text-center select-none">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelectRow(dataset.id)}
+                        aria-label={`Select dataset ${dataset.name}`}
+                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
+                      />
+                    </td>
+
+                    {/* Dataset Name & Description */}
+                    <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 shrink-0">
-                          <Table2 className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 max-w-md">
-                          <span className="block text-sm font-bold text-slate-900 truncate">
-                            {dataset.name}
-                          </span>
-                          {dataset.description ? (
-                            <span className="text-xs text-slate-500 font-normal block truncate mt-0.5">
-                              {dataset.description}
-                            </span>
-                          ) : (
-                            <span className="text-[11px] text-slate-400 italic block mt-0.5">
-                              Structured telemetry dataset
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Data Source */}
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
                         {getSourceIcon(dataset.data_source_type)}
-                        <span className="text-xs font-medium text-slate-700 truncate max-w-[150px]">
-                          {dataset.data_source_name || 'Direct Upload'}
-                        </span>
-                        {getSourceBadge(dataset.data_source_type)}
+                        <div className="min-w-0 max-w-sm lg:max-w-md">
+                          <button
+                            onClick={() => onPreview && onPreview(dataset.id)}
+                            className="text-left font-bold text-slate-900 hover:text-blue-600 transition truncate block text-xs sm:text-sm"
+                            title={`Preview ${dataset.name}`}
+                          >
+                            {dataset.name}
+                          </button>
+                          <p className="text-[11px] text-slate-500 truncate mt-0.5 font-normal">
+                            {dataset.description || 'Enterprise analysis dataset'}
+                          </p>
+                        </div>
                       </div>
                     </td>
 
-                    {/* Status Pill */}
-                    <td className="py-3 px-4 whitespace-nowrap">
+                    {/* Source Pipeline */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      {renderSourceBadge(dataset.data_source_type)}
+                    </td>
+
+                    {/* Status */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       {renderStatusBadge(status)}
                     </td>
 
                     {/* Record Count */}
-                    <td className="py-3 px-4 text-right whitespace-nowrap font-mono text-xs font-semibold text-slate-800">
+                    <td className="py-3.5 px-4 whitespace-nowrap font-mono text-xs font-semibold text-slate-800">
                       {Number(dataset.row_count || 0).toLocaleString()} rows
                     </td>
 
-                    {/* Columns Count */}
-                    <td className="py-3 px-4 text-right whitespace-nowrap text-xs text-slate-600">
+                    {/* Fields */}
+                    <td className="py-3.5 px-4 whitespace-nowrap text-xs text-slate-600">
                       {dataset.column_count || 0} fields
                     </td>
 
-                    {/* Created Date */}
-                    <td className="py-3 px-4 text-slate-500 text-[11px] whitespace-nowrap">
-                      {dataset.created_at ? new Date(dataset.created_at).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                      }) : '—'}
+                    {/* Created / Updated */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <span className="block text-xs font-medium text-slate-800">
+                        {formatDate(dataset.created_at)}
+                      </span>
+                      <span className="block text-[11px] text-slate-400 mt-0.5">
+                        {formatRelativeTime(dataset.updated_at || dataset.created_at)}
+                      </span>
                     </td>
 
                     {/* Actions */}
-                    <td className="py-3 px-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Quality Action Button */}
                         <button
                           onClick={() => navigate(`/data-quality?datasetId=${dataset.id}`)}
-                          className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition shadow-2xs"
-                          title="View Data Quality & Observability profile"
+                          id={`quality-dataset-${dataset.id}`}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50/50 transition shadow-2xs"
+                          title="View Data Quality profile"
                         >
-                          <ShieldCheck className="h-3.5 w-3.5" />
+                          <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
                           <span>Quality</span>
                         </button>
 
+                        {/* Preview Action Button */}
                         <button
-                          onClick={() => onPreview(dataset.id)}
+                          onClick={() => onPreview && onPreview(dataset.id)}
                           id={`preview-dataset-${dataset.id}`}
-                          className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition shadow-2xs"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50/50 transition shadow-2xs"
                           title="Preview records and schema"
                         >
-                          <Eye className="h-3.5 w-3.5" />
+                          <Eye className="h-3.5 w-3.5 text-blue-600" />
                           <span>Preview</span>
                         </button>
 
-                        {!isViewer && onRefreshDataset && (
+                        {/* More Action Menu (...) */}
+                        <div className="relative inline-block text-left" ref={isMenuOpen ? actionMenuRef : null}>
                           <button
-                            onClick={() => onRefreshDataset(dataset.id)}
-                            disabled={isRefreshingDataset === dataset.id}
-                            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs disabled:opacity-40"
-                            title="Refresh & re-sync dataset ingestion"
+                            onClick={() => setOpenActionMenuId(isMenuOpen ? null : dataset.id)}
+                            id={`action-menu-${dataset.id}`}
+                            className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition shadow-2xs"
+                            title="More actions"
+                            aria-label="More actions"
                           >
-                            <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshingDataset === dataset.id ? 'animate-spin text-blue-600' : ''}`} />
-                            <span>Refresh</span>
+                            <MoreVertical className="h-3.5 w-3.5" />
                           </button>
-                        )}
 
-                        {!isViewer && (
-                          <button
-                            onClick={() => onDelete(dataset)}
-                            disabled={isDeleting === dataset.id}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition disabled:opacity-40"
-                            title="Delete Dataset"
-                            aria-label="Delete Dataset"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
+                          {/* Action Dropdown Menu */}
+                          {isMenuOpen && (
+                            <div className="absolute right-0 mt-1.5 w-44 rounded-xl border border-slate-200 bg-white shadow-lg py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
+                              <button
+                                onClick={() => {
+                                  setOpenActionMenuId(null);
+                                  if (onViewDetails) onViewDetails(dataset);
+                                }}
+                                className="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition"
+                              >
+                                <Info className="h-3.5 w-3.5 text-slate-500" />
+                                <span>View Details</span>
+                              </button>
+
+                              {!isViewer && onRefreshDataset && (
+                                <button
+                                  onClick={() => {
+                                    setOpenActionMenuId(null);
+                                    onRefreshDataset(dataset.id);
+                                  }}
+                                  disabled={isRefreshingDataset === dataset.id}
+                                  className="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition disabled:opacity-40"
+                                >
+                                  <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshingDataset === dataset.id ? 'animate-spin text-blue-600' : ''}`} />
+                                  <span>Refresh & Sync</span>
+                                </button>
+                              )}
+
+                              <button
+                                onClick={() => {
+                                  setOpenActionMenuId(null);
+                                  navigate(`/data-quality?datasetId=${dataset.id}`);
+                                }}
+                                className="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition"
+                              >
+                                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                                <span>Data Quality</span>
+                              </button>
+
+                              {!isViewer && onDelete && (
+                                <>
+                                  <div className="my-1 border-t border-slate-100" />
+                                  <button
+                                    onClick={() => {
+                                      setOpenActionMenuId(null);
+                                      onDelete(dataset);
+                                    }}
+                                    disabled={isDeleting === dataset.id}
+                                    className="w-full text-left px-3.5 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition disabled:opacity-40 font-medium"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5 text-rose-500" />
+                                    <span>Delete Dataset</span>
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -499,6 +767,88 @@ export default function DatasetTable({
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination Footer */}
+      <div className="p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white text-xs text-slate-600">
+        {/* Left: Showing entries info */}
+        <div>
+          {totalItems > 0 ? (
+            <span>
+              Showing <strong className="text-slate-900">{startIndex + 1}</strong> to{' '}
+              <strong className="text-slate-900">
+                {Math.min(startIndex + pageSize, totalItems)}
+              </strong>{' '}
+              of <strong className="text-slate-900">{totalItems}</strong> {totalItems === 1 ? 'dataset' : 'datasets'}
+            </span>
+          ) : (
+            <span>Showing 0 datasets</span>
+          )}
+        </div>
+
+        {/* Right: Pagination buttons & page-size selector */}
+        <div className="flex items-center gap-3">
+          {/* Page controls */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={validPage <= 1}
+              id="pagination-prev-btn"
+              className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition"
+              title="Previous page"
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+
+            {/* Page number buttons */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+              <button
+                key={pageNum}
+                onClick={() => setCurrentPage(pageNum)}
+                id={`pagination-page-${pageNum}`}
+                className={`h-7 min-w-[28px] px-2 rounded-lg text-xs font-semibold transition ${
+                  validPage === pageNum
+                    ? 'bg-blue-600 text-white shadow-2xs'
+                    : 'text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                {pageNum}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={validPage >= totalPages}
+              id="pagination-next-btn"
+              className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition"
+              title="Next page"
+              aria-label="Next page"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Page Size Selector */}
+          <div className="relative">
+            <select
+              id="pagination-page-size"
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              aria-label="Datasets per page"
+              className="appearance-none rounded-lg border border-slate-200 bg-white py-1.5 pl-2.5 pr-7 text-xs font-medium text-slate-700 hover:bg-slate-50 focus:border-blue-600 focus:outline-none cursor-pointer transition"
+            >
+              <option value={5}>5 / page</option>
+              <option value={10}>10 / page</option>
+              <option value={25}>25 / page</option>
+              <option value={50}>50 / page</option>
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+          </div>
+        </div>
       </div>
     </div>
   );

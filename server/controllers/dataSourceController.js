@@ -109,8 +109,18 @@ const createDataSource = async (req, res, next) => {
       }
 
       // Test connection
-      const testResult = await testPostgresConnection({ host, port, database, user, password, ssl });
-      status = testResult.success ? 'connected' : 'error';
+      try {
+        const testResult = await testPostgresConnection({ host, port, database, user, password, ssl });
+        status = testResult.success ? 'connected' : 'error';
+      } catch (err) {
+        if (err.message && err.message.includes('Disallowed PostgreSQL host')) {
+          return res.status(400).json({
+            success: false,
+            message: err.message
+          });
+        }
+        status = 'error';
+      }
     }
 
     // 2. REST API Connector
@@ -227,7 +237,10 @@ const testConnection = async (req, res, next) => {
     const result = await testPostgresConnection({ host, port, database, user, password, ssl });
     return res.status(result.success ? 200 : 400).json(result);
   } catch (err) {
-    next(err);
+    return res.status(400).json({
+      success: false,
+      message: err.message || 'PostgreSQL connection failed.'
+    });
   }
 };
 
@@ -549,10 +562,40 @@ const deleteDataSource = async (req, res, next) => {
   }
 };
 
+/**
+ * PUT /api/data-sources/:id
+ * Update data source name, status or configuration
+ */
+const updateDataSource = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const { name, config, status } = req.body;
+
+    const source = await DataSource.findByIdAndUserId(id, userId);
+    if (!source) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data source not found or you do not have permission to edit it.'
+      });
+    }
+
+    const updated = await DataSource.update(id, userId, { name, config, status });
+    return res.status(200).json({
+      success: true,
+      message: 'Data source updated successfully.',
+      data: updated
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getDataSources,
   getDataSourceById,
   createDataSource,
+  updateDataSource,
   testConnection,
   testApiConnection,
   syncDataSource,

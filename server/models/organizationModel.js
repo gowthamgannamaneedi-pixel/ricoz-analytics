@@ -11,7 +11,7 @@ const OrganizationModel = {
    */
   async findById(id) {
     const sql = `
-      SELECT id, name, slug, plan, settings, created_at, updated_at
+      SELECT id, name, slug, plan, trial_started_at, trial_ends_at, subscription_status, payment_status, stripe_customer_id, stripe_subscription_id, settings, created_at, updated_at
       FROM organizations
       WHERE id = $1
       LIMIT 1;
@@ -27,7 +27,7 @@ const OrganizationModel = {
    */
   async findBySlug(slug) {
     const sql = `
-      SELECT id, name, slug, plan, settings, created_at, updated_at
+      SELECT id, name, slug, plan, trial_started_at, trial_ends_at, subscription_status, payment_status, stripe_customer_id, stripe_subscription_id, settings, created_at, updated_at
       FROM organizations
       WHERE LOWER(slug) = LOWER($1)
       LIMIT 1;
@@ -37,22 +37,29 @@ const OrganizationModel = {
   },
 
   /**
-   * Create a new organization
-   * @param {{ name: string, slug?: string, plan?: string, settings?: any }} data
+   * Create a new organization with 14-day free trial
+   * @param {{ name: string, slug?: string, plan?: string, settings?: any, trial_started_at?: Date, trial_ends_at?: Date, subscription_status?: string, payment_status?: string }} data
    * @returns {Promise<any>}
    */
-  async create({ name, slug, plan = 'starter', settings = {} }) {
-    const generatedSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  async create({ name, slug, plan = 'starter', settings = {}, trial_started_at, trial_ends_at, subscription_status = 'trial', payment_status = 'unpaid' }) {
+    const generatedSlug = slug || (name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString(36).slice(-4));
+    const trialStart = trial_started_at || new Date();
+    const trialEnd = trial_ends_at || new Date(trialStart.getTime() + 14 * 24 * 60 * 60 * 1000);
+
     const sql = `
-      INSERT INTO organizations (name, slug, plan, settings)
-      VALUES ($1, $2, $3, $4)
-      RETURNING id, name, slug, plan, settings, created_at, updated_at;
+      INSERT INTO organizations (name, slug, plan, settings, trial_started_at, trial_ends_at, subscription_status, payment_status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING id, name, slug, plan, settings, trial_started_at, trial_ends_at, subscription_status, payment_status, created_at, updated_at;
     `;
     const result = await db.query(sql, [
       name.trim(),
       generatedSlug,
       plan,
-      typeof settings === 'string' ? settings : JSON.stringify(settings)
+      typeof settings === 'string' ? settings : JSON.stringify(settings),
+      trialStart,
+      trialEnd,
+      subscription_status,
+      payment_status
     ]);
     return result.rows[0];
   },

@@ -1,6 +1,8 @@
 const OrganizationModel = require('../models/organizationModel');
 const UserModel = require('../models/userModel');
 const AuditLogModel = require('../models/auditLogModel');
+const InvitationModel = require('../models/invitationModel');
+const emailService = require('../services/emailService');
 const { logAuditEvent, AUDIT_ACTIONS } = require('../services/auditService');
 const { getFullPermissionMatrix, getPermissionsForRole } = require('../utils/permissions');
 
@@ -409,6 +411,144 @@ const adminController = {
       return res.status(500).json({
         success: false,
         message: 'Failed to retrieve permission matrix.',
+        error: error.message
+      });
+    }
+  },
+
+  /**
+   * POST /api/admin/invitations
+   * Invite a new team member to the organization
+   */
+  async createInvitation(req, res) {
+    try {
+      const orgId = req.user.organization_id;
+      const { email, role = 'viewer' } = req.body;
+
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({
+          success: false,
+          message: 'A valid email address is required.'
+        });
+      }
+
+      const cleanRole = role.toLowerCase();
+      const validRoles = ['admin', 'manager', 'analyst', 'viewer'];
+      if (!validRoles.includes(cleanRole)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid role. Allowed: ${validRoles.join(', ')}`
+        });
+      }
+
+      // Check if user already in organization
+      const existingUser = await UserModel.findByEmail(email);
+      if (existingUser && String(existingUser.organization_id) === String(orgId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'User is already a member of this organization.'
+        });
+      }
+
+      const org = await OrganizationModel.findById(orgId);
+      const invitation = await InvitationModel.create({
+        organizationId: orgId,
+        invitedBy: req.user.id,
+        email: email.trim().toLowerCase(),
+        role: cleanRole
+      });
+
+      // Dispatch invitation email
+      const inviteUrl = `http://localhost:5173/auth/accept-invite?token=${invitation.token}`;
+      await emailService.sendInvitationEmail({
+        email: invitation.email,
+        inviterName: req.user.name || req.user.email,
+        orgName: org?.name || 'Your Team',
+        role: cleanRole,
+        inviteUrl
+      });
+
+      await logAuditEvent({
+        organizationId: orgId,
+        userId: req.user.id,
+        action: AUDIT_ACTIONS.SETTINGS_UPDATED,
+        resourceType: 'invitation',
+        resourceId: invitation.id,
+        description: `Team invitation sent to ${invitation.email} for role ${cleanRole}`,
+        metadata: { email: invitation.email, role: cleanRole },
+        req
+      }).catch(() => null);
+
+      return res.status(201).json({
+        success: true,
+        message: `Invitation successfully sent to ${invitation.email}.`,
+        invitation: {
+          id: invitation.id,
+          email: invitation.email,
+          role: invitation.role,
+          status: invitation.status,
+          token: invitation.token,
+          expiresAt: invitation.expires_at,
+          inviteUrl
+        }
+      });
+    } catch (error) {
+      console.error('[AdminController.createInvitation] Error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to create team invitation.',
+        error: error.message
+      });
+    }
+  },
+
+  /**
+   * GET /api/admin/invitations
+   * List all pending invitations for the organization
+   */
+  async getInvitations(req, res) {
+    try {
+      const orgId = req.user.organization_id;
+      const invitations = await InvitationModel.findByOrganizationId(orgId);
+
+      return res.status(200).json({
+        success: true,
+        invitations
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to retrieve team invitations.',
+        error: error.message
+      });
+    }
+  },
+
+  /**
+   * DELETE /api/admin/invitations/:id
+   * Revoke an invitation
+   */
+  async deleteInvitation(req, res) {
+    try {
+      const orgId = req.user.organization_id;
+      const { id } = req.params;
+
+      const deleted = await InvitationModel.delete(id, orgId);
+      if (!deleted) {
+        return res.status(404).json({
+          success: false,
+          message: 'Invitation not found or already deleted.'
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Invitation revoked successfully.'
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to revoke invitation.',
         error: error.message
       });
     }

@@ -81,7 +81,18 @@ export async function apiRequest(endpoint, options = {}) {
     }
 
     if (!response.ok) {
-      if (response.status === 401 && endpoint !== '/auth/login' && endpoint !== '/auth/register') {
+      if (response.status === 402) {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:trial_expired', {
+            detail: {
+              message: data?.message || 'Your 14-day free trial has expired. Please select a plan to continue.',
+              subscription: data?.subscription
+            }
+          }));
+        }
+      }
+
+      if (response.status === 401 && endpoint !== '/auth/login' && endpoint !== '/auth/register' && endpoint !== '/auth/verify-otp' && endpoint !== '/auth/resend-otp' && endpoint !== '/auth/verify-email') {
         removeAuthToken();
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('auth:session_expired', {
@@ -97,7 +108,9 @@ export async function apiRequest(endpoint, options = {}) {
           errorMsg = 'Please sign in to continue.';
         }
       } else if (response.status === 403) {
-        errorMsg = "You don't have permission to access this resource.";
+        if (!errorMsg) {
+          errorMsg = "You don't have permission to access this resource.";
+        }
       } else if (!errorMsg) {
         errorMsg = `Request failed with status ${response.status}`;
       }
@@ -133,6 +146,69 @@ export async function registerUser(userData) {
   return apiRequest('/auth/register', {
     method: 'POST',
     body: JSON.stringify(userData)
+  });
+}
+
+/**
+ * Verify email address with 6-digit OTP or link token
+ * @param {{ email?: string, otp?: string, token?: string }} payload 
+ */
+export async function verifyEmailApi(payload) {
+  return apiRequest('/auth/verify-email', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+/**
+ * Resend verification email and 6-digit OTP
+ * @param {{ email: string }} payload 
+ */
+export async function resendVerificationApi(payload) {
+  return apiRequest('/auth/resend-verification', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+/**
+ * Retrieve invitation details by token
+ * @param {string} token 
+ */
+export async function getInvitationDetailsApi(token) {
+  return apiRequest(`/auth/invite/${token}`);
+}
+
+/**
+ * Accept organization invitation and set password
+ * @param {{ token: string, name: string, password: string }} payload 
+ */
+export async function acceptInvitationApi(payload) {
+  return apiRequest('/auth/accept-invite', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+/**
+ * Verify 6-digit email OTP
+ * @param {{ email: string, otp: string }} payload 
+ */
+export async function verifyOtpUser(payload) {
+  return apiRequest('/auth/verify-otp', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+/**
+ * Resend 6-digit email OTP
+ * @param {{ email: string }} payload 
+ */
+export async function resendOtpUser(payload) {
+  return apiRequest('/auth/resend-otp', {
+    method: 'POST',
+    body: JSON.stringify(payload)
   });
 }
 
@@ -270,6 +346,16 @@ export async function testApiDataSource(config) {
 export async function syncDataSource(id) {
   return apiRequest(`/data-sources/${id}/sync`, {
     method: 'POST'
+  });
+}
+
+/**
+ * Update an existing data source
+ */
+export async function updateDataSource(id, data) {
+  return apiRequest(`/data-sources/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
   });
 }
 
@@ -985,6 +1071,72 @@ export async function getAdminAuditLogs(params = {}) {
  */
 export async function getAdminPermissions() {
   return apiRequest('/admin/permissions');
+}
+
+/**
+ * Invite a new member to the organization
+ * @param {{ email: string, role: string }} payload 
+ */
+export async function createAdminInvitation(payload) {
+  return apiRequest('/admin/invitations', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+/**
+ * Get all pending invitations for the current organization
+ */
+export async function getAdminInvitations() {
+  return apiRequest('/admin/invitations');
+}
+
+/**
+ * Revoke/delete a pending invitation
+ * @param {string} id 
+ */
+export async function deleteAdminInvitation(id) {
+  return apiRequest(`/admin/invitations/${id}`, {
+    method: 'DELETE'
+  });
+}
+
+// ==========================================
+// SAAS BILLING & SUBSCRIPTION APIS
+// ==========================================
+
+/**
+ * Fetch available subscription plans
+ */
+export async function getBillingPlans() {
+  return apiRequest('/billing/plans');
+}
+
+/**
+ * Fetch organization's current subscription & trial status
+ */
+export async function getBillingSubscription() {
+  return apiRequest('/billing/subscription');
+}
+
+/**
+ * Create a Stripe checkout session for plan upgrade
+ * @param {{ planId: string, interval?: string }} payload 
+ */
+export async function createBillingCheckoutSession(payload) {
+  return apiRequest('/billing/create-checkout-session', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+/**
+ * Cancel active subscription
+ */
+export async function cancelBillingSubscription() {
+  return apiRequest('/billing/cancel-subscription', {
+    method: 'POST'
+  });
 }
 
 // ==========================================

@@ -107,9 +107,9 @@ async function runPhase6Tests() {
     );
 
     // ------------------------------------------------------------------------
-    // Test 2: User signup with organization creation & viewer default role
+    // Test 2: User signup with organization creation & admin initial role
     // ------------------------------------------------------------------------
-    const testEmail = `viewer_${Date.now()}@acme-corp.com`;
+    const testEmail = `admin_${Date.now()}@acme-corp.com`;
     const signupRes = await request('POST', '/api/auth/register', {
       name: 'Priya Sharma',
       email: testEmail,
@@ -120,13 +120,18 @@ async function runPhase6Tests() {
     assert(
       signupRes.status === 201 &&
       signupRes.data.success === true &&
-      Boolean(signupRes.data.token) &&
-      signupRes.data.user.role === 'viewer' &&
+      signupRes.data.user.role === 'admin' &&
       Boolean(signupRes.data.user.organization_id),
-      'User signup creates profile with organization_id and enforces default "viewer" role'
+      'User signup creates profile with organization_id and assigns "admin" tenant role'
     );
 
-    const viewerToken = signupRes.data.token;
+    // Verify email using server-generated OTP
+    const otp = signupRes.data._devVerificationOtp;
+    const verifyRes = await request('POST', '/api/auth/verify-email', {
+      email: testEmail,
+      otp
+    });
+    const viewerToken = verifyRes.data.token;
     const viewerOrgId = signupRes.data.user.organization_id;
     const viewerId = signupRes.data.user.id;
 
@@ -141,7 +146,7 @@ async function runPhase6Tests() {
       meRes.status === 200 &&
       meRes.data.success === true &&
       meRes.data.user.email === testEmail &&
-      meRes.data.user.role === 'viewer' &&
+      meRes.data.user.role === 'admin' &&
       meRes.data.user.organization_id === viewerOrgId &&
       meRes.data.user.organization_name !== undefined,
       'GET /api/auth/me returns synchronized profile with role and organization metadata'

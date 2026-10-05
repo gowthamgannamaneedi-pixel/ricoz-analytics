@@ -18,9 +18,9 @@ export default function ChartCard({
   className = ''
 }) {
   return (
-    <div className={`flex flex-col rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-md ${className}`}>
+    <div className={`flex flex-col rounded-lg border border-slate-200 bg-white p-4 sm:p-5 shadow-xs ${className}`}>
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
           <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
             {title}

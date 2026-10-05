@@ -40,17 +40,11 @@ const getDatasetById = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const organizationId = req.user.organization_id;
-    const userRole = (req.user.role || 'viewer').toLowerCase();
     const { id } = req.params;
 
-    let dataset;
-    if (['admin', 'manager'].includes(userRole)) {
-      dataset = organizationId
-        ? await Dataset.findByIdAndOrgId(id, organizationId)
-        : await Dataset.findByIdAndUserId(id, userId);
-    } else {
-      dataset = await Dataset.findByIdAndUserId(id, userId);
-    }
+    const dataset = organizationId
+      ? await Dataset.findByIdAndOrgId(id, organizationId)
+      : await Dataset.findByIdAndUserId(id, userId);
 
     if (!dataset) {
       return res.status(404).json({
@@ -76,17 +70,11 @@ const getDatasetPreview = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const organizationId = req.user.organization_id;
-    const userRole = (req.user.role || 'viewer').toLowerCase();
     const { id } = req.params;
 
-    let dataset;
-    if (['admin', 'manager'].includes(userRole)) {
-      dataset = organizationId
-        ? await Dataset.findByIdAndOrgId(id, organizationId)
-        : await Dataset.findByIdAndUserId(id, userId);
-    } else {
-      dataset = await Dataset.findByIdAndUserId(id, userId);
-    }
+    const dataset = organizationId
+      ? await Dataset.findByIdAndOrgId(id, organizationId)
+      : await Dataset.findByIdAndUserId(id, userId);
 
     if (!dataset) {
       return res.status(404).json({
@@ -339,10 +327,34 @@ const refreshDataset = async (req, res, next) => {
   }
 };
 
+/**
+ * DEV ONLY: Create dataset for automated multi-tenant isolation testing
+ */
+const devCreateDataset = async (req, res, next) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ success: false, message: 'Simulation disabled in production' });
+  }
+  try {
+    const { name, rowCount } = req.body;
+    const dataset = await Dataset.create({
+      userId: req.user.id,
+      organizationId: req.user.organization_id,
+      name: name || 'Isolated Test Dataset',
+      rowCount: rowCount || 100,
+      columnCount: 5,
+      schema: [{ name: 'id', type: 'integer' }, { name: 'sales', type: 'numeric' }]
+    });
+    return res.status(201).json({ success: true, dataset });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getDatasets,
   getDatasetById,
   getDatasetPreview,
   refreshDataset,
-  deleteDataset
+  deleteDataset,
+  devCreateDataset
 };

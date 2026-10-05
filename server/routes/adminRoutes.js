@@ -18,6 +18,11 @@ router.get('/users/:id', requireRole('admin', 'manager'), adminController.getUse
 router.put('/users/:id/role', requireRole('admin'), adminController.updateUserRole);
 router.put('/users/:id/status', requireRole('admin'), adminController.updateUserStatus);
 
+// Team Invitations
+router.get('/invitations', requireRole('admin', 'manager'), adminController.getInvitations);
+router.post('/invitations', requireRole('admin'), adminController.createInvitation);
+router.delete('/invitations/:id', requireRole('admin'), adminController.deleteInvitation);
+
 // Enterprise Audit Logs
 router.get('/audit-logs', requireRole('admin', 'manager'), adminController.getAuditLogs);
 

@@ -55,7 +55,7 @@ const authenticateToken = async (req, res, next) => {
     const decoded = jwt.verify(token, config.jwtSecret);
     if (decoded && (decoded.id || decoded.email)) {
       // Resolve latest organization and role EXCLUSIVELY from database record
-      let userOrgId = decoded.organization_id || '00000000-0000-0000-0000-000000000001';
+      let userOrgId = decoded.organization_id || null;
       let userRole = decoded.role || 'viewer';
       let userName = decoded.name || decoded.email;
       let userId = decoded.id;
@@ -68,6 +68,20 @@ const authenticateToken = async (req, res, next) => {
 
       if (dbUser) {
         // Enforce account status check
+        if (dbUser.status === 'pending_verification') {
+          return res.status(403).json({
+            success: false,
+            error: {
+              code: 'EMAIL_NOT_VERIFIED',
+              message: 'Email verification required. Please verify your email before accessing the workspace.'
+            },
+            message: 'Email verification required. Please verify your email before accessing the workspace.',
+            requiresVerification: true,
+            email: dbUser.email,
+            request_id: req.id
+          });
+        }
+
         if (dbUser.status === 'deactivated' || dbUser.status === 'inactive') {
           return res.status(403).json({
             success: false,
@@ -80,7 +94,7 @@ const authenticateToken = async (req, res, next) => {
           });
         }
 
-        // ROLE COMES EXCLUSIVELY FROM DATABASE RECORD (Overrides any payload claim)
+        // ROLE AND TENANT COME EXCLUSIVELY FROM DATABASE RECORD (Overrides any payload claim)
         userRole = dbUser.role || 'viewer';
         userOrgId = dbUser.organization_id || userOrgId;
         userName = dbUser.name || userName;
@@ -106,6 +120,20 @@ const authenticateToken = async (req, res, next) => {
           // Look up user profile in database to get synced role & organization
           const dbUser = await UserModel.findByEmail(sbUser.email).catch(() => null);
           
+          if (dbUser && dbUser.status === 'pending_verification') {
+            return res.status(403).json({
+              success: false,
+              error: {
+                code: 'EMAIL_NOT_VERIFIED',
+                message: 'Email verification required. Please verify your email before accessing the workspace.'
+              },
+              message: 'Email verification required. Please verify your email before accessing the workspace.',
+              requiresVerification: true,
+              email: dbUser.email,
+              request_id: req.id
+            });
+          }
+
           if (dbUser && (dbUser.status === 'deactivated' || dbUser.status === 'inactive')) {
             return res.status(403).json({
               success: false,
@@ -123,7 +151,7 @@ const authenticateToken = async (req, res, next) => {
             email: sbUser.email,
             name: dbUser?.name || sbUser.user_metadata?.name || sbUser.user_metadata?.full_name || sbUser.email.split('@')[0],
             role: dbUser?.role || sbUser.user_metadata?.role || 'viewer', // Database role takes precedence
-            organization_id: dbUser?.organization_id || '00000000-0000-0000-0000-000000000001'
+            organization_id: dbUser?.organization_id || null
           };
           return next();
         }

@@ -1,10 +1,26 @@
 require('dotenv').config();
 const http = require('http');
+const app = require('./app');
 const demoRequestModel = require('./models/demoRequestModel');
 const emailService = require('./services/emailService');
 const { checkSupabaseConnection } = require('./config/supabase');
 
+const TEST_PORT = process.env.TEST_PORT || 5096;
+
 async function runDemoRequestTestSuite() {
+  let server = null;
+  try {
+    server = await new Promise((resolve, reject) => {
+      const s = app.listen(TEST_PORT, () => resolve(s));
+      s.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') resolve(null);
+        else reject(err);
+      });
+    });
+  } catch (err) {
+    console.warn(`Port ${TEST_PORT} bind note:`, err.message);
+  }
+
   console.log('====================================================');
   console.log('  RicozAnalytics Demo Request End-to-End Test Suite ');
   console.log('====================================================\n');
@@ -95,7 +111,7 @@ async function runDemoRequestTestSuite() {
     const req = http.request(
       {
         hostname: 'localhost',
-        port: process.env.PORT || 5000,
+        port: TEST_PORT,
         path: '/api/demo-request',
         method: 'POST',
         headers: {
@@ -117,7 +133,7 @@ async function runDemoRequestTestSuite() {
     );
 
     req.on('error', (e) => {
-      resolve({ error: e.message });
+      resolve({ error: e.message || e.code || 'CONNECTION_ERROR' });
     });
 
     req.write(httpPayload);
@@ -149,7 +165,7 @@ async function runDemoRequestTestSuite() {
     const req = http.request(
       {
         hostname: 'localhost',
-        port: process.env.PORT || 5000,
+        port: TEST_PORT,
         path: '/api/demo-request',
         method: 'POST',
         headers: {
@@ -171,7 +187,7 @@ async function runDemoRequestTestSuite() {
     );
 
     req.on('error', (e) => {
-      resolve({ error: e.message });
+      resolve({ error: e.message || e.code || 'CONNECTION_ERROR' });
     });
 
     req.write(invalidPayload);
@@ -184,6 +200,10 @@ async function runDemoRequestTestSuite() {
       invalidApiResult.data.success === false,
       'HTTP API rejects malformed email with 400 Bad Request'
     );
+  }
+
+  if (server) {
+    await new Promise(r => server.close(r));
   }
 
   console.log('\n====================================================');

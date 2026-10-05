@@ -324,15 +324,16 @@ async function runAuthSecurityTests() {
     const regEmail = `test_registrant_${Date.now()}@ricozanalytics.com`;
     const regRes = await request('POST', '/api/auth/register', {
       name: 'Sneaky Attacker',
+      organization_name: 'Attacker Corp',
       email: regEmail,
       password: 'StrongPassword123!',
-      role: 'admin' // Attempted role injection
+      role: 'superadmin' // Attempted role injection
     });
 
     assert(
       regRes.statusCode === 201 &&
-      regRes.body.user.role === 'viewer',
-      'Registration Role Injection — Server ignores client role and strictly provisions default "viewer" role'
+      regRes.body.user.role === 'admin',
+      'Registration Role Injection — Server ignores client role and strictly provisions default "admin" tenant role'
     );
 
     // -------------------------------------------------------------

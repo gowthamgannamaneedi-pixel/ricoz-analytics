@@ -17,25 +17,36 @@ const dataQualityRoutes = require('./dataQualityRoutes');
 const insightRoutes = require('./insightRoutes');
 const collaborationRoutes = require('./collaborationRoutes');
 const demoRequestRoutes = require('./demoRequestRoutes');
+const billingRoutes = require('./billingRoutes');
 
-// Mount routes onto /api prefix
+const authenticateToken = require('../middleware/authMiddleware');
+const { requireActiveSubscription } = require('../middleware/subscriptionMiddleware');
+
+// Mount public routes
 router.use('/', healthRoutes);
 router.use('/auth', authRoutes);
-router.use('/data-sources', dataSourceRoutes);
-router.use('/datasets', datasetRoutes);
-router.use('/analytics', analyticsRoutes);
-router.use('/dataset-relationships', relationshipRoutes);
-router.use('/data-quality', dataQualityRoutes);
-router.use('/metrics', metricRoutes);
-router.use('/dashboards', dashboardRoutes);
-router.use('/reports', reportRoutes);
-router.use('/alerts', alertRoutes);
-router.use('/forecasts', forecastRoutes);
-router.use('/ai', aiRoutes);
-router.use('/insights', insightRoutes);
-router.use('/collaboration', collaborationRoutes);
+router.use('/billing', billingRoutes);
 router.use('/demo-request', demoRequestRoutes);
 router.use('/demo-requests', demoRequestRoutes);
+
+// Protected Workspace routes with 14-day trial & active subscription gating
+const protectedWorkspace = [authenticateToken, requireActiveSubscription];
+
+router.use('/data-sources', ...protectedWorkspace, dataSourceRoutes);
+router.use('/datasets', ...protectedWorkspace, datasetRoutes);
+router.use('/analytics', ...protectedWorkspace, analyticsRoutes);
+router.use('/dataset-relationships', ...protectedWorkspace, relationshipRoutes);
+router.use('/data-quality', ...protectedWorkspace, dataQualityRoutes);
+router.use('/metrics', ...protectedWorkspace, metricRoutes);
+router.use('/dashboards', ...protectedWorkspace, dashboardRoutes);
+router.use('/reports', ...protectedWorkspace, reportRoutes);
+router.use('/alerts', ...protectedWorkspace, alertRoutes);
+router.use('/forecasts', ...protectedWorkspace, forecastRoutes);
+router.use('/ai', ...protectedWorkspace, aiRoutes);
+router.use('/insights', ...protectedWorkspace, insightRoutes);
+router.use('/collaboration', ...protectedWorkspace, collaborationRoutes);
+
+// Workspace Administration (accessible with authentication)
 router.use('/admin', adminRoutes);
 
 module.exports = router;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Loader2, Sparkles, HelpCircle, Layers, CheckCircle2 } from 'lucide-react';
+import { Button } from './ui/Button';
 import { API_BASE_URL } from '../services/api';
 
 const METRIC_TYPES = [
@@ -220,7 +221,7 @@ export default function MetricModal({
                   placeholder="e.g. Q4 Net Revenue"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-3 text-xs text-slate-900 placeholder-slate-400 transition hover:border-slate-300 focus:border-blue-600 focus:outline-none"
+                  className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-900 placeholder-slate-400 transition hover:border-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none shadow-2xs"
                 />
               </div>
 
@@ -232,7 +233,7 @@ export default function MetricModal({
                   id="metric-type"
                   value={type}
                   onChange={(e) => handleTypeChange(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-3 text-xs text-slate-900 transition hover:border-slate-300 focus:border-blue-600 focus:outline-none"
+                  className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-900 transition hover:border-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none shadow-2xs cursor-pointer"
                 >
                   {METRIC_TYPES.map(t => (
                     <option key={t.value} value={t.value}>{t.label}</option>
@@ -250,7 +251,7 @@ export default function MetricModal({
                   id="dataset-select"
                   value={datasetId}
                   onChange={(e) => setDatasetId(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-3 text-xs text-slate-900 transition hover:border-slate-300 focus:border-blue-600 focus:outline-none"
+                  className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-900 transition hover:border-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none shadow-2xs cursor-pointer"
                 >
                   <option value="">-- Standalone (No Dataset) --</option>
                   {datasets.map(d => (
@@ -269,7 +270,7 @@ export default function MetricModal({
                   placeholder="₹, %, units"
                   value={unit}
                   onChange={(e) => setUnit(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-3 text-xs text-slate-900 placeholder-slate-400 transition hover:border-slate-300 focus:border-blue-600 focus:outline-none"
+                  className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-900 placeholder-slate-400 transition hover:border-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none shadow-2xs"
                 />
               </div>
             </div>
@@ -414,33 +415,26 @@ export default function MetricModal({
           </div>
 
           {/* Modal Actions */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
-            <button
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+            <Button
               type="button"
+              variant="secondary"
               onClick={onClose}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+              disabled={isLoading}
             >
               Cancel
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="submit"
+              variant="primary"
               disabled={isLoading}
+              loading={isLoading}
               id="save-metric-btn"
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition disabled:opacity-50 shadow-2xs"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>{metricToEdit ? 'Save Changes' : 'Create KPI'}</span>
-                </>
-              )}
-            </button>
+              <CheckCircle2 className="h-4 w-4" />
+              <span>{metricToEdit ? 'Save Changes' : 'Create KPI'}</span>
+            </Button>
           </div>
         </form>
       </div>

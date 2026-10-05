@@ -12,7 +12,8 @@ import {
   Hash,
   Type,
   Calendar,
-  ToggleLeft
+  ToggleLeft,
+  RefreshCw
 } from 'lucide-react';
 import { API_BASE_URL } from '../services/api';
 
@@ -37,7 +38,7 @@ function formatColumnHeader(key) {
 
 /**
  * Enterprise Dataset Preview Modal
- * Displays strictly up to 50 sample rows with schema types and sticky header
+ * Displays strictly up to 50 real sample rows from backend API with schema types and sticky header
  * @param {{
  *   isOpen: boolean,
  *   onClose: () => void,
@@ -50,57 +51,11 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (isOpen && datasetId) {
-      fetchPreview(datasetId);
-    } else {
-      setData(null);
-      setError('');
-    }
-  }, [isOpen, datasetId]);
-
-  const generateFallbackPreview = (id) => {
-    const sampleRows = [];
-    const regions = ['Bengaluru', 'Mumbai', 'Delhi NCR', 'Hyderabad', 'Chennai', 'Pune'];
-    const categories = ['Hardware', 'Software', 'Cloud SaaS', 'Services', 'Consulting'];
-    const channels = ['Direct Online', 'Retail Partners', 'B2B Enterprise', 'Distributor'];
-
-    for (let i = 1; i <= 50; i++) {
-      sampleRows.push({
-        order_id: 1000 + i,
-        region: regions[i % regions.length],
-        category: categories[i % categories.length],
-        channel: channels[i % channels.length],
-        sales_amount: Math.round((25000 + (i * 3820)) * 100) / 100,
-        units_sold: (i % 15) + 3,
-        profit: Math.round((5000 + (i * 950)) * 100) / 100,
-        is_discounted: i % 3 === 0,
-        order_date: `2025-01-${String((i % 28) + 1).padStart(2, '0')}`
-      });
-    }
-
-    return {
-      name: id === 2 ? 'Product Inventory & Logistics' : id === 3 ? 'Production PostgreSQL Transactions' : 'Indian Enterprise Sales Telemetry (Q4)',
-      rowCount: 45200,
-      columnCount: 9,
-      schema: [
-        { name: 'order_id', type: 'number' },
-        { name: 'region', type: 'string' },
-        { name: 'category', type: 'string' },
-        { name: 'channel', type: 'string' },
-        { name: 'sales_amount', type: 'number' },
-        { name: 'units_sold', type: 'number' },
-        { name: 'profit', type: 'number' },
-        { name: 'is_discounted', type: 'boolean' },
-        { name: 'order_date', type: 'date' }
-      ],
-      preview: sampleRows
-    };
-  };
-
   const fetchPreview = async (id) => {
     setIsLoading(true);
     setError('');
+    setData(null);
+
     try {
       const res = await fetch(`${API_BASE_URL}/datasets/${id}/preview`, {
         headers: {
@@ -110,18 +65,34 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
       const contentType = res.headers.get('content-type') || '';
       if (res.ok && contentType.includes('application/json')) {
         const json = await res.json();
-        if (json.data && json.data.preview) {
+        if (json?.data) {
           setData(json.data);
           return;
         }
       }
-      setData(generateFallbackPreview(id));
-    } catch (_) {
-      setData(generateFallbackPreview(id));
+
+      // If backend returned an error JSON or non-OK response
+      let errorMsg = `Failed to load preview (HTTP ${res.status})`;
+      if (contentType.includes('application/json')) {
+        const errJson = await res.json().catch(() => null);
+        if (errJson?.message) errorMsg = errJson.message;
+      }
+      setError(errorMsg);
+    } catch (err) {
+      setError(err?.message || 'Network error while retrieving dataset preview.');
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isOpen && datasetId) {
+      fetchPreview(datasetId);
+    } else {
+      setData(null);
+      setError('');
+    }
+  }, [isOpen, datasetId]);
 
   const handleExportSampleCsv = () => {
     if (!data || !data.preview || data.preview.length === 0) return;
@@ -129,7 +100,7 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
     const headers = Object.keys(data.preview[0]);
     const rows = data.preview.map(row =>
       headers.map(h => {
-        const val = row[h] !== undefined ? String(row[h]) : '';
+        const val = row[h] !== undefined && row[h] !== null ? String(row[h]) : '';
         return `"${val.replace(/"/g, '""')}"`;
       }).join(',')
     );
@@ -176,8 +147,20 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
 
   if (!isOpen) return null;
 
-  const previewRows = data?.preview || [];
-  const schemaList = Array.isArray(data?.schema) ? data.schema : [];
+  const previewRows = Array.isArray(data?.preview) ? data.preview : [];
+  
+  // Parse schema if it's a JSON string
+  let schemaList = [];
+  if (Array.isArray(data?.schema)) {
+    schemaList = data.schema;
+  } else if (typeof data?.schema === 'string') {
+    try {
+      schemaList = JSON.parse(data.schema);
+    } catch (_) {
+      schemaList = [];
+    }
+  }
+
   const columnNames = schemaList.length > 0
     ? schemaList.map(s => s.name)
     : previewRows.length > 0
@@ -186,24 +169,24 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/40 backdrop-blur-xs font-sans">
-      <div className="flex flex-col w-full max-w-6xl max-h-[92vh] rounded-2xl border border-slate-200/90 bg-white shadow-2xl overflow-hidden">
+      <div className="flex flex-col w-full max-w-6xl max-h-[92vh] rounded-2xl border border-slate-200/90 bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-50 border border-blue-100 text-blue-600">
+            <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 shrink-0">
               <Table2 className="h-5 w-5" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
                 <h2 className="text-sm sm:text-base font-bold text-slate-900">
-                  {data?.name || 'Dataset Preview'}
+                  {data?.name || (isLoading ? 'Loading Preview...' : 'Dataset Preview')}
                 </h2>
                 <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80">
                   50-Row Sample Preview
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                {data ? `${data.rowCount?.toLocaleString()} total records · ${data.columnCount} columns detected` : 'Loading telemetry schema...'}
+                {data ? `${Number(data.rowCount || 0).toLocaleString()} total records · ${data.columnCount || columnNames.length} columns detected` : 'Fetching real records from storage...'}
               </p>
             </div>
           </div>
@@ -215,7 +198,7 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
                 className="flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
               >
                 <Download className="h-3.5 w-3.5 text-slate-500" />
-                <span className="hidden sm:inline">Export Sample (50)</span>
+                <span className="hidden sm:inline">Export Sample ({previewRows.length})</span>
               </button>
             )}
             <button
@@ -255,17 +238,32 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
               </p>
             </div>
           ) : error ? (
-            <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-xs text-rose-700 my-8 max-w-xl mx-auto">
-              <AlertCircle className="h-5 w-5 shrink-0 text-rose-600 mt-0.5" />
-              <div>
-                <p className="font-bold">Failed to load preview</p>
-                <p className="mt-0.5">{error}</p>
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center max-w-md mx-auto space-y-3">
+              <div className="p-3 bg-rose-50 text-rose-600 rounded-full border border-rose-200">
+                <AlertCircle className="h-6 w-6" />
               </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Failed to load preview</h3>
+                <p className="text-xs text-rose-600 mt-1">{error}</p>
+              </div>
+              <button
+                onClick={() => fetchPreview(datasetId)}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-2xs"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                <span>Retry</span>
+              </button>
             </div>
           ) : previewRows.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <p className="text-xs text-slate-500 font-medium">
-                No preview rows found for this dataset.
+            <div className="flex flex-col items-center justify-center py-20 text-center space-y-2">
+              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                <Table2 className="h-5 w-5" />
+              </div>
+              <p className="text-sm font-semibold text-slate-800">
+                No preview records available
+              </p>
+              <p className="text-xs text-slate-500 max-w-sm">
+                This dataset does not contain preview rows in the underlying storage or data source.
               </p>
             </div>
           ) : (
@@ -347,7 +345,7 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
         {/* Modal Footer */}
         <div className="flex items-center justify-between px-6 py-3 border-t border-slate-100 bg-slate-50/60 text-xs text-slate-500 shrink-0">
           <span className="font-mono text-[11px]">
-            Showing sample 1–{previewRows.length} of {data?.rowCount?.toLocaleString() || 0} rows
+            Showing sample 1–{previewRows.length} of {Number(data?.rowCount || 0).toLocaleString()} rows
           </span>
           <button
             onClick={onClose}

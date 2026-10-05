@@ -58,6 +58,7 @@ import DashboardModal from '../components/DashboardModal';
 import AddWidgetModal from '../components/AddWidgetModal';
 import ShareModal from '../components/ShareModal';
 import CommentsPanel from '../components/CommentsPanel';
+import ExecutiveDashboard from '../components/ExecutiveDashboard';
 import {
   getDashboards,
   getDashboardById,
@@ -235,6 +236,8 @@ export default function DashboardPage() {
   const [regionBreakdown, setRegionBreakdown] = useState([]);
   const [channelBreakdown, setChannelBreakdown] = useState([]);
   const [productBreakdown, setProductBreakdown] = useState([]);
+  const [decisionSignals, setDecisionSignals] = useState([]);
+  const [isSignalsLoading, setIsSignalsLoading] = useState(false);
 
   // Table State
   const [tableData, setTableData] = useState({ rows: FALLBACK_ROWS, totalCount: FALLBACK_ROWS.length });
@@ -432,6 +435,26 @@ export default function DashboardPage() {
       filtered = filtered.filter(r => r.category.toLowerCase() === filters.category.toLowerCase());
     }
 
+    if (filters.dateRange && filters.dateRange !== 'all') {
+      const allDates = filtered.map(r => new Date(r.order_date)).filter(d => !isNaN(d.getTime())).sort((a, b) => b - a);
+      if (allDates.length > 0) {
+        const referenceDate = allDates[0];
+        let startDate = null;
+        if (filters.dateRange === '7d') {
+          startDate = new Date(referenceDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+        } else if (filters.dateRange === '30d') {
+          startDate = new Date(referenceDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+        } else if (filters.dateRange === '90d') {
+          startDate = new Date(referenceDate.getTime() - 90 * 24 * 60 * 60 * 1000);
+        } else if (filters.dateRange === 'ytd') {
+          startDate = new Date(referenceDate.getFullYear(), 0, 1);
+        }
+        if (startDate) {
+          filtered = filtered.filter(r => new Date(r.order_date) >= startDate);
+        }
+      }
+    }
+
     if (tableSearch.trim()) {
       const q = tableSearch.toLowerCase();
       filtered = filtered.filter(r =>
@@ -440,11 +463,33 @@ export default function DashboardPage() {
     }
 
     const totalSales = filtered.reduce((sum, r) => sum + r.sales_amount, 0);
-    const totalOrders = filtered.length;
+    const uniqueOrderIds = new Set(filtered.map(r => r.order_id).filter(id => id !== undefined && id !== null && String(id).trim() !== ''));
+    const totalOrders = uniqueOrderIds.size > 0 ? uniqueOrderIds.size : filtered.length;
     const totalQuantity = filtered.reduce((sum, r) => sum + r.units_sold, 0);
     const aov = totalOrders > 0 ? Math.round(totalSales / totalOrders) : 0;
     const minSales = totalOrders > 0 ? Math.min(...filtered.map(r => r.sales_amount)) : 0;
     const maxSales = totalOrders > 0 ? Math.max(...filtered.map(r => r.sales_amount)) : 0;
+
+    let comparison = null;
+    if (filtered.length >= 2) {
+      const mid = Math.floor(filtered.length / 2);
+      const prevHalf = filtered.slice(0, mid);
+      const currHalf = filtered.slice(mid);
+      const prevSum = prevHalf.reduce((sum, r) => sum + (r.sales_amount || 0), 0);
+      const currSum = currHalf.reduce((sum, r) => sum + (r.sales_amount || 0), 0);
+      const prevOrders = prevHalf.length;
+      const currOrders = currHalf.length;
+      const salesChangePct = prevSum > 0 ? ((currSum - prevSum) / prevSum) * 100 : 0;
+      const ordersChangePct = prevOrders > 0 ? ((currOrders - prevOrders) / prevOrders) * 100 : 0;
+      comparison = {
+        hasComparison: true,
+        salesChange: `${salesChangePct >= 0 ? '+' : ''}${salesChangePct.toFixed(1)}%`,
+        isSalesPositive: salesChangePct >= 0,
+        ordersChange: `${ordersChangePct >= 0 ? '+' : ''}${ordersChangePct.toFixed(1)}%`,
+        isOrdersPositive: ordersChangePct >= 0,
+        periodLabel: 'vs previous period'
+      };
+    }
 
     setKpiData({
       totalSales,
@@ -453,24 +498,19 @@ export default function DashboardPage() {
       averageOrderValue: aov,
       minSales,
       maxSales,
-      recordCount: 45200,
-      comparison: {
-        hasComparison: true,
-        isSalesPositive: true,
-        salesChange: '+18.2%',
-        isOrdersPositive: true,
-        ordersChange: '+12.4%',
-        periodLabel: 'vs last month'
-      }
+      recordCount: filtered.length,
+      comparison
     });
 
     const trendsMap = {};
     filtered.forEach(r => {
       const dateKey = r.order_date;
       if (!trendsMap[dateKey]) {
-        trendsMap[dateKey] = { formattedDate: dateKey, revenue: 0, target: 80000 };
+        trendsMap[dateKey] = { formattedDate: dateKey, revenue: 0, orders: 0, units: 0 };
       }
       trendsMap[dateKey].revenue += r.sales_amount;
+      trendsMap[dateKey].orders += 1;
+      trendsMap[dateKey].units += (r.units_sold || 0);
     });
     setTrendsData(Object.values(trendsMap));
 
@@ -550,7 +590,7 @@ export default function DashboardPage() {
     try {
       const queryStr = buildQueryParams();
 
-      const [kpisRes, trendsRes, regionRes, channelRes, productRes, rowsRes] = await Promise.all([
+      const [kpisRes, trendsRes, regionRes, channelRes, productRes, rowsRes, insightsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/analytics/datasets/${id}/kpis?${queryStr}`, { headers: { 'Authorization': `Bearer ${token}` } }),
         fetch(`${API_BASE_URL}/analytics/datasets/${id}/trends?${queryStr}`, { headers: { 'Authorization': `Bearer ${token}` } }),
         fetch(`${API_BASE_URL}/analytics/datasets/${id}/breakdowns?${buildQueryParams({ groupBy: 'region' })}`, { headers: { 'Authorization': `Bearer ${token}` } }),
@@ -562,16 +602,18 @@ export default function DashboardPage() {
           sortKey: tableSortKey,
           sortOrder: tableSortOrder,
           search: tableSearch
-        })}`, { headers: { 'Authorization': `Bearer ${token}` } })
+        })}`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API_BASE_URL}/insights?datasetId=${id}`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
       ]);
 
-      const [kpisJson, trendsJson, regionJson, channelJson, productJson, rowsJson] = await Promise.all([
+      const [kpisJson, trendsJson, regionJson, channelJson, productJson, rowsJson, insightsJson] = await Promise.all([
         kpisRes.json().catch(() => null),
         trendsRes.json().catch(() => null),
         regionRes.json().catch(() => null),
         channelRes.json().catch(() => null),
         productRes.json().catch(() => null),
-        rowsRes.json().catch(() => null)
+        rowsRes.json().catch(() => null),
+        insightsRes ? insightsRes.json().catch(() => null) : null
       ]);
 
       if (kpisRes.ok && kpisJson?.data?.kpis) {
@@ -584,6 +626,11 @@ export default function DashboardPage() {
           rows: rowsJson?.data?.rows || [],
           totalCount: rowsJson?.data?.totalCount || 0
         });
+        if (insightsJson && (insightsJson.insights || insightsJson.data)) {
+          setDecisionSignals(insightsJson.insights || insightsJson.data || []);
+        } else {
+          setDecisionSignals([]);
+        }
       } else {
         computeFallbackAnalytics();
       }
@@ -592,6 +639,28 @@ export default function DashboardPage() {
     } finally {
       setIsAnalyticsLoading(false);
       setIsRefreshing(false);
+    }
+  };
+
+  const handleGenerateSignals = async () => {
+    if (!selectedDatasetId) return;
+    try {
+      setIsSignalsLoading(true);
+      const res = await fetch(`${API_BASE_URL}/insights/generate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ datasetId: selectedDatasetId })
+      });
+      const json = await res.json();
+      if (json.success && (json.data?.insights || json.insights)) {
+        setDecisionSignals(json.data?.insights || json.insights || []);
+      }
+    } catch (_) {}
+    finally {
+      setIsSignalsLoading(false);
     }
   };
 
@@ -793,270 +862,150 @@ export default function DashboardPage() {
   const widgets = activeDashboardData?.widgets || [];
 
   return (
-    <div className="space-y-6 font-sans">
-      {/* 1. Multi-Dashboard Tab Switcher & Navigation Header */}
-      <div className="border-b border-slate-200 pb-3">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          {/* Dashboard Selector Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto py-1">
-            {/* Built-in Standard Overview Tab */}
-            <button
-              type="button"
-              onClick={() => setActiveDashboardId('overview')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                activeDashboardId === 'overview'
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-              }`}
-            >
-              <LayoutDashboard className="h-3.5 w-3.5" />
-              <span>Overview</span>
-            </button>
-
-            {/* Custom User / Org Dashboards */}
-            {dashboards.map((d) => {
-              const isActive = activeDashboardId === d.id;
-              return (
-                <button
-                  key={d.id}
-                  type="button"
-                  onClick={() => setActiveDashboardId(d.id)}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    isActive
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-                  }`}
-                >
-                  {d.is_default && (
-                    <Star className={`h-3 w-3 ${isActive ? 'fill-white text-white' : 'fill-amber-400 text-amber-500'}`} />
-                  )}
-                  <span>{d.title}</span>
-                  {d.widget_count !== undefined && (
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-blue-700 text-blue-100' : 'bg-slate-100 text-slate-500'}`}>
-                      {d.widget_count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-
-            {/* Create Dashboard Button (Forbidden for Viewers) */}
-            {!isViewer && (
+    <div className="space-y-5 font-sans">
+      {/* 1. Multi-Dashboard Tab Switcher (Only when viewing a custom dashboard) */}
+      {activeDashboardId !== 'overview' && (
+        <div className="border-b border-slate-200 pb-3">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            {/* Dashboard Selector Tabs */}
+            <div className="flex flex-wrap items-center gap-2 overflow-x-auto py-1">
+              {/* Built-in Standard Overview Tab */}
               <button
                 type="button"
-                onClick={() => {
-                  setEditingDashboard(null);
-                  setIsDashboardModalOpen(true);
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-slate-300 text-xs font-semibold text-slate-600 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 transition"
+                onClick={() => setActiveDashboardId('overview')}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeDashboardId === 'overview'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-2xs'
+                }`}
               >
-                <Plus className="h-3.5 w-3.5" />
-                <span>New Dashboard</span>
+                <LayoutDashboard className="h-4 w-4" />
+                <span>Executive Overview</span>
               </button>
-            )}
-          </div>
 
-          {/* Action Header on the Right */}
-          <div className="flex items-center gap-2">
+              {/* Custom User / Org Dashboards */}
+              {dashboards.map((d) => {
+                const isActive = activeDashboardId === d.id;
+                return (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => setActiveDashboardId(d.id)}
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-xs font-bold'
+                        : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-2xs'
+                    }`}
+                  >
+                    {d.is_default && (
+                      <Star className={`h-3.5 w-3.5 ${isActive ? 'fill-white text-white' : 'fill-amber-400 text-amber-500'}`} />
+                    )}
+                    <span>{d.title}</span>
+                    {d.widget_count !== undefined && (
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${isActive ? 'bg-blue-700 text-blue-100' : 'bg-slate-100 text-slate-600'}`}>
+                        {d.widget_count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+
+              {/* Create Dashboard Button */}
+              {!isViewer && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingDashboard(null);
+                    setIsDashboardModalOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-dashed border-slate-300 text-xs font-semibold text-slate-600 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 transition cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>New Custom Board</span>
+                </button>
+              )}
+            </div>
+
+            {/* Custom Dashboard Actions (Only when viewing custom user dashboards) */}
             {activeDashboardId !== 'overview' && (
-              <>
+              <div className="flex items-center gap-2">
                 {/* Favorite Star Button */}
                 <button
                   type="button"
                   onClick={handleToggleFavorite}
-                  className={`p-1.5 rounded-lg border transition ${
+                  className={`p-2 rounded-xl border transition cursor-pointer ${
                     isFavorite
                       ? 'bg-amber-50 border-amber-300 text-amber-500'
-                      : 'border-slate-200 bg-white text-slate-400 hover:text-amber-500 hover:bg-slate-50'
+                      : 'border-slate-200 bg-white text-slate-400 hover:text-amber-500 hover:bg-slate-50 shadow-2xs'
                   }`}
                   title={isFavorite ? 'Bookmarked in Favorites' : 'Bookmark Dashboard'}
                 >
                   <Star className={`h-4 w-4 ${isFavorite ? 'fill-amber-400' : ''}`} />
                 </button>
 
-                {/* Saved Views Preset Dropdown */}
-                <div className="relative">
-                  <select
-                    onChange={(e) => {
-                      if (e.target.value === '__save_new__') {
-                        setIsSavedViewModalOpen(true);
-                      } else if (e.target.value) {
-                        const sv = savedViews.find(v => String(v.id) === e.target.value);
-                        if (sv) handleApplySavedView(sv);
-                      }
-                    }}
-                    defaultValue=""
-                    className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-50 focus:outline-none"
-                  >
-                    <option value="" disabled>Saved Views ({savedViews.length})</option>
-                    <option value="__save_new__">+ Save Current Filters...</option>
-                    {savedViews.map(sv => (
-                      <option key={sv.id} value={sv.id}>{sv.name}</option>
-                    ))}
-                  </select>
-                </div>
-
                 {/* Share Dashboard Button */}
                 <button
                   type="button"
                   onClick={() => setIsShareModalOpen(true)}
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs cursor-pointer"
                   title="Share Dashboard with Teammates"
                 >
-                  <Share2 className="h-3.5 w-3.5 text-blue-600" />
+                  <Share2 className="h-4 w-4 text-blue-600" />
                   <span>Share</span>
                 </button>
 
-                {/* Threaded Discussion Comments Button */}
+                {/* Threaded Discussion Button */}
                 <button
                   type="button"
                   onClick={() => setIsCommentsPanelOpen(true)}
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs cursor-pointer"
                   title="Open Discussion & Annotations"
                 >
-                  <MessageSquare className="h-3.5 w-3.5 text-indigo-600" />
+                  <MessageSquare className="h-4 w-4 text-indigo-600" />
                   <span>Discussion</span>
                 </button>
-              </>
-            )}
 
-            {activeDashboardId !== 'overview' && currentDashboard && !isViewer && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingWidget(null);
-                    setIsWidgetModalOpen(true);
-                  }}
-                  className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Add Widget</span>
-                </button>
+                {currentDashboard && !isViewer && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingWidget(null);
+                        setIsWidgetModalOpen(true);
+                      }}
+                      className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs cursor-pointer"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Add Widget</span>
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingDashboard(currentDashboard);
-                    setIsDashboardModalOpen(true);
-                  }}
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
-                >
-                  <Edit3 className="h-3.5 w-3.5 text-slate-500" />
-                  <span>Edit</span>
-                </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingDashboard(currentDashboard);
+                        setIsDashboardModalOpen(true);
+                      }}
+                      className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs cursor-pointer"
+                    >
+                      <Edit3 className="h-4 w-4 text-slate-500" />
+                      <span>Edit</span>
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={() => handleDeleteDashboard(currentDashboard.id)}
-                  className="flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </>
-            )}
-
-            {activeDashboardId === 'overview' && (
-              <button
-                type="button"
-                onClick={() => navigate('/datasets')}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
-              >
-                <Table2 className="h-3.5 w-3.5 text-slate-500" />
-                <span>Manage Datasets</span>
-              </button>
-            )}
-
-            {/* Ask AI Analytics Assistant Quick Launch */}
-            <button
-              type="button"
-              onClick={() => navigate('/ai-insights')}
-              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
-              title="Query data with AI Analytics Assistant"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
-              <span>Ask AI</span>
-            </button>
-
-            {/* Duplicate Dashboard (Phase 15) */}
-            {activeDashboardId !== 'overview' && !isViewer && (
-              <button
-                type="button"
-                onClick={handleDuplicateDashboard}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
-                title="Duplicate this dashboard and its widgets"
-              >
-                <Copy className="h-3.5 w-3.5 text-slate-500" />
-                <span>Duplicate</span>
-              </button>
-            )}
-
-            {/* Export Dropdown Menu (Phase 9) */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
-                disabled={isExporting}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
-              >
-                {isExporting ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
-                ) : (
-                  <Download className="h-3.5 w-3.5 text-slate-500" />
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteDashboard(currentDashboard.id)}
+                      className="p-2 rounded-xl border border-rose-200 bg-white text-rose-600 hover:bg-rose-50 transition shadow-2xs cursor-pointer"
+                      title="Delete custom dashboard"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </>
                 )}
-                <span>Export</span>
-              </button>
-
-              {isExportMenuOpen && (
-                <div className="absolute right-0 mt-1.5 w-44 rounded-lg bg-white border border-slate-200 shadow-xl z-50 py-1 font-sans text-xs">
-                  <button
-                    type="button"
-                    onClick={() => handleExportDashboard('pdf')}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-left text-slate-700 hover:bg-slate-50 transition"
-                  >
-                    <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">PDF</span>
-                    <span>Executive PDF</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleExportDashboard('excel')}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-left text-slate-700 hover:bg-slate-50 transition"
-                  >
-                    <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">XLSX</span>
-                    <span>Excel Workbook</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleExportDashboard('csv')}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-left text-slate-700 hover:bg-slate-50 transition"
-                  >
-                    <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">CSV</span>
-                    <span>Raw CSV Data</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleExportDashboard('json')}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-left text-slate-700 hover:bg-slate-50 transition"
-                  >
-                    <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">JSON</span>
-                    <span>Structured JSON</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              id="dashboard-refresh-btn"
-              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50 shadow-2xs"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
-              <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
-            </button>
+              </div>
+            )}
           </div>
         </div>
+      )}
 
         {/* Current Active Dashboard Title & Description */}
         {activeDashboardId !== 'overview' && currentDashboard && (
@@ -1081,7 +1030,6 @@ export default function DashboardPage() {
             )}
           </div>
         )}
-      </div>
 
       {/* 2. Error Banner */}
       {error && (
@@ -1506,216 +1454,38 @@ export default function DashboardPage() {
       {/* 4. OVERVIEW MODE: Built-in Single Dataset Analytics Engine (Phase 5)  */}
       {/* -------------------------------------------------------------------- */}
       {activeDashboardId === 'overview' && (
-        <section className="max-w-7xl mx-auto space-y-8">
-          {/* Header Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200">
-            <div>
-              <div className="flex flex-wrap items-center gap-3">
-                <h2 className="text-xl font-bold tracking-tight text-slate-900">
-                  Analytics Overview
-                </h2>
-                <p className="text-sm text-slate-600">Comprehensive view of your selected dataset with key metrics and insights.</p>
-
-                <DatasetSelector
-                  datasets={datasets}
-                  selectedDatasetId={selectedDatasetId}
-                  onSelectDataset={handleSelectDataset}
-                />
-              </div>
-
-              <p className="text-xs text-slate-500 mt-1 font-normal">
-                {activeDataset ? (
-                  <>
-                    <span className="font-semibold text-slate-700">{activeDataset.name}</span>
-                    {summaryData?.filterOptions?.dateBounds?.min && summaryData?.filterOptions?.dateBounds?.max && (
-                      <span> · Timeline: {summaryData.filterOptions.dateBounds.min} to {summaryData.filterOptions.dateBounds.max}</span>
-                    )}
-                    <span> · {activeDataset.row_count?.toLocaleString()} records ingested</span>
-                  </>
-                ) : (
-                  'Multi-channel enterprise telemetry'
-                )}
-              </p>
-            </div>
-          </div>
-
-          {/* Global Filter Strip */}
-          <section className="my-6 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
-            <DynamicFilterBar
-              filters={filters}
-              filterOptions={summaryData?.filterOptions || {}}
-              dimensions={summaryData?.dimensions || {}}
-              onFilterChange={handleFilterChange}
-              onResetFilters={handleResetFilters}
-              onRefresh={handleRefresh}
-              isRefreshing={isRefreshing}
-            />
-          </section>
-
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Key Performance Indicators</h2>
-          {kpiData ? (
-            <section className="rounded-xl border border-slate-200/90 bg-white divide-y sm:divide-y-0 sm:divide-x divide-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 overflow-hidden shadow-md p-4 gap-4">
-              <StatCard
-                title={summaryData?.dimensions?.primaryMetric ? `Total ${formatMetricLabel(summaryData.dimensions.primaryMetric)}` : 'Total Revenue'}
-                value={formatCurrency(kpiData.totalSales)}
-                change={kpiData.comparison?.salesChange}
-                isPositive={kpiData.comparison?.isSalesPositive}
-                period={kpiData.comparison?.periodLabel || 'vs previous period'}
-                subtext=""
-                isPrimary={true}
-              />
-              <StatCard
-                title="Total Orders"
-                value={kpiData.totalOrders.toLocaleString()}
-                change={kpiData.comparison?.ordersChange}
-                isPositive={kpiData.comparison?.isOrdersPositive}
-                period={kpiData.comparison?.periodLabel || 'vs previous period'}
-                subtext=""
-              />
-              <StatCard
-                title={summaryData?.dimensions?.quantityMetric ? formatMetricLabel(summaryData.dimensions.quantityMetric) : 'Units Sold'}
-                value={kpiData.totalQuantity.toLocaleString()}
-                period="total fulfilled"
-                subtext=""
-              />
-              <StatCard
-                title="Average Order Value"
-                value={formatCurrency(kpiData.averageOrderValue)}
-                period="per transaction"
-                subtext=""
-              />
-            </section>
-          ) : (
-            <div className="rounded-xl border border-slate-200/90 bg-white p-6 text-center text-xs text-slate-400 shadow-2xs">
-              No numeric fields available for KPI analysis.
-            </div>
-          )}
-
-          {/* Visualizations Row 1: Time-Series Trend + Regional Commercial Hubs */}
-          <h3 className="col-span-full text-lg font-semibold text-slate-800 mb-2">Revenue & Regional Overview</h3>
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <ChartCard
-              title={summaryData?.dimensions?.primaryMetric ? `${formatMetricLabel(summaryData.dimensions.primaryMetric)} Trend` : 'Revenue Trend'}
-              subtitle="Daily performance vs baseline benchmark"
-              className="lg:col-span-2"
-              action={
-                <div className="flex items-center gap-4 text-xs font-medium text-slate-600">
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-blue-600" /> Revenue
-                  </span>
-                  <span className="flex items-center gap-1.5 text-slate-400">
-                    <span className="h-2 w-2 rounded-xs border-2 border-dashed border-slate-400" /> Benchmark
-                  </span>
-                </div>
-              }
-            >
-              {trendsData.length === 0 ? (
-                <div className="flex items-center justify-center h-56 text-xs text-slate-400">
-                  No date dimension available for time-series trendline.
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={trendsData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-                    <XAxis dataKey="formattedDate" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : `₹${val}`} />
-                    <Tooltip content={<EnterpriseTooltip prefix="₹" />} />
-                    <Line type="monotone" dataKey="revenue" name={formatMetricLabel(summaryData?.dimensions?.primaryMetric) || 'Revenue'} stroke="#2563eb" strokeWidth={2.5} dot={{ r: 3.5, fill: '#2563eb', strokeWidth: 1.5, stroke: '#FFFFFF' }} activeDot={{ r: 5, fill: '#2563eb' }} />
-                    <Line type="monotone" dataKey="target" name="Benchmark" stroke="#94a3b8" strokeWidth={1.75} strokeDasharray="4 4" dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </ChartCard>
-
-            <ChartCard
-              title="Regional Performance"
-              subtitle="Revenue distribution by region"
-            >
-              {regionBreakdown.length === 0 ? (
-                <div className="flex items-center justify-center h-56 text-xs text-slate-400">
-                  No region column identified in dataset.
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={regionBreakdown.slice(0, 6)} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" horizontal={false} />
-                    <XAxis type="number" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val) => val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : `₹${val}`} />
-                    <YAxis type="category" dataKey="category" stroke="#475569" fontSize={11} tickLine={false} axisLine={false} width={80} />
-                    <Tooltip content={<EnterpriseTooltip prefix="₹" />} />
-                    <Bar dataKey="value" name={formatMetricLabel(summaryData?.dimensions?.primaryMetric) || 'Revenue'} fill="#2563eb" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </ChartCard>
-          </section>
-
-          {/* Visualizations Row 2: Sales Channel Breakdown + Product Performance */}
-          <h3 className="col-span-full text-lg font-semibold text-slate-800 mb-2">Channel & Product Insights</h3>
-          <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ChartCard
-              title="Channel Distribution"
-              subtitle="Revenue share across sales channels"
-            >
-              {channelBreakdown.length === 0 ? (
-                <div className="flex items-center justify-center h-56 text-xs text-slate-400">
-                  No channel dimension detected.
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={channelBreakdown} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-                    <XAxis dataKey="category" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : `₹${val}`} />
-                    <Tooltip content={<EnterpriseTooltip prefix="₹" />} />
-                    <Bar dataKey="value" name={formatMetricLabel(summaryData?.dimensions?.primaryMetric) || 'Revenue'} fill="#2563eb" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </ChartCard>
-
-            <ChartCard
-              title="Product Breakdown"
-              subtitle="Revenue distribution by product"
-            >
-              {productBreakdown.length === 0 ? (
-                <div className="flex items-center justify-center h-56 text-xs text-slate-400">
-                  No product or category column detected.
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={productBreakdown.slice(0, 6)} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-                    <XAxis dataKey="category" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : `₹${val}`} />
-                    <Tooltip content={<EnterpriseTooltip prefix="₹" />} />
-                    <Bar dataKey="value" name={formatMetricLabel(summaryData?.dimensions?.primaryMetric) || 'Revenue'} fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </ChartCard>
-          </section>
-
-          {/* Dynamic Paginated Data Table */}
-          <section className="mt-8 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-800 mb-4">Detailed Records</h3>
-            <DynamicDataTable
-              columns={summaryData?.dataset?.schema || []}
-              rows={tableData.rows}
-              totalCount={tableData.totalCount}
-              page={tablePage}
-              limit={tableLimit}
-              onPageChange={setTablePage}
-              onLimitChange={(newLimit) => { setTableLimit(newLimit); setTablePage(1); }}
-              onSortChange={(key, order) => { setTableSortKey(key); setTableSortOrder(order); }}
-              onSearchChange={(query) => { setTableSearch(query); setTablePage(1); }}
-              sortKey={tableSortKey}
-              sortOrder={tableSortOrder}
-              searchQuery={tableSearch}
-              isLoading={isAnalyticsLoading}
-              datasetName={activeDataset?.name}
-            />
-          </section>
-          </section>
+        <ExecutiveDashboard
+          datasets={datasets}
+          selectedDatasetId={selectedDatasetId}
+          onSelectDataset={handleSelectDataset}
+          activeDataset={activeDataset}
+          summaryData={summaryData}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onResetFilters={handleResetFilters}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
+          kpiData={kpiData}
+          trendsData={trendsData}
+          regionBreakdown={regionBreakdown}
+          channelBreakdown={channelBreakdown}
+          productBreakdown={productBreakdown}
+          decisionSignals={decisionSignals}
+          isSignalsLoading={isSignalsLoading}
+          onGenerateSignals={handleGenerateSignals}
+          tableData={tableData}
+          tablePage={tablePage}
+          tableLimit={tableLimit}
+          tableSortKey={tableSortKey}
+          tableSortOrder={tableSortOrder}
+          tableSearch={tableSearch}
+          onTablePageChange={setTablePage}
+          onTableLimitChange={(newLimit) => { setTableLimit(newLimit); setTablePage(1); }}
+          onTableSortChange={(key, order) => { setTableSortKey(key); setTableSortOrder(order); }}
+          onTableSearchChange={(query) => { setTableSearch(query); setTablePage(1); }}
+          isAnalyticsLoading={isAnalyticsLoading}
+          navigate={navigate}
+        />
       )}
 
       {/* Modals */}

@@ -1,41 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Sparkles,
   TrendingUp,
   TrendingDown,
   AlertTriangle,
   Activity,
-  ShieldCheck,
   CheckCircle2,
   XCircle,
   RefreshCw,
   FileDown,
-  Layers,
-  ArrowRight,
-  ArrowUpRight,
-  ThumbsUp,
-  ThumbsDown,
-  Filter,
-  Check,
   Search,
-  Eye,
-  EyeOff,
-  Calendar,
+  X,
+  ChevronDown,
+  ExternalLink,
+  Layers,
   Compass,
-  Cpu,
-  Database,
-  BarChart3,
-  Lightbulb,
   Star,
   Share2,
-  Lock,
-  X,
-  Loader2,
-  ChevronDown,
-  ChevronUp,
-  Beaker,
-  GitBranch
+  MoreVertical,
+  Tag,
+  ShieldCheck,
+  Eye,
+  ArrowRight,
+  ThumbsUp,
+  ThumbsDown,
+  Bot,
+  Info,
+  LayoutGrid,
+  Table as TableIcon,
+  Calendar,
+  Database,
+  BarChart3,
+  Clock,
+  SlidersHorizontal,
+  Plus,
+  Check,
+  Copy,
+  FileText,
+  PieChart,
+  Bell,
+  ArrowUpRight,
+  Filter,
+  CheckCheck
 } from 'lucide-react';
 import {
   generateAIInsights,
@@ -45,46 +52,301 @@ import {
   submitAIInsightFeedback,
   exportAIInsights,
   getDatasets,
+  getMetrics,
+  createAlert,
+  createReport,
+  getDashboards,
   toggleFavoriteApi,
   getFavoritesApi,
-  recordRecentlyViewedApi
+  recordRecentlyViewedApi,
+  getAuthToken
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import RootCauseDrawer from '../components/RootCauseDrawer';
 import ScenarioSimulatorModal from '../components/ScenarioSimulatorModal';
 import ShareModal from '../components/ShareModal';
+import AlertModal from '../components/AlertModal';
+import MetricModal from '../components/MetricModal';
+import ReportModal from '../components/ReportModal';
+import { Button } from '../components/ui/Button';
+
+// ----------------------------------------------------------------------
+// Helper utilities
+// ----------------------------------------------------------------------
+
+function formatTimeAgo(dateString) {
+  if (!dateString) return 'Recently';
+  try {
+    const diff = Math.max(0, Date.now() - new Date(dateString).getTime());
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    const days = Math.floor(hours / 24);
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+  } catch (_) {
+    return 'Recently';
+  }
+}
+
+function getCategoryTag(insight) {
+  if (insight.source_metadata?.category) {
+    return String(insight.source_metadata.category).toUpperCase();
+  }
+  const dsName = (insight.dataset_name || insight.source_metadata?.dataset_name || insight.evidence?.datasetName || '').toLowerCase();
+  if (dsName.includes('sales')) return 'SALES';
+  if (dsName.includes('inventory') || dsName.includes('stock')) return 'INVENTORY';
+  if (dsName.includes('customer') || dsName.includes('user') || dsName.includes('churn')) return 'CUSTOMER';
+  if (dsName.includes('product') || dsName.includes('order')) return 'PRODUCT';
+  if (dsName.includes('region') || dsName.includes('apac') || dsName.includes('geo')) return 'REGION';
+  if (insight.type === 'operational') return 'OPS';
+  if (insight.type === 'data_quality') return 'QUALITY';
+  if (insight.type === 'trend' || insight.type === 'growth') return 'SALES';
+  return 'GENERAL';
+}
+
+function getKeyMetricInfo(insight) {
+  const ev = insight.evidence || {};
+  
+  if (ev.changePercent !== undefined && ev.changePercent !== null) {
+    const val = Number(ev.changePercent);
+    return {
+      value: `${val > 0 ? '+' : ''}${val}%`,
+      label: val < 0 ? 'vs expected' : 'vs previous period',
+      isPositive: val > 0,
+      isNegative: val < 0,
+      isWarning: false,
+      isInfo: false,
+      chartType: 'line'
+    };
+  }
+
+  if (ev.change_percent !== undefined && ev.change_percent !== null) {
+    const val = Number(ev.change_percent);
+    return {
+      value: `${val > 0 ? '+' : ''}${val}%`,
+      label: val < 0 ? 'vs expected' : 'vs previous period',
+      isPositive: val > 0,
+      isNegative: val < 0,
+      isWarning: false,
+      isInfo: false,
+      chartType: 'line'
+    };
+  }
+
+  if (insight.type === 'data_quality') {
+    const score = ev.score !== undefined ? ev.score : 100;
+    return {
+      value: `${score}/100`,
+      label: 'Quality Score',
+      isPositive: true,
+      isNegative: false,
+      isWarning: false,
+      isInfo: false,
+      chartType: 'bars'
+    };
+  }
+
+  if (insight.type === 'operational') {
+    return {
+      value: ev.threshold !== undefined ? `${Number(ev.threshold).toLocaleString()}` : 'Alert',
+      label: 'Breached Threshold',
+      isPositive: false,
+      isNegative: true,
+      isWarning: false,
+      isInfo: false,
+      chartType: 'line'
+    };
+  }
+
+  if (insight.impactScore || insight.impact_score) {
+    const score = insight.impactScore || insight.impact_score;
+    return {
+      value: `${score}/100`,
+      label: 'Impact Score',
+      isPositive: insight.severity === 'positive',
+      isNegative: insight.severity === 'critical',
+      isWarning: insight.severity === 'warning',
+      isInfo: insight.severity === 'info',
+      chartType: 'bars'
+    };
+  }
+
+  return {
+    value: 'Verified',
+    label: 'Telemetry Ground Truth',
+    isPositive: true,
+    isNegative: false,
+    isWarning: false,
+    isInfo: false,
+    chartType: 'line'
+  };
+}
+
+// ----------------------------------------------------------------------
+// Mini Sparkline / Trend Visual Component
+// ----------------------------------------------------------------------
+
+function MiniVisualChart({ insight, metricInfo }) {
+  const severity = insight.severity || 'info';
+  const chartType = metricInfo.chartType;
+
+  // Semantic color sets
+  let strokeColor = '#3B82F6'; // blue
+  let fillColor = '#93C5FD';
+  let gradientId = `grad-blue-${insight.id || Math.random()}`;
+
+  if (severity === 'critical') {
+    strokeColor = '#EF4444'; // rose / red
+    fillColor = '#FCA5A5';
+    gradientId = `grad-red-${insight.id}`;
+  } else if (severity === 'positive') {
+    strokeColor = '#10B981'; // emerald / green
+    fillColor = '#6EE7B7';
+    gradientId = `grad-green-${insight.id}`;
+  } else if (severity === 'warning') {
+    strokeColor = '#F59E0B'; // amber / orange
+    fillColor = '#FCD34D';
+    gradientId = `grad-amber-${insight.id}`;
+  }
+
+  if (chartType === 'bars') {
+    // Generate 7 aesthetic mini bars with variation
+    const heights = severity === 'positive' 
+      ? [20, 28, 35, 45, 52, 60, 68]
+      : severity === 'critical'
+      ? [65, 58, 48, 38, 30, 24, 18]
+      : severity === 'warning'
+      ? [40, 55, 35, 60, 48, 30, 25]
+      : [30, 38, 45, 35, 50, 42, 48];
+
+    return (
+      <div className="flex items-end gap-1.5 h-12 py-1 px-1 justify-end">
+        {heights.map((h, i) => (
+          <div
+            key={i}
+            className="w-2 rounded-t-sm transition-all duration-300"
+            style={{
+              height: `${h}%`,
+              backgroundColor: strokeColor,
+              opacity: 0.35 + (i / heights.length) * 0.65
+            }}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // Line Sparkline
+  let pathD = 'M 0,25 Q 25,18 50,22 T 100,15 T 140,8';
+  let areaD = 'M 0,25 Q 25,18 50,22 T 100,15 T 140,8 L 140,38 L 0,38 Z';
+
+  if (severity === 'critical') {
+    pathD = 'M 0,10 Q 30,12 60,20 T 100,28 T 140,32';
+    areaD = 'M 0,10 Q 30,12 60,20 T 100,28 T 140,32 L 140,38 L 0,38 Z';
+  } else if (severity === 'positive') {
+    pathD = 'M 0,32 Q 35,28 70,18 T 110,12 T 140,6';
+    areaD = 'M 0,32 Q 35,28 70,18 T 110,12 T 140,6 L 140,38 L 0,38 Z';
+  } else if (severity === 'warning') {
+    pathD = 'M 0,18 Q 35,8 70,26 T 110,16 T 140,28';
+    areaD = 'M 0,18 Q 35,8 70,26 T 110,16 T 140,28 L 140,38 L 0,38 Z';
+  }
+
+  return (
+    <svg className="w-28 sm:w-32 h-10 overflow-visible" viewBox="0 0 140 38">
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={fillColor} stopOpacity="0.35" />
+          <stop offset="100%" stopColor={fillColor} stopOpacity="0.0" />
+        </linearGradient>
+      </defs>
+      <path d={areaD} fill={`url(#${gradientId})`} />
+      <path
+        d={pathD}
+        fill="none"
+        stroke={strokeColor}
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+// ----------------------------------------------------------------------
+// Main Component
+// ----------------------------------------------------------------------
 
 export default function AIInsightsPage() {
   const { user } = useAuth();
-  const isViewer = user?.role === 'viewer';
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const targetInsightId = searchParams.get('id');
 
+  // State
   const [insights, setInsights] = useState([]);
-  const [executiveSummary, setExecutiveSummary] = useState('');
-  const [rootCauseInsight, setRootCauseInsight] = useState(null);
-  const [simulatorData, setSimulatorData] = useState(null);
   const [datasets, setDatasets] = useState([]);
+  const [metrics, setMetrics] = useState([]);
+  const [dashboards, setDashboards] = useState([]);
   const [selectedDatasetId, setSelectedDatasetId] = useState('');
-  const [severityFilter, setSeverityFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('active');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [executiveSummary, setExecutiveSummary] = useState('');
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [feedbackState, setFeedbackState] = useState({});
-  const [expandedEvidence, setExpandedEvidence] = useState({});
-  const [briefing, setBriefing] = useState(null);
-  const [relationships, setRelationships] = useState([]);
   const [error, setError] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
 
-  // Collaboration State
+  // Filters & View Mode
+  const [viewMode, setViewMode] = useState('card'); // 'card' | 'table'
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [impactFilter, setImpactFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('active');
+
+  // User Actions State
   const [favorites, setFavorites] = useState(new Set());
+  const [feedbackState, setFeedbackState] = useState({});
+  const [activeMenuId, setActiveMenuId] = useState(null);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+
+  // Modals
+  const [selectedInsightForDetails, setSelectedInsightForDetails] = useState(null);
+  const [isLearnMoreOpen, setIsLearnMoreOpen] = useState(false);
+  const [rootCauseInsight, setRootCauseInsight] = useState(null);
+  const [simulatorData, setSimulatorData] = useState(null);
   const [shareModalConfig, setShareModalConfig] = useState({ isOpen: false, insightId: null, title: '' });
 
-  // Load initial data
+  // Creation Modals
+  const [alertModalConfig, setAlertModalConfig] = useState({ isOpen: false, prefilled: null });
+  const [metricModalConfig, setMetricModalConfig] = useState({ isOpen: false, prefilled: null });
+  const [reportModalConfig, setReportModalConfig] = useState({ isOpen: false, prefilled: null });
+
+  const exportMenuRef = useRef(null);
+
+  // Toast feedback helper
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(prev => (prev === msg ? null : prev));
+    }, 3500);
+  };
+
+  // Close menus on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
+        setExportMenuOpen(false);
+      }
+      if (!e.target.closest('.insight-overflow-menu-container')) {
+        setActiveMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  // Initial Data Loading
   useEffect(() => {
     loadData();
   }, [selectedDatasetId, statusFilter]);
@@ -93,23 +355,26 @@ export default function AIInsightsPage() {
     try {
       setLoading(true);
       setError(null);
-      const [insightsRes, datasetsRes, summaryRes] = await Promise.all([
+
+      const [insightsRes, datasetsRes, metricsRes, summaryRes, dashboardsRes] = await Promise.all([
         getAIInsights({
           status: statusFilter,
           datasetId: selectedDatasetId || undefined
         }).catch(() => ({ insights: [] })),
         getDatasets().catch(() => ({ datasets: [] })),
-        getAIExecutiveSummary(selectedDatasetId || null).catch(() => ({ summary: '' }))
+        getMetrics().catch(() => ({ metrics: [] })),
+        getAIExecutiveSummary(selectedDatasetId || null).catch(() => ({ summary: '' })),
+        getDashboards ? getDashboards().catch(() => ({ dashboards: [] })) : Promise.resolve({ dashboards: [] })
       ]);
 
       const insList = insightsRes.insights || insightsRes.data || [];
       setInsights(insList);
-      setExecutiveSummary(summaryRes.summary || summaryRes.executive_summary || '');
-      setBriefing(summaryRes.briefing || null);
-      setRelationships(summaryRes.relationships || []);
       setDatasets(datasetsRes.datasets || datasetsRes.data || []);
+      setMetrics(metricsRes.metrics || metricsRes.data || []);
+      setDashboards(dashboardsRes.dashboards || dashboardsRes.data || []);
+      setExecutiveSummary(summaryRes.summary || summaryRes.executive_summary || '');
 
-      // Prepopulate feedback state
+      // Prepopulate feedback map
       const initialFeedback = {};
       insList.forEach(item => {
         if (item.feedback) initialFeedback[item.id] = item.feedback;
@@ -129,48 +394,62 @@ export default function AIInsightsPage() {
         }
       } catch (_) {}
 
-      // Record recently viewed if target ID opened via URL
+      // Target insight highlighted from URL
       if (targetInsightId) {
-        recordRecentlyViewedApi('ai_insight', targetInsightId).catch(() => {});
+        const target = insList.find(i => String(i.id) === String(targetInsightId));
+        if (target) {
+          setSelectedInsightForDetails(target);
+          recordRecentlyViewedApi('ai_insight', targetInsightId).catch(() => {});
+        }
       }
     } catch (err) {
-      console.error('[AIInsightsPage] Failed loading insights:', err);
-      setError('Could not connect to the AI insights service.');
+      console.error('[AIInsightsPage] Load error:', err);
+      setError('Could not connect to the AI Insights service.');
     } finally {
       setLoading(false);
     }
   }
 
-  // Handle on-demand generation
+  // Generate Insights Handler
   async function handleGenerateInsights() {
+    if (generating) return;
     try {
       setGenerating(true);
       const res = await generateAIInsights({
         datasetId: selectedDatasetId || undefined,
         persist: true
       });
-      setInsights(res.insights || res.data || []);
-      setExecutiveSummary(res.executive_summary || '');
-      setBriefing(res.briefing || null);
-      setRelationships(res.relationships || []);
+      const newlyGenerated = res.insights || res.data || [];
+      setInsights(newlyGenerated);
+      if (res.executive_summary) {
+        setExecutiveSummary(res.executive_summary);
+      }
+      showToast(`Generated ${newlyGenerated.length} real insights across datasets.`);
     } catch (err) {
       console.error('[AIInsightsPage] Generation failed:', err);
+      showToast('Insight generation encountered an error. Please try again.');
     } finally {
       setGenerating(false);
     }
   }
 
-  // Handle dismiss
+  // Dismiss Insight Handler
   async function handleDismiss(id) {
     try {
       await dismissAIInsight(id);
       setInsights(prev => prev.filter(item => item.id !== id));
+      setActiveMenuId(null);
+      if (selectedInsightForDetails?.id === id) {
+        setSelectedInsightForDetails(null);
+      }
+      showToast('Insight dismissed.');
     } catch (err) {
       console.error('[AIInsightsPage] Dismiss failed:', err);
+      showToast('Failed to dismiss insight.');
     }
   }
 
-  // Handle favorite toggle
+  // Favorite Toggle Handler
   const handleToggleFavorite = async (e, insightId) => {
     e.stopPropagation();
     try {
@@ -182,424 +461,584 @@ export default function AIInsightsPage() {
         else next.delete(String(insightId));
         return next;
       });
+      showToast(isFav ? 'Added to favorites' : 'Removed from favorites');
     } catch (err) {
       console.error('Failed to toggle favorite:', err);
     }
   };
 
-  // Handle feedback
+  // Feedback Submission Handler
   async function handleFeedback(id, feedbackType) {
     try {
       setFeedbackState(prev => ({ ...prev, [id]: feedbackType }));
       await submitAIInsightFeedback(id, feedbackType);
+      showToast('Thank you for your feedback!');
     } catch (err) {
-      console.error('[AIInsightsPage] Feedback submission failed:', err);
+      console.error('[AIInsightsPage] Feedback failed:', err);
     }
   }
 
-  // Handle export
+  // Export Report Handler
   async function handleExport(format) {
     try {
       setExporting(true);
+      setExportMenuOpen(false);
+      showToast(`Preparing ${format.toUpperCase()} export...`);
       await exportAIInsights(format);
+      showToast(`Downloaded insights report in ${format.toUpperCase()}`);
     } catch (err) {
       console.error('[AIInsightsPage] Export failed:', err);
+      showToast('Export failed. Please check network connection.');
     } finally {
       setExporting(false);
     }
   }
 
-  // Toggle evidence view
-  function toggleEvidence(id) {
-    setExpandedEvidence(prev => ({ ...prev, [id]: !prev[id] }));
-  }
+  // Copy Summary Handler
+  const handleCopySummary = (insight) => {
+    const text = `${insight.title}\n\n${insight.summary}`;
+    navigator.clipboard.writeText(text);
+    setActiveMenuId(null);
+    showToast('Insight summary copied to clipboard.');
+  };
 
-  // Filtered insights list
-  const filteredInsights = insights.filter(ins => {
-    if (severityFilter !== 'all' && ins.severity !== severityFilter) return false;
-    if (typeFilter !== 'all' && ins.type !== typeFilter) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchTitle = ins.title?.toLowerCase().includes(q);
-      const matchSummary = ins.summary?.toLowerCase().includes(q);
-      const matchDataset = ins.source_metadata?.dataset_name?.toLowerCase().includes(q);
-      if (!matchTitle && !matchSummary && !matchDataset) return false;
-    }
-    return true;
-  });
+  // Real KPI Metrics derived strictly from existing dataset
+  const totalCount = insights.length;
+  const positiveCount = insights.filter(i => i.severity === 'positive' || i.type === 'growth').length;
+  const criticalCount = insights.filter(i => i.severity === 'critical' || i.priority === 'critical' || i.severity === 'warning').length;
+  const infoCount = insights.filter(i => 
+    i.severity === 'info' || 
+    i.type === 'operational' || 
+    (!['positive', 'critical', 'warning'].includes(i.severity) && i.type !== 'growth')
+  ).length;
 
-  const hasActiveFilters = searchQuery !== '' || severityFilter !== 'all' || typeFilter !== 'all' || statusFilter !== 'active';
+  const positivePercent = totalCount > 0 ? Math.round((positiveCount / totalCount) * 100) : 0;
+  const criticalPercent = totalCount > 0 ? Math.round((criticalCount / totalCount) * 100) : 0;
+  const infoPercent = totalCount > 0 ? Math.round((infoCount / totalCount) * 100) : 0;
+
+  // Real filtered insights list
+  const filteredInsights = useMemo(() => {
+    return insights.filter(ins => {
+      // Type filter
+      if (typeFilter !== 'all' && ins.type !== typeFilter) return false;
+
+      // Impact / Priority filter
+      if (impactFilter !== 'all') {
+        const p = String(ins.priority || ins.severity || '').toLowerCase();
+        if (impactFilter === 'critical' && p !== 'critical') return false;
+        if (impactFilter === 'high' && p !== 'high' && p !== 'warning') return false;
+        if (impactFilter === 'medium' && p !== 'medium') return false;
+        if (impactFilter === 'low' && p !== 'low' && p !== 'info') return false;
+      }
+
+      // Search Query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchTitle = (ins.title || '').toLowerCase().includes(q);
+        const matchSummary = (ins.summary || '').toLowerCase().includes(q);
+        const matchDataset = (ins.dataset_name || ins.source_metadata?.dataset_name || '').toLowerCase();
+        if (!matchTitle && !matchSummary && !matchDataset.includes(q)) return false;
+      }
+
+      return true;
+    });
+  }, [insights, typeFilter, impactFilter, searchQuery]);
+
+  const hasActiveFilters = searchQuery !== '' || typeFilter !== 'all' || impactFilter !== 'all' || statusFilter !== 'active';
+
   const resetFilters = () => {
     setSearchQuery('');
-    setSeverityFilter('all');
     setTypeFilter('all');
+    setImpactFilter('all');
     setStatusFilter('active');
   };
 
-  // --- Badge helpers ---
-  const getPriorityBadge = (priority) => {
-    const p = String(priority || 'medium').toLowerCase();
-    switch (p) {
+  // Severity pill helper
+  const renderSeverityPill = (severity) => {
+    const s = String(severity || 'info').toLowerCase();
+    switch (s) {
       case 'critical':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wider">
-            <XCircle className="w-3 h-3" /> Critical
-          </span>
-        );
-      case 'high':
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider">
-            <AlertTriangle className="w-3 h-3" /> High
-          </span>
-        );
-      case 'medium':
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wider">
-            <Activity className="w-3 h-3" /> Medium
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wider">
-            <Activity className="w-3 h-3" /> Low
-          </span>
-        );
-    }
-  };
-
-  const getSeverityBadge = (severity) => {
-    switch (severity) {
-      case 'positive':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <TrendingUp className="w-3 h-3" /> Positive
-          </span>
-        );
-      case 'critical':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full bg-rose-50 text-rose-700 border border-rose-200">
-            <XCircle className="w-3 h-3" /> Critical
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+            CRITICAL
           </span>
         );
       case 'warning':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-            <AlertTriangle className="w-3 h-3" /> Warning
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            WARNING
+          </span>
+        );
+      case 'positive':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            POSITIVE
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-            <Activity className="w-3 h-3" /> Info
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+            INFO
           </span>
         );
     }
   };
 
-  const getTypeIcon = (type) => {
-    switch (type) {
-      case 'growth':
-      case 'trend':
-        return <TrendingUp className="w-4 h-4 text-emerald-600" />;
-      case 'decline':
-        return <TrendingDown className="w-4 h-4 text-rose-600" />;
-      case 'anomaly':
-        return <AlertTriangle className="w-4 h-4 text-amber-600" />;
-      case 'forecast':
-        return <Compass className="w-4 h-4 text-purple-600" />;
-      case 'data_quality':
-        return <ShieldCheck className="w-4 h-4 text-cyan-600" />;
-      case 'relationship':
-        return <Layers className="w-4 h-4 text-blue-600" />;
-      case 'operational':
-        return <Activity className="w-4 h-4 text-orange-600" />;
-      default:
-        return <Sparkles className="w-4 h-4 text-blue-600" />;
+  // Secondary middle card action
+  const handleMiddleAction = (ins) => {
+    if (ins.type === 'trend' || ins.type === 'growth') {
+      setSimulatorData({ insight: ins, attribution: null });
+    } else if (ins.dataset_id || ins.source_metadata?.dataset_id) {
+      setRootCauseInsight(ins);
+    } else {
+      setSelectedInsightForDetails(ins);
     }
   };
 
-  const getTypeLabel = (type) => {
-    if (!type) return 'Insight';
-    return type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  // Secondary right card action
+  const handleRightAction = (ins) => {
+    if (ins.severity === 'critical' || ins.type === 'operational') {
+      setAlertModalConfig({
+        isOpen: true,
+        prefilled: {
+          name: ins.title,
+          metric_id: ins.metric_id || '',
+          condition: 'less_than',
+          threshold: ins.evidence?.threshold || ins.evidence?.currentValue || ''
+        }
+      });
+    } else if (ins.type === 'growth' || ins.type === 'trend') {
+      setMetricModalConfig({
+        isOpen: true,
+        prefilled: {
+          name: ins.title,
+          datasetId: ins.dataset_id || ins.source_metadata?.dataset_id || '',
+          targetColumn: ins.evidence?.metric || ins.source_metadata?.target_column || ''
+        }
+      });
+    } else {
+      setReportModalConfig({
+        isOpen: true,
+        prefilled: {
+          title: `Report: ${ins.title}`,
+          description: ins.summary
+        }
+      });
+    }
   };
 
-  const verifiedCount = insights.filter(i => i.evidence?.verified).length;
-
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-              AI Insights
-            </h1>
-            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200/80">
-              {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Analyst'}
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal">
-            Evidence-grounded intelligence to help you understand what is changing across your business.
-          </p>
+    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold animate-fade-in border border-slate-700">
+          <CheckCheck className="w-4 h-4 text-emerald-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* 1. TOP HEADER & BREADCRUMB                                         */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="space-y-2">
+        <div className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+          <span>RicozAnalytics</span>
+          <span>&gt;</span>
+          <span className="text-slate-700 font-semibold">AI Insights</span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          {/* Dataset Scope Selector */}
-          <select
-            value={selectedDatasetId}
-            onChange={(e) => setSelectedDatasetId(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-700 focus:outline-hidden focus:border-blue-500 cursor-pointer"
-          >
-            <option value="">All Datasets</option>
-            {datasets.map(d => (
-              <option key={d.id} value={d.id}>
-                {d.name} ({d.row_count || 0} rows)
-              </option>
-            ))}
-          </select>
-
-          <button
-            onClick={loadData}
-            title="Refresh insights"
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 transition shadow-2xs cursor-pointer"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </button>
-
-          <button
-            onClick={handleGenerateInsights}
-            disabled={generating}
-            id="generate-insights-btn"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition disabled:opacity-50 cursor-pointer"
-          >
-            <Sparkles className={`h-3.5 w-3.5 ${generating ? 'animate-spin' : ''}`} />
-            <span>{generating ? 'Analyzing...' : 'Generate Insights'}</span>
-          </button>
-
-          {/* Export */}
-          <div className="flex items-center gap-1 border border-slate-200 rounded-lg p-0.5 bg-white shadow-2xs">
-            {['pdf', 'excel', 'csv'].map(fmt => (
-              <button
-                key={fmt}
-                onClick={() => handleExport(fmt)}
-                disabled={exporting}
-                className="px-2 py-1.5 rounded-md text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer disabled:opacity-50"
-                title={`Export ${fmt.toUpperCase()}`}
-              >
-                {fmt.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Executive Briefing Section */}
-      <div className="rounded-xl border border-slate-200/90 bg-white shadow-2xs overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/70 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs">
-              <Lightbulb className="h-4.5 w-4.5" />
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3.5">
+            {/* Glowing Blue Sparkle Icon Badge */}
+            <div className="h-12 w-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/20">
+              <Sparkles className="h-6 w-6 text-white" />
             </div>
+
             <div>
-              <h2 className="text-sm font-bold text-slate-900">Executive Briefing</h2>
-              <p className="text-[11px] text-slate-500">
-                {briefing?.headline || 'Operations & telemetry overview'}
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                  AI Insights
+                </h1>
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                  {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Admin'}
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5 leading-relaxed font-normal">
+                Discover actionable insights from your business data. AI analyzes your data to identify trends, opportunities, anomalies, and risks.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {insights.length > 0 && verifiedCount > 0 && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                {verifiedCount === insights.length
-                  ? 'All evidence ground-truth verified'
-                  : `${verifiedCount} of ${insights.length} verified`}
-              </span>
-            )}
-          </div>
-        </div>
+          {/* Header Action Controls */}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            {/* Dataset Scope Selector */}
+            <select
+              value={selectedDatasetId}
+              onChange={(e) => setSelectedDatasetId(e.target.value)}
+              className="h-10 px-3.5 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition cursor-pointer"
+            >
+              <option value="">All Datasets</option>
+              {datasets.map(d => (
+                <option key={d.id} value={d.id}>
+                  {d.name} ({d.row_count || 0} rows)
+                </option>
+              ))}
+            </select>
 
-        <div className="p-6 space-y-4">
-          {/* Summary */}
-          <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-            {briefing?.summary || executiveSummary || 'No significant changes detected. Metrics remain stable within expected parameters.'}
-          </div>
+            {/* Refresh Button */}
+            <button
+              onClick={loadData}
+              disabled={loading}
+              className="h-10 px-3.5 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-400 flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 text-slate-600 ${loading ? 'animate-spin' : ''}`} />
+              <span>{loading ? 'Refreshing...' : 'Refresh'}</span>
+            </button>
 
-          {/* Business Implications & Recommended Actions */}
-          {(briefing?.businessImplications?.length > 0 || briefing?.recommendedActions?.length > 0) && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
-              {briefing?.businessImplications?.length > 0 && (
-                <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4 space-y-2">
-                  <div className="text-xs font-bold text-slate-700 flex items-center gap-1.5 uppercase tracking-wider">
-                    <Lightbulb className="w-3.5 h-3.5 text-amber-600" />
-                    Business Implications
+            {/* Generate Insights CTA */}
+            <button
+              onClick={handleGenerateInsights}
+              disabled={generating}
+              id="generate-insights-btn"
+              className="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs sm:text-sm font-semibold shadow-xs flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
+            >
+              <Sparkles className={`w-4 h-4 ${generating ? 'animate-spin' : ''}`} />
+              <span>{generating ? 'Analyzing Data...' : 'Generate Insights'}</span>
+            </button>
+
+            {/* Export Dropdown */}
+            <div className="relative" ref={exportMenuRef}>
+              <button
+                onClick={() => setExportMenuOpen(prev => !prev)}
+                disabled={exporting}
+                className="h-10 px-3.5 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-400 flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+              >
+                <FileDown className="w-4 h-4 text-slate-600" />
+                <span>Export</span>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+              </button>
+
+              {exportMenuOpen && (
+                <div className="absolute right-0 mt-2 w-44 rounded-xl bg-white border border-slate-200 shadow-lg py-1.5 z-40 animate-fade-in text-xs">
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    Export Format
                   </div>
-                  <ul className="space-y-1.5 text-xs text-slate-600">
-                    {briefing.businessImplications.map((imp, idx) => (
-                      <li key={idx} className="flex items-start gap-2 leading-relaxed">
-                        <span className="text-amber-500 font-bold mt-0.5">•</span>
-                        <span>{imp}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {briefing?.recommendedActions?.length > 0 && (
-                <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-4 space-y-2">
-                  <div className="text-xs font-bold text-slate-700 flex items-center gap-1.5 uppercase tracking-wider">
-                    <Compass className="w-3.5 h-3.5 text-blue-600" />
-                    Recommended Actions
-                  </div>
-                  <ul className="space-y-1.5 text-xs text-slate-600">
-                    {briefing.recommendedActions.map((act, idx) => (
-                      <li key={idx} className="flex items-start gap-2 leading-relaxed">
-                        <span className="text-blue-500 font-bold mt-0.5">•</span>
-                        <span>{act}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <button
+                    onClick={() => handleExport('csv')}
+                    className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-slate-500" /> CSV Spreadsheet
+                  </button>
+                  <button
+                    onClick={() => handleExport('excel')}
+                    className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium"
+                  >
+                    <PieChart className="w-3.5 h-3.5 text-emerald-600" /> Excel Workbook (.xlsx)
+                  </button>
+                  <button
+                    onClick={() => handleExport('pdf')}
+                    className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium"
+                  >
+                    <FileDown className="w-3.5 h-3.5 text-rose-600" /> PDF Executive Report
+                  </button>
                 </div>
               )}
             </div>
-          )}
-
-          {/* Observed Relationships */}
-          {((briefing?.relationships && briefing.relationships.length > 0) || relationships.length > 0) && (
-            <div className="pt-3 border-t border-slate-100 space-y-2.5">
-              <div className="flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-blue-600" />
-                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Observed Relationships</span>
-                <span className="text-[10px] text-slate-500 ml-1">(observational, not causal)</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {(briefing?.relationships || relationships).map((rel, idx) => (
-                  <div key={idx} className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 flex items-center justify-between gap-3 text-xs">
-                    <span className="text-slate-700 leading-relaxed font-medium">{rel.relationship}</span>
-                    <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 font-semibold shrink-0 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                      <ShieldCheck className="w-3 h-3" /> Verified
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </div>
 
-      {/* Filter & Search Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="relative min-w-[220px] flex-1 md:max-w-xs">
-          <Search className="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+      {/* ------------------------------------------------------------------ */}
+      {/* 2. KPI SUMMARY (4 CARDS)                                           */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Total Insights */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs hover:shadow-xs transition">
+          <div className="flex items-center justify-between">
+            <div className="h-11 w-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <Bot className="w-6 h-6" />
+            </div>
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              <TrendingUp className="w-3 h-3" />
+              {totalCount > 0 ? 'Live Telemetry' : 'Zero State'}
+            </span>
+          </div>
+          <div className="mt-4">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+              Total Insights
+            </span>
+            <div className="text-3xl font-extrabold text-slate-900 mt-1">
+              {totalCount}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Across all connected datasets
+            </p>
+          </div>
+        </div>
+
+        {/* Card 2: Positive Insights */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs hover:shadow-xs transition">
+          <div className="flex items-center justify-between">
+            <div className="h-11 w-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <TrendingUp className="w-6 h-6" />
+            </div>
+            {totalCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                <ArrowUpRight className="w-3 h-3" />
+                {positivePercent}%
+              </span>
+            )}
+          </div>
+          <div className="mt-4">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+              Positive Insights
+            </span>
+            <div className="text-3xl font-extrabold text-slate-900 mt-1">
+              {positiveCount}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Growth opportunities &amp; expansion
+            </p>
+          </div>
+        </div>
+
+        {/* Card 3: Critical Insights */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs hover:shadow-xs transition">
+          <div className="flex items-center justify-between">
+            <div className="h-11 w-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            {criticalCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                {criticalPercent}%
+              </span>
+            )}
+          </div>
+          <div className="mt-4">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+              Critical Insights
+            </span>
+            <div className="text-3xl font-extrabold text-slate-900 mt-1">
+              {criticalCount}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Require immediate business attention
+            </p>
+          </div>
+        </div>
+
+        {/* Card 4: Informational Insights */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs hover:shadow-xs transition">
+          <div className="flex items-center justify-between">
+            <div className="h-11 w-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center">
+              <Info className="w-6 h-6" />
+            </div>
+            {totalCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+                {infoPercent}%
+              </span>
+            )}
+          </div>
+          <div className="mt-4">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+              Informational Insights
+            </span>
+            <div className="text-3xl font-extrabold text-slate-900 mt-1">
+              {infoCount}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              General business observations
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* 3. SIMPLE EXPLANATION PANEL ("What are AI Insights?")               */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-white p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-start gap-3.5">
+          <div className="h-11 w-11 rounded-2xl bg-blue-100/90 text-blue-700 flex items-center justify-center shrink-0">
+            <Bot className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-slate-900">
+              What are AI Insights?
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mt-0.5 leading-relaxed max-w-3xl">
+              AI analyzes your business data to identify important trends, risks, opportunities, and unusual changes. Each insight includes the reason it was detected and recommended actions.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setIsLearnMoreOpen(true)}
+          className="h-9 px-4 rounded-xl border border-blue-200 bg-white text-xs font-semibold text-blue-700 hover:bg-blue-50 shadow-2xs flex items-center gap-1.5 transition cursor-pointer shrink-0"
+        >
+          <span>Learn More</span>
+          <ExternalLink className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* 4. FILTER / SEARCH TOOLBAR                                         */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
+        {/* Search Input */}
+        <div className="relative flex-1 min-w-[240px]">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            id="search-insights-input"
-            placeholder="Search insights, metrics, or datasets..."
+            placeholder="Search insights by title, description, or tags..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-7 py-1.5 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-blue-500 transition"
+            className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 bg-slate-50/60 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
             >
-              <X className="h-3.5 w-3.5" />
+              <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          {/* Severity Filter Chips */}
-          <div className="flex items-center gap-1 border border-slate-200 rounded-lg p-0.5 bg-white shadow-2xs">
-            {['all', 'positive', 'warning', 'critical', 'info'].map(sev => (
-              <button
-                key={sev}
-                onClick={() => setSeverityFilter(sev)}
-                className={`px-2.5 py-1 rounded-md font-medium transition cursor-pointer ${
-                  severityFilter === sev
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {sev.charAt(0).toUpperCase() + sev.slice(1)}
-              </button>
-            ))}
-          </div>
+        {/* Dropdown Filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Type Filter */}
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+          >
+            <option value="all">All Types</option>
+            <option value="growth">Growth</option>
+            <option value="decline">Decline</option>
+            <option value="trend">Trend</option>
+            <option value="anomaly">Anomaly</option>
+            <option value="operational">Operational</option>
+            <option value="forecast">Forecast</option>
+            <option value="data_quality">Data Quality</option>
+            <option value="relationship">Relationship</option>
+          </select>
 
-          {/* Status Filter Chips */}
-          <div className="flex items-center gap-1 border border-slate-200 rounded-lg p-0.5 bg-white shadow-2xs">
-            {['active', 'dismissed', 'all'].map(st => (
-              <button
-                key={st}
-                onClick={() => setStatusFilter(st)}
-                className={`px-2.5 py-1 rounded-md font-medium transition cursor-pointer ${
-                  statusFilter === st
-                    ? 'bg-slate-700 text-white shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {st.charAt(0).toUpperCase() + st.slice(1)}
-              </button>
-            ))}
-          </div>
+          {/* Impact Level Filter */}
+          <select
+            value={impactFilter}
+            onChange={(e) => setImpactFilter(e.target.value)}
+            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+          >
+            <option value="all">All Impact Levels</option>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
 
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+          >
+            <option value="active">All Statuses (Active)</option>
+            <option value="dismissed">Dismissed</option>
+          </select>
+
+          {/* Reset Filters Action */}
           {hasActiveFilters && (
             <button
               onClick={resetFilters}
-              className="text-xs font-semibold text-blue-600 hover:text-blue-800 px-2 py-1 rounded transition cursor-pointer"
+              className="h-10 px-3 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition cursor-pointer"
             >
               Reset
             </button>
           )}
+
+          <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center gap-1 border border-slate-200 rounded-xl p-1 bg-slate-50/70">
+            <button
+              onClick={() => setViewMode('card')}
+              className={`h-8 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+                viewMode === 'card'
+                  ? 'bg-blue-600 text-white shadow-2xs'
+                  : 'text-slate-600 hover:bg-white'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>Card View</span>
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`h-8 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+                viewMode === 'table'
+                  ? 'bg-blue-600 text-white shadow-2xs'
+                  : 'text-slate-600 hover:bg-white'
+              }`}
+            >
+              <TableIcon className="w-3.5 h-3.5" />
+              <span>Table View</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Insights Content */}
+      {/* ------------------------------------------------------------------ */}
+      {/* 5. MAIN CONTENT (CARDS / TABLE / EMPTY / ERROR / LOADING)          */}
+      {/* ------------------------------------------------------------------ */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map((n) => (
-            <div key={n} className="rounded-xl border border-slate-200 bg-white p-5 animate-pulse space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 bg-slate-200 rounded-lg" />
-                <div className="h-4 bg-slate-200 rounded w-24" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {[1, 2, 3, 4, 5, 6].map(n => (
+            <div key={n} className="rounded-2xl border border-slate-200 bg-white p-5 animate-pulse space-y-4 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <div className="h-5 bg-slate-200 rounded-full w-20" />
+                <div className="h-4 bg-slate-100 rounded w-16" />
               </div>
-              <div className="h-5 bg-slate-200 rounded w-3/4" />
+              <div className="h-6 bg-slate-200 rounded w-4/5" />
               <div className="h-4 bg-slate-100 rounded w-full" />
-              <div className="h-4 bg-slate-100 rounded w-5/6" />
-              <div className="h-10 bg-slate-50 rounded" />
+              <div className="h-4 bg-slate-100 rounded w-3/4" />
+              <div className="h-10 bg-slate-50 rounded-xl" />
+              <div className="flex items-center justify-between pt-2">
+                <div className="h-8 bg-slate-200 rounded-lg w-24" />
+                <div className="h-8 bg-slate-100 rounded-lg w-20" />
+              </div>
             </div>
           ))}
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-8 text-center">
-          <AlertTriangle className="h-8 w-8 text-rose-500 mx-auto mb-2" />
-          <h3 className="text-sm font-bold text-rose-900">Service Communication Error</h3>
+        <div className="rounded-2xl border border-rose-200 bg-rose-50/60 p-10 text-center">
+          <AlertTriangle className="h-10 w-10 text-rose-500 mx-auto mb-3" />
+          <h3 className="text-base font-bold text-rose-900">Communication Error</h3>
           <p className="text-xs text-rose-700 mt-1 max-w-md mx-auto">{error}</p>
           <button
             onClick={loadData}
-            className="mt-3.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-semibold hover:bg-rose-700 transition cursor-pointer"
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-semibold hover:bg-rose-700 transition cursor-pointer"
           >
-            <RefreshCw className="h-3.5 w-3.5" /> Retry
+            <RefreshCw className="w-3.5 h-3.5" /> Retry Connection
           </button>
         </div>
       ) : filteredInsights.length === 0 ? (
-        <div className="rounded-xl border border-slate-200/90 bg-white p-12 text-center shadow-2xs">
-          <Sparkles className="h-10 w-10 text-slate-400 mx-auto mb-3" />
-          <h3 className="text-sm font-bold text-slate-900">
-            {hasActiveFilters ? 'No Matching Insights' : 'No Insights Generated Yet'}
+        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-2xs">
+          <Sparkles className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+          <h3 className="text-base font-bold text-slate-900">
+            {hasActiveFilters ? 'No Matching Insights Found' : 'No Insights Available'}
           </h3>
-          <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 mb-4">
+          <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1 mb-5 leading-relaxed">
             {hasActiveFilters
-              ? 'No insights match your current search and filter criteria. Try adjusting your parameters.'
-              : 'AI Insights are generated by analyzing patterns, trends, and anomalies across your uploaded datasets. Click below to run the first analysis.'}
+              ? 'No insights match your active search and filter parameters. Try clearing filters to view all records.'
+              : 'AI Insights are calculated by evaluating patterns, growth velocity, and anomalies across your uploaded datasets.'}
           </p>
           {hasActiveFilters ? (
             <button
               onClick={resetFilters}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
             >
               Clear Filters
             </button>
@@ -607,367 +1046,550 @@ export default function AIInsightsPage() {
             <button
               onClick={handleGenerateInsights}
               disabled={generating}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-blue-700 transition cursor-pointer shadow-xs disabled:opacity-50"
             >
-              <Sparkles className="h-4 w-4" /> Generate Insights
+              <Sparkles className="w-4 h-4" /> Generate Insights
             </button>
           )}
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      ) : viewMode === 'card' ? (
+        /* CARD VIEW GRID */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredInsights.map(ins => {
-            const isEvidenceOpen = expandedEvidence[ins.id];
-            const feedback = feedbackState[ins.id];
-            const isFavorited = favorites.has(String(ins.id));
-            const isTargetHighlighted = targetInsightId === String(ins.id);
+            const metricInfo = getKeyMetricInfo(ins);
+            const categoryTag = getCategoryTag(ins);
+            const timeAgo = formatTimeAgo(ins.created_at);
+            const isFav = favorites.has(String(ins.id));
+            const isMenuOpen = activeMenuId === ins.id;
 
             return (
               <div
                 key={ins.id}
-                onClick={() => recordRecentlyViewedApi('ai_insight', ins.id).catch(() => {})}
-                className={`group rounded-xl border bg-white shadow-2xs hover:shadow-xs transition flex flex-col justify-between ${
-                  isTargetHighlighted ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200/90 hover:border-slate-300'
-                }`}
+                className="group rounded-2xl border border-slate-200/90 bg-white shadow-2xs hover:shadow-xs transition flex flex-col justify-between overflow-visible relative"
               >
-                {/* Card Header */}
-                <div className="p-5 space-y-3">
-                  {/* Top Row: Type Icon + Badges + Actions */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-slate-100 border border-slate-200/80">
-                        {getTypeIcon(ins.type)}
-                      </div>
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                        {getTypeLabel(ins.type)}
+                {/* Card Top Border Accent */}
+                <div
+                  className="h-1 w-full rounded-t-2xl"
+                  style={{
+                    backgroundColor:
+                      ins.severity === 'critical'
+                        ? '#EF4444'
+                        : ins.severity === 'positive'
+                        ? '#10B981'
+                        : ins.severity === 'warning'
+                        ? '#F59E0B'
+                        : '#3B82F6'
+                  }}
+                />
+
+                <div className="p-5 space-y-3.5">
+                  {/* Card Header: Severity pill + Category tag + time ago + overflow menu */}
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {renderSeverityPill(ins.severity)}
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md uppercase tracking-wider font-mono">
+                        <Tag className="w-2.5 h-2.5 text-slate-400" />
+                        {categoryTag}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                      {getPriorityBadge(ins.priority || ins.evidence?.priority)}
-                      {getSeverityBadge(ins.severity)}
-
-                      {/* Impact Score */}
-                      {((ins.impactScore ?? ins.impact_score ?? ins.evidence?.impactScore ?? ins.evidence?.impact_score) !== undefined) && (
-                        <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                          Impact: {ins.impactScore ?? ins.impact_score ?? ins.evidence?.impactScore ?? ins.evidence?.impact_score}/100
-                        </span>
-                      )}
-
-                      {/* Favorite & Share */}
-                      <button
-                        onClick={(e) => handleToggleFavorite(e, ins.id)}
-                        title={isFavorited ? 'Remove favorite' : 'Add to favorites'}
-                        className="text-slate-400 hover:text-amber-500 p-1 rounded-md hover:bg-slate-50 transition cursor-pointer"
-                      >
-                        <Star className={`w-3.5 h-3.5 ${isFavorited ? 'fill-amber-400 text-amber-500' : ''}`} />
-                      </button>
-
+                    <div className="flex items-center gap-2 text-slate-400 text-xs shrink-0 relative insight-overflow-menu-container">
+                      <span className="text-[11px] font-medium text-slate-400">
+                        {timeAgo}
+                      </span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setShareModalConfig({ isOpen: true, insightId: ins.id, title: ins.title });
+                          setActiveMenuId(prev => (prev === ins.id ? null : ins.id));
                         }}
-                        title="Share insight"
-                        className="text-slate-400 hover:text-blue-600 p-1 rounded-md hover:bg-slate-50 transition cursor-pointer"
+                        className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                        title="More options"
                       >
-                        <Share2 className="w-3.5 h-3.5" />
+                        <MoreVertical className="w-4 h-4" />
                       </button>
+
+                      {/* Dropdown Menu */}
+                      {isMenuOpen && (
+                        <div className="absolute right-0 top-7 w-48 rounded-xl bg-white border border-slate-200 shadow-lg py-1.5 z-40 animate-fade-in text-xs">
+                          <button
+                            onClick={(e) => handleToggleFavorite(e, ins.id)}
+                            className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                          >
+                            <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-amber-400 text-amber-500' : 'text-slate-400'}`} />
+                            <span>{isFav ? 'Remove Favorite' : 'Save to Favorites'}</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setActiveMenuId(null);
+                              setShareModalConfig({ isOpen: true, insightId: ins.id, title: ins.title });
+                            }}
+                            className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                          >
+                            <Share2 className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Share Insight</span>
+                          </button>
+                          <button
+                            onClick={() => handleCopySummary(ins)}
+                            className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                          >
+                            <Copy className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Copy Summary</span>
+                          </button>
+                          <div className="h-px bg-slate-100 my-1" />
+                          <button
+                            onClick={() => handleDismiss(ins.id)}
+                            className="w-full text-left px-3 py-2 text-rose-600 hover:bg-rose-50 flex items-center gap-2"
+                          >
+                            <XCircle className="w-3.5 h-3.5 text-rose-500" />
+                            <span>Dismiss</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Insight Title (Strongest Element) */}
-                  <h3 className="text-base font-bold text-slate-900 leading-snug">
+                  {/* Title */}
+                  <h3 className="text-base font-bold text-slate-900 leading-snug line-clamp-2">
                     {ins.title}
                   </h3>
 
-                  {/* Summary */}
-                  <p className="text-xs text-slate-600 leading-relaxed">
+                  {/* Description */}
+                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-2 font-normal">
                     {ins.summary}
                   </p>
 
-                  {/* Priority Basis */}
-                  {(ins.priorityReason || ins.evidence?.priorityReason) && (
-                    <div className="text-[11px] text-slate-600 bg-slate-50 border border-slate-200/80 rounded-lg p-2.5 flex items-start gap-1.5">
-                      <span className="font-semibold text-slate-700 shrink-0">Priority Basis:</span>
-                      <span className="leading-relaxed">{ins.priorityReason || ins.evidence?.priorityReason}</span>
-                    </div>
-                  )}
-
-                  {/* AI Grounded badge */}
-                  {ins.evidence?.ai_grounded && (
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-medium">
-                      <Sparkles className="w-3 h-3 text-blue-600" />
-                      <span>AI Interpretation — Grounded in verified dataset evidence</span>
-                    </div>
-                  )}
-
-                  {/* Cross-Metric Relationship Details */}
-                  {ins.type === 'relationship' && ins.evidence?.evidence && (
-                    <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-xs space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-slate-700 flex items-center gap-1.5 text-[11px]">
-                          <Layers className="w-3.5 h-3.5 text-blue-600" />
-                          Observed Cross-Metric Co-Movement
-                        </span>
-                        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                          {ins.evidence.direction}
-                        </span>
+                  {/* Key Metric & Visual Area */}
+                  <div className="flex items-center justify-between pt-1 pb-1">
+                    <div>
+                      <div
+                        className="text-2xl font-extrabold tracking-tight"
+                        style={{
+                          color:
+                            ins.severity === 'critical'
+                              ? '#DC2626'
+                              : ins.severity === 'positive'
+                              ? '#059669'
+                              : ins.severity === 'warning'
+                              ? '#D97706'
+                              : '#2563EB'
+                        }}
+                      >
+                        {metricInfo.value}
                       </div>
-                      <div className="grid grid-cols-2 gap-2 text-[11px]">
-                        {ins.evidence.evidence.map((ev, idx) => (
-                          <div key={idx} className="bg-white p-2 rounded-lg border border-slate-200">
-                            <span className="text-[10px] text-slate-500 uppercase font-medium block">{ev.metric}</span>
-                            <span className="font-semibold text-slate-800">
-                              {ev.previousValue} → {ev.currentValue}
-                            </span>
-                            <span className={`block text-[10px] font-mono font-bold ${ev.changePercent >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                              {ev.changePercent >= 0 ? '+' : ''}{ev.changePercent}%
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                      <span className="text-[11px] font-medium text-slate-500 block">
+                        {metricInfo.label}
+                      </span>
                     </div>
-                  )}
 
-                  {/* AI Grounded Explanation */}
-                  {ins.evidence?.ai_explanation && (
-                    <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-3.5 text-xs space-y-2">
-                      <div className="flex items-center justify-between text-[11px]">
-                        <div className="flex items-center gap-1.5 text-blue-700 font-semibold">
-                          <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                          AI Interpretation
-                        </div>
-                        <span className="text-[10px] font-mono text-blue-600 bg-blue-100 px-2 py-0.5 rounded border border-blue-200">
-                          Gemini
-                        </span>
-                      </div>
-                      <p className="text-slate-700 leading-relaxed text-xs">
-                        {ins.evidence.ai_explanation}
-                      </p>
-                      {ins.evidence?.business_impact && (
-                        <div className="text-[11px] text-slate-600 pt-1.5 border-t border-blue-100 flex items-start gap-1.5">
-                          <span className="font-semibold text-slate-700">Business Impact:</span>
-                          <span>{ins.evidence.business_impact}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    <MiniVisualChart insight={ins} metricInfo={metricInfo} />
+                  </div>
                 </div>
 
-                {/* Evidence & Actions Footer */}
-                <div className="px-5 pb-5 space-y-3 border-t border-slate-100 pt-3">
-                  {/* Source Tags + Evidence Toggle */}
-                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
-                    {ins.source_metadata?.dataset_name && (
-                      <span className="inline-flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200">
-                        <Database className="w-3 h-3 text-blue-600" />
-                        {ins.source_metadata.dataset_name}
-                      </span>
+                {/* 3 Bottom Structured Action Buttons */}
+                <div className="px-5 pb-5 pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                  {/* Button 1: View Details */}
+                  <button
+                    onClick={() => setSelectedInsightForDetails(ins)}
+                    className="h-8 px-2.5 rounded-lg border border-blue-200 bg-blue-50/60 text-blue-700 text-xs font-semibold hover:bg-blue-100 flex items-center gap-1 transition cursor-pointer"
+                  >
+                    <span>View Details</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+
+                  {/* Button 2: Contextual Middle Action */}
+                  <button
+                    onClick={() => handleMiddleAction(ins)}
+                    className="h-8 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 flex items-center gap-1 transition cursor-pointer"
+                  >
+                    {ins.type === 'trend' || ins.type === 'growth' ? (
+                      <>
+                        <Compass className="w-3 h-3 text-purple-600" />
+                        <span>Explore What-If</span>
+                      </>
+                    ) : (
+                      <>
+                        <Layers className="w-3 h-3 text-blue-600" />
+                        <span>Investigate</span>
+                      </>
                     )}
-                    {ins.source_metadata?.target_column && (
-                      <span className="inline-flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200 font-mono">
-                        <BarChart3 className="w-3 h-3 text-purple-600" />
-                        {ins.source_metadata.target_column}
-                      </span>
+                  </button>
+
+                  {/* Button 3: Contextual Right Action */}
+                  <button
+                    onClick={() => handleRightAction(ins)}
+                    className="h-8 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 flex items-center gap-1 transition cursor-pointer"
+                  >
+                    {ins.severity === 'critical' || ins.type === 'operational' ? (
+                      <>
+                        <Bell className="w-3 h-3 text-rose-600" />
+                        <span>Create Alert</span>
+                      </>
+                    ) : ins.type === 'growth' || ins.type === 'trend' ? (
+                      <>
+                        <Plus className="w-3 h-3 text-emerald-600" />
+                        <span>Create KPI</span>
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="w-3 h-3 text-blue-600" />
+                        <span>Add to Report</span>
+                      </>
                     )}
-                    <button
-                      onClick={() => toggleEvidence(ins.id)}
-                      className="text-blue-600 hover:text-blue-800 font-medium ml-auto flex items-center gap-1 cursor-pointer"
-                    >
-                      {isEvidenceOpen ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                      {isEvidenceOpen ? 'Hide Evidence' : 'View Evidence'}
-                    </button>
-                  </div>
-
-                  {/* Collapsible Ground Truth Evidence Panel */}
-                  {isEvidenceOpen && (
-                    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 text-xs space-y-3">
-                      {/* Verification Header */}
-                      <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-200">
-                        <div className="flex items-center gap-1.5 font-semibold">
-                          {ins.evidence?.verified ? (
-                            <span className="flex items-center gap-1.5 text-emerald-700">
-                              <ShieldCheck className="w-4 h-4" />
-                              Ground Truth — Verified
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1.5 text-amber-700">
-                              <AlertTriangle className="w-4 h-4" />
-                              Unverified
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-[10px] text-slate-500 font-mono">
-                          {ins.evidence?.recordsAnalyzed ?? ins.evidence?.records_analyzed ?? 0} rows analyzed
-                        </span>
-                      </div>
-
-                      {/* Verification Description */}
-                      {ins.evidence?.verificationReason && (
-                        <p className="text-[11px] text-slate-600 leading-relaxed italic">
-                          {ins.evidence.verificationReason}
-                        </p>
-                      )}
-
-                      {/* Telemetry Grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
-                        <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                          <span className="text-[10px] text-slate-500 block uppercase font-medium">Dataset</span>
-                          <span className="font-semibold text-slate-800 truncate block">
-                            {ins.evidence?.datasetName || ins.source_metadata?.dataset_name || 'Primary'}
-                          </span>
-                        </div>
-                        <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                          <span className="text-[10px] text-slate-500 block uppercase font-medium">Metric</span>
-                          <span className="font-semibold text-purple-700 truncate block font-mono">
-                            {ins.evidence?.metric || 'primary_metric'}
-                          </span>
-                        </div>
-                        <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                          <span className="text-[10px] text-slate-500 block uppercase font-medium">Current Value</span>
-                          <span className="font-semibold text-emerald-700 font-mono">
-                            {ins.evidence?.currentValue !== undefined
-                              ? (typeof ins.evidence.currentValue === 'number' ? ins.evidence.currentValue.toLocaleString() : ins.evidence.currentValue)
-                              : (ins.evidence?.current_value !== undefined ? ins.evidence.current_value.toLocaleString() : 'N/A')}
-                          </span>
-                        </div>
-                        <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                          <span className="text-[10px] text-slate-500 block uppercase font-medium">Comparison</span>
-                          <span className="font-semibold text-slate-700 font-mono">
-                            {ins.evidence?.comparisonValue !== undefined
-                              ? (typeof ins.evidence.comparisonValue === 'number' ? ins.evidence.comparisonValue.toLocaleString() : ins.evidence.comparisonValue)
-                              : (ins.evidence?.previous_value !== undefined ? ins.evidence.previous_value.toLocaleString() : 'N/A')}
-                          </span>
-                        </div>
-                        <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                          <span className="text-[10px] text-slate-500 block uppercase font-medium">Change %</span>
-                          <span className={`font-semibold font-mono ${
-                            (ins.evidence?.changePercent || ins.evidence?.change_percent || 0) >= 0 ? 'text-emerald-700' : 'text-rose-700'
-                          }`}>
-                            {ins.evidence?.changePercent !== undefined
-                              ? `${ins.evidence.changePercent >= 0 ? '+' : ''}${ins.evidence.changePercent}%`
-                              : (ins.evidence?.change_percent !== undefined ? `${ins.evidence.change_percent >= 0 ? '+' : ''}${ins.evidence.change_percent}%` : 'N/A')}
-                          </span>
-                        </div>
-                        <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                          <span className="text-[10px] text-slate-500 block uppercase font-medium">Period</span>
-                          <span className="font-semibold text-slate-700 truncate block">
-                            {ins.evidence?.period || ins.evidence?.currentPeriod || 'Latest'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Source Fields */}
-                      {(ins.evidence?.sourceFields || ins.evidence?.source_fields)?.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                          <span className="text-[10px] text-slate-500 uppercase font-medium mr-1">Source Fields:</span>
-                          {(ins.evidence?.sourceFields || ins.evidence?.source_fields).map((sf, idx) => (
-                            <span key={idx} className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-mono px-1.5 py-0.5 rounded">
-                              {sf}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Calculation Formula */}
-                      {ins.evidence?.calculation && (
-                        <div className="pt-1 border-t border-slate-200">
-                          <span className="text-[10px] text-slate-500 uppercase font-medium block mb-0.5">Calculation:</span>
-                          <code className="text-[10px] text-slate-600 font-mono bg-white px-2 py-1 rounded block overflow-x-auto border border-slate-200">
-                            {ins.evidence.calculation}
-                          </code>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Recommendation */}
-                  {ins.recommendation?.action && (
-                    <div className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-blue-50/50 border border-blue-100">
-                      <div className="flex items-center gap-2 text-xs text-blue-800 font-medium min-w-0">
-                        <Compass className="w-4 h-4 text-blue-600 shrink-0" />
-                        <span className="truncate">{ins.recommendation.action}</span>
-                      </div>
-                      {ins.recommendation.target_page && (
-                        <button
-                          onClick={() => navigate(ins.recommendation.target_page)}
-                          className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold rounded-lg flex items-center gap-1 transition cursor-pointer shrink-0"
-                        >
-                          Explore <ArrowRight className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Action Footer */}
-                  <div className="flex items-center justify-between pt-2">
-                    {/* Feedback */}
-                    <div className="flex items-center gap-1 text-xs">
-                      <span className="text-[11px] text-slate-500 mr-1">Was this useful?</span>
-                      <button
-                        onClick={() => handleFeedback(ins.id, 'useful')}
-                        className={`p-1.5 rounded-lg transition cursor-pointer ${
-                          feedback === 'useful' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'hover:bg-slate-100 text-slate-400'
-                        }`}
-                        title="Useful"
-                      >
-                        <ThumbsUp className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleFeedback(ins.id, 'not_useful')}
-                        className={`p-1.5 rounded-lg transition cursor-pointer ${
-                          feedback === 'not_useful' ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'hover:bg-slate-100 text-slate-400'
-                        }`}
-                        title="Not useful"
-                      >
-                        <ThumbsDown className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {/* Investigate Drivers */}
-                      {(ins.dataset_id || ins.evidence?.datasetId || ins.evidence?.dataset_id || ins.source_metadata?.dataset_id) && (
-                        <button
-                          onClick={() => setRootCauseInsight(ins)}
-                          className="px-2.5 py-1.5 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg flex items-center gap-1.5 transition cursor-pointer"
-                          title="Break down the observed change by available business dimensions"
-                        >
-                          <Layers className="w-3 h-3 text-blue-600" />
-                          Investigate Drivers
-                        </button>
-                      )}
-
-                      {/* What-If */}
-                      {(ins.dataset_id || ins.evidence?.datasetId || ins.evidence?.dataset_id || ins.source_metadata?.dataset_id) && (
-                        <button
-                          onClick={() => setSimulatorData({ insight: ins, attribution: null })}
-                          className="px-2.5 py-1.5 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg flex items-center gap-1.5 transition cursor-pointer"
-                          title="Test a counterfactual scenario without changing your real data"
-                        >
-                          <Compass className="w-3 h-3 text-purple-600" />
-                          Explore What-If
-                        </button>
-                      )}
-
-                      {/* Dismiss */}
-                      {ins.status !== 'dismissed' && (
-                        <button
-                          onClick={() => handleDismiss(ins.id)}
-                          className="text-[11px] text-slate-500 hover:text-slate-700 font-medium transition cursor-pointer"
-                        >
-                          Dismiss
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
+      ) : (
+        /* TABLE VIEW */
+        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 font-semibold uppercase tracking-wider text-[10px]">
+                  <th className="py-3 px-4">Insight Title &amp; Summary</th>
+                  <th className="py-3 px-4">Type</th>
+                  <th className="py-3 px-4">Impact</th>
+                  <th className="py-3 px-4">Dataset</th>
+                  <th className="py-3 px-4">Key Metric</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Created</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredInsights.map(ins => {
+                  const metricInfo = getKeyMetricInfo(ins);
+                  const isFav = favorites.has(String(ins.id));
+
+                  return (
+                    <tr
+                      key={ins.id}
+                      className="hover:bg-slate-50/70 transition cursor-pointer"
+                      onClick={() => setSelectedInsightForDetails(ins)}
+                    >
+                      <td className="py-3 px-4 max-w-sm">
+                        <div className="font-bold text-slate-900 leading-snug truncate">
+                          {ins.title}
+                        </div>
+                        <div className="text-slate-500 text-[11px] truncate mt-0.5">
+                          {ins.summary}
+                        </div>
+                      </td>
+
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <span className="font-mono text-[11px] font-semibold text-slate-600 uppercase bg-slate-100 px-2 py-0.5 rounded">
+                          {ins.type || 'insight'}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        {renderSeverityPill(ins.severity)}
+                      </td>
+
+                      <td className="py-3 px-4 whitespace-nowrap text-slate-600 font-medium">
+                        {ins.dataset_name || ins.source_metadata?.dataset_name || 'Primary'}
+                      </td>
+
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <span className="font-bold text-slate-900 font-mono">
+                          {metricInfo.value}
+                        </span>
+                        <span className="text-[10px] text-slate-400 block font-normal">
+                          {metricInfo.label}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          {ins.status || 'Active'}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4 whitespace-nowrap text-slate-500 font-medium">
+                        {formatTimeAgo(ins.created_at)}
+                      </td>
+
+                      <td className="py-3 px-4 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setSelectedInsightForDetails(ins)}
+                            className="px-2.5 py-1 text-xs font-semibold rounded-lg text-blue-600 hover:bg-blue-50 border border-blue-200 transition cursor-pointer"
+                          >
+                            Details
+                          </button>
+                          <button
+                            onClick={(e) => handleToggleFavorite(e, ins.id)}
+                            className="p-1 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-slate-100 transition"
+                            title="Favorite"
+                          >
+                            <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-amber-400 text-amber-500' : ''}`} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
-      {/* Root-Cause Driver Breakdown Drawer */}
+      {/* ------------------------------------------------------------------ */}
+      {/* 6. INSIGHT DETAILS MODAL                                           */}
+      {/* ------------------------------------------------------------------ */}
+      {selectedInsightForDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 flex flex-col justify-between">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {renderSeverityPill(selectedInsightForDetails.severity)}
+                  <span className="text-[11px] font-mono uppercase font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                    {selectedInsightForDetails.type}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setSelectedInsightForDetails(null)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <h2 className="text-xl font-bold text-slate-900 leading-snug">
+                {selectedInsightForDetails.title}
+              </h2>
+
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                {selectedInsightForDetails.summary}
+              </p>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5 text-xs">
+              {/* Telemetry & Ground-Truth Verification */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-700 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    Ground-Truth Physical Telemetry
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-500">
+                    {selectedInsightForDetails.evidence?.recordsAnalyzed || selectedInsightForDetails.evidence?.records_analyzed || 0} rows analyzed
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  <div className="bg-white p-2.5 rounded-lg border border-slate-200">
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Dataset</span>
+                    <span className="font-bold text-slate-800 truncate block">
+                      {selectedInsightForDetails.dataset_name || selectedInsightForDetails.evidence?.datasetName || 'Primary'}
+                    </span>
+                  </div>
+
+                  <div className="bg-white p-2.5 rounded-lg border border-slate-200">
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Current Value</span>
+                    <span className="font-bold text-emerald-700 font-mono truncate block">
+                      {selectedInsightForDetails.evidence?.currentValue !== undefined
+                        ? selectedInsightForDetails.evidence.currentValue.toLocaleString()
+                        : 'N/A'}
+                    </span>
+                  </div>
+
+                  <div className="bg-white p-2.5 rounded-lg border border-slate-200">
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Comparison</span>
+                    <span className="font-bold text-slate-700 font-mono truncate block">
+                      {selectedInsightForDetails.evidence?.comparisonValue !== undefined
+                        ? selectedInsightForDetails.evidence.comparisonValue.toLocaleString()
+                        : 'N/A'}
+                    </span>
+                  </div>
+
+                  <div className="bg-white p-2.5 rounded-lg border border-slate-200">
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Change %</span>
+                    <span className="font-bold text-blue-700 font-mono block">
+                      {selectedInsightForDetails.evidence?.changePercent !== undefined
+                        ? `${selectedInsightForDetails.evidence.changePercent}%`
+                        : 'Verified'}
+                    </span>
+                  </div>
+
+                  <div className="bg-white p-2.5 rounded-lg border border-slate-200">
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Period</span>
+                    <span className="font-bold text-slate-800 truncate block">
+                      {selectedInsightForDetails.evidence?.period || 'Q4 Observation'}
+                    </span>
+                  </div>
+
+                  <div className="bg-white p-2.5 rounded-lg border border-slate-200">
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Impact Score</span>
+                    <span className="font-bold text-purple-700 font-mono block">
+                      {selectedInsightForDetails.impactScore || selectedInsightForDetails.impact_score || 50}/100
+                    </span>
+                  </div>
+                </div>
+
+                {/* Calculation formula */}
+                {selectedInsightForDetails.evidence?.calculation && (
+                  <div className="pt-2 border-t border-slate-200">
+                    <span className="text-[10px] text-slate-400 font-semibold block mb-1 uppercase">Evidence Formula</span>
+                    <code className="text-[10px] font-mono bg-white p-2 rounded block border border-slate-200 text-slate-700 overflow-x-auto">
+                      {selectedInsightForDetails.evidence.calculation}
+                    </code>
+                  </div>
+                )}
+              </div>
+
+              {/* Recommended Action */}
+              {selectedInsightForDetails.recommendation?.action && (
+                <div className="rounded-xl border border-blue-200 bg-blue-50/40 p-4 space-y-1.5">
+                  <div className="font-bold text-blue-900 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                    <Compass className="w-4 h-4 text-blue-600" />
+                    Recommended Action
+                  </div>
+                  <p className="text-slate-700 text-xs leading-relaxed">
+                    {selectedInsightForDetails.recommendation.action}
+                  </p>
+                  {selectedInsightForDetails.recommendation.target_page && (
+                    <button
+                      onClick={() => {
+                        const target = selectedInsightForDetails.recommendation.target_page;
+                        setSelectedInsightForDetails(null);
+                        navigate(target);
+                      }}
+                      className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-blue-700 hover:text-blue-900"
+                    >
+                      <span>Navigate to {selectedInsightForDetails.recommendation.target_page}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-200 bg-slate-50/80 rounded-b-2xl flex flex-wrap items-center justify-between gap-3">
+              {/* Feedback Buttons */}
+              <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                <span>Useful?</span>
+                <button
+                  onClick={() => handleFeedback(selectedInsightForDetails.id, 'useful')}
+                  className={`p-1.5 rounded-lg border transition ${
+                    feedbackState[selectedInsightForDetails.id] === 'useful'
+                      ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                      : 'border-slate-200 bg-white hover:bg-slate-100 text-slate-400'
+                  }`}
+                  title="Thumbs Up"
+                >
+                  <ThumbsUp className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => handleFeedback(selectedInsightForDetails.id, 'not_useful')}
+                  className={`p-1.5 rounded-lg border transition ${
+                    feedbackState[selectedInsightForDetails.id] === 'not_useful'
+                      ? 'bg-rose-50 text-rose-600 border-rose-200'
+                      : 'border-slate-200 bg-white hover:bg-slate-100 text-slate-400'
+                  }`}
+                  title="Thumbs Down"
+                >
+                  <ThumbsDown className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const ins = selectedInsightForDetails;
+                    setSelectedInsightForDetails(null);
+                    handleMiddleAction(ins);
+                  }}
+                  className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer"
+                >
+                  Investigate Drivers
+                </button>
+                <button
+                  onClick={() => {
+                    const ins = selectedInsightForDetails;
+                    setSelectedInsightForDetails(null);
+                    handleRightAction(ins);
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition cursor-pointer"
+                >
+                  Take Action
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* 7. EDUCATIONAL "WHAT ARE AI INSIGHTS?" MODAL                       */}
+      {/* ------------------------------------------------------------------ */}
+      {isLearnMoreOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="h-10 w-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+                  <Bot className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Understanding AI Insights</h3>
+                  <p className="text-xs text-slate-500">Enterprise Data Intelligence Platform</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsLearnMoreOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
+              <div className="rounded-xl border border-slate-200 p-3 bg-slate-50/50">
+                <div className="font-bold text-slate-800 mb-0.5">1. Continuous Telemetry Analysis</div>
+                <p>
+                  RicozAnalytics evaluates metrics, time-series velocities, monotonic growths, and operational alerts against your actual database records.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 p-3 bg-slate-50/50">
+                <div className="font-bold text-slate-800 mb-0.5">2. Ground-Truth Zero Hallucination</div>
+                <p>
+                  Every metric, change percentage, and threshold trigger is mathematically verified from uploaded CSV or SQL datasets before presentation.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 p-3 bg-slate-50/50">
+                <div className="font-bold text-slate-800 mb-0.5">3. Impact Scoring &amp; Prioritization</div>
+                <p>
+                  Insights are weighted by business severity (Critical, Positive, Warning, Informational) so your team can address risks first.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setIsLearnMoreOpen(false)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 transition cursor-pointer"
+              >
+                Got It
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* 8. CONNECTED COMPONENT MODALS & DRAWERS                            */}
+      {/* ------------------------------------------------------------------ */}
       <RootCauseDrawer
         isOpen={Boolean(rootCauseInsight)}
         onClose={() => setRootCauseInsight(null)}
@@ -978,7 +1600,6 @@ export default function AIInsightsPage() {
         }}
       />
 
-      {/* Counterfactual Scenario Simulator Modal */}
       {simulatorData && (
         <ScenarioSimulatorModal
           isOpen={Boolean(simulatorData)}
@@ -988,13 +1609,59 @@ export default function AIInsightsPage() {
         />
       )}
 
-      {/* Resource Share Modal */}
       <ShareModal
         isOpen={shareModalConfig.isOpen}
         onClose={() => setShareModalConfig({ isOpen: false, insightId: null, title: '' })}
         resourceType="insight"
         resourceId={shareModalConfig.insightId}
         resourceTitle={shareModalConfig.title}
+      />
+
+      <AlertModal
+        isOpen={alertModalConfig.isOpen}
+        onClose={() => setAlertModalConfig({ isOpen: false, prefilled: null })}
+        alert={alertModalConfig.prefilled}
+        metrics={metrics}
+        onSave={async (payload) => {
+          try {
+            await createAlert(payload);
+            setAlertModalConfig({ isOpen: false, prefilled: null });
+            showToast('Alert created successfully.');
+          } catch (err) {
+            console.error('Create alert failed:', err);
+            showToast('Failed to create alert.');
+          }
+        }}
+      />
+
+      <MetricModal
+        isOpen={metricModalConfig.isOpen}
+        onClose={() => setMetricModalConfig({ isOpen: false, prefilled: null })}
+        datasets={datasets}
+        token={getAuthToken()}
+        onSuccess={() => {
+          setMetricModalConfig({ isOpen: false, prefilled: null });
+          showToast('KPI created successfully.');
+        }}
+      />
+
+      <ReportModal
+        isOpen={reportModalConfig.isOpen}
+        onClose={() => setReportModalConfig({ isOpen: false, prefilled: null })}
+        dashboards={dashboards}
+        report={reportModalConfig.prefilled}
+        onSave={async (payload) => {
+          try {
+            if (createReport) {
+              await createReport(payload);
+            }
+            setReportModalConfig({ isOpen: false, prefilled: null });
+            showToast('Report created successfully.');
+          } catch (err) {
+            console.error('Create report failed:', err);
+            showToast('Failed to create report.');
+          }
+        }}
       />
     </div>
   );

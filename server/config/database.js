@@ -18,6 +18,10 @@ const fallbackOrganizations = [
     name: 'Ricoz Primary Organization',
     slug: 'ricoz-primary',
     plan: 'enterprise',
+    trial_started_at: new Date('2026-01-01T00:00:00Z'),
+    trial_ends_at: new Date('2026-12-31T23:59:59Z'),
+    subscription_status: 'active',
+    payment_status: 'paid',
     settings: { isDefault: true },
     created_at: new Date('2026-01-01T00:00:00Z'),
     updated_at: new Date('2026-01-01T00:00:00Z')
@@ -26,13 +30,23 @@ const fallbackOrganizations = [
     id: '00000000-0000-0000-0000-000000000002',
     name: 'Beta Global Enterprises',
     slug: 'beta-global',
-    plan: 'enterprise',
+    plan: 'starter',
+    trial_started_at: new Date('2026-01-01T00:00:00Z'),
+    trial_ends_at: new Date('2026-12-31T23:59:59Z'),
+    subscription_status: 'active',
+    payment_status: 'paid',
     settings: { isDefault: false },
     created_at: new Date('2026-01-01T00:00:00Z'),
     updated_at: new Date('2026-01-01T00:00:00Z')
   }
 ];
 let nextOrgId = 3;
+
+const fallbackInvitations = [];
+let nextInvitationId = 1;
+
+const fallbackInvoices = [];
+let nextInvoiceId = 1;
 
 const fallbackUsers = [
   {
@@ -472,8 +486,20 @@ function handleFallbackQuery(text, params = []) {
     });
   }
 
+  if (normalizedSql.includes('from organizations') && (normalizedSql.includes('stripe_customer_id = $1') || normalizedSql.includes('stripe_subscription_id = $2'))) {
+    const [cId, sId] = params;
+    const org = fallbackOrganizations.find(o => 
+      (cId && o.stripe_customer_id === String(cId)) || 
+      (sId && o.stripe_subscription_id === String(sId))
+    );
+    return Promise.resolve({
+      rows: org ? [{ ...org }] : [],
+      rowCount: org ? 1 : 0
+    });
+  }
+
   if (normalizedSql.startsWith('insert into organizations')) {
-    const [name, slug, plan = 'starter', settings = '{}'] = params;
+    const [name, slug, plan = 'starter', settings = '{}', trial_started_at, trial_ends_at, subscription_status = 'trial', payment_status = 'unpaid'] = params;
     const existing = fallbackOrganizations.find(o => o.slug.toLowerCase() === slug.toLowerCase());
     if (existing) {
       const err = new Error('duplicate key value violates unique constraint "organizations_slug_key"');
@@ -481,12 +507,19 @@ function handleFallbackQuery(text, params = []) {
       return Promise.reject(err);
     }
 
+    const trialStart = trial_started_at ? new Date(trial_started_at) : new Date();
+    const trialEnd = trial_ends_at ? new Date(trial_ends_at) : new Date(trialStart.getTime() + 14 * 24 * 60 * 60 * 1000);
+
     const newOrg = {
       id: `00000000-0000-0000-0000-00000000000${nextOrgId++}`,
       name,
       slug,
       plan,
       settings: typeof settings === 'string' ? JSON.parse(settings) : settings,
+      trial_started_at: trialStart,
+      trial_ends_at: trialEnd,
+      subscription_status,
+      payment_status,
       created_at: new Date(),
       updated_at: new Date()
     };
@@ -501,16 +534,33 @@ function handleFallbackQuery(text, params = []) {
     const orgId = String(params[params.length - 1]);
     const org = fallbackOrganizations.find(o => String(o.id) === orgId);
     if (org) {
-      let paramIdx = 0;
-      if (normalizedSql.includes('name = $')) {
-        org.name = params[paramIdx++];
-      }
-      if (normalizedSql.includes('settings = $')) {
-        const rawSettings = params[paramIdx++];
-        org.settings = typeof rawSettings === 'string' ? JSON.parse(rawSettings) : rawSettings;
-      }
-      if (normalizedSql.includes('plan = $')) {
-        org.plan = params[paramIdx++];
+      const setMatch = normalizedSql.match(/set\s+(.*?)\s+where/i);
+      if (setMatch) {
+        const setClauses = setMatch[1].split(',').map(s => s.trim());
+        setClauses.forEach(clause => {
+          const parts = clause.split('=').map(s => s.trim());
+          const col = parts[0].toLowerCase();
+          const valPart = parts[1];
+          let val;
+          const paramMatch = valPart ? valPart.match(/\$(\d+)/) : null;
+          if (paramMatch) {
+            const pIdx = parseInt(paramMatch[1], 10) - 1;
+            val = params[pIdx];
+          } else if (valPart) {
+            val = valPart.replace(/^['"]|['"]$/g, '');
+          }
+
+          if (col === 'trial_ends_at') org.trial_ends_at = val ? new Date(val) : org.trial_ends_at;
+          else if (col === 'trial_started_at') org.trial_started_at = val ? new Date(val) : org.trial_started_at;
+          else if (col === 'subscription_status') org.subscription_status = val;
+          else if (col === 'payment_status') org.payment_status = val;
+          else if (col === 'plan') org.plan = val;
+          else if (col === 'name') org.name = val;
+          else if (col === 'stripe_customer_id') org.stripe_customer_id = val;
+          else if (col === 'stripe_subscription_id') org.stripe_subscription_id = val;
+          else if (col === 'current_period_end') org.current_period_end = val;
+          else if (col === 'settings') org.settings = typeof val === 'string' ? JSON.parse(val) : val;
+        });
       }
       org.updated_at = new Date();
       return Promise.resolve({
@@ -519,6 +569,106 @@ function handleFallbackQuery(text, params = []) {
       });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
+  // ----------------- INVITATIONS -----------------
+  if (normalizedSql.startsWith('insert into invitations')) {
+    const [organization_id, invited_by, email, role = 'viewer', token, expires_at] = params;
+    const newInvite = {
+      id: `00000000-0000-0000-0000-00000000000${nextInvitationId++}`,
+      organization_id: String(organization_id),
+      invited_by: Number(invited_by),
+      email: String(email).toLowerCase(),
+      role: String(role).toLowerCase(),
+      token: String(token),
+      status: 'pending',
+      expires_at: new Date(expires_at),
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+    fallbackInvitations.push(newInvite);
+    return Promise.resolve({
+      rows: [{ ...newInvite }],
+      rowCount: 1
+    });
+  }
+
+  if (normalizedSql.includes('from invitations i') && normalizedSql.includes('i.token = $1')) {
+    const token = String(params[0]);
+    const inv = fallbackInvitations.find(i => i.token === token);
+    if (inv) {
+      const org = fallbackOrganizations.find(o => String(o.id) === String(inv.organization_id));
+      const inviter = fallbackUsers.find(u => Number(u.id) === Number(inv.invited_by));
+      return Promise.resolve({
+        rows: [{
+          ...inv,
+          organization_name: org?.name || 'Workspace',
+          organization_plan: org?.plan || 'starter',
+          inviter_name: inviter?.name || 'An administrator'
+        }],
+        rowCount: 1
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
+  if (normalizedSql.includes('from invitations') && normalizedSql.includes('organization_id = $1')) {
+    const orgId = String(params[0]);
+    const list = fallbackInvitations
+      .filter(i => String(i.organization_id) === orgId)
+      .map(i => {
+        const inviter = fallbackUsers.find(u => Number(u.id) === Number(i.invited_by));
+        return {
+          ...i,
+          inviter_name: inviter?.name || 'An administrator'
+        };
+      })
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return Promise.resolve({ rows: list, rowCount: list.length });
+  }
+
+  if (normalizedSql.startsWith('update invitations set status = $1') || normalizedSql.startsWith('update invitations set status = \'accepted\'')) {
+    const id = String(params[params.length - 1]);
+    const inv = fallbackInvitations.find(i => String(i.id) === id);
+    if (inv) {
+      inv.status = 'accepted';
+      inv.updated_at = new Date();
+      return Promise.resolve({ rows: [{ ...inv }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
+  if (normalizedSql.startsWith('delete from invitations where id = $1 and organization_id = $2')) {
+    const [id, orgId] = params;
+    const idx = fallbackInvitations.findIndex(i => String(i.id) === String(id) && String(i.organization_id) === String(orgId));
+    if (idx !== -1) {
+      const removed = fallbackInvitations.splice(idx, 1)[0];
+      return Promise.resolve({ rows: [removed], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
+  // ----------------- INVOICES -----------------
+  if (normalizedSql.startsWith('insert into invoices')) {
+    const [organization_id, stripe_invoice_id, amount, currency, plan, status = 'paid'] = params;
+    const newInvoice = {
+      id: `00000000-0000-0000-0000-00000000000${nextInvoiceId++}`,
+      organization_id: String(organization_id),
+      stripe_invoice_id,
+      amount: Number(amount),
+      currency: currency || 'usd',
+      plan,
+      status,
+      created_at: new Date()
+    };
+    fallbackInvoices.push(newInvoice);
+    return Promise.resolve({ rows: [{ ...newInvoice }], rowCount: 1 });
+  }
+
+  if (normalizedSql.includes('from invoices') && normalizedSql.includes('organization_id = $1')) {
+    const orgId = String(params[0]);
+    const list = fallbackInvoices.filter(i => String(i.organization_id) === orgId);
+    return Promise.resolve({ rows: list, rowCount: list.length });
   }
 
   if (normalizedSql.includes('from users where organization_id = $1') && normalizedSql.includes('as members_count')) {
@@ -761,7 +911,7 @@ function handleFallbackQuery(text, params = []) {
   }
 
   if (normalizedSql.startsWith('insert into users')) {
-    const [name, email, password_hash, role = 'viewer', organization_id = '00000000-0000-0000-0000-000000000001', status = 'active'] = params;
+    const [name, email, password_hash, role = 'viewer', organization_id, status = 'pending_verification', verification_token = null, verification_otp = null, verification_token_expires_at = null] = params;
     const existing = fallbackUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
     if (existing) {
       const err = new Error('duplicate key value violates unique constraint "users_email_key"');
@@ -775,8 +925,12 @@ function handleFallbackQuery(text, params = []) {
       email,
       password_hash,
       role,
-      organization_id: organization_id || '00000000-0000-0000-0000-000000000001',
-      status: status || 'active',
+      organization_id: String(organization_id),
+      status: status || 'pending_verification',
+      verification_token: verification_token || null,
+      verification_otp: verification_otp || null,
+      verification_token_expires_at: verification_token_expires_at || null,
+      email_verified_at: status === 'active' ? new Date() : null,
       last_login_at: null,
       created_at: new Date(),
       updated_at: new Date()
@@ -791,11 +945,49 @@ function handleFallbackQuery(text, params = []) {
         role: newUser.role,
         organization_id: newUser.organization_id,
         status: newUser.status,
+        verification_token: newUser.verification_token,
+        verification_otp: newUser.verification_otp,
         created_at: newUser.created_at,
         updated_at: newUser.updated_at
       }],
       rowCount: 1
     });
+  }
+
+  if (normalizedSql.includes('from users where verification_token = $1')) {
+    const token = String(params[0]);
+    const user = fallbackUsers.find(u => u.verification_token === token);
+    return Promise.resolve({
+      rows: user ? [{ ...user }] : [],
+      rowCount: user ? 1 : 0
+    });
+  }
+
+  if (normalizedSql.includes('update users') && normalizedSql.includes('verification_token = $1')) {
+    const [token, otp, expiresAt, email] = params;
+    const user = fallbackUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (user) {
+      user.verification_token = token;
+      user.verification_otp = otp;
+      user.verification_token_expires_at = expiresAt;
+      user.updated_at = new Date();
+      return Promise.resolve({ rows: [{ ...user }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
+  if (normalizedSql.includes('update users') && normalizedSql.includes('status = \'active\'') && normalizedSql.includes('where lower(email) = lower($1)')) {
+    const email = params[0]?.toLowerCase();
+    const user = fallbackUsers.find(u => u.email.toLowerCase() === email);
+    if (user) {
+      user.status = 'active';
+      user.email_verified_at = new Date();
+      user.verification_token = null;
+      user.verification_otp = null;
+      user.updated_at = new Date();
+      return Promise.resolve({ rows: [{ ...user }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
   }
 
   if (normalizedSql.startsWith('update users set role = $1') && normalizedSql.includes('organization_id = $3')) {
@@ -842,9 +1034,53 @@ function handleFallbackQuery(text, params = []) {
     return Promise.resolve({ rows: [], rowCount: 0 });
   }
 
+  if (normalizedSql.startsWith("update users set status = 'active'") && normalizedSql.includes('lower(email) = lower($1)')) {
+    const email = params[0]?.toLowerCase();
+    const user = fallbackUsers.find(u => u.email.toLowerCase() === email);
+    if (user) {
+      user.status = 'active';
+      user.updated_at = new Date();
+      return Promise.resolve({
+        rows: [{
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          organization_id: user.organization_id,
+          status: user.status,
+          updated_at: user.updated_at
+        }],
+        rowCount: 1
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
+  if (normalizedSql.startsWith('update users set password_hash = $1') && normalizedSql.includes('lower(email) = lower($2)')) {
+    const [passwordHash, email] = params;
+    const user = fallbackUsers.find(u => u.email.toLowerCase() === email?.toLowerCase());
+    if (user) {
+      user.password_hash = passwordHash;
+      user.updated_at = new Date();
+      return Promise.resolve({
+        rows: [{
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          organization_id: user.organization_id,
+          status: user.status,
+          updated_at: user.updated_at
+        }],
+        rowCount: 1
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
   if (normalizedSql.startsWith('update users set status = $1')) {
     const [status, id, orgId] = params;
-    const user = fallbackUsers.find(u => u.id === Number(id) && String(u.organization_id) === String(orgId));
+    const user = fallbackUsers.find(u => u.id === Number(id) && (!orgId || String(u.organization_id) === String(orgId)));
     if (user) {
       user.status = status;
       user.updated_at = new Date();
@@ -874,6 +1110,42 @@ function handleFallbackQuery(text, params = []) {
   }
 
   // ----------------- DATA SOURCES -----------------
+  // UPDATE data_sources
+  if (normalizedSql.startsWith('update data_sources')) {
+    if (normalizedSql.includes('set status = $1')) {
+      const [status, id] = params;
+      const ds = fallbackDataSources.find(d => d.id === Number(id));
+      if (ds) {
+        ds.status = status;
+        ds.last_synced_at = new Date();
+        ds.updated_at = new Date();
+        return Promise.resolve({ rows: [{ ...ds }], rowCount: 1 });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+
+    const id = Number(params[params.length - 2]);
+    const userId = Number(params[params.length - 1]);
+    const ds = fallbackDataSources.find(d => d.id === id && d.user_id === userId);
+    if (ds) {
+      for (let i = 0; i < params.length - 2; i++) {
+        const val = params[i];
+        if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) {
+          try { ds.config = JSON.parse(val); } catch (_) { ds.config = val; }
+        } else if (typeof val === 'object' && val !== null) {
+          ds.config = val;
+        } else if (typeof val === 'string' && ['active', 'connected', 'disconnected', 'error'].includes(val)) {
+          ds.status = val;
+        } else if (typeof val === 'string' && val.trim()) {
+          ds.name = val.trim();
+        }
+      }
+      ds.updated_at = new Date();
+      return Promise.resolve({ rows: [{ ...ds }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
   // DELETE data_sources
   if (normalizedSql.startsWith('delete from data_sources')) {
     const id = Number(params[0]);
@@ -3603,6 +3875,11 @@ module.exports = {
   initDb,
   getPool: () => pool,
   isUsingFallback: () => useFallbackStore,
+  fallbackUsers,
+  fallbackOrganizations,
+  fallbackDatasets,
+  fallbackInvitations,
+  fallbackInvoices,
   closeDb: async () => {
     if (pool) {
       try {

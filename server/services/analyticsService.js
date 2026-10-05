@@ -92,7 +92,11 @@ function detectDatasetDimensions(schema = [], sampleRecords = []) {
   // 2. Quantity / Units Metric Detection
   const qtyCandidates = ['quantity', 'units_sold', 'units', 'qty', 'count', 'items'];
   for (const candidate of qtyCandidates) {
-    const match = result.numericColumns.find(c => c.toLowerCase() === candidate || c.toLowerCase().includes(candidate));
+    const match = result.numericColumns.find(c => {
+      const colLower = c.toLowerCase();
+      if (candidate === 'count' && colLower.includes('discount')) return false;
+      return colLower === candidate || colLower === `total_${candidate}` || colLower.includes(`_${candidate}`) || colLower.includes(`${candidate}_`);
+    });
     if (match && match !== result.primaryMetric) {
       result.quantityMetric = match;
       break;
@@ -100,12 +104,21 @@ function detectDatasetDimensions(schema = [], sampleRecords = []) {
   }
 
   // 3. Order ID Column
-  const idCandidates = ['order_id', 'id', 'transaction_id', 'invoice_id', 'order_number'];
+  const idCandidates = ['order_id', 'orderid', 'order_number', 'order_no', 'orderno', 'transaction_id', 'transactionid', 'invoice_id', 'invoice_number', 'invoice_no'];
   for (const candidate of idCandidates) {
-    const match = schema.find(c => c.name.toLowerCase() === candidate || c.name.toLowerCase().includes(candidate));
+    const match = schema.find(c => {
+      const colLower = c.name.toLowerCase();
+      return colLower === candidate || colLower.replace(/[-_\s]/g, '') === candidate.replace(/[-_\s]/g, '');
+    });
     if (match) {
       result.orderIdColumn = match.name;
       break;
+    }
+  }
+  if (!result.orderIdColumn) {
+    const exactId = schema.find(c => c.name.toLowerCase() === 'id');
+    if (exactId) {
+      result.orderIdColumn = exactId.name;
     }
   }
 
@@ -259,8 +272,10 @@ function computeDatasetKpis(allRecords = [], filteredRecords = [], dimensions = 
       averageOrderValue: 0,
       minSales: 0,
       maxSales: 0,
+      recordCount: 0,
       comparison: null,
       primaryMetricName: primaryCol || 'Metric',
+      quantityMetricName: qtyCol || 'Units',
       hasNumericMetrics: Boolean(primaryCol)
     };
   }
@@ -289,7 +304,7 @@ function computeDatasetKpis(allRecords = [], filteredRecords = [], dimensions = 
   // 2. Orders Count (Distinct order_id if present, else row count)
   let totalOrders = totalRecordsCount;
   if (idCol) {
-    const uniqueIds = new Set(filteredRecords.map(r => r[idCol]).filter(v => v !== undefined && v !== null));
+    const uniqueIds = new Set(filteredRecords.map(r => r[idCol]).filter(v => v !== undefined && v !== null && String(v).trim() !== ''));
     if (uniqueIds.size > 0) {
       totalOrders = uniqueIds.size;
     }
@@ -372,6 +387,7 @@ function computeDatasetKpis(allRecords = [], filteredRecords = [], dimensions = 
 function computeDatasetTrends(filteredRecords = [], dimensions = {}) {
   const dateCol = dimensions.dateColumn;
   const primaryCol = dimensions.primaryMetric;
+  const qtyCol = dimensions.quantityMetric;
 
   if (!dateCol || !primaryCol || filteredRecords.length === 0) {
     return [];
@@ -389,12 +405,14 @@ function computeDatasetTrends(filteredRecords = [], dimensions = {}) {
     // Standard ISO Date Key: YYYY-MM-DD
     const dateKey = parsedDate.toISOString().split('T')[0];
     const val = Number(r[primaryCol]) || 0;
+    const qty = qtyCol ? (Number(r[qtyCol]) || 0) : 0;
 
     if (!dateMap.has(dateKey)) {
       dateMap.set(dateKey, {
         date: dateKey,
         revenue: 0,
         orders: 0,
+        units: 0,
         rawTimestamp: parsedDate.getTime()
       });
     }
@@ -402,6 +420,7 @@ function computeDatasetTrends(filteredRecords = [], dimensions = {}) {
     const entry = dateMap.get(dateKey);
     entry.revenue += val;
     entry.orders += 1;
+    entry.units += qty;
   });
 
   const sortedTrends = Array.from(dateMap.values()).sort((a, b) => a.rawTimestamp - b.rawTimestamp);

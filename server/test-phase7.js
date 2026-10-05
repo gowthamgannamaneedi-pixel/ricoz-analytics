@@ -179,6 +179,12 @@ async function runPhase7Tests() {
     const orgAId = orgARes.data.user.organization_id;
     const analystUserId = orgARes.data.user.id;
 
+    // Verify Alice email
+    await request('POST', '/api/auth/verify-email', {
+      email: orgARes.data.email,
+      otp: orgARes.data._devVerificationOtp
+    });
+
     // Promote Alice to analyst
     await UserModel.updateRole(analystUserId, 'analyst');
     const analystToken = jwt.sign(
@@ -241,6 +247,13 @@ async function runPhase7Tests() {
     });
     const orgBId = orgBRes.data.user.organization_id;
     const userBId = orgBRes.data.user.id;
+
+    // Verify Bob email
+    await request('POST', '/api/auth/verify-email', {
+      email: orgBRes.data.email,
+      otp: orgBRes.data._devVerificationOtp
+    });
+
     await UserModel.updateRole(userBId, 'admin');
     const userBToken = jwt.sign(
       { id: userBId, email: orgBRes.data.user.email, role: 'admin', organization_id: orgBId },

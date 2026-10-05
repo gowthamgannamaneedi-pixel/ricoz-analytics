@@ -97,19 +97,11 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
         const data = await res.json();
         setPgTestResult(data);
       } else {
-        // Fallback demo simulation
-        setPgTestResult({
-          success: true,
-          message: `PostgreSQL host "${pgForm.host}" responded successfully (Standby mode).`,
-          serverVersion: 'PostgreSQL 16.2 (Demo Telemetry Hub)'
-        });
+        const errData = await res.json().catch(() => ({}));
+        setError(errData.message || `PostgreSQL connection test failed (HTTP ${res.status}).`);
       }
-    } catch (_) {
-      setPgTestResult({
-        success: true,
-        message: `PostgreSQL connection verified for database "${pgForm.database}".`,
-        serverVersion: 'PostgreSQL 16.2 (Demo Telemetry Hub)'
-      });
+    } catch (err) {
+      setError(err.message || 'PostgreSQL connection test failed.');
     } finally {
       setIsTestingPg(false);
     }
@@ -152,36 +144,10 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
         return;
       }
 
-      // Standalone demo fallback
-      const mockResult = {
-        success: true,
-        data: {
-          id: Date.now(),
-          name: pgForm.name.trim(),
-          type: 'postgresql',
-          total_rows: 50000,
-          status: 'connected',
-          config: { host: pgForm.host, database: pgForm.database, user: pgForm.user, hasPassword: Boolean(pgForm.password) },
-          created_at: new Date().toISOString()
-        }
-      };
-      onSuccess(mockResult);
-      handleClose();
-    } catch (_) {
-      const mockResult = {
-        success: true,
-        data: {
-          id: Date.now(),
-          name: pgForm.name.trim(),
-          type: 'postgresql',
-          total_rows: 50000,
-          status: 'connected',
-          config: { host: pgForm.host, database: pgForm.database, user: pgForm.user, hasPassword: Boolean(pgForm.password) },
-          created_at: new Date().toISOString()
-        }
-      };
-      onSuccess(mockResult);
-      handleClose();
+      const errData = await res.json().catch(() => ({}));
+      setError(errData.message || `Failed to create PostgreSQL data source (HTTP ${res.status}).`);
+    } catch (err) {
+      setError(err.message || 'Failed to create PostgreSQL data source.');
     } finally {
       setIsProcessing(false);
     }
@@ -326,54 +292,30 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
       setUploadStage('complete');
       setStageMessage('Ingestion complete! Generating preview...');
 
-      let responseData = null;
       if (res && res.ok) {
         const contentType = res.headers.get('content-type') || '';
+        let responseData = null;
         if (contentType.includes('application/json')) {
           responseData = await res.json().catch(() => null);
         }
+        if (responseData && responseData.success) {
+          setTimeout(() => {
+            onSuccess(responseData);
+            handleClose();
+          }, 300);
+          return;
+        }
       }
 
-      if (!responseData) {
-        // Generate mock ingested dataset
-        responseData = {
-          success: true,
-          data: {
-            source: {
-              id: Date.now(),
-              name: sourceName.trim() || selectedFile.name,
-              type: activeTab,
-              total_rows: 1500,
-              status: 'active',
-              config: { filename: selectedFile.name, sizeBytes: selectedFile.size },
-              created_at: new Date().toISOString()
-            },
-            dataset: {
-              id: Date.now(),
-              name: sourceName.trim() || selectedFile.name,
-              type: activeTab,
-              row_count: 1500,
-              column_count: 6,
-              created_at: new Date().toISOString(),
-              schema: [
-                { name: 'id', type: 'number' },
-                { name: 'region', type: 'string' },
-                { name: 'category', type: 'string' },
-                { name: 'sales_amount', type: 'number' },
-                { name: 'units_sold', type: 'number' },
-                { name: 'created_date', type: 'date' }
-              ]
-            }
-          }
-        };
+      let errorMsg = 'Failed to upload and ingest file.';
+      if (res) {
+        const errJson = await res.json().catch(() => ({}));
+        errorMsg = errJson.message || `File upload failed with HTTP ${res.status}`;
       }
-
-      setTimeout(() => {
-        onSuccess(responseData);
-        handleClose();
-      }, 500);
+      setError(errorMsg);
+      setIsProcessing(false);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'File upload failed');
       setIsProcessing(false);
     }
   };

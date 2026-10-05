@@ -38,6 +38,8 @@ import {
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import AlertModal from '../components/AlertModal';
+import { Button } from '../components/ui/Button';
+import { RefreshButton } from '../components/ui/RefreshButton';
 
 const SEVERITY_CONFIG = {
   critical: {
@@ -295,26 +297,23 @@ export default function AlertsPage() {
 
         {/* Header Actions */}
         <div className="flex items-center gap-2.5">
-          <button
+          <RefreshButton
+            label={refreshing ? 'Refreshing...' : 'Refresh'}
+            loading={refreshing}
             onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin text-blue-600' : 'text-slate-400'}`} />
-            <span>Refresh</span>
-          </button>
+          />
 
           {canMutate && (
-            <button
+            <Button
               onClick={() => {
                 setEditingAlert(null);
                 setIsAlertModalOpen(true);
               }}
-              className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+              variant="primary"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>Create Alert Rule</span>
-            </button>
+            </Button>
           )}
         </div>
       </div>

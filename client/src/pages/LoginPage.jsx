@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Lock, Mail, AlertCircle, ArrowRight, Loader2, Layers } from 'lucide-react';
+import { Lock, Mail, AlertCircle, CheckCircle2, ArrowRight, Loader2, KeyRound } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
@@ -15,8 +15,10 @@ export default function LoginPage() {
   const [error, setError] = useState(
     location.state?.sessionExpired 
       ? 'Your session has expired. Please sign in again.' 
-      : (location.state?.message || '')
+      : ''
   );
+  const [successMessage, setSuccessMessage] = useState(location.state?.message || '');
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   // Development-only authentication helper (strictly disabled in production)
@@ -32,6 +34,7 @@ export default function LoginPage() {
       [e.target.name]: e.target.value
     }));
     if (error) setError('');
+    if (unverifiedEmail) setUnverifiedEmail('');
   };
 
   const handleSubmit = async (e) => {
@@ -43,6 +46,8 @@ export default function LoginPage() {
 
     setIsLoading(true);
     setError('');
+    setSuccessMessage('');
+    setUnverifiedEmail('');
 
     try {
       await login({
@@ -51,7 +56,15 @@ export default function LoginPage() {
       });
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message || 'Invalid email or password.');
+      const errMsg = err.message || 'Invalid email or password.';
+      setError(errMsg);
+      if (err.statusCode === 402 || err.data?.requiresSubscription) {
+        navigate('/billing', { state: { trialExpired: true, email: formData.email } });
+        return;
+      }
+      if (err.data?.requiresVerification || errMsg.toLowerCase().includes('verify your email')) {
+        setUnverifiedEmail(err.data?.email || formData.email);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -66,6 +79,10 @@ export default function LoginPage() {
             src="/ricoz-logo.png" 
             alt="RicoZ" 
             className="h-10 w-auto object-contain" 
+            onError={(e) => {
+              // Fallback logo text if png asset is not available
+              e.currentTarget.style.display = 'none';
+            }}
           />
           <div className="flex items-center gap-1.5 mt-1">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-700 font-mono">
@@ -92,6 +109,27 @@ export default function LoginPage() {
             <div className="flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600" />
               <span className="font-medium">{error}</span>
+            </div>
+          )}
+
+          {unverifiedEmail && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900 space-y-2">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+                <span className="font-bold">Email Verification Required</span>
+              </div>
+              <p className="text-[11px] text-amber-800">
+                Please verify your email address to access your workspace.
+              </p>
+              <div>
+                <Link
+                  to="/auth/verify-email"
+                  state={{ email: unverifiedEmail }}
+                  className="inline-flex items-center font-semibold text-blue-600 hover:text-blue-700 underline"
+                >
+                  Enter Verification Code / Resend &rarr;
+                </Link>
+              </div>
             </div>
           )}
 

@@ -517,6 +517,160 @@ class EmailService {
       };
     }
   }
+
+  /**
+   * Send Account Verification Email with OTP and Direct Link
+   * @param {{ email: string, name: string, token: string, otp: string, verifyUrl: string }} options
+   */
+  async sendVerificationEmail({ email, name, token, otp, verifyUrl }) {
+    const fromEmail = process.env.SMTP_FROM || 'care@ricoz.in';
+    const link = verifyUrl || `http://localhost:5173/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
+
+    const htmlContent = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;">
+        <div style="margin-bottom: 24px;">
+          <span style="font-weight: 800; font-size: 20px; color: #0f172a; letter-spacing: -0.5px;">ricoz<span style="color: #2563eb;">Analytics</span></span>
+          <span style="margin-left: 8px; font-size: 10px; font-weight: 700; background: #eff6ff; color: #2563eb; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">Enterprise</span>
+        </div>
+        <h2 style="color: #0f172a; font-size: 22px; font-weight: 700; margin: 0 0 12px 0;">Verify your email address</h2>
+        <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
+          Hi ${name || 'there'}, welcome to RicozAnalytics! Your 14-day full enterprise free trial is ready. Please verify your email address to access your workspace.
+        </p>
+        
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-align: center; margin: 24px 0;">
+          <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 8px;">Your 6-Digit Verification Code</div>
+          <div style="font-family: monospace; font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #1e293b;">${otp}</div>
+          <div style="font-size: 11px; color: #94a3b8; margin-top: 8px;">This code will expire in 24 hours.</div>
+        </div>
+
+        <div style="text-align: center; margin: 28px 0;">
+          <a href="${link}" style="display: inline-block; background: #2563eb; color: #ffffff; font-weight: 600; font-size: 14px; padding: 12px 28px; border-radius: 8px; text-decoration: none; box-shadow: 0 2px 4px rgba(37,99,235,0.2);">
+            Verify Email & Open Workspace
+          </a>
+        </div>
+
+        <p style="color: #64748b; font-size: 12px; margin-top: 24px;">
+          If the button above does not work, copy and paste this link into your browser:<br>
+          <a href="${link}" style="color: #2563eb; word-break: break-all;">${link}</a>
+        </p>
+
+        <div style="border-top: 1px solid #f1f5f9; margin-top: 32px; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
+          © ${new Date().getFullYear()} RicozAnalytics Inc. Security & Tenant Isolation Verified.
+        </div>
+      </div>
+    `;
+
+    console.log(`[EmailService] ✉️ Verification Email generated for: ${email} (OTP: ${otp})`);
+
+    if (!this.isConfigured()) {
+      return {
+        attempted: false,
+        success: true, // Marked available in dev/sandbox
+        recipient: email,
+        otp,
+        token,
+        verifyUrl: link,
+        message: 'Dev mode: verification code dispatched to server log.'
+      };
+    }
+
+    try {
+      const info = await this.transporter.sendMail({
+        from: `"RicozAnalytics Security" <${fromEmail}>`,
+        to: email,
+        subject: `Your RicozAnalytics Verification Code: ${otp}`,
+        html: htmlContent
+      });
+      return {
+        attempted: true,
+        success: true,
+        recipient: email,
+        messageId: info.messageId,
+        otp
+      };
+    } catch (err) {
+      console.warn(`[EmailService] Verification email SMTP delivery note: ${err.message}. Token and OTP remain valid in database.`);
+      return {
+        attempted: true,
+        success: false,
+        recipient: email,
+        error: err.message,
+        otp
+      };
+    }
+  }
+
+  /**
+   * Send Team Member Invitation Email
+   * @param {{ email: string, inviterName: string, orgName: string, role: string, inviteUrl: string }} options
+   */
+  async sendInvitationEmail({ email, inviterName, orgName, role, inviteUrl }) {
+    const fromEmail = process.env.SMTP_FROM || 'care@ricoz.in';
+    const link = inviteUrl || `http://localhost:5173/auth/accept-invite?email=${encodeURIComponent(email)}`;
+
+    const htmlContent = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;">
+        <div style="margin-bottom: 24px;">
+          <span style="font-weight: 800; font-size: 20px; color: #0f172a; letter-spacing: -0.5px;">ricoz<span style="color: #2563eb;">Analytics</span></span>
+          <span style="margin-left: 8px; font-size: 10px; font-weight: 700; background: #eff6ff; color: #2563eb; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">Workspace Invitation</span>
+        </div>
+        <h2 style="color: #0f172a; font-size: 22px; font-weight: 700; margin: 0 0 12px 0;">You've been invited to join ${orgName}</h2>
+        <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
+          <strong>${inviterName || 'An administrator'}</strong> has invited you to join the <strong>${orgName}</strong> team on RicozAnalytics with the role of <strong>${role.toUpperCase()}</strong>.
+        </p>
+
+        <div style="text-align: center; margin: 28px 0;">
+          <a href="${link}" style="display: inline-block; background: #2563eb; color: #ffffff; font-weight: 600; font-size: 14px; padding: 12px 28px; border-radius: 8px; text-decoration: none; box-shadow: 0 2px 4px rgba(37,99,235,0.2);">
+            Accept Invitation & Join Team
+          </a>
+        </div>
+
+        <p style="color: #64748b; font-size: 12px; margin-top: 24px;">
+          This invitation link is valid for 7 days.<br>
+          <a href="${link}" style="color: #2563eb; word-break: break-all;">${link}</a>
+        </p>
+
+        <div style="border-top: 1px solid #f1f5f9; margin-top: 32px; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
+          © ${new Date().getFullYear()} RicozAnalytics Inc.
+        </div>
+      </div>
+    `;
+
+    console.log(`[EmailService] ✉️ Team Invitation generated for: ${email} -> ${orgName} (${role})`);
+
+    if (!this.isConfigured()) {
+      return {
+        attempted: false,
+        success: true,
+        recipient: email,
+        inviteUrl: link
+      };
+    }
+
+    try {
+      const info = await this.transporter.sendMail({
+        from: `"RicozAnalytics Team" <${fromEmail}>`,
+        to: email,
+        subject: `Invitation to join ${orgName} on RicozAnalytics`,
+        html: htmlContent
+      });
+      return {
+        attempted: true,
+        success: true,
+        recipient: email,
+        messageId: info.messageId
+      };
+    } catch (err) {
+      console.warn(`[EmailService] Invitation email SMTP warning: ${err.message}`);
+      return {
+        attempted: true,
+        success: false,
+        recipient: email,
+        error: err.message
+      };
+    }
+  }
 }
 
 module.exports = new EmailService();
+

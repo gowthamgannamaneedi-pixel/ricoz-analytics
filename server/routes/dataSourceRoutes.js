@@ -11,6 +11,7 @@ const {
   testApiConnection,
   syncDataSource,
   uploadDataSource,
+  updateDataSource,
   deleteDataSource
 } = require('../controllers/dataSourceController');
 
@@ -24,6 +25,7 @@ router.post('/test-connection', testConnection);
 router.post('/test-api', requireRole('admin', 'manager', 'analyst'), testApiConnection);
 router.post('/upload', handleUpload('file'), uploadDataSource);
 router.get('/:id', getDataSourceById);
+router.put('/:id', requireRole('admin', 'manager', 'analyst'), updateDataSource);
 router.post('/:id/sync', requireRole('admin', 'manager', 'analyst'), syncDataSource);
 router.delete('/:id', deleteDataSource);
 

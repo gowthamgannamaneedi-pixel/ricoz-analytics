@@ -90,7 +90,10 @@ function evaluateRecordAggregation(records = [], aggType = 'SUM', col = null) {
  */
 const getDashboards = async (req, res, next) => {
   try {
-    const orgId = req.user.organization_id || '00000000-0000-0000-0000-000000000001';
+    const orgId = req.user.organization_id;
+    if (!orgId) {
+      return res.status(403).json({ success: false, message: 'Organization required.' });
+    }
     const dashboards = await Dashboard.findByOrganizationId(orgId);
 
     return res.status(200).json({
@@ -110,7 +113,10 @@ const getDashboards = async (req, res, next) => {
  */
 const getDashboardById = async (req, res, next) => {
   try {
-    const orgId = req.user.organization_id || '00000000-0000-0000-0000-000000000001';
+    const orgId = req.user.organization_id;
+    if (!orgId) {
+      return res.status(403).json({ success: false, message: 'Organization required.' });
+    }
     const { id } = req.params;
 
     const dashboard = await Dashboard.findByIdAndOrgId(id, orgId);

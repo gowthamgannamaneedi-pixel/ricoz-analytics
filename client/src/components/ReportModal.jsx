@@ -13,6 +13,7 @@ import {
   Plus,
   Trash2
 } from 'lucide-react';
+import { Button } from './ui/Button';
 
 const FORMAT_OPTIONS = [
   { value: 'pdf', label: 'PDF Document', desc: 'Formatted executive summary with charts & KPI cards', icon: '📄' },
@@ -192,8 +193,8 @@ export default function ReportModal({
           </button>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+        {/* Form Body — increased top padding, clear section rhythm */}
+        <form onSubmit={handleSubmit} className="px-6 pt-5 pb-6 space-y-5 max-h-[72vh] overflow-y-auto">
           {error && (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs">
               <AlertCircle className="h-4 w-4 shrink-0" />
@@ -382,28 +383,28 @@ export default function ReportModal({
           </div>
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-            <button
+          <div className="flex items-center justify-end gap-2.5 pt-5 border-t border-slate-100">
+            <Button
               type="button"
+              variant="secondary"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg border border-slate-300 text-xs font-medium text-slate-700 hover:bg-slate-50 transition cursor-pointer"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={loading}
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold shadow-xs hover:bg-blue-700 disabled:opacity-50 transition cursor-pointer"
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   Saving...
                 </>
               ) : (
                 report ? 'Update Report' : 'Create & Schedule Report'
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

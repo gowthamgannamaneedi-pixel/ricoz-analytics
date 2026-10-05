@@ -1,271 +1,189 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, Search, Bell, LogOut, ChevronRight, CheckCircle2, User, Sliders, CheckCheck, MessageSquare, Share2, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  Menu,
+  Search,
+  Building2,
+  ChevronDown,
+  Clock,
+  AlertTriangle,
+  Sparkles
+} from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getNotificationsApi, markNotificationReadApi, markAllNotificationsReadApi } from '../services/api';
+import Notification from './ui/Notification';
+import Profile from './ui/Profile';
 
 const routeTitleMap = {
-  '/': 'Overview',
-  '/dashboard': 'Overview',
-  '/data-sources': 'Data Sources & Connectors',
-  '/datasets': 'Dataset Explorer',
-  '/kpis': 'Key Performance Indicators',
-  '/reports': 'Automated Reports',
-  '/forecasts': 'Predictive Forecasting',
-  '/alerts': 'Real-time Alerts Engine',
-  '/ai-insights': 'Automated AI Insights',
-  '/ai-assistant': 'AI Analytics Assistant',
-  '/collaboration': 'Enterprise Collaboration',
-  '/settings': 'Platform Governance'
+  '/':               'Overview',
+  '/dashboard':      'Overview',
+  '/data-sources':   'Data Sources & Connectors',
+  '/datasets':       'Dataset Explorer',
+  '/data-model':     'Data Model',
+  '/relationships':  'Data Model',
+  '/data-quality':   'Data Quality',
+  '/kpis':           'Key Performance Indicators',
+  '/reports':        'Automated Reports',
+  '/forecasts':      'Predictive Forecasting',
+  '/alerts':         'Real-time Alerts Engine',
+  '/ai-insights':    'Automated AI Insights',
+  '/ai-assistant':   'AI Analytics Assistant',
+  '/collaboration':  'Enterprise Collaboration',
+  '/billing':        'Subscription & Licensing',
+  '/settings':       'Workspace Settings',
+  '/governance':     'Platform Governance',
 };
 
 /**
- * Professional Light-First Navbar
- * @param {{ onOpenSidebar: () => void }} props
+ * Enterprise Navbar Component — RicozAnalytics
+ *
+ * Popover Coordination:
+ * - Only ONE header popover (Profile OR Notifications) can be open at a time.
+ * - Clicking outside or pressing Escape closes the active popover.
+ * - Unified across all workspace pages.
  */
 export default function Navbar({ onOpenSidebar }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, subscription, isTrialExpired, trialDaysRemaining } = useAuth();
 
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [activePopover, setActivePopover] = useState(null); // 'notifications' | 'profile' | null
   const [searchQuery, setSearchQuery] = useState('');
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const searchRef = useRef(null);
 
-  const currentTitle = routeTitleMap[location.pathname] || 'Analytics Overview';
-
+  // Global keyboard shortcuts
   useEffect(() => {
-    loadNotifications();
-    const interval = setInterval(loadNotifications, 30000);
-    return () => clearInterval(interval);
-  }, [user]);
-
-  const loadNotifications = async () => {
-    try {
-      const res = await getNotificationsApi(15);
-      setNotifications(res.data?.notifications || []);
-      setUnreadCount(res.data?.unreadCount || 0);
-    } catch (_) {}
-  };
-
-  const handleMarkAllRead = async () => {
-    try {
-      await markAllNotificationsReadApi();
-      setUnreadCount(0);
-      setNotifications(notifications.map(n => ({ ...n, read_at: new Date() })));
-    } catch (_) {}
-  };
-
-  const handleNotificationClick = async (notif) => {
-    try {
-      if (!notif.read_at) {
-        await markNotificationReadApi(notif.id);
-        setUnreadCount(Math.max(0, unreadCount - 1));
-        setNotifications(notifications.map(n => n.id === notif.id ? { ...n, read_at: new Date() } : n));
+    const handleKeyDown = (e) => {
+      // Ctrl+K or Cmd+K: Focus global search
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchRef.current?.focus();
       }
-      setShowNotifications(false);
-      if (notif.resource_type === 'dashboard') navigate('/dashboard');
-      else if (notif.resource_type === 'report') navigate('/reports');
-      else if (notif.resource_type === 'ai_insight') navigate('/ai-insights');
-      else navigate('/collaboration');
-    } catch (_) {}
-  };
+      // Escape: Close any open popovers
+      if (e.key === 'Escape') {
+        setActivePopover(null);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
-  // Compute 2-letter initials
-  const getInitials = (name) => {
-    if (!name) return 'RA';
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    return name.slice(0, 2).toUpperCase();
-  };
+  const handleToggleNotifications = useCallback(() => {
+    setActivePopover((prev) => (prev === 'notifications' ? null : 'notifications'));
+  }, []);
 
-  const handleLogout = () => {
-    setShowProfileMenu(false);
-    logout();
-    navigate('/login', { replace: true });
-  };
+  const handleToggleProfile = useCallback(() => {
+    setActivePopover((prev) => (prev === 'profile' ? null : 'profile'));
+  }, []);
+
+  const handleClosePopovers = useCallback(() => {
+    setActivePopover(null);
+  }, []);
+
+  const isActivePaid = subscription?.status === 'active';
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-slate-50 shadow-sm px-4 sm:px-6">
-      {/* Left: Mobile Toggle & Breadcrumb */}
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8 shadow-2xs">
+      {/* Left: Mobile Navigation Drawer Toggle & Global Search */}
+      <div className="flex items-center gap-3 flex-1 max-w-xl">
         <button
+          type="button"
           onClick={onOpenSidebar}
-          className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 lg:hidden transition cursor-pointer"
           aria-label="Open sidebar"
         >
-          <Menu className="h-4 w-4" />
+          <Menu className="h-5 w-5" />
         </button>
 
-        {/* Breadcrumb Hierarchy */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs">
-          <span className="text-slate-400 hidden sm:inline font-medium">Workspace</span>
-          <ChevronRight className="h-3 w-3 text-slate-300 hidden sm:inline" />
-          <span className="text-slate-500 hidden sm:inline font-medium">Production</span>
-          <ChevronRight className="h-3 w-3 text-slate-300 hidden sm:inline" />
-          <span className="font-semibold text-brand-700">{currentTitle}</span>
-        </nav>
-      </div>
-
-      {/* Right: Telemetry, Search, Notifications, Profile */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* Live Data Freshness Badge */}
-        <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-[11px] text-emerald-700 font-medium">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Live Telemetry · 2m ago</span>
-        </div>
-
         {/* Global Search Bar */}
-        <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
+            ref={searchRef}
             type="text"
-            placeholder="Search metrics, reports..."
+            placeholder="Search metrics, reports, datasets, or ask AI..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-52 lg:w-64 rounded-lg border border-slate-200 bg-slate-100 py-1.5 pl-9 pr-12 text-xs text-slate-800 placeholder-slate-400 transition hover:border-brand-500 focus:border-brand-500 focus:bg-white focus:outline-none"
+            className="w-full h-10 rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-16 text-xs sm:text-sm text-slate-800 placeholder-slate-400 hover:border-slate-300 focus:border-blue-600 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-100 transition shadow-2xs"
           />
-          <kbd className="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[9px] text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-2xs">
-            Ctrl+K
+          <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-[10px] font-semibold text-slate-500 bg-white px-2 py-0.5 rounded-md border border-slate-200 shadow-2xs pointer-events-none select-none">
+            Ctrl + K
           </kbd>
         </div>
+      </div>
 
-        {/* Notifications Popover */}
-        <div className="relative">
+      {/* Right Controls: Organization Selector, Trial Status, Notifications, Profile */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Organization Selector */}
+        <button
+          type="button"
+          onClick={() => {
+            handleClosePopovers();
+            navigate('/settings');
+          }}
+          className="hidden md:flex items-center gap-2 h-10 px-3.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition shadow-2xs cursor-pointer select-none"
+          aria-label="Current organization"
+          title="Manage organization & workspace"
+        >
+          <Building2 className="h-4 w-4 text-blue-600" />
+          <span className="max-w-36 truncate font-medium">
+            {user?.organization_name || 'Ricoz Primary Organization'}
+          </span>
+          <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+        </button>
+
+        {/* 14-Day Free Trial / Subscription Badge */}
+        {isTrialExpired ? (
           <button
-            onClick={() => { setShowNotifications(!showNotifications); loadNotifications(); }}
-            className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
-            aria-label="View notifications"
+            type="button"
+            onClick={() => navigate('/billing')}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 text-xs font-bold transition cursor-pointer shadow-2xs"
+            title="Your trial has expired. Click to choose a plan"
           >
-            <Bell className="h-4 w-4" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-600 font-mono text-[9px] font-bold text-white ring-2 ring-white">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
+            <AlertTriangle className="h-3.5 w-3.5 text-rose-600" />
+            <span>Free Trial Expired</span>
           </button>
-
-          {showNotifications && (
-            <div className="absolute right-0 mt-2 w-84 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xl z-50 text-xs">
-              <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-slate-100">
-                <span className="font-bold text-slate-900">Notifications ({unreadCount})</span>
-                {unreadCount > 0 && (
-                  <button
-                    onClick={handleMarkAllRead}
-                    className="flex items-center gap-1 text-[11px] text-blue-600 font-medium hover:underline cursor-pointer"
-                  >
-                    <CheckCheck className="h-3 w-3" />
-                    <span>Mark all read</span>
-                  </button>
-                )}
-              </div>
-
-              <div className="max-h-72 overflow-y-auto space-y-1.5 pr-1">
-                {notifications.length === 0 ? (
-                  <div className="py-8 text-center text-xs text-slate-400">
-                    <Bell className="h-6 w-6 text-slate-200 mx-auto mb-1.5" />
-                    <span>No notifications</span>
-                  </div>
-                ) : (
-                  notifications.map(notif => (
-                    <div
-                      key={notif.id}
-                      onClick={() => handleNotificationClick(notif)}
-                      className={`flex items-start gap-2.5 p-2.5 rounded-xl cursor-pointer transition ${
-                        !notif.read_at
-                          ? 'bg-blue-50/70 border border-blue-100 hover:bg-blue-100/50'
-                          : 'bg-slate-50/50 border border-slate-100 hover:bg-slate-100/60'
-                      }`}
-                    >
-                      <div className="p-1.5 rounded-lg bg-white border border-slate-200/80 text-blue-600 shrink-0 mt-0.5 shadow-2xs">
-                        {notif.type === 'mention' ? (
-                          <MessageSquare className="h-3.5 w-3.5 text-indigo-600" />
-                        ) : notif.type === 'share' ? (
-                          <Share2 className="h-3.5 w-3.5 text-blue-600" />
-                        ) : (
-                          <Bell className="h-3.5 w-3.5 text-amber-600" />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-1">
-                          <p className="font-semibold text-slate-900 text-xs truncate">{notif.title}</p>
-                          <span className="text-[9px] text-slate-400 shrink-0">
-                            {new Date(notif.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-600 mt-0.5 line-clamp-2 leading-relaxed">{notif.message}</p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Vertical Divider */}
-        <div className="h-5 w-px bg-slate-200 hidden sm:block" />
-
-        {/* User Profile */}
-        <div className="relative">
+        ) : isActivePaid ? (
           <button
-            onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="flex items-center gap-2 rounded-lg p-1 text-left transition hover:bg-brand-50"
-            id="navbar-profile-btn"
+            type="button"
+            onClick={() => navigate('/billing')}
+            className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition cursor-pointer shadow-2xs"
+            title="Subscription active"
           >
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-50 border border-brand-200 font-mono text-[11px] font-bold text-brand-700 relative">
-              {getInitials(user?.name)}<span className="absolute bottom-0 right-0 block h-2 w-2 rounded-full bg-emerald-500 border-2 border-white"></span>
-            </div>
-            <div className="hidden sm:block">
-              <span className="text-xs font-semibold text-slate-800 block leading-tight max-w-[110px] truncate">
-                {user?.name || 'Enterprise User'}
-              </span>
-              <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-1 py-0.2 rounded inline-block leading-tight ${
-                user?.role === 'admin'
-                  ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                  : user?.role === 'manager'
-                  ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                  : user?.role === 'analyst'
-                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                  : 'bg-slate-100 text-slate-600 border border-slate-200'
-              }`}>
-                {user?.role ? user.role.toUpperCase() : 'VIEWER'}
-              </span>
-            </div>
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="capitalize">{subscription?.plan || 'Pro'} Plan</span>
           </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => navigate('/billing')}
+            className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-bold transition cursor-pointer shadow-2xs ${
+              trialDaysRemaining <= 3 
+                ? 'bg-amber-50 border border-amber-200 text-amber-800 hover:bg-amber-100' 
+                : 'bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100'
+            }`}
+            title="Click to view plans and subscription"
+          >
+            <Clock className="h-3.5 w-3.5 text-blue-600" />
+            <span>{trialDaysRemaining} {trialDaysRemaining === 1 ? 'day' : 'days'} remaining</span>
+          </button>
+        )}
 
-          {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-60 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl z-50 text-xs">
-              <div className="px-3 py-2.5 border-b border-slate-100 mb-1">
-                <p className="font-semibold text-slate-900 truncate">{user?.name || 'Enterprise User'}</p>
-                <p className="text-[11px] text-slate-500 truncate font-mono">{user?.email || 'user@company.com'}</p>
-                <p className="text-[10px] text-slate-400 truncate mt-1 flex items-center gap-1 font-medium">
-                  <span>🏢</span> {user?.organization_name || 'Primary Organization'}
-                </p>
-              </div>
+        {/* Coordinated Notification Bell Popover */}
+        <Notification
+          isOpen={activePopover === 'notifications'}
+          onToggle={handleToggleNotifications}
+          onClose={handleClosePopovers}
+        />
 
-              <button
-                onClick={() => { setShowProfileMenu(false); navigate('/settings'); }}
-                className="w-full text-left px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-50 transition text-xs font-medium"
-              >
-                Workspace Settings
-              </button>
+        {/* Vertical divider */}
+        <div className="h-6 w-px bg-slate-200 hidden sm:block" />
 
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-2 text-left px-3 py-2 rounded-lg text-rose-600 hover:bg-rose-50 transition text-xs font-medium mt-1 border-t border-slate-100"
-                id="profile-logout-btn"
-              >
-                <LogOut className="h-3.5 w-3.5 text-rose-500" />
-                <span>Sign Out</span>
-              </button>
-            </div>
-          )}
-        </div>
+        {/* Coordinated User Profile Popover */}
+        <Profile
+          isOpen={activePopover === 'profile'}
+          onToggle={handleToggleProfile}
+          onClose={handleClosePopovers}
+        />
       </div>
     </header>
   );

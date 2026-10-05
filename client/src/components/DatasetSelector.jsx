@@ -74,22 +74,19 @@ export default function DatasetSelector({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         id="dataset-selector-trigger"
-        className="flex items-center gap-2.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-left text-xs font-medium text-slate-800 transition hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-600 shadow-2xs min-w-[220px] max-w-[320px]"
+        className="flex items-center gap-2.5 h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-left text-xs font-medium text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100 shadow-2xs min-w-[220px] max-w-[320px] cursor-pointer"
       >
-        <div className="p-1 rounded bg-blue-50 border border-blue-100 text-blue-700 shrink-0">
-          <Table2 className="h-3.5 w-3.5" />
+        <div className="p-1 rounded-md bg-blue-50 border border-blue-100 text-blue-700 shrink-0">
+          <Table2 className="h-4 w-4" />
         </div>
 
         <div className="min-w-0 flex-1">
-          <span className="text-[10px] text-slate-400 block uppercase font-mono tracking-wider font-semibold">
-            Active Dataset
-          </span>
-          <span className="font-semibold text-slate-900 truncate block text-xs">
+          <span className="font-bold text-slate-900 truncate block text-xs">
             {selectedDataset ? selectedDataset.name : 'Select Dataset'}
           </span>
         </div>
 
-        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180 text-blue-600' : ''}`} />
       </button>
 
       {/* Popover Menu */}

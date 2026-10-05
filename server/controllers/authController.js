@@ -1,10 +1,17 @@
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('../config');
 const { supabase, isConfigured } = require('../config/supabase');
 const UserModel = require('../models/userModel');
 const OrganizationModel = require('../models/organizationModel');
+const InvitationModel = require('../models/invitationModel');
+const subscriptionService = require('../services/subscriptionService');
+const emailService = require('../services/emailService');
 const { logAuditEvent, AUDIT_ACTIONS } = require('../services/auditService');
+
+// In-memory rate limiting map for verification resends: email -> lastSentTimestamp
+const resendRateLimits = new Map();
 
 /**
  * Helper to generate signed JWT token containing multi-tenant user claims
@@ -16,7 +23,7 @@ function generateToken(user) {
       email: user.email,
       name: user.name,
       role: user.role || 'viewer',
-      organization_id: user.organization_id || '00000000-0000-0000-0000-000000000001'
+      organization_id: user.organization_id
     },
     config.jwtSecret,
     { expiresIn: '7d' }
@@ -33,11 +40,14 @@ function isValidEmail(email) {
 
 /**
  * POST /api/auth/register
- * Register a new user account with default 'viewer' role and multi-tenant organization linking
+ * Register a new SaaS account.
+ * Automatically creates a NEW tenant organization with a 14-day free trial.
+ * The registering user is designated as 'admin' of their organization.
  */
 const register = async (req, res, next) => {
   try {
-    const { name, email, password, organization_name } = req.body;
+    const { name, email, password, organization_name, organizationName } = req.body;
+    const orgName = (organization_name || organizationName || '').trim();
 
     // 1. Validation
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -61,96 +71,129 @@ const register = async (req, res, next) => {
       });
     }
 
-    // 2. Check for duplicate email in database
-    const existingUser = await UserModel.findByEmail(email);
-    if (existingUser) {
-      return res.status(409).json({
+    if (!orgName) {
+      return res.status(400).json({
         success: false,
-        message: 'An account with this email address already exists.'
+        message: 'Organization or company name is required to create your workspace.'
       });
     }
 
-    // 3. Resolve or create user's organization
-    let organizationId = '00000000-0000-0000-0000-000000000001';
-    if (organization_name && organization_name.trim()) {
-      const org = await OrganizationModel.create({
-        name: organization_name.trim(),
-        plan: 'starter'
-      }).catch(() => null);
-      if (org && org.id) organizationId = org.id;
-    } else {
-      const defaultOrg = await OrganizationModel.ensureDefaultOrganization().catch(() => null);
-      if (defaultOrg && defaultOrg.id) organizationId = defaultOrg.id;
+    const cleanEmail = email.trim().toLowerCase();
+
+    // 2. Check for duplicate email in database
+    const existingUser = await UserModel.findByEmail(cleanEmail);
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: 'An account with this email address already exists. Please log in or verify your account.'
+      });
     }
+
+    // 3. Create a BRAND NEW isolated tenant organization with 14-day free trial
+    const newOrg = await OrganizationModel.create({
+      name: orgName,
+      plan: 'starter',
+      subscription_status: 'trial',
+      payment_status: 'unpaid'
+    });
+
+    if (!newOrg || !newOrg.id) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to initialize tenant workspace organization.'
+      });
+    }
+
+    const organizationId = newOrg.id;
 
     // 4. Hash password securely
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // 5. Enforce strict default role to prevent privilege escalation on public registration
-    // Roles can only be upgraded by administrators
-    const defaultRole = 'viewer';
+    // 5. Initial registering user is granted the 'admin' role of their organization
+    const initialRole = 'admin';
 
-    // 6. If Supabase Auth is configured, attempt Supabase Auth signup
-    let supabaseUserId = null;
+    // 6. Generate cryptographic verification token and 6-digit OTP
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // 7. Supabase Auth registration (if configured)
     if (isConfigured && supabase) {
       try {
-        const { data, error } = await supabase.auth.signUp({
-          email: email.trim().toLowerCase(),
+        await supabase.auth.signUp({
+          email: cleanEmail,
           password,
           options: {
             data: {
               name: name.trim(),
-              role: defaultRole,
+              role: initialRole,
               organization_id: organizationId
             }
           }
         });
-        if (!error && data?.user?.id) {
-          supabaseUserId = data.user.id;
-        }
       } catch (_) {
-        // Continue to local database insert
+        // Fall back to local DB verification flow
       }
     }
 
-    // 7. Insert user record in public.users
+    // 8. Insert user record in public.users with pending_verification status
     const newUser = await UserModel.create({
       name: name.trim(),
-      email: email.trim().toLowerCase(),
+      email: cleanEmail,
       password_hash: passwordHash,
-      role: defaultRole,
-      organization_id: organizationId
+      role: initialRole,
+      organization_id: organizationId,
+      status: 'pending_verification',
+      verification_token: verificationToken,
+      verification_otp: verificationOtp,
+      verification_token_expires_at: tokenExpiresAt
     });
 
-    // Safe Audit Log
+    // 9. Dispatch verification email
+    await emailService.sendVerificationEmail({
+      email: cleanEmail,
+      name: newUser.name,
+      token: verificationToken,
+      otp: verificationOtp,
+      verifyUrl: `http://localhost:5173/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`
+    });
+
+    // 10. Audit Log
     await logAuditEvent({
       organizationId,
       userId: newUser.id,
       action: AUDIT_ACTIONS.USER_REGISTERED,
       resourceType: 'auth',
       resourceId: newUser.id,
-      description: `New user registered: ${newUser.email} (${newUser.name}) with role "${defaultRole}"`,
-      metadata: { email: newUser.email, role: defaultRole },
+      description: `New organization registered: "${orgName}" with admin user "${newUser.email}" (14-day free trial initiated)`,
+      metadata: { email: newUser.email, organizationName: orgName, plan: 'starter', trialDays: 14 },
       req
-    });
+    }).catch(() => null);
 
-    // 8. Generate authentication token
     const token = generateToken(newUser);
 
-    // 9. Return safe payload (without password_hash)
     return res.status(201).json({
       success: true,
-      message: 'Account registered successfully.',
+      message: 'Account registered successfully. A 6-digit verification code has been sent to your email.',
+      requiresVerification: true,
       token,
+      email: newUser.email,
+      organization_id: organizationId,
+      organization_name: orgName,
       user: {
         id: newUser.id,
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
-        organization_id: newUser.organization_id,
+        status: 'pending_verification',
+        organization_id: organizationId,
         created_at: newUser.created_at
-      }
+      },
+      ...(process.env.NODE_ENV !== 'production' ? {
+        _devVerificationToken: verificationToken,
+        _devVerificationOtp: verificationOtp
+      } : {})
     });
   } catch (err) {
     if (err.code === '23505') {
@@ -164,8 +207,233 @@ const register = async (req, res, next) => {
 };
 
 /**
+ * POST /api/auth/verify-email (and verify-otp)
+ * Verify email address with 6-digit code or cryptographic token
+ */
+const verifyOtp = async (req, res, next) => {
+  try {
+    const { email, otp, token } = req.body;
+
+    if (!email && !token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email address or verification token is required.'
+      });
+    }
+
+    let user = null;
+    const cleanEmail = email ? email.trim().toLowerCase() : null;
+    const cleanOtp = otp ? String(otp).trim() : null;
+    const cleanToken = token ? String(token).trim() : null;
+
+    if (cleanEmail) {
+      user = await UserModel.findByEmail(cleanEmail);
+    } else if (cleanToken) {
+      user = await UserModel.findByVerificationToken(cleanToken);
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'No account found matching the verification details.'
+      });
+    }
+
+    if (user.status === 'active') {
+      const authToken = generateToken(user);
+      return res.status(200).json({
+        success: true,
+        alreadyVerified: true,
+        token: authToken,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          organization_id: user.organization_id,
+          status: 'active'
+        },
+        message: 'Your email address is already verified.'
+      });
+    }
+
+    let isValid = false;
+
+    // A. Check against cryptographic token
+    if (cleanToken && user.verification_token === cleanToken) {
+      if (user.verification_token_expires_at && new Date() > new Date(user.verification_token_expires_at)) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'TOKEN_EXPIRED', message: 'The verification link has expired. Please request a new one.' },
+          message: 'The verification link has expired. Please request a new one.'
+        });
+      }
+      isValid = true;
+    }
+
+    // B. Check against 6-digit OTP
+    if (!isValid && cleanOtp) {
+      if (user.verification_otp && user.verification_otp === cleanOtp) {
+        if (user.verification_token_expires_at && new Date() > new Date(user.verification_token_expires_at)) {
+          return res.status(400).json({
+            success: false,
+            error: { code: 'OTP_EXPIRED', message: 'The 6-digit code has expired. Please request a new one.' },
+            message: 'The 6-digit code has expired. Please request a new one.'
+          });
+        }
+        isValid = true;
+      }
+    }
+
+    // C. Supabase Auth fallback if configured
+    if (!isValid && isConfigured && supabase && cleanEmail && cleanOtp) {
+      try {
+        const { error } = await supabase.auth.verifyOtp({
+          email: cleanEmail,
+          token: cleanOtp,
+          type: 'signup'
+        });
+        if (!error) isValid = true;
+      } catch (_) {}
+    }
+
+    if (!isValid) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_CODE',
+          message: 'Invalid verification code or link. Please check your email and try again.'
+        },
+        message: 'Invalid verification code or link. Please check your email and try again.'
+      });
+    }
+
+    // Mark verified in database
+    await UserModel.markEmailVerified(user.email);
+
+    // Generate authenticated session JWT token
+    const authToken = generateToken({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      organization_id: user.organization_id
+    });
+
+    // Audit log
+    await logAuditEvent({
+      organizationId: user.organization_id,
+      userId: user.id,
+      action: AUDIT_ACTIONS.USER_EMAIL_VERIFIED,
+      resourceType: 'auth',
+      resourceId: user.id,
+      description: `User ${user.email} successfully verified their email address.`,
+      metadata: { email: user.email },
+      req
+    }).catch(() => null);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Email verified successfully! You can now access your workspace.',
+      email: user.email,
+      token: authToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        organization_id: user.organization_id,
+        status: 'active'
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/auth/resend-otp (and resend-verification)
+ * Resend email verification code with 60-second rate limiting
+ */
+const resendOtp = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || !isValidEmail(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'A valid email address is required.'
+      });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Check rate limit: 60s cooldown
+    const lastSent = resendRateLimits.get(cleanEmail);
+    const now = Date.now();
+    if (lastSent && now - lastSent < 60000) {
+      const waitSeconds = Math.ceil((60000 - (now - lastSent)) / 1000);
+      return res.status(429).json({
+        success: false,
+        error: {
+          code: 'RATE_LIMITED',
+          message: `Please wait ${waitSeconds} seconds before requesting another verification email.`
+        },
+        message: `Please wait ${waitSeconds} seconds before requesting another verification email.`,
+        retryAfter: waitSeconds
+      });
+    }
+
+    const user = await UserModel.findByEmail(cleanEmail);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'No registered account found with this email address.'
+      });
+    }
+
+    if (user.status === 'active') {
+      return res.status(200).json({
+        success: true,
+        alreadyVerified: true,
+        message: 'Your email address is already verified. You can log in directly.'
+      });
+    }
+
+    // Generate fresh verification details
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await UserModel.setVerificationDetails(cleanEmail, verificationToken, verificationOtp, tokenExpiresAt);
+    resendRateLimits.set(cleanEmail, now);
+
+    // Supabase trigger if configured
+    if (isConfigured && supabase) {
+      await supabase.auth.resend({ type: 'signup', email: cleanEmail }).catch(() => null);
+    }
+
+    // Dispatch verification email
+    await emailService.sendVerificationEmail({
+      email: cleanEmail,
+      name: user.name,
+      token: verificationToken,
+      otp: verificationOtp,
+      verifyUrl: `http://localhost:5173/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'A new 6-digit verification code has been sent to your email.'
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
  * POST /api/auth/login
- * Authenticate user with credentials and return signed session token
+ * Authenticate user with credentials, verify email status, and check 14-day trial
  */
 const login = async (req, res, next) => {
   try {
@@ -178,35 +446,32 @@ const login = async (req, res, next) => {
       });
     }
 
-    // 1. Find user by email
-    const user = await UserModel.findByEmail(email);
-    if (!user) {
-      // If not in database, attempt Supabase Auth signIn if configured
-      if (isConfigured && supabase) {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password }).catch(() => ({ error: true }));
-        if (!error && data?.session?.access_token) {
-          return res.status(200).json({
-            success: true,
-            message: 'Logged in successfully via Supabase.',
-            token: data.session.access_token,
-            user: {
-              id: data.user.id,
-              name: data.user.user_metadata?.name || email.split('@')[0],
-              email: data.user.email,
-              role: data.user.user_metadata?.role || 'viewer',
-              organization_id: data.user.user_metadata?.organization_id || '00000000-0000-0000-0000-000000000001'
-            }
-          });
-        }
-      }
+    const cleanEmail = email.trim().toLowerCase();
 
+    // 1. Find user by email
+    const user = await UserModel.findByEmail(cleanEmail);
+    if (!user) {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password.'
       });
     }
 
-    // Check account status
+    // 2. Check email verification status
+    if (user.status === 'pending_verification') {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'EMAIL_NOT_VERIFIED',
+          message: 'Please verify your email address before logging in.'
+        },
+        message: 'Please verify your email address before logging in. A 6-digit verification code was sent to your email.',
+        requiresVerification: true,
+        email: user.email
+      });
+    }
+
+    // 3. Check account suspension status
     if (user.status === 'deactivated' || user.status === 'inactive') {
       return res.status(403).json({
         success: false,
@@ -214,7 +479,7 @@ const login = async (req, res, next) => {
       });
     }
 
-    // 2. Verify password with bcrypt (supports both primary hash and alternate test hash)
+    // 4. Verify password with bcrypt
     let isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch && user.password_hash_alt) {
       isMatch = await bcrypt.compare(password, user.password_hash_alt);
@@ -230,28 +495,34 @@ const login = async (req, res, next) => {
       });
     }
 
+    // 5. Check organization subscription & 14-day trial status
+    const orgId = user.organization_id;
+    let subscription = null;
+    let org = null;
+
+    if (orgId) {
+      subscription = await subscriptionService.getOrganizationSubscription(orgId);
+      org = await OrganizationModel.findById(orgId);
+    }
+
     // Update last login timestamp
     await UserModel.updateLastLogin(user.id).catch(() => null);
 
-    // Safe Audit Log
+    // Audit Log
     await logAuditEvent({
-      organizationId: user.organization_id || '00000000-0000-0000-0000-000000000001',
+      organizationId: orgId,
       userId: user.id,
       action: AUDIT_ACTIONS.USER_LOGIN,
       resourceType: 'auth',
       resourceId: user.id,
-      description: `User ${user.email} successfully logged into enterprise workspace`,
+      description: `User ${user.email} logged into enterprise workspace`,
       metadata: { role: user.role, email: user.email },
       req
-    });
+    }).catch(() => null);
 
-    // 3. Generate signed session token with verified database role
+    // 6. Generate signed session token with strictly verified claims
     const token = generateToken(user);
 
-    // Load organization name if available
-    const org = await OrganizationModel.findById(user.organization_id || '00000000-0000-0000-0000-000000000001').catch(() => null);
-
-    // 4. Return safe payload (strictly sanitized, never exposing password or secret keys)
     return res.status(200).json({
       success: true,
       message: 'Logged in successfully.',
@@ -260,11 +531,17 @@ const login = async (req, res, next) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role, // REAL role from database record
-        organization_id: user.organization_id || '00000000-0000-0000-0000-000000000001',
-        organization_name: org?.name || 'Ricoz Primary Organization',
+        role: user.role,
+        organization_id: orgId,
+        organization_name: org?.name || 'Workspace',
         created_at: user.created_at
-      }
+      },
+      subscription: subscription || {
+        subscriptionStatus: 'trial',
+        daysRemaining: 14,
+        canAccessApp: true
+      },
+      requiresPayment: subscription ? !subscription.canAccessApp : false
     });
   } catch (err) {
     next(err);
@@ -273,7 +550,7 @@ const login = async (req, res, next) => {
 
 /**
  * GET /api/auth/me
- * Return profile and organization information for currently authenticated user
+ * Return current user profile, organization, and trial subscription status
  */
 const getMe = async (req, res, next) => {
   try {
@@ -285,10 +562,13 @@ const getMe = async (req, res, next) => {
       });
     }
 
-    const orgId = user?.organization_id || req.user.organization_id || '00000000-0000-0000-0000-000000000001';
+    const orgId = user?.organization_id || req.user.organization_id;
     let organization = null;
+    let subscription = null;
+
     if (orgId) {
       organization = await OrganizationModel.findById(orgId).catch(() => null);
+      subscription = await subscriptionService.getOrganizationSubscription(orgId).catch(() => null);
     }
 
     return res.status(200).json({
@@ -299,9 +579,148 @@ const getMe = async (req, res, next) => {
         email: user?.email || req.user.email,
         role: user?.role || req.user.role || 'viewer',
         organization_id: orgId,
-        organization_name: organization?.name || 'Ricoz Primary Organization',
+        organization_name: organization?.name || 'Workspace',
         avatar_url: user?.avatar_url || null,
         created_at: user?.created_at || new Date()
+      },
+      subscription: subscription || {
+        subscriptionStatus: 'trial',
+        daysRemaining: 14,
+        canAccessApp: true
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * GET /api/auth/invitation/:token
+ * Validate invitation token and return organization details
+ */
+const getInvitationDetails = async (req, res, next) => {
+  try {
+    const { token } = req.params;
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'Invitation token is required.' });
+    }
+
+    const invitation = await InvitationModel.findByToken(token);
+    if (!invitation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Invitation not found or invalid.'
+      });
+    }
+
+    if (invitation.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: `This invitation has already been ${invitation.status}.`
+      });
+    }
+
+    if (new Date() > new Date(invitation.expires_at)) {
+      return res.status(400).json({
+        success: false,
+        message: 'This invitation has expired. Please ask your administrator to send a new invite.'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      invitation: {
+        email: invitation.email,
+        role: invitation.role,
+        organizationName: invitation.organization_name,
+        inviterName: invitation.inviter_name,
+        expiresAt: invitation.expires_at
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/auth/accept-invite
+ * Accept team member invitation and join the inviting organization
+ */
+const acceptInvite = async (req, res, next) => {
+  try {
+    const { token, name, password } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'Invitation token is required.' });
+    }
+
+    const invitation = await InvitationModel.findByToken(token);
+    if (!invitation) {
+      return res.status(404).json({ success: false, message: 'Invitation not found or invalid.' });
+    }
+
+    if (invitation.status !== 'pending') {
+      return res.status(400).json({ success: false, message: `This invitation has already been ${invitation.status}.` });
+    }
+
+    if (new Date() > new Date(invitation.expires_at)) {
+      return res.status(400).json({ success: false, message: 'This invitation has expired.' });
+    }
+
+    const cleanEmail = invitation.email.toLowerCase();
+
+    // Check if user already exists
+    let user = await UserModel.findByEmail(cleanEmail);
+
+    if (user) {
+      // If user exists, update their organization and role to the invited org
+      await UserModel.updateRole(user.id, invitation.role, invitation.organization_id);
+      await UserModel.markEmailVerified(cleanEmail);
+    } else {
+      if (!password || password.length < 6) {
+        return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+      }
+
+      const passwordHash = await bcrypt.hash(password, 10);
+      user = await UserModel.create({
+        name: (name || cleanEmail.split('@')[0]).trim(),
+        email: cleanEmail,
+        password_hash: passwordHash,
+        role: invitation.role,
+        organization_id: invitation.organization_id,
+        status: 'active' // Email is verified via invitation link
+      });
+      await UserModel.markEmailVerified(cleanEmail);
+    }
+
+    // Mark invitation accepted
+    await InvitationModel.markAccepted(invitation.id);
+
+    // Audit log
+    await logAuditEvent({
+      organizationId: invitation.organization_id,
+      userId: user.id,
+      action: AUDIT_ACTIONS.USER_REGISTERED,
+      resourceType: 'auth',
+      resourceId: user.id,
+      description: `User ${user.email} accepted invitation and joined as ${invitation.role}`,
+      metadata: { role: invitation.role, invitationId: invitation.id },
+      req
+    }).catch(() => null);
+
+    const authToken = generateToken(user);
+
+    return res.status(200).json({
+      success: true,
+      message: `You have successfully joined ${invitation.organization_name}!`,
+      token: authToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: invitation.role,
+        organization_id: invitation.organization_id,
+        organization_name: invitation.organization_name
       }
     });
   } catch (err) {
@@ -317,7 +736,7 @@ const logout = async (req, res, next) => {
   try {
     if (req.user) {
       await logAuditEvent({
-        organizationId: req.user.organization_id || '00000000-0000-0000-0000-000000000001',
+        organizationId: req.user.organization_id,
         userId: req.user.id,
         action: AUDIT_ACTIONS.USER_LOGOUT,
         resourceType: 'auth',
@@ -325,7 +744,7 @@ const logout = async (req, res, next) => {
         description: `User ${req.user.email} logged out from session`,
         metadata: { role: req.user.role },
         req
-      });
+      }).catch(() => null);
     }
 
     if (isConfigured && supabase) {
@@ -342,7 +761,13 @@ const logout = async (req, res, next) => {
 
 module.exports = {
   register,
+  verifyOtp,
+  verifyEmail: verifyOtp,
+  resendOtp,
+  resendVerification: resendOtp,
   login,
   getMe,
+  getInvitationDetails,
+  acceptInvite,
   logout
 };

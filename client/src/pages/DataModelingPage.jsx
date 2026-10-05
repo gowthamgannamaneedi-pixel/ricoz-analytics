@@ -32,6 +32,8 @@ import {
   executeRelationalQuery
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { Button } from '../components/ui/Button';
+import { RefreshButton } from '../components/ui/RefreshButton';
 
 /**
  * Enterprise Relational Data Modeling & Dataset Joins Page (Phase 14)
@@ -284,36 +286,36 @@ export default function DataModelingPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <button
+          <Button
             onClick={() => {
               setTestQueryModalOpen(true);
               setTestResults(null);
             }}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition"
+            variant="secondary"
           >
             <Play className="h-3.5 w-3.5 text-blue-600" />
-            Test Relational Query
-          </button>
+            <span>Test Relational Query</span>
+          </Button>
 
           {canManage && (
-            <button
+            <Button
               onClick={handleOpenCreateModal}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+              variant="primary"
             >
-              <Plus className="h-4 w-4" />
-              New Relationship
-            </button>
+              <Plus className="h-3.5 w-3.5" />
+              <span>New Relationship</span>
+            </Button>
           )}
         </div>
       </div>
 
       {/* Schema Visualizer Blueprint */}
-      <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 p-6 text-white shadow-md relative overflow-hidden">
+      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-xs relative overflow-hidden">
         <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <h2 className="text-sm font-semibold tracking-wide uppercase text-slate-300">
+            <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
+            <h2 className="text-sm font-semibold tracking-wide text-slate-800">
               Active Relational Architecture Graph
             </h2>
           </div>
@@ -323,10 +325,10 @@ export default function DataModelingPage() {
         </div>
 
         {relationships.length === 0 ? (
-          <div className="py-8 text-center border border-dashed border-slate-700 rounded-lg">
+          <div className="py-8 text-center border border-dashed border-slate-300 rounded-lg bg-slate-50/60">
             <Layers className="h-10 w-10 text-slate-500 mx-auto mb-2 opacity-50" />
-            <p className="text-sm font-medium text-slate-300">No Relationships Configured</p>
-            <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+            <p className="text-sm font-medium text-slate-700">No relationships configured</p>
+            <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
               Link datasets like Orders and Customers on matching keys to unlock cross-table dimensional metrics.
             </p>
             {canManage && (
@@ -344,20 +346,20 @@ export default function DataModelingPage() {
             {relationships.slice(0, 3).map((rel) => (
               <div
                 key={rel.id}
-                className="rounded-lg border border-slate-700/80 bg-slate-800/80 backdrop-blur p-3.5 flex flex-col justify-between"
+                className="rounded-lg border border-slate-200 bg-slate-50/70 p-3.5 flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between text-xs font-mono text-slate-400 pb-2 border-b border-slate-700">
-                    <span className="uppercase text-blue-400 font-bold">{rel.relationship_type.replace(/_/g, ' ')}</span>
-                    <span className="text-[10px] text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800">
+                  <div className="flex items-center justify-between text-xs font-mono text-slate-500 pb-2 border-b border-slate-200">
+                    <span className="uppercase text-blue-700 font-bold">{rel.relationship_type.replace(/_/g, ' ')}</span>
+                    <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
                       Verified
                     </span>
                   </div>
 
                   <div className="mt-3 flex items-center justify-between gap-2 text-xs">
-                    <div className="bg-slate-900/90 rounded p-2 flex-1 border border-slate-700 min-w-0">
-                      <div className="font-bold text-slate-200 truncate">{rel.source_dataset_name || 'Source Dataset'}</div>
-                      <div className="text-[11px] text-blue-300 font-mono truncate mt-0.5">.{rel.source_column}</div>
+                    <div className="bg-white rounded p-2 flex-1 border border-slate-200 min-w-0">
+                      <div className="font-bold text-slate-700 truncate">{rel.source_dataset_name || 'Source Dataset'}</div>
+                      <div className="text-[11px] text-blue-700 font-mono truncate mt-0.5">.{rel.source_column}</div>
                     </div>
 
                     <div className="flex flex-col items-center shrink-0 px-1">
@@ -365,15 +367,15 @@ export default function DataModelingPage() {
                       <span className="text-[9px] text-slate-400 font-mono">LEFT JOIN</span>
                     </div>
 
-                    <div className="bg-slate-900/90 rounded p-2 flex-1 border border-slate-700 min-w-0">
-                      <div className="font-bold text-slate-200 truncate">{rel.target_dataset_name || 'Target Dataset'}</div>
-                      <div className="text-[11px] text-indigo-300 font-mono truncate mt-0.5">.{rel.target_column}</div>
+                    <div className="bg-white rounded p-2 flex-1 border border-slate-200 min-w-0">
+                      <div className="font-bold text-slate-700 truncate">{rel.target_dataset_name || 'Target Dataset'}</div>
+                      <div className="text-[11px] text-indigo-700 font-mono truncate mt-0.5">.{rel.target_column}</div>
                     </div>
                   </div>
                 </div>
 
                 {rel.description && (
-                  <p className="mt-2.5 text-[11px] text-slate-400 line-clamp-1 italic">
+                  <p className="mt-2.5 text-[11px] text-slate-500 line-clamp-1 italic">
                     "{rel.description}"
                   </p>
                 )}
@@ -422,7 +424,7 @@ export default function DataModelingPage() {
 
       {/* Relationship List Table */}
       <div className="rounded-xl border border-slate-200 bg-white shadow-2xs overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="rz-table-wrap">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/75 text-[11px] font-semibold text-slate-600 uppercase tracking-wider">

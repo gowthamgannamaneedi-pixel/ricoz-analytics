@@ -140,7 +140,10 @@ function calculateMetricStatus(currentValue, targetValue, warningThreshold, crit
  */
 const getMetrics = async (req, res, next) => {
   try {
-    const orgId = req.user.organization_id || '00000000-0000-0000-0000-000000000001';
+    const orgId = req.user.organization_id;
+    if (!orgId) {
+      return res.status(403).json({ success: false, message: 'Organization required.' });
+    }
     const metrics = await Metric.findByOrganizationId(orgId);
 
     // Populate live calculated values
@@ -157,7 +160,8 @@ const getMetrics = async (req, res, next) => {
         // If metric is linked to a dataset, calculate value dynamically
         if (m.dataset_id) {
           try {
-            const dataset = await Dataset.findByIdAndUserId(m.dataset_id, req.user.id).catch(() => null);
+            const dataset = (await Dataset.findByIdAndOrgId(m.dataset_id, orgId).catch(() => null))
+              || (await Dataset.findByIdAndUserId(m.dataset_id, req.user.id).catch(() => null));
             if (dataset && dataset.file_path) {
               const records = await loadDatasetRecords(dataset.file_path).catch(() => []);
               if (records && records.length > 0) {
@@ -215,7 +219,10 @@ const getMetrics = async (req, res, next) => {
  */
 const getMetricById = async (req, res, next) => {
   try {
-    const orgId = req.user.organization_id || '00000000-0000-0000-0000-000000000001';
+    const orgId = req.user.organization_id;
+    if (!orgId) {
+      return res.status(403).json({ success: false, message: 'Organization required.' });
+    }
     const { id } = req.params;
 
     const metric = await Metric.findByIdAndOrgId(id, orgId);
@@ -286,7 +293,10 @@ const getMetricById = async (req, res, next) => {
  */
 const createMetric = async (req, res, next) => {
   try {
-    const orgId = req.user.organization_id || '00000000-0000-0000-0000-000000000001';
+    const orgId = req.user.organization_id;
+    if (!orgId) {
+      return res.status(403).json({ success: false, message: 'Organization required.' });
+    }
     const userId = req.user.id;
     const {
       name,
@@ -380,7 +390,10 @@ const createMetric = async (req, res, next) => {
  */
 const updateMetric = async (req, res, next) => {
   try {
-    const orgId = req.user.organization_id || '00000000-0000-0000-0000-000000000001';
+    const orgId = req.user.organization_id;
+    if (!orgId) {
+      return res.status(403).json({ success: false, message: 'Organization required.' });
+    }
     const { id } = req.params;
     const {
       name,
@@ -443,7 +456,10 @@ const updateMetric = async (req, res, next) => {
  */
 const deleteMetric = async (req, res, next) => {
   try {
-    const orgId = req.user.organization_id || '00000000-0000-0000-0000-000000000001';
+    const orgId = req.user.organization_id;
+    if (!orgId) {
+      return res.status(403).json({ success: false, message: 'Organization required.' });
+    }
     const { id } = req.params;
 
     const deleted = await Metric.deleteByIdAndOrgId(id, orgId);

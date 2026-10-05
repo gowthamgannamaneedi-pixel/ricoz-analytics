@@ -10,7 +10,9 @@ import {
   Hash,
   Type,
   Calendar,
-  ToggleLeft
+  ToggleLeft,
+  Loader2,
+  Inbox
 } from 'lucide-react';
 
 /**
@@ -128,14 +130,14 @@ export default function DynamicDataTable({
 
         <div className="flex items-center gap-2.5">
           {/* Search Input */}
-          <div className="relative w-48 sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+          <div className="relative w-52 sm:w-72">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
               placeholder="Search records..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50/70 py-1.5 pl-8 pr-3 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:outline-none transition"
+              className="w-full h-10 rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition shadow-2xs"
             />
           </div>
 
@@ -144,9 +146,9 @@ export default function DynamicDataTable({
             type="button"
             onClick={handleExportCsv}
             disabled={rows.length === 0}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-40 shadow-2xs"
+            className="flex h-10 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition disabled:opacity-40 shadow-2xs cursor-pointer"
           >
-            <Download className="h-3.5 w-3.5 text-slate-500" />
+            <Download className="h-4 w-4 text-slate-500" />
             <span className="hidden sm:inline">Export CSV</span>
           </button>
         </div>
@@ -188,14 +190,21 @@ export default function DynamicDataTable({
           <tbody className="divide-y divide-slate-100 bg-white font-mono text-[11px]">
             {isLoading ? (
               <tr>
-                <td colSpan={columns.length + 1} className="py-12 text-center text-xs text-slate-400 font-sans">
-                  Calculating records...
+                <td colSpan={columns.length + 1} className="py-16 text-center text-xs text-slate-500 font-sans">
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                    <span className="font-semibold text-slate-700">Loading records...</span>
+                  </div>
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + 1} className="py-12 text-center text-xs text-slate-400 font-sans">
-                  No records match current filter criteria.
+                <td colSpan={columns.length + 1} className="py-16 text-center text-xs text-slate-500 font-sans">
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <Inbox className="h-8 w-8 text-slate-300" />
+                    <span className="font-semibold text-slate-700">No records found</span>
+                    <span className="text-[11px] text-slate-400">Try adjusting your filters or search query</span>
+                  </div>
                 </td>
               </tr>
             ) : (
@@ -203,7 +212,7 @@ export default function DynamicDataTable({
                 const globalRowNumber = (page - 1) * limit + rowIdx + 1;
                 return (
                   <tr key={row.id || rowIdx} className="hover:bg-blue-50/40 transition-colors group">
-                    <td className="py-2.5 px-3 text-center text-slate-400 border-r border-slate-100 font-mono text-[10px] bg-slate-50/70 group-hover:bg-blue-50/60 sticky left-0 z-10 select-none">
+                    <td className="py-3 px-3 text-center text-slate-400 border-r border-slate-100 font-mono text-[10px] bg-slate-50/70 group-hover:bg-blue-50/60 sticky left-0 z-10 select-none">
                       {globalRowNumber}
                     </td>
 
@@ -214,11 +223,11 @@ export default function DynamicDataTable({
                       const isNum = typeof val === 'number';
 
                       return (
-                        <td key={col.name} className="py-2.5 px-4 whitespace-nowrap text-slate-800">
+                        <td key={col.name} className="py-3 px-4 whitespace-nowrap text-slate-800">
                           {isNull ? (
                             <span className="text-slate-300 italic font-sans text-[10px]">null</span>
                           ) : isBool ? (
-                            <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                               val ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
                             }`}>
                               {val ? 'TRUE' : 'FALSE'}
@@ -242,24 +251,24 @@ export default function DynamicDataTable({
       {/* Pagination Footer */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-slate-50/70 border-t border-slate-100 text-xs text-slate-500">
         <div className="flex items-center gap-2">
-          <span>Rows per page:</span>
+          <span className="font-medium text-slate-600">Rows per page:</span>
           <select
             value={limit}
             onChange={(e) => onLimitChange(Number(e.target.value))}
-            className="rounded border border-slate-200 bg-white py-1 px-2 text-xs font-semibold text-slate-800 outline-none"
+            className="h-8 rounded-lg border border-slate-300 bg-white py-1 px-2.5 text-xs font-bold text-slate-800 outline-none shadow-2xs focus:border-blue-600 cursor-pointer"
           >
             <option value={10}>10</option>
             <option value={20}>20</option>
             <option value={50}>50</option>
           </select>
-          <span className="text-slate-400 font-mono">
+          <span className="text-slate-500 font-mono text-xs ml-1">
             Showing {rows.length > 0 ? (page - 1) * limit + 1 : 0}–{Math.min(page * limit, totalCount)} of {totalCount}
           </span>
         </div>
 
         {/* Page Nav */}
         <div className="flex items-center gap-2">
-          <span className="font-mono text-xs text-slate-600 font-semibold mr-2">
+          <span className="font-mono text-xs text-slate-600 font-bold mr-2">
             Page {page} of {totalPages}
           </span>
 
@@ -267,7 +276,7 @@ export default function DynamicDataTable({
             type="button"
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
-            className="p-1.5 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white transition"
+            className="h-8 w-8 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white flex items-center justify-center transition shadow-2xs cursor-pointer"
             title="Previous Page"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -277,7 +286,7 @@ export default function DynamicDataTable({
             type="button"
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages}
-            className="p-1.5 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white transition"
+            className="h-8 w-8 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white flex items-center justify-center transition shadow-2xs cursor-pointer"
             title="Next Page"
           >
             <ChevronRight className="h-4 w-4" />

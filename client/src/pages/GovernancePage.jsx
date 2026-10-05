@@ -975,16 +975,48 @@ export default function GovernancePage() {
                                 <div className="text-[11px] font-mono text-slate-400">{p.key}</div>
                               </td>
                               <td className="px-4 py-2.5 text-center">
-                                {p.roles.admin ? <Check className="w-4 h-4 text-emerald-600 mx-auto" /> : <X className="w-4 h-4 text-slate-300 mx-auto" />}
+                                {p.roles.admin ? (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <Check className="w-2.5 h-2.5 text-emerald-600" /> Allowed
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+                                    <X className="w-2.5 h-2.5 text-slate-400" /> Denied
+                                  </span>
+                                )}
                               </td>
                               <td className="px-4 py-2.5 text-center">
-                                {p.roles.manager ? <Check className="w-4 h-4 text-emerald-600 mx-auto" /> : <X className="w-4 h-4 text-slate-300 mx-auto" />}
+                                {p.roles.manager ? (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <Check className="w-2.5 h-2.5 text-emerald-600" /> Allowed
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+                                    <X className="w-2.5 h-2.5 text-slate-400" /> Denied
+                                  </span>
+                                )}
                               </td>
                               <td className="px-4 py-2.5 text-center">
-                                {p.roles.analyst ? <Check className="w-4 h-4 text-emerald-600 mx-auto" /> : <X className="w-4 h-4 text-slate-300 mx-auto" />}
+                                {p.roles.analyst ? (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <Check className="w-2.5 h-2.5 text-emerald-600" /> Allowed
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+                                    <X className="w-2.5 h-2.5 text-slate-400" /> Denied
+                                  </span>
+                                )}
                               </td>
                               <td className="px-4 py-2.5 text-center">
-                                {p.roles.viewer ? <Check className="w-4 h-4 text-emerald-600 mx-auto" /> : <X className="w-4 h-4 text-slate-300 mx-auto" />}
+                                {p.roles.viewer ? (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <Check className="w-2.5 h-2.5 text-emerald-600" /> Allowed
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+                                    <X className="w-2.5 h-2.5 text-slate-400" /> Denied
+                                  </span>
+                                )}
                               </td>
                             </tr>
                           );

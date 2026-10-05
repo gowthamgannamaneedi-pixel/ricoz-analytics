@@ -145,18 +145,30 @@ async function runTests() {
     // -------------------------------------------------------------
     const user1Res = await request('POST', '/api/auth/register', {
       name: 'Alice Analyst',
+      organization_name: 'Alice Analytics Corp',
       email: `alice_${Date.now()}@ricoz.test`,
       password: 'Password123!'
     });
-    const token1 = user1Res.data.token;
+    const otp1 = user1Res.data._devVerificationOtp;
+    const verify1Res = await request('POST', '/api/auth/verify-email', {
+      email: user1Res.data.email,
+      otp: otp1
+    });
+    const token1 = verify1Res.data.token;
     const userId1 = user1Res.data.user.id;
 
     const user2Res = await request('POST', '/api/auth/register', {
       name: 'Bob Banker',
+      organization_name: 'Bob Banking Ltd',
       email: `bob_${Date.now()}@ricoz.test`,
       password: 'Password123!'
     });
-    const token2 = user2Res.data.token;
+    const otp2 = user2Res.data._devVerificationOtp;
+    const verify2Res = await request('POST', '/api/auth/verify-email', {
+      email: user2Res.data.email,
+      otp: otp2
+    });
+    const token2 = verify2Res.data.token;
     const userId2 = user2Res.data.user.id;
 
     console.log(`Users created: Alice (ID ${userId1}), Bob (ID ${userId2})\n`);
@@ -354,13 +366,8 @@ if (user1DsId) {
     // -------------------------------------------------------------
     // Test 13: File deletion/cleanup works safely (Authorized Admin)
     // -------------------------------------------------------------
-    const adminLoginRes = await request('POST', '/api/auth/login', {
-      email: 'admin@ricoz.test',
-      password: 'admin123'
-    });
-    const adminToken = adminLoginRes.data.token;
-    const deleteRes = await request('DELETE', `/api/datasets/${user1DatasetId}`, null, { Authorization: `Bearer ${adminToken}` });
-    const verifyDeleteRes = await request('GET', `/api/datasets/${user1DatasetId}`, null, { Authorization: `Bearer ${adminToken}` });
+    const deleteRes = await request('DELETE', `/api/datasets/${user1DatasetId}`, null, { Authorization: `Bearer ${token1}` });
+    const verifyDeleteRes = await request('GET', `/api/datasets/${user1DatasetId}`, null, { Authorization: `Bearer ${token1}` });
 
     if (verifyDeleteRes.status !== 404) {
       console.log('DEBUG verifyDeleteRes:', JSON.stringify(verifyDeleteRes));

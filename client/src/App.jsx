@@ -21,8 +21,12 @@ const DataModelingPage = lazy(() => import('./pages/DataModelingPage'));
 const DataQualityPage = lazy(() => import('./pages/DataQualityPage'));
 const CollaborationPage = lazy(() => import('./pages/CollaborationPage'));
 const GovernancePage = lazy(() => import('./pages/GovernancePage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const BillingPage = lazy(() => import('./pages/BillingPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'));
+const AcceptInvitePage = lazy(() => import('./pages/AcceptInvitePage'));
 
 /**
  * Main Application Routing Component with Authentication Guards & Error Boundary
@@ -36,8 +40,14 @@ export default function App() {
             <Routes>
               {/* Public Authentication Routes */}
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/auth/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
-                <Route path="/" element={<LandingPage />} />
+              <Route path="/auth/register" element={<RegisterPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
+              <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
+              <Route path="/accept-invite" element={<AcceptInvitePage />} />
+              <Route path="/auth/accept-invite" element={<AcceptInvitePage />} />
+              <Route path="/" element={<LandingPage />} />
 
               {/* Protected Application Routes */}
               <Route element={<ProtectedRoute />}>
@@ -58,7 +68,8 @@ export default function App() {
                   <Route path="/ai" element={<AIInsightsPage />} />
                   <Route path="/collaboration" element={<CollaborationPage />} />
                   <Route path="/favorites" element={<CollaborationPage />} />
-                  <Route path="/settings" element={<GovernancePage />} />
+                  <Route path="/billing" element={<BillingPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/governance" element={<GovernancePage />} />
                 </Route>
               </Route>
@@ -72,3 +83,4 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+

@@ -145,18 +145,30 @@ async function runTests() {
     // -------------------------------------------------------------
     const user1Res = await request('POST', '/api/auth/register', {
       name: 'Diana Director',
+      organization_name: 'Diana Analytics Corp',
       email: `diana_${Date.now()}@ricoz.test`,
       password: 'Password123!'
     });
-    const token1 = user1Res.data.token;
+    const otp1 = user1Res.data._devVerificationOtp;
+    const verify1Res = await request('POST', '/api/auth/verify-email', {
+      email: user1Res.data.email,
+      otp: otp1
+    });
+    const token1 = verify1Res.data.token;
     const userId1 = user1Res.data.user.id;
 
     const user2Res = await request('POST', '/api/auth/register', {
       name: 'Edward External',
+      organization_name: 'Edward External LLC',
       email: `edward_${Date.now()}@ricoz.test`,
       password: 'Password123!'
     });
-    const token2 = user2Res.data.token;
+    const otp2 = user2Res.data._devVerificationOtp;
+    const verify2Res = await request('POST', '/api/auth/verify-email', {
+      email: user2Res.data.email,
+      otp: otp2
+    });
+    const token2 = verify2Res.data.token;
     const userId2 = user2Res.data.user.id;
 
     // Upload a test CSV dataset with 5 known records

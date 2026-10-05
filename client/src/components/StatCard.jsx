@@ -20,20 +20,22 @@ export default function StatCard({
   isPositive,
   period = 'vs previous period',
   subtext,
-  isPrimary = false
+  isPrimary = false,
+  icon: Icon
 }) {
   return (
-    <div className={`relative p-4 sm:p-5 bg-white border border-slate-200 rounded-xl shadow-sm transition-colors hover:bg-slate-50/50 ${isPrimary ? 'bg-brand-50 border-brand-200' : ''}`}>
+    <div className={`relative min-w-0 p-4 bg-white border border-slate-200 rounded-lg shadow-xs transition-colors hover:border-slate-300 ${isPrimary ? 'border-brand-200 bg-brand-50/40' : ''}`}>
       {/* Metric Label */}
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-slate-600">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
           {title}
         </span>
+        {Icon && <span className={`flex h-7 w-7 items-center justify-center rounded-md ${isPrimary ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-600'}`}><Icon className="h-3.5 w-3.5" /></span>}
       </div>
 
       {/* Main Metric Value */}
       <div className="mt-2 flex items-baseline gap-2">
-        <span className="font-mono text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+        <span className="text-2xl sm:text-[28px] font-semibold tracking-tight text-slate-950">
           {value}
         </span>
       </div>

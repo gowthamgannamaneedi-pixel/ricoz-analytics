@@ -68,30 +68,37 @@ async function runAuthTests() {
       'GET /api/health returns 200 OK'
     );
 
-    // 2. Register with attempted role escalation (client sends role: 'admin')
-    const testEmail = `viewer_${Date.now()}@ricozanalytics.com`;
+    // 2. Register with attempted role escalation (client sends role: 'superadmin')
+    const testEmail = `admin_${Date.now()}@ricozanalytics.com`;
     const regRes = await makeRequest(TEST_PORT, { path: '/api/auth/register', method: 'POST' }, {
-      name: 'Standard Viewer',
+      name: 'Standard Admin',
       email: testEmail,
+      organization_name: 'Test Enterprise Org',
       password: 'testPassword123',
-      role: 'admin' // Attempted escalation should be ignored
+      role: 'superadmin' // Attempted escalation should be ignored
     });
 
     assert(
       regRes.statusCode === 201 &&
       regRes.body.success === true &&
-      Boolean(regRes.body.token) &&
       regRes.body.user.email === testEmail &&
-      regRes.body.user.role === 'viewer' && // STRICT: must be 'viewer'
+      regRes.body.user.role === 'admin' && // Organization creator is provisioned as admin
       !regRes.body.user.password_hash,
-      'POST /api/auth/register ignores client role and strictly sets role to "viewer"'
+      'POST /api/auth/register ignores client role and provisions organization "admin" role'
     );
 
-    const authToken = regRes.body.token;
+    // Verify email using server-generated OTP to activate session
+    const otp = regRes.body._devVerificationOtp;
+    const verifyRes = await makeRequest(TEST_PORT, { path: '/api/auth/verify-email', method: 'POST' }, {
+      email: testEmail,
+      otp
+    });
+    const authToken = verifyRes.body.token;
 
     // 3. Register duplicate email should fail with 409
     const dupRes = await makeRequest(TEST_PORT, { path: '/api/auth/register', method: 'POST' }, {
       name: 'Duplicate User',
+      organization_name: 'Another Org',
       email: testEmail,
       password: 'anotherPassword123'
     });
@@ -111,9 +118,9 @@ async function runAuthTests() {
       loginRes.statusCode === 200 &&
       loginRes.body.success === true &&
       Boolean(loginRes.body.token) &&
-      loginRes.body.user.role === 'viewer' &&
+      loginRes.body.user.role === 'admin' &&
       loginRes.body.user.email === testEmail,
-      'POST /api/auth/login succeeds with valid credentials and returns "viewer" role'
+      'POST /api/auth/login succeeds with valid credentials and returns "admin" role'
     );
 
     // 5. Login with wrong password
@@ -138,7 +145,7 @@ async function runAuthTests() {
       'POST /api/auth/login rejects non-existent email with 401'
     );
 
-    // 7. GET /api/auth/me with valid Bearer token for registered viewer
+    // 7. GET /api/auth/me with valid Bearer token for registered admin
     const meRes = await makeRequest(TEST_PORT, {
       path: '/api/auth/me',
       method: 'GET',
@@ -151,9 +158,9 @@ async function runAuthTests() {
       meRes.statusCode === 200 &&
       meRes.body.success === true &&
       meRes.body.user.email === testEmail &&
-      meRes.body.user.role === 'viewer' &&
+      meRes.body.user.role === 'admin' &&
       !meRes.body.user.password_hash,
-      'GET /api/auth/me returns authenticated user details with "viewer" role'
+      'GET /api/auth/me returns authenticated user details with "admin" role'
     );
 
     // 8. Verify existing admin user role preservation (e.g. system provisioned account)
