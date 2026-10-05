@@ -61,11 +61,15 @@ export function AuthProvider({ children }) {
           setSubscription(null);
         }
       } catch (err) {
-        console.warn('Session verification failed on startup:', err.message);
-        removeAuthToken();
-        setUser(null);
-        setToken(null);
-        setSubscription(null);
+        console.warn('Session verification note on startup:', err.message);
+        const isRateLimit = err.message?.includes('429') || err.message?.includes('Rate limit') || err.message?.includes('RATE_LIMIT');
+        const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError');
+        if (!isRateLimit && !isNetworkErr) {
+          removeAuthToken();
+          setUser(null);
+          setToken(null);
+          setSubscription(null);
+        }
       } finally {
         setIsLoading(false);
       }

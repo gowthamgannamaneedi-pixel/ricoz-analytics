@@ -195,6 +195,10 @@ class TieredRateLimiter {
       next();
     };
   }
+
+  reset() {
+    this.buckets.clear();
+  }
 }
 
 const rateLimiterInstance = new TieredRateLimiter();
@@ -204,7 +208,11 @@ module.exports = {
   corsMiddleware: createCorsHandler(),
   sanitizeInputs,
   rateLimiter: rateLimiterInstance,
-  rateLimitAuth: rateLimiterInstance.limit({ category: 'AUTH', maxRequests: 30, windowMs: 15 * 60 * 1000 }),
+  rateLimitAuth: rateLimiterInstance.limit({ 
+    category: 'AUTH', 
+    maxRequests: process.env.NODE_ENV === 'development' ? 500 : 100, 
+    windowMs: 15 * 60 * 1000 
+  }),
   rateLimitAI: rateLimiterInstance.limit({ category: 'AI', maxRequests: 60, windowMs: 60 * 1000 }),
   rateLimitExport: rateLimiterInstance.limit({ category: 'EXPORT', maxRequests: 30, windowMs: 60 * 1000 }),
   rateLimitCollaboration: rateLimiterInstance.limit({ category: 'COLLABORATION', maxRequests: 120, windowMs: 60 * 1000 }),

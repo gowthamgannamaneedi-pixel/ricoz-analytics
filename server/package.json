@@ -11,7 +11,8 @@
     "test:demo": "node test-demo-requests.js",
     "test:smtp": "node test-smtp-delivery.js",
     "test:saas": "node test-saas-trial-payment.js",
-    "test:kpi": "node test-kpis-verification-suite.js"
+    "test:kpi": "node test-kpis-verification-suite.js",
+    "test:realworld": "node test-realworld-qa-e2e.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.0",

@@ -233,9 +233,13 @@ const verifyOtp = async (req, res, next) => {
     }
 
     if (!user) {
-      return res.status(404).json({
+      return res.status(400).json({
         success: false,
-        message: 'No account found matching the verification details.'
+        error: {
+          code: 'INVALID_VERIFICATION',
+          message: 'No pending verification matching the provided details.'
+        },
+        message: 'No pending verification matching the provided details.'
       });
     }
 
