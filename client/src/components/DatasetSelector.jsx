@@ -61,7 +61,7 @@ export default function DatasetSelector({
           className="flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
         >
           <Plus className="h-3.5 w-3.5" />
-          <span>+ Connect Dataset</span>
+          <span>Connect Dataset</span>
         </button>
       </div>
     );

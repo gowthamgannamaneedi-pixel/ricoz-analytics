@@ -78,7 +78,7 @@ export default function RootCauseDrawer({
   if (!isOpen || !insight) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs transition-opacity">
+    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/30 backdrop-blur-xs transition-opacity">
       <div className="fixed inset-y-0 right-0 flex max-w-full pl-6 sm:pl-10">
         <div className="w-screen max-w-3xl bg-white border-l border-slate-200 shadow-2xl flex flex-col text-slate-900">
           

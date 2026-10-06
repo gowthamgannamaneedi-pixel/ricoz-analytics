@@ -32,7 +32,8 @@ import {
   CheckCircle,
   Radio,
   FileText,
-  UserPlus
+  UserPlus,
+  Plus
 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -538,7 +539,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <span className="text-xs font-semibold text-slate-500">Total Users</span>
-                  <div className="text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
                     {stats.membersCount}
                   </div>
                   <span className="text-[11px] text-slate-400 font-medium">
@@ -560,7 +561,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <span className="text-xs font-semibold text-slate-500">Connected Datasets</span>
-                  <div className="text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
                     {stats.datasetsCount}
                   </div>
                   <span className="text-[11px] text-slate-400 font-medium">Enterprise data sources</span>
@@ -580,7 +581,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <span className="text-xs font-semibold text-slate-500">Dashboards & Reports</span>
-                  <div className="text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
                     {stats.dashboardsCount + stats.reportsCount}
                   </div>
                   <span className="text-[11px] text-slate-400 font-medium">
@@ -602,7 +603,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <span className="text-xs font-semibold text-slate-500">Security Status</span>
-                  <div className="text-2xl font-black text-emerald-600 tracking-tight mt-0.5">
+                  <div className="text-2xl sm:text-3xl font-black text-emerald-600 tracking-tight mt-1">
                     {healthStatus}
                   </div>
                   <span className="text-[11px] text-slate-400 font-medium">All checks passed</span>
@@ -994,7 +995,7 @@ export default function SettingsPage() {
       {/* 4. TAB 2: ORGANIZATION CONFIGURATION                               */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       {activeTab === 'organization' && (
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-6 max-w-3xl">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-6 w-full">
           <div className="flex items-center justify-between pb-4 border-b border-slate-100">
             <div>
               <h2 className="text-base font-bold text-slate-900">Organization Profile & Regional Settings</h2>
@@ -1298,8 +1299,8 @@ export default function SettingsPage() {
       {/* 6. TAB 4: INTEGRATIONS                                             */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       {activeTab === 'integrations' && (
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-6 w-full">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100">
             <div>
               <h2 className="text-base font-bold text-slate-900">Connected Services & Infrastructure</h2>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -1307,40 +1308,44 @@ export default function SettingsPage() {
               </p>
             </div>
             <Button
-              variant="secondary"
+              variant="primary"
               size="sm"
               onClick={() => navigate('/data-sources')}
+              className="gap-1.5 shadow-2xs shrink-0 self-start sm:self-auto"
             >
-              Add Data Connector
+              <Plus className="h-4 w-4" />
+              <span>Add Data Connector</span>
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
             {/* Integration 1: PostgreSQL & Supabase Engine */}
-            <div className="border border-slate-200/80 rounded-xl p-4.5 space-y-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-bold">
-                    <Database className="h-5 w-5" />
+            <div className="bg-slate-50/50 border border-slate-200/90 rounded-2xl p-6 space-y-4 hover:border-slate-300 hover:bg-slate-50/80 transition flex flex-col justify-between shadow-2xs">
+              <div className="space-y-3.5">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-bold shrink-0">
+                      <Database className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900">PostgreSQL / Supabase Storage</h3>
+                      <p className="text-xs text-slate-500 font-medium">Core database & dataset storage provider</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-900">PostgreSQL / Supabase Storage</h3>
-                    <p className="text-[11px] text-slate-500">Core database & dataset storage provider</p>
-                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    Operational
+                  </span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Operational
-                </span>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Connects to the enterprise SQL telemetry hub with automated health heartbeats and query fallback protection.
+                </p>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Connects to the enterprise SQL telemetry hub with automated health heartbeats and query fallback protection.
-              </p>
-              <div className="pt-2 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100">
-                <span>Latency: 1.2ms</span>
+              <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 border-t border-slate-200/70">
+                <span className="font-mono text-slate-600">Latency: 1.2ms</span>
                 <button
                   type="button"
                   onClick={() => navigate('/data-sources')}
-                  className="font-semibold text-blue-600 hover:text-blue-800"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-blue-50 hover:border-blue-200 text-blue-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                 >
                   Configure Connector →
                 </button>
@@ -1348,30 +1353,32 @@ export default function SettingsPage() {
             </div>
 
             {/* Integration 2: Zoho SMTP Mail Gateway */}
-            <div className="border border-slate-200/80 rounded-xl p-4.5 space-y-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 font-bold">
-                    <Mail className="h-5 w-5" />
+            <div className="bg-slate-50/50 border border-slate-200/90 rounded-2xl p-6 space-y-4 hover:border-slate-300 hover:bg-slate-50/80 transition flex flex-col justify-between shadow-2xs">
+              <div className="space-y-3.5">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600 font-bold shrink-0">
+                      <Mail className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900">Zoho SMTP Gateway</h3>
+                      <p className="text-xs text-slate-500 font-medium">Alert dispatch & automated report emails</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-900">Zoho SMTP Gateway</h3>
-                    <p className="text-[11px] text-slate-500">Alert dispatch & automated report emails</p>
-                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    Connected
+                  </span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Connected
-                </span>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Transports transactional notifications, schedule execution summaries, and critical incident alerts.
+                </p>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Transports transactional notifications, schedule execution summaries, and critical incident alerts.
-              </p>
-              <div className="pt-2 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100">
-                <span>Host: smtp.zoho.com:587</span>
+              <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 border-t border-slate-200/70">
+                <span className="font-mono text-slate-600">Host: smtp.zoho.com:587</span>
                 <button
                   type="button"
                   onClick={() => setSuccessMessage('SMTP test handshake validated successfully.')}
-                  className="font-semibold text-blue-600 hover:text-blue-800"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-blue-50 hover:border-blue-200 text-blue-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                 >
                   Test Connection
                 </button>
@@ -1379,30 +1386,32 @@ export default function SettingsPage() {
             </div>
 
             {/* Integration 3: Enterprise Export Pipeline */}
-            <div className="border border-slate-200/80 rounded-xl p-4.5 space-y-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 font-bold">
-                    <FileText className="h-5 w-5" />
+            <div className="bg-slate-50/50 border border-slate-200/90 rounded-2xl p-6 space-y-4 hover:border-slate-300 hover:bg-slate-50/80 transition flex flex-col justify-between shadow-2xs">
+              <div className="space-y-3.5">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-purple-600 font-bold shrink-0">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900">PDF & Excel Generation Pipeline</h3>
+                      <p className="text-xs text-slate-500 font-medium">PDFKit & ExcelJS high-fidelity generators</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-900">PDF & Excel Generation Pipeline</h3>
-                    <p className="text-[11px] text-slate-500">PDFKit & ExcelJS high-fidelity generators</p>
-                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    Ready
+                  </span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Ready
-                </span>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Produces automated report digests, telemetry audit spreadsheets, and printable executive summaries.
+                </p>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Produces automated report digests, telemetry audit spreadsheets, and printable executive summaries.
-              </p>
-              <div className="pt-2 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100">
-                <span>Formats: PDF, XLSX, CSV</span>
+              <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 border-t border-slate-200/70">
+                <span className="font-mono text-slate-600">Formats: PDF, XLSX, CSV</span>
                 <button
                   type="button"
                   onClick={() => navigate('/reports')}
-                  className="font-semibold text-blue-600 hover:text-blue-800"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-blue-50 hover:border-blue-200 text-blue-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                 >
                   View Reports Engine →
                 </button>
@@ -1410,30 +1419,32 @@ export default function SettingsPage() {
             </div>
 
             {/* Integration 4: AI Analytics Engine */}
-            <div className="border border-slate-200/80 rounded-xl p-4.5 space-y-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-600 font-bold">
-                    <Sparkles className="h-5 w-5" />
+            <div className="bg-slate-50/50 border border-slate-200/90 rounded-2xl p-6 space-y-4 hover:border-slate-300 hover:bg-slate-50/80 transition flex flex-col justify-between shadow-2xs">
+              <div className="space-y-3.5">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-600 font-bold shrink-0">
+                      <Sparkles className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900">AI Intelligence Core</h3>
+                      <p className="text-xs text-slate-500 font-medium">Natural-language analytics & telemetry insight</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-900">AI Intelligence Core</h3>
-                    <p className="text-[11px] text-slate-500">Natural-language analytics & telemetry insight</p>
-                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    Active
+                  </span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Active
-                </span>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Powers conversational intelligence, automated anomalies, narrative digests, and query planning.
+                </p>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Powers conversational intelligence, automated anomalies, narrative digests, and query planning.
-              </p>
-              <div className="pt-2 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100">
-                <span>Status: Operational</span>
+              <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 border-t border-slate-200/70">
+                <span className="font-mono text-slate-600">Status: Operational</span>
                 <button
                   type="button"
                   onClick={() => navigate('/ai-insights')}
-                  className="font-semibold text-blue-600 hover:text-blue-800"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-blue-50 hover:border-blue-200 text-blue-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                 >
                   Explore AI Core →
                 </button>
@@ -1447,8 +1458,8 @@ export default function SettingsPage() {
       {/* 7. TAB 5: NOTIFICATIONS PREFERENCES                                */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       {activeTab === 'notifications' && (
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-6 max-w-3xl">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-6 w-full">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100">
             <div>
               <h2 className="text-base font-bold text-slate-900">Notification Channels & Delivery Rules</h2>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -1459,8 +1470,10 @@ export default function SettingsPage() {
               variant="secondary"
               size="sm"
               onClick={() => navigate('/alerts')}
+              className="gap-1.5 shadow-2xs shrink-0 self-start sm:self-auto"
             >
-              Alert Rules Engine
+              <Sliders className="h-4 w-4" />
+              <span>Alert Rules Engine</span>
             </Button>
           </div>
 
@@ -1559,7 +1572,7 @@ export default function SettingsPage() {
       {/* 8. TAB 6: WORKSPACE PREFERENCES                                    */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       {activeTab === 'preferences' && (
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-6 max-w-3xl">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-6 w-full">
           <div className="pb-4 border-b border-slate-100">
             <h2 className="text-base font-bold text-slate-900">Workspace User Experience & Display Preferences</h2>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -1648,7 +1661,7 @@ export default function SettingsPage() {
 
       {/* Edit Organization Modal */}
       {isEditOrgModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
@@ -1726,7 +1739,7 @@ export default function SettingsPage() {
 
       {/* Invite Member Modal */}
       {isInviteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
@@ -1813,7 +1826,7 @@ export default function SettingsPage() {
 
       {/* Documentation Modal */}
       {isDocsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
@@ -1859,7 +1872,7 @@ export default function SettingsPage() {
 
       {/* Contact Support Modal */}
       {isSupportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
@@ -1904,7 +1917,7 @@ export default function SettingsPage() {
 
       {/* System Status Modal */}
       {isStatusModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">

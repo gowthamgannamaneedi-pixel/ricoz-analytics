@@ -15,6 +15,8 @@ import {
   Zap,
   Info,
   ChevronRight,
+  ChevronDown,
+  RotateCcw,
   Database,
   ArrowUpRight,
   ArrowDownRight,
@@ -692,10 +694,11 @@ export default function ForecastsPage() {
               type="button"
               id="reset-config-defaults-btn"
               onClick={handleResetDefaults}
-              className="text-[11px] font-semibold text-slate-500 hover:text-blue-600 transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 hover:text-blue-600 border border-slate-200/80 shadow-2xs transition-all active:scale-95 cursor-pointer"
               title="Reset parameters to defaults"
             >
-              Reset
+              <RotateCcw className="h-3 w-3 text-slate-400 group-hover:text-blue-600" />
+              <span>Reset</span>
             </button>
           </div>
 
@@ -713,7 +716,7 @@ export default function ForecastsPage() {
                   id="forecast-dataset-select"
                   value={selectedDatasetId}
                   onChange={handleDatasetChange}
-                  className="w-full appearance-none pl-9 pr-8 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-blue-600 shadow-2xs cursor-pointer"
+                  className="w-full appearance-none pl-9 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-blue-600 shadow-2xs cursor-pointer"
                 >
                   {datasets.length === 0 ? (
                     <option value="">No datasets available</option>
@@ -726,7 +729,7 @@ export default function ForecastsPage() {
                   )}
                 </select>
                 <Database className="h-4 w-4 text-blue-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <ChevronRight className="h-4 w-4 text-slate-400 rotate-90 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
 
@@ -738,22 +741,25 @@ export default function ForecastsPage() {
               <p className="text-[11px] text-slate-400">
                 Select the numeric column to predict
               </p>
-              <select
-                id="forecast-metric-column-select"
-                value={targetColumn}
-                onChange={(e) => setTargetColumn(e.target.value)}
-                className="w-full py-2.5 px-3 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-blue-600 shadow-2xs cursor-pointer mt-1"
-              >
-                {availableColumns.numericCols.length === 0 ? (
-                  <option value="">No numeric columns found</option>
-                ) : (
-                  availableColumns.numericCols.map(col => (
-                    <option key={col} value={col}>
-                      {col}
-                    </option>
-                  ))
-                )}
-              </select>
+              <div className="relative mt-1">
+                <select
+                  id="forecast-metric-column-select"
+                  value={targetColumn}
+                  onChange={(e) => setTargetColumn(e.target.value)}
+                  className="w-full appearance-none pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-blue-600 shadow-2xs cursor-pointer"
+                >
+                  {availableColumns.numericCols.length === 0 ? (
+                    <option value="">No numeric columns found</option>
+                  ) : (
+                    availableColumns.numericCols.map(col => (
+                      <option key={col} value={col}>
+                        {col}
+                      </option>
+                    ))
+                  )}
+                </select>
+                <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
             </div>
 
             {/* 3. Time Column Selector */}
@@ -764,22 +770,25 @@ export default function ForecastsPage() {
               <p className="text-[11px] text-slate-400">
                 Select the time column
               </p>
-              <select
-                id="forecast-time-column-select"
-                value={dateColumn}
-                onChange={(e) => setDateColumn(e.target.value)}
-                className="w-full py-2.5 px-3 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-blue-600 shadow-2xs cursor-pointer mt-1"
-              >
-                {availableColumns.dateCols.length === 0 ? (
-                  <option value="">No date columns found</option>
-                ) : (
-                  availableColumns.dateCols.map(col => (
-                    <option key={col} value={col}>
-                      {col}
-                    </option>
-                  ))
-                )}
-              </select>
+              <div className="relative mt-1">
+                <select
+                  id="forecast-time-column-select"
+                  value={dateColumn}
+                  onChange={(e) => setDateColumn(e.target.value)}
+                  className="w-full appearance-none pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-blue-600 shadow-2xs cursor-pointer"
+                >
+                  {availableColumns.dateCols.length === 0 ? (
+                    <option value="">No date columns found</option>
+                  ) : (
+                    availableColumns.dateCols.map(col => (
+                      <option key={col} value={col}>
+                        {col}
+                      </option>
+                    ))
+                  )}
+                </select>
+                <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
             </div>
 
             {/* 4. Model Selector */}
@@ -787,18 +796,21 @@ export default function ForecastsPage() {
               <label className="block text-xs font-bold text-slate-800">
                 Model
               </label>
-              <select
-                id="forecast-model-select"
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                className="w-full py-2.5 px-3 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-blue-600 shadow-2xs cursor-pointer mt-1"
-              >
-                <option value="auto">Auto (Best Model)</option>
-                <option value="linear_regression">Linear Regression (Trend)</option>
-                <option value="holt_winters">Holt-Winters (Seasonality)</option>
-                <option value="arima">ARIMA (Auto-Regressive)</option>
-                <option value="exponential_smoothing">Exponential Smoothing</option>
-              </select>
+              <div className="relative mt-1">
+                <select
+                  id="forecast-model-select"
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="w-full appearance-none pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-blue-600 shadow-2xs cursor-pointer"
+                >
+                  <option value="auto">Auto (Best Model)</option>
+                  <option value="linear_regression">Linear Regression (Trend)</option>
+                  <option value="holt_winters">Holt-Winters (Seasonality)</option>
+                  <option value="arima">ARIMA (Auto-Regressive)</option>
+                  <option value="exponential_smoothing">Exponential Smoothing</option>
+                </select>
+                <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
             </div>
 
             {/* 5. Horizon & Interval (Two columns) */}
@@ -827,18 +839,21 @@ export default function ForecastsPage() {
                 <label className="block text-xs font-bold text-slate-800">
                   Interval
                 </label>
-                <select
-                  id="forecast-interval-select"
-                  value={interval}
-                  onChange={(e) => setInterval(e.target.value)}
-                  className="w-full py-2.5 px-3 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-blue-600 shadow-2xs cursor-pointer mt-1"
-                >
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="quarterly">Quarterly</option>
-                  <option value="yearly">Yearly</option>
-                </select>
+                <div className="relative mt-1">
+                  <select
+                    id="forecast-interval-select"
+                    value={interval}
+                    onChange={(e) => setInterval(e.target.value)}
+                    className="w-full appearance-none pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-blue-600 shadow-2xs cursor-pointer"
+                  >
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
+                  <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
               </div>
             </div>
 
@@ -1296,22 +1311,22 @@ export default function ForecastsPage() {
               </div>
 
               {/* Model Insights Card */}
-              <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-2xs flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
+              <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all">
+                <div className="flex items-start sm:items-center gap-4 min-w-0">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100 shrink-0 shadow-2xs">
                     <Lightbulb className="h-5 w-5" />
                   </div>
-                  <div className="space-y-0.5 min-w-0">
+                  <div className="space-y-1 min-w-0 py-0.5">
                     <h4 className="text-xs sm:text-sm font-bold text-slate-900">
                       Model Insights
                     </h4>
-                    <p className="text-xs text-slate-500 leading-relaxed truncate sm:text-wrap">
+                    <p className="text-xs text-slate-600 leading-relaxed">
                       {forecastResult ? (
                         <>
-                          Selected <strong>{MODEL_LABELS[forecastResult.model] || forecastResult.model}</strong> across {forecastResult.historical_points || 0} observations.
+                          Selected <strong className="text-slate-900 font-semibold">{MODEL_LABELS[forecastResult.model] || forecastResult.model}</strong> across {forecastResult.historical_points || 0} observations.
                           {forecastResult.metrics?.mape !== undefined && ` Model achieved ${Number(forecastResult.metrics.mape).toFixed(1)}% MAPE accuracy.`}
                           {anomaliesCount > 0 ? (
-                            <> Detected <strong className="text-amber-700">{anomaliesCount} statistical outliers</strong> in the historical data.</>
+                            <> Detected <strong className="text-amber-700 font-semibold">{anomaliesCount} statistical outliers</strong> in the historical data.</>
                           ) : (
                             <> Historical values remained within normal statistical boundaries.</>
                           )}
@@ -1322,7 +1337,9 @@ export default function ForecastsPage() {
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="h-4 w-4 text-slate-400 rotate-90 shrink-0" />
+                <div className="hidden sm:flex items-center text-slate-400 shrink-0">
+                  <ChevronRight className="h-4 w-4" />
+                </div>
               </div>
             </div>
           )}
@@ -1561,7 +1578,7 @@ export default function ForecastsPage() {
       {/* 5. DELETE FORECAST CONFIRMATION MODAL                             */}
       {/* ───────────────────────────────────────────────────────────────── */}
       {forecastToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-xs p-4 animate-in fade-in duration-150">
           <div className="relative w-full max-w-sm rounded-2xl bg-white shadow-2xl border border-slate-200 p-6 space-y-4 animate-in zoom-in-95 duration-150">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 shrink-0">

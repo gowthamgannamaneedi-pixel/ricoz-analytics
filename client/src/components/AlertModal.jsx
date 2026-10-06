@@ -11,7 +11,8 @@ import {
   Loader2,
   AlertCircle,
   Activity,
-  CheckCircle2
+  CheckCircle2,
+  ChevronDown
 } from 'lucide-react';
 import { Button } from './ui/Button';
 
@@ -170,113 +171,119 @@ export default function AlertModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/40 backdrop-blur-xs p-4 sm:p-6 animate-fadeIn">
-      <div className="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-xs p-3 sm:p-4 animate-fadeIn">
+      <div className="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all max-h-[96vh] flex flex-col">
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 border border-blue-100 text-blue-600">
-              <Bell className="h-4 w-4" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 border border-blue-100 text-blue-600 shrink-0">
+              <Bell className="h-4.5 w-4.5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
                 {alert ? 'Edit Alert Rule' : 'Create Real-Time Alert Rule'}
               </h2>
-              <p className="text-xs text-slate-500">
-                Set operational condition thresholds and notification rules
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Set operational condition thresholds and dispatch rules
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Modal Body — increased top padding, consistent section spacing */}
-        <form onSubmit={handleSubmit} className="px-6 pt-5 pb-6 space-y-5">
+        {/* Modal Body */}
+        <form onSubmit={handleSubmit} className="px-5 py-4 space-y-3.5 overflow-visible">
           {error && (
-            <div className="flex items-center gap-2.5 rounded-xl border border-rose-200 bg-rose-50/80 p-3 text-xs text-rose-700">
+            <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50/90 px-3 py-2 text-xs text-rose-700">
               <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
               <span>{error}</span>
             </div>
           )}
 
-          {/* Rule Name */}
+          {/* Row 1: Rule Name */}
           <div>
-            <label className="block text-xs font-semibold text-slate-800 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-800 mb-1">
               Alert Rule Name <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
-              placeholder="e.g., Critical Revenue Drop Alert"
+              placeholder="e.g., Critical Revenue Minimum Threshold"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-800 placeholder-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none"
+              className="w-full h-9 rounded-xl border border-slate-300 bg-white px-3.5 text-xs text-slate-900 font-medium placeholder-slate-400 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none shadow-2xs"
             />
           </div>
 
-          {/* Metric & Condition Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Row 2: Metric & Condition Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Metric Selection */}
             <div>
-              <label className="block text-xs font-semibold text-slate-800 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-800 mb-1">
                 Target Metric / KPI
               </label>
-              <select
-                value={metricId}
-                onChange={(e) => setMetricId(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-800 transition focus:border-blue-500 focus:bg-white focus:outline-none"
-              >
-                <option value="">-- Generic Organization Metric --</option>
-                {metrics.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} {m.unit ? `(${m.unit})` : ''}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={metricId}
+                  onChange={(e) => setMetricId(e.target.value)}
+                  className="w-full h-9 appearance-none rounded-xl border border-slate-300 bg-white pl-3 pr-8 text-xs font-medium text-slate-800 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none cursor-pointer shadow-2xs"
+                >
+                  <option value="">-- Generic Organization Metric --</option>
+                  {metrics.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} {m.unit ? `(${m.unit})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+              </div>
             </div>
 
             {/* Condition Expression */}
             <div>
-              <label className="block text-xs font-semibold text-slate-800 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-800 mb-1">
                 Condition Trigger <span className="text-rose-500">*</span>
               </label>
-              <select
-                value={condition}
-                onChange={(e) => setCondition(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-800 transition focus:border-blue-500 focus:bg-white focus:outline-none"
-              >
-                {CONDITIONS.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={condition}
+                  onChange={(e) => setCondition(e.target.value)}
+                  className="w-full h-9 appearance-none rounded-xl border border-slate-300 bg-white pl-3 pr-8 text-xs font-medium text-slate-800 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none cursor-pointer shadow-2xs"
+                >
+                  {CONDITIONS.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+              </div>
             </div>
           </div>
 
-          {/* Threshold & Cooldown Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Row 3: Threshold & Cooldown Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Threshold Value */}
             <div>
-              <label className="block text-xs font-semibold text-slate-800 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-800 mb-1">
                 Threshold Boundary <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
                 <input
                   type="number"
                   step="any"
-                  placeholder="e.g., 50000"
+                  placeholder="e.g., 100000"
                   value={threshold}
                   onChange={(e) => setThreshold(e.target.value)}
                   required
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-800 placeholder-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none"
+                  className="w-full h-9 rounded-xl border border-slate-300 bg-white pl-3.5 pr-12 text-xs font-medium text-slate-900 placeholder-slate-400 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none shadow-2xs"
                 />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-mono">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 font-mono pointer-events-none">
                   value
                 </span>
               </div>
@@ -284,7 +291,7 @@ export default function AlertModal({
 
             {/* Cooldown Period */}
             <div>
-              <label className="block text-xs font-semibold text-slate-800 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-800 mb-1">
                 Anti-Flapping Cooldown (Minutes)
               </label>
               <div className="relative">
@@ -294,21 +301,21 @@ export default function AlertModal({
                   placeholder="60"
                   value={cooldownMinutes}
                   onChange={(e) => setCooldownMinutes(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-800 placeholder-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none"
+                  className="w-full h-9 rounded-xl border border-slate-300 bg-white pl-3.5 pr-12 text-xs font-medium text-slate-900 placeholder-slate-400 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none shadow-2xs"
                 />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-mono">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 font-mono pointer-events-none">
                   mins
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Severity Badges Selector */}
+          {/* Row 4: Severity Badges Selector */}
           <div>
-            <label className="block text-xs font-semibold text-slate-800 mb-2">
+            <label className="block text-xs font-semibold text-slate-800 mb-1.5">
               Incident Severity Level
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {SEVERITIES.map((sev) => {
                 const isSelected = severity === sev.value;
                 return (
@@ -316,9 +323,9 @@ export default function AlertModal({
                     key={sev.value}
                     type="button"
                     onClick={() => setSeverity(sev.value)}
-                    className={`flex items-center justify-center gap-2 rounded-xl border py-2 px-3 text-xs font-semibold transition ${
+                    className={`flex items-center justify-center gap-1.5 rounded-xl border h-8 px-2.5 text-xs font-semibold transition cursor-pointer ${
                       isSelected
-                        ? `${sev.color} ring-2 ring-blue-500/20 shadow-xs`
+                        ? `${sev.color} ring-2 ring-blue-500/20 shadow-xs font-bold`
                         : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                     }`}
                   >
@@ -330,20 +337,20 @@ export default function AlertModal({
             </div>
           </div>
 
-          {/* Notification Channels & Recipient Emails */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-3">
+          {/* Row 5: Notification Channels & Recipient Emails */}
+          <div className="rounded-xl border border-slate-200/90 bg-slate-50/60 p-3 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-800 flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
                 <Mail className="h-3.5 w-3.5 text-blue-600" />
                 <span>Notification Dispatch Channels</span>
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => toggleChannel('in_app')}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
                     notificationChannels.includes('in_app')
-                      ? 'bg-blue-600 text-white border-blue-600'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
                       : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
@@ -352,9 +359,9 @@ export default function AlertModal({
                 <button
                   type="button"
                   onClick={() => toggleChannel('email')}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
                     notificationChannels.includes('email')
-                      ? 'bg-blue-600 text-white border-blue-600'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
                       : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
@@ -365,7 +372,7 @@ export default function AlertModal({
 
             {/* Email Recipients Input */}
             {notificationChannels.includes('email') && (
-              <div className="pt-2 border-t border-slate-200/60 space-y-2">
+              <div className="pt-2 border-t border-slate-200/70 space-y-2">
                 <div className="flex gap-2">
                   <input
                     type="email"
@@ -378,12 +385,12 @@ export default function AlertModal({
                         handleAddEmail();
                       }
                     }}
-                    className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none"
+                    className="flex-1 h-8 rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-600 focus:outline-none"
                   />
                   <button
                     type="button"
                     onClick={handleAddEmail}
-                    className="flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 border border-blue-200 hover:bg-blue-100 transition"
+                    className="flex items-center gap-1 h-8 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-700 transition cursor-pointer shadow-2xs"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     <span>Add</span>
@@ -392,17 +399,17 @@ export default function AlertModal({
 
                 {/* Recipient Chips */}
                 {recipients.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
+                  <div className="flex flex-wrap gap-1.5">
                     {recipients.map((em) => (
                       <span
                         key={em}
-                        className="inline-flex items-center gap-1.5 rounded-md bg-white border border-slate-200 px-2.5 py-1 text-[11px] font-mono text-slate-700 shadow-2xs"
+                        className="inline-flex items-center gap-1.5 rounded-md bg-white border border-slate-200 px-2 py-0.5 text-[11px] font-mono text-slate-700 shadow-2xs"
                       >
                         <span>{em}</span>
                         <button
                           type="button"
                           onClick={() => handleRemoveEmail(em)}
-                          className="text-slate-400 hover:text-rose-600 transition"
+                          className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
                         >
                           <Trash2 className="h-3 w-3" />
                         </button>
@@ -414,55 +421,57 @@ export default function AlertModal({
             )}
           </div>
 
-          {/* Active / Disabled Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-white">
-            <div>
-              <p className="text-xs font-semibold text-slate-800">Rule Activation Status</p>
-              <p className="text-[11px] text-slate-500">
-                {status === 'active' ? 'Rule is currently active and evaluated by background scheduler.' : 'Rule is disabled and will not evaluate or trigger.'}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setStatus(status === 'active' ? 'disabled' : 'active')}
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                status === 'active' ? 'bg-blue-600' : 'bg-slate-200'
-              }`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  status === 'active' ? 'translate-x-5' : 'translate-x-0'
+          {/* Modal Footer: Active Switch on Left + Action Buttons on Right */}
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+            {/* Activation Status Switch */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setStatus(status === 'active' ? 'disabled' : 'active')}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  status === 'active' ? 'bg-blue-600' : 'bg-slate-300'
                 }`}
-              />
-            </button>
-          </div>
+              >
+                <span
+                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    status === 'active' ? 'translate-x-4' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+              <span className="text-xs font-semibold text-slate-700">
+                {status === 'active' ? 'Rule Active' : 'Disabled'}
+              </span>
+            </div>
 
-          {/* Modal Footer Actions */}
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={onClose}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  {alert ? 'Update Rule' : 'Create Alert'}
-                </>
-              )}
-            </Button>
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={onClose}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>{alert ? 'Update Rule' : 'Create Alert'}</span>
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </form>
       </div>

@@ -88,7 +88,7 @@ export default function ScenarioSimulatorModal({
   if (!isOpen || !attribution) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/30 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
       <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-4xl shadow-2xl text-slate-900 overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}

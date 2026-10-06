@@ -92,7 +92,7 @@
 
   /* Shared native select — use when not using the Select component */
   .rz-select {
-    @apply h-9 rounded-md border border-slate-200 bg-white pl-3 pr-8 text-xs text-slate-700 font-medium
+    @apply h-9 rounded-md border border-slate-200 bg-white pl-3.5 pr-9 text-xs text-slate-700 font-medium
            appearance-none cursor-pointer
            hover:border-brand-500
            focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20
@@ -116,7 +116,7 @@
 
   /* Modal overlay backdrop */
   .rz-modal-backdrop {
-    @apply fixed inset-0 z-50 flex items-start justify-center p-4 pt-16 bg-slate-900/40 backdrop-blur-xs overflow-y-auto;
+    @apply fixed inset-0 z-50 flex items-start justify-center p-4 pt-16 bg-slate-900/30 backdrop-blur-xs overflow-y-auto;
   }
 
   /* Modal container */

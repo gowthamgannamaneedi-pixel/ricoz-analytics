@@ -679,7 +679,7 @@ export default function AIAnalyticsAssistant() {
               className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-2xs transition cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>+ New Chat</span>
+              <span>New Chat</span>
             </button>
 
             {/* Search History Input */}
@@ -910,15 +910,15 @@ export default function AIAnalyticsAssistant() {
                             </span>
                           </div>
 
-                          <div className="space-y-1.5">
+                          <div className="space-y-2">
                             {cat.questions.map((q, qIdx) => (
                               <button
                                 key={qIdx}
                                 onClick={() => handleSendQuery(q)}
-                                className="w-full text-left p-2 rounded-lg text-slate-700 hover:text-blue-700 hover:bg-slate-50 text-[11px] font-medium transition flex items-start gap-1.5 group cursor-pointer"
+                                className="w-full text-left p-2.5 rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-blue-50/60 hover:border-blue-200 hover:text-blue-700 active:scale-[0.98] text-[11px] font-medium transition-all flex items-center gap-2 group cursor-pointer shadow-2xs hover:shadow-xs"
                               >
-                                <span className="text-blue-500 font-bold mt-0.5 group-hover:translate-x-0.5 transition-transform">&gt;</span>
-                                <span className="leading-snug">{q}</span>
+                                <ChevronRight className="w-3.5 h-3.5 text-blue-500 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                                <span className="leading-snug flex-1 text-slate-700 group-hover:text-blue-700">{q}</span>
                               </button>
                             ))}
                           </div>

@@ -649,7 +649,9 @@ export default function CollaborationPage() {
           >
             <Star className={`w-4 h-4 ${activeTab === 'favorites' ? 'fill-blue-600 text-blue-600' : 'text-slate-400'}`} />
             <span>Favorites</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600">
+            <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
+              activeTab === 'favorites' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600'
+            }`}>
               {favorites.length}
             </span>
           </button>
@@ -664,7 +666,9 @@ export default function CollaborationPage() {
           >
             <Clock className="w-4 h-4" />
             <span>Recently Viewed</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600">
+            <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
+              activeTab === 'recent' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600'
+            }`}>
               {recentlyViewed.length}
             </span>
           </button>
@@ -679,7 +683,9 @@ export default function CollaborationPage() {
           >
             <Share2 className="w-4 h-4" />
             <span>Shared with Me</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600">
+            <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
+              activeTab === 'shared' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600'
+            }`}>
               {sharedWithMeTotal}
             </span>
           </button>
@@ -694,7 +700,9 @@ export default function CollaborationPage() {
           >
             <Users2 className="w-4 h-4" />
             <span>Teams &amp; Groups</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600">
+            <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
+              activeTab === 'teams' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600'
+            }`}>
               {teams.length}
             </span>
           </button>
@@ -708,7 +716,7 @@ export default function CollaborationPage() {
             className="h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-xs flex items-center gap-2 shadow-2xs transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Share Item</span>
+            <span>Share Item</span>
           </button>
         </div>
       </div>
@@ -720,7 +728,7 @@ export default function CollaborationPage() {
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
           {/* Search Input */}
           <div className="relative flex-1 min-w-[240px]">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               placeholder="Search dashboards, reports, or insights..."
@@ -741,28 +749,34 @@ export default function CollaborationPage() {
           {/* Filter Dropdowns */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Type Filter */}
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-            >
-              <option value="all">All Types</option>
-              <option value="dashboard">Dashboards</option>
-              <option value="report">Reports</option>
-              <option value="ai_insight">AI Insights</option>
-            </select>
+            <div className="relative">
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="h-10 appearance-none pl-3.5 pr-8 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer shadow-2xs transition"
+              >
+                <option value="all">All Types</option>
+                <option value="dashboard">Dashboards</option>
+                <option value="report">Reports</option>
+                <option value="ai_insight">AI Insights</option>
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
 
             {/* Access Filter */}
-            <select
-              value={accessFilter}
-              onChange={(e) => setAccessFilter(e.target.value)}
-              className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-            >
-              <option value="all">All Access Levels</option>
-              <option value="viewer">View Only</option>
-              <option value="editor">Editor</option>
-              <option value="admin">Admin / Owner</option>
-            </select>
+            <div className="relative">
+              <select
+                value={accessFilter}
+                onChange={(e) => setAccessFilter(e.target.value)}
+                className="h-10 appearance-none pl-3.5 pr-8 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer shadow-2xs transition"
+              >
+                <option value="all">All Access Levels</option>
+                <option value="viewer">View Only</option>
+                <option value="editor">Editor</option>
+                <option value="admin">Admin / Owner</option>
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
 
             {/* Clear Filters Button */}
             {(searchQuery || typeFilter !== 'all' || accessFilter !== 'all') && (
@@ -988,19 +1002,19 @@ export default function CollaborationPage() {
           <div className="flex flex-wrap items-center justify-center gap-2.5">
             <button
               onClick={() => navigate('/dashboard')}
-              className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-blue-200/90 bg-white hover:bg-blue-50 hover:border-blue-300 text-blue-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
             >
               Browse Dashboards
             </button>
             <button
               onClick={() => navigate('/reports')}
-              className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-blue-200/90 bg-white hover:bg-blue-50 hover:border-blue-300 text-blue-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
             >
               Browse Reports
             </button>
             <button
               onClick={() => navigate('/ai-insights')}
-              className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-blue-200/90 bg-white hover:bg-blue-50 hover:border-blue-300 text-blue-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
             >
               Explore AI Insights
             </button>
@@ -1229,7 +1243,7 @@ export default function CollaborationPage() {
       {/* 6. QUICK SHARE ITEM PICKER MODAL                                   */}
       {/* ------------------------------------------------------------------ */}
       {showSharePickerModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs animate-fade-in">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
@@ -1339,7 +1353,7 @@ export default function CollaborationPage() {
       {/* 8. CREATE TEAM MODAL                                               */}
       {/* ------------------------------------------------------------------ */}
       {showCreateTeamModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs animate-fade-in">
           <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 flex flex-col">
             <div className="flex items-center justify-between p-6 pb-4 border-b border-slate-100">
               <div>
@@ -1401,7 +1415,7 @@ export default function CollaborationPage() {
       {/* 9. ADD MEMBER MODAL                                                */}
       {/* ------------------------------------------------------------------ */}
       {showAddMemberModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs animate-fade-in">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>

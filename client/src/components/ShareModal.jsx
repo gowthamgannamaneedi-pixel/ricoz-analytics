@@ -8,7 +8,8 @@ import {
   Trash2,
   Check,
   AlertCircle,
-  Loader2
+  Loader2,
+  ChevronDown
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import {
@@ -140,7 +141,7 @@ export default function ShareModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs">
       <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-slate-200">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
@@ -155,14 +156,13 @@ export default function ShareModal({
               <p className="text-xs text-slate-500 truncate max-w-[280px]">{resourceTitle}</p>
             </div>
           </div>
-          <Button
+          <button
+            type="button"
             onClick={onClose}
-            variant="secondary"
-            size="sm"
-            className="p-1.5 rounded-lg"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
           >
             <X className="h-4 w-4" />
-          </Button>
+          </button>
         </div>
 
         {/* Feedback Messages */}
@@ -211,38 +211,44 @@ export default function ShareModal({
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Select {activeTab === 'user' ? 'Organization User' : 'Team'}
               </label>
-              <select
-                value={selectedTargetId}
-                onChange={(e) => setSelectedTargetId(e.target.value)}
-                className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition shadow-2xs cursor-pointer"
-              >
-                <option value="">Choose {activeTab}...</option>
-                {activeTab === 'user' ? (
-                  users.map(u => (
-                    <option key={u.id} value={u.id}>
-                      {u.name} ({u.email}) — {u.role?.toUpperCase()}
-                    </option>
-                  ))
-                ) : (
-                  teams.map(t => (
-                    <option key={t.id} value={t.id}>
-                      {t.name} ({t.member_count || 0} members)
-                    </option>
-                  ))
-                )}
-              </select>
+              <div className="relative">
+                <select
+                  value={selectedTargetId}
+                  onChange={(e) => setSelectedTargetId(e.target.value)}
+                  className="w-full h-10 appearance-none rounded-xl border border-slate-300 bg-white pl-3.5 pr-9 text-sm font-medium text-slate-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition shadow-2xs cursor-pointer"
+                >
+                  <option value="">Choose {activeTab}...</option>
+                  {activeTab === 'user' ? (
+                    users.map(u => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({u.email}) — {u.role?.toUpperCase()}
+                      </option>
+                    ))
+                  ) : (
+                    teams.map(t => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} ({t.member_count || 0} members)
+                      </option>
+                    ))
+                  )}
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Permission</label>
-              <select
-                value={permission}
-                onChange={(e) => setPermission(e.target.value)}
-                className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition shadow-2xs cursor-pointer"
-              >
-                <option value="viewer">Viewer</option>
-                {resourceType !== 'insight' && <option value="editor">Editor</option>}
-              </select>
+              <div className="relative">
+                <select
+                  value={permission}
+                  onChange={(e) => setPermission(e.target.value)}
+                  className="w-full h-10 appearance-none rounded-xl border border-slate-300 bg-white pl-3.5 pr-9 text-sm font-medium text-slate-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition shadow-2xs cursor-pointer"
+                >
+                  <option value="viewer">Viewer</option>
+                  {resourceType !== 'insight' && <option value="editor">Editor</option>}
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
             </div>
           </div>
 

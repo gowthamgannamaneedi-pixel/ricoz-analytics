@@ -1533,7 +1533,7 @@ export default function DashboardPage() {
 
       {/* Save View Modal */}
       {isSavedViewModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs">
           <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl border border-slate-200">
             <h3 className="font-bold text-slate-900 text-sm mb-3">Save Current Filter View</h3>
             <form onSubmit={handleSaveCurrentView} className="space-y-3">

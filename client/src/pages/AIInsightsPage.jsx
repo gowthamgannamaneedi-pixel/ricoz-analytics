@@ -676,28 +676,21 @@ export default function AIInsightsPage() {
           {/* Header Action Controls */}
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             {/* Dataset Scope Selector */}
-            <select
-              value={selectedDatasetId}
-              onChange={(e) => setSelectedDatasetId(e.target.value)}
-              className="h-10 px-3.5 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition cursor-pointer"
-            >
-              <option value="">All Datasets</option>
-              {datasets.map(d => (
-                <option key={d.id} value={d.id}>
-                  {d.name} ({d.row_count || 0} rows)
-                </option>
-              ))}
-            </select>
-
-            {/* Refresh Button */}
-            <button
-              onClick={loadData}
-              disabled={loading}
-              className="h-10 px-3.5 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-400 flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
-            >
-              <RefreshCw className={`w-4 h-4 text-slate-600 ${loading ? 'animate-spin' : ''}`} />
-              <span>{loading ? 'Refreshing...' : 'Refresh'}</span>
-            </button>
+            <div className="relative">
+              <select
+                value={selectedDatasetId}
+                onChange={(e) => setSelectedDatasetId(e.target.value)}
+                className="h-10 appearance-none pl-3.5 pr-9 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition cursor-pointer"
+              >
+                <option value="">All Datasets</option>
+                {datasets.map(d => (
+                  <option key={d.id} value={d.id}>
+                    {d.name} ({d.row_count || 0} rows)
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
 
             {/* Generate Insights CTA */}
             <button
@@ -729,25 +722,35 @@ export default function AIInsightsPage() {
                   </div>
                   <button
                     onClick={() => handleExport('csv')}
-                    className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium"
+                    className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium cursor-pointer"
                   >
                     <FileText className="w-3.5 h-3.5 text-slate-500" /> CSV Spreadsheet
                   </button>
                   <button
                     onClick={() => handleExport('excel')}
-                    className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium"
+                    className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium cursor-pointer"
                   >
                     <PieChart className="w-3.5 h-3.5 text-emerald-600" /> Excel Workbook (.xlsx)
                   </button>
                   <button
                     onClick={() => handleExport('pdf')}
-                    className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium"
+                    className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium cursor-pointer"
                   >
-                    <FileDown className="w-3.5 h-3.5 text-rose-600" /> PDF Executive Report
+                    <Download className="w-3.5 h-3.5 text-rose-600" /> PDF Document
                   </button>
                 </div>
               )}
             </div>
+
+            {/* Refresh Button (Moved to trailing end) */}
+            <button
+              onClick={loadData}
+              disabled={loading}
+              className="h-10 px-3.5 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-400 flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 text-slate-600 ${loading ? 'animate-spin' : ''}`} />
+              <span>{loading ? 'Refreshing...' : 'Refresh'}</span>
+            </button>
           </div>
         </div>
       </div>
@@ -887,21 +890,21 @@ export default function AIInsightsPage() {
       {/* ------------------------------------------------------------------ */}
       {/* 4. FILTER / SEARCH TOOLBAR                                         */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
         {/* Search Input */}
         <div className="relative flex-1 min-w-[240px]">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             placeholder="Search insights by title, description, or tags..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 bg-slate-50/60 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+            className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs transition"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -911,44 +914,53 @@ export default function AIInsightsPage() {
         {/* Dropdown Filters */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Type Filter */}
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-          >
-            <option value="all">All Types</option>
-            <option value="growth">Growth</option>
-            <option value="decline">Decline</option>
-            <option value="trend">Trend</option>
-            <option value="anomaly">Anomaly</option>
-            <option value="operational">Operational</option>
-            <option value="forecast">Forecast</option>
-            <option value="data_quality">Data Quality</option>
-            <option value="relationship">Relationship</option>
-          </select>
+          <div className="relative">
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="h-10 appearance-none pl-3.5 pr-9 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs cursor-pointer"
+            >
+              <option value="all">All Types</option>
+              <option value="growth">Growth</option>
+              <option value="decline">Decline</option>
+              <option value="trend">Trend</option>
+              <option value="anomaly">Anomaly</option>
+              <option value="operational">Operational</option>
+              <option value="forecast">Forecast</option>
+              <option value="data_quality">Data Quality</option>
+              <option value="relationship">Relationship</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
 
           {/* Impact Level Filter */}
-          <select
-            value={impactFilter}
-            onChange={(e) => setImpactFilter(e.target.value)}
-            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-          >
-            <option value="all">All Impact Levels</option>
-            <option value="critical">Critical</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
+          <div className="relative">
+            <select
+              value={impactFilter}
+              onChange={(e) => setImpactFilter(e.target.value)}
+              className="h-10 appearance-none pl-3.5 pr-9 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs cursor-pointer"
+            >
+              <option value="all">All Impact Levels</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
 
           {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-          >
-            <option value="active">All Statuses (Active)</option>
-            <option value="dismissed">Dismissed</option>
-          </select>
+          <div className="relative">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-10 appearance-none pl-3.5 pr-9 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs cursor-pointer"
+            >
+              <option value="active">All Statuses (Active)</option>
+              <option value="dismissed">Dismissed</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
 
           {/* Reset Filters Action */}
           {hasActiveFilters && (
@@ -963,7 +975,7 @@ export default function AIInsightsPage() {
           <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
 
           {/* View Mode Toggle */}
-          <div className="flex items-center gap-1 border border-slate-200 rounded-xl p-1 bg-slate-50/70">
+          <div className="flex items-center gap-1 border border-slate-200 rounded-xl p-1 bg-white shadow-2xs">
             <button
               onClick={() => setViewMode('card')}
               className={`h-8 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
@@ -1341,7 +1353,7 @@ export default function AIInsightsPage() {
       {/* 6. INSIGHT DETAILS MODAL                                           */}
       {/* ------------------------------------------------------------------ */}
       {selectedInsightForDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs animate-fade-in">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 flex flex-col justify-between">
             {/* Modal Header */}
             <div className="p-6 border-b border-slate-200 space-y-3">
@@ -1532,7 +1544,7 @@ export default function AIInsightsPage() {
       {/* 7. EDUCATIONAL "WHAT ARE AI INSIGHTS?" MODAL                       */}
       {/* ------------------------------------------------------------------ */}
       {isLearnMoreOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs animate-fade-in">
           <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">

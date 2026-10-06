@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Shield,
   Users,
@@ -47,6 +48,7 @@ import {
  * Light enterprise SaaS redesign matching exact reference layout and specs
  */
 export default function GovernancePage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
@@ -360,62 +362,39 @@ export default function GovernancePage() {
   return (
     <div className="w-full max-w-full space-y-6 pb-10">
       {/* ------------------------------------------------------------- */}
-      {/* 1. TOP BANNER: Deep Enterprise Navy Gradient with Shield & Org */}
+      {/* 1. NATIVE HEADER: Light Enterprise Header matching application */}
       {/* ------------------------------------------------------------- */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d1e3a] via-[#102a54] to-[#0c192e] p-6 sm:p-7 md:p-8 text-white shadow-md border border-slate-800/60">
-        {/* Subtle Skyscraper Architecture Watermark Graphic */}
-        <div className="absolute right-0 top-0 bottom-0 w-2/5 pointer-events-none opacity-20 overflow-hidden hidden sm:block">
-          <svg className="w-full h-full object-cover" viewBox="0 0 400 200" preserveAspectRatio="none" fill="none">
-            <path d="M120 0 L260 200 L400 200 L400 0 Z" fill="#1e3a8a" opacity="0.3" />
-            <path d="M200 0 L320 200 L400 200 L400 0 Z" fill="#2563eb" opacity="0.4" />
-            <line x1="80" y1="0" x2="220" y2="200" stroke="#60a5fa" strokeWidth="1" strokeDasharray="3 3" opacity="0.4" />
-            <line x1="140" y1="0" x2="280" y2="200" stroke="#60a5fa" strokeWidth="1" opacity="0.3" />
-            <line x1="200" y1="0" x2="340" y2="200" stroke="#60a5fa" strokeWidth="1" strokeDasharray="4 4" opacity="0.5" />
-            <rect x="230" y="30" width="24" height="16" rx="2" fill="#93c5fd" opacity="0.3" />
-            <rect x="265" y="30" width="24" height="16" rx="2" fill="#93c5fd" opacity="0.5" />
-            <rect x="300" y="30" width="24" height="16" rx="2" fill="#93c5fd" opacity="0.2" />
-            <rect x="230" y="60" width="24" height="16" rx="2" fill="#93c5fd" opacity="0.6" />
-            <rect x="265" y="60" width="24" height="16" rx="2" fill="#93c5fd" opacity="0.3" />
-            <rect x="300" y="60" width="24" height="16" rx="2" fill="#93c5fd" opacity="0.4" />
-            <rect x="230" y="90" width="24" height="16" rx="2" fill="#93c5fd" opacity="0.2" />
-            <rect x="265" y="90" width="24" height="16" rx="2" fill="#93c5fd" opacity="0.6" />
-            <rect x="300" y="90" width="24" height="16" rx="2" fill="#93c5fd" opacity="0.3" />
-          </svg>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
+        <div className="flex items-center gap-3.5">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 shadow-2xs shrink-0">
+            <Shield className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Workspace Governance & Audit Logs
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Enterprise tenant administration, team access controls, RBAC matrix, and immutable audit trails
+            </p>
+          </div>
         </div>
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          {/* Left: Shield Icon + Title + Subtitle */}
-          <div className="flex items-center gap-4 sm:gap-5">
-            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-900/40 shrink-0 border border-blue-400/30">
-              <Shield className="w-7 h-7 text-white" strokeWidth={2.2} />
+        {/* Right: Organization Badge */}
+        <div className="flex items-center gap-3 bg-white border border-slate-200/90 rounded-xl px-3.5 py-2 shadow-2xs shrink-0 self-start sm:self-auto">
+          <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <Building2 className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              ORGANIZATION
             </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                Workspace Governance & Audit Logs
-              </h1>
-              <p className="text-xs sm:text-sm text-blue-200/80 mt-1 max-w-2xl font-normal leading-relaxed">
-                Enterprise tenant administration, team access controls, RBAC matrix, and immutable audit trails
-              </p>
+            <div className="text-xs font-bold text-slate-900 truncate max-w-[160px]">
+              {orgData?.name || 'Ricoz Primary Organization'}
             </div>
           </div>
-
-          {/* Right: Organization Glassmorphic Card */}
-          <div className="flex items-center gap-3.5 bg-white/[0.08] hover:bg-white/[0.12] transition-colors backdrop-blur-md border border-white/10 rounded-xl px-4 py-2.5 shadow-xs shrink-0 self-start lg:self-auto">
-            <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center text-white shrink-0">
-              <Building2 className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-[10px] font-semibold text-blue-200/70 tracking-wider uppercase">
-                ORGANIZATION
-              </div>
-              <div className="text-sm font-bold text-white tracking-tight">
-                {orgData?.name || 'Ricoz Primary Organization'}
-              </div>
-            </div>
-            <span className="ml-2 px-3 py-1 text-[11px] font-bold tracking-wide uppercase rounded-md bg-blue-600 text-white shadow-xs shrink-0">
-              {orgData?.plan ? String(orgData.plan).toUpperCase() : 'ENTERPRISE'}
-            </span>
-          </div>
+          <span className="ml-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+            {orgData?.plan ? String(orgData.plan).toUpperCase() : 'ENTERPRISE'}
+          </span>
         </div>
       </div>
 
@@ -546,7 +525,10 @@ export default function GovernancePage() {
             </div>
 
             {/* Card 2: DATASETS CONNECTED */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-purple-200 transition-all duration-200 group">
+            <div
+              onClick={() => navigate('/datasets')}
+              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-purple-200 transition-all duration-200 group cursor-pointer"
+            >
               <div className="flex items-center gap-4 min-w-0">
                 <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
                   <Database className="w-6 h-6" />
@@ -569,7 +551,10 @@ export default function GovernancePage() {
             </div>
 
             {/* Card 3: DASHBOARDS & REPORTS */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-emerald-200 transition-all duration-200 group">
+            <div
+              onClick={() => navigate('/dashboard')}
+              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-emerald-200 transition-all duration-200 group cursor-pointer"
+            >
               <div className="flex items-center gap-4 min-w-0">
                 <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                   <Layers className="w-6 h-6" />
@@ -592,7 +577,10 @@ export default function GovernancePage() {
             </div>
 
             {/* Card 4: ML & AI TELEMETRY */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-amber-200 transition-all duration-200 group">
+            <div
+              onClick={() => navigate('/ai-insights')}
+              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-amber-200 transition-all duration-200 group cursor-pointer"
+            >
               <div className="flex items-center gap-4 min-w-0">
                 <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
                   <Sparkles className="w-6 h-6" />
@@ -1327,7 +1315,7 @@ export default function GovernancePage() {
       {/* MODAL: CHANGE USER ROLE                                                   */}
       {/* ========================================================================= */}
       {roleModalOpen && selectedUserForRole && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/30 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl border border-slate-200 max-w-md w-full p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -1392,7 +1380,7 @@ export default function GovernancePage() {
       {/* MODAL: CHANGE USER STATUS                                                 */}
       {/* ========================================================================= */}
       {statusModalOpen && selectedUserForStatus && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/30 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl border border-slate-200 max-w-md w-full p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -1443,7 +1431,7 @@ export default function GovernancePage() {
       {/* MODAL: INSPECT AUDIT METADATA                                             */}
       {/* ========================================================================= */}
       {inspectMetadata && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/30 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl border border-slate-200 max-w-lg w-full p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
