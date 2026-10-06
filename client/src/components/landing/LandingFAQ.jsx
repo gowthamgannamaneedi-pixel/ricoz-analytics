@@ -36,16 +36,16 @@ export default function LandingFAQ() {
   };
 
   return (
-    <section id="faq" className="py-20 lg:py-28 bg-white border-b border-slate-200">
+    <section id="faq" className="py-20 lg:py-28 bg-white dark:bg-[#0B0F19] border-b border-slate-200 dark:border-slate-800 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center space-y-4 mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-50 border border-red-200 text-red-700 text-xs font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-xs font-bold uppercase tracking-wider">
             Frequently Asked Questions
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
             Everything You Need to Know
           </h2>
-          <p className="text-base sm:text-lg text-slate-600">
+          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300">
             Have questions about architecture, security, or onboarding? Find your answers here.
           </p>
         </div>
@@ -58,21 +58,21 @@ export default function LandingFAQ() {
                 key={idx}
                 className={`rounded-2xl transition-all duration-200 border ${
                   isOpen
-                    ? 'bg-red-50/30 border-red-200 shadow-sm'
-                    : 'bg-white border-slate-200 hover:border-slate-300'
+                    ? 'bg-red-50/30 dark:bg-red-950/20 border-red-200 dark:border-red-900/60 shadow-xs'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                 }`}
               >
                 <button
                   onClick={() => toggle(idx)}
-                  className="w-full py-5 px-6 flex items-center justify-between text-left focus:outline-none"
+                  className="w-full py-5 px-6 flex items-center justify-between text-left focus:outline-none cursor-pointer"
                   aria-expanded={isOpen}
                 >
-                  <span className="text-base sm:text-lg font-bold text-slate-900 pr-4">
+                  <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white pr-4">
                     {faq.q}
                   </span>
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                      isOpen ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-600'
+                      isOpen ? 'bg-red-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                     }`}
                   >
                     {isOpen ? <Minus size={16} /> : <Plus size={16} />}
@@ -80,7 +80,7 @@ export default function LandingFAQ() {
                 </button>
 
                 {isOpen && (
-                  <div className="px-6 pb-6 pt-1 text-sm sm:text-base text-slate-600 leading-relaxed border-t border-red-100/60 animate-fadeIn">
+                  <div className="px-6 pb-6 pt-1 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed border-t border-red-100/60 dark:border-red-900/40 animate-fadeIn">
                     {faq.a}
                   </div>
                 )}

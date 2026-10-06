@@ -92,17 +92,17 @@ export default function PlatformShowcase({ onOpenDemo }) {
   const current = pillars[selectedPillar];
 
   return (
-    <section id="dashboards" className="py-20 lg:py-28 bg-white border-b border-slate-200">
+    <section id="dashboards" className="py-20 lg:py-28 bg-white dark:bg-[#0B0F19] border-b border-slate-200 dark:border-slate-800 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center space-y-4 mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-50 border border-red-200 text-red-700 text-xs font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-xs font-bold uppercase tracking-wider">
             One Unified Platform
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
             Complete Visibility Across Your Entire Operation
           </h2>
-          <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
+          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
             Eliminate silos between engineering, data analysts, and executive leadership with an integrated workspace.
           </p>
         </div>
@@ -120,8 +120,8 @@ export default function PlatformShowcase({ onOpenDemo }) {
                   onClick={() => setSelectedPillar(idx)}
                   className={`cursor-pointer rounded-2xl p-5 sm:p-6 transition-all duration-200 border text-left ${
                     isSelected
-                      ? 'bg-red-50/70 border-red-500 shadow-md ring-1 ring-red-500/30'
-                      : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                      ? 'bg-red-50/70 dark:bg-red-950/30 border-red-500 shadow-md ring-1 ring-red-500/30'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-850'
                   }`}
                 >
                   <div className="flex items-start gap-4">
@@ -129,29 +129,29 @@ export default function PlatformShowcase({ onOpenDemo }) {
                       className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm flex-shrink-0 ${
                         isSelected
                           ? 'bg-red-600 text-white shadow-md shadow-red-500/20'
-                          : 'bg-slate-100 text-slate-700'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                       }`}
                     >
                       {pillar.step}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <span className={`text-xs font-bold uppercase tracking-wider ${isSelected ? 'text-red-700' : 'text-slate-400'}`}>
+                        <span className={`text-xs font-bold uppercase tracking-wider ${isSelected ? 'text-red-700 dark:text-red-400' : 'text-slate-400'}`}>
                           {pillar.tagline}
                         </span>
                       </div>
-                      <h3 className={`text-base font-bold mb-1.5 ${isSelected ? 'text-slate-950' : 'text-slate-800'}`}>
+                      <h3 className={`text-base font-bold mb-1.5 ${isSelected ? 'text-slate-950 dark:text-white' : 'text-slate-800 dark:text-slate-200'}`}>
                         {pillar.title}
                       </h3>
-                      <p className="text-xs text-slate-600 leading-relaxed">
+                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                         {pillar.desc}
                       </p>
 
                       {isSelected && (
-                        <div className="mt-4 pt-3 border-t border-red-200/60 space-y-2 animate-fadeIn">
+                        <div className="mt-4 pt-3 border-t border-red-200/60 dark:border-red-900/40 space-y-2 animate-fadeIn">
                           {pillar.details.map((d, i) => (
-                            <div key={i} className="flex items-center gap-2 text-xs text-slate-800 font-medium">
-                              <CheckCircle2 size={13} className="text-red-600 flex-shrink-0" />
+                            <div key={i} className="flex items-center gap-2 text-xs text-slate-800 dark:text-slate-200 font-medium">
+                              <CheckCircle2 size={13} className="text-red-600 dark:text-red-400 flex-shrink-0" />
                               <span>{d}</span>
                             </div>
                           ))}

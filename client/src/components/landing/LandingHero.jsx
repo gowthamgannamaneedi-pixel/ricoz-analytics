@@ -35,34 +35,34 @@ export default function LandingHero({ onOpenDemo }) {
   ];
 
   return (
-    <section className="relative pt-12 pb-20 md:pt-20 md:pb-28 overflow-hidden bg-gradient-to-b from-white via-slate-50/50 to-white">
+    <section className="relative pt-12 pb-20 md:pt-20 md:pb-28 overflow-hidden bg-gradient-to-b from-white via-slate-50/50 to-white dark:from-[#0B0F19] dark:via-slate-900/50 dark:to-[#0B0F19] transition-colors duration-200">
       {/* Background Ambient Glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-12 left-1/4 w-96 h-96 bg-red-500/5 rounded-full blur-3xl" />
-        <div className="absolute top-28 right-1/4 w-[28rem] h-[28rem] bg-red-600/5 rounded-full blur-3xl" />
+        <div className="absolute top-12 left-1/4 w-96 h-96 bg-red-500/5 dark:bg-red-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-28 right-1/4 w-[28rem] h-[28rem] bg-red-600/5 dark:bg-red-600/10 rounded-full blur-3xl" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Top Pill Badge */}
         <div className="flex justify-center mb-6">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-50 border border-red-200/80 shadow-sm text-red-700 text-xs sm:text-sm font-semibold tracking-wide">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200/80 dark:border-red-900/50 shadow-sm text-red-700 dark:text-red-300 text-xs sm:text-sm font-semibold tracking-wide">
             <span className="flex h-2 w-2 rounded-full bg-red-600 animate-pulse" />
             <span className="uppercase tracking-wider">Enterprise Data Intelligence Platform</span>
-            <span className="text-red-400">|</span>
-            <span className="text-slate-600 hidden sm:inline font-normal">Next-Gen Real-Time Analytics</span>
+            <span className="text-red-400 dark:text-red-500">|</span>
+            <span className="text-slate-600 dark:text-slate-300 hidden sm:inline font-normal">Next-Gen Real-Time Analytics</span>
           </div>
         </div>
 
         {/* Main Display Headline */}
         <div className="max-w-4xl mx-auto text-center space-y-6">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.12]">
             Turn Fragmented Business Data Into{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-red-600 to-rose-700">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-red-600 to-rose-700 dark:from-red-500 dark:via-rose-400 dark:to-red-400">
               Unified Real-Time Action
             </span>
           </h1>
 
-          <p className="text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed font-normal">
+          <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed font-normal">
             RicozAnalytics connects your databases, monitors enterprise KPIs, builds high-performance dashboards, generates automated executive reports, and triggers proactive AI alerts—all in one sovereign workspace.
           </p>
 
@@ -78,29 +78,29 @@ export default function LandingHero({ onOpenDemo }) {
 
             <button
               onClick={onOpenDemo}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-semibold text-base transition-all duration-200 shadow-sm hover:border-slate-400"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-800 dark:text-slate-200 font-semibold text-base transition-all duration-200 shadow-sm hover:border-slate-400 dark:hover:border-slate-600 cursor-pointer"
             >
-              <Play size={16} className="text-red-600 fill-red-600" />
+              <Play size={16} className="text-red-600 dark:text-red-400 fill-red-600 dark:fill-red-400" />
               <span>Schedule Enterprise Demo</span>
             </button>
           </div>
 
           {/* Trust Value Badges — Clean Symmetrical Grid Layout */}
           <div className="pt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
-            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50/80 border border-slate-200/60 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 whitespace-nowrap">
-              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">
+              <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span>Sub-second multi-source queries</span>
             </div>
-            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50/80 border border-slate-200/60 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 whitespace-nowrap">
-              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">
+              <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span>Zero code KPI metric builder</span>
             </div>
-            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50/80 border border-slate-200/60 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 whitespace-nowrap">
-              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">
+              <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span>SOC2 &amp; Granular RBAC ready</span>
             </div>
-            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50/80 border border-slate-200/60 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 whitespace-nowrap">
-              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">
+              <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span>Real-time anomaly AI alerts</span>
             </div>
           </div>

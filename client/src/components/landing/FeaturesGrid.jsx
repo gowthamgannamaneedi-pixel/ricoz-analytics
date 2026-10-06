@@ -104,17 +104,17 @@ export default function FeaturesGrid() {
   ];
 
   return (
-    <section id="features" className="py-20 lg:py-28 bg-slate-50/60 border-b border-slate-200/80">
+    <section id="features" className="py-20 lg:py-28 bg-slate-50/60 dark:bg-slate-950/40 border-b border-slate-200/80 dark:border-slate-800 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center space-y-4 mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-100/70 border border-red-200 text-red-700 text-xs font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-100/70 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-xs font-bold uppercase tracking-wider">
             Why RicozAnalytics
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
             Enterprise Architecture Built for Modern Decision Velocity
           </h2>
-          <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
+          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
             From raw transaction ingestion to automated leadership briefings, RicozAnalytics handles every tier of your modern business intelligence lifecycle.
           </p>
         </div>
@@ -124,30 +124,30 @@ export default function FeaturesGrid() {
           {features.map((feature) => (
             <div
               key={feature.title}
-              className="group bg-white rounded-2xl p-7 border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-red-300 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
+              className="group bg-white dark:bg-slate-900 rounded-2xl p-7 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-xl hover:border-red-300 dark:hover:border-red-800/80 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-5">
-                  <div className="w-13 h-13 p-3 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-colors duration-300">
+                  <div className="w-13 h-13 p-3 rounded-2xl bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-colors duration-300">
                     <feature.icon size={26} />
                   </div>
-                  <span className="text-[11px] font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-md uppercase tracking-wider border border-red-100">
+                  <span className="text-[11px] font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60 px-2.5 py-1 rounded-md uppercase tracking-wider border border-red-100 dark:border-red-900/50">
                     {feature.badge}
                   </span>
                 </div>
 
-                <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-red-600 transition-colors">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
                   {feature.title}
                 </h3>
 
-                <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
                   {feature.description}
                 </p>
 
-                <div className="space-y-2.5 pt-2 border-t border-slate-100 mb-6">
+                <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 mb-6">
                   {feature.highlights.map((item, i) => (
-                    <div key={i} className="flex items-start gap-2 text-xs text-slate-700">
-                      <CheckCircle size={14} className="text-red-600 flex-shrink-0 mt-0.5" />
+                    <div key={i} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
+                      <CheckCircle size={14} className="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
                       <span>{item}</span>
                     </div>
                   ))}
@@ -156,7 +156,7 @@ export default function FeaturesGrid() {
 
               <Link
                 to={feature.linkUrl}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700 group-hover:translate-x-1 transition-transform"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 group-hover:translate-x-1 transition-transform"
               >
                 <span>{feature.linkText}</span>
                 <ArrowRight size={14} />

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Menu, X, PhoneCall, ChevronRight } from 'lucide-react';
+import ThemeToggle from '../ui/ThemeToggle';
 
 export default function LandingNavbar({ onOpenDemo }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -58,8 +59,8 @@ export default function LandingNavbar({ onOpenDemo }) {
       ref={navContainerRef}
       className={`sticky top-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? 'bg-white/95 backdrop-blur-md shadow-xs border-b border-slate-200/80 py-2.5'
-          : 'bg-white border-b border-slate-100 py-3.5'
+          ? 'bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xs border-b border-slate-200/80 dark:border-slate-800 py-2.5'
+          : 'bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800/80 py-3.5'
       }`}
     >
       <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
@@ -70,8 +71,8 @@ export default function LandingNavbar({ onOpenDemo }) {
               <span className="tracking-tighter">rZ</span>
             </div>
             <div className="flex items-baseline gap-1.5 shrink-0">
-              <span className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Ricoz</span>
-              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100">
+              <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Ricoz</span>
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60 px-2 py-0.5 rounded border border-red-100 dark:border-red-900/50">
                 Analytics
               </span>
             </div>
@@ -83,7 +84,7 @@ export default function LandingNavbar({ onOpenDemo }) {
               <a
                 key={link.name}
                 href={link.href}
-                className="text-xs xl:text-sm font-semibold text-slate-600 hover:text-red-600 transition-colors duration-150 whitespace-nowrap px-1 py-1"
+                className="text-xs xl:text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 transition-colors duration-150 whitespace-nowrap px-1 py-1"
               >
                 {link.name}
               </a>
@@ -92,18 +93,21 @@ export default function LandingNavbar({ onOpenDemo }) {
 
           {/* Desktop CTA Action Buttons */}
           <div className="hidden lg:flex items-center gap-2 xl:gap-3 shrink-0">
+            {/* Theme Toggle Button */}
+            <ThemeToggle size="sm" />
+
             <button
               type="button"
               onClick={onOpenDemo}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs xl:text-sm font-semibold text-slate-700 hover:text-red-600 hover:bg-red-50/70 rounded-xl transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs xl:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/70 dark:hover:bg-slate-800 rounded-xl transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
-              <PhoneCall size={14} className="text-red-600 shrink-0" />
+              <PhoneCall size={14} className="text-red-600 dark:text-red-400 shrink-0" />
               <span>Talk to Sales</span>
             </button>
 
             <Link
               to="/login"
-              className="inline-flex items-center justify-center px-3.5 xl:px-4 py-2 text-xs xl:text-sm font-semibold text-red-600 border border-red-600/30 hover:border-red-600 hover:bg-red-50 rounded-xl transition-all duration-150 shadow-2xs whitespace-nowrap shrink-0"
+              className="inline-flex items-center justify-center px-3.5 xl:px-4 py-2 text-xs xl:text-sm font-semibold text-red-600 dark:text-red-400 border border-red-600/30 dark:border-red-500/30 hover:border-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all duration-150 shadow-2xs whitespace-nowrap shrink-0"
             >
               Sign In
             </Link>
@@ -117,17 +121,18 @@ export default function LandingNavbar({ onOpenDemo }) {
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Button & Theme Toggle */}
           <div className="flex lg:hidden items-center gap-2">
+            <ThemeToggle size="sm" />
             <Link
               to="/login"
-              className="text-xs font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-lg border border-red-200"
+              className="text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/50"
             >
               Sign In
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="p-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -137,26 +142,26 @@ export default function LandingNavbar({ onOpenDemo }) {
 
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden mt-3 pt-4 pb-6 border-t border-slate-100 animate-fadeIn">
+          <div className="lg:hidden mt-3 pt-4 pb-6 border-t border-slate-100 dark:border-slate-800 animate-fadeIn">
             <div className="flex flex-col space-y-3">
               {navLinks.map((link) => (
                 <a
                   key={link.name}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 text-base font-semibold text-slate-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-between"
+                  className="px-3 py-2 text-base font-semibold text-slate-700 dark:text-slate-200 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center justify-between"
                 >
                   <span>{link.name}</span>
                   <ChevronRight size={16} className="text-slate-400" />
                 </a>
               ))}
-              <div className="pt-4 border-t border-slate-100 flex flex-col gap-2.5">
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5">
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);
                     onOpenDemo();
                   }}
-                  className="w-full py-2.5 px-4 text-center font-semibold text-sm text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+                  className="w-full py-2.5 px-4 text-center font-semibold text-sm text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors"
                 >
                   Schedule Demo / Contact Sales
                 </button>

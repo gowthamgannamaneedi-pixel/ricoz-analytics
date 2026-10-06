@@ -30,9 +30,9 @@ export default function StatsBanner() {
   ];
 
   return (
-    <section className="border-y border-slate-200 bg-white py-12 lg:py-16">
+    <section className="border-y border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B0F19] py-12 lg:py-16 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800">
           {stats.map((stat, idx) => (
             <div
               key={stat.label}
@@ -40,16 +40,16 @@ export default function StatsBanner() {
                 idx !== 0 ? 'pt-6 sm:pt-0 sm:pl-6' : ''
               }`}
             >
-              <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mb-3">
+              <div className="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center mb-3">
                 <stat.icon size={24} />
               </div>
-              <div className="text-4xl lg:text-5xl font-black text-red-600 tracking-tight mb-1">
+              <div className="text-4xl lg:text-5xl font-black text-red-600 dark:text-red-400 tracking-tight mb-1">
                 {stat.value}
               </div>
-              <div className="text-base font-bold text-slate-900 mb-1">
+              <div className="text-base font-bold text-slate-900 dark:text-white mb-1">
                 {stat.label}
               </div>
-              <div className="text-xs text-slate-500 max-w-[220px]">
+              <div className="text-xs text-slate-500 dark:text-slate-400 max-w-[220px]">
                 {stat.description}
               </div>
             </div>

@@ -42,18 +42,18 @@ export default function CapabilitiesMatrix() {
   ];
 
   return (
-    <section id="ai-automation" className="py-20 lg:py-28 bg-slate-50/50 border-b border-slate-200">
+    <section id="ai-automation" className="py-20 lg:py-28 bg-slate-50/50 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
         {/* Sub-section 1: What Can You Analyze */}
         <div>
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-14">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-100/80 border border-red-200 text-red-700 text-xs font-bold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-100/80 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-xs font-bold uppercase tracking-wider">
               Comprehensive Domain Coverage
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
               What Can You Analyze with RicozAnalytics?
             </h2>
-            <p className="text-base text-slate-600">
+            <p className="text-base text-slate-600 dark:text-slate-300">
               Cross-functional intelligence designed for leadership, finance, operations, and field managers.
             </p>
           </div>
@@ -62,28 +62,28 @@ export default function CapabilitiesMatrix() {
             {analysisDomains.map((item) => (
               <div
                 key={item.title}
-                className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-red-300 transition-all group"
+                className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-red-300 dark:hover:border-red-800/80 transition-all group"
               >
-                <div className="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center mb-3.5 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                <div className="w-11 h-11 rounded-xl bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center mb-3.5 group-hover:bg-red-600 group-hover:text-white transition-colors">
                   <item.icon size={22} />
                 </div>
-                <h3 className="text-base font-bold text-slate-900 mb-1.5">{item.title}</h3>
-                <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">{item.title}</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Sub-section 2: What Can You Do With Your Data */}
-        <div className="pt-12 border-t border-slate-200">
+        <div className="pt-12 border-t border-slate-200 dark:border-slate-800">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-14">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-50 border border-red-200/80 text-red-700 text-xs font-bold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200/80 dark:border-red-900/50 text-red-700 dark:text-red-300 text-xs font-bold uppercase tracking-wider">
               End-to-End Capabilities
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
               What Can You Do With Your Business Data?
             </h2>
-            <p className="text-base text-slate-600">
+            <p className="text-base text-slate-600 dark:text-slate-300">
               Powerful tools to turn raw numbers into automated workflows and executive decisions.
             </p>
           </div>
@@ -92,13 +92,13 @@ export default function CapabilitiesMatrix() {
             {actions.map((act) => (
               <div
                 key={act.label}
-                className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-red-300 transition-all group"
+                className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-red-300 dark:hover:border-red-800/80 transition-all group"
               >
-                <div className="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center mb-3.5 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                <div className="w-11 h-11 rounded-xl bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center mb-3.5 group-hover:bg-red-600 group-hover:text-white transition-colors">
                   <act.icon size={22} />
                 </div>
-                <h3 className="text-base font-bold text-slate-900 mb-1.5">{act.label}</h3>
-                <p className="text-xs text-slate-500 leading-relaxed">{act.desc}</p>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">{act.label}</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{act.desc}</p>
               </div>
             ))}
           </div>

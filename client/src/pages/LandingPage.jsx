@@ -30,7 +30,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-red-600 selection:text-white">
+    <div className="min-h-screen bg-white dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 font-sans selection:bg-red-600 selection:text-white transition-colors duration-200">
       {/* Top Navigation Bar */}
       <LandingNavbar onOpenDemo={handleOpenDemo} />
 
