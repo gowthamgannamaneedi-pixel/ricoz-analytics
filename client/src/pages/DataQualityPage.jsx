@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   ShieldCheck,
   AlertTriangle,
@@ -86,11 +86,12 @@ function QualityHealthGauge({ score = 100, size = 130, strokeWidth = 11 }) {
           className="transition-all duration-700 ease-out"
         />
       </svg>
-      {/* Centered Score */}
+      {/* Centered Score matching Wireframe */}
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
+        <span className="text-2xl font-extrabold text-slate-900 tracking-tight font-sans">
           {clampedScore}%
         </span>
+        <span className="text-[11px] font-semibold text-slate-400 font-mono">/ 100</span>
       </div>
     </div>
   );
@@ -439,175 +440,164 @@ export default function DataQualityPage() {
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* �      {/* ─────────────────────────────────────────────────────────────────── */}
       {/* 1. BREADCRUMB & HEADER                                              */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="space-y-3">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-          <span>RicozAnalytics</span>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-          <span className="text-blue-600 font-semibold">Data Quality & Observability</span>
-        </div>
+      <div className="space-y-2.5">
+        {/* Breadcrumb Navigation matching Wireframe */}
+        <nav className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+          <span className="hover:text-slate-600 transition cursor-pointer" onClick={() => navigate('/dashboard')}>
+            Workspace
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+          <span className="hover:text-slate-600 transition cursor-pointer">
+            Production
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+          <span className="text-slate-900 font-bold">
+            Data Quality & Observability
+          </span>
+        </nav>
 
         {/* Header Title + Action Controls Toolbar */}
-        <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-5">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pt-1">
           {/* Left Title and Description */}
-          <div className="flex items-start gap-3.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-500/20 shrink-0 mt-0.5">
-              <ShieldCheck className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
-                Data Quality & Observability
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal max-w-2xl leading-relaxed">
-                Ensure data accuracy, consistency, and reliability across your datasets with automated quality checks and monitoring.
-              </p>
-            </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
+              Data Quality & Observability
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal leading-relaxed">
+              Continuous telemetry, anomaly detection, schema tracking, and relational integrity.
+            </p>
           </div>
 
-          {/* Right Action Controls Toolbar */}
-          <div className="flex flex-col items-start xl:items-end gap-2 shrink-0">
-            <div className="flex flex-wrap items-center gap-2.5">
-              {/* Dataset Selector Dropdown */}
-              <div className="relative">
-                <select
-                  id="dataset-select"
-                  value={selectedDatasetId}
-                  onChange={(e) => setSelectedDatasetId(e.target.value)}
-                  className="appearance-none pl-9 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-800 hover:border-slate-300 focus:outline-hidden focus:border-blue-500 shadow-2xs cursor-pointer"
-                >
-                  {datasets.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}
-                    </option>
-                  ))}
-                </select>
-                <Database className="h-4 w-4 text-blue-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-
-              {/* Scan Mode Selector Dropdown */}
-              <div className="relative">
-                <select
-                  id="scan-mode-select"
-                  value={scanMode}
-                  onChange={(e) => setScanMode(e.target.value)}
-                  className="appearance-none pl-8 pr-8 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-hidden focus:border-blue-500 shadow-2xs cursor-pointer"
-                >
-                  <option value="full">Full Scan</option>
-                  <option value="sampled">Sampled (1k)</option>
-                </select>
-                <RotateCcw className="h-3.5 w-3.5 text-blue-600 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-
-              {/* Run Audit Button (Primary Action) */}
-              <Button
-                id="run-audit-button"
-                onClick={handleRunAudit}
-                disabled={evaluating || !selectedDatasetId}
-                variant="primary"
-                className="h-10 px-4 rounded-xl font-semibold shadow-xs"
+          {/* Right Action Controls Toolbar matching Wireframe */}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            {/* Dataset Selector Dropdown */}
+            <div className="relative">
+              <select
+                id="dataset-select"
+                value={selectedDatasetId}
+                onChange={(e) => setSelectedDatasetId(e.target.value)}
+                className="appearance-none pl-9 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-800 hover:border-slate-300 focus:outline-hidden focus:border-blue-500 shadow-2xs cursor-pointer"
               >
-                {evaluating ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    <span>Evaluating...</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4 fill-white" />
-                    <span>Run Audit</span>
-                  </>
-                )}
-              </Button>
-
-              {/* Export Dropdown Button */}
-              <div className="relative" ref={exportRef}>
-                <button
-                  type="button"
-                  id="export-menu-button"
-                  onClick={() => setExportMenuOpen((prev) => !prev)}
-                  disabled={!selectedDatasetId}
-                  className="flex items-center gap-2 h-10 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-xs sm:text-sm font-semibold text-slate-700 transition shadow-2xs cursor-pointer disabled:opacity-50 select-none"
-                >
-                  <FileDown className="h-4 w-4 text-slate-500" />
-                  <span>Export</span>
-                  <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-                </button>
-
-                {exportMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-52 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl z-50 text-xs animate-in fade-in slide-in-from-top-2 duration-150">
-                    <button
-                      type="button"
-                      onClick={() => handleExport('pdf')}
-                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 hover:text-rose-700 transition text-xs font-semibold cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-rose-500" />
-                        <span>Export PDF Report</span>
-                      </div>
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
-                        PDF
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleExport('excel')}
-                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 hover:text-emerald-700 transition text-xs font-semibold cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2">
-                        <FileSpreadsheet className="h-4 w-4 text-emerald-500" />
-                        <span>Export Excel Sheet</span>
-                      </div>
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        XLSX
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleExport('json')}
-                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 hover:text-purple-700 transition text-xs font-semibold cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Database className="h-4 w-4 text-purple-500" />
-                        <span>Export JSON Schema</span>
-                      </div>
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
-                        JSON
-                      </span>
-                    </button>
-                  </div>
-                )}
-              </div>
+                {datasets.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name} {d.row_count ? `(${Number(d.row_count).toLocaleString()} rows)` : ''}
+                  </option>
+                ))}
+              </select>
+              <Database className="h-4 w-4 text-blue-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
 
-            {/* Sub-meta: Last Scanned & Status */}
-            {qualityProfile && (
-              <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium pt-1">
-                <span>
-                  Last scanned:{' '}
-                  {qualityProfile.evaluated_at
-                    ? new Date(qualityProfile.evaluated_at).toLocaleString([], {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })
-                    : 'Never'}
-                </span>
-                <span className="text-slate-300">•</span>
-                <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Completed
-                </span>
-              </div>
-            )}
+            {/* Scan Mode Pill Toggle */}
+            <div className="flex items-center rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
+              <button
+                type="button"
+                onClick={() => setScanMode('full')}
+                className={`h-8 px-3 rounded-lg font-semibold transition cursor-pointer ${
+                  scanMode === 'full'
+                    ? 'bg-blue-600 text-white shadow-2xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Full Scan
+              </button>
+              <button
+                type="button"
+                onClick={() => setScanMode('sampled')}
+                className={`h-8 px-3 rounded-lg font-semibold transition cursor-pointer ${
+                  scanMode === 'sampled'
+                    ? 'bg-blue-600 text-white shadow-2xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Sampled (1k)
+              </button>
+            </div>
+
+            {/* Export Dropdown Button */}
+            <div className="relative" ref={exportRef}>
+              <button
+                type="button"
+                id="export-menu-button"
+                onClick={() => setExportMenuOpen((prev) => !prev)}
+                disabled={!selectedDatasetId}
+                className="flex items-center gap-2 h-10 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-xs sm:text-sm font-semibold text-slate-700 transition shadow-2xs cursor-pointer disabled:opacity-50 select-none"
+              >
+                <FileDown className="h-4 w-4 text-slate-500" />
+                <span>Export like PDF</span>
+                <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+              </button>
+
+              {exportMenuOpen && (
+                <div className="absolute right-0 mt-2 w-52 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl z-50 text-xs animate-in fade-in slide-in-from-top-2 duration-150">
+                  <button
+                    type="button"
+                    onClick={() => handleExport('pdf')}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 hover:text-rose-700 transition text-xs font-semibold cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-rose-500" />
+                      <span>Export PDF Report</span>
+                    </div>
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                      PDF
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleExport('excel')}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 hover:text-emerald-700 transition text-xs font-semibold cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileSpreadsheet className="h-4 w-4 text-emerald-500" />
+                      <span>Export Excel Sheet</span>
+                    </div>
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      XLSX
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleExport('json')}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 hover:text-purple-700 transition text-xs font-semibold cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Database className="h-4 w-4 text-purple-500" />
+                      <span>Export JSON Schema</span>
+                    </div>
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                      JSON
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Run Quality Audit Button (Primary Action) */}
+            <Button
+              id="run-audit-button"
+              onClick={handleRunAudit}
+              disabled={evaluating || !selectedDatasetId}
+              variant="primary"
+              className="h-10 px-4 rounded-xl font-semibold shadow-xs"
+            >
+              {evaluating ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <span>Evaluating...</span>
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4 fill-white" />
+                  <span>Run Quality Audit</span>
+                </>
+              )}
+            </Button>
           </div>
         </div>
       </div>
@@ -637,60 +627,39 @@ export default function DataQualityPage() {
           {/* 2. OVERALL DATASET HEALTH & 6 QUALITY DIMENSIONS                   */}
           {/* ───────────────────────────────────────────────────────────────── */}
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-            {/* Left Card: Overall Dataset Health (Approx 4.5 cols) */}
+            {/* Left Card: Overall Dataset Health */}
             <div className="lg:col-span-5 bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between relative overflow-hidden">
               <div>
                 {/* Header */}
-                <div className="flex items-center justify-between pb-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                       <ShieldCheck className="h-4 w-4" />
                     </div>
                     <span className="text-sm font-bold text-slate-900">Overall Dataset Health</span>
                   </div>
+                  <div>{getStatusBadge(qualityProfile.status)}</div>
                 </div>
 
                 {/* Donut Gauge + Status / Description */}
-                <div className="flex items-center gap-5 my-2">
-                  <QualityHealthGauge score={qualityProfile.quality_score} size={125} strokeWidth={11} />
-                  <div className="space-y-2 flex-1">
-                    <div>{getStatusBadge(qualityProfile.status)}</div>
-                    <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                      {qualityProfile.quality_score >= 90
-                        ? 'Your dataset is in good shape with minimal issues. Keep monitoring for optimal data quality.'
-                        : qualityProfile.quality_score >= 75
-                        ? 'Minor issues detected across columns. Review the issues tab for automated recommendations.'
-                        : 'Critical quality violations require remediation to restore data pipeline reliability.'}
-                    </p>
-                  </div>
+                <div className="flex items-center justify-center py-5">
+                  <QualityHealthGauge score={qualityProfile.quality_score} size={140} strokeWidth={12} />
                 </div>
               </div>
 
-              {/* Bottom 3 KPI metrics */}
-              <div className="mt-5 pt-4 border-t border-slate-100 grid grid-cols-3 gap-2 text-left">
-                <div>
-                  <p className="text-2xl font-extrabold text-slate-900 font-sans tracking-tight">
-                    {qualityProfile.column_count || columnMetrics.length || 0}
-                  </p>
-                  <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">
-                    Total Columns
-                  </p>
+              {/* Bottom Wireframe Summary: Scan Execution & Evaluated Rows */}
+              <div className="mt-4 pt-3.5 border-t border-slate-100 space-y-1.5 text-xs text-slate-500">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-slate-500">Scan Execution:</span>
+                  <span className="font-bold text-slate-800 capitalize">{scanMode === 'full' ? 'Full Scan' : 'Sampled (1,000)'}</span>
                 </div>
-                <div>
-                  <p className="text-2xl font-extrabold text-rose-600 font-sans tracking-tight">
-                    {criticalIssuesCount}
-                  </p>
-                  <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">
-                    Critical Issues
-                  </p>
-                </div>
-                <div>
-                  <p className="text-2xl font-extrabold text-amber-600 font-sans tracking-tight">
-                    {minorIssuesCount}
-                  </p>
-                  <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">
-                    Minor Issues
-                  </p>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-slate-500">Evaluated Rows:</span>
+                  <span className="font-bold text-slate-800 font-mono">
+                    {selectedDataset?.row_count !== undefined
+                      ? `${Number(selectedDataset.row_count).toLocaleString()} rows`
+                      : `${qualityProfile.row_count || 0} rows`}
+                  </span>
                 </div>
               </div>
             </div>
@@ -829,18 +798,18 @@ export default function DataQualityPage() {
                 </div>
               </div>
 
-              {/* Card 6: Schema Stability */}
+              {/* Card 6: Schema & Volume */}
               <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-indigo-300 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
                       <GitBranch className="h-4 w-4" />
                     </div>
-                    <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">Telemetry</span>
+                    <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">Volume</span>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-700 mt-2.5">Schema Stability</h4>
+                  <h4 className="text-xs font-bold text-slate-700 mt-2.5">Schema & Volume</h4>
                   <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
-                    {qualityProfile.column_count || columnMetrics.length || 0} cols
+                    {qualityProfile.column_count || columnMetrics.length || 0}
                   </div>
                   {/* Progress Bar */}
                   <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2.5 overflow-hidden">
@@ -848,11 +817,13 @@ export default function DataQualityPage() {
                   </div>
                 </div>
                 <div className="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-50">
-                  No schema drift detected
+                  {qualityProfile.column_count || columnMetrics.length || 0} dimensions tracked
                 </div>
               </div>
             </div>
           </section>
+
+
 
           {/* ───────────────────────────────────────────────────────────────── */}
           {/* 3. SEGMENTED TABS TOOLBAR                                         */}

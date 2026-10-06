@@ -85,24 +85,24 @@ export default function LandingHero({ onOpenDemo }) {
             </button>
           </div>
 
-          {/* Trust Value Badges */}
-          <div className="pt-4 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 text-xs sm:text-sm font-medium text-slate-500">
-            <span className="inline-flex items-center gap-1.5">
-              <CheckCircle2 size={16} className="text-emerald-600 flex-shrink-0" />
-              Sub-second multi-source queries
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <CheckCircle2 size={16} className="text-emerald-600 flex-shrink-0" />
-              Zero code KPI metric builder
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <CheckCircle2 size={16} className="text-emerald-600 flex-shrink-0" />
-              SOC2 &amp; Granular RBAC ready
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <CheckCircle2 size={16} className="text-emerald-600 flex-shrink-0" />
-              Real-time anomaly AI alerts
-            </span>
+          {/* Trust Value Badges — Clean Symmetrical Grid Layout */}
+          <div className="pt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
+            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50/80 border border-slate-200/60 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 whitespace-nowrap">
+              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+              <span>Sub-second multi-source queries</span>
+            </div>
+            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50/80 border border-slate-200/60 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 whitespace-nowrap">
+              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+              <span>Zero code KPI metric builder</span>
+            </div>
+            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50/80 border border-slate-200/60 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 whitespace-nowrap">
+              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+              <span>SOC2 &amp; Granular RBAC ready</span>
+            </div>
+            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50/80 border border-slate-200/60 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 whitespace-nowrap">
+              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+              <span>Real-time anomaly AI alerts</span>
+            </div>
           </div>
         </div>
 

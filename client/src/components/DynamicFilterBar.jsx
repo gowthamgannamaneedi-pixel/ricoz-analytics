@@ -42,26 +42,22 @@ export default function DynamicFilterBar({
     <div className="flex flex-wrap items-center justify-between gap-3.5 font-sans">
       {/* Dynamic Filter Controls */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Date Range Selector Segmented Control */}
-        <div className="flex items-center rounded-xl bg-slate-100 p-1 border border-slate-200">
-          {dateRanges.map((opt) => {
-            const isActive = (filters.dateRange || 'all') === opt.value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => onFilterChange('dateRange', opt.value)}
-                title={opt.tooltip}
-                className={`h-9 px-3.5 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer ${
-                  isActive
-                    ? 'bg-white text-blue-700 shadow-xs font-bold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-                }`}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
+        {/* Clean Date Range Dropdown Filter */}
+        <div className="flex items-center gap-2 h-10 rounded-xl bg-white border border-slate-200/90 px-3.5 text-sm font-medium text-slate-700 hover:border-slate-300 transition shadow-2xs">
+          <Calendar className="h-4 w-4 text-slate-400 shrink-0" />
+          <select
+            id="dynamic-filter-date"
+            value={filters.dateRange || 'all'}
+            onChange={(e) => onFilterChange('dateRange', e.target.value)}
+            aria-label="Filter by Date Range"
+            className="bg-transparent text-sm text-slate-800 font-semibold outline-none cursor-pointer pr-1"
+          >
+            <option value="all">All Time</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+            <option value="90d">Last 90 Days</option>
+            <option value="ytd">Year to Date</option>
+          </select>
         </div>
 
         {/* Region Filter Dropdown */}

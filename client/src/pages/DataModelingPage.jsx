@@ -266,56 +266,71 @@ export default function DataModelingPage() {
   const targetColumns = parseSchemaColumns(selectedTargetDs);
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+    <div className="space-y-6 pb-12 font-sans">
+      {/* 1. Breadcrumbs matching Wireframe */}
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+        <span className="hover:text-slate-600 transition cursor-pointer" onClick={() => navigate('/dashboard')}>
+          Workspace
+        </span>
+        <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+        <span className="hover:text-slate-600 transition cursor-pointer">
+          Production
+        </span>
+        <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+        <span className="text-slate-900 font-bold">
+          Data Modeling & Relationships
+        </span>
+      </nav>
+
+      {/* 2. Page Header with Title, Actions, and Status Pill */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
-              <Network className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-                Data Modeling & Relationships
-              </h1>
-              <p className="text-xs text-slate-500">
-                Define relational foreign keys and join boundaries across multi-table datasets.
-              </p>
-            </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
+            Data Modeling & Relationships
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal leading-relaxed">
+            Define relational foreign keys and join boundaries across multi-table datasets.
+          </p>
+          <div className="flex flex-wrap items-center gap-2.5 mt-3">
+            {canManage && (
+              <Button
+                onClick={handleOpenCreateModal}
+                variant="primary"
+                className="h-9 px-3.5 rounded-xl font-semibold shadow-xs text-xs sm:text-sm"
+              >
+                <Plus className="h-4 w-4" />
+                <span>New Relationship</span>
+              </Button>
+            )}
+
+            <Button
+              onClick={() => {
+                setTestQueryModalOpen(true);
+                setTestResults(null);
+              }}
+              variant="secondary"
+              className="h-9 px-3.5 rounded-xl border-slate-200 text-xs sm:text-sm font-semibold shadow-2xs"
+            >
+              <Play className="h-3.5 w-3.5 text-blue-600" />
+              <span>Test Relational Query</span>
+            </Button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <Button
-            onClick={() => {
-              setTestQueryModalOpen(true);
-              setTestResults(null);
-            }}
-            variant="secondary"
-          >
-            <Play className="h-3.5 w-3.5 text-blue-600" />
-            <span>Test Relational Query</span>
-          </Button>
-
-          {canManage && (
-            <Button
-              onClick={handleOpenCreateModal}
-              variant="primary"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>New Relationship</span>
-            </Button>
-          )}
+        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+          <span className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-mono font-bold border border-slate-200 shadow-2xs">
+            {relationships.length} Active Joins • {datasets.length} Datasets
+          </span>
         </div>
       </div>
 
-      {/* Schema Visualizer Blueprint */}
-      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-xs relative overflow-hidden">
-        <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* 3. Schema Visualizer Blueprint / Architecture Graph */}
+      <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs relative overflow-hidden">
+        <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
-            <h2 className="text-sm font-semibold tracking-wide text-slate-800">
+            <h2 className="text-sm font-bold tracking-tight text-slate-800">
               Active Relational Architecture Graph
             </h2>
           </div>

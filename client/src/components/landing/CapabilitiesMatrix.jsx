@@ -77,7 +77,7 @@ export default function CapabilitiesMatrix() {
         {/* Sub-section 2: What Can You Do With Your Data */}
         <div className="pt-12 border-t border-slate-200">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-14">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-200/80 text-slate-800 text-xs font-bold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-50 border border-red-200/80 text-red-700 text-xs font-bold uppercase tracking-wider">
               End-to-End Capabilities
             </div>
             <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
@@ -92,12 +92,12 @@ export default function CapabilitiesMatrix() {
             {actions.map((act) => (
               <div
                 key={act.label}
-                className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-slate-400 transition text-center flex flex-col items-center"
+                className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-red-300 transition-all group"
               >
-                <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center mb-3">
-                  <act.icon size={24} />
+                <div className="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center mb-3.5 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                  <act.icon size={22} />
                 </div>
-                <h3 className="text-sm font-bold text-slate-900 mb-1">{act.label}</h3>
+                <h3 className="text-base font-bold text-slate-900 mb-1.5">{act.label}</h3>
                 <p className="text-xs text-slate-500 leading-relaxed">{act.desc}</p>
               </div>
             ))}

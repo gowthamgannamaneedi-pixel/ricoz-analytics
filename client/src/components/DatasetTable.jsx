@@ -214,21 +214,21 @@ export default function DatasetTable({
     switch (status) {
       case 'ready':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/90 whitespace-nowrap shadow-2xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/90 whitespace-nowrap shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
             <span>Ready</span>
           </span>
         );
       case 'processing':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/90 whitespace-nowrap shadow-2xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/90 whitespace-nowrap shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
             <span>Processing</span>
           </span>
         );
       case 'error':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200/90 whitespace-nowrap shadow-2xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200/90 whitespace-nowrap shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" />
             <span>Error</span>
           </span>
@@ -236,7 +236,7 @@ export default function DatasetTable({
       case 'empty':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200/90 whitespace-nowrap shadow-2xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200/90 whitespace-nowrap shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0" />
             <span>Empty</span>
           </span>
@@ -380,12 +380,12 @@ export default function DatasetTable({
       <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white">
         {/* Left: Datasets count title */}
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
-            <Database className="h-4 w-4" />
-          </div>
-          <h2 className="text-base font-bold text-slate-900 tracking-tight">
-            Datasets ({datasets.length})
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+            Available Datasets
           </h2>
+          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-mono font-bold border border-slate-200">
+            {datasets.length} {datasets.length === 1 ? 'Dataset' : 'Datasets'}
+          </span>
         </div>
 
         {/* Right: Search + Status filter + Source filter */}
@@ -396,13 +396,13 @@ export default function DatasetTable({
             <input
               type="text"
               id="datasets-search-input"
-              placeholder="Search datasets by name, description, or tags..."
+              placeholder="Search dataset schema, origin, or name..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all"
+              className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all shadow-2xs"
             />
             {searchQuery && (
               <button
@@ -474,12 +474,12 @@ export default function DatasetTable({
       </div>
 
       {/* Main Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse text-xs min-w-[980px]">
+      <div className="w-full overflow-hidden">
+        <table className="w-full text-left border-collapse text-xs table-fixed">
           <thead>
             <tr className="border-b border-slate-200/80 bg-slate-50/60 text-slate-600">
               {/* Checkbox column */}
-              <th className="py-3 px-4 w-12 text-center select-none">
+              <th className="py-2.5 px-2 w-10 text-center select-none">
                 <input
                   type="checkbox"
                   checked={isAllCurrentPageSelected}
@@ -492,7 +492,7 @@ export default function DatasetTable({
               {/* Dataset Name */}
               <th
                 onClick={() => handleSort('name')}
-                className="py-3 px-4 font-semibold cursor-pointer hover:text-slate-900 select-none group whitespace-nowrap"
+                className="py-2.5 px-3 w-[28%] font-semibold cursor-pointer hover:text-slate-900 select-none group whitespace-nowrap min-w-0"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Dataset Name</span>
@@ -501,19 +501,19 @@ export default function DatasetTable({
               </th>
 
               {/* Source Pipeline */}
-              <th className="py-3 px-4 font-semibold whitespace-nowrap">
+              <th className="py-2.5 px-2 w-[13%] font-semibold whitespace-nowrap">
                 Source Pipeline
               </th>
 
               {/* Status */}
-              <th className="py-3 px-4 font-semibold whitespace-nowrap">
+              <th className="py-2.5 px-2 w-[11%] font-semibold whitespace-nowrap">
                 Status
               </th>
 
               {/* Record Count */}
               <th
                 onClick={() => handleSort('row_count')}
-                className="py-3 px-4 font-semibold cursor-pointer hover:text-slate-900 select-none group whitespace-nowrap"
+                className="py-2.5 px-2 w-[11%] font-semibold cursor-pointer hover:text-slate-900 select-none group whitespace-nowrap"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Record Count</span>
@@ -524,7 +524,7 @@ export default function DatasetTable({
               {/* Fields */}
               <th
                 onClick={() => handleSort('column_count')}
-                className="py-3 px-4 font-semibold cursor-pointer hover:text-slate-900 select-none group whitespace-nowrap"
+                className="py-2.5 px-2 w-[9%] font-semibold cursor-pointer hover:text-slate-900 select-none group whitespace-nowrap"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Fields</span>
@@ -535,7 +535,7 @@ export default function DatasetTable({
               {/* Created / Updated */}
               <th
                 onClick={() => handleSort('created_at')}
-                className="py-3 px-4 font-semibold cursor-pointer hover:text-slate-900 select-none group whitespace-nowrap"
+                className="py-2.5 px-2 w-[15%] font-semibold cursor-pointer hover:text-slate-900 select-none group whitespace-nowrap"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Created / Updated</span>
@@ -544,7 +544,7 @@ export default function DatasetTable({
               </th>
 
               {/* Actions */}
-              <th className="py-3 px-4 font-semibold text-right whitespace-nowrap">
+              <th className="py-2.5 px-2.5 w-[13%] font-semibold text-right whitespace-nowrap">
                 Actions
               </th>
             </tr>
@@ -605,7 +605,7 @@ export default function DatasetTable({
                     }`}
                   >
                     {/* Checkbox */}
-                    <td className="py-3 px-4 text-center select-none">
+                    <td className="py-2.5 px-2 w-10 text-center select-none">
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -616,18 +616,20 @@ export default function DatasetTable({
                     </td>
 
                     {/* Dataset Name & Description */}
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-3">
-                        {getSourceIcon(dataset.data_source_type)}
-                        <div className="min-w-0 max-w-sm lg:max-w-md">
+                    <td className="py-2.5 px-3 min-w-0">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="shrink-0">
+                          {getSourceIcon(dataset.data_source_type)}
+                        </div>
+                        <div className="min-w-0 flex-1 overflow-hidden">
                           <button
                             onClick={() => onPreview && onPreview(dataset.id)}
-                            className="text-left font-bold text-slate-900 hover:text-blue-600 transition truncate block text-xs sm:text-sm"
-                            title={`Preview ${dataset.name}`}
+                            className="text-left font-bold text-slate-900 hover:text-blue-600 transition truncate block text-xs sm:text-sm w-full"
+                            title={dataset.name}
                           >
                             {dataset.name}
                           </button>
-                          <p className="text-[11px] text-slate-500 truncate mt-0.5 font-normal">
+                          <p className="text-[11px] text-slate-500 truncate mt-0.5 font-normal w-full" title={dataset.description || 'Enterprise analysis dataset'}>
                             {dataset.description || 'Enterprise analysis dataset'}
                           </p>
                         </div>
@@ -635,58 +637,58 @@ export default function DatasetTable({
                     </td>
 
                     {/* Source Pipeline */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
+                    <td className="py-2.5 px-2 whitespace-nowrap overflow-hidden text-ellipsis">
                       {renderSourceBadge(dataset.data_source_type)}
                     </td>
 
                     {/* Status */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
+                    <td className="py-2.5 px-2 whitespace-nowrap overflow-hidden text-ellipsis">
                       {renderStatusBadge(status)}
                     </td>
 
                     {/* Record Count */}
-                    <td className="py-3.5 px-4 whitespace-nowrap font-mono text-xs font-semibold text-slate-800">
+                    <td className="py-2.5 px-2 whitespace-nowrap font-mono text-xs font-semibold text-slate-800">
                       {Number(dataset.row_count || 0).toLocaleString()} rows
                     </td>
 
                     {/* Fields */}
-                    <td className="py-3.5 px-4 whitespace-nowrap text-xs text-slate-600">
+                    <td className="py-2.5 px-2 whitespace-nowrap text-xs text-slate-600">
                       {dataset.column_count || 0} fields
                     </td>
 
                     {/* Created / Updated */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span className="block text-xs font-medium text-slate-800">
+                    <td className="py-2.5 px-2 whitespace-nowrap min-w-0 overflow-hidden">
+                      <span className="block text-xs font-medium text-slate-800 truncate">
                         {formatDate(dataset.created_at)}
                       </span>
-                      <span className="block text-[11px] text-slate-400 mt-0.5">
+                      <span className="block text-[11px] text-slate-400 mt-0.5 truncate">
                         {formatRelativeTime(dataset.updated_at || dataset.created_at)}
                       </span>
                     </td>
 
                     {/* Actions */}
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="py-2.5 px-2.5 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1.5">
                         {/* Quality Action Button */}
                         <button
                           onClick={() => navigate(`/data-quality?datasetId=${dataset.id}`)}
                           id={`quality-dataset-${dataset.id}`}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50/50 transition shadow-2xs"
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1.5 2xl:px-2 2xl:py-1 text-xs font-semibold text-slate-700 hover:text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50/50 transition shadow-2xs shrink-0"
                           title="View Data Quality profile"
                         >
                           <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                          <span>Quality</span>
+                          <span className="hidden 2xl:inline">Quality</span>
                         </button>
 
                         {/* Preview Action Button */}
                         <button
                           onClick={() => onPreview && onPreview(dataset.id)}
                           id={`preview-dataset-${dataset.id}`}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50/50 transition shadow-2xs"
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1.5 2xl:px-2 2xl:py-1 text-xs font-semibold text-slate-700 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50/50 transition shadow-2xs shrink-0"
                           title="Preview records and schema"
                         >
                           <Eye className="h-3.5 w-3.5 text-blue-600" />
-                          <span>Preview</span>
+                          <span className="hidden 2xl:inline">Preview</span>
                         </button>
 
                         {/* More Action Menu (...) */}
@@ -694,7 +696,7 @@ export default function DatasetTable({
                           <button
                             onClick={() => setOpenActionMenuId(isMenuOpen ? null : dataset.id)}
                             id={`action-menu-${dataset.id}`}
-                            className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition shadow-2xs"
+                            className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition shadow-2xs shrink-0"
                             title="More actions"
                             aria-label="More actions"
                           >

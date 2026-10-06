@@ -470,61 +470,65 @@ export default function DataSourcesPage() {
       {/* ───────────────────────────────────────────────────────────────── */}
       {/* 1. TOP HEADER                                                     */}
       {/* ───────────────────────────────────────────────────────────────── */}
-      <div className="space-y-3">
-        {/* Breadcrumb Navigation */}
-        <nav className="flex items-center gap-2 text-xs font-medium text-slate-500">
-          <span className="text-slate-400">RicozAnalytics</span>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-          <span className="text-blue-600 font-semibold">Data Sources</span>
+      <div className="space-y-2.5">
+        {/* Breadcrumb Navigation matching Wireframe */}
+        <nav className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+          <span className="hover:text-slate-600 transition cursor-pointer" onClick={() => navigate('/dashboard')}>
+            Workspace
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+          <span className="hover:text-slate-600 transition cursor-pointer">
+            Production
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+          <span className="text-slate-900 font-bold">
+            Data Sources & Connectors
+          </span>
         </nav>
 
         {/* Page Title & Controls Toolbar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
-              <Database className="h-6 w-6 stroke-[2.2]" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
+                Data Sources
+              </h1>
+              {currentRole && (
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200/80">
+                  {currentRole.charAt(0).toUpperCase() + currentRole.slice(1)}
+                </span>
+              )}
             </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
-                  Data Sources
-                </h1>
-                {currentRole && (
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200/80">
-                    {currentRole.charAt(0).toUpperCase() + currentRole.slice(1)}
-                  </span>
-                )}
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal leading-relaxed">
+              Connect and manage your business data.
+            </p>
+            {!isViewer && (
+              <div className="mt-2.5">
+                <Button
+                  id="connect-source-btn"
+                  onClick={() => setIsAddModalOpen(true)}
+                  variant="primary"
+                  className="h-9 px-3.5 rounded-xl font-semibold shadow-xs text-xs sm:text-sm flex items-center gap-1.5"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add Data Sources</span>
+                </Button>
               </div>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal max-w-2xl leading-relaxed">
-                Connect external data pipelines, upload files, and track ingestion health across your organization.
-              </p>
-            </div>
+            )}
           </div>
 
           {/* Right Action Controls Toolbar */}
-          <div className="flex items-center gap-2.5 shrink-0 self-start md:self-auto">
+          <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
             <Button
               id="refresh-sources-btn"
               onClick={handleRefresh}
               disabled={isRefreshing}
               variant="secondary"
-              className="h-10 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold shadow-2xs text-xs sm:text-sm"
+              className="h-9.5 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold shadow-2xs text-xs sm:text-sm"
             >
-              <RefreshCw className={`h-4 w-4 text-slate-500 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
+              <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
               <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
             </Button>
-
-            {!isViewer && (
-              <Button
-                id="connect-source-btn"
-                onClick={() => setIsAddModalOpen(true)}
-                variant="primary"
-                className="h-10 px-4 rounded-xl font-semibold shadow-xs text-xs sm:text-sm"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Connect Data Source</span>
-              </Button>
-            )}
           </div>
         </div>
       </div>
@@ -561,205 +565,133 @@ export default function DataSourcesPage() {
       )}
 
       {/* ───────────────────────────────────────────────────────────────── */}
-      {/* 3. CALLOUT BANNER: From Source to Insights                         */}
+      {/* 3. FOUR METRIC SUMMARY CARDS (Wireframe Layout)                    */}
       {/* ───────────────────────────────────────────────────────────────── */}
-      {!isBannerDismissed && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3.5 rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/50 via-sky-50/30 to-white text-xs shadow-2xs">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-100/80 text-blue-600 shrink-0">
-              <FolderOpen className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-900 leading-tight">
-                From Source to Insights
-              </p>
-              <p className="text-slate-500 text-[11px] mt-0.5">
-                Connect files, databases or APIs <span className="text-slate-400">→</span> Ingest and validate data <span className="text-slate-400">→</span> Create datasets <span className="text-slate-400">→</span> Analyze in reports, KPIs and AI.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
-            <Link
-              to="/datasets"
-              className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition px-2 py-1"
-            >
-              Learn More
-            </Link>
-            <button
-              type="button"
-              onClick={() => setIsBannerDismissed(true)}
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
-              title="Dismiss banner"
-              aria-label="Dismiss banner"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ───────────────────────────────────────────────────────────────── */}
-      {/* 4. METRIC SUMMARY STRIP (5 Cards)                                 */}
-      {/* ───────────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-        {/* Card 1: Total Sources */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: All Sources */}
         <div
           onClick={() => setActiveTab('all')}
-          className={`rounded-2xl border p-4 sm:p-4.5 transition-all text-left cursor-pointer shadow-2xs ${
+          className={`rounded-2xl border p-5 transition-all text-left cursor-pointer shadow-2xs ${
             activeTab === 'all'
               ? 'border-blue-500 bg-blue-50/20 ring-1 ring-blue-500/25 shadow-xs'
               : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/40'
           }`}
         >
           <div className="flex items-center justify-between">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              All Sources
+            </p>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
               <Database className="h-4 w-4" />
             </div>
-            {totalCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <TrendingUp className="h-3 w-3" />
-                Active
-              </span>
-            )}
           </div>
-          <div className="mt-3 flex items-baseline justify-between">
-            <div>
-              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                Total Sources
-              </p>
-              <p className="font-mono text-2xl font-extrabold tracking-tight text-slate-900 mt-0.5">
-                {totalCount}
-              </p>
-            </div>
-            <div className="text-slate-300">
-              <svg className="w-8 h-6 text-blue-500/60" viewBox="0 0 40 24" fill="none">
-                <path d="M2 20L10 14L18 17L26 8L34 11L38 4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
+          <div className="mt-2.5">
+            <p className="font-mono text-3xl font-extrabold tracking-tight text-slate-900">
+              {totalCount}
+            </p>
+            <p className="mt-1.5 text-xs text-slate-400 truncate">
+              All connected data sources
+            </p>
           </div>
-          <p className="mt-2 text-[11px] text-slate-400 truncate">
-            All connected data sources
-          </p>
         </div>
 
-        {/* Card 2: CSV Files */}
+        {/* Card 2: CSV Uploads */}
         <div
           onClick={() => setActiveTab('csv')}
-          className={`rounded-2xl border p-4 sm:p-4.5 transition-all text-left cursor-pointer shadow-2xs ${
+          className={`rounded-2xl border p-5 transition-all text-left cursor-pointer shadow-2xs ${
             activeTab === 'csv'
               ? 'border-emerald-500 bg-emerald-50/20 ring-1 ring-emerald-500/25 shadow-xs'
               : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/40'
           }`}
         >
           <div className="flex items-center justify-between">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              CSV Uploads
+            </p>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
               <FileSpreadsheet className="h-4 w-4" />
             </div>
-            <span className="text-[11px] font-medium text-slate-400">Flat file</span>
           </div>
-          <div className="mt-3">
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              CSV Files
-            </p>
-            <p className="font-mono text-2xl font-extrabold tracking-tight text-slate-900 mt-0.5">
+          <div className="mt-2.5">
+            <p className="font-mono text-3xl font-extrabold tracking-tight text-slate-900">
               {csvCount}
             </p>
+            <p className="mt-1.5 text-xs text-slate-400 truncate">
+              Structured file uploads ({getPercentage(csvCount)})
+            </p>
           </div>
-          <p className="mt-2 text-[11px] text-slate-400 truncate">
-            {getPercentage(csvCount)}
-          </p>
         </div>
 
-        {/* Card 3: JSON Files */}
+        {/* Card 3: JSON Datasets */}
         <div
           onClick={() => setActiveTab('json')}
-          className={`rounded-2xl border p-4 sm:p-4.5 transition-all text-left cursor-pointer shadow-2xs ${
+          className={`rounded-2xl border p-5 transition-all text-left cursor-pointer shadow-2xs ${
             activeTab === 'json'
               ? 'border-amber-500 bg-amber-50/20 ring-1 ring-amber-500/25 shadow-xs'
               : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/40'
           }`}
         >
           <div className="flex items-center justify-between">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
+            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              JSON Datasets
+            </p>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
               <FileCode className="h-4 w-4" />
             </div>
-            <span className="text-[11px] font-medium text-slate-400">Document</span>
           </div>
-          <div className="mt-3">
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              JSON Files
-            </p>
-            <p className="font-mono text-2xl font-extrabold tracking-tight text-slate-900 mt-0.5">
+          <div className="mt-2.5">
+            <p className="font-mono text-3xl font-extrabold tracking-tight text-slate-900">
               {jsonCount}
             </p>
+            <p className="mt-1.5 text-xs text-slate-400 truncate">
+              Semi-structured payloads ({getPercentage(jsonCount)})
+            </p>
           </div>
-          <p className="mt-2 text-[11px] text-slate-400 truncate">
-            {getPercentage(jsonCount)}
-          </p>
         </div>
 
         {/* Card 4: PostgreSQL */}
         <div
           onClick={() => setActiveTab('postgresql')}
-          className={`rounded-2xl border p-4 sm:p-4.5 transition-all text-left cursor-pointer shadow-2xs ${
+          className={`rounded-2xl border p-5 transition-all text-left cursor-pointer shadow-2xs ${
             activeTab === 'postgresql'
               ? 'border-blue-500 bg-blue-50/20 ring-1 ring-blue-500/25 shadow-xs'
               : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/40'
           }`}
         >
           <div className="flex items-center justify-between">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
-              <Database className="h-4 w-4" />
-            </div>
-            <span className="text-[11px] font-medium text-slate-400">RDBMS</span>
-          </div>
-          <div className="mt-3">
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
               PostgreSQL
             </p>
-            <p className="font-mono text-2xl font-extrabold tracking-tight text-slate-900 mt-0.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+              <Database className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-2.5">
+            <p className="font-mono text-3xl font-extrabold tracking-tight text-slate-900">
               {pgCount}
             </p>
-          </div>
-          <p className="mt-2 text-[11px] text-slate-400 truncate">
-            {getPercentage(pgCount)}
-          </p>
-        </div>
-
-        {/* Card 5: REST APIs */}
-        <div
-          onClick={() => setActiveTab('rest_api')}
-          className={`rounded-2xl border p-4 sm:p-4.5 transition-all text-left cursor-pointer shadow-2xs ${
-            activeTab === 'rest_api'
-              ? 'border-purple-500 bg-purple-50/20 ring-1 ring-purple-500/25 shadow-xs'
-              : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/40'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600 border border-purple-100">
-              <Share2 className="h-4 w-4" />
-            </div>
-            <span className="text-[11px] font-medium text-slate-400">HTTP/Feed</span>
-          </div>
-          <div className="mt-3">
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              REST APIs
-            </p>
-            <p className="font-mono text-2xl font-extrabold tracking-tight text-slate-900 mt-0.5">
-              {apiCount}
+            <p className="mt-1.5 text-xs text-slate-400 truncate">
+              Direct database connections ({getPercentage(pgCount)})
             </p>
           </div>
-          <p className="mt-2 text-[11px] text-slate-400 truncate">
-            {getPercentage(apiCount)}
-          </p>
         </div>
       </div>
 
       {/* ───────────────────────────────────────────────────────────────── */}
-      {/* 5. TABS & CONTROLS TOOLBAR                                        */}
+      {/* 4. ACTIVE DATA SOURCES SECTION (Wireframe Header & Controls)      */}
       {/* ───────────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-2 border-b border-slate-200/80 pb-3">
+      <div className="pt-2">
+        <div className="flex items-center gap-2.5 pb-2">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
+            Active Data Sources
+          </h2>
+          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-mono font-bold border border-slate-200">
+            {filteredSources.length} {filteredSources.length === 1 ? 'Source' : 'Sources'}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200/80 pb-3">
         {/* Left Segmented Filter Tabs */}
         <div className="flex flex-wrap items-center gap-1 sm:gap-2">
           <button

@@ -21,24 +21,22 @@ export default function FilterBar({
     <div className="flex flex-wrap items-center justify-between gap-3 border-y border-slate-200 py-3">
       {/* Left: Segmented Time Window + Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Segmented Time Range Selector */}
-        <div className="flex items-center rounded-md bg-slate-100 p-0.5 border border-slate-200">
-          {filterOptions.dateRanges.map((opt) => {
-            const isActive = filters.dateRange === opt.value;
-            return (
-              <button
-                key={opt.value}
-                onClick={() => onFilterChange('dateRange', opt.value)}
-                className={`px-3 py-1.5 text-xs font-medium rounded transition-all ${
-                  isActive
-                    ? 'bg-white text-blue-700 font-semibold shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
+        {/* Clean Date Range Dropdown */}
+        <div className="flex items-center gap-2 rounded-md bg-white border border-slate-200 px-3 py-1.5 text-xs text-slate-700 hover:border-slate-300 transition shadow-2xs">
+          <Calendar className="h-3.5 w-3.5 text-slate-400" />
+          <select
+            id="filter-date"
+            value={filters.dateRange || 'all'}
+            onChange={(e) => onFilterChange('dateRange', e.target.value)}
+            aria-label="Filter by Date Range"
+            className="bg-transparent text-xs text-slate-800 font-medium outline-none cursor-pointer pr-1"
+          >
+            {filterOptions.dateRanges.map((opt) => (
+              <option key={opt.value} value={opt.value} className="bg-white text-slate-800">
                 {opt.label}
-              </button>
-            );
-          })}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Region Dropdown */}

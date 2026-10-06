@@ -9,8 +9,8 @@ export default function CallToAction({ onOpenDemo }) {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-96 bg-red-600/15 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-8">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-500/20 border border-red-400/30 text-red-300 text-xs sm:text-sm font-semibold">
-          <Sparkles size={16} className="text-red-400" />
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-red-600 to-rose-600 text-white text-xs sm:text-sm font-bold tracking-wide shadow-lg shadow-red-600/40 border border-red-400/30">
+          <Sparkles size={15} className="text-white shrink-0" />
           <span>Transform Your Business Intelligence Today</span>
         </div>
 
