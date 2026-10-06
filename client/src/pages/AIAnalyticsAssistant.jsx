@@ -585,9 +585,6 @@ export default function AIAnalyticsAssistant() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-slate-900 tracking-tight">AI Analytics Assistant</h1>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                Gemini 1.5
-              </span>
             </div>
             <p className="text-xs text-slate-500 font-normal mt-0.5">
               Your AI analyst for business data. Ask questions in plain English and get instant insights, visualizations, and recommendations.
