@@ -77,8 +77,8 @@ export default function Profile({
         onClick={handleToggle}
         className={`group flex items-center gap-2.5 h-10 px-2.5 rounded-xl border transition-all cursor-pointer select-none ${
           isMenuOpen
-            ? 'border-blue-500 bg-blue-50/40 ring-2 ring-blue-100 shadow-xs'
-            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80 shadow-2xs'
+            ? 'border-blue-500 bg-blue-50/40 dark:bg-blue-950/40 ring-2 ring-blue-100 dark:ring-blue-900/50 shadow-xs'
+            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/80 dark:hover:bg-slate-750 shadow-2xs'
         }`}
         aria-label="User Account Menu"
         aria-expanded={isMenuOpen}
@@ -89,7 +89,7 @@ export default function Profile({
 
         {/* Identity & Role Badge */}
         <div className="hidden sm:flex items-center gap-2 text-left leading-none">
-          <span className="text-xs font-bold text-slate-800 tracking-tight max-w-[110px] truncate">
+          <span className="text-xs font-bold text-slate-800 dark:text-slate-100 tracking-tight max-w-[110px] truncate">
             {displayName}
           </span>
           <RoleBadge role={role} size="xs" />
@@ -97,8 +97,8 @@ export default function Profile({
 
         {/* Dropdown Chevron */}
         <ChevronDown
-          className={`h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 transition-transform duration-150 ${
-            isMenuOpen ? 'rotate-180 text-blue-600' : ''
+          className={`h-3.5 w-3.5 text-slate-400 dark:text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-transform duration-150 ${
+            isMenuOpen ? 'rotate-180 text-blue-600 dark:text-blue-400' : ''
           }`}
         />
       </button>
@@ -109,32 +109,32 @@ export default function Profile({
           role="menu"
           aria-orientation="vertical"
           aria-labelledby="top-profile-menu-button"
-          className="absolute right-0 mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+          className="absolute right-0 mt-2 w-72 rounded-2xl border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-850 p-2 shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-slate-800 dark:text-slate-100"
         >
           {/* User Account Context Header */}
-          <div className="p-3 border-b border-slate-100 bg-slate-50/70 rounded-xl mb-1.5">
+          <div className="p-3 border-b border-slate-100 dark:border-slate-750 bg-slate-50/70 dark:bg-slate-800/80 rounded-xl mb-1.5">
             <div className="flex items-center gap-3">
               <UserAvatar user={user} size="md" showStatus={true} status="online" />
               <div className="min-w-0 flex-1">
-                <p className="font-bold text-slate-900 text-xs sm:text-sm truncate leading-snug">
+                <p className="font-bold text-slate-900 dark:text-slate-50 text-xs sm:text-sm truncate leading-snug">
                   {displayName}
                 </p>
-                <p className="text-[11px] text-slate-500 truncate font-mono mt-0.5">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate font-mono mt-0.5">
                   {userEmail}
                 </p>
               </div>
             </div>
 
             {/* Workspace & Role Metadata Strip */}
-            <div className="mt-3 pt-2.5 border-t border-slate-200/60 space-y-1.5 text-[11px]">
-              <div className="flex items-center justify-between text-slate-600">
-                <span className="text-slate-400 font-medium">Workspace:</span>
-                <span className="font-semibold text-slate-800 truncate max-w-[150px]" title={orgName}>
+            <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-700/60 space-y-1.5 text-[11px]">
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                <span className="text-slate-400 dark:text-slate-500 font-medium">Workspace:</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[150px]" title={orgName}>
                   {orgName}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-slate-600">
-                <span className="text-slate-400 font-medium">Role Authority:</span>
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                <span className="text-slate-400 dark:text-slate-500 font-medium">Role Authority:</span>
                 <RoleBadge role={role} size="xs" />
               </div>
             </div>
@@ -148,9 +148,9 @@ export default function Profile({
                 handleClose();
                 navigate('/settings');
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition text-xs font-semibold cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition text-xs font-semibold cursor-pointer"
             >
-              <Settings className="h-4 w-4 text-slate-400" />
+              <Settings className="h-4 w-4 text-slate-400 dark:text-slate-400" />
               <span>Workspace Settings</span>
             </button>
 
@@ -160,9 +160,9 @@ export default function Profile({
                 handleClose();
                 navigate('/governance');
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition text-xs font-semibold cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition text-xs font-semibold cursor-pointer"
             >
-              <ShieldCheck className="h-4 w-4 text-blue-600" />
+              <ShieldCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               <span>Platform Governance</span>
             </button>
 
@@ -172,22 +172,22 @@ export default function Profile({
                 handleClose();
                 navigate('/collaboration');
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition text-xs font-semibold cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition text-xs font-semibold cursor-pointer"
             >
-              <Users className="h-4 w-4 text-indigo-600" />
+              <Users className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
               <span>Team Collaboration</span>
             </button>
           </div>
 
           {/* Sign Out Action */}
-          <div className="pt-1.5 border-t border-slate-100 mt-1">
+          <div className="pt-1.5 border-t border-slate-100 dark:border-slate-750 mt-1">
             <button
               type="button"
               onClick={handleLogout}
               id="top-profile-logout-button"
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition text-xs font-semibold cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 transition text-xs font-semibold cursor-pointer"
             >
-              <LogOut className="h-4 w-4 text-rose-500" />
+              <LogOut className="h-4 w-4 text-rose-500 dark:text-rose-400" />
               <span>Sign Out</span>
             </button>
           </div>

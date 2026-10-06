@@ -9,9 +9,9 @@ export default function PageHeader({ eyebrow, title, description, actions, child
   return (
     <section className={`rz-page-header ${className}`}>
       <div className="min-w-0">
-        {eyebrow && <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{eyebrow}</p>}
-        <h1 className="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">{title}</h1>
-        {description && <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">{description}</p>}
+        {eyebrow && <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">{eyebrow}</p>}
+        <h1 className="text-xl font-semibold tracking-tight text-slate-950 dark:text-slate-100 sm:text-2xl">{title}</h1>
+        {description && <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500 dark:text-slate-400">{description}</p>}
         {children}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}

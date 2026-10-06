@@ -13,3 +13,4 @@ export { default as PageHeader } from '../PageHeader';
 export { default as StatusBadge } from '../StatusBadge';
 export { default as Notification } from './Notification';
 export { default as Profile } from './Profile';
+export { default as ThemeToggle } from './ThemeToggle';

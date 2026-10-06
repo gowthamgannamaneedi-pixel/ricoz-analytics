@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './layouts/DashboardLayout';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -36,8 +37,9 @@ const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 export default function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <ThemeProvider>
+        <AuthProvider>
+          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Suspense fallback={<LoadingSpinner size="lg" text="Loading RicozAnalytics..." className="min-h-screen" />}>
             <Routes>
               {/* Public Authentication Routes */}
@@ -86,6 +88,7 @@ export default function App() {
           </Suspense>
         </Router>
       </AuthProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

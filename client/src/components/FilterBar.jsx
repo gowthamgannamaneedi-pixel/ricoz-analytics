@@ -18,21 +18,21 @@ export default function FilterBar({
   isRefreshing = false
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-y border-slate-200 py-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-y border-slate-200 dark:border-slate-800 py-3">
       {/* Left: Segmented Time Window + Filters */}
       <div className="flex flex-wrap items-center gap-3">
         {/* Clean Date Range Dropdown */}
-        <div className="flex items-center gap-2 rounded-md bg-white border border-slate-200 px-3 py-1.5 text-xs text-slate-700 hover:border-slate-300 transition shadow-2xs">
+        <div className="flex items-center gap-2 rounded-md bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 transition shadow-2xs">
           <Calendar className="h-3.5 w-3.5 text-slate-400" />
           <select
             id="filter-date"
             value={filters.dateRange || 'all'}
             onChange={(e) => onFilterChange('dateRange', e.target.value)}
             aria-label="Filter by Date Range"
-            className="bg-transparent text-xs text-slate-800 font-medium outline-none cursor-pointer pr-1"
+            className="bg-transparent text-xs text-slate-800 dark:text-slate-100 font-medium outline-hidden cursor-pointer pr-1 dark:bg-slate-850"
           >
             {filterOptions.dateRanges.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-white text-slate-800">
+              <option key={opt.value} value={opt.value} className="bg-white dark:bg-slate-850 text-slate-800 dark:text-slate-100">
                 {opt.label}
               </option>
             ))}
@@ -40,17 +40,17 @@ export default function FilterBar({
         </div>
 
         {/* Region Dropdown */}
-        <div className="flex items-center gap-2 rounded-md bg-white border border-slate-200 px-3 py-1.5 text-xs text-slate-700 hover:border-slate-300 transition">
+        <div className="flex items-center gap-2 rounded-md bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 transition">
           <MapPin className="h-3.5 w-3.5 text-slate-400" />
           <select
             id="filter-region"
             value={filters.region}
             onChange={(e) => onFilterChange('region', e.target.value)}
             aria-label="Filter by Region"
-            className="bg-transparent text-xs text-slate-800 font-medium outline-none cursor-pointer pr-1"
+            className="bg-transparent text-xs text-slate-800 dark:text-slate-100 font-medium outline-hidden cursor-pointer pr-1 dark:bg-slate-850"
           >
             {filterOptions.regions.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-white text-slate-800">
+              <option key={opt.value} value={opt.value} className="bg-white dark:bg-slate-850 text-slate-800 dark:text-slate-100">
                 {opt.label}
               </option>
             ))}
@@ -58,17 +58,17 @@ export default function FilterBar({
         </div>
 
         {/* Channel Dropdown */}
-        <div className="flex items-center gap-2 rounded-md bg-white border border-slate-200 px-3 py-1.5 text-xs text-slate-700 hover:border-slate-300 transition">
+        <div className="flex items-center gap-2 rounded-md bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 transition">
           <Layers className="h-3.5 w-3.5 text-slate-400" />
           <select
             id="filter-category"
             value={filters.category}
             onChange={(e) => onFilterChange('category', e.target.value)}
             aria-label="Filter by Channel"
-            className="bg-transparent text-xs text-slate-800 font-medium outline-none cursor-pointer pr-1"
+            className="bg-transparent text-xs text-slate-800 dark:text-slate-100 font-medium outline-hidden cursor-pointer pr-1 dark:bg-slate-850"
           >
             {filterOptions.categories.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-white text-slate-800">
+              <option key={opt.value} value={opt.value} className="bg-white dark:bg-slate-850 text-slate-800 dark:text-slate-100">
                 {opt.label}
               </option>
             ))}
@@ -82,7 +82,7 @@ export default function FilterBar({
           onClick={onRefresh}
           disabled={isRefreshing}
           id="filter-refresh-btn"
-          className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50"
+          className="flex items-center gap-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white disabled:opacity-50 cursor-pointer"
         >
           <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
           <span>{isRefreshing ? 'Synchronizing...' : 'Refresh'}</span>

@@ -59,18 +59,18 @@ export default function DataTable({
   }, [data, searchQuery, sortKey, sortOrder]);
 
   return (
-    <div className={`rounded-md border border-slate-200 bg-white overflow-hidden shadow-2xs ${className}`}>
+    <div className={`rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-2xs ${className}`}>
       {/* Table Header / Toolbar */}
       {(title || action || subtitle) && (
-        <div className="flex flex-wrap items-center justify-between gap-3 p-4 sm:px-5 border-b border-slate-100">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 sm:px-5 border-b border-slate-100 dark:border-slate-800">
           <div>
             {title && (
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">
                 {title}
               </h3>
             )}
             {subtitle && (
-              <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>
             )}
           </div>
           {action && (
@@ -85,7 +85,7 @@ export default function DataTable({
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50/80">
+            <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-850">
               {columns.map((col) => {
                 const isSorted = sortKey === col.key;
                 return (
@@ -93,16 +93,16 @@ export default function DataTable({
                     key={col.key}
                     scope="col"
                     onClick={() => col.sortable !== false && handleSort(col.key)}
-                    className={`py-3 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-500 select-none ${
+                    className={`py-3 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 select-none ${
                       col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
-                    } ${col.sortable !== false ? 'cursor-pointer hover:text-slate-800' : ''}`}
+                    } ${col.sortable !== false ? 'cursor-pointer hover:text-slate-800 dark:hover:text-slate-200' : ''}`}
                   >
                     <div className={`inline-flex items-center gap-1.5 ${col.align === 'right' ? 'justify-end' : ''}`}>
                       <span>{col.label}</span>
                       {col.sortable !== false && (
-                        <span className="text-slate-400">
+                        <span className="text-slate-400 dark:text-slate-500">
                           {isSorted ? (
-                            sortOrder === 'asc' ? <ChevronUp className="h-3 w-3 text-blue-600" /> : <ChevronDown className="h-3 w-3 text-blue-600" />
+                            sortOrder === 'asc' ? <ChevronUp className="h-3 w-3 text-blue-600 dark:text-blue-400" /> : <ChevronDown className="h-3 w-3 text-blue-600 dark:text-blue-400" />
                           ) : (
                             <ArrowUpDown className="h-3 w-3 opacity-40 hover:opacity-100" />
                           )}
@@ -114,10 +114,10 @@ export default function DataTable({
               })}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 bg-white">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 bg-white dark:bg-slate-900">
             {filteredData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="py-8 text-center text-xs text-slate-400">
+                <td colSpan={columns.length} className="py-8 text-center text-xs text-slate-400 dark:text-slate-500">
                   No matching telemetry records found.
                 </td>
               </tr>
@@ -125,12 +125,12 @@ export default function DataTable({
               filteredData.map((row, rowIdx) => (
                 <tr
                   key={row.id || rowIdx}
-                  className="transition-colors hover:bg-slate-50/80 group"
+                  className="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/60 group"
                 >
                   {columns.map((col) => (
                     <td
                       key={col.key}
-                      className={`py-3 px-4 text-slate-700 ${
+                      className={`py-3 px-4 text-slate-700 dark:text-slate-300 ${
                         col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
                       }`}
                     >
@@ -145,9 +145,9 @@ export default function DataTable({
       </div>
 
       {/* Table Footer / Row Count */}
-      <div className="flex items-center justify-between px-4 py-3 bg-slate-50/50 border-t border-slate-100 text-xs text-slate-500 font-medium">
+      <div className="flex items-center justify-between px-4 py-3 bg-slate-50/50 dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 font-medium">
         <span>Showing {filteredData.length} entries</span>
-        <span className="font-mono text-[11px] text-slate-400">Live Enterprise Stream</span>
+        <span className="font-mono text-[11px] text-slate-400 dark:text-slate-500">Live Enterprise Stream</span>
       </div>
     </div>
   );

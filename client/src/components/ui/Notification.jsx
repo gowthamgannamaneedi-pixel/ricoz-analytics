@@ -123,8 +123,8 @@ export default function Notification({
         onClick={handleToggle}
         className={`relative h-10 w-10 flex items-center justify-center rounded-xl border transition-all cursor-pointer select-none ${
           isPopoverOpen
-            ? 'border-blue-500 bg-blue-50/50 text-blue-600 ring-2 ring-blue-100 shadow-xs'
-            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 shadow-2xs'
+            ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 ring-2 ring-blue-100 dark:ring-blue-900/50 shadow-xs'
+            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-750 hover:text-slate-900 dark:hover:text-white shadow-2xs'
         }`}
         aria-label="View notifications"
         aria-expanded={isPopoverOpen}
@@ -134,7 +134,7 @@ export default function Notification({
 
         {/* Real Data Badge: ONLY shown when unreadCount > 0, NEVER hardcoded */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4.5 min-w-4.5 px-1 items-center justify-center rounded-full bg-rose-500 font-mono text-[10px] font-bold text-white ring-2 ring-white shadow-2xs animate-in zoom-in-75 duration-150">
+          <span className="absolute -top-1 -right-1 flex h-4.5 min-w-4.5 px-1 items-center justify-center rounded-full bg-rose-500 font-mono text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900 shadow-2xs animate-in zoom-in-75 duration-150">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -145,14 +145,14 @@ export default function Notification({
         <div
           role="region"
           aria-label="Notifications panel"
-          className="absolute right-0 mt-2 w-84 sm:w-96 max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-200 bg-white shadow-xl z-50 text-xs overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
+          className="absolute right-0 mt-2 w-84 sm:w-96 max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-850 shadow-xl z-50 text-xs overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/70">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-750 bg-slate-50/70 dark:bg-slate-800/80">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-900 text-sm">Notifications</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">Notifications</span>
               {unreadCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold font-mono">
+                <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-[10px] font-bold font-mono">
                   {unreadCount} unread
                 </span>
               )}
@@ -162,7 +162,7 @@ export default function Notification({
               <button
                 type="button"
                 onClick={handleMarkAllRead}
-                className="flex items-center gap-1 text-xs text-blue-600 font-semibold hover:text-blue-800 transition cursor-pointer"
+                className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 font-semibold hover:text-blue-800 dark:hover:text-blue-300 transition cursor-pointer"
               >
                 <CheckCheck className="h-3.5 w-3.5" />
                 <span>Mark all read</span>
@@ -173,12 +173,12 @@ export default function Notification({
           {/* Notifications List */}
           <div className="max-h-84 overflow-y-auto p-2.5 space-y-1.5 divide-y-0">
             {notifications.length === 0 ? (
-              <div className="py-10 text-center text-slate-400 space-y-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400 mx-auto">
+              <div className="py-10 text-center text-slate-400 dark:text-slate-500 space-y-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 mx-auto">
                   <Bell className="h-5 w-5" />
                 </div>
-                <p className="text-xs font-semibold text-slate-700">All caught up!</p>
-                <p className="text-[11px] text-slate-400 max-w-[200px] mx-auto leading-normal">
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">All caught up!</p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 max-w-[200px] mx-auto leading-normal">
                   No unread alerts, report broadcasts, or team mentions at this time.
                 </p>
               </div>
@@ -191,26 +191,26 @@ export default function Notification({
                     onClick={() => handleNotificationClick(notif)}
                     className={`flex items-start gap-3 p-3 rounded-xl cursor-pointer transition text-left ${
                       isUnread
-                        ? 'bg-blue-50/60 border border-blue-100/80 hover:bg-blue-100/60'
-                        : 'bg-slate-50/40 border border-slate-100 hover:bg-slate-100/70'
+                        ? 'bg-blue-50/60 dark:bg-blue-950/40 border border-blue-100/80 dark:border-blue-900/60 hover:bg-blue-100/60 dark:hover:bg-blue-900/50'
+                        : 'bg-slate-50/40 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 hover:bg-slate-100/70 dark:hover:bg-slate-800/80'
                     }`}
                   >
-                    <div className="p-2 rounded-lg bg-white border border-slate-200/80 shrink-0 mt-0.5 shadow-2xs">
+                    <div className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shrink-0 mt-0.5 shadow-2xs">
                       {notif.type === 'mention' ? (
-                        <MessageSquare className="h-4 w-4 text-indigo-600" />
+                        <MessageSquare className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                       ) : notif.type === 'share' ? (
-                        <Share2 className="h-4 w-4 text-blue-600" />
+                        <Share2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       ) : (
-                        <Bell className="h-4 w-4 text-amber-600" />
+                        <Bell className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                       )}
                     </div>
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-1.5">
-                        <p className="font-bold text-slate-900 text-xs truncate">
+                        <p className="font-bold text-slate-900 dark:text-slate-100 text-xs truncate">
                           {notif.title || 'Notification'}
                         </p>
-                        <span className="text-[10px] text-slate-400 shrink-0 font-mono">
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0 font-mono">
                           {notif.created_at
                             ? new Date(notif.created_at).toLocaleTimeString([], {
                                 hour: '2-digit',
@@ -221,7 +221,7 @@ export default function Notification({
                       </div>
 
                       {/* Naturally wrapping message text without overflow */}
-                      <p className="text-xs text-slate-600 mt-1 leading-relaxed break-words whitespace-normal line-clamp-3">
+                      <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed break-words whitespace-normal line-clamp-3">
                         {notif.message || ''}
                       </p>
                     </div>

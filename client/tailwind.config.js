@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -24,6 +25,14 @@ export default {
           subtle: '#F1F5F9',      // Subtle neutral background
           border: '#E2E8F0',      // Standard subtle border
           borderLight: '#CBD5E1', // Focus/hover border
+        },
+        darkSurface: {
+          canvas: '#0B0F19',
+          card: '#111827',
+          cardHover: '#1F2937',
+          subtle: '#1E293B',
+          border: '#1F2937',
+          borderLight: '#374151',
         },
         semantic: {
           positive: '#16A34A',

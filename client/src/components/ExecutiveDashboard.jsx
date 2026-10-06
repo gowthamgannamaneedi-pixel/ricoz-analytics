@@ -68,12 +68,12 @@ const EnterpriseTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     const entry = payload[0];
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-xl text-xs font-sans">
-        <p className="font-semibold text-slate-500 mb-1 text-[11px]">{label}</p>
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-xl text-xs font-sans">
+        <p className="font-semibold text-slate-500 dark:text-slate-400 mb-1 text-[11px]">{label}</p>
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-blue-600" />
-          <span className="text-slate-600 font-medium">Revenue:</span>
-          <span className="font-mono text-slate-900 font-bold">
+          <span className="text-slate-600 dark:text-slate-300 font-medium">Revenue:</span>
+          <span className="font-mono text-slate-900 dark:text-slate-100 font-bold">
             {formatCurrency(entry.value)}
           </span>
         </div>
@@ -275,16 +275,16 @@ export default function ExecutiveDashboard({
       {/* ─────────────────────────────────────────────────────────────────── */}
       <section className="space-y-2 pb-1">
         {/* Breadcrumb Hierarchy */}
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-          <span className="hover:text-slate-600 transition cursor-pointer" onClick={() => navigate('/dashboard')}>
+        <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-medium">
+          <span className="hover:text-slate-600 dark:hover:text-slate-300 transition cursor-pointer" onClick={() => navigate('/dashboard')}>
             Workspace
           </span>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-          <span className="hover:text-slate-600 transition cursor-pointer">
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
+          <span className="hover:text-slate-600 dark:hover:text-slate-300 transition cursor-pointer">
             Production
           </span>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-          <span className="text-slate-900 font-bold">
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
+          <span className="text-slate-900 dark:text-slate-100 font-bold">
             Overview
           </span>
         </div>
@@ -292,15 +292,15 @@ export default function ExecutiveDashboard({
         {/* Title & Telemetry Metadata Row */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-0.5">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 font-sans">
               Overview
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-normal">
-              <span className="font-semibold text-slate-700">{activeDataset?.name || 'Product Inventory & Logistics'}</span>
-              <span className="mx-2 text-slate-300">|</span>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-normal">
+              <span className="font-semibold text-slate-700 dark:text-slate-300">{activeDataset?.name || 'Product Inventory & Logistics'}</span>
+              <span className="mx-2 text-slate-300 dark:text-slate-700">|</span>
               <span>Telemetry {dateRangeLabel}</span>
-              <span className="mx-2 text-slate-300">|</span>
-              <span className="font-mono font-medium text-slate-700">{Number(kpiData?.recordCount || summaryData?.totalRows || tableData?.totalCount || 0).toLocaleString()} records</span>
+              <span className="mx-2 text-slate-300 dark:text-slate-700">|</span>
+              <span className="font-mono font-medium text-slate-700 dark:text-slate-300">{Number(kpiData?.recordCount || summaryData?.totalRows || tableData?.totalCount || 0).toLocaleString()} records</span>
             </p>
           </div>
 
@@ -312,16 +312,16 @@ export default function ExecutiveDashboard({
                   value={selectedDatasetId || (activeDataset?.id ?? '')}
                   onChange={(e) => onSelectDataset(Number(e.target.value))}
                   aria-label="Active Telemetry Dataset"
-                  className="appearance-none pl-9 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-800 hover:border-slate-300 focus:outline-hidden focus:border-blue-500 shadow-2xs cursor-pointer transition"
+                  className="appearance-none pl-9 pr-9 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 hover:border-slate-300 dark:hover:border-slate-600 focus:outline-hidden focus:border-blue-500 shadow-2xs cursor-pointer transition"
                 >
                   {datasets.map((d) => (
-                    <option key={d.id} value={d.id}>
+                    <option key={d.id} value={d.id} className="dark:bg-slate-800 dark:text-slate-100">
                       {d.name}
                     </option>
                   ))}
                 </select>
-                <Database className="h-4 w-4 text-blue-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Database className="h-4 w-4 text-blue-600 dark:text-blue-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             )}
           </div>
@@ -331,7 +331,7 @@ export default function ExecutiveDashboard({
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* 2. FILTER BAR (Time Range, Regions, Channels, Manage Dataset, Refresh) */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <section className="rounded-2xl border border-slate-200/90 bg-white p-3 sm:p-3.5 shadow-2xs">
+      <section className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 sm:p-3.5 shadow-2xs">
         <div className="flex flex-wrap items-center justify-between gap-3.5">
           {/* Left Filters */}
           <div className="flex flex-wrap items-center gap-2.5">
@@ -341,16 +341,16 @@ export default function ExecutiveDashboard({
                 value={filters.dateRange || 'all'}
                 onChange={(e) => onFilterChange('dateRange', e.target.value)}
                 aria-label="Time Filter"
-                className="appearance-none pl-8 pr-8 h-9.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-hidden focus:border-blue-500 shadow-2xs cursor-pointer transition"
+                className="appearance-none pl-8 pr-8 h-9.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-750 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 focus:outline-hidden focus:border-blue-500 shadow-2xs cursor-pointer transition"
               >
-                <option value="all">All Time</option>
-                <option value="7d">Last 7 Days</option>
-                <option value="30d">Last 30 Days</option>
-                <option value="90d">Last 90 Days</option>
-                <option value="ytd">Year to Date</option>
+                <option value="all" className="dark:bg-slate-800">All Time</option>
+                <option value="7d" className="dark:bg-slate-800">Last 7 Days</option>
+                <option value="30d" className="dark:bg-slate-800">Last 30 Days</option>
+                <option value="90d" className="dark:bg-slate-800">Last 90 Days</option>
+                <option value="ytd" className="dark:bg-slate-800">Year to Date</option>
               </select>
-              <Calendar className="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Calendar className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
 
             {/* Region Filter Dropdown */}
@@ -359,17 +359,17 @@ export default function ExecutiveDashboard({
                 value={filters[summaryData?.dimensions?.regionColumn || 'region'] || 'all'}
                 onChange={(e) => onFilterChange(summaryData?.dimensions?.regionColumn || 'region', e.target.value)}
                 aria-label="Region Filter"
-                className="appearance-none pl-8 pr-8 h-9.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-hidden focus:border-blue-500 shadow-2xs cursor-pointer transition"
+                className="appearance-none pl-8 pr-8 h-9.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-750 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 focus:outline-hidden focus:border-blue-500 shadow-2xs cursor-pointer transition"
               >
-                <option value="all">Regions{summaryData?.filterOptions?.regions?.length ? ` (${summaryData.filterOptions.regions.length})` : ''}</option>
+                <option value="all" className="dark:bg-slate-800">Regions{summaryData?.filterOptions?.regions?.length ? ` (${summaryData.filterOptions.regions.length})` : ''}</option>
                 {(summaryData?.filterOptions?.regions || []).map((reg) => (
-                  <option key={reg} value={reg}>
+                  <option key={reg} value={reg} className="dark:bg-slate-800">
                     {reg}
                   </option>
                 ))}
               </select>
-              <Globe className="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Globe className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
 
             {/* Channel Filter Dropdown */}
@@ -378,17 +378,17 @@ export default function ExecutiveDashboard({
                 value={filters[summaryData?.dimensions?.channelColumn || 'channel'] || 'all'}
                 onChange={(e) => onFilterChange(summaryData?.dimensions?.channelColumn || 'channel', e.target.value)}
                 aria-label="Channel Filter"
-                className="appearance-none pl-8 pr-8 h-9.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-hidden focus:border-blue-500 shadow-2xs cursor-pointer transition"
+                className="appearance-none pl-8 pr-8 h-9.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-750 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 focus:outline-hidden focus:border-blue-500 shadow-2xs cursor-pointer transition"
               >
-                <option value="all">All Channels{summaryData?.filterOptions?.channels?.length ? ` (${summaryData.filterOptions.channels.length})` : ''}</option>
+                <option value="all" className="dark:bg-slate-800">All Channels{summaryData?.filterOptions?.channels?.length ? ` (${summaryData.filterOptions.channels.length})` : ''}</option>
                 {(summaryData?.filterOptions?.channels || []).map((chan) => (
-                  <option key={chan} value={chan}>
+                  <option key={chan} value={chan} className="dark:bg-slate-800">
                     {chan}
                   </option>
                 ))}
               </select>
-              <Network className="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Network className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
 
             {/* Reset Filters button */}
@@ -396,7 +396,7 @@ export default function ExecutiveDashboard({
               type="button"
               onClick={onResetFilters}
               title="Reset Filters"
-              className="flex items-center gap-1.5 h-9.5 px-3 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-500 hover:text-slate-800 transition cursor-pointer"
+              className="flex items-center gap-1.5 h-9.5 px-3 rounded-xl border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition cursor-pointer"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               <span>Reset</span>
@@ -408,9 +408,9 @@ export default function ExecutiveDashboard({
             <Button
               variant="secondary"
               onClick={() => navigate('/datasets')}
-              className="h-9.5 px-3.5 text-xs font-semibold rounded-xl border-slate-200 hover:border-slate-300 shadow-2xs"
+              className="h-9.5 px-3.5 text-xs font-semibold rounded-xl border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 dark:bg-slate-800 dark:text-slate-200 shadow-2xs"
             >
-              <Database className="h-3.5 w-3.5 text-slate-500" />
+              <Database className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
               <span>Manage Dataset</span>
             </Button>
 
@@ -418,9 +418,9 @@ export default function ExecutiveDashboard({
               variant="secondary"
               onClick={onRefresh}
               disabled={isRefreshing}
-              className="h-9.5 px-3.5 text-xs font-semibold rounded-xl border-slate-200 hover:border-slate-300 shadow-2xs"
+              className="h-9.5 px-3.5 text-xs font-semibold rounded-xl border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 dark:bg-slate-800 dark:text-slate-200 shadow-2xs"
             >
-              <RotateCcw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
+              <RotateCcw className={`h-3.5 w-3.5 text-slate-500 dark:text-slate-400 ${isRefreshing ? 'animate-spin text-blue-600 dark:text-blue-400' : ''}`} />
               <span>Refresh</span>
             </Button>
           </div>
@@ -435,16 +435,16 @@ export default function ExecutiveDashboard({
         {/* Left 7 Cols: 2x2 Grid of Headline KPI Cards */}
         <div className="xl:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* KPI 1: Total Sales */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-blue-200 transition-all flex flex-col justify-between">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-blue-200 dark:hover:border-blue-800/60 transition-all flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2.5 text-slate-600">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
                   <BarChart3 className="h-4.5 w-4.5" />
                 </div>
-                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Total Sales</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Total Sales</span>
               </div>
               <div className="mt-3 flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
+                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
                   {kpiData?.totalSales !== undefined && kpiData?.totalSales !== null
                     ? formatCurrency(kpiData.totalSales)
                     : '—'}
@@ -455,37 +455,37 @@ export default function ExecutiveDashboard({
               <div className="mt-2 flex items-center gap-1.5 text-xs sm:text-sm font-semibold">
                 {kpiData?.comparison?.hasComparison ? (
                   <>
-                    <span className={kpiData.comparison.isSalesPositive ? 'text-emerald-600' : 'text-rose-600'}>
+                    <span className={kpiData.comparison.isSalesPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
                       {kpiData.comparison.salesChange}
                     </span>
-                    <span className="text-slate-400 font-normal">{kpiData.comparison.periodLabel}</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-normal">{kpiData.comparison.periodLabel}</span>
                   </>
                 ) : (
-                  <span className="text-slate-400 font-normal">Active baseline period</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-normal">Active baseline period</span>
                 )}
               </div>
             </div>
             {/* Real Secondary Metric */}
-            <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs sm:text-sm text-slate-500 font-medium">
+            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
               {kpiData?.target ? (
                 <>
                   <span>Target {formatCurrency(kpiData.target)}</span>
                   <div className="flex items-center gap-2 flex-1 max-w-[90px] mx-2">
-                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-blue-600 rounded-full"
                         style={{ width: `${Math.min(Math.round((kpiData.totalSales / kpiData.target) * 100), 100)}%` }}
                       />
                     </div>
                   </div>
-                  <span className="font-bold text-slate-800">
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
                     {Math.round((kpiData.totalSales / kpiData.target) * 100)}%
                   </span>
                 </>
               ) : (
                 <>
                   <span>Peak Daily:</span>
-                  <span className="font-bold text-slate-800 font-mono">
+                  <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
                     {kpiData?.maxSales ? formatCurrency(kpiData.maxSales) : '—'}
                   </span>
                 </>
@@ -494,16 +494,16 @@ export default function ExecutiveDashboard({
           </div>
 
           {/* KPI 2: Total Orders */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-emerald-200 transition-all flex flex-col justify-between">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-emerald-200 dark:hover:border-emerald-800/60 transition-all flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2.5 text-slate-600">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
                   <ShoppingCart className="h-4.5 w-4.5" />
                 </div>
-                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Total Orders</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Total Orders</span>
               </div>
               <div className="mt-3 flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
+                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
                   {kpiData?.totalOrders !== undefined && kpiData?.totalOrders !== null
                     ? Number(kpiData.totalOrders).toLocaleString()
                     : '—'}
@@ -514,20 +514,20 @@ export default function ExecutiveDashboard({
               <div className="mt-2 flex items-center gap-1.5 text-xs sm:text-sm font-semibold">
                 {kpiData?.comparison?.hasComparison ? (
                   <>
-                    <span className={kpiData.comparison.isOrdersPositive ? 'text-emerald-600' : 'text-rose-600'}>
+                    <span className={kpiData.comparison.isOrdersPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
                       {kpiData.comparison.ordersChange}
                     </span>
-                    <span className="text-slate-400 font-normal">{kpiData.comparison.periodLabel}</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-normal">{kpiData.comparison.periodLabel}</span>
                   </>
                 ) : (
-                  <span className="text-slate-400 font-normal">Active baseline period</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-normal">Active baseline period</span>
                 )}
               </div>
             </div>
             {/* Target or Real Secondary Metric */}
-            <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs sm:text-sm text-slate-500 font-medium">
+            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
               <span>Avg Order Volume:</span>
-              <span className="font-bold text-slate-800 font-mono">
+              <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
                 {kpiData?.totalOrders > 0
                   ? `${(kpiData.totalQuantity / kpiData.totalOrders).toFixed(1)} units`
                   : '—'}
@@ -536,16 +536,16 @@ export default function ExecutiveDashboard({
           </div>
 
           {/* KPI 3: Total Unit Sold */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-amber-200 transition-all flex flex-col justify-between">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-amber-200 dark:hover:border-amber-800/60 transition-all flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2.5 text-slate-600">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+              <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
                   <Package className="h-4.5 w-4.5" />
                 </div>
-                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Total Unit Sold</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Total Unit Sold</span>
               </div>
               <div className="mt-3 flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
+                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
                   {kpiData?.totalQuantity !== undefined && kpiData?.totalQuantity !== null
                     ? Number(kpiData.totalQuantity).toLocaleString()
                     : '—'}
@@ -553,15 +553,15 @@ export default function ExecutiveDashboard({
                 <Sparkline points={unitsSparkline} color="#d97706" />
               </div>
               {/* Real Secondary Metric */}
-              <div className="mt-2 flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-500">
-                <span className="font-bold text-slate-700">{kpiData?.recordCount || 0}</span>
-                <span className="text-slate-400 font-normal">verified line items</span>
+              <div className="mt-2 flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
+                <span className="font-bold text-slate-700 dark:text-slate-300">{kpiData?.recordCount || 0}</span>
+                <span className="text-slate-400 dark:text-slate-500 font-normal">verified line items</span>
               </div>
             </div>
             {/* Real Secondary Metric */}
-            <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs sm:text-sm text-slate-500 font-medium">
+            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
               <span>Avg Unit Realization:</span>
-              <span className="font-bold text-slate-800 font-mono">
+              <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
                 {kpiData?.totalQuantity > 0
                   ? formatCurrency(kpiData.totalSales / kpiData.totalQuantity)
                   : '—'}
@@ -570,16 +570,16 @@ export default function ExecutiveDashboard({
           </div>
 
           {/* KPI 4: Average Order Value */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-purple-200 transition-all flex flex-col justify-between">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-purple-200 dark:hover:border-purple-800/60 transition-all flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2.5 text-slate-600">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+              <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400">
                   <IndianRupee className="h-4.5 w-4.5" />
                 </div>
-                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Average Order Value</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Average Order Value</span>
               </div>
               <div className="mt-3 flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
+                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
                   {kpiData?.averageOrderValue !== undefined && kpiData?.averageOrderValue !== null
                     ? formatCurrency(kpiData.averageOrderValue)
                     : '—'}
@@ -590,20 +590,20 @@ export default function ExecutiveDashboard({
               <div className="mt-2 flex items-center gap-1.5 text-xs sm:text-sm font-semibold">
                 {kpiData?.comparison?.hasComparison ? (
                   <>
-                    <span className={kpiData.comparison.isSalesPositive ? 'text-emerald-600' : 'text-rose-600'}>
+                    <span className={kpiData.comparison.isSalesPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
                       {kpiData.comparison.salesChange}
                     </span>
-                    <span className="text-slate-400 font-normal">{kpiData.comparison.periodLabel}</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-normal">{kpiData.comparison.periodLabel}</span>
                   </>
                 ) : (
-                  <span className="text-slate-400 font-normal">Dataset benchmark</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-normal">Dataset benchmark</span>
                 )}
               </div>
             </div>
             {/* Real Secondary Metric */}
-            <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs sm:text-sm text-slate-500 font-medium">
+            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
               <span>Orders Sampled:</span>
-              <span className="font-bold text-slate-800 font-mono">
+              <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
                 {kpiData?.totalOrders || 0} orders
               </span>
             </div>
@@ -611,18 +611,18 @@ export default function ExecutiveDashboard({
         </div>
 
         {/* Right 5 Cols: Regional Performance Card (Wireframe Placement) */}
-        <div className="xl:col-span-5 bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
+        <div className="xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
                   <Globe className="h-4.5 w-4.5" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-tight">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
                     Regional Performance
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Top regions by sales volume and share.
                   </p>
                 </div>
@@ -630,7 +630,7 @@ export default function ExecutiveDashboard({
               <button
                 type="button"
                 onClick={() => navigate('/reports')}
-                className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
+                className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1 cursor-pointer"
               >
                 <span>View Details</span>
                 <ChevronRight className="h-3.5 w-3.5" />
@@ -640,24 +640,24 @@ export default function ExecutiveDashboard({
             {/* Horizontal Bar Chart List with Real Data */}
             <div className="mt-4 space-y-3.5">
               {regionalData.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 text-sm">
+                <div className="py-8 text-center text-slate-400 dark:text-slate-500 text-sm">
                   No regional distribution available for this dataset.
                 </div>
               ) : (
                 regionalData.slice(0, 5).map((item, idx) => (
                   <div key={item.region || idx} className="space-y-1">
                     <div className="flex items-center justify-between text-xs sm:text-sm">
-                      <span className="font-semibold text-slate-700">{item.region}</span>
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">{item.region}</span>
                       <div className="flex items-center gap-2.5">
-                        <span className="font-bold text-slate-900 font-mono">
+                        <span className="font-bold text-slate-900 dark:text-slate-100 font-mono">
                           {formatCurrency(item.revenue)}
                         </span>
-                        <span className="text-slate-400 font-mono text-xs w-8 text-right">
+                        <span className="text-slate-400 dark:text-slate-500 font-mono text-xs w-8 text-right">
                           {item.share}%
                         </span>
                       </div>
                     </div>
-                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-blue-600 rounded-full transition-all duration-500"
                         style={{ width: `${item.relativeWidth}%` }}
@@ -669,9 +669,9 @@ export default function ExecutiveDashboard({
             </div>
           </div>
 
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span>{regionalData.length} active geographic territories</span>
-            <span className="font-semibold text-slate-700">100% telemetry coverage</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-300">100% telemetry coverage</span>
           </div>
         </div>
       </section>
@@ -679,19 +679,19 @@ export default function ExecutiveDashboard({
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* 4. SALES AMOUNT REALISATION TREND (Full-Width Wireframe Layout)      */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <section className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs">
+      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs">
         <div>
           {/* Header with Title, Mode Controls & Legend (● Realized Metric, ● Target Benchmark) */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
                 <BarChart3 className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-tight">
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
                   Sales Amount Realisation Trend
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                   Daily revenue performance and realization against dataset baseline.
                 </p>
               </div>
@@ -701,25 +701,25 @@ export default function ExecutiveDashboard({
             <div className="flex flex-wrap items-center gap-4">
               {/* Wireframe Legend Indicators */}
               <div className="flex items-center gap-3 text-xs font-semibold">
-                <span className="flex items-center gap-1.5 text-slate-700">
+                <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
                   <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
                   <span>Realized Metric</span>
                 </span>
-                <span className="flex items-center gap-1.5 text-slate-400">
-                  <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+                <span className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                  <span className="h-2.5 w-2.5 rounded-full bg-slate-300 dark:bg-slate-700" />
                   <span>Target Benchmark</span>
                 </span>
               </div>
 
               {/* Chart Mode Controls */}
-              <div className="flex items-center rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
+              <div className="flex items-center rounded-xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 text-xs">
                 <button
                   type="button"
                   onClick={() => setChartViewMode('area')}
                   className={`h-7 sm:h-8 px-3 rounded-lg font-semibold transition cursor-pointer ${
                     chartViewMode === 'area'
                       ? 'bg-blue-600 text-white shadow-2xs font-bold'
-                      : 'text-slate-600 hover:text-slate-900'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
                   }`}
                 >
                   Area
@@ -730,7 +730,7 @@ export default function ExecutiveDashboard({
                   className={`h-7 sm:h-8 px-3 rounded-lg font-semibold transition cursor-pointer ${
                     chartViewMode === 'bar'
                       ? 'bg-blue-600 text-white shadow-2xs font-bold'
-                      : 'text-slate-600 hover:text-slate-900'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
                   }`}
                 >
                   Bar
@@ -741,7 +741,7 @@ export default function ExecutiveDashboard({
                   className={`h-7 sm:h-8 px-3 rounded-lg font-semibold transition cursor-pointer ${
                     chartViewMode === 'line'
                       ? 'bg-blue-600 text-white shadow-2xs font-bold'
-                      : 'text-slate-600 hover:text-slate-900'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
                   }`}
                 >
                   Line
@@ -753,8 +753,8 @@ export default function ExecutiveDashboard({
           {/* Spline Area / Bar / Line Visualization with Real Data */}
           <div className="mt-4 h-[300px] w-full">
             {trendsData.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-slate-400 text-sm space-y-2">
-                <BarChart3 className="h-10 w-10 text-slate-300" />
+              <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500 text-sm space-y-2">
+                <BarChart3 className="h-10 w-10 text-slate-300 dark:text-slate-700" />
                 <span>No revenue trajectory records found for the applied filter.</span>
               </div>
             ) : (
@@ -769,7 +769,7 @@ export default function ExecutiveDashboard({
                       <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.25} vertical={false} />
                   <XAxis
                     dataKey="formattedDate"
                     stroke="#94a3b8"
@@ -822,44 +822,44 @@ export default function ExecutiveDashboard({
         </div>
 
         {/* Bottom Summary Strip (Calculated 100% from Real Trend Records) */}
-        <div className="mt-3 pt-3.5 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="mt-3 pt-3.5 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
               <ArrowUpRight className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm sm:text-base font-extrabold text-slate-900 font-sans leading-tight">
+              <p className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100 font-sans leading-tight">
                 {highestTrendPoint ? formatCurrency(highestTrendPoint.revenue) : '—'}
               </p>
-              <p className="text-[11px] text-slate-400 font-medium">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                 Highest ({highestTrendPoint ? highestTrendPoint.formattedDate : '—'})
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
               <ArrowDownRight className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm sm:text-base font-extrabold text-slate-900 font-sans leading-tight">
+              <p className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100 font-sans leading-tight">
                 {lowestTrendPoint ? formatCurrency(lowestTrendPoint.revenue) : '—'}
               </p>
-              <p className="text-[11px] text-slate-400 font-medium">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                 Lowest ({lowestTrendPoint ? lowestTrendPoint.formattedDate : '—'})
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
               <Equal className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm sm:text-base font-extrabold text-slate-900 font-sans leading-tight">
+              <p className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100 font-sans leading-tight">
                 {avgDailyRevenue > 0 ? `${formatCurrency(avgDailyRevenue)}/day` : '—'}
               </p>
-              <p className="text-[11px] text-slate-400 font-medium">Average Revenue</p>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Average Revenue</p>
             </div>
           </div>
         </div>
@@ -870,18 +870,18 @@ export default function ExecutiveDashboard({
       {/* ─────────────────────────────────────────────────────────────────── */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Card 1: Sales by Channel (Donut Chart + Legend with Real Data) */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs flex flex-col justify-between min-h-[380px]">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 shadow-2xs flex flex-col justify-between min-h-[380px]">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
                   <Network className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-tight">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
                     Sales by Channel
                   </h3>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                     Channel-wise revenue distribution.
                   </p>
                 </div>
@@ -889,7 +889,7 @@ export default function ExecutiveDashboard({
               <button
                 type="button"
                 onClick={() => navigate('/reports')}
-                className="text-xs sm:text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
+                className="text-xs sm:text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1 cursor-pointer"
               >
                 <span>View Details</span>
                 <ChevronRight className="h-4 w-4" />
@@ -898,7 +898,7 @@ export default function ExecutiveDashboard({
 
             {/* Donut and Legend Side-by-Side with Real Channels */}
             {channelData.length === 0 ? (
-              <div className="py-8 text-center text-slate-400 text-sm">
+              <div className="py-8 text-center text-slate-400 dark:text-slate-500 text-sm">
                 No channel breakdown available for this dataset.
               </div>
             ) : (
@@ -924,12 +924,12 @@ export default function ExecutiveDashboard({
                   </ResponsiveContainer>
                   {/* Center Text with Real Total Sales */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-                    <span className="text-base font-black text-slate-900 font-sans tracking-tight">
+                    <span className="text-base font-black text-slate-900 dark:text-slate-100 font-sans tracking-tight">
                       {kpiData?.totalSales !== undefined && kpiData?.totalSales !== null
                         ? formatCurrency(kpiData.totalSales)
                         : '—'}
                     </span>
-                    <span className="text-[11px] text-slate-400 font-medium">Total Revenue</span>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Total Revenue</span>
                   </div>
                 </div>
 
@@ -939,11 +939,11 @@ export default function ExecutiveDashboard({
                     <div key={c.name} className="flex items-center justify-between text-xs sm:text-sm">
                       <div className="flex items-center gap-2 truncate">
                         <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
-                        <span className="text-slate-700 font-medium truncate">{c.name}</span>
+                        <span className="text-slate-700 dark:text-slate-300 font-medium truncate">{c.name}</span>
                       </div>
                       <div className="flex items-center gap-2.5 shrink-0 ml-2">
-                        <span className="text-slate-400 font-mono text-xs">{c.share}%</span>
-                        <span className="font-bold text-slate-900 font-mono text-xs sm:text-sm">
+                        <span className="text-slate-400 dark:text-slate-500 font-mono text-xs">{c.share}%</span>
+                        <span className="font-bold text-slate-900 dark:text-slate-100 font-mono text-xs sm:text-sm">
                           {formatCurrency(c.value)}
                         </span>
                       </div>
@@ -956,18 +956,18 @@ export default function ExecutiveDashboard({
         </div>
 
         {/* Card 2: Top Performing Products (Enterprise Table with Real Data) */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs flex flex-col justify-between min-h-[380px]">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 shadow-2xs flex flex-col justify-between min-h-[380px]">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
                   <Package className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-tight">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
                     Top Performing Products
                   </h3>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                     Revenue by product category.
                   </p>
                 </div>
@@ -975,7 +975,7 @@ export default function ExecutiveDashboard({
               <button
                 type="button"
                 onClick={() => navigate('/datasets')}
-                className="text-xs sm:text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
+                className="text-xs sm:text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1 cursor-pointer"
               >
                 <span>View All</span>
                 <ChevronRight className="h-4 w-4" />
@@ -985,32 +985,32 @@ export default function ExecutiveDashboard({
             {/* Table with Real Products Data */}
             <div className="mt-4 overflow-x-auto">
               {productsData.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 text-sm">
+                <div className="py-8 text-center text-slate-400 dark:text-slate-500 text-sm">
                   No product performance data available.
                 </div>
               ) : (
                 <table className="w-full text-left text-xs sm:text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    <tr className="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                       <th className="pb-2.5">Product</th>
                       <th className="pb-2.5 text-right">Revenue</th>
                       <th className="pb-2.5 text-right">Orders</th>
                       <th className="pb-2.5 text-right">Share</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {productsData.slice(0, 5).map((row, idx) => (
-                      <tr key={row.product || idx} className="hover:bg-slate-50/70 transition">
-                        <td className="py-2.5 font-semibold text-slate-800 truncate max-w-[110px]" title={row.product}>
+                      <tr key={row.product || idx} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition">
+                        <td className="py-2.5 font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[110px]" title={row.product}>
                           {row.product}
                         </td>
-                        <td className="py-2.5 text-right font-mono font-bold text-slate-900">
+                        <td className="py-2.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
                           {formatCurrency(row.revenue)}
                         </td>
-                        <td className="py-2.5 text-right font-mono text-slate-600">
+                        <td className="py-2.5 text-right font-mono text-slate-600 dark:text-slate-400">
                           {row.orders}
                         </td>
-                        <td className="py-2.5 text-right font-mono font-bold text-emerald-600">
+                        <td className="py-2.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
                           {row.percentage}
                         </td>
                       </tr>
@@ -1023,24 +1023,24 @@ export default function ExecutiveDashboard({
         </div>
 
         {/* Card 3: Real Decision Signals from Backend AI Engine */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs flex flex-col justify-between min-h-[380px]">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 shadow-2xs flex flex-col justify-between min-h-[380px]">
           <div className="flex-1 flex flex-col min-h-0">
             {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
                   <Lightbulb className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-tight">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
                     Decision Signals
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Live operational insights.
                   </p>
                 </div>
               </div>
-              <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 LIVE
               </span>
@@ -1055,7 +1055,7 @@ export default function ExecutiveDashboard({
                   className={`h-6 px-2.5 rounded-full text-[11px] font-semibold transition cursor-pointer shrink-0 ${
                     signalTab === 'all'
                       ? 'bg-blue-600 text-white font-bold'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
                   All ({decisionSignals.length})
@@ -1068,7 +1068,7 @@ export default function ExecutiveDashboard({
                     className={`h-6 px-2.5 rounded-full text-[11px] font-semibold capitalize transition cursor-pointer shrink-0 ${
                       signalTab === cat
                         ? 'bg-blue-600 text-white font-bold'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                     }`}
                   >
                     {cat} ({decisionSignals.filter(s => (s.type || s.severity || 'general').toLowerCase() === cat).length})
@@ -1080,11 +1080,11 @@ export default function ExecutiveDashboard({
             {/* Scrollable Signals Container */}
             <div className="flex-1 overflow-y-auto max-h-[220px] pr-1 space-y-2.5">
               {decisionSignals.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-6 text-center text-slate-400 space-y-2">
-                  <Lightbulb className="h-7 w-7 text-slate-300" />
+                <div className="flex flex-col items-center justify-center p-6 text-center text-slate-400 dark:text-slate-500 space-y-2">
+                  <Lightbulb className="h-7 w-7 text-slate-300 dark:text-slate-700" />
                   <div>
-                    <p className="text-xs font-semibold text-slate-700">No decision signals available</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5 max-w-[200px]">
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">No decision signals available</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 max-w-[200px]">
                       Run automated AI analysis to extract actionable operational signals.
                     </p>
                   </div>
@@ -1093,9 +1093,9 @@ export default function ExecutiveDashboard({
                       variant="secondary"
                       onClick={onGenerateSignals}
                       loading={isSignalsLoading}
-                      className="h-7 text-xs font-semibold px-2.5"
+                      className="h-7 text-xs font-semibold px-2.5 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
                     >
-                      <Sparkles className="h-3 w-3 text-blue-600" />
+                      <Sparkles className="h-3 w-3 text-blue-600 dark:text-blue-400" />
                       <span>Generate Signals</span>
                     </Button>
                   )}
@@ -1109,17 +1109,17 @@ export default function ExecutiveDashboard({
                   return (
                     <div
                       key={sig.id}
-                      className="p-2.5 rounded-xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/50 transition flex items-start gap-2.5"
+                      className="p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition flex items-start gap-2.5"
                     >
                       <div
                         className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
                           isPositive
-                            ? 'bg-emerald-50 text-emerald-600'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400'
                             : isCritical
-                            ? 'bg-rose-50 text-rose-600'
+                            ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400'
                             : isWarning
-                            ? 'bg-amber-50 text-amber-600'
-                            : 'bg-blue-50 text-blue-600'
+                            ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400'
+                            : 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400'
                         }`}
                       >
                         {isPositive ? (
@@ -1132,18 +1132,18 @@ export default function ExecutiveDashboard({
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <h4 className="text-xs font-bold text-slate-900 truncate">
+                          <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
                             {sig.title}
                           </h4>
                           <span
                             className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 ${
                               isPositive
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60'
                                 : isCritical
-                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/60'
                                 : isWarning
-                                ? 'bg-amber-50 text-amber-700 border-amber-200'
-                                : 'bg-purple-50 text-purple-700 border-purple-200'
+                                ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60'
+                                : 'bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60'
                             }`}
                           >
                             {sig.evidence?.delta !== undefined
@@ -1151,7 +1151,7 @@ export default function ExecutiveDashboard({
                               : sig.priority || sig.type}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed line-clamp-2">
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed line-clamp-2">
                           {sig.summary || sig.description}
                         </p>
                       </div>
@@ -1163,11 +1163,11 @@ export default function ExecutiveDashboard({
           </div>
 
           {/* AI Insights Link Action */}
-          <div className="mt-2.5 pt-2.5 border-t border-slate-100">
+          <div className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={() => navigate('/ai-insights')}
-              className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 py-1 transition cursor-pointer"
+              className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 py-1 transition cursor-pointer"
             >
               <span>Explore All Decision Insights</span>
               <ArrowUpRight className="h-3.5 w-3.5" />
@@ -1179,25 +1179,25 @@ export default function ExecutiveDashboard({
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* 6. DATA PROVENANCE / RAW TRANSACTION LOGS (Collapsible Section)     */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <section className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs">
+      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs">
         <div
           onClick={() => setIsRawDataExpanded(!isRawDataExpanded)}
           className="flex flex-wrap items-center justify-between gap-4 cursor-pointer select-none"
         >
           <div>
-            <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2">
               <span>Recent Sales Transactions (Source Dataset)</span>
-              <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full">
+              <span className="text-xs font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
                 {tableData.totalCount?.toLocaleString() || 0} Records
               </span>
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Live transactional records and order-level audit logs from the active enterprise database.
             </p>
           </div>
           <button
             type="button"
-            className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition"
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition"
           >
             <span>{isRawDataExpanded ? 'Collapse Table' : 'Expand Table'}</span>
             {isRawDataExpanded ? (
@@ -1209,7 +1209,7 @@ export default function ExecutiveDashboard({
         </div>
 
         {isRawDataExpanded && (
-          <div className="mt-5 pt-4 border-t border-slate-100">
+          <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
             <DynamicDataTable
               columns={summaryData?.dataset?.schema || []}
               rows={tableData.rows}
