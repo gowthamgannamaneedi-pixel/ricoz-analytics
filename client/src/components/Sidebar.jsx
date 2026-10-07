@@ -131,7 +131,7 @@ export default function Sidebar({ isOpen, onClose }) {
                         `group relative flex items-center justify-between rounded-xl px-3 py-2 text-xs sm:text-[13px] font-medium transition-all ${
                           isActive
                             ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 font-bold shadow-2xs'
-                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white'
+                            : 'text-slate-600 dark:text-slate-300 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400'
                         }`
                       }
                     >

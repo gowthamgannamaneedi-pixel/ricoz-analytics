@@ -32,7 +32,7 @@ export default function FilterBar({
             className="bg-transparent text-xs text-slate-800 dark:text-slate-100 font-medium outline-hidden cursor-pointer pr-1 dark:bg-slate-850"
           >
             {filterOptions.dateRanges.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-white dark:bg-slate-850 text-slate-800 dark:text-slate-100">
+              <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
             ))}
@@ -50,7 +50,7 @@ export default function FilterBar({
             className="bg-transparent text-xs text-slate-800 dark:text-slate-100 font-medium outline-hidden cursor-pointer pr-1 dark:bg-slate-850"
           >
             {filterOptions.regions.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-white dark:bg-slate-850 text-slate-800 dark:text-slate-100">
+              <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
             ))}
@@ -68,7 +68,7 @@ export default function FilterBar({
             className="bg-transparent text-xs text-slate-800 dark:text-slate-100 font-medium outline-hidden cursor-pointer pr-1 dark:bg-slate-850"
           >
             {filterOptions.categories.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-white dark:bg-slate-850 text-slate-800 dark:text-slate-100">
+              <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
             ))}

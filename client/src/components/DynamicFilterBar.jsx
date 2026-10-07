@@ -52,11 +52,11 @@ export default function DynamicFilterBar({
             aria-label="Filter by Date Range"
             className="bg-transparent text-sm text-slate-800 dark:text-slate-100 font-semibold outline-hidden cursor-pointer pr-1 dark:bg-slate-850"
           >
-            <option value="all" className="dark:bg-slate-850 dark:text-slate-100">All Time</option>
-            <option value="7d" className="dark:bg-slate-850 dark:text-slate-100">Last 7 Days</option>
-            <option value="30d" className="dark:bg-slate-850 dark:text-slate-100">Last 30 Days</option>
-            <option value="90d" className="dark:bg-slate-850 dark:text-slate-100">Last 90 Days</option>
-            <option value="ytd" className="dark:bg-slate-850 dark:text-slate-100">Year to Date</option>
+            <option value="all">All Time</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+            <option value="90d">Last 90 Days</option>
+            <option value="ytd">Year to Date</option>
           </select>
         </div>
 
@@ -70,9 +70,9 @@ export default function DynamicFilterBar({
             aria-label="Filter by Region"
             className="bg-transparent text-sm text-slate-800 dark:text-slate-100 font-semibold outline-hidden cursor-pointer pr-1 dark:bg-slate-850"
           >
-            <option value="all" className="dark:bg-slate-850 dark:text-slate-100">All Regions{regions.length > 0 ? ` (${regions.length})` : ''}</option>
+            <option value="all">All Regions{regions.length > 0 ? ` (${regions.length})` : ''}</option>
             {regions.map((reg) => (
-              <option key={reg} value={reg} className="dark:bg-slate-850 dark:text-slate-100">
+              <option key={reg} value={reg}>
                 {reg}
               </option>
             ))}
@@ -89,9 +89,9 @@ export default function DynamicFilterBar({
             aria-label="Filter by Channel"
             className="bg-transparent text-sm text-slate-800 dark:text-slate-100 font-semibold outline-hidden cursor-pointer pr-1 dark:bg-slate-850"
           >
-            <option value="all" className="dark:bg-slate-850 dark:text-slate-100">All Channels{channels.length > 0 ? ` (${channels.length})` : ''}</option>
+            <option value="all">All Channels{channels.length > 0 ? ` (${channels.length})` : ''}</option>
             {channels.map((chan) => (
-              <option key={chan} value={chan} className="dark:bg-slate-850 dark:text-slate-100">
+              <option key={chan} value={chan}>
                 {chan}
               </option>
             ))}
@@ -108,9 +108,9 @@ export default function DynamicFilterBar({
             aria-label="Filter by Category"
             className="bg-transparent text-sm text-slate-800 dark:text-slate-100 font-semibold outline-hidden cursor-pointer pr-1 dark:bg-slate-850"
           >
-            <option value="all" className="dark:bg-slate-850 dark:text-slate-100">All Categories{categories.length > 0 ? ` (${categories.length})` : ''}</option>
+            <option value="all">All Categories{categories.length > 0 ? ` (${categories.length})` : ''}</option>
             {categories.map((cat) => (
-              <option key={cat} value={cat} className="dark:bg-slate-850 dark:text-slate-100">
+              <option key={cat} value={cat}>
                 {cat}
               </option>
             ))}

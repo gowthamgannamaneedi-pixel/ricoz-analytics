@@ -50,8 +50,8 @@ export default function ThemeToggle({ className = '', variant = 'icon', size = '
       onClick={toggleTheme}
       className={`relative inline-flex items-center justify-center rounded-xl border transition cursor-pointer select-none shadow-2xs ${sizeClasses} ${
         isDark
-          ? 'bg-slate-800 border-slate-700 text-amber-400 hover:bg-slate-700 hover:border-slate-600 hover:text-amber-300'
-          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300'
+          ? 'bg-slate-800 border-slate-700 text-amber-400 hover:bg-rose-950/40 hover:border-rose-800 hover:text-amber-300'
+          : 'bg-white border-slate-200 text-slate-600 hover:bg-rose-50/80 hover:text-rose-700 hover:border-rose-300'
       } ${className}`}
       aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
       title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}

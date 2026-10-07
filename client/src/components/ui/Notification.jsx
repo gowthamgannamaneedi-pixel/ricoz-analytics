@@ -124,7 +124,7 @@ export default function Notification({
         className={`relative h-10 w-10 flex items-center justify-center rounded-xl border transition-all cursor-pointer select-none ${
           isPopoverOpen
             ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 ring-2 ring-rose-100 dark:ring-rose-900/50 shadow-xs'
-            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-750 hover:text-slate-900 dark:hover:text-white shadow-2xs'
+            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/80 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 shadow-2xs'
         }`}
         aria-label="View notifications"
         aria-expanded={isPopoverOpen}

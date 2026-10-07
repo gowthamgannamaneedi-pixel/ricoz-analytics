@@ -1030,7 +1030,7 @@ export default function DataQualityPage() {
                         </tr>
                       ) : (
                         filteredColumns.map((col, idx) => (
-                          <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
+                          <tr key={idx} className={`hover:bg-slate-50/70 transition-colors ${actionMenuColumn === col.column_name ? 'relative z-30' : ''}`}>
                             <td className="px-5 py-3.5 font-bold text-slate-900 font-sans">
                               {col.column_name}
                             </td>
@@ -1101,7 +1101,7 @@ export default function DataQualityPage() {
                               <button
                                 type="button"
                                 onClick={() => setActionMenuColumn(actionMenuColumn === col.column_name ? null : col.column_name)}
-                                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                                className="p-1 rounded-lg text-slate-400 hover:text-rose-700 hover:bg-rose-50/80 transition cursor-pointer"
                                 aria-label="Column actions"
                               >
                                 <MoreVertical className="h-4 w-4" />
@@ -1110,12 +1110,16 @@ export default function DataQualityPage() {
                               {actionMenuColumn === col.column_name && (
                                 <div
                                   ref={actionMenuRef}
-                                  className="absolute right-4 mt-1 w-44 rounded-xl border border-slate-200 bg-white p-1 shadow-xl z-50 text-xs text-left animate-in fade-in duration-100"
+                                  className={`absolute right-4 ${
+                                    idx >= filteredColumns.length - 2 || filteredColumns.length <= 3
+                                      ? 'bottom-full mb-1.5'
+                                      : 'top-full mt-1'
+                                  } w-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 p-1 shadow-xl z-50 text-xs text-left animate-in fade-in duration-100`}
                                 >
                                   <button
                                     type="button"
                                     onClick={() => handleOpenRuleForColumn(col.column_name)}
-                                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition font-semibold cursor-pointer"
+                                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 transition font-semibold cursor-pointer"
                                   >
                                     <Plus className="h-3.5 w-3.5 text-rose-600" />
                                     <span>Add Quality Rule</span>
@@ -1126,7 +1130,7 @@ export default function DataQualityPage() {
                                       setActionMenuColumn(null);
                                       setColumnSearch(col.column_name);
                                     }}
-                                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-slate-700 hover:bg-slate-50 transition font-semibold cursor-pointer"
+                                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 transition font-semibold cursor-pointer"
                                   >
                                     <Search className="h-3.5 w-3.5 text-slate-400" />
                                     <span>Filter Column</span>

@@ -375,9 +375,9 @@ export default function DatasetTable({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden font-sans transition-colors">
+    <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs font-sans transition-colors">
       {/* Table Card Header / Toolbar */}
-      <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-slate-900">
+      <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 rounded-t-2xl">
         {/* Left: Datasets count title */}
         <div className="flex items-center gap-2.5">
           <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
@@ -474,7 +474,7 @@ export default function DatasetTable({
       </div>
 
       {/* Main Table */}
-      <div className="w-full overflow-hidden">
+      <div className="w-full overflow-x-auto overflow-y-visible">
         <table className="w-full text-left border-collapse text-xs table-fixed">
           <thead>
             <tr className="border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850/60 text-slate-600 dark:text-slate-400">
@@ -592,17 +592,18 @@ export default function DatasetTable({
                 </td>
               </tr>
             ) : (
-              currentPaginatedDatasets.map((dataset) => {
+              currentPaginatedDatasets.map((dataset, idx) => {
                 const status = getDatasetStatus(dataset);
                 const isSelected = selectedIds.has(dataset.id);
                 const isMenuOpen = openActionMenuId === dataset.id;
+                const isNearBottom = idx >= currentPaginatedDatasets.length - 2 || currentPaginatedDatasets.length <= 3;
 
                 return (
                   <tr
                     key={dataset.id}
                     className={`transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/60 group ${
                       isSelected ? 'bg-rose-50/30 dark:bg-rose-950/40' : ''
-                    }`}
+                    } ${isMenuOpen ? 'relative z-30' : ''}`}
                   >
                     {/* Checkbox */}
                     <td className="py-2.5 px-2 w-10 text-center select-none">
@@ -673,7 +674,7 @@ export default function DatasetTable({
                         <button
                           onClick={() => navigate(`/data-quality?datasetId=${dataset.id}`)}
                           id={`quality-dataset-${dataset.id}`}
-                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-1.5 2xl:px-2 2xl:py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 hover:border-emerald-300 dark:hover:border-emerald-800 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/40 transition shadow-2xs shrink-0"
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-1.5 2xl:px-2 2xl:py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 hover:border-emerald-300 dark:hover:border-emerald-800 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/40 transition shadow-2xs shrink-0 cursor-pointer"
                           title="View Data Quality profile"
                         >
                           <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
@@ -684,7 +685,7 @@ export default function DatasetTable({
                         <button
                           onClick={() => onPreview && onPreview(dataset.id)}
                           id={`preview-dataset-${dataset.id}`}
-                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-1.5 2xl:px-2 2xl:py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/50 dark:hover:bg-rose-950/40 transition shadow-2xs shrink-0"
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-1.5 2xl:px-2 2xl:py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/50 dark:hover:bg-rose-950/40 transition shadow-2xs shrink-0 cursor-pointer"
                           title="Preview records and schema"
                         >
                           <Eye className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
@@ -696,7 +697,7 @@ export default function DatasetTable({
                           <button
                             onClick={() => setOpenActionMenuId(isMenuOpen ? null : dataset.id)}
                             id={`action-menu-${dataset.id}`}
-                            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-750 transition shadow-2xs shrink-0"
+                            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50/80 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800 transition shadow-2xs shrink-0 cursor-pointer"
                             title="More actions"
                             aria-label="More actions"
                           >
@@ -705,13 +706,15 @@ export default function DatasetTable({
 
                           {/* Action Dropdown Menu */}
                           {isMenuOpen && (
-                            <div className="absolute right-0 mt-1.5 w-44 rounded-xl border border-slate-200 dark:border-slate-755 bg-white dark:bg-slate-850 shadow-lg py-1 z-30 animate-in fade-in zoom-in-95 duration-100 text-slate-700 dark:text-slate-200">
+                            <div className={`absolute right-0 ${
+                              isNearBottom ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
+                            } w-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 text-slate-700 dark:text-slate-200`}>
                               <button
                                 onClick={() => {
                                   setOpenActionMenuId(null);
                                   if (onViewDetails) onViewDetails(dataset);
                                 }}
-                                className="w-full text-left px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition"
+                                className="w-full text-left px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 flex items-center gap-2 transition cursor-pointer"
                               >
                                 <Info className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
                                 <span>View Details</span>
@@ -724,7 +727,7 @@ export default function DatasetTable({
                                     onRefreshDataset(dataset.id);
                                   }}
                                   disabled={isRefreshingDataset === dataset.id}
-                                  className="w-full text-left px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition disabled:opacity-40"
+                                  className="w-full text-left px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 flex items-center gap-2 transition disabled:opacity-40 cursor-pointer"
                                 >
                                   <RefreshCw className={`h-3.5 w-3.5 text-slate-500 dark:text-slate-400 ${isRefreshingDataset === dataset.id ? 'animate-spin text-rose-600' : ''}`} />
                                   <span>Refresh & Sync</span>
@@ -736,7 +739,7 @@ export default function DatasetTable({
                                   setOpenActionMenuId(null);
                                   navigate(`/data-quality?datasetId=${dataset.id}`);
                                 }}
-                                className="w-full text-left px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition"
+                                className="w-full text-left px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 flex items-center gap-2 transition cursor-pointer"
                               >
                                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                                 <span>Data Quality</span>
@@ -751,7 +754,7 @@ export default function DatasetTable({
                                       onDelete(dataset);
                                     }}
                                     disabled={isDeleting === dataset.id}
-                                    className="w-full text-left px-3.5 py-2 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-2 transition disabled:opacity-40 font-medium"
+                                    className="w-full text-left px-3.5 py-2 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/60 hover:text-rose-700 dark:hover:text-rose-300 flex items-center gap-2 transition disabled:opacity-40 font-medium cursor-pointer"
                                   >
                                     <Trash2 className="h-3.5 w-3.5 text-rose-500 dark:text-rose-400" />
                                     <span>Delete Dataset</span>

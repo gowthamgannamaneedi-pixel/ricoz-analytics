@@ -508,7 +508,7 @@ export default function DataSourcesPage() {
                   id="connect-source-btn"
                   onClick={() => setIsAddModalOpen(true)}
                   variant="primary"
-                  className="h-9 px-3.5 rounded-xl font-semibold shadow-xs text-xs sm:text-sm flex items-center gap-1.5"
+                  className="h-10 px-4 rounded-xl font-semibold shadow-xs text-xs gap-2"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Add Data Sources</span>
@@ -524,9 +524,9 @@ export default function DataSourcesPage() {
               onClick={handleRefresh}
               disabled={isRefreshing}
               variant="secondary"
-              className="h-9.5 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold shadow-2xs text-xs sm:text-sm"
+              className="h-10 px-4 rounded-xl font-semibold shadow-2xs text-xs gap-2"
             >
-              <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-rose-600' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin text-rose-600' : ''}`} />
               <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
             </Button>
           </div>
@@ -1020,8 +1020,8 @@ export default function DataSourcesPage() {
               </thead>
 
               <tbody className="divide-y divide-slate-100 bg-white">
-                {paginatedSources.map((source) => (
-                  <tr key={source.id} className="transition-colors hover:bg-slate-50/60 group">
+                {paginatedSources.map((source, idx) => (
+                  <tr key={source.id} className={`transition-colors hover:bg-slate-50/60 group ${actionMenuId === source.id ? 'relative z-30' : ''}`}>
                     {/* Checkbox */}
                     <td className="py-3.5 px-4">
                       <input
@@ -1152,12 +1152,16 @@ export default function DataSourcesPage() {
                         {actionMenuId === source.id && (
                           <div
                             ref={actionMenuRef}
-                            className="absolute right-0 top-8 mt-1 w-44 rounded-xl border border-slate-200 bg-white p-1 shadow-xl z-50 text-xs text-left animate-in fade-in duration-100 space-y-0.5"
+                            className={`absolute right-0 ${
+                              idx >= paginatedSources.length - 2 || paginatedSources.length <= 3
+                                ? 'bottom-full mb-1.5'
+                                : 'top-8 mt-1'
+                            } w-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 p-1 shadow-xl z-50 text-xs text-left animate-in fade-in duration-100 space-y-0.5`}
                           >
                             <button
                               type="button"
                               onClick={() => handleOpenDetails(source)}
-                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-slate-50 font-medium cursor-pointer"
+                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 font-medium cursor-pointer"
                             >
                               <Eye className="h-3.5 w-3.5 text-slate-400" />
                               <span>View Details</span>
@@ -1166,7 +1170,7 @@ export default function DataSourcesPage() {
                               type="button"
                               onClick={() => handleSync(source.id, source.name)}
                               disabled={isViewer}
-                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-rose-50 hover:text-rose-700 font-medium cursor-pointer disabled:opacity-40"
+                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 font-medium cursor-pointer disabled:opacity-40"
                             >
                               <RefreshCw className="h-3.5 w-3.5 text-rose-600" />
                               <span>Sync Pipeline</span>
@@ -1174,7 +1178,7 @@ export default function DataSourcesPage() {
                             <button
                               type="button"
                               onClick={() => navigate('/datasets')}
-                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-slate-50 font-medium cursor-pointer"
+                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 font-medium cursor-pointer"
                             >
                               <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
                               <span>Explore Datasets</span>
@@ -1183,14 +1187,14 @@ export default function DataSourcesPage() {
                               <button
                                 type="button"
                                 onClick={() => handleOpenEdit(source)}
-                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-slate-50 font-medium cursor-pointer"
+                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 font-medium cursor-pointer"
                               >
                                 <Edit2 className="h-3.5 w-3.5 text-slate-400" />
                                 <span>Edit Connection</span>
                               </button>
                             )}
                             {!isViewer && (
-                              <div className="border-t border-slate-100 my-1 pt-1">
+                              <div className="border-t border-slate-100 dark:border-slate-800 my-1 pt-1">
                                 <button
                                   type="button"
                                   id={`delete-btn-${source.id}`}
@@ -1198,7 +1202,7 @@ export default function DataSourcesPage() {
                                     setActionMenuId(null);
                                     setSourceToDelete(source);
                                   }}
-                                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 font-semibold cursor-pointer"
+                                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-700 font-semibold cursor-pointer"
                                 >
                                   <Trash2 className="h-3.5 w-3.5 text-rose-600" />
                                   <span>Delete Source</span>

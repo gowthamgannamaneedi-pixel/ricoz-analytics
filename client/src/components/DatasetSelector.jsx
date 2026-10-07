@@ -74,7 +74,7 @@ export default function DatasetSelector({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         id="dataset-selector-trigger"
-        className="flex items-center gap-2.5 h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-left text-xs font-medium text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-rose-100 shadow-2xs min-w-[220px] max-w-[320px] cursor-pointer"
+        className="flex items-center gap-2.5 h-10 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-left text-xs font-medium text-slate-800 dark:text-slate-200 transition hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/40 shadow-2xs min-w-[220px] max-w-[320px] cursor-pointer"
       >
         <div className="p-1 rounded-md bg-rose-50 border border-rose-100 text-rose-700 shrink-0">
           <Table2 className="h-4 w-4" />
@@ -124,8 +124,8 @@ export default function DatasetSelector({
                     }}
                     className={`w-full flex items-center justify-between p-2 rounded-md text-left transition ${
                       isSelected
-                        ? 'bg-rose-50/80 text-rose-900 font-semibold'
-                        : 'text-slate-700 hover:bg-slate-50'
+                        ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-900 dark:text-rose-200 font-semibold'
+                        : 'text-slate-700 dark:text-slate-200 hover:bg-rose-50/90 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">

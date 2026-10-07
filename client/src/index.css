@@ -221,10 +221,44 @@ html.dark .text-gray-400:not([class*="dark:text-"]) {
   color: #94A3B8 !important;
 }
 
-/* Ensure native select options are readable in dark mode */
+/* Ensure native select options have soft red highlight on hover/focus across all pages */
+select option {
+  padding: 8px 12px;
+  background-color: #ffffff;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+select option:hover,
+select option:focus,
+select option:active {
+  background-color: #fef2f2 !important; /* Soft rose red highlight */
+  color: #e11d48 !important;            /* Rose red text */
+}
+
+select option:checked {
+  background-color: #ffe4e6 !important; /* Soft rose red selected highlight */
+  color: #be123c !important;            /* Rose red text */
+  font-weight: 600;
+}
+
+/* Dark mode native select option soft red highlight */
 html.dark select option {
-  background-color: #111827;
-  color: #F8FAFC;
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+html.dark select option:hover,
+html.dark select option:focus,
+html.dark select option:active {
+  background-color: rgba(225, 29, 72, 0.25) !important; /* Soft red dark mode tint */
+  color: #fda4af !important;                            /* Soft red text dark mode */
+}
+
+html.dark select option:checked {
+  background-color: rgba(225, 29, 72, 0.4) !important;
+  color: #fecdd3 !important;
+  font-weight: 600;
 }
 
 /* Global Recharts Dark Mode Styling */

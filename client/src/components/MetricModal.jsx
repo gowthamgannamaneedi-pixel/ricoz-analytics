@@ -207,7 +207,7 @@ export default function MetricModal({
                   placeholder="e.g. Q4 Net Revenue"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-900 placeholder-slate-400 transition hover:border-slate-400 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs"
+                  className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-900 placeholder-slate-400 transition hover:border-rose-300 hover:bg-rose-50/30 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs"
                 />
               </div>
 
@@ -219,7 +219,7 @@ export default function MetricModal({
                   id="metric-type"
                   value={type}
                   onChange={(e) => handleTypeChange(e.target.value)}
-                  className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-900 transition hover:border-slate-400 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs cursor-pointer"
+                  className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-900 transition hover:border-rose-300 hover:bg-rose-50/70 hover:text-rose-700 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs cursor-pointer"
                 >
                   {METRIC_TYPES.map(t => (
                     <option key={t.value} value={t.value}>{t.label}</option>
@@ -237,7 +237,7 @@ export default function MetricModal({
                   id="dataset-select"
                   value={datasetId}
                   onChange={(e) => setDatasetId(e.target.value)}
-                  className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-900 transition hover:border-slate-400 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs cursor-pointer"
+                  className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-900 transition hover:border-rose-300 hover:bg-rose-50/70 hover:text-rose-700 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs cursor-pointer"
                 >
                   <option value="">-- Standalone (No Dataset) --</option>
                   {datasets.map(d => (
@@ -256,7 +256,7 @@ export default function MetricModal({
                   placeholder="₹, %, units"
                   value={unit}
                   onChange={(e) => setUnit(e.target.value)}
-                  className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-900 placeholder-slate-400 transition hover:border-slate-400 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs"
+                  className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-900 placeholder-slate-400 transition hover:border-rose-300 hover:bg-rose-50/30 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs"
                 />
               </div>
             </div>

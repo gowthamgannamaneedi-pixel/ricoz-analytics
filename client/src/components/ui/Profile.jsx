@@ -78,7 +78,7 @@ export default function Profile({
         className={`group flex items-center gap-2.5 h-10 px-2.5 rounded-xl border transition-all cursor-pointer select-none ${
           isMenuOpen
             ? 'border-rose-500 bg-rose-50/40 dark:bg-rose-950/40 ring-2 ring-rose-100 dark:ring-rose-900/50 shadow-xs'
-            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/80 dark:hover:bg-slate-750 shadow-2xs'
+            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/80 dark:hover:bg-rose-950/40 shadow-2xs'
         }`}
         aria-label="User Account Menu"
         aria-expanded={isMenuOpen}
@@ -148,9 +148,9 @@ export default function Profile({
                 handleClose();
                 navigate('/settings');
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition text-xs font-semibold cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-700 dark:hover:text-rose-300 transition text-xs font-semibold cursor-pointer"
             >
-              <Settings className="h-4 w-4 text-slate-400 dark:text-slate-400" />
+              <Settings className="h-4 w-4 text-slate-400 dark:text-slate-400 group-hover:text-rose-600" />
               <span>Workspace Settings</span>
             </button>
 
@@ -160,7 +160,7 @@ export default function Profile({
                 handleClose();
                 navigate('/governance');
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition text-xs font-semibold cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-700 dark:hover:text-rose-300 transition text-xs font-semibold cursor-pointer"
             >
               <ShieldCheck className="h-4 w-4 text-rose-600 dark:text-rose-400" />
               <span>Platform Governance</span>
@@ -172,7 +172,7 @@ export default function Profile({
                 handleClose();
                 navigate('/collaboration');
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition text-xs font-semibold cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-700 dark:hover:text-rose-300 transition text-xs font-semibold cursor-pointer"
             >
               <Users className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
               <span>Team Collaboration</span>

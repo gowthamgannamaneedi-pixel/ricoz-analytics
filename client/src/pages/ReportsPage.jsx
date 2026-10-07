@@ -1084,7 +1084,7 @@ export default function ReportsPage() {
                               {actionMenuOpenId === r.id && (
                                 <div
                                   ref={menuRef}
-                                  className="absolute right-0 bottom-full mb-1 w-44 rounded-xl bg-white border border-slate-200 shadow-lg py-1.5 z-30 animate-in fade-in zoom-in-95 text-xs font-medium text-slate-700"
+                                  className="absolute right-0 bottom-full mb-1 w-44 rounded-xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 shadow-lg py-1.5 z-30 animate-in fade-in zoom-in-95 text-xs font-medium text-slate-700 dark:text-slate-200"
                                 >
                                   {!isViewer && (
                                     <>
@@ -1095,7 +1095,7 @@ export default function ReportsPage() {
                                           setSelectedReport(r);
                                           setIsModalOpen(true);
                                         }}
-                                        className="w-full px-3 py-1.5 text-left hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
+                                        className="w-full px-3 py-1.5 text-left text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 flex items-center gap-2 cursor-pointer transition"
                                       >
                                         <Edit3 className="h-3.5 w-3.5 text-slate-400" />
                                         <span>Edit Configuration</span>
@@ -1107,7 +1107,7 @@ export default function ReportsPage() {
                                           setActionMenuOpenId(null);
                                           handleTogglePause(r);
                                         }}
-                                        className="w-full px-3 py-1.5 text-left hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
+                                        className="w-full px-3 py-1.5 text-left text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 flex items-center gap-2 cursor-pointer transition"
                                       >
                                         <Pause className="h-3.5 w-3.5 text-slate-400" />
                                         <span>{r.status === 'active' ? 'Pause Schedule' : 'Resume Schedule'}</span>
@@ -1121,7 +1121,7 @@ export default function ReportsPage() {
                                       setActionMenuOpenId(null);
                                       setShareModalConfig({ isOpen: true, reportId: r.id, title: r.title });
                                     }}
-                                    className="w-full px-3 py-1.5 text-left hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
+                                    className="w-full px-3 py-1.5 text-left text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 flex items-center gap-2 cursor-pointer transition"
                                   >
                                     <Share2 className="h-3.5 w-3.5 text-slate-400" />
                                     <span>Share Report</span>
@@ -1133,7 +1133,7 @@ export default function ReportsPage() {
                                       setActionMenuOpenId(null);
                                       handleToggleFavorite(e, r.id);
                                     }}
-                                    className="w-full px-3 py-1.5 text-left hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
+                                    className="w-full px-3 py-1.5 text-left text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 flex items-center gap-2 cursor-pointer transition"
                                   >
                                     <Star className={`h-3.5 w-3.5 ${isFavorited ? 'fill-amber-400 text-amber-500' : 'text-slate-400'}`} />
                                     <span>{isFavorited ? 'Remove Favorite' : 'Add to Favorites'}</span>

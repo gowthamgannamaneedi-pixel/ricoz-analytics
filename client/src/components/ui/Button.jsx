@@ -20,13 +20,13 @@ const variantMap = {
   primary:
     'bg-rose-600 text-white border border-rose-600 hover:bg-rose-700 hover:border-rose-700 active:bg-rose-800 active:border-rose-800 shadow-xs focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2',
   secondary:
-    'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-900 active:bg-slate-100 shadow-2xs focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2',
+    'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-rose-50/80 hover:border-rose-300 hover:text-rose-700 dark:hover:bg-rose-950/40 dark:hover:border-rose-800 dark:hover:text-rose-300 active:bg-rose-100 shadow-2xs focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2',
   outline:
-    'bg-transparent text-slate-700 border border-slate-300 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-900 active:bg-slate-100 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2',
+    'bg-transparent text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-rose-50/80 hover:border-rose-300 hover:text-rose-700 dark:hover:bg-rose-950/40 dark:hover:border-rose-800 dark:hover:text-rose-300 active:bg-rose-100 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2',
   tertiary:
-    'bg-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 border border-transparent focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2',
+    'bg-transparent text-slate-600 dark:text-slate-300 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50/80 dark:hover:bg-rose-950/40 active:bg-rose-100 border border-transparent focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2',
   ghost:
-    'bg-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 border border-transparent focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2',
+    'bg-transparent text-slate-600 dark:text-slate-300 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50/80 dark:hover:bg-rose-950/40 active:bg-rose-100 border border-transparent focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2',
   danger:
     'bg-rose-600 text-white border border-rose-600 hover:bg-rose-700 hover:border-rose-700 active:bg-rose-800 active:border-rose-800 shadow-xs focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2',
 };

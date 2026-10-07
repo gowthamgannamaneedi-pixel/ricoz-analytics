@@ -341,13 +341,13 @@ export default function ExecutiveDashboard({
                 value={filters.dateRange || 'all'}
                 onChange={(e) => onFilterChange('dateRange', e.target.value)}
                 aria-label="Time Filter"
-                className="appearance-none pl-8 pr-8 h-9.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-750 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 focus:outline-hidden focus:border-blue-500 shadow-2xs cursor-pointer transition"
+                className="appearance-none pl-8 pr-8 h-9.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-rose-300 dark:hover:border-rose-800 hover:text-rose-700 dark:hover:text-rose-300 focus:outline-hidden focus:border-rose-500 shadow-2xs cursor-pointer transition"
               >
-                <option value="all" className="dark:bg-slate-800">All Time</option>
-                <option value="7d" className="dark:bg-slate-800">Last 7 Days</option>
-                <option value="30d" className="dark:bg-slate-800">Last 30 Days</option>
-                <option value="90d" className="dark:bg-slate-800">Last 90 Days</option>
-                <option value="ytd" className="dark:bg-slate-800">Year to Date</option>
+                <option value="all">All Time</option>
+                <option value="7d">Last 7 Days</option>
+                <option value="30d">Last 30 Days</option>
+                <option value="90d">Last 90 Days</option>
+                <option value="ytd">Year to Date</option>
               </select>
               <Calendar className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <ChevronDown className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -359,11 +359,11 @@ export default function ExecutiveDashboard({
                 value={filters[summaryData?.dimensions?.regionColumn || 'region'] || 'all'}
                 onChange={(e) => onFilterChange(summaryData?.dimensions?.regionColumn || 'region', e.target.value)}
                 aria-label="Region Filter"
-                className="appearance-none pl-8 pr-8 h-9.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-750 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 focus:outline-hidden focus:border-blue-500 shadow-2xs cursor-pointer transition"
+                className="appearance-none pl-8 pr-8 h-9.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-rose-300 dark:hover:border-rose-800 hover:text-rose-700 dark:hover:text-rose-300 focus:outline-hidden focus:border-rose-500 shadow-2xs cursor-pointer transition"
               >
-                <option value="all" className="dark:bg-slate-800">Regions{summaryData?.filterOptions?.regions?.length ? ` (${summaryData.filterOptions.regions.length})` : ''}</option>
+                <option value="all">Regions{summaryData?.filterOptions?.regions?.length ? ` (${summaryData.filterOptions.regions.length})` : ''}</option>
                 {(summaryData?.filterOptions?.regions || []).map((reg) => (
-                  <option key={reg} value={reg} className="dark:bg-slate-800">
+                  <option key={reg} value={reg}>
                     {reg}
                   </option>
                 ))}
@@ -378,11 +378,11 @@ export default function ExecutiveDashboard({
                 value={filters[summaryData?.dimensions?.channelColumn || 'channel'] || 'all'}
                 onChange={(e) => onFilterChange(summaryData?.dimensions?.channelColumn || 'channel', e.target.value)}
                 aria-label="Channel Filter"
-                className="appearance-none pl-8 pr-8 h-9.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-750 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 focus:outline-hidden focus:border-blue-500 shadow-2xs cursor-pointer transition"
+                className="appearance-none pl-8 pr-8 h-9.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-rose-300 dark:hover:border-rose-800 hover:text-rose-700 dark:hover:text-rose-300 focus:outline-hidden focus:border-rose-500 shadow-2xs cursor-pointer transition"
               >
-                <option value="all" className="dark:bg-slate-800">All Channels{summaryData?.filterOptions?.channels?.length ? ` (${summaryData.filterOptions.channels.length})` : ''}</option>
+                <option value="all">All Channels{summaryData?.filterOptions?.channels?.length ? ` (${summaryData.filterOptions.channels.length})` : ''}</option>
                 {(summaryData?.filterOptions?.channels || []).map((chan) => (
-                  <option key={chan} value={chan} className="dark:bg-slate-800">
+                  <option key={chan} value={chan}>
                     {chan}
                   </option>
                 ))}
@@ -396,7 +396,7 @@ export default function ExecutiveDashboard({
               type="button"
               onClick={onResetFilters}
               title="Reset Filters"
-              className="flex items-center gap-1.5 h-9.5 px-3 rounded-xl border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition cursor-pointer"
+              className="flex items-center gap-1.5 h-9.5 px-3 rounded-xl border border-transparent hover:border-rose-200 dark:hover:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-rose-700 dark:hover:text-rose-300 transition cursor-pointer"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               <span>Reset</span>
@@ -408,9 +408,9 @@ export default function ExecutiveDashboard({
             <Button
               variant="secondary"
               onClick={() => navigate('/datasets')}
-              className="h-9.5 px-3.5 text-xs font-semibold rounded-xl border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 dark:bg-slate-800 dark:text-slate-200 shadow-2xs"
+              className="h-9.5 px-3.5 text-xs font-semibold rounded-xl shadow-2xs"
             >
-              <Database className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
+              <Database className="h-3.5 w-3.5" />
               <span>Manage Dataset</span>
             </Button>
 
@@ -418,9 +418,9 @@ export default function ExecutiveDashboard({
               variant="secondary"
               onClick={onRefresh}
               disabled={isRefreshing}
-              className="h-9.5 px-3.5 text-xs font-semibold rounded-xl border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 dark:bg-slate-800 dark:text-slate-200 shadow-2xs"
+              className="h-9.5 px-3.5 text-xs font-semibold rounded-xl shadow-2xs"
             >
-              <RotateCcw className={`h-3.5 w-3.5 text-slate-500 dark:text-slate-400 ${isRefreshing ? 'animate-spin text-blue-600 dark:text-blue-400' : ''}`} />
+              <RotateCcw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin text-rose-600 dark:text-rose-400' : ''}`} />
               <span>Refresh</span>
             </Button>
           </div>

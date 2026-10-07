@@ -104,7 +104,7 @@ export default function Navbar({ onOpenSidebar }) {
             placeholder="Search metrics, reports, datasets, or ask AI..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/80 pl-10 pr-16 text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 dark:focus:border-rose-500 focus:bg-white dark:focus:bg-slate-850 focus:outline-hidden focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/40 transition shadow-2xs"
+            className="w-full h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/80 pl-10 pr-16 text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/30 dark:hover:bg-rose-950/20 focus:border-rose-600 dark:focus:border-rose-500 focus:bg-white dark:focus:bg-slate-850 focus:outline-hidden focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/40 transition shadow-2xs"
           />
           <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-750 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 shadow-2xs pointer-events-none select-none">
             Ctrl + K
@@ -121,7 +121,7 @@ export default function Navbar({ onOpenSidebar }) {
             handleClosePopovers();
             navigate('/settings');
           }}
-          className="hidden md:flex items-center gap-2 h-9 px-3.5 rounded-xl bg-rose-50/40 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/60 text-xs font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/60 transition shadow-2xs cursor-pointer select-none"
+          className="hidden md:flex items-center gap-2 h-9 px-3.5 rounded-xl bg-rose-50/40 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/60 text-xs font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-100/70 hover:border-rose-300 dark:hover:bg-rose-950/60 transition shadow-2xs cursor-pointer select-none"
           aria-label="Current organization"
           title="Manage organization & workspace"
         >
@@ -136,7 +136,7 @@ export default function Navbar({ onOpenSidebar }) {
         <button
           type="button"
           onClick={() => navigate('/billing')}
-          className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/60 text-xs font-semibold transition cursor-pointer shadow-2xs"
+          className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300 hover:bg-rose-50/90 hover:border-rose-300 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 text-xs font-semibold transition cursor-pointer shadow-2xs"
           title="Subscription active"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
