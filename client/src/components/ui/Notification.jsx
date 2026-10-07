@@ -123,7 +123,7 @@ export default function Notification({
         onClick={handleToggle}
         className={`relative h-10 w-10 flex items-center justify-center rounded-xl border transition-all cursor-pointer select-none ${
           isPopoverOpen
-            ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 ring-2 ring-blue-100 dark:ring-blue-900/50 shadow-xs'
+            ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 ring-2 ring-rose-100 dark:ring-rose-900/50 shadow-xs'
             : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-750 hover:text-slate-900 dark:hover:text-white shadow-2xs'
         }`}
         aria-label="View notifications"
@@ -152,7 +152,7 @@ export default function Notification({
             <div className="flex items-center gap-2">
               <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">Notifications</span>
               {unreadCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-[10px] font-bold font-mono">
+                <span className="px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-[10px] font-bold font-mono">
                   {unreadCount} unread
                 </span>
               )}
@@ -162,7 +162,7 @@ export default function Notification({
               <button
                 type="button"
                 onClick={handleMarkAllRead}
-                className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 font-semibold hover:text-blue-800 dark:hover:text-blue-300 transition cursor-pointer"
+                className="flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400 font-semibold hover:text-rose-800 dark:hover:text-rose-300 transition cursor-pointer"
               >
                 <CheckCheck className="h-3.5 w-3.5" />
                 <span>Mark all read</span>
@@ -191,7 +191,7 @@ export default function Notification({
                     onClick={() => handleNotificationClick(notif)}
                     className={`flex items-start gap-3 p-3 rounded-xl cursor-pointer transition text-left ${
                       isUnread
-                        ? 'bg-blue-50/60 dark:bg-blue-950/40 border border-blue-100/80 dark:border-blue-900/60 hover:bg-blue-100/60 dark:hover:bg-blue-900/50'
+                        ? 'bg-rose-50/60 dark:bg-rose-950/40 border border-rose-100/80 dark:border-rose-900/60 hover:bg-rose-100/60 dark:hover:bg-rose-900/50'
                         : 'bg-slate-50/40 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 hover:bg-slate-100/70 dark:hover:bg-slate-800/80'
                     }`}
                   >
@@ -199,7 +199,7 @@ export default function Notification({
                       {notif.type === 'mention' ? (
                         <MessageSquare className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                       ) : notif.type === 'share' ? (
-                        <Share2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <Share2 className="h-4 w-4 text-rose-600 dark:text-rose-400" />
                       ) : (
                         <Bell className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                       )}

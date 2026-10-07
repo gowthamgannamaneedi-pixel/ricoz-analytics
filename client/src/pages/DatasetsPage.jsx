@@ -239,7 +239,7 @@ export default function DatasetsPage() {
               <button
                 onClick={() => setIsUploadModalOpen(true)}
                 id="upload-dataset-header-btn"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-rose-700 transition shadow-xs cursor-pointer"
               >
                 <Plus className="h-4 w-4" />
                 <span>Ingest New Dataset</span>
@@ -256,7 +256,7 @@ export default function DatasetsPage() {
             id="refresh-datasets-btn"
             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs disabled:opacity-50 cursor-pointer"
           >
-            <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
+            <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-rose-600' : ''}`} />
             <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
           </button>
         </div>
@@ -299,8 +299,8 @@ export default function DatasetsPage() {
       )}
 
       {refreshSuccess && (
-        <div className="flex items-center gap-2.5 rounded-xl border border-blue-200 bg-blue-50/80 p-3.5 text-xs text-blue-800 animate-in fade-in">
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-blue-600" />
+        <div className="flex items-center gap-2.5 rounded-xl border border-rose-200 bg-rose-50/80 p-3.5 text-xs text-rose-800 animate-in fade-in">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-rose-600" />
           <span>{refreshSuccess}</span>
         </div>
       )}
@@ -313,7 +313,7 @@ export default function DatasetsPage() {
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
               Total Datasets
             </span>
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+            <div className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
               <Database className="h-4 w-4" />
             </div>
           </div>
@@ -371,7 +371,7 @@ export default function DatasetsPage() {
       {/* 5. Datasets Table Card */}
       {isLoading ? (
         <div className="rounded-2xl border border-slate-200/90 bg-white p-16 flex flex-col items-center justify-center space-y-3 shadow-2xs">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-rose-600" />
           <p className="text-xs font-medium text-slate-500">
             Fetching dataset metadata and schemas...
           </p>

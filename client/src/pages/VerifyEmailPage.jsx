@@ -205,7 +205,7 @@ export default function VerifyEmailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
+    <div className="relative min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] text-[#0F172A] dark:text-slate-100 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans transition-colors duration-200">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Brand Header */}
         <div className="flex flex-col items-center justify-center gap-2 mb-6">
@@ -218,26 +218,26 @@ export default function VerifyEmailPage() {
             }}
           />
           <div className="flex items-center gap-1.5 mt-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-700 font-mono">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-mono">
               Analytics Workspace
             </span>
-            <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+            <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
               ENTERPRISE
             </span>
           </div>
         </div>
 
         {/* Card */}
-        <div className="rounded-xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-5">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-sm space-y-5">
           {/* Header Title */}
           <div className="text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 border border-blue-100 mb-3 shadow-2xs">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-800/80 mb-3 shadow-2xs">
               <KeyRound className="w-6 h-6" />
             </div>
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               Verify your email address
             </h2>
-            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
               To secure your tenant workspace and start your 14-day free trial, please verify your email.
             </p>
           </div>
@@ -245,8 +245,8 @@ export default function VerifyEmailPage() {
           {/* Automatic token verification spinner */}
           {isTokenVerifying && (
             <div className="text-center py-6 space-y-3">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
-              <p className="text-xs font-semibold text-slate-700">
+              <Loader2 className="w-8 h-8 animate-spin text-rose-600 dark:text-rose-400 mx-auto" />
+              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Verifying your email token with server...
               </p>
             </div>
@@ -254,13 +254,13 @@ export default function VerifyEmailPage() {
 
           {/* Success Notification */}
           {isSuccess && (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-800 space-y-2">
+            <div className="rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/60 p-4 text-xs text-emerald-800 dark:text-emerald-200 space-y-2">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-                <span className="font-bold text-emerald-900">Email Verified Successfully</span>
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span className="font-bold text-emerald-900 dark:text-emerald-100">Email Verified Successfully</span>
               </div>
-              <p className="text-emerald-700 text-[11px]">{successMsg}</p>
-              <p className="text-emerald-600 text-[11px] font-medium animate-pulse">
+              <p className="text-emerald-700 dark:text-emerald-300 text-[11px]">{successMsg}</p>
+              <p className="text-emerald-600 dark:text-emerald-400 text-[11px] font-medium animate-pulse">
                 Redirecting to workspace dashboard...
               </p>
             </div>
@@ -268,16 +268,16 @@ export default function VerifyEmailPage() {
 
           {/* Error Notification */}
           {error && !isSuccess && (
-            <div className="flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
-              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600" />
+            <div className="flex items-start gap-2.5 rounded-lg border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/60 p-3 text-xs text-rose-700 dark:text-rose-300">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
               <span className="font-medium">{error}</span>
             </div>
           )}
 
           {/* Info Notification */}
           {infoMessage && !error && !isSuccess && (
-            <div className="flex items-start gap-2.5 rounded-lg border border-blue-100 bg-blue-50/80 p-3 text-xs text-blue-800">
-              <Mail className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
+            <div className="flex items-start gap-2.5 rounded-lg border border-rose-100 dark:border-rose-900 bg-rose-50/80 dark:bg-rose-950/60 p-3 text-xs text-rose-800 dark:text-rose-300">
+              <Mail className="h-4 w-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
               <span>{infoMessage}</span>
             </div>
           )}
@@ -285,7 +285,7 @@ export default function VerifyEmailPage() {
           {!isTokenVerifying && !isSuccess && (
             <form onSubmit={handleSubmitOtp} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5" htmlFor="verify-email">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" htmlFor="verify-email">
                   Registered Work Email
                 </label>
                 <input
@@ -295,12 +295,12 @@ export default function VerifyEmailPage() {
                   placeholder="name@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3.5 text-xs text-slate-900 placeholder-slate-400 transition hover:border-slate-300 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2 text-center">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 text-center">
                   6-Digit Verification Code
                 </label>
                 <div 
@@ -318,7 +318,7 @@ export default function VerifyEmailPage() {
                       value={digit}
                       onChange={(e) => handleDigitChange(idx, e.target.value)}
                       onKeyDown={(e) => handleKeyDown(idx, e.target.value, e)}
-                      className="w-10 h-12 text-center text-lg font-mono font-bold rounded-lg border border-slate-300 bg-white text-slate-900 shadow-2xs focus:border-blue-600 focus:ring-2 focus:ring-blue-100 focus:outline-none transition"
+                      className="w-10 h-12 text-center text-lg font-mono font-bold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-2xs focus:border-rose-600 focus:ring-2 focus:ring-rose-100 focus:outline-none transition"
                     />
                   ))}
                 </div>
@@ -327,7 +327,7 @@ export default function VerifyEmailPage() {
               <button
                 type="submit"
                 disabled={isManualVerifying}
-                className="w-full flex items-center justify-center gap-2 rounded-lg bg-blue-600 py-2.5 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:opacity-50 mt-2"
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-rose-600 py-2.5 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-600 focus:ring-offset-2 disabled:opacity-50 mt-2 cursor-pointer"
               >
                 {isManualVerifying ? (
                   <>
@@ -343,13 +343,13 @@ export default function VerifyEmailPage() {
               </button>
 
               {/* Resend Action */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                 <span>Didn't receive the code?</span>
                 <button
                   type="button"
                   onClick={handleResend}
                   disabled={countdown > 0 || isResending}
-                  className="font-semibold text-blue-600 hover:text-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5"
+                  className="font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5"
                 >
                   {isResending ? (
                     <>
@@ -369,9 +369,9 @@ export default function VerifyEmailPage() {
             </form>
           )}
 
-          <div className="pt-4 border-t border-slate-100 text-center text-xs text-slate-500">
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
             Back to{' '}
-            <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-700 transition">
+            <Link to="/login" className="font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition">
               Sign In
             </Link>
           </div>

@@ -196,7 +196,7 @@ export default function LandingHero({ onOpenDemo }) {
                     <div className="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 hover:border-slate-700 transition">
                       <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
                         <span>Data Ingestion Latency</span>
-                        <span className="text-blue-400 font-bold bg-blue-950/60 px-1.5 py-0.5 rounded text-[10px]">Sub-sec</span>
+                        <span className="text-rose-400 font-bold bg-rose-950/60 px-1.5 py-0.5 rounded text-[10px]">Sub-sec</span>
                       </div>
                       <div className="text-xl sm:text-2xl font-black text-white">180 ms</div>
                       <div className="text-[11px] text-slate-500 mt-1">Streaming over 1.2M events/hr</div>

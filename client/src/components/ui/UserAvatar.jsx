@@ -81,7 +81,7 @@ export default function UserAvatar({
   return (
     <div className={`relative inline-flex shrink-0 select-none ${className}`}>
       <div
-        className={`${sizeConfig.container} flex items-center justify-center rounded-full font-bold font-sans text-white bg-blue-600 shadow-2xs overflow-hidden`}
+        className={`${sizeConfig.container} flex items-center justify-center rounded-full font-bold font-sans text-white bg-rose-600 shadow-2xs overflow-hidden`}
         title={displayName}
       >
         {avatarUrl && !imgError ? (

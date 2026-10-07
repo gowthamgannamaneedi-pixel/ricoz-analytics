@@ -261,9 +261,9 @@ export default function DatasetTable({
       return <ArrowUpDown className="h-3 w-3 text-slate-400 opacity-60 group-hover:opacity-100 transition-opacity" />;
     }
     return sortOrder === 'asc' ? (
-      <ArrowUp className="h-3 w-3 text-blue-600" />
+      <ArrowUp className="h-3 w-3 text-rose-600" />
     ) : (
-      <ArrowDown className="h-3 w-3 text-blue-600" />
+      <ArrowDown className="h-3 w-3 text-rose-600" />
     );
   };
 
@@ -402,7 +402,7 @@ export default function DatasetTable({
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 py-2 pl-9 pr-8 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-850 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 focus:outline-hidden transition-all shadow-2xs"
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 py-2 pl-9 pr-8 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-850 focus:border-rose-600 dark:focus:border-rose-500 focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/40 focus:outline-hidden transition-all shadow-2xs"
             />
             {searchQuery && (
               <button
@@ -429,7 +429,7 @@ export default function DatasetTable({
                 setCurrentPage(1);
               }}
               aria-label="Filter datasets by status"
-              className="appearance-none rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-750 focus:bg-white dark:focus:bg-slate-850 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-hidden cursor-pointer transition-all"
+              className="appearance-none rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-750 focus:bg-white dark:focus:bg-slate-850 focus:border-rose-600 dark:focus:border-rose-500 focus:outline-hidden cursor-pointer transition-all"
             >
               <option value="all" className="dark:bg-slate-850 dark:text-slate-100">All Statuses</option>
               <option value="ready" className="dark:bg-slate-850 dark:text-slate-100">Ready</option>
@@ -450,7 +450,7 @@ export default function DatasetTable({
                 setCurrentPage(1);
               }}
               aria-label="Filter datasets by source type"
-              className="appearance-none rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-750 focus:bg-white dark:focus:bg-slate-850 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-hidden cursor-pointer transition-all"
+              className="appearance-none rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-750 focus:bg-white dark:focus:bg-slate-850 focus:border-rose-600 dark:focus:border-rose-500 focus:outline-hidden cursor-pointer transition-all"
             >
               <option value="all" className="dark:bg-slate-850 dark:text-slate-100">All Sources</option>
               <option value="csv" className="dark:bg-slate-850 dark:text-slate-100">CSV Upload</option>
@@ -465,7 +465,7 @@ export default function DatasetTable({
             <button
               onClick={resetFilters}
               id="reset-filters-btn"
-              className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 px-2 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/40 transition"
+              className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 px-2 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
             >
               Reset
             </button>
@@ -485,7 +485,7 @@ export default function DatasetTable({
                   checked={isAllCurrentPageSelected}
                   onChange={toggleSelectAllCurrentPage}
                   aria-label="Select all datasets on page"
-                  className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer dark:bg-slate-800"
+                  className="rounded border-slate-300 dark:border-slate-600 text-rose-600 focus:ring-rose-500 h-3.5 w-3.5 cursor-pointer dark:bg-slate-800"
                 />
               </th>
 
@@ -565,14 +565,14 @@ export default function DatasetTable({
                       </p>
                       <button
                         onClick={resetFilters}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/60 transition"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-semibold hover:bg-rose-100 dark:hover:bg-rose-900/60 transition"
                       >
                         Reset filters
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-3 max-w-sm mx-auto">
-                      <div className="mx-auto w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900">
+                      <div className="mx-auto w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/60 flex items-center justify-center text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900">
                         <Table2 className="h-6 w-6" />
                       </div>
                       <p className="font-bold text-slate-900 dark:text-slate-100 text-sm">No datasets available yet</p>
@@ -582,7 +582,7 @@ export default function DatasetTable({
                       {onOpenUploadModal && !isViewer && (
                         <button
                           onClick={onOpenUploadModal}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700 transition shadow-xs"
                         >
                           + Upload Dataset
                         </button>
@@ -601,7 +601,7 @@ export default function DatasetTable({
                   <tr
                     key={dataset.id}
                     className={`transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/60 group ${
-                      isSelected ? 'bg-blue-50/30 dark:bg-blue-950/40' : ''
+                      isSelected ? 'bg-rose-50/30 dark:bg-rose-950/40' : ''
                     }`}
                   >
                     {/* Checkbox */}
@@ -611,7 +611,7 @@ export default function DatasetTable({
                         checked={isSelected}
                         onChange={() => toggleSelectRow(dataset.id)}
                         aria-label={`Select dataset ${dataset.name}`}
-                        className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer dark:bg-slate-800"
+                        className="rounded border-slate-300 dark:border-slate-600 text-rose-600 focus:ring-rose-500 h-3.5 w-3.5 cursor-pointer dark:bg-slate-800"
                       />
                     </td>
 
@@ -624,7 +624,7 @@ export default function DatasetTable({
                         <div className="min-w-0 flex-1 overflow-hidden">
                           <button
                             onClick={() => onPreview && onPreview(dataset.id)}
-                            className="text-left font-bold text-slate-900 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 transition truncate block text-xs sm:text-sm w-full"
+                            className="text-left font-bold text-slate-900 dark:text-slate-100 hover:text-rose-600 dark:hover:text-rose-400 transition truncate block text-xs sm:text-sm w-full"
                             title={dataset.name}
                           >
                             {dataset.name}
@@ -684,10 +684,10 @@ export default function DatasetTable({
                         <button
                           onClick={() => onPreview && onPreview(dataset.id)}
                           id={`preview-dataset-${dataset.id}`}
-                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-1.5 2xl:px-2 2xl:py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-800 hover:bg-blue-50/50 dark:hover:bg-blue-950/40 transition shadow-2xs shrink-0"
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-1.5 2xl:px-2 2xl:py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/50 dark:hover:bg-rose-950/40 transition shadow-2xs shrink-0"
                           title="Preview records and schema"
                         >
-                          <Eye className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                          <Eye className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
                           <span className="hidden 2xl:inline">Preview</span>
                         </button>
 
@@ -705,7 +705,7 @@ export default function DatasetTable({
 
                           {/* Action Dropdown Menu */}
                           {isMenuOpen && (
-                            <div className="absolute right-0 mt-1.5 w-44 rounded-xl border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-850 shadow-lg py-1 z-30 animate-in fade-in zoom-in-95 duration-100 text-slate-700 dark:text-slate-200">
+                            <div className="absolute right-0 mt-1.5 w-44 rounded-xl border border-slate-200 dark:border-slate-755 bg-white dark:bg-slate-850 shadow-lg py-1 z-30 animate-in fade-in zoom-in-95 duration-100 text-slate-700 dark:text-slate-200">
                               <button
                                 onClick={() => {
                                   setOpenActionMenuId(null);
@@ -726,7 +726,7 @@ export default function DatasetTable({
                                   disabled={isRefreshingDataset === dataset.id}
                                   className="w-full text-left px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition disabled:opacity-40"
                                 >
-                                  <RefreshCw className={`h-3.5 w-3.5 text-slate-500 dark:text-slate-400 ${isRefreshingDataset === dataset.id ? 'animate-spin text-blue-600' : ''}`} />
+                                  <RefreshCw className={`h-3.5 w-3.5 text-slate-500 dark:text-slate-400 ${isRefreshingDataset === dataset.id ? 'animate-spin text-rose-600' : ''}`} />
                                   <span>Refresh & Sync</span>
                                 </button>
                               )}
@@ -811,7 +811,7 @@ export default function DatasetTable({
                 id={`pagination-page-${pageNum}`}
                 className={`h-7 min-w-[28px] px-2 rounded-lg text-xs font-semibold transition ${
                   validPage === pageNum
-                    ? 'bg-blue-600 text-white shadow-2xs'
+                    ? 'bg-rose-600 text-white shadow-2xs'
                     : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
@@ -841,7 +841,7 @@ export default function DatasetTable({
                 setCurrentPage(1);
               }}
               aria-label="Datasets per page"
-              className="appearance-none rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-1.5 pl-2.5 pr-7 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-hidden cursor-pointer transition"
+              className="appearance-none rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-1.5 pl-2.5 pr-7 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 focus:border-rose-600 dark:focus:border-rose-500 focus:outline-hidden cursor-pointer transition"
             >
               <option value={5} className="dark:bg-slate-850 dark:text-slate-100">5 / page</option>
               <option value={10} className="dark:bg-slate-850 dark:text-slate-100">10 / page</option>

@@ -170,7 +170,7 @@ export default function DataSourceTable({
             placeholder="Search sources, origins, or types..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50/70 py-1.5 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:outline-none transition-all"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50/70 py-1.5 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-rose-600 focus:outline-none transition-all"
           />
           {searchQuery && (
             <button
@@ -252,7 +252,7 @@ export default function DataSourceTable({
                       <p>No data sources matched your search "{searchQuery}".</p>
                       <button
                         onClick={() => setSearchQuery('')}
-                        className="text-xs font-medium text-blue-600 hover:text-blue-700 underline"
+                        className="text-xs font-medium text-rose-600 hover:text-rose-700 underline"
                       >
                         Clear search filter
                       </button>
@@ -269,7 +269,7 @@ export default function DataSourceTable({
                       {onOpenAddModal && !isViewer && (
                         <button
                           onClick={onOpenAddModal}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 transition"
                         >
                           + Connect Data Source
                         </button>
@@ -312,10 +312,10 @@ export default function DataSourceTable({
                   <td className="py-3 px-4 whitespace-nowrap">
                     <Link
                       to="/datasets"
-                      className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 hover:text-blue-600 group/link transition-colors"
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 hover:text-rose-600 group/link transition-colors"
                       title="View resulting table in Datasets"
                     >
-                      <FileCheck className="h-3.5 w-3.5 text-slate-400 group-hover/link:text-blue-500" />
+                      <FileCheck className="h-3.5 w-3.5 text-slate-400 group-hover/link:text-rose-500" />
                       <span>{source.dataset_count || 1} {source.dataset_count === 1 ? 'Dataset' : 'Datasets'}</span>
                       <ExternalLink className="h-2.5 w-2.5 opacity-40 group-hover/link:opacity-100" />
                     </Link>
@@ -345,12 +345,12 @@ export default function DataSourceTable({
                           <button
                             onClick={() => onSync(source.id)}
                             disabled={isSyncing === source.id || isDeleting === source.id}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition disabled:opacity-40"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition disabled:opacity-40"
                             title="Synchronize Data Source"
                             aria-label="Synchronize Data Source"
                           >
                             {isSyncing === source.id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-rose-600" />
                             ) : (
                               <RefreshCw className="h-3.5 w-3.5" />
                             )}

@@ -18,7 +18,7 @@ import React from 'react';
  */
 const variantMap = {
   primary:
-    'bg-blue-600 text-white border border-blue-600 hover:bg-blue-700 hover:border-blue-700 active:bg-blue-800 active:border-blue-800 shadow-xs focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
+    'bg-rose-600 text-white border border-rose-600 hover:bg-rose-700 hover:border-rose-700 active:bg-rose-800 active:border-rose-800 shadow-xs focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2',
   secondary:
     'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-900 active:bg-slate-100 shadow-2xs focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2',
   outline:

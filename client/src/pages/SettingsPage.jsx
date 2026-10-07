@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
   Settings,
   Users,
@@ -56,7 +56,7 @@ import {
 import { Button } from '../components/ui/Button';
 
 /**
- * Enterprise Settings Page — RicozAnalytics
+ * Enterprise Settings Page â€” RicozAnalytics
  * Organization configuration, team access, integrations, notifications, and platform preferences.
  */
 export default function SettingsPage() {
@@ -417,12 +417,12 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans">
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* 1. PAGE HEADER                                                     */}
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-1">
         <div className="flex items-center gap-3.5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20">
             <Settings className="h-6 w-6" />
           </div>
           <div>
@@ -480,9 +480,9 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* 2. HORIZONTAL SETTINGS NAVIGATION TABS                             */}
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="border-b border-slate-200">
         <nav className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar py-0.5">
           {[
@@ -502,15 +502,15 @@ export default function SettingsPage() {
                 onClick={() => handleTabChange(tab.id)}
                 className={`flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-t-lg border-b-2 whitespace-nowrap transition cursor-pointer ${
                   isActive
-                    ? 'border-blue-600 text-blue-700 bg-blue-50/50'
+                    ? 'border-rose-600 text-rose-700 bg-rose-50/50'
                     : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                 }`}
               >
-                <Icon className={`h-4 w-4 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
+                <Icon className={`h-4 w-4 ${isActive ? 'text-rose-600' : 'text-slate-400'}`} />
                 <span>{tab.label}</span>
                 {tab.count !== undefined && tab.count > 0 && (
                   <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                    isActive ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600'
+                    isActive ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'
                   }`}>
                     {tab.count}
                   </span>
@@ -521,9 +521,9 @@ export default function SettingsPage() {
         </nav>
       </div>
 
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* 3. TAB 1: OVERVIEW SECTION (Matching visual reference composition)  */}
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
           {/* Top 4 KPI Summary Cards */}
@@ -531,10 +531,10 @@ export default function SettingsPage() {
             {/* Card 1: Total Users */}
             <div
               onClick={() => handleTabChange('users')}
-              className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-blue-200 transition-all cursor-pointer flex items-center justify-between"
+              className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all cursor-pointer flex items-center justify-between"
             >
               <div className="flex items-center gap-3.5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shrink-0">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 shrink-0">
                   <Users className="h-5 w-5" />
                 </div>
                 <div>
@@ -553,10 +553,10 @@ export default function SettingsPage() {
             {/* Card 2: Connected Datasets */}
             <div
               onClick={() => navigate('/datasets')}
-              className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-blue-200 transition-all cursor-pointer flex items-center justify-between"
+              className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all cursor-pointer flex items-center justify-between"
             >
               <div className="flex items-center gap-3.5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shrink-0">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 shrink-0">
                   <Database className="h-5 w-5" />
                 </div>
                 <div>
@@ -585,7 +585,7 @@ export default function SettingsPage() {
                     {stats.dashboardsCount + stats.reportsCount}
                   </div>
                   <span className="text-[11px] text-slate-400 font-medium">
-                    {stats.dashboardsCount} dashboards • {stats.reportsCount} reports
+                    {stats.dashboardsCount} dashboards â€¢ {stats.reportsCount} reports
                   </span>
                 </div>
               </div>
@@ -603,67 +603,70 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <span className="text-xs font-semibold text-slate-500">Security Status</span>
-                  <div className="text-2xl sm:text-3xl font-black text-emerald-600 tracking-tight mt-1">
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
                     {healthStatus}
                   </div>
-                  <span className="text-[11px] text-slate-400 font-medium">All checks passed</span>
+                  <span className="text-[11px] text-slate-400 font-medium">
+                    {stats.alertsCount} active alert{stats.alertsCount !== 1 ? 's' : ''}
+                  </span>
                 </div>
               </div>
               <ChevronRight className="h-4 w-4 text-slate-400" />
             </div>
-          </div>
+          </div>{/* â”€â”€ end 4-card grid â”€â”€ */}
 
-          {/* Main 2-Column Overview Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left Column: System Configuration Tiles + Quick Actions (7 Cols) */}
+          {/* Two-column layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Left Column: System Config + Quick Actions */}
             <div className="lg:col-span-7 space-y-6">
-              {/* System Configuration Section */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                    <Settings className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-slate-900">System Configuration</h2>
-                    <p className="text-xs text-slate-500 font-medium">
-                      Configure your organization and platform settings.
-                    </p>
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+            {/* System Configuration Panel */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+                  <Settings className="h-4 w-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900">System Configuration</h2>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Configure your organization and platform settings.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                   {/* Tile 1: Organization Settings */}
                   <div
                     onClick={() => handleTabChange('organization')}
-                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-blue-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
+                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-rose-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 shrink-0 mt-0.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600 shrink-0 mt-0.5">
                         <Building2 className="h-4 w-4" />
                       </div>
                       <div>
-                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">
-                          Organization Settings
+                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
+                           Organization Settings
                         </h3>
                         <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">
                           Manage organization profile, branding, and regional settings.
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
+                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
                   </div>
 
                   {/* Tile 2: Users & Access */}
                   <div
                     onClick={() => handleTabChange('users')}
-                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-blue-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
+                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-rose-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 shrink-0 mt-0.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600 shrink-0 mt-0.5">
                         <Users className="h-4 w-4" />
                       </div>
                       <div>
-                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">
+                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
                           Users & Access
                         </h3>
                         <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">
@@ -671,20 +674,20 @@ export default function SettingsPage() {
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
+                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
                   </div>
 
                   {/* Tile 3: Data Settings */}
                   <div
                     onClick={() => navigate('/data-sources')}
-                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-blue-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
+                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-rose-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 shrink-0 mt-0.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600 shrink-0 mt-0.5">
                         <Database className="h-4 w-4" />
                       </div>
                       <div>
-                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">
+                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
                           Data Settings
                         </h3>
                         <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">
@@ -692,20 +695,20 @@ export default function SettingsPage() {
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
+                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
                   </div>
 
                   {/* Tile 4: Integrations */}
                   <div
                     onClick={() => handleTabChange('integrations')}
-                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-blue-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
+                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-rose-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 shrink-0 mt-0.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600 shrink-0 mt-0.5">
                         <Plug className="h-4 w-4" />
                       </div>
                       <div>
-                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">
+                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
                           Integrations
                         </h3>
                         <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">
@@ -713,20 +716,20 @@ export default function SettingsPage() {
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
+                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
                   </div>
 
                   {/* Tile 5: Notifications */}
                   <div
                     onClick={() => handleTabChange('notifications')}
-                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-blue-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
+                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-rose-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shrink-0 mt-0.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600 shrink-0 mt-0.5">
                         <Bell className="h-4 w-4" />
                       </div>
                       <div>
-                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">
+                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
                           Notifications
                         </h3>
                         <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">
@@ -734,20 +737,20 @@ export default function SettingsPage() {
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
+                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
                   </div>
 
                   {/* Tile 6: Platform Preferences */}
                   <div
                     onClick={() => handleTabChange('preferences')}
-                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-blue-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
+                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-rose-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shrink-0 mt-0.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600 shrink-0 mt-0.5">
                         <Sliders className="h-4 w-4" />
                       </div>
                       <div>
-                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">
+                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
                           Platform Preferences
                         </h3>
                         <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">
@@ -755,7 +758,7 @@ export default function SettingsPage() {
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
+                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
                   </div>
                 </div>
               </div>
@@ -763,16 +766,16 @@ export default function SettingsPage() {
               {/* Quick Actions Row */}
               <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-3">
                 <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-blue-600 shrink-0" />
+                  <Zap className="h-4 w-4 text-rose-600 shrink-0" />
                   <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">Quick Actions</span>
-                  <span className="text-xs text-slate-400 font-normal">— Common administrative tasks.</span>
+                  <span className="text-xs text-slate-400 font-normal">â€” Common administrative tasks.</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
                   <button
                     type="button"
                     onClick={() => setIsInviteModalOpen(true)}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-blue-200 bg-blue-50/50 hover:bg-blue-100/70 text-blue-700 text-xs font-semibold transition cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-rose-200 bg-rose-50/50 hover:bg-rose-100/70 text-rose-700 text-xs font-semibold transition cursor-pointer"
                   >
                     <UserPlus className="h-3.5 w-3.5" />
                     <span>Invite User</span>
@@ -806,15 +809,16 @@ export default function SettingsPage() {
                   </button>
                 </div>
               </div>
-            </div>
+            </div>{/* â”€â”€ end Quick Actions â”€â”€ */}
+            </div>{/* â”€â”€ end left column â”€â”€ */}
 
-            {/* Right Column: Organization Information + Recent Activity + Support (5 Cols) */}
+            {/* Right Column: Organization Info + Recent Activity + Support */}
             <div className="lg:col-span-5 space-y-6">
               {/* Organization Information Card */}
               <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-blue-600" />
+                    <Building2 className="h-4 w-4 text-rose-600" />
                     <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                       Organization Information
                     </h3>
@@ -897,7 +901,7 @@ export default function SettingsPage() {
               <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-4">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-blue-600" />
+                    <Clock className="h-4 w-4 text-rose-600" />
                     <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                       Recent Activity
                     </h3>
@@ -905,7 +909,7 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => navigate('/governance?tab=audit')}
-                    className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 transition cursor-pointer"
+                    className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 transition cursor-pointer"
                   >
                     View All
                   </button>
@@ -923,7 +927,7 @@ export default function SettingsPage() {
                           {log.action?.includes('LOGIN') ? (
                             <Users className="h-3.5 w-3.5 text-emerald-600" />
                           ) : log.action?.includes('DATASET') ? (
-                            <Database className="h-3.5 w-3.5 text-blue-600" />
+                            <Database className="h-3.5 w-3.5 text-rose-600" />
                           ) : log.action?.includes('REPORT') ? (
                             <FileText className="h-3.5 w-3.5 text-purple-600" />
                           ) : (
@@ -950,7 +954,7 @@ export default function SettingsPage() {
               {/* Help & Support Card */}
               <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-3">
                 <div className="flex items-center gap-2">
-                  <HelpCircle className="h-4 w-4 text-blue-600 shrink-0" />
+                  <HelpCircle className="h-4 w-4 text-rose-600 shrink-0" />
                   <div>
                     <h3 className="text-xs font-bold text-slate-900">Help & Support</h3>
                     <p className="text-[11px] text-slate-500">Get help with settings and administration.</p>
@@ -963,7 +967,7 @@ export default function SettingsPage() {
                     onClick={() => setIsDocsModalOpen(true)}
                     className="flex flex-col items-center justify-center gap-1 p-2.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700 text-[11px] font-semibold transition cursor-pointer"
                   >
-                    <FileText className="h-3.5 w-3.5 text-blue-600" />
+                    <FileText className="h-3.5 w-3.5 text-rose-600" />
                     <span>Documentation</span>
                   </button>
 
@@ -972,7 +976,7 @@ export default function SettingsPage() {
                     onClick={() => setIsSupportModalOpen(true)}
                     className="flex flex-col items-center justify-center gap-1 p-2.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700 text-[11px] font-semibold transition cursor-pointer"
                   >
-                    <Mail className="h-3.5 w-3.5 text-blue-600" />
+                    <Mail className="h-3.5 w-3.5 text-rose-600" />
                     <span>Contact Support</span>
                   </button>
 
@@ -988,12 +992,11 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-        </div>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* 4. TAB 2: ORGANIZATION CONFIGURATION                               */}
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeTab === 'organization' && (
         <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-6 w-full">
           <div className="flex items-center justify-between pb-4 border-b border-slate-100">
@@ -1017,7 +1020,7 @@ export default function SettingsPage() {
                   value={editOrgName}
                   onChange={(e) => setEditOrgName(e.target.value)}
                   required
-                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 font-semibold"
+                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-900 font-semibold"
                 />
               </div>
 
@@ -1038,12 +1041,12 @@ export default function SettingsPage() {
                 <select
                   value={editOrgRegion}
                   onChange={(e) => setEditOrgRegion(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 font-semibold bg-white cursor-pointer"
+                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-900 font-semibold bg-white cursor-pointer"
                 >
-                  <option value="Mumbai (ap-south-1)">Mumbai (ap-south-1) — Primary Indian Hub</option>
-                  <option value="Singapore (ap-southeast-1)">Singapore (ap-southeast-1) — APAC Gateway</option>
-                  <option value="Frankfurt (eu-central-1)">Frankfurt (eu-central-1) — EU Compliance</option>
-                  <option value="N. Virginia (us-east-1)">N. Virginia (us-east-1) — US Global</option>
+                  <option value="Mumbai (ap-south-1)">Mumbai (ap-south-1) â€” Primary Indian Hub</option>
+                  <option value="Singapore (ap-southeast-1)">Singapore (ap-southeast-1) â€” APAC Gateway</option>
+                  <option value="Frankfurt (eu-central-1)">Frankfurt (eu-central-1) â€” EU Compliance</option>
+                  <option value="N. Virginia (us-east-1)">N. Virginia (us-east-1) â€” US Global</option>
                 </select>
               </div>
 
@@ -1052,12 +1055,12 @@ export default function SettingsPage() {
                 <select
                   value={editOrgCurrency}
                   onChange={(e) => setEditOrgCurrency(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 font-semibold bg-white cursor-pointer"
+                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-900 font-semibold bg-white cursor-pointer"
                 >
-                  <option value="INR">INR — Indian Rupee (₹)</option>
-                  <option value="USD">USD — US Dollar ($)</option>
-                  <option value="EUR">EUR — Euro (€)</option>
-                  <option value="GBP">GBP — British Pound (£)</option>
+                  <option value="INR">INR â€” Indian Rupee (â‚¹)</option>
+                  <option value="USD">USD â€” US Dollar ($)</option>
+                  <option value="EUR">EUR â€” Euro (â‚¬)</option>
+                  <option value="GBP">GBP â€” British Pound (Â£)</option>
                 </select>
               </div>
             </div>
@@ -1068,7 +1071,7 @@ export default function SettingsPage() {
                 <select
                   value={editOrgTimezone}
                   onChange={(e) => setEditOrgTimezone(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 font-semibold bg-white cursor-pointer"
+                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-900 font-semibold bg-white cursor-pointer"
                 >
                   <option value="Asia/Kolkata">Asia/Kolkata (IST, UTC+05:30)</option>
                   <option value="UTC">UTC (Coordinated Universal Time)</option>
@@ -1108,9 +1111,9 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* 5. TAB 3: USERS & ACCESS ROSTER                                    */}
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeTab === 'users' && (
         <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -1142,7 +1145,7 @@ export default function SettingsPage() {
                 placeholder="Search member by name or email..."
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
-                className="w-full h-10 pl-9 pr-3.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full h-10 pl-9 pr-3.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-rose-500"
               />
             </div>
 
@@ -1185,14 +1188,14 @@ export default function SettingsPage() {
                       <tr key={m.id} className="hover:bg-slate-50/60 transition">
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs uppercase">
+                            <div className="h-8 w-8 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-xs uppercase">
                               {m.name ? m.name.charAt(0) : 'U'}
                             </div>
                             <div>
                               <div className="font-bold text-slate-900 flex items-center gap-1.5">
                                 <span>{m.name}</span>
                                 {isSelf && (
-                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200">
+                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">
                                     You
                                   </span>
                                 )}
@@ -1206,7 +1209,7 @@ export default function SettingsPage() {
                             m.role === 'admin'
                               ? 'bg-purple-50 text-purple-700 border border-purple-200'
                               : m.role === 'manager'
-                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                              ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
                               : m.role === 'analyst'
                               ? 'bg-teal-50 text-teal-700 border border-teal-200'
                               : 'bg-slate-100 text-slate-700 border border-slate-200'
@@ -1227,9 +1230,9 @@ export default function SettingsPage() {
                           <button
                             type="button"
                             onClick={() => navigate('/governance?tab=users')}
-                            className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition"
+                            className="text-xs font-semibold text-rose-600 hover:text-rose-800 transition cursor-pointer"
                           >
-                            Manage Permissions →
+                            Manage Permissions â†’
                           </button>
                         </td>
                       </tr>
@@ -1264,7 +1267,7 @@ export default function SettingsPage() {
                       <tr key={inv.id} className="hover:bg-amber-50/40">
                         <td className="py-2.5 px-4 font-mono font-medium text-slate-900">{inv.email}</td>
                         <td className="py-2.5 px-4">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-50 text-blue-700 border border-blue-200">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-rose-50 text-rose-700 border border-rose-200">
                             {inv.role}
                           </span>
                         </td>
@@ -1295,9 +1298,9 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* 6. TAB 4: INTEGRATIONS                                             */}
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeTab === 'integrations' && (
         <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-6 w-full">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100">
@@ -1324,7 +1327,7 @@ export default function SettingsPage() {
               <div className="space-y-3.5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3.5">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-bold shrink-0">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 font-bold shrink-0">
                       <Database className="h-5 w-5" />
                     </div>
                     <div>
@@ -1345,9 +1348,9 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => navigate('/data-sources')}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-blue-50 hover:border-blue-200 text-blue-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-rose-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                 >
-                  Configure Connector →
+                  Configure Connector â†’
                 </button>
               </div>
             </div>
@@ -1378,7 +1381,7 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => setSuccessMessage('SMTP test handshake validated successfully.')}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-blue-50 hover:border-blue-200 text-blue-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-rose-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                 >
                   Test Connection
                 </button>
@@ -1411,9 +1414,9 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => navigate('/reports')}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-blue-50 hover:border-blue-200 text-blue-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-rose-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                 >
-                  View Reports Engine →
+                  View Reports Engine â†’
                 </button>
               </div>
             </div>
@@ -1444,9 +1447,9 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => navigate('/ai-insights')}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-blue-50 hover:border-blue-200 text-blue-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-rose-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                 >
-                  Explore AI Core →
+                  Explore AI Core â†’
                 </button>
               </div>
             </div>
@@ -1454,9 +1457,9 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* 7. TAB 5: NOTIFICATIONS PREFERENCES                                */}
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeTab === 'notifications' && (
         <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-6 w-full">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100">
@@ -1487,7 +1490,7 @@ export default function SettingsPage() {
                     type="checkbox"
                     checked={notifSettings.emailExecutiveDigest}
                     onChange={(e) => setNotifSettings(prev => ({ ...prev, emailExecutiveDigest: e.target.checked }))}
-                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
                   />
                   <div>
                     <span className="font-bold text-slate-900 block">Weekly Executive Digest</span>
@@ -1500,7 +1503,7 @@ export default function SettingsPage() {
                     type="checkbox"
                     checked={notifSettings.emailAlertThresholds}
                     onChange={(e) => setNotifSettings(prev => ({ ...prev, emailAlertThresholds: e.target.checked }))}
-                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
                   />
                   <div>
                     <span className="font-bold text-slate-900 block">Critical Threshold Breach Alerts</span>
@@ -1513,7 +1516,7 @@ export default function SettingsPage() {
                     type="checkbox"
                     checked={notifSettings.emailReportGenerated}
                     onChange={(e) => setNotifSettings(prev => ({ ...prev, emailReportGenerated: e.target.checked }))}
-                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
                   />
                   <div>
                     <span className="font-bold text-slate-900 block">Scheduled Report Deliveries</span>
@@ -1532,7 +1535,7 @@ export default function SettingsPage() {
                     type="checkbox"
                     checked={notifSettings.inAppCollaboration}
                     onChange={(e) => setNotifSettings(prev => ({ ...prev, inAppCollaboration: e.target.checked }))}
-                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
                   />
                   <div>
                     <span className="font-bold text-slate-900 block">Collaboration & Sharing Notifications</span>
@@ -1545,7 +1548,7 @@ export default function SettingsPage() {
                     type="checkbox"
                     checked={notifSettings.inAppSystemNotices}
                     onChange={(e) => setNotifSettings(prev => ({ ...prev, inAppSystemNotices: e.target.checked }))}
-                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
                   />
                   <div>
                     <span className="font-bold text-slate-900 block">System Maintenance & Health Notices</span>
@@ -1568,9 +1571,9 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* 8. TAB 6: WORKSPACE PREFERENCES                                    */}
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeTab === 'preferences' && (
         <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-6 w-full">
           <div className="pb-4 border-b border-slate-100">
@@ -1603,7 +1606,7 @@ export default function SettingsPage() {
                   onClick={() => handleSavePreferences({ ...preferences, tableDensity: 'comfortable' })}
                   className={`p-3 rounded-xl border text-left transition cursor-pointer ${
                     preferences.tableDensity === 'comfortable'
-                      ? 'border-blue-600 bg-blue-50/50 text-blue-900 font-bold'
+                      ? 'border-rose-600 bg-rose-50/50 text-rose-900 font-bold'
                       : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-medium'
                   }`}
                 >
@@ -1616,7 +1619,7 @@ export default function SettingsPage() {
                   onClick={() => handleSavePreferences({ ...preferences, tableDensity: 'compact' })}
                   className={`p-3 rounded-xl border text-left transition cursor-pointer ${
                     preferences.tableDensity === 'compact'
-                      ? 'border-blue-600 bg-blue-50/50 text-blue-900 font-bold'
+                      ? 'border-rose-600 bg-rose-50/50 text-rose-900 font-bold'
                       : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-medium'
                   }`}
                 >
@@ -1647,17 +1650,17 @@ export default function SettingsPage() {
                 onChange={(e) => handleSavePreferences({ ...preferences, numberFormat: e.target.value })}
                 className="w-full h-10 px-3.5 rounded-xl border border-slate-300 text-slate-900 font-semibold bg-white cursor-pointer"
               >
-                <option value="inr_lakhs">Indian Numbering Format (₹ Lakhs & Crores — e.g. ₹17.6L)</option>
-                <option value="standard_millions">International Standard (Millions & Billions — e.g. $1.76M)</option>
+                <option value="inr_lakhs">Indian Numbering Format (â‚¹ Lakhs & Crores â€” e.g. â‚¹17.6L)</option>
+                <option value="standard_millions">International Standard (Millions & Billions â€” e.g. $1.76M)</option>
               </select>
             </div>
           </div>
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* 9. MODALS                                                          */}
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
 
       {/* Edit Organization Modal */}
       {isEditOrgModalOpen && (
@@ -1665,7 +1668,7 @@ export default function SettingsPage() {
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-blue-600" />
+                <Building2 className="h-5 w-5 text-rose-600" />
                 <h3 className="text-sm font-bold text-slate-900">Edit Organization Profile</h3>
               </div>
               <button
@@ -1685,7 +1688,7 @@ export default function SettingsPage() {
                   value={editOrgName}
                   onChange={(e) => setEditOrgName(e.target.value)}
                   required
-                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-slate-900"
+                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 font-semibold text-slate-900"
                 />
               </div>
 
@@ -1694,9 +1697,9 @@ export default function SettingsPage() {
                 <select
                   value={editOrgRegion}
                   onChange={(e) => setEditOrgRegion(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 font-semibold text-slate-900 bg-white"
+                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 font-semibold text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500"
                 >
-                  <option value="Mumbai (ap-south-1)">Mumbai (ap-south-1) — Primary Indian Hub</option>
+                  <option value="Mumbai (ap-south-1)">Mumbai (ap-south-1) â€” Primary Indian Hub</option>
                   <option value="Singapore (ap-southeast-1)">Singapore (ap-southeast-1)</option>
                   <option value="Frankfurt (eu-central-1)">Frankfurt (eu-central-1)</option>
                   <option value="N. Virginia (us-east-1)">N. Virginia (us-east-1)</option>
@@ -1708,11 +1711,11 @@ export default function SettingsPage() {
                 <select
                   value={editOrgCurrency}
                   onChange={(e) => setEditOrgCurrency(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 font-semibold text-slate-900 bg-white"
+                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 font-semibold text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500"
                 >
-                  <option value="INR">INR — Indian Rupee (₹)</option>
-                  <option value="USD">USD — US Dollar ($)</option>
-                  <option value="EUR">EUR — Euro (€)</option>
+                  <option value="INR">INR â€” Indian Rupee (â‚¹)</option>
+                  <option value="USD">USD â€” US Dollar ($)</option>
+                  <option value="EUR">EUR â€” Euro (â‚¬)</option>
                 </select>
               </div>
 
@@ -1743,7 +1746,7 @@ export default function SettingsPage() {
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <UserPlus className="h-5 w-5 text-blue-600" />
+                <UserPlus className="h-5 w-5 text-rose-600" />
                 <h3 className="text-sm font-bold text-slate-900">Invite Team Member</h3>
               </div>
               <button
@@ -1773,7 +1776,7 @@ export default function SettingsPage() {
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
                     required
-                    className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                    className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium"
                   />
                 </div>
 
@@ -1784,7 +1787,7 @@ export default function SettingsPage() {
                     placeholder="Priya Sharma"
                     value={inviteName}
                     onChange={(e) => setInviteName(e.target.value)}
-                    className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                    className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium"
                   />
                 </div>
 
@@ -1793,7 +1796,7 @@ export default function SettingsPage() {
                   <select
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value)}
-                    className="w-full h-10 px-3.5 rounded-xl border border-slate-300 font-semibold text-slate-900 bg-white"
+                    className="w-full h-10 px-3.5 rounded-xl border border-slate-300 font-semibold text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500"
                   >
                     <option value="viewer">Viewer (Read-only analytics access)</option>
                     <option value="analyst">Analyst (Create reports, charts, forecasts)</option>
@@ -1830,7 +1833,7 @@ export default function SettingsPage() {
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-blue-600" />
+                <FileText className="h-5 w-5 text-rose-600" />
                 <h3 className="text-sm font-bold text-slate-900">RicozAnalytics Documentation</h3>
               </div>
               <button
@@ -1876,7 +1879,7 @@ export default function SettingsPage() {
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <Mail className="h-5 w-5 text-blue-600" />
+                <Mail className="h-5 w-5 text-rose-600" />
                 <h3 className="text-sm font-bold text-slate-900">Enterprise Dedicated Support</h3>
               </div>
               <button
@@ -1891,10 +1894,10 @@ export default function SettingsPage() {
               <p>
                 As an <strong>Enterprise Tier</strong> client, your organization has 24/7 priority SLA support with a dedicated solutions engineer.
               </p>
-              <div className="p-3.5 rounded-xl bg-blue-50/60 border border-blue-100 space-y-1.5">
+              <div className="p-3.5 rounded-xl bg-rose-50/60 border border-rose-100 space-y-1.5">
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-500 font-medium">Support Desk:</span>
-                  <span className="font-mono font-bold text-blue-700">support@ricoz.in</span>
+                  <span className="font-mono font-bold text-rose-700">support@ricoz.in</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-500 font-medium">SLA Response:</span>

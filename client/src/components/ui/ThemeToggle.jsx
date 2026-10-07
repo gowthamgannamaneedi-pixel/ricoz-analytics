@@ -29,7 +29,7 @@ export default function ThemeToggle({ className = '', variant = 'icon', size = '
         </div>
         <span
           className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors duration-200 ${
-            isDark ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'
+            isDark ? 'bg-rose-600 justify-end' : 'bg-slate-300 justify-start'
           }`}
         >
           <span className="w-4 h-4 rounded-full bg-white shadow-xs" />

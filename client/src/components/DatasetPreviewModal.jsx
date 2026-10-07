@@ -173,7 +173,7 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 shrink-0">
+            <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 shrink-0">
               <Table2 className="h-5 w-5" />
             </div>
             <div>
@@ -181,7 +181,7 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
                 <h2 className="text-sm sm:text-base font-bold text-slate-900">
                   {data?.name || (isLoading ? 'Loading Preview...' : 'Dataset Preview')}
                 </h2>
-                <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80">
+                <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200/80">
                   50-Row Sample Preview
                 </span>
               </div>
@@ -232,7 +232,7 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
         <div className="flex-1 overflow-auto bg-slate-50/40 p-4">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-24 space-y-3">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <Loader2 className="h-8 w-8 animate-spin text-rose-600" />
               <p className="text-xs font-medium text-slate-600">
                 Retrieving dataset records from storage provider...
               </p>
@@ -248,7 +248,7 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
               </div>
               <button
                 onClick={() => fetchPreview(datasetId)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-2xs"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 transition shadow-2xs"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
                 <span>Retry</span>
@@ -297,9 +297,9 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
                   {/* Table Body */}
                   <tbody className="divide-y divide-slate-100 bg-white text-xs">
                     {previewRows.map((row, rowIdx) => (
-                      <tr key={rowIdx} className="hover:bg-blue-50/30 transition-colors group">
+                      <tr key={rowIdx} className="hover:bg-rose-50/30 transition-colors group">
                         {/* Row Index */}
-                        <td className="py-2 px-3 text-center text-slate-400 border-r border-slate-100 font-mono text-[10px] bg-slate-50/60 group-hover:bg-blue-50/50 sticky left-0 z-10 select-none">
+                        <td className="py-2 px-3 text-center text-slate-400 border-r border-slate-100 font-mono text-[10px] bg-slate-50/60 group-hover:bg-rose-50/50 sticky left-0 z-10 select-none">
                           {rowIdx + 1}
                         </td>
 

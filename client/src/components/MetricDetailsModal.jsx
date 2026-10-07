@@ -77,7 +77,7 @@ export default function MetricDetailsModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 shrink-0">
+            <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 shrink-0">
               <Gauge className="h-5 w-5" />
             </div>
             <div>
@@ -156,7 +156,7 @@ export default function MetricDetailsModal({
 
             <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
               <span className="text-[11px] font-semibold text-slate-500 block">Calculation Formula</span>
-              <span className="text-xs font-mono font-bold text-blue-600 mt-1 block truncate" title={metric.formula}>
+              <span className="text-xs font-mono font-bold text-rose-600 mt-1 block truncate" title={metric.formula}>
                 {metric.formula || 'SUM'}
               </span>
               <span className="text-[10px] text-slate-400">Agg: {formatting.aggregation_type || 'SUM'}</span>

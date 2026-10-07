@@ -58,7 +58,7 @@ export default function DatasetSelector({
       <div className="flex items-center gap-2">
         <button
           onClick={() => navigate('/data-sources')}
-          className="flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
+          className="flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 transition shadow-xs"
         >
           <Plus className="h-3.5 w-3.5" />
           <span>Connect Dataset</span>
@@ -74,9 +74,9 @@ export default function DatasetSelector({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         id="dataset-selector-trigger"
-        className="flex items-center gap-2.5 h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-left text-xs font-medium text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100 shadow-2xs min-w-[220px] max-w-[320px] cursor-pointer"
+        className="flex items-center gap-2.5 h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-left text-xs font-medium text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-rose-100 shadow-2xs min-w-[220px] max-w-[320px] cursor-pointer"
       >
-        <div className="p-1 rounded-md bg-blue-50 border border-blue-100 text-blue-700 shrink-0">
+        <div className="p-1 rounded-md bg-rose-50 border border-rose-100 text-rose-700 shrink-0">
           <Table2 className="h-4 w-4" />
         </div>
 
@@ -86,7 +86,7 @@ export default function DatasetSelector({
           </span>
         </div>
 
-        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180 text-blue-600' : ''}`} />
+        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180 text-rose-600' : ''}`} />
       </button>
 
       {/* Popover Menu */}
@@ -100,7 +100,7 @@ export default function DatasetSelector({
               placeholder="Search datasets..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-md border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-3 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:outline-none"
+              className="w-full rounded-md border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-3 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-rose-600 focus:outline-none"
               autoFocus
             />
           </div>
@@ -124,7 +124,7 @@ export default function DatasetSelector({
                     }}
                     className={`w-full flex items-center justify-between p-2 rounded-md text-left transition ${
                       isSelected
-                        ? 'bg-blue-50/80 text-blue-900 font-semibold'
+                        ? 'bg-rose-50/80 text-rose-900 font-semibold'
                         : 'text-slate-700 hover:bg-slate-50'
                     }`}
                   >
@@ -143,7 +143,7 @@ export default function DatasetSelector({
                     </div>
 
                     {isSelected && (
-                      <Check className="h-4 w-4 text-blue-600 shrink-0 ml-2" />
+                      <Check className="h-4 w-4 text-rose-600 shrink-0 ml-2" />
                     )}
                   </button>
                 );
@@ -159,7 +159,7 @@ export default function DatasetSelector({
                 setIsOpen(false);
                 navigate('/data-sources');
               }}
-              className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold text-blue-600 hover:bg-blue-50 transition"
+              className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold text-rose-600 hover:bg-rose-50 transition"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>Ingest New Dataset</span>

@@ -136,7 +136,7 @@ export default function BillingPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <CreditCard className="h-5 w-5 text-blue-600" />
+              <CreditCard className="h-5 w-5 text-rose-600" />
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">
                 Subscription & Licensing
               </span>
@@ -164,8 +164,8 @@ export default function BillingPage() {
                   Free Trial Expired
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                  <Clock className="w-3.5 h-3.5 text-blue-600" />
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                  <Clock className="w-3.5 h-3.5 text-rose-600" />
                   {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining
                 </span>
               )}
@@ -237,12 +237,12 @@ export default function BillingPage() {
                 key={p.id}
                 className={`relative flex flex-col justify-between rounded-2xl border bg-white p-6 sm:p-7 shadow-xs transition hover:shadow-md ${
                   isPopular
-                    ? 'border-blue-500 ring-2 ring-blue-500/20 shadow-blue-50'
+                    ? 'border-rose-500 ring-2 ring-rose-500/20 shadow-rose-50'
                     : 'border-slate-200 hover:border-slate-300'
                 }`}
               >
                 {isPopular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-xs">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-rose-600 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-xs">
                     Most Popular
                   </div>
                 )}
@@ -251,7 +251,7 @@ export default function BillingPage() {
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-bold text-slate-950 font-serif">{p.name}</h3>
                     {p.id === 'growth' ? (
-                      <Zap className="h-5 w-5 text-blue-600" />
+                      <Zap className="h-5 w-5 text-rose-600" />
                     ) : p.id === 'enterprise' ? (
                       <ShieldCheck className="h-5 w-5 text-indigo-600" />
                     ) : (
@@ -296,7 +296,7 @@ export default function BillingPage() {
                       isCurrentPlan
                         ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
                         : isPopular
-                        ? 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                        ? 'bg-rose-600 text-white hover:bg-rose-700 focus:ring-2 focus:ring-rose-500 focus:ring-offset-2'
                         : 'bg-slate-900 text-white hover:bg-slate-800 focus:ring-2 focus:ring-slate-700 focus:ring-offset-2'
                     }`}
                   >
@@ -341,7 +341,7 @@ export default function BillingPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
+              <div className="p-2.5 rounded-lg bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div className="text-xs">
@@ -359,7 +359,7 @@ export default function BillingPage() {
               <div className="text-xs">
                 <p className="font-bold text-slate-900">Enterprise Support & Invoicing</p>
                 <p className="text-slate-500 mt-0.5 text-[11px]">
-                  Need custom PO billing or wire transfer? <a href="mailto:support@ricoz.in" className="text-blue-600 underline font-semibold">Contact Enterprise Sales</a>
+                  Need custom PO billing or wire transfer? <a href="mailto:support@ricoz.in" className="text-rose-600 underline font-semibold">Contact Enterprise Sales</a>
                 </p>
               </div>
             </div>
@@ -402,7 +402,7 @@ export default function BillingPage() {
                         <button
                           type="button"
                           onClick={() => alert(`Downloading invoice ${inv.id}`)}
-                          className="text-blue-600 hover:text-blue-700 font-semibold cursor-pointer"
+                          className="text-rose-600 hover:text-rose-700 font-semibold cursor-pointer"
                         >
                           PDF &darr;
                         </button>

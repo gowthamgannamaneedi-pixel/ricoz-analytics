@@ -311,7 +311,7 @@ export default function DataModelingPage() {
               variant="secondary"
               className="h-9 px-3.5 rounded-xl border-slate-200 text-xs sm:text-sm font-semibold shadow-2xs"
             >
-              <Play className="h-3.5 w-3.5 text-blue-600" />
+              <Play className="h-3.5 w-3.5 text-rose-600" />
               <span>Test Relational Query</span>
             </Button>
           </div>
@@ -326,7 +326,7 @@ export default function DataModelingPage() {
 
       {/* 3. Schema Visualizer Blueprint / Architecture Graph */}
       <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs relative overflow-hidden">
-        <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 bg-rose-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
@@ -349,7 +349,7 @@ export default function DataModelingPage() {
             {canManage && (
               <button
                 onClick={handleOpenCreateModal}
-                className="mt-3.5 inline-flex items-center gap-1.5 rounded-md bg-blue-600/80 hover:bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition"
+                className="mt-3.5 inline-flex items-center gap-1.5 rounded-md bg-rose-600 hover:bg-rose-700 px-3 py-1.5 text-xs font-semibold text-white transition cursor-pointer shadow-xs"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Connect Datasets
@@ -365,7 +365,7 @@ export default function DataModelingPage() {
               >
                 <div>
                   <div className="flex items-center justify-between text-xs font-mono text-slate-500 pb-2 border-b border-slate-200">
-                    <span className="uppercase text-blue-700 font-bold">{rel.relationship_type.replace(/_/g, ' ')}</span>
+                    <span className="uppercase text-rose-700 font-bold">{rel.relationship_type.replace(/_/g, ' ')}</span>
                     <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
                       Verified
                     </span>
@@ -374,7 +374,7 @@ export default function DataModelingPage() {
                   <div className="mt-3 flex items-center justify-between gap-2 text-xs">
                     <div className="bg-white rounded p-2 flex-1 border border-slate-200 min-w-0">
                       <div className="font-bold text-slate-700 truncate">{rel.source_dataset_name || 'Source Dataset'}</div>
-                      <div className="text-[11px] text-blue-700 font-mono truncate mt-0.5">.{rel.source_column}</div>
+                      <div className="text-[11px] text-rose-700 font-mono truncate mt-0.5">.{rel.source_column}</div>
                     </div>
 
                     <div className="flex flex-col items-center shrink-0 px-1">
@@ -409,7 +409,7 @@ export default function DataModelingPage() {
             placeholder="Search relationships, tables, columns..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+            className="w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
           />
         </div>
 
@@ -418,7 +418,7 @@ export default function DataModelingPage() {
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 focus:border-blue-600 focus:outline-none"
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 focus:border-rose-600 focus:outline-none"
           >
             <option value="all">All Relationship Types</option>
             <option value="many_to_one">Many-to-One (N:1)</option>
@@ -430,9 +430,9 @@ export default function DataModelingPage() {
           <button
             onClick={loadData}
             title="Refresh"
-            className="p-2 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 transition"
+            className="p-2 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 transition cursor-pointer"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin text-blue-600' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin text-rose-600' : ''}`} />
           </button>
         </div>
       </div>
@@ -455,7 +455,7 @@ export default function DataModelingPage() {
               {loading ? (
                 <tr>
                   <td colSpan="6" className="py-12 text-center text-slate-400">
-                    <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2 text-blue-600" />
+                    <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2 text-rose-600" />
                     Loading dataset relationships...
                   </td>
                 </tr>
@@ -471,7 +471,7 @@ export default function DataModelingPage() {
                   <tr key={rel.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="px-4 py-3.5">
                       <div className="font-semibold text-slate-900 flex items-center gap-1.5">
-                        <Table className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                        <Table className="h-3.5 w-3.5 text-rose-600 shrink-0" />
                         {rel.source_dataset_name || 'Dataset'}
                       </div>
                       <div className="text-[11px] text-slate-500 font-mono mt-0.5 flex items-center gap-1">
@@ -512,7 +512,7 @@ export default function DataModelingPage() {
                           <>
                             <button
                               onClick={() => handleOpenEditModal(rel)}
-                              className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition"
+                              className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-rose-600 transition"
                               title="Edit"
                             >
                               <Edit3 className="h-3.5 w-3.5" />
@@ -543,7 +543,7 @@ export default function DataModelingPage() {
           <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl border border-slate-200">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-700">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
                   <Link2 className="h-4 w-4" />
                 </div>
                 <h3 className="text-base font-bold text-slate-900">
@@ -590,7 +590,7 @@ export default function DataModelingPage() {
                         source_column: cols[0]?.name || ''
                       });
                     }}
-                    className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-600 focus:outline-none"
+                    className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-rose-600 focus:outline-none"
                   >
                     <option value="">Select source...</option>
                     {datasets.map((d) => (
@@ -604,7 +604,7 @@ export default function DataModelingPage() {
                   <select
                     value={modalForm.source_column}
                     onChange={(e) => setModalForm({ ...modalForm, source_column: e.target.value })}
-                    className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-mono text-slate-900 focus:border-blue-600 focus:outline-none"
+                    className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-mono text-slate-900 focus:border-rose-600 focus:outline-none"
                   >
                     <option value="">Select column...</option>
                     {sourceColumns.map((col) => (
@@ -633,7 +633,7 @@ export default function DataModelingPage() {
                         target_column: cols[0]?.name || ''
                       });
                     }}
-                    className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-600 focus:outline-none"
+                    className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-rose-600 focus:outline-none"
                   >
                     <option value="">Select target...</option>
                     {datasets.map((d) => (
@@ -647,7 +647,7 @@ export default function DataModelingPage() {
                   <select
                     value={modalForm.target_column}
                     onChange={(e) => setModalForm({ ...modalForm, target_column: e.target.value })}
-                    className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-mono text-slate-900 focus:border-blue-600 focus:outline-none"
+                    className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-mono text-slate-900 focus:border-rose-600 focus:outline-none"
                   >
                     <option value="">Select column...</option>
                     {targetColumns.map((col) => (
@@ -665,7 +665,7 @@ export default function DataModelingPage() {
                 <select
                   value={modalForm.relationship_type}
                   onChange={(e) => setModalForm({ ...modalForm, relationship_type: e.target.value })}
-                  className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-600 focus:outline-none"
+                  className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-rose-600 focus:outline-none"
                 >
                   <option value="many_to_one">Many-to-One (N:1) - (e.g. Orders to Customers)</option>
                   <option value="one_to_many">One-to-Many (1:N) - (e.g. Customers to Orders)</option>
@@ -682,7 +682,7 @@ export default function DataModelingPage() {
                   placeholder="e.g. Links customer master profile to transactional order streams"
                   value={modalForm.description}
                   onChange={(e) => setModalForm({ ...modalForm, description: e.target.value })}
-                  className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-600 focus:outline-none"
+                  className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-rose-600 focus:outline-none"
                 />
               </div>
 
@@ -691,14 +691,14 @@ export default function DataModelingPage() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                  className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="rounded-md bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition flex items-center gap-1.5"
+                  className="rounded-md bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-rose-700 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   {submitting && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                   {editingId ? 'Save Changes' : 'Establish Relationship'}
@@ -715,7 +715,7 @@ export default function DataModelingPage() {
           <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl border border-slate-200">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
                   <Play className="h-4 w-4" />
                 </div>
                 <h3 className="text-base font-bold text-slate-900">
@@ -724,7 +724,7 @@ export default function DataModelingPage() {
               </div>
               <button
                 onClick={() => setTestQueryModalOpen(false)}
-                className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -747,7 +747,7 @@ export default function DataModelingPage() {
                 <select
                   value={testBaseDatasetId}
                   onChange={(e) => setTestBaseDatasetId(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-600 focus:outline-none"
+                  className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-rose-600 focus:outline-none"
                 >
                   <option value="">Select base dataset...</option>
                   {datasets.map((d) => (
@@ -761,7 +761,7 @@ export default function DataModelingPage() {
                 <select
                   value={testJoinedDatasetId}
                   onChange={(e) => setTestJoinedDatasetId(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-600 focus:outline-none"
+                  className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-rose-600 focus:outline-none"
                 >
                   <option value="">Select target dataset...</option>
                   {datasets.map((d) => (
@@ -777,7 +777,7 @@ export default function DataModelingPage() {
                   placeholder="e.g. region or customers.region"
                   value={testDimension}
                   onChange={(e) => setTestDimension(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-600 focus:outline-none font-mono"
+                  className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-rose-600 focus:outline-none font-mono"
                 />
               </div>
 
@@ -787,7 +787,7 @@ export default function DataModelingPage() {
                   <select
                     value={testAggregation}
                     onChange={(e) => setTestAggregation(e.target.value)}
-                    className="w-24 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900 focus:border-blue-600 focus:outline-none font-mono"
+                    className="w-24 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900 focus:border-rose-600 focus:outline-none font-mono"
                   >
                     <option value="SUM">SUM</option>
                     <option value="AVG">AVG</option>
@@ -800,7 +800,7 @@ export default function DataModelingPage() {
                     placeholder="e.g. revenue or amount"
                     value={testMetric}
                     onChange={(e) => setTestMetric(e.target.value)}
-                    className="flex-1 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-600 focus:outline-none font-mono"
+                    className="flex-1 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-rose-600 focus:outline-none font-mono"
                   />
                 </div>
               </div>
@@ -810,7 +810,7 @@ export default function DataModelingPage() {
               <button
                 onClick={handleExecuteTestRelationalQuery}
                 disabled={testingQuery || !testBaseDatasetId}
-                className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition"
+                className="inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-rose-700 transition cursor-pointer"
               >
                 {testingQuery ? (
                   <RefreshCw className="h-3.5 w-3.5 animate-spin" />

@@ -84,7 +84,7 @@ export default function FilterBar({
           id="filter-refresh-btn"
           className="flex items-center gap-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white disabled:opacity-50 cursor-pointer"
         >
-          <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
+          <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-rose-600' : ''}`} />
           <span>{isRefreshing ? 'Synchronizing...' : 'Refresh'}</span>
         </button>
       </div>

@@ -240,7 +240,7 @@ export default function KpisPage() {
     const t = String(type || '').toLowerCase();
     if (t === 'currency' || unit === '₹' || unit === '$') {
       return (
-        <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 shrink-0">
+        <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 shrink-0">
           <TrendingUp className="h-5 w-5" />
         </div>
       );
@@ -332,8 +332,8 @@ export default function KpisPage() {
       {/* 2. Top Header with Icon, Title, Subtitle, and Primary Actions */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-1">
         <div className="flex items-center gap-3.5">
-          {/* Main Blue Header Icon */}
-          <div className="h-12 w-12 rounded-2xl bg-blue-600 text-white shadow-xs flex items-center justify-center shrink-0">
+          {/* Main Rose Header Icon */}
+          <div className="h-12 w-12 rounded-2xl bg-rose-600 text-white shadow-xs flex items-center justify-center shrink-0">
             <BarChart3 className="h-6 w-6 text-white" />
           </div>
 
@@ -362,7 +362,7 @@ export default function KpisPage() {
             id="refresh-kpis-btn"
             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs disabled:opacity-50"
           >
-            <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
+            <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-rose-600' : ''}`} />
             <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
           </button>
 
@@ -370,7 +370,7 @@ export default function KpisPage() {
             <button
               onClick={handleCreateNew}
               id="define-metric-header-btn"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700 transition shadow-xs"
             >
               <Plus className="h-4 w-4" />
               <span>Define Metric</span>
@@ -419,9 +419,9 @@ export default function KpisPage() {
       {/* 3. Summary KPI Cards (4 Cards Grid) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Total KPIs */}
-        <div className="rounded-2xl border border-blue-200 bg-white p-5 shadow-2xs ring-1 ring-blue-500/10">
+        <div className="rounded-2xl border border-rose-200 bg-white p-5 shadow-2xs ring-1 ring-rose-500/10">
           <div className="flex items-center justify-between">
-            <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+            <div className="p-2.5 rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
               <BarChart3 className="h-5 w-5" />
             </div>
             {totalCount > 0 && (
@@ -522,7 +522,7 @@ export default function KpisPage() {
             placeholder="Search KPIs by name, description, or tags..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-rose-600 focus:ring-2 focus:ring-rose-100 focus:outline-none transition-all"
           />
           {searchQuery && (
             <button
@@ -545,7 +545,7 @@ export default function KpisPage() {
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               aria-label="Filter by metric type"
-              className="appearance-none rounded-xl border border-slate-200 bg-slate-50/70 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 hover:bg-slate-100/70 focus:bg-white focus:border-blue-600 focus:outline-none cursor-pointer transition-all"
+              className="appearance-none rounded-xl border border-slate-200 bg-slate-50/70 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 hover:bg-slate-100/70 focus:bg-white focus:border-rose-600 focus:outline-none cursor-pointer transition-all"
             >
               <option value="all">All Metric Types</option>
               <option value="currency">Currency (₹)</option>
@@ -564,7 +564,7 @@ export default function KpisPage() {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               aria-label="Filter by performance status"
-              className="appearance-none rounded-xl border border-slate-200 bg-slate-50/70 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 hover:bg-slate-100/70 focus:bg-white focus:border-blue-600 focus:outline-none cursor-pointer transition-all"
+              className="appearance-none rounded-xl border border-slate-200 bg-slate-50/70 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 hover:bg-slate-100/70 focus:bg-white focus:border-rose-600 focus:outline-none cursor-pointer transition-all"
             >
               <option value="all">All Statuses</option>
               <option value="on_track">On Track</option>
@@ -581,7 +581,7 @@ export default function KpisPage() {
               value={datasetFilter}
               onChange={(e) => setDatasetFilter(e.target.value)}
               aria-label="Filter by linked dataset"
-              className="appearance-none rounded-xl border border-slate-200 bg-slate-50/70 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 hover:bg-slate-100/70 focus:bg-white focus:border-blue-600 focus:outline-none cursor-pointer transition-all max-w-[180px] truncate"
+              className="appearance-none rounded-xl border border-slate-200 bg-slate-50/70 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 hover:bg-slate-100/70 focus:bg-white focus:border-rose-600 focus:outline-none cursor-pointer transition-all max-w-[180px] truncate"
             >
               <option value="all">All Datasets</option>
               {datasets.map(d => (
@@ -597,7 +597,7 @@ export default function KpisPage() {
             <button
               onClick={resetFilters}
               id="reset-kpi-filters-btn"
-              className="text-xs font-semibold text-blue-600 hover:text-blue-700 px-2 py-1.5 rounded-lg hover:bg-blue-50 transition"
+              className="text-xs font-semibold text-rose-600 hover:text-rose-700 px-2 py-1.5 rounded-lg hover:bg-rose-50 transition"
             >
               Reset
             </button>
@@ -609,7 +609,7 @@ export default function KpisPage() {
               onClick={() => setViewMode('card')}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition ${
                 viewMode === 'card'
-                  ? 'bg-white text-blue-600 shadow-2xs'
+                  ? 'bg-white text-rose-600 shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
               title="Card View"
@@ -621,7 +621,7 @@ export default function KpisPage() {
               onClick={() => setViewMode('table')}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition ${
                 viewMode === 'table'
-                  ? 'bg-white text-blue-600 shadow-2xs'
+                  ? 'bg-white text-rose-600 shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
               title="Table View"
@@ -636,7 +636,7 @@ export default function KpisPage() {
       {/* 5. Main KPI Content Area */}
       {isLoading ? (
         <div className="rounded-2xl border border-slate-200/90 bg-white p-16 flex flex-col items-center justify-center space-y-3 shadow-2xs">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-rose-600" />
           <p className="text-xs font-medium text-slate-500">
             Calculating metric telemetry and targets...
           </p>
@@ -654,14 +654,14 @@ export default function KpisPage() {
               </p>
               <button
                 onClick={resetFilters}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition text-xs"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-rose-50 text-rose-700 font-semibold hover:bg-rose-100 transition text-xs"
               >
                 Reset filters
               </button>
             </div>
           ) : (
             <div className="space-y-3 max-w-sm mx-auto">
-              <div className="mx-auto w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100">
+              <div className="mx-auto w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 border border-rose-100">
                 <Gauge className="h-6 w-6" />
               </div>
               <p className="font-bold text-slate-900 text-sm">No KPIs defined yet</p>
@@ -671,7 +671,7 @@ export default function KpisPage() {
               {!isViewer && (
                 <button
                   onClick={handleCreateNew}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700 transition shadow-xs"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Define Metric</span>
@@ -703,7 +703,7 @@ export default function KpisPage() {
                       <div className="min-w-0 flex-1">
                         <button
                           onClick={() => handleOpenDetails(metric)}
-                          className="text-left font-bold text-slate-900 hover:text-blue-600 transition truncate block text-sm"
+                          className="text-left font-bold text-slate-900 hover:text-rose-600 transition truncate block text-sm"
                           title={metric.name}
                         >
                           {metric.name}
@@ -900,7 +900,7 @@ export default function KpisPage() {
                       <td className="py-3 px-4">
                         <button
                           onClick={() => handleOpenDetails(metric)}
-                          className="font-bold text-slate-900 hover:text-blue-600 text-left block"
+                          className="font-bold text-slate-900 hover:text-rose-600 text-left block"
                         >
                           {metric.name}
                         </button>

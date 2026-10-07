@@ -104,7 +104,7 @@ export default function Navbar({ onOpenSidebar }) {
             placeholder="Search metrics, reports, datasets, or ask AI..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/80 pl-10 pr-16 text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:border-slate-300 dark:hover:border-slate-600 focus:border-blue-600 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-850 focus:outline-hidden focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 transition shadow-2xs"
+            className="w-full h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/80 pl-10 pr-16 text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 dark:focus:border-rose-500 focus:bg-white dark:focus:bg-slate-850 focus:outline-hidden focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/40 transition shadow-2xs"
           />
           <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-750 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 shadow-2xs pointer-events-none select-none">
             Ctrl + K
@@ -121,53 +121,27 @@ export default function Navbar({ onOpenSidebar }) {
             handleClosePopovers();
             navigate('/settings');
           }}
-          className="hidden md:flex items-center gap-2 h-10 px-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 hover:border-slate-300 dark:hover:border-slate-600 transition shadow-2xs cursor-pointer select-none"
+          className="hidden md:flex items-center gap-2 h-9 px-3.5 rounded-xl bg-rose-50/40 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/60 text-xs font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/60 transition shadow-2xs cursor-pointer select-none"
           aria-label="Current organization"
           title="Manage organization & workspace"
         >
-          <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <Building2 className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
           <span className="max-w-36 truncate font-medium">
             {user?.organization_name || 'Ricoz Primary Organization'}
           </span>
-          <ChevronDown className="h-3.5 w-3.5 text-slate-400 dark:text-slate-400" />
+          <ChevronDown className="h-3 w-3 text-rose-500/80 dark:text-rose-400" />
         </button>
 
-        {/* 14-Day Free Trial / Subscription Badge */}
-        {isTrialExpired ? (
-          <button
-            type="button"
-            onClick={() => navigate('/billing')}
-            className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-xs font-bold transition cursor-pointer shadow-2xs"
-            title="Your trial has expired. Click to choose a plan"
-          >
-            <AlertTriangle className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
-            <span>Free Trial Expired</span>
-          </button>
-        ) : isActivePaid ? (
-          <button
-            type="button"
-            onClick={() => navigate('/billing')}
-            className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-xs font-bold transition cursor-pointer shadow-2xs"
-            title="Subscription active"
-          >
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="capitalize">{subscription?.plan || 'Pro'} Plan</span>
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => navigate('/billing')}
-            className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-bold transition cursor-pointer shadow-2xs ${
-              trialDaysRemaining <= 3 
-                ? 'bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 hover:bg-amber-100' 
-                : 'bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100'
-            }`}
-            title="Click to view plans and subscription"
-          >
-            <Clock className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-            <span>{trialDaysRemaining} {trialDaysRemaining === 1 ? 'day' : 'days'} remaining</span>
-          </button>
-        )}
+        {/* Enterprise Plan Badge */}
+        <button
+          type="button"
+          onClick={() => navigate('/billing')}
+          className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/60 text-xs font-semibold transition cursor-pointer shadow-2xs"
+          title="Subscription active"
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          <span>Enterprise Plan</span>
+        </button>
 
         {/* Global Dark / Light Mode Switcher */}
         <ThemeToggle size="md" />

@@ -94,7 +94,7 @@ export default function ScenarioSimulatorModal({
         {/* Header */}
         <div className="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-xl bg-blue-50 border border-blue-100 text-blue-600">
+            <div className="p-2 rounded-xl bg-rose-50 border border-rose-100 text-rose-600">
               <Sliders className="w-5 h-5" />
             </div>
             <div>
@@ -146,12 +146,12 @@ export default function ScenarioSimulatorModal({
                 <div className="text-[11px] text-slate-400 mt-1">Current verified row sum</div>
               </div>
 
-              <div className="p-4 rounded-xl bg-blue-50/40 border border-blue-100">
-                <span className="text-[11px] font-medium text-blue-700">Counterfactual Projection</span>
-                <div className="text-xl font-bold text-blue-700 mt-1 font-mono">
+              <div className="p-4 rounded-xl bg-rose-50/40 border border-rose-100">
+                <span className="text-[11px] font-medium text-rose-700">Counterfactual Projection</span>
+                <div className="text-xl font-bold text-rose-700 mt-1 font-mono">
                   {simulationResult.simulatedTotal.toLocaleString()}
                 </div>
-                <div className="text-[11px] text-blue-500 mt-1">Simulated outcome</div>
+                <div className="text-[11px] text-rose-500 mt-1">Simulated outcome</div>
               </div>
 
               <div className={`p-4 rounded-xl border ${
@@ -217,7 +217,7 @@ export default function ScenarioSimulatorModal({
                         step="1"
                         value={currentVal}
                         onChange={(e) => handleSliderChange(d.segment, e.target.value)}
-                        className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                        className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-600"
                       />
                       <div className="flex justify-between text-[10px] text-slate-400 font-mono">
                         <span>-50%</span>
@@ -248,13 +248,13 @@ export default function ScenarioSimulatorModal({
 
           {/* Grounded AI Scenario Synthesis */}
           {simulationResult && (
-            <div className="p-4 rounded-xl bg-blue-50/40 border border-blue-100 text-xs space-y-1.5">
+            <div className="p-4 rounded-xl bg-rose-50/40 border border-rose-100 text-xs space-y-1.5">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-blue-600" />
-                <span className="font-bold text-blue-900">
+                <Sparkles className="w-4 h-4 text-rose-600" />
+                <span className="font-bold text-rose-900">
                   AI Scenario Synthesis
                 </span>
-                <span className="text-[10px] font-mono text-blue-600 bg-blue-100 px-2 py-0.2 rounded border border-blue-200">
+                <span className="text-[10px] font-mono text-rose-600 bg-rose-100 px-2 py-0.2 rounded border border-rose-200">
                   {simulationResult.aiGenerated ? 'Gemini' : 'Deterministic Engine'}
                 </span>
               </div>

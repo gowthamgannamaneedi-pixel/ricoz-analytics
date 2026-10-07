@@ -22,8 +22,8 @@ export default function PlaceholderPage({
       {/* Header Context Banner */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-mono font-semibold uppercase mb-2">
-            <Clock className="h-3.5 w-3.5 text-blue-600" />
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-mono font-semibold uppercase mb-2">
+            <Clock className="h-3.5 w-3.5 text-rose-600" />
             <span>Target: {phase}</span>
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-900">{title}</h2>
@@ -43,7 +43,7 @@ export default function PlaceholderPage({
       <div className="rounded-xl border border-slate-200 bg-white p-6 sm:p-7 space-y-6 shadow-2xs">
         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-200">
               <Layers className="h-4 w-4" />
             </div>
             <div>
@@ -59,7 +59,7 @@ export default function PlaceholderPage({
         </div>
 
         <p className="text-xs text-slate-600 leading-relaxed max-w-3xl">
-          The API routing contracts and UI layout placeholders for <strong className="text-slate-900 font-semibold">{title}</strong> are registered in the core workspace router. Implementation will be executed in accordance with <strong className="text-blue-700 font-mono font-semibold">{phase}</strong>.
+          The API routing contracts and UI layout placeholders for <strong className="text-slate-900 font-semibold">{title}</strong> are registered in the core workspace router. Implementation will be executed in accordance with <strong className="text-rose-700 font-mono font-semibold">{phase}</strong>.
         </p>
 
         {plannedFeatures.length > 0 && (
@@ -70,7 +70,7 @@ export default function PlaceholderPage({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {plannedFeatures.map((feat, idx) => (
                 <div key={idx} className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50/70 p-3 text-xs text-slate-700">
-                  <CheckCircle2 className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 text-rose-600 mt-0.5 shrink-0" />
                   <span className="font-medium leading-relaxed">{feat}</span>
                 </div>
               ))}

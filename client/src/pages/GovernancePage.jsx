@@ -366,7 +366,7 @@ export default function GovernancePage() {
       {/* ------------------------------------------------------------- */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
         <div className="flex items-center gap-3.5">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 shadow-2xs shrink-0">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 shadow-2xs shrink-0">
             <Shield className="h-6 w-6" />
           </div>
           <div>
@@ -381,7 +381,7 @@ export default function GovernancePage() {
 
         {/* Right: Organization Badge */}
         <div className="flex items-center gap-3 bg-white border border-slate-200/90 rounded-xl px-3.5 py-2 shadow-2xs shrink-0 self-start sm:self-auto">
-          <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
             <Building2 className="w-4 h-4" />
           </div>
           <div>
@@ -432,7 +432,7 @@ export default function GovernancePage() {
             onClick={() => setActiveTab('overview')}
             className={`flex items-center gap-2 py-3 px-1 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'overview'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-rose-600 text-rose-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
             }`}
           >
@@ -444,7 +444,7 @@ export default function GovernancePage() {
             onClick={() => setActiveTab('users')}
             className={`flex items-center gap-2 py-3 px-1 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'users'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-rose-600 text-rose-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
             }`}
           >
@@ -456,7 +456,7 @@ export default function GovernancePage() {
             onClick={() => setActiveTab('audit')}
             className={`flex items-center gap-2 py-3 px-1 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'audit'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-rose-600 text-rose-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
             }`}
           >
@@ -468,7 +468,7 @@ export default function GovernancePage() {
             onClick={() => setActiveTab('permissions')}
             className={`flex items-center gap-2 py-3 px-1 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'permissions'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-rose-600 text-rose-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
             }`}
           >
@@ -480,7 +480,7 @@ export default function GovernancePage() {
             onClick={() => setActiveTab('settings')}
             className={`flex items-center gap-2 py-3 px-1 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'settings'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-rose-600 text-rose-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
             }`}
           >
@@ -500,10 +500,10 @@ export default function GovernancePage() {
             {/* Card 1: TEAM MEMBERS */}
             <div
               onClick={() => setActiveTab('users')}
-              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-blue-200 transition-all duration-200 group cursor-pointer"
+              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-rose-200 transition-all duration-200 group cursor-pointer"
             >
               <div className="flex items-center gap-4 min-w-0">
-                <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
                   <Users className="w-6 h-6" />
                 </div>
                 <div className="min-w-0">
@@ -519,7 +519,7 @@ export default function GovernancePage() {
                   </div>
                 </div>
               </div>
-              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-50 group-hover:text-blue-700 transition-colors shrink-0 ml-2">
+              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-rose-600 group-hover:bg-rose-50 group-hover:text-rose-700 transition-colors shrink-0 ml-2">
                 <ChevronRight className="w-4 h-4" />
               </div>
             </div>
@@ -545,7 +545,7 @@ export default function GovernancePage() {
                   </div>
                 </div>
               </div>
-              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-blue-600 group-hover:bg-purple-50 group-hover:text-purple-700 transition-colors shrink-0 ml-2">
+              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-purple-50 group-hover:text-purple-700 transition-colors shrink-0 ml-2">
                 <ChevronRight className="w-4 h-4" />
               </div>
             </div>
@@ -571,7 +571,7 @@ export default function GovernancePage() {
                   </div>
                 </div>
               </div>
-              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-blue-600 group-hover:bg-emerald-50 group-hover:text-emerald-700 transition-colors shrink-0 ml-2">
+              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-700 transition-colors shrink-0 ml-2">
                 <ChevronRight className="w-4 h-4" />
               </div>
             </div>
@@ -597,7 +597,7 @@ export default function GovernancePage() {
                   </div>
                 </div>
               </div>
-              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-blue-600 group-hover:bg-amber-50 group-hover:text-amber-700 transition-colors shrink-0 ml-2">
+              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-amber-50 group-hover:text-amber-700 transition-colors shrink-0 ml-2">
                 <ChevronRight className="w-4 h-4" />
               </div>
             </div>
@@ -608,7 +608,7 @@ export default function GovernancePage() {
             {/* Left Column: Role Distribution & Team Access */}
             <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-xs">
               <div className="flex items-center gap-2.5">
-                <Users className="w-5 h-5 text-blue-600" />
+                <Users className="w-5 h-5 text-rose-600" />
                 <h2 className="text-base sm:text-lg font-bold text-slate-900">
                   Role Distribution & Team Access
                 </h2>
@@ -718,7 +718,7 @@ export default function GovernancePage() {
             <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-xs flex flex-col justify-between">
               <div>
                 <div className="flex items-center gap-2.5">
-                  <Shield className="w-5 h-5 text-blue-600" />
+                  <Shield className="w-5 h-5 text-rose-600" />
                   <h2 className="text-base sm:text-lg font-bold text-slate-900">
                     Security & Isolation
                   </h2>
@@ -728,7 +728,7 @@ export default function GovernancePage() {
                   {/* Row 1: Tenant Isolation (RLS) */}
                   <div className="bg-slate-50/70 hover:bg-slate-100/60 border border-slate-100 rounded-xl px-4 py-3.5 flex items-center justify-between transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
-                      <Lock className="w-4 h-4 text-blue-600 shrink-0" />
+                      <Lock className="w-4 h-4 text-rose-600 shrink-0" />
                       <span className="text-xs font-medium text-slate-800 truncate">
                         Tenant Isolation (RLS)
                       </span>
@@ -747,7 +747,7 @@ export default function GovernancePage() {
                     className="bg-slate-50/70 hover:bg-slate-100/60 border border-slate-100 rounded-xl px-4 py-3.5 flex items-center justify-between transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+                      <FileText className="w-4 h-4 text-rose-600 shrink-0" />
                       <span className="text-xs font-medium text-slate-800 truncate">
                         Immutable Audit Logs
                       </span>
@@ -763,13 +763,13 @@ export default function GovernancePage() {
                   {/* Row 3: Credential Scrubbing */}
                   <div className="bg-slate-50/70 hover:bg-slate-100/60 border border-slate-100 rounded-xl px-4 py-3.5 flex items-center justify-between transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
-                      <Database className="w-4 h-4 text-blue-600 shrink-0" />
+                      <Database className="w-4 h-4 text-rose-600 shrink-0" />
                       <span className="text-xs font-medium text-slate-800 truncate">
                         Credential Scrubbing
                       </span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/60">
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/60">
                         Strict
                       </span>
                       <ChevronRight className="w-4 h-4 text-slate-400" />
@@ -782,7 +782,7 @@ export default function GovernancePage() {
                     className="bg-slate-50/70 hover:bg-slate-100/60 border border-slate-100 rounded-xl px-4 py-3.5 flex items-center justify-between transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <User className="w-4 h-4 text-blue-600 shrink-0" />
+                      <User className="w-4 h-4 text-rose-600 shrink-0" />
                       <span className="text-xs font-medium text-slate-800 truncate">
                         Current Session Role
                       </span>
@@ -815,7 +815,7 @@ export default function GovernancePage() {
                 value={userSearch}
                 onChange={(e) => { setUserSearch(e.target.value); setUserPage(1); }}
                 placeholder="Search member by name or email..."
-                className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-colors"
+                className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
               />
             </div>
 
@@ -823,7 +823,7 @@ export default function GovernancePage() {
               <select
                 value={userRoleFilter}
                 onChange={(e) => { setUserRoleFilter(e.target.value); setUserPage(1); }}
-                className="px-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-colors"
+                className="px-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
               >
                 <option value="all">All Roles</option>
                 <option value="admin">Admin</option>
@@ -835,7 +835,7 @@ export default function GovernancePage() {
               <select
                 value={userStatusFilter}
                 onChange={(e) => { setUserStatusFilter(e.target.value); setUserPage(1); }}
-                className="px-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-colors"
+                className="px-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
               >
                 <option value="all">All Statuses</option>
                 <option value="active">Active</option>
@@ -987,14 +987,14 @@ export default function GovernancePage() {
                 value={auditSearch}
                 onChange={(e) => { setAuditSearch(e.target.value); setAuditPage(1); }}
                 placeholder="Search action or description..."
-                className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-colors"
+                className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
               />
             </div>
 
             <select
               value={auditActionFilter}
               onChange={(e) => { setAuditActionFilter(e.target.value); setAuditPage(1); }}
-              className="px-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-colors"
+              className="px-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
             >
               <option value="all">All Actions</option>
               <option value="USER_LOGIN">User Login</option>
@@ -1015,7 +1015,7 @@ export default function GovernancePage() {
             <select
               value={auditResourceFilter}
               onChange={(e) => { setAuditResourceFilter(e.target.value); setAuditPage(1); }}
-              className="px-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-colors"
+              className="px-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
             >
               <option value="all">All Resources</option>
               <option value="auth">Auth</option>
@@ -1087,7 +1087,7 @@ export default function GovernancePage() {
                       <td className="px-4 py-3 text-right font-sans">
                         <button
                           onClick={() => setInspectMetadata(log)}
-                          className="px-2.5 py-1 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                          className="px-2.5 py-1 text-xs font-semibold text-rose-600 hover:text-rose-800 hover:underline"
                         >
                           View Meta
                         </button>
@@ -1132,7 +1132,7 @@ export default function GovernancePage() {
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-6">
           <div>
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Key className="w-5 h-5 text-blue-600" />
+              <Key className="w-5 h-5 text-rose-600" />
               Enterprise Role-Based Access Control (RBAC) Matrix
             </h3>
             <p className="text-xs text-slate-500 mt-1">
@@ -1162,7 +1162,7 @@ export default function GovernancePage() {
                         {perms.map((p) => {
                           const hasCallerPerm = userPermissions.includes(p.key);
                           return (
-                            <tr key={p.key} className={`hover:bg-slate-50/70 transition-colors ${hasCallerPerm ? 'bg-blue-50/20' : ''}`}>
+                            <tr key={p.key} className={`hover:bg-slate-50/70 transition-colors ${hasCallerPerm ? 'bg-rose-50/20' : ''}`}>
                               <td className="px-4 py-2.5">
                                 <div className="font-semibold text-slate-900 text-xs">{p.label}</div>
                                 <div className="text-[11px] font-mono text-slate-400">{p.key}</div>
@@ -1233,7 +1233,7 @@ export default function GovernancePage() {
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 sm:p-7 space-y-6 max-w-2xl">
           <div>
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Sliders className="w-5 h-5 text-blue-600" />
+              <Sliders className="w-5 h-5 text-rose-600" />
               Organization & Workspace Profile
             </h3>
             <p className="text-xs text-slate-500 mt-1">
@@ -1251,7 +1251,7 @@ export default function GovernancePage() {
                 value={orgName}
                 onChange={(e) => setOrgName(e.target.value)}
                 disabled={!isAdmin}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 disabled:opacity-50 transition-colors"
                 placeholder="E.g. Ricoz Primary Organization"
               />
             </div>
@@ -1265,7 +1265,7 @@ export default function GovernancePage() {
                   value={orgTimezone}
                   onChange={(e) => setOrgTimezone(e.target.value)}
                   disabled={!isAdmin}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 disabled:opacity-50 transition-colors"
                 >
                   <option value="UTC">UTC (Coordinated Universal Time)</option>
                   <option value="Asia/Kolkata">Asia/Kolkata (IST +5:30)</option>
@@ -1282,7 +1282,7 @@ export default function GovernancePage() {
                   value={orgDateFormat}
                   onChange={(e) => setOrgDateFormat(e.target.value)}
                   disabled={!isAdmin}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 disabled:opacity-50 transition-colors"
                 >
                   <option value="YYYY-MM-DD">YYYY-MM-DD (ISO)</option>
                   <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -1296,7 +1296,7 @@ export default function GovernancePage() {
                 <button
                   type="submit"
                   disabled={settingsSaving}
-                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-xs disabled:opacity-50 flex items-center gap-2 transition-colors"
+                  className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold shadow-xs disabled:opacity-50 flex items-center gap-2 transition-colors cursor-pointer"
                 >
                   {settingsSaving && <RefreshCw className="w-4 h-4 animate-spin" />}
                   Save Governance Settings
@@ -1319,7 +1319,7 @@ export default function GovernancePage() {
           <div className="bg-white rounded-2xl border border-slate-200 max-w-md w-full p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Edit3 className="w-5 h-5 text-blue-600" />
+                <Edit3 className="w-5 h-5 text-rose-600" />
                 Update Team Role
               </h3>
               <button onClick={() => setRoleModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1">
@@ -1338,7 +1338,7 @@ export default function GovernancePage() {
               <select
                 value={newRole}
                 onChange={(e) => setNewRole(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500"
               >
                 <option value="admin">Administrator (Universal Full Access)</option>
                 <option value="manager">Manager (Create/Edit, Reports, Alerts, Audit View)</option>
@@ -1366,7 +1366,7 @@ export default function GovernancePage() {
                 type="button"
                 onClick={handleRoleUpdate}
                 disabled={roleUpdating}
-                className="px-4 py-2 text-sm font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 flex items-center gap-2 shadow-xs transition-colors"
+                className="px-4 py-2 text-sm font-semibold rounded-xl bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50 flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
               >
                 {roleUpdating && <RefreshCw className="w-4 h-4 animate-spin" />}
                 Confirm Role Change
@@ -1415,7 +1415,7 @@ export default function GovernancePage() {
                 type="button"
                 onClick={handleStatusUpdate}
                 disabled={statusUpdating}
-                className={`px-4 py-2 text-sm font-semibold rounded-xl text-white disabled:opacity-50 flex items-center gap-2 shadow-xs transition-colors ${
+                className={`px-4 py-2 text-sm font-semibold rounded-xl text-white disabled:opacity-50 flex items-center gap-2 shadow-xs transition-colors cursor-pointer ${
                   newStatus === 'active' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'
                 }`}
               >
@@ -1435,7 +1435,7 @@ export default function GovernancePage() {
           <div className="bg-white rounded-2xl border border-slate-200 max-w-lg w-full p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Info className="w-5 h-5 text-blue-600" />
+                <Info className="w-5 h-5 text-rose-600" />
                 Audit Metadata Details
               </h3>
               <button onClick={() => setInspectMetadata(null)} className="text-slate-400 hover:text-slate-600 p-1">

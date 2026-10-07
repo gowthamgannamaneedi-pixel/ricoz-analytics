@@ -110,12 +110,12 @@ export default function FileUpload({
           onClick={() => fileInputRef.current?.click()}
           className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 sm:p-8 text-center cursor-pointer transition-all ${
             isDragging
-              ? 'border-blue-500 bg-blue-50/50'
+              ? 'border-rose-500 bg-rose-50/50'
               : 'border-slate-200/90 bg-slate-50/40 hover:bg-slate-50/80 hover:border-slate-300'
           }`}
         >
-          <div className="rounded-full bg-white p-3 border border-slate-200/90 shadow-2xs text-blue-600 mb-2.5">
-            <UploadCloud className="h-6 w-6 text-blue-600" />
+          <div className="rounded-full bg-white p-3 border border-slate-200/90 shadow-2xs text-rose-600 mb-2.5">
+            <UploadCloud className="h-6 w-6 text-rose-600" />
           </div>
 
           <p className="text-xs font-semibold text-slate-800">

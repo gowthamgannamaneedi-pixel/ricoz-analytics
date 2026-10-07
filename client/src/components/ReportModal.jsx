@@ -172,7 +172,7 @@ export default function ReportModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/70">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-600 text-white shadow-xs">
               <FileBarChart className="h-5 w-5" />
             </div>
             <div>
@@ -212,7 +212,7 @@ export default function ReportModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Q4 Executive Performance Digest"
-              className="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 transition"
+              className="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500 transition"
               required
             />
           </div>
@@ -227,7 +227,7 @@ export default function ReportModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Summary of KPIs, key focus metrics, and target stakeholders..."
               rows={2}
-              className="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 transition"
+              className="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500 transition"
             />
           </div>
 
@@ -240,7 +240,7 @@ export default function ReportModal({
               <select
                 value={dashboardId}
                 onChange={(e) => setDashboardId(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500"
               >
                 <option value="">Executive Organization KPIs (All)</option>
                 {dashboards.map((dash) => (
@@ -258,7 +258,7 @@ export default function ReportModal({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500"
               >
                 <option value="active">Active (Running on schedule)</option>
                 <option value="draft">Draft (On-demand only)</option>
@@ -282,13 +282,13 @@ export default function ReportModal({
                     onClick={() => setFormat(opt.value)}
                     className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition cursor-pointer ${
                       isSelected
-                        ? 'border-blue-600 bg-blue-50/50 ring-1 ring-blue-600 shadow-2xs'
+                        ? 'border-rose-600 bg-rose-50/50 ring-1 ring-rose-600 shadow-2xs'
                         : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
                     <span className="text-xl shrink-0">{opt.icon}</span>
                     <div className="min-w-0">
-                      <p className={`text-xs font-bold ${isSelected ? 'text-blue-900' : 'text-slate-800'}`}>
+                      <p className={`text-xs font-bold ${isSelected ? 'text-rose-900' : 'text-slate-800'}`}>
                         {opt.label}
                       </p>
                       <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">{opt.desc}</p>
@@ -307,7 +307,7 @@ export default function ReportModal({
             <select
               value={schedulePreset}
               onChange={(e) => setSchedulePreset(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500"
             >
               {SCHEDULE_PRESETS.map((p) => (
                 <option key={p.value} value={p.value}>
@@ -323,7 +323,7 @@ export default function ReportModal({
                   value={customCron}
                   onChange={(e) => setCustomCron(e.target.value)}
                   placeholder="e.g. 0 18 * * 5 (Every Friday at 6:00 PM)"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-mono text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-mono text-slate-800 focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500"
                 />
                 <p className="text-[10px] text-slate-500 mt-1">
                   Standard 5-field cron syntax: <code>minute hour day-of-month month day-of-week</code>
@@ -349,7 +349,7 @@ export default function ReportModal({
                   }
                 }}
                 placeholder="colleague@company.com"
-                className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800 focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500"
               />
               <button
                 type="button"
@@ -365,14 +365,14 @@ export default function ReportModal({
                 {recipients.map((email) => (
                   <span
                     key={email}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-800 text-xs font-medium"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium"
                   >
-                    <Mail className="h-3 w-3 text-blue-600" />
+                    <Mail className="h-3 w-3 text-rose-600" />
                     {email}
                     <button
                       type="button"
                       onClick={() => handleRemoveEmail(email)}
-                      className="text-blue-500 hover:text-rose-600 ml-0.5 cursor-pointer"
+                      className="text-rose-500 hover:text-rose-800 ml-0.5 cursor-pointer"
                     >
                       <X className="h-3 w-3" />
                     </button>

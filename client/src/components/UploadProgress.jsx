@@ -39,7 +39,7 @@ export default function UploadProgress({
           {stage === 'complete' ? (
             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
           ) : (
-            <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
+            <Loader2 className="h-4 w-4 text-rose-600 animate-spin" />
           )}
           <span className="text-xs font-semibold text-slate-800">
             {stageMessage || 'Processing dataset ingestion pipeline...'}
@@ -53,7 +53,7 @@ export default function UploadProgress({
       {/* Progress Bar */}
       <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
         <div
-          className="h-full bg-blue-600 transition-all duration-300 ease-out"
+          className="h-full bg-rose-600 transition-all duration-300 ease-out"
           style={{ width: `${Math.min(100, Math.max(5, progress))}%` }}
         />
       </div>
@@ -69,7 +69,7 @@ export default function UploadProgress({
                 status === 'done'
                   ? 'text-emerald-600'
                   : status === 'active'
-                  ? 'text-blue-600 font-semibold'
+                  ? 'text-rose-600 font-semibold'
                   : 'text-slate-400'
               }`}
             >
@@ -78,7 +78,7 @@ export default function UploadProgress({
                   status === 'done'
                     ? 'bg-emerald-600'
                     : status === 'active'
-                    ? 'bg-blue-600 animate-pulse'
+                    ? 'bg-rose-600 animate-pulse'
                     : 'bg-slate-300'
                 }`}
               />

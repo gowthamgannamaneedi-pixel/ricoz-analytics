@@ -72,7 +72,7 @@ const PREBUILT_TEMPLATES = [
     title: 'Executive Summary',
     description: 'High-level KPIs, revenue trajectories, and decision intelligence signals.',
     format: 'pdf',
-    iconBg: 'bg-blue-50 text-blue-600 border-blue-200/80',
+    iconBg: 'bg-rose-50 text-rose-600 border-rose-200/80',
     category: 'Executive'
   },
   {
@@ -599,7 +599,7 @@ export default function ReportsPage() {
       {/* ─────────────────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-500/20 shrink-0">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20 shrink-0">
             <FileBarChart className="h-6 w-6" />
           </div>
           <div>
@@ -650,10 +650,10 @@ export default function ReportsPage() {
       {/* ─────────────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         {/* Card 1: Total Reports */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-blue-200 transition-all flex flex-col justify-between min-h-[140px]">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all flex flex-col justify-between min-h-[140px]">
           <div>
             <div className="flex items-center gap-2.5 text-slate-600">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100/80">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80">
                 <FileBarChart className="h-5 w-5" />
               </div>
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Reports</span>
@@ -662,7 +662,7 @@ export default function ReportsPage() {
               <span className="text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
                 {loading ? '—' : totalReportsCount}
               </span>
-              <MiniSparklineBars count={totalReportsCount} color="#2563eb" />
+              <MiniSparklineBars count={totalReportsCount} color="#e11d48" />
             </div>
           </div>
           <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center gap-1.5 text-xs">
@@ -739,7 +739,7 @@ export default function ReportsPage() {
             </div>
           </div>
           <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center gap-1.5 text-xs">
-            <span className="font-semibold text-blue-600">
+            <span className="font-semibold text-rose-600">
               {executionsCount > 0 ? `${executions.filter(e => e.status === 'completed').length} completed` : 'Audit log ready'}
             </span>
           </div>
@@ -757,7 +757,7 @@ export default function ReportsPage() {
             onClick={() => setActiveTab('library')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
               activeTab === 'library'
-                ? 'bg-blue-600 text-white shadow-xs font-bold'
+                ? 'bg-rose-600 text-white shadow-xs font-bold'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
             }`}
           >
@@ -770,7 +770,7 @@ export default function ReportsPage() {
             onClick={() => setActiveTab('scheduled')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
               activeTab === 'scheduled'
-                ? 'bg-blue-600 text-white shadow-xs font-bold'
+                ? 'bg-rose-600 text-white shadow-xs font-bold'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
             }`}
           >
@@ -783,7 +783,7 @@ export default function ReportsPage() {
             onClick={() => setActiveTab('history')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
               activeTab === 'history'
-                ? 'bg-blue-600 text-white shadow-xs font-bold'
+                ? 'bg-rose-600 text-white shadow-xs font-bold'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
             }`}
           >
@@ -796,7 +796,7 @@ export default function ReportsPage() {
             onClick={() => setActiveTab('templates')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
               activeTab === 'templates'
-                ? 'bg-blue-600 text-white shadow-xs font-bold'
+                ? 'bg-rose-600 text-white shadow-xs font-bold'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
             }`}
           >
@@ -815,7 +815,7 @@ export default function ReportsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by report name, description..."
-              className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-blue-500 shadow-2xs"
+              className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-rose-500 shadow-2xs"
             />
             {searchQuery && (
               <button
@@ -833,7 +833,7 @@ export default function ReportsPage() {
               id="filter-type-select"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="appearance-none pl-3 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 focus:outline-hidden focus:border-blue-500 cursor-pointer shadow-2xs"
+              className="appearance-none pl-3 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 focus:outline-hidden focus:border-rose-500 cursor-pointer shadow-2xs"
             >
               <option value="all">All Types</option>
               <option value="pdf">PDF Document</option>
@@ -849,7 +849,7 @@ export default function ReportsPage() {
               id="filter-status-select"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="appearance-none pl-3 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 focus:outline-hidden focus:border-blue-500 cursor-pointer shadow-2xs"
+              className="appearance-none pl-3 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 focus:outline-hidden focus:border-rose-500 cursor-pointer shadow-2xs"
             >
               <option value="all">All Statuses</option>
               <option value="active">Active Only</option>
@@ -863,7 +863,7 @@ export default function ReportsPage() {
             <button
               type="button"
               onClick={resetFilters}
-              className="text-xs font-semibold text-blue-600 hover:text-blue-800 px-2 py-1 rounded transition cursor-pointer"
+              className="text-xs font-semibold text-rose-600 hover:text-rose-800 px-2 py-1 rounded transition cursor-pointer"
             >
               Reset Filters
             </button>
@@ -884,7 +884,7 @@ export default function ReportsPage() {
             <div className="xl:col-span-8 bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs">
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
                     <FileBarChart className="h-4 w-4" />
                   </div>
                   <div>
@@ -904,7 +904,7 @@ export default function ReportsPage() {
                     setTypeFilter('all');
                     setStatusFilter('all');
                   }}
-                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition cursor-pointer"
+                  className="text-xs font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1 transition cursor-pointer"
                 >
                   <span>View All Reports</span>
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -969,15 +969,15 @@ export default function ReportsPage() {
                       return (
                         <div
                           key={r.id}
-                          className={`group rounded-xl border bg-white p-4.5 shadow-2xs hover:border-blue-300 hover:shadow-xs transition-all flex flex-col justify-between cursor-pointer ${
-                            isTargetHighlighted ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200/90'
+                          className={`group rounded-xl border bg-white p-4.5 shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between cursor-pointer ${
+                            isTargetHighlighted ? 'border-rose-500 ring-2 ring-rose-100' : 'border-slate-200/90'
                           }`}
                           onClick={() => handleOpenViewer(r)}
                         >
                           <div>
                             {/* Top Row: Icon + Format Badge */}
                             <div className="flex items-center justify-between pb-3">
-                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
                                 <FileText className="h-4 w-4" />
                               </div>
                               <div className="flex items-center gap-1.5">
@@ -989,11 +989,11 @@ export default function ReportsPage() {
                             <ReportVisualPreview type={previewType} className="mb-3.5" />
 
                             {/* Title - Strongest Visual Element, 2 lines max without premature truncation */}
-                            <div className="flex items-start justify-between gap-1.5 group-hover:text-blue-600 transition">
-                              <h4 className="text-sm sm:text-base font-bold text-slate-900 leading-snug line-clamp-2 group-hover:text-blue-600">
+                            <div className="flex items-start justify-between gap-1.5 group-hover:text-rose-600 transition">
+                              <h4 className="text-sm sm:text-base font-bold text-slate-900 leading-snug line-clamp-2 group-hover:text-rose-600">
                                 {r.title}
                               </h4>
-                              <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 shrink-0 mt-1" />
+                              <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-rose-600 shrink-0 mt-1" />
                             </div>
 
                             {/* Description */}
@@ -1015,7 +1015,7 @@ export default function ReportsPage() {
                                       <div
                                         key={rIdx}
                                         title={rec}
-                                        className="inline-block h-5 w-5 rounded-full ring-2 ring-white bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center"
+                                        className="inline-block h-5 w-5 rounded-full ring-2 ring-white bg-rose-600 text-white text-[9px] font-bold flex items-center justify-center"
                                       >
                                         {getInitials(rec)}
                                       </div>
@@ -1047,7 +1047,7 @@ export default function ReportsPage() {
                               type="button"
                               onClick={() => handleRunReportNow(r)}
                               disabled={isRunning || isViewer}
-                              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition disabled:opacity-50 cursor-pointer shadow-2xs"
+                              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition disabled:opacity-50 cursor-pointer shadow-2xs"
                             >
                               {isRunning ? (
                                 <>
@@ -1172,7 +1172,7 @@ export default function ReportsPage() {
               <div>
                 <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
                   <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
                       <Layout className="h-4 w-4" />
                     </div>
                     <div>
@@ -1188,7 +1188,7 @@ export default function ReportsPage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('templates')}
-                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition cursor-pointer"
+                    className="text-xs font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1 transition cursor-pointer"
                   >
                     <span>View All</span>
                     <ChevronRight className="h-3.5 w-3.5" />
@@ -1200,7 +1200,7 @@ export default function ReportsPage() {
                   {PREBUILT_TEMPLATES.map((tpl) => (
                     <div
                       key={tpl.id}
-                      className="p-3 rounded-xl border border-slate-100 hover:border-blue-200 bg-slate-50/50 hover:bg-blue-50/20 transition-all flex items-center justify-between gap-3 group"
+                      className="p-3 rounded-xl border border-slate-100 hover:border-rose-200 bg-slate-50/50 hover:bg-rose-50/20 transition-all flex items-center justify-between gap-3 group"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 border ${tpl.iconBg}`}>
@@ -1219,7 +1219,7 @@ export default function ReportsPage() {
                       <button
                         type="button"
                         onClick={() => handleUseTemplate(tpl)}
-                        className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-blue-50 text-xs font-semibold text-blue-600 hover:text-blue-700 transition cursor-pointer shrink-0 shadow-2xs"
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 text-xs font-semibold text-rose-600 hover:text-rose-700 transition cursor-pointer shrink-0 shadow-2xs"
                       >
                         Use
                       </button>
@@ -1229,8 +1229,8 @@ export default function ReportsPage() {
               </div>
 
               {/* Template Promotion Banner */}
-              <div className="mt-5 p-3.5 rounded-xl bg-blue-50/60 border border-blue-100 flex items-center gap-3 text-xs text-blue-900">
-                <Sparkles className="h-4 w-4 text-blue-600 shrink-0" />
+              <div className="mt-5 p-3.5 rounded-xl bg-rose-50/60 border border-rose-100 flex items-center gap-3 text-xs text-rose-900">
+                <Sparkles className="h-4 w-4 text-rose-600 shrink-0" />
                 <span className="leading-relaxed">
                   Automated formats include PDF digest, XLSX multi-sheet tables, and lightweight CSV exports.
                 </span>
@@ -1244,7 +1244,7 @@ export default function ReportsPage() {
             <div className="xl:col-span-8 bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs">
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
                     <FileBarChart className="h-4 w-4" />
                   </div>
                   <div>
@@ -1260,7 +1260,7 @@ export default function ReportsPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab('history')}
-                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition cursor-pointer"
+                  className="text-xs font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1 transition cursor-pointer"
                 >
                   <span>View All</span>
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -1308,7 +1308,7 @@ export default function ReportsPage() {
                                 <AlertCircle className="h-3 w-3" /> Failed
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
                                 <Loader2 className="h-3 w-3 animate-spin" /> Running
                               </span>
                             )}
@@ -1317,7 +1317,7 @@ export default function ReportsPage() {
                             {new Date(exec.created_at).toLocaleDateString()} {new Date(exec.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </td>
                           <td className="py-3">
-                            <div className="h-6 w-6 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">
+                            <div className="h-6 w-6 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center">
                               {getInitials(exec.executed_by_name || user?.name || 'Admin')}
                             </div>
                           </td>
@@ -1328,11 +1328,11 @@ export default function ReportsPage() {
                                   type="button"
                                   onClick={() => handleDownloadExecution(exec)}
                                   disabled={downloadingExecutionId === exec.id}
-                                  className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                                   title="Download Artifact"
                                 >
                                   {downloadingExecutionId === exec.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                                    <Loader2 className="h-4 w-4 animate-spin text-rose-600" />
                                   ) : (
                                     <Download className="h-4 w-4" />
                                   )}
@@ -1377,7 +1377,7 @@ export default function ReportsPage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('scheduled')}
-                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition cursor-pointer"
+                    className="text-xs font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1 transition cursor-pointer"
                   >
                     <span>View All</span>
                     <ChevronRight className="h-3.5 w-3.5" />
@@ -1440,7 +1440,7 @@ export default function ReportsPage() {
                             <span className="text-[11px] font-semibold text-slate-600 font-mono">
                               9:00 AM
                             </span>
-                            <div className="h-5 w-5 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center">
+                            <div className="h-5 w-5 rounded-full bg-rose-600 text-white text-[9px] font-bold flex items-center justify-center">
                               {getInitials(recipients[0] || user?.name || 'Admin')}
                             </div>
                           </div>
@@ -1495,7 +1495,7 @@ export default function ReportsPage() {
                 {scheduledReports.map((sr) => (
                   <div
                     key={sr.id}
-                    className="p-4 rounded-xl border border-slate-200 bg-white hover:border-blue-200 transition-all shadow-2xs flex flex-col justify-between"
+                    className="p-4 rounded-xl border border-slate-200 bg-white hover:border-rose-200 transition-all shadow-2xs flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-center justify-between pb-2">
@@ -1532,7 +1532,7 @@ export default function ReportsPage() {
                         type="button"
                         onClick={() => handleRunReportNow(sr)}
                         disabled={runningReportId === sr.id}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-semibold transition cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-semibold transition cursor-pointer"
                       >
                         <Play className="h-3 w-3" /> Trigger Now
                       </button>
@@ -1600,7 +1600,7 @@ export default function ReportsPage() {
                             <AlertCircle className="h-3 w-3" /> Failed
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
                             <Loader2 className="h-3 w-3 animate-spin" /> {exec.status}
                           </span>
                         )}
@@ -1621,7 +1621,7 @@ export default function ReportsPage() {
                             type="button"
                             onClick={() => handleDownloadExecution(exec)}
                             disabled={downloadingExecutionId === exec.id}
-                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 disabled:opacity-50 transition cursor-pointer"
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-800 disabled:opacity-50 transition cursor-pointer"
                           >
                             {downloadingExecutionId === exec.id ? (
                               <>
@@ -1666,7 +1666,7 @@ export default function ReportsPage() {
             {PREBUILT_TEMPLATES.map((tpl) => (
               <div
                 key={tpl.id}
-                className="p-5 rounded-2xl border border-slate-200 bg-white hover:border-blue-300 hover:shadow-xs transition-all flex flex-col justify-between"
+                className="p-5 rounded-2xl border border-slate-200 bg-white hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between pb-3">

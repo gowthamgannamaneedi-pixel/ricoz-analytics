@@ -526,7 +526,7 @@ export default function DataSourcesPage() {
               variant="secondary"
               className="h-9.5 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold shadow-2xs text-xs sm:text-sm"
             >
-              <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
+              <RefreshCw className={`h-3.5 w-3.5 text-slate-500 ${isRefreshing ? 'animate-spin text-rose-600' : ''}`} />
               <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
             </Button>
           </div>
@@ -573,7 +573,7 @@ export default function DataSourcesPage() {
           onClick={() => setActiveTab('all')}
           className={`rounded-2xl border p-5 transition-all text-left cursor-pointer shadow-2xs ${
             activeTab === 'all'
-              ? 'border-blue-500 bg-blue-50/20 ring-1 ring-blue-500/25 shadow-xs'
+              ? 'border-rose-500 bg-rose-50/20 ring-1 ring-rose-500/25 shadow-xs'
               : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/40'
           }`}
         >
@@ -581,7 +581,7 @@ export default function DataSourcesPage() {
             <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
               All Sources
             </p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
               <Database className="h-4 w-4" />
             </div>
           </div>
@@ -700,7 +700,7 @@ export default function DataSourcesPage() {
             onClick={() => { setActiveTab('all'); setCurrentPage(1); }}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
               activeTab === 'all'
-                ? 'bg-blue-50 text-blue-700 shadow-2xs border border-blue-200/80 font-bold'
+                ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
@@ -794,7 +794,7 @@ export default function DataSourcesPage() {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:outline-none transition-all shadow-2xs"
+              className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-rose-600 focus:outline-none transition-all shadow-2xs"
             />
             {searchQuery && (
               <button
@@ -817,14 +817,14 @@ export default function DataSourcesPage() {
               onClick={() => setIsFilterDropdownOpen(prev => !prev)}
               className={`flex items-center gap-2 h-9 px-3 rounded-xl border text-xs font-semibold transition cursor-pointer shadow-2xs ${
                 statusFilter !== 'all'
-                  ? 'border-blue-500 bg-blue-50/50 text-blue-700'
+                  ? 'border-rose-500 bg-rose-50/50 text-rose-700'
                   : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
               }`}
             >
               <Filter className="h-3.5 w-3.5 text-slate-500" />
               <span>Filter</span>
               {statusFilter !== 'all' && (
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
+                <span className="h-1.5 w-1.5 rounded-full bg-rose-600" />
               )}
             </button>
 
@@ -837,7 +837,7 @@ export default function DataSourcesPage() {
                   type="button"
                   onClick={() => { setStatusFilter('all'); setIsFilterDropdownOpen(false); }}
                   className={`w-full text-left px-3 py-2 rounded-lg flex items-center justify-between text-xs cursor-pointer ${
-                    statusFilter === 'all' ? 'bg-blue-50 font-bold text-blue-700' : 'text-slate-700 hover:bg-slate-50'
+                    statusFilter === 'all' ? 'bg-rose-50 font-bold text-rose-700' : 'text-slate-700 hover:bg-slate-50'
                   }`}
                 >
                   <span>All Statuses</span>
@@ -847,7 +847,7 @@ export default function DataSourcesPage() {
                   type="button"
                   onClick={() => { setStatusFilter('active_ready'); setIsFilterDropdownOpen(false); }}
                   className={`w-full text-left px-3 py-2 rounded-lg flex items-center justify-between text-xs cursor-pointer ${
-                    statusFilter === 'active_ready' ? 'bg-blue-50 font-bold text-blue-700' : 'text-slate-700 hover:bg-slate-50'
+                    statusFilter === 'active_ready' ? 'bg-rose-50 font-bold text-rose-700' : 'text-slate-700 hover:bg-slate-50'
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -860,7 +860,7 @@ export default function DataSourcesPage() {
                   type="button"
                   onClick={() => { setStatusFilter('error_disconnected'); setIsFilterDropdownOpen(false); }}
                   className={`w-full text-left px-3 py-2 rounded-lg flex items-center justify-between text-xs cursor-pointer ${
-                    statusFilter === 'error_disconnected' ? 'bg-blue-50 font-bold text-blue-700' : 'text-slate-700 hover:bg-slate-50'
+                    statusFilter === 'error_disconnected' ? 'bg-rose-50 font-bold text-rose-700' : 'text-slate-700 hover:bg-slate-50'
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -881,7 +881,7 @@ export default function DataSourcesPage() {
               onClick={() => setViewMode('table')}
               className={`p-1.5 rounded-lg transition cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-rose-600 text-white shadow-xs'
                   : 'text-slate-400 hover:text-slate-600'
               }`}
               title="Table View"
@@ -894,7 +894,7 @@ export default function DataSourcesPage() {
               onClick={() => setViewMode('grid')}
               className={`p-1.5 rounded-lg transition cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-rose-600 text-white shadow-xs'
                   : 'text-slate-400 hover:text-slate-600'
               }`}
               title="Grid View"
@@ -910,7 +910,7 @@ export default function DataSourcesPage() {
       {/* ───────────────────────────────────────────────────────────────── */}
       {isLoading ? (
         <div className="rounded-2xl border border-slate-200/90 bg-white p-16 flex flex-col items-center justify-center space-y-3 shadow-2xs">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-rose-600" />
           <p className="text-xs font-semibold text-slate-600">
             Fetching connected data sources and pipeline health...
           </p>
@@ -918,7 +918,7 @@ export default function DataSourcesPage() {
       ) : filteredSources.length === 0 ? (
         /* Empty State */
         <div className="rounded-2xl border border-slate-200/90 bg-white p-16 text-center space-y-4 shadow-2xs">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 mx-auto">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 mx-auto">
             <Database className="h-7 w-7" />
           </div>
           <div>
@@ -935,7 +935,7 @@ export default function DataSourcesPage() {
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="text-xs font-semibold text-blue-600 hover:text-blue-700 underline cursor-pointer"
+              className="text-xs font-semibold text-rose-600 hover:text-rose-700 underline cursor-pointer"
             >
               Clear search filter
             </button>
@@ -967,7 +967,7 @@ export default function DataSourcesPage() {
                         paginatedSources.every(s => selectedIds.includes(s.id))
                       }
                       onChange={handleSelectAll}
-                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      className="rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
                     />
                   </th>
 
@@ -1028,7 +1028,7 @@ export default function DataSourcesPage() {
                         type="checkbox"
                         checked={selectedIds.includes(source.id)}
                         onChange={() => handleToggleSelect(source.id)}
-                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        className="rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
                       />
                     </td>
 
@@ -1042,7 +1042,7 @@ export default function DataSourcesPage() {
                           <button
                             type="button"
                             onClick={() => handleOpenDetails(source)}
-                            className="font-bold text-slate-900 hover:text-blue-600 transition text-left truncate block text-xs cursor-pointer"
+                            className="font-bold text-slate-900 hover:text-rose-600 transition text-left truncate block text-xs cursor-pointer"
                           >
                             {source.name}
                           </button>
@@ -1070,12 +1070,12 @@ export default function DataSourcesPage() {
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       <Link
                         to="/datasets"
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-blue-600 group/link transition"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-rose-600 group/link transition"
                         title="View table in Datasets workspace"
                       >
-                        <TableIcon className="h-3.5 w-3.5 text-slate-400 group-hover/link:text-blue-500" />
+                        <TableIcon className="h-3.5 w-3.5 text-slate-400 group-hover/link:text-rose-500" />
                         <span>{source.dataset_count || 1} {source.dataset_count === 1 ? 'Dataset' : 'Datasets'}</span>
-                        <ExternalLink className="h-3 w-3 text-slate-400 group-hover/link:text-blue-500" />
+                        <ExternalLink className="h-3 w-3 text-slate-400 group-hover/link:text-rose-500" />
                       </Link>
                     </td>
 
@@ -1113,12 +1113,12 @@ export default function DataSourcesPage() {
                           id={`sync-source-${source.id}`}
                           onClick={() => handleSync(source.id, source.name)}
                           disabled={syncingId === source.id || isViewer}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer disabled:opacity-40"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer disabled:opacity-40"
                           title="Synchronize Data Source"
                           aria-label={`Sync ${source.name}`}
                         >
                           {syncingId === source.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                            <Loader2 className="h-4 w-4 animate-spin text-rose-600" />
                           ) : (
                             <RefreshCw className="h-4 w-4" />
                           )}
@@ -1166,9 +1166,9 @@ export default function DataSourcesPage() {
                               type="button"
                               onClick={() => handleSync(source.id, source.name)}
                               disabled={isViewer}
-                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-50 hover:text-blue-700 font-medium cursor-pointer disabled:opacity-40"
+                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-rose-50 hover:text-rose-700 font-medium cursor-pointer disabled:opacity-40"
                             >
-                              <RefreshCw className="h-3.5 w-3.5 text-blue-600" />
+                              <RefreshCw className="h-3.5 w-3.5 text-rose-600" />
                               <span>Sync Pipeline</span>
                             </button>
                             <button
@@ -1243,7 +1243,7 @@ export default function DataSourcesPage() {
                   <ChevronLeft className="h-3.5 w-3.5" />
                 </button>
 
-                <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold border border-blue-200/80 text-xs">
+                <span className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 font-bold border border-rose-200/80 text-xs">
                   {currentPage}
                 </span>
 
@@ -1281,7 +1281,7 @@ export default function DataSourcesPage() {
           {paginatedSources.map((source) => (
             <div
               key={source.id}
-              className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xs hover:shadow-xs hover:border-blue-200 transition space-y-4"
+              className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 transition space-y-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -1317,7 +1317,7 @@ export default function DataSourcesPage() {
                     type="button"
                     onClick={() => handleSync(source.id, source.name)}
                     disabled={syncingId === source.id || isViewer}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                     title="Sync"
                   >
                     <RefreshCw className="h-4 w-4" />
@@ -1411,7 +1411,7 @@ export default function DataSourcesPage() {
                         className="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 bg-white"
                       >
                         <div className="flex items-center gap-2">
-                          <TableIcon className="h-4 w-4 text-blue-600" />
+                          <TableIcon className="h-4 w-4 text-rose-600" />
                           <span className="font-semibold text-slate-900">{ds.name}</span>
                         </div>
                         <span className="font-mono text-[11px] text-slate-500">
@@ -1456,7 +1456,7 @@ export default function DataSourcesPage() {
           <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 p-6 space-y-4 animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
                   <Edit2 className="h-4 w-4" />
                 </div>
                 <div>
@@ -1480,7 +1480,7 @@ export default function DataSourcesPage() {
                   type="text"
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-blue-600 shadow-2xs font-medium"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-rose-600 shadow-2xs font-medium"
                   required
                 />
               </div>
@@ -1494,7 +1494,7 @@ export default function DataSourcesPage() {
                     type="text"
                     value={editForm.endpoint}
                     onChange={(e) => setEditForm({ ...editForm, endpoint: e.target.value })}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-blue-600 shadow-2xs font-mono text-[11px]"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-rose-600 shadow-2xs font-mono text-[11px]"
                   />
                 </div>
               )}
@@ -1504,7 +1504,7 @@ export default function DataSourcesPage() {
                 <select
                   value={editForm.status}
                   onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-blue-600 shadow-2xs cursor-pointer font-medium"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer font-medium"
                 >
                   <option value="active">Active & Ready</option>
                   <option value="connected">Connected</option>

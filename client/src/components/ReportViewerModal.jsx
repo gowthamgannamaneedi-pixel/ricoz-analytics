@@ -113,7 +113,7 @@ export default function ReportViewerModal({
         {/* Header */}
         <div className="flex items-start justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/70">
           <div className="flex items-start gap-3.5 min-w-0 pr-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-600 text-white shadow-xs">
               <FileBarChart className="h-5 w-5" />
             </div>
             <div className="min-w-0">
@@ -146,7 +146,7 @@ export default function ReportViewerModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/50">
               <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 mb-1">
-                <Layers className="h-3.5 w-3.5 text-blue-600" />
+                <Layers className="h-3.5 w-3.5 text-rose-600" />
                 <span>Source Scope</span>
               </div>
               <p className="text-xs font-semibold text-slate-900 truncate" title={report.dashboard_title || 'Executive Overview'}>
@@ -235,7 +235,7 @@ export default function ReportViewerModal({
                 <button
                   onClick={() => onDownloadExecution(latestExecution)}
                   disabled={downloadingId === latestExecution.id}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-xs transition disabled:opacity-50 cursor-pointer"
                 >
                   {downloadingId === latestExecution.id ? (
                     <>
@@ -321,7 +321,7 @@ export default function ReportViewerModal({
                                 <AlertCircle className="h-3 w-3" /> Failed
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
                                 <Loader2 className="h-3 w-3 animate-spin" /> {exec.status}
                               </span>
                             )}
@@ -338,7 +338,7 @@ export default function ReportViewerModal({
                               <button
                                 onClick={() => onDownloadExecution(exec)}
                                 disabled={downloadingId === exec.id}
-                                className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 transition cursor-pointer"
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-800 transition cursor-pointer"
                               >
                                 {downloadingId === exec.id ? (
                                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -398,7 +398,7 @@ export default function ReportViewerModal({
             <button
               onClick={() => onRunReport(report)}
               disabled={isRunning || isViewer}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-xs transition disabled:opacity-50 cursor-pointer"
             >
               {isRunning ? (
                 <>

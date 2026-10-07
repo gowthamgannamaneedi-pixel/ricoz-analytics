@@ -85,13 +85,13 @@ export default function RootCauseDrawer({
           {/* Header */}
           <div className="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 sticky top-0 z-10">
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-xl bg-blue-50 border border-blue-100 text-blue-600">
+              <div className="p-2 rounded-xl bg-rose-50 border border-rose-100 text-rose-600">
                 <Layers className="w-5 h-5" />
               </div>
               <div>
                 <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <span>Root-Cause Driver Breakdown</span>
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80 font-mono">
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200/80 font-mono">
                     Attribution Analysis
                   </span>
                 </h2>
@@ -124,7 +124,7 @@ export default function RootCauseDrawer({
                     onClick={() => setSelectedDimension(dim)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition capitalize cursor-pointer ${
                       selectedDimension === dim
-                        ? 'bg-blue-600 text-white shadow-2xs'
+                        ? 'bg-rose-600 text-white shadow-2xs'
                         : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                     }`}
                   >
@@ -136,7 +136,7 @@ export default function RootCauseDrawer({
 
             {loading ? (
               <div className="py-20 flex flex-col items-center justify-center space-y-3">
-                <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
+                <RefreshCw className="w-8 h-8 text-rose-600 animate-spin" />
                 <p className="text-xs font-medium text-slate-500">Decomposing dimensional drivers from dataset rows...</p>
               </div>
             ) : error ? (
@@ -204,7 +204,7 @@ export default function RootCauseDrawer({
                 {/* Movement Concentration Metric */}
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 text-slate-700">
-                    <PieChart className="w-4 h-4 text-blue-600" />
+                    <PieChart className="w-4 h-4 text-rose-600" />
                     <span>
                       <strong className="text-slate-900">Movement Concentration:</strong> {attribution.concentration?.type ? attribution.concentration.type.charAt(0).toUpperCase() + attribution.concentration.type.slice(1) : 'Distributed'} (Score: {attribution.concentration?.hhi})
                     </span>
@@ -270,13 +270,13 @@ export default function RootCauseDrawer({
                 </div>
 
                 {/* Grounded AI Driver Explanation */}
-                <div className="p-4 rounded-xl bg-blue-50/40 border border-blue-100 text-xs space-y-1.5">
+                <div className="p-4 rounded-xl bg-rose-50/40 border border-rose-100 text-xs space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-blue-600" />
-                    <span className="font-bold text-blue-900">
+                    <Sparkles className="w-4 h-4 text-rose-600" />
+                    <span className="font-bold text-rose-900">
                       AI Driver Interpretation
                     </span>
-                    <span className="text-[10px] font-mono text-blue-600 bg-blue-100 px-2 py-0.2 rounded border border-blue-200">
+                    <span className="text-[10px] font-mono text-rose-600 bg-rose-100 px-2 py-0.2 rounded border border-rose-200">
                       {attribution.aiGenerated ? 'Gemini' : 'Deterministic Engine'}
                     </span>
                   </div>
@@ -302,7 +302,7 @@ export default function RootCauseDrawer({
                 onClick={() => {
                   onLaunchSimulator(insight, attribution);
                 }}
-                className="px-4 py-2 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-2xs flex items-center gap-2 transition cursor-pointer"
+                className="px-4 py-2 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-2xs flex items-center gap-2 transition cursor-pointer"
               >
                 <Sliders className="w-4 h-4" />
                 <span>Launch What-If Simulator</span>

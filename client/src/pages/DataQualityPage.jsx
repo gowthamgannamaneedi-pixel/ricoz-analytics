@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   ShieldCheck,
   AlertTriangle,
@@ -479,7 +479,7 @@ export default function DataQualityPage() {
                 id="dataset-select"
                 value={selectedDatasetId}
                 onChange={(e) => setSelectedDatasetId(e.target.value)}
-                className="appearance-none pl-9 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-800 hover:border-slate-300 focus:outline-hidden focus:border-blue-500 shadow-2xs cursor-pointer"
+                className="appearance-none pl-9 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-800 hover:border-slate-300 focus:outline-hidden focus:border-rose-500 shadow-2xs cursor-pointer"
               >
                 {datasets.map((d) => (
                   <option key={d.id} value={d.id}>
@@ -487,7 +487,7 @@ export default function DataQualityPage() {
                   </option>
                 ))}
               </select>
-              <Database className="h-4 w-4 text-blue-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Database className="h-4 w-4 text-rose-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
 
@@ -498,7 +498,7 @@ export default function DataQualityPage() {
                 onClick={() => setScanMode('full')}
                 className={`h-8 px-3 rounded-lg font-semibold transition cursor-pointer ${
                   scanMode === 'full'
-                    ? 'bg-blue-600 text-white shadow-2xs font-bold'
+                    ? 'bg-rose-600 text-white shadow-2xs font-bold'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -509,7 +509,7 @@ export default function DataQualityPage() {
                 onClick={() => setScanMode('sampled')}
                 className={`h-8 px-3 rounded-lg font-semibold transition cursor-pointer ${
                   scanMode === 'sampled'
-                    ? 'bg-blue-600 text-white shadow-2xs font-bold'
+                    ? 'bg-rose-600 text-white shadow-2xs font-bold'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -604,12 +604,12 @@ export default function DataQualityPage() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-28 space-y-3 bg-white border border-slate-200/90 rounded-2xl shadow-xs">
-          <RefreshCw className="h-8 w-8 text-blue-600 animate-spin" />
+          <RefreshCw className="h-8 w-8 text-rose-600 animate-spin" />
           <p className="text-xs font-semibold text-slate-500">Evaluating dataset quality dimensions...</p>
         </div>
       ) : !qualityProfile ? (
         <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-4 shadow-xs max-w-lg mx-auto my-6">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-200">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 border border-rose-200">
             <ShieldCheck className="h-6 w-6" />
           </div>
           <h3 className="text-base font-bold text-slate-900">No Quality Profile Found</h3>
@@ -633,7 +633,7 @@ export default function DataQualityPage() {
                 {/* Header */}
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
                       <ShieldCheck className="h-4 w-4" />
                     </div>
                     <span className="text-sm font-bold text-slate-900">Overall Dataset Health</span>
@@ -835,7 +835,7 @@ export default function DataQualityPage() {
               onClick={() => setActiveTab('matrix')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
                 activeTab === 'matrix'
-                  ? 'bg-blue-600 text-white shadow-xs font-bold'
+                  ? 'bg-rose-600 text-white shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
@@ -849,7 +849,7 @@ export default function DataQualityPage() {
               onClick={() => setActiveTab('issues')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
                 activeTab === 'issues'
-                  ? 'bg-blue-600 text-white shadow-xs font-bold'
+                  ? 'bg-rose-600 text-white shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
@@ -872,7 +872,7 @@ export default function DataQualityPage() {
               onClick={() => setActiveTab('rules')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
                 activeTab === 'rules'
-                  ? 'bg-blue-600 text-white shadow-xs font-bold'
+                  ? 'bg-rose-600 text-white shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
@@ -881,7 +881,7 @@ export default function DataQualityPage() {
               {rules.length > 0 && (
                 <span
                   className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold font-mono ${
-                    activeTab === 'rules' ? 'bg-white text-blue-700' : 'bg-slate-200 text-slate-700'
+                    activeTab === 'rules' ? 'bg-white text-rose-700' : 'bg-slate-200 text-slate-700'
                   }`}
                 >
                   {rules.length}
@@ -895,7 +895,7 @@ export default function DataQualityPage() {
               onClick={() => setActiveTab('history')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
                 activeTab === 'history'
-                  ? 'bg-blue-600 text-white shadow-xs font-bold'
+                  ? 'bg-rose-600 text-white shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
@@ -912,7 +912,7 @@ export default function DataQualityPage() {
               {/* Header + Controls Toolbar */}
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
                     <Layers className="h-4 w-4" />
                   </div>
                   <div>
@@ -933,7 +933,7 @@ export default function DataQualityPage() {
                       id="filter-column-scope"
                       value={scopeFilter}
                       onChange={(e) => setScopeFilter(e.target.value)}
-                      className="appearance-none pl-3 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-hidden focus:border-blue-500 cursor-pointer shadow-2xs"
+                      className="appearance-none pl-3 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-hidden focus:border-rose-500 cursor-pointer shadow-2xs"
                     >
                       <option value="all">All Columns ({columnMetrics.length})</option>
                       <option value="missing">With Missing Values</option>
@@ -948,7 +948,7 @@ export default function DataQualityPage() {
                       id="filter-column-type"
                       value={typeFilter}
                       onChange={(e) => setTypeFilter(e.target.value)}
-                      className="appearance-none pl-3 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-hidden focus:border-blue-500 cursor-pointer shadow-2xs"
+                      className="appearance-none pl-3 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-hidden focus:border-rose-500 cursor-pointer shadow-2xs"
                     >
                       <option value="all">All Data Types</option>
                       <option value="string">String / Text</option>
@@ -981,7 +981,7 @@ export default function DataQualityPage() {
                   placeholder="Search columns..."
                   value={columnSearch}
                   onChange={(e) => setColumnSearch(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 bg-slate-50/70 text-xs sm:text-sm text-slate-800 placeholder-slate-400 hover:border-slate-300 focus:border-blue-600 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-100 transition shadow-2xs"
+                  className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 bg-slate-50/70 text-xs sm:text-sm text-slate-800 placeholder-slate-400 hover:border-slate-300 focus:border-rose-600 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-100 transition shadow-2xs"
                 />
                 {columnSearch && (
                   <button
@@ -1022,7 +1022,7 @@ export default function DataQualityPage() {
                             <button
                               type="button"
                               onClick={resetFilters}
-                              className="text-xs font-semibold text-blue-600 hover:underline pt-1 cursor-pointer"
+                              className="text-xs font-semibold text-rose-600 hover:underline pt-1 cursor-pointer"
                             >
                               Reset filters
                             </button>
@@ -1089,7 +1089,7 @@ export default function DataQualityPage() {
                             </td>
                             <td className="px-4 py-3.5">
                               {col.is_candidate_pk ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/90 text-[10px] font-bold">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200/90 text-[10px] font-bold">
                                   <Key className="h-3 w-3 text-amber-500" />
                                   <span>Primary Key</span>
                                 </span>
@@ -1115,9 +1115,9 @@ export default function DataQualityPage() {
                                   <button
                                     type="button"
                                     onClick={() => handleOpenRuleForColumn(col.column_name)}
-                                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition font-semibold cursor-pointer"
+                                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition font-semibold cursor-pointer"
                                   >
-                                    <Plus className="h-3.5 w-3.5 text-blue-600" />
+                                    <Plus className="h-3.5 w-3.5 text-rose-600" />
                                     <span>Add Quality Rule</span>
                                   </button>
                                   <button
@@ -1267,7 +1267,7 @@ export default function DataQualityPage() {
             <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
                     <Sliders className="h-4 w-4" />
                   </div>
                   <div>
@@ -1296,7 +1296,7 @@ export default function DataQualityPage() {
 
               {rules.length === 0 ? (
                 <div className="bg-white border border-slate-100 rounded-2xl p-14 text-center space-y-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 mx-auto">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 mx-auto">
                     <Sliders className="h-6 w-6" />
                   </div>
                   <p className="text-sm font-bold text-slate-900">No Custom Rules Configured</p>
@@ -1318,12 +1318,12 @@ export default function DataQualityPage() {
                   {rules.map((rule) => (
                     <div
                       key={rule.id}
-                      className="bg-white border border-slate-200/90 rounded-xl p-4.5 flex items-start justify-between gap-3 shadow-2xs hover:border-blue-200 hover:shadow-xs transition-all"
+                      className="bg-white border border-slate-200/90 rounded-xl p-4.5 flex items-start justify-between gap-3 shadow-2xs hover:border-rose-200 hover:shadow-xs transition-all"
                     >
                       <div className="space-y-2 min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-bold text-slate-900 text-sm">{rule.column_name}</span>
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/90 uppercase font-mono">
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200/90 uppercase font-mono">
                             {rule.rule_type}
                           </span>
                           <span
@@ -1367,7 +1367,7 @@ export default function DataQualityPage() {
           {activeTab === 'history' && (
             <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
               <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
                   <Calendar className="h-4 w-4" />
                 </div>
                 <div>
@@ -1425,7 +1425,7 @@ export default function DataQualityPage() {
                             <td className="px-4 py-3.5 font-mono">{h.completeness}%</td>
                             <td className="px-4 py-3.5 font-mono">{h.validity}%</td>
                             <td className="px-4 py-3.5 font-mono">{h.uniqueness}%</td>
-                            <td className="px-4 py-3.5 text-blue-700 font-mono text-[11px] font-semibold">
+                            <td className="px-4 py-3.5 text-rose-700 font-mono text-[11px] font-semibold">
                               {h.scan_mode || 'FULL_SCAN'}
                             </td>
                             <td className="px-4 py-3.5 font-mono">
@@ -1451,7 +1451,7 @@ export default function DataQualityPage() {
           <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 p-6 animate-in fade-in zoom-in-95 duration-150 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
                   <Sliders className="h-4.5 w-4.5" />
                 </div>
                 <div>
@@ -1481,7 +1481,7 @@ export default function DataQualityPage() {
                 <select
                   value={ruleForm.columnName}
                   onChange={(e) => setRuleForm({ ...ruleForm, columnName: e.target.value })}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-hidden focus:border-blue-600 shadow-2xs cursor-pointer font-medium"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-hidden focus:border-rose-600 shadow-2xs cursor-pointer font-medium"
                   required
                 >
                   <option value="">Select a column</option>
@@ -1498,7 +1498,7 @@ export default function DataQualityPage() {
                 <select
                   value={ruleForm.ruleType}
                   onChange={(e) => setRuleForm({ ...ruleForm, ruleType: e.target.value })}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-hidden focus:border-blue-600 shadow-2xs cursor-pointer font-medium"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-hidden focus:border-rose-600 shadow-2xs cursor-pointer font-medium"
                 >
                   <option value="not_null">Must Not Be Null / Empty</option>
                   <option value="unique">Must Be Unique</option>
@@ -1515,7 +1515,7 @@ export default function DataQualityPage() {
                 <select
                   value={ruleForm.severity}
                   onChange={(e) => setRuleForm({ ...ruleForm, severity: e.target.value })}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-hidden focus:border-blue-600 shadow-2xs cursor-pointer font-medium"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-hidden focus:border-rose-600 shadow-2xs cursor-pointer font-medium"
                 >
                   <option value="warning">Warning (Non-blocking alert)</option>
                   <option value="critical">Critical (Fails ingestion quality score)</option>

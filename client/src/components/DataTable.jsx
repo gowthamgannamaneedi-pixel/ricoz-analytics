@@ -102,7 +102,7 @@ export default function DataTable({
                       {col.sortable !== false && (
                         <span className="text-slate-400 dark:text-slate-500">
                           {isSorted ? (
-                            sortOrder === 'asc' ? <ChevronUp className="h-3 w-3 text-blue-600 dark:text-blue-400" /> : <ChevronDown className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                            sortOrder === 'asc' ? <ChevronUp className="h-3 w-3 text-rose-600 dark:text-rose-400" /> : <ChevronDown className="h-3 w-3 text-rose-600 dark:text-rose-400" />
                           ) : (
                             <ArrowUpDown className="h-3 w-3 opacity-40 hover:opacity-100" />
                           )}

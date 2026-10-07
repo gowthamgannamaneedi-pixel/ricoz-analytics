@@ -44,7 +44,7 @@ export function RefreshButton({
       {...rest}
     >
       <RefreshCw
-        className={`h-4 w-4 shrink-0 transition-transform ${loading ? 'animate-spin text-blue-600' : 'text-slate-500'}`}
+        className={`h-4 w-4 shrink-0 transition-transform ${loading ? 'animate-spin text-rose-600' : 'text-slate-500'}`}
         strokeWidth={2}
       />
       <span>{label}</span>

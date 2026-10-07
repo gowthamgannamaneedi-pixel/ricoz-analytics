@@ -6,6 +6,7 @@
   html {
     scroll-behavior: smooth;
   }
+  
   body {
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     background-color: #F8FAFC;
@@ -17,9 +18,13 @@
   }
 
   /* Dark mode root styles */
+  html.dark {
+    color-scheme: dark;
+  }
+
   html.dark body {
-    background-color: #0B0F19;
-    color: #F8FAFC;
+    background-color: #0B0F19 !important;
+    color: #F8FAFC !important;
   }
 }
 
@@ -59,26 +64,26 @@
 
 /* Custom crisp enterprise scrollbars (Dark Theme) */
 html.dark ::-webkit-scrollbar-track {
-  background: #0F172A;
+  background: #0B0F19;
 }
 
 html.dark ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #1E293B;
   border-radius: 4px;
 }
 
 html.dark ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #334155;
 }
 
 /* Global focus styling for accessibility */
 *:focus-visible {
-  outline: 2px solid #2563EB;
+  outline: 2px solid #E11D48;
   outline-offset: 2px;
 }
 
 html.dark *:focus-visible {
-  outline: 2px solid #3B82F6;
+  outline: 2px solid #F43F5E;
   outline-offset: 2px;
 }
 
@@ -142,7 +147,7 @@ html.dark *:focus-visible {
 
   /* Modal overlay backdrop */
   .rz-modal-backdrop {
-    @apply fixed inset-0 z-50 flex items-start justify-center p-4 pt-16 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-xs overflow-y-auto;
+    @apply fixed inset-0 z-50 flex items-start justify-center p-4 pt-16 bg-slate-900/60 dark:bg-black/80 backdrop-blur-xs overflow-y-auto;
   }
 
   /* Modal container */
@@ -171,6 +176,57 @@ html.dark *:focus-visible {
 .rz-table-wrap { overflow-x: auto; overscroll-behavior-x: contain; }
 .rz-table-wrap table { min-width: 680px; width: 100%; }
 
+/* ─── Global Dark Mode Container & Surface Consistency Rules ─────────────── */
+/* Guaranteed dark backgrounds for containers, cards, dialogs, dropdowns, forms */
+html.dark .bg-white:not([class*="dark:bg-"]) {
+  background-color: #111827 !important;
+}
+
+html.dark .bg-slate-50:not([class*="dark:bg-"]),
+html.dark .bg-gray-50:not([class*="dark:bg-"]) {
+  background-color: #161F30 !important;
+}
+
+html.dark .bg-slate-100:not([class*="dark:bg-"]),
+html.dark .bg-gray-100:not([class*="dark:bg-"]) {
+  background-color: #1E293B !important;
+}
+
+html.dark .border-slate-100:not([class*="dark:border-"]),
+html.dark .border-slate-200:not([class*="dark:border-"]),
+html.dark .border-slate-300:not([class*="dark:border-"]),
+html.dark .border-gray-200:not([class*="dark:border-"]),
+html.dark .border-gray-300:not([class*="dark:border-"]) {
+  border-color: #1E293B !important;
+}
+
+html.dark .text-slate-900:not([class*="dark:text-"]),
+html.dark .text-slate-800:not([class*="dark:text-"]),
+html.dark .text-gray-900:not([class*="dark:text-"]),
+html.dark .text-gray-800:not([class*="dark:text-"]) {
+  color: #F8FAFC !important;
+}
+
+html.dark .text-slate-700:not([class*="dark:text-"]),
+html.dark .text-slate-600:not([class*="dark:text-"]),
+html.dark .text-gray-700:not([class*="dark:text-"]),
+html.dark .text-gray-600:not([class*="dark:text-"]) {
+  color: #CBD5E1 !important;
+}
+
+html.dark .text-slate-500:not([class*="dark:text-"]),
+html.dark .text-slate-400:not([class*="dark:text-"]),
+html.dark .text-gray-500:not([class*="dark:text-"]),
+html.dark .text-gray-400:not([class*="dark:text-"]) {
+  color: #94A3B8 !important;
+}
+
+/* Ensure native select options are readable in dark mode */
+html.dark select option {
+  background-color: #111827;
+  color: #F8FAFC;
+}
+
 /* Global Recharts Dark Mode Styling */
 .dark .recharts-cartesian-grid-horizontal line,
 .dark .recharts-cartesian-grid-vertical line {
@@ -190,6 +246,7 @@ html.dark *:focus-visible {
   background-color: #0F172A !important;
   border-color: #334155 !important;
   color: #F8FAFC !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.6) !important;
   border-radius: 0.75rem !important;
 }
+

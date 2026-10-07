@@ -63,10 +63,10 @@ import {
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
-const PIE_COLORS = ['#2563EB', '#7C3AED', '#059669', '#D97706', '#DB2777', '#0891B2', '#4B5563'];
+const PIE_COLORS = ['#E11D48', '#7C3AED', '#059669', '#D97706', '#DB2777', '#0891B2', '#4B5563'];
 
 const INTENT_BADGES = {
-  kpi: 'bg-blue-50 text-blue-700 border-blue-200',
+  kpi: 'bg-rose-50 text-rose-700 border-rose-200',
   trend: 'bg-purple-50 text-purple-700 border-purple-200',
   growth: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   ranking: 'bg-indigo-50 text-indigo-700 border-indigo-200',
@@ -78,7 +78,7 @@ const INTENT_BADGES = {
   metric_explanation: 'bg-teal-50 text-teal-700 border-teal-200',
   greeting: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   farewell: 'bg-slate-100 text-slate-700 border-slate-200',
-  thanks: 'bg-blue-50 text-blue-700 border-blue-200',
+  thanks: 'bg-rose-50 text-rose-700 border-rose-200',
   help: 'bg-amber-50 text-amber-700 border-amber-200',
   capabilities: 'bg-indigo-50 text-indigo-700 border-indigo-200',
   non_analytics: 'bg-slate-100 text-slate-600 border-slate-200'
@@ -102,10 +102,10 @@ const QUESTION_CATEGORIES = [
   {
     category: 'Sales Analysis',
     icon: ShoppingBag,
-    headerColor: 'text-blue-700',
-    iconBg: 'bg-blue-50 text-blue-600',
-    borderColor: 'border-blue-100',
-    hoverBorder: 'hover:border-blue-300',
+    headerColor: 'text-rose-700',
+    iconBg: 'bg-rose-50 text-rose-600',
+    borderColor: 'border-rose-100',
+    hoverBorder: 'hover:border-rose-300',
     questions: [
       'Which product has the highest sales?',
       'Show top 5 products by revenue',
@@ -464,7 +464,7 @@ export default function AIAnalyticsAssistant() {
         return (
           <div className="mt-3.5 p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-2">
             <div className="text-xs font-bold text-slate-800 flex items-center gap-2">
-              <LineChartIcon className="h-4 w-4 text-blue-600" />
+              <LineChartIcon className="h-4 w-4 text-rose-600" />
               <span>{viz.title || 'Observed Time-Series Trend'}</span>
             </div>
             <div className="h-56 w-full">
@@ -476,7 +476,7 @@ export default function AIAnalyticsAssistant() {
                   <Tooltip
                     contentStyle={{ backgroundColor: '#0F172A', borderColor: '#1E293B', borderRadius: '8px', color: '#FFF', fontSize: '11px' }}
                   />
-                  <Line type="monotone" dataKey={viz.yAxis || 'revenue'} stroke="#2563EB" strokeWidth={2.5} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey={viz.yAxis || 'revenue'} stroke="#E11D48" strokeWidth={2.5} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -578,7 +578,7 @@ export default function AIAnalyticsAssistant() {
             <Menu className="w-5 h-5" />
           </button>
 
-          <div className="h-11 w-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/20">
+          <div className="h-11 w-11 rounded-2xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-rose-500/20">
             <Bot className="h-6 w-6 text-white" />
           </div>
 
@@ -598,7 +598,7 @@ export default function AIAnalyticsAssistant() {
             onClick={() => setDatasetDropdownOpen(prev => !prev)}
             className="border border-slate-200 bg-white rounded-xl px-4 py-2 flex items-center gap-3 shadow-2xs hover:border-slate-300 transition cursor-pointer"
           >
-            <Database className="h-5 w-5 text-blue-600 shrink-0" />
+            <Database className="h-5 w-5 text-rose-600 shrink-0" />
             <div className="text-left">
               <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block leading-none">
                 Dataset Context
@@ -637,7 +637,7 @@ export default function AIAnalyticsAssistant() {
                         }}
                         className={`p-2.5 rounded-xl cursor-pointer transition flex items-center justify-between gap-2 ${
                           isSelected
-                            ? 'bg-blue-50 text-blue-900 font-semibold'
+                            ? 'bg-rose-50 text-rose-900 font-semibold'
                             : 'hover:bg-slate-50 text-slate-700'
                         }`}
                       >
@@ -647,7 +647,7 @@ export default function AIAnalyticsAssistant() {
                             {ds.row_count || 0} rows • {ds.column_count || 10} columns
                           </span>
                         </div>
-                        {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0" />}
+                        {isSelected && <Check className="w-4 h-4 text-rose-600 shrink-0" />}
                       </div>
                     );
                   })
@@ -673,7 +673,7 @@ export default function AIAnalyticsAssistant() {
             <button
               onClick={handleNewChat}
               id="new-chat-btn"
-              className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-2xs transition cursor-pointer"
+              className="w-full h-10 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-2xs transition cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>New Chat</span>
@@ -687,7 +687,7 @@ export default function AIAnalyticsAssistant() {
                 placeholder="Search conversations..."
                 value={searchHistoryQuery}
                 onChange={(e) => setSearchHistoryQuery(e.target.value)}
-                className="w-full h-8 pl-8 pr-7 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition"
+                className="w-full h-8 pl-8 pr-7 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-rose-500 transition"
               />
               {searchHistoryQuery && (
                 <button
@@ -747,12 +747,12 @@ export default function AIAnalyticsAssistant() {
                           }}
                           className={`group w-full text-left p-2.5 rounded-xl text-xs cursor-pointer transition flex items-center justify-between gap-2 relative ${
                             isActive
-                              ? 'bg-blue-50/80 text-blue-900 font-semibold border-l-4 border-blue-600'
+                              ? 'bg-rose-50/80 text-rose-900 font-semibold border-l-4 border-rose-600'
                               : 'text-slate-700 hover:bg-slate-50'
                           }`}
                         >
                           <div className="min-w-0 flex items-center gap-2 flex-1">
-                            <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
+                            <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-rose-600' : 'text-slate-400'}`} />
                             <div className="min-w-0 flex-1">
                               <span className="truncate block font-bold leading-tight">
                                 {conv.title || 'Analytics Conversation'}
@@ -821,16 +821,16 @@ export default function AIAnalyticsAssistant() {
               /* EMPTY / HERO STATE */
               <div className="space-y-6 max-w-4xl mx-auto">
                 {/* Hero Banner: "Ask your data anything" */}
-                <div className="rounded-2xl border border-slate-200/90 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-white p-6 sm:p-8 relative overflow-hidden shadow-2xs">
+                <div className="rounded-2xl border border-slate-200/90 bg-gradient-to-r from-rose-50/70 via-amber-50/30 to-white p-6 sm:p-8 relative overflow-hidden shadow-2xs">
                   <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                     <div className="space-y-2.5 max-w-xl">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-100/90 text-blue-800 text-[10px] font-bold tracking-wider uppercase font-mono">
-                        <Sparkles className="w-3 h-3 text-blue-600" />
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-100/90 text-rose-800 text-[10px] font-bold tracking-wider uppercase font-mono">
+                        <Sparkles className="w-3 h-3 text-rose-600" />
                         <span>AI Analytics Assistant</span>
                       </div>
 
                       <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                        Ask your data <span className="text-blue-600">anything</span>
+                        Ask your data <span className="text-rose-600">anything</span>
                       </h2>
 
                       <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
@@ -861,14 +861,14 @@ export default function AIAnalyticsAssistant() {
                     <div className="hidden sm:block shrink-0">
                       <div className="rounded-xl border border-slate-200 bg-white/95 p-3.5 shadow-md w-56 space-y-2">
                         <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-800 bg-slate-50 px-2 py-1 rounded-md">
-                          <Bot className="w-3.5 h-3.5 text-blue-600" />
+                          <Bot className="w-3.5 h-3.5 text-rose-600" />
                           <span>Show me revenue trend</span>
                         </div>
-                        <div className="h-16 flex items-end gap-1.5 px-2 pt-2 bg-gradient-to-t from-blue-50/50 to-transparent rounded">
+                        <div className="h-16 flex items-end gap-1.5 px-2 pt-2 bg-gradient-to-t from-rose-50/50 to-transparent rounded">
                           {[30, 45, 35, 60, 50, 75, 90].map((h, i) => (
                             <div
                               key={i}
-                              className="flex-1 bg-blue-600 rounded-t-xs"
+                              className="flex-1 bg-rose-600 rounded-t-xs"
                               style={{ height: `${h}%`, opacity: 0.4 + (i / 7) * 0.6 }}
                             />
                           ))}
@@ -912,10 +912,10 @@ export default function AIAnalyticsAssistant() {
                               <button
                                 key={qIdx}
                                 onClick={() => handleSendQuery(q)}
-                                className="w-full text-left p-2.5 rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-blue-50/60 hover:border-blue-200 hover:text-blue-700 active:scale-[0.98] text-[11px] font-medium transition-all flex items-center gap-2 group cursor-pointer shadow-2xs hover:shadow-xs"
+                                className="w-full text-left p-2.5 rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-rose-50/60 hover:border-rose-200 hover:text-rose-700 active:scale-[0.98] text-[11px] font-medium transition-all flex items-center gap-2 group cursor-pointer shadow-2xs hover:shadow-xs"
                               >
-                                <ChevronRight className="w-3.5 h-3.5 text-blue-500 shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                                <span className="leading-snug flex-1 text-slate-700 group-hover:text-blue-700">{q}</span>
+                                <ChevronRight className="w-3.5 h-3.5 text-rose-500 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                                <span className="leading-snug flex-1 text-slate-700 group-hover:text-rose-700">{q}</span>
                               </button>
                             ))}
                           </div>
@@ -928,7 +928,7 @@ export default function AIAnalyticsAssistant() {
                 {/* "Start a conversation" divider/hint */}
                 <div className="text-center pt-2 pb-1 space-y-1">
                   <div className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700">
-                    <Bot className="w-4 h-4 text-blue-600" />
+                    <Bot className="w-4 h-4 text-rose-600" />
                     <span>Start a conversation</span>
                   </div>
                   <p className="text-[11px] text-slate-400">
@@ -949,7 +949,7 @@ export default function AIAnalyticsAssistant() {
                       className={`flex gap-3 max-w-3xl ${isUser ? 'ml-auto justify-end' : 'mr-auto justify-start'}`}
                     >
                       {!isUser && (
-                        <div className="h-8 w-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-2xs mt-1">
+                        <div className="h-8 w-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-2xs mt-1">
                           <Bot className="h-4 w-4 text-white" />
                         </div>
                       )}
@@ -958,7 +958,7 @@ export default function AIAnalyticsAssistant() {
                         <div
                           className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${
                             isUser
-                              ? 'bg-blue-600 text-white rounded-tr-xs shadow-xs'
+                              ? 'bg-rose-600 text-white rounded-tr-xs shadow-xs'
                               : 'bg-slate-50 border border-slate-200/90 text-slate-800 rounded-tl-xs shadow-2xs'
                           }`}
                         >
@@ -1021,7 +1021,7 @@ export default function AIAnalyticsAssistant() {
                       </div>
 
                       {isUser && (
-                        <div className="h-8 w-8 rounded-xl bg-blue-700 text-white flex items-center justify-center shrink-0 shadow-2xs mt-1">
+                        <div className="h-8 w-8 rounded-xl bg-rose-700 text-white flex items-center justify-center shrink-0 shadow-2xs mt-1">
                           <User className="h-4 w-4" />
                         </div>
                       )}
@@ -1031,11 +1031,11 @@ export default function AIAnalyticsAssistant() {
 
                 {loading && (
                   <div className="flex gap-3 max-w-3xl mr-auto">
-                    <div className="h-8 w-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 animate-pulse">
+                    <div className="h-8 w-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 animate-pulse">
                       <Bot className="h-4 w-4" />
                     </div>
                     <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 rounded-tl-xs text-xs text-slate-600 flex items-center gap-2.5">
-                      <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
+                      <RefreshCw className="h-4 w-4 animate-spin text-rose-600" />
                       <span>Planning analytical query and computing aggregations...</span>
                     </div>
                   </div>
@@ -1056,10 +1056,10 @@ export default function AIAnalyticsAssistant() {
                 e.preventDefault();
                 handleSendQuery();
               }}
-              className="relative flex items-center rounded-2xl border border-slate-300 bg-white p-1.5 shadow-2xs hover:border-slate-400 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-500/20 transition"
+              className="relative flex items-center rounded-2xl border border-slate-300 bg-white p-1.5 shadow-2xs hover:border-slate-400 focus-within:border-rose-600 focus-within:ring-2 focus-within:ring-rose-500/20 transition"
             >
               <div className="pl-3 text-slate-400">
-                <Sparkles className="w-4 h-4 text-blue-500" />
+                <Sparkles className="w-4 h-4 text-rose-500" />
               </div>
 
               <input
@@ -1077,7 +1077,7 @@ export default function AIAnalyticsAssistant() {
                 className={`h-9 w-9 rounded-xl flex items-center justify-center text-white transition shadow-2xs ${
                   !inputQuery.trim() || loading
                     ? 'bg-slate-300 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 active:scale-95 cursor-pointer'
+                    : 'bg-rose-600 hover:bg-rose-700 active:scale-95 cursor-pointer'
                 }`}
                 title="Send query"
               >
@@ -1092,7 +1092,7 @@ export default function AIAnalyticsAssistant() {
                   <button
                     key={idx}
                     onClick={() => handleSendQuery(chip)}
-                    className="px-2.5 py-1 rounded-lg bg-slate-100/80 hover:bg-blue-50 text-slate-600 hover:text-blue-700 border border-slate-200/70 transition cursor-pointer flex items-center gap-1 font-medium"
+                    className="px-2.5 py-1 rounded-lg bg-slate-100/80 hover:bg-rose-50 text-slate-600 hover:text-rose-700 border border-slate-200/70 transition cursor-pointer flex items-center gap-1 font-medium"
                   >
                     <span>{chip}</span>
                   </button>

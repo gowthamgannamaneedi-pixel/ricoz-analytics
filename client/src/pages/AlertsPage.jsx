@@ -282,7 +282,7 @@ export default function AlertsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 border border-blue-200 text-blue-600 shadow-2xs">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 border border-rose-200 text-rose-600 shadow-2xs">
               <Bell className="h-5 w-5" />
             </div>
             <div>
@@ -325,7 +325,7 @@ export default function AlertsPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">Active Alert Rules</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
               <Bell className="h-4 w-4" />
             </div>
           </div>
@@ -378,7 +378,7 @@ export default function AlertsPage() {
             onClick={() => setActiveTab('rules')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition ${
               activeTab === 'rules'
-                ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs'
+                ? 'bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs'
                 : 'text-slate-600 hover:bg-slate-100 border border-transparent'
             }`}
           >
@@ -389,7 +389,7 @@ export default function AlertsPage() {
             onClick={() => setActiveTab('incidents')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition ${
               activeTab === 'incidents'
-                ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs'
+                ? 'bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs'
                 : 'text-slate-600 hover:bg-slate-100 border border-transparent'
             }`}
           >
@@ -410,7 +410,7 @@ export default function AlertsPage() {
             <select
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
-              className="appearance-none rounded-xl border border-slate-200 bg-white pl-3.5 pr-9 py-2 text-xs font-medium text-slate-700 hover:border-slate-300 focus:border-blue-500 focus:outline-none shadow-2xs cursor-pointer"
+              className="appearance-none rounded-xl border border-slate-200 bg-white pl-3.5 pr-9 py-2 text-xs font-medium text-slate-700 hover:border-slate-300 focus:border-rose-500 focus:outline-none shadow-2xs cursor-pointer"
             >
               <option value="all">All Severities</option>
               <option value="critical">Critical</option>
@@ -429,7 +429,7 @@ export default function AlertsPage() {
               placeholder="Filter by name or metric..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-48 sm:w-60 rounded-xl border border-slate-200 bg-white pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none"
+              className="w-48 sm:w-60 rounded-xl border border-slate-200 bg-white pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:border-rose-500 focus:outline-none"
             />
           </div>
         </div>
@@ -440,12 +440,12 @@ export default function AlertsPage() {
         <div className="space-y-4">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-slate-200">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
+              <Loader2 className="h-8 w-8 animate-spin text-rose-600 mb-2" />
               <p className="text-xs text-slate-500">Loading operational alert rules...</p>
             </div>
           ) : filteredAlerts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-4 bg-white rounded-2xl border border-dashed border-slate-300 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 mb-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 mb-3">
                 <Bell className="h-6 w-6" />
               </div>
               <h3 className="text-sm font-bold text-slate-900">No alert rules found</h3>
@@ -460,7 +460,7 @@ export default function AlertsPage() {
                     setEditingAlert(null);
                     setIsAlertModalOpen(true);
                   }}
-                  className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+                  className="flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-rose-700 transition"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   <span>Create First Alert Rule</span>
@@ -506,7 +506,7 @@ export default function AlertsPage() {
                           <span className="font-semibold text-slate-800">
                             {alert.metric_name || 'Generic Metric'}
                           </span>
-                          <span className="font-mono font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                          <span className="font-mono font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">
                             {condSymbol} {alert.threshold} {alert.metric_unit || ''}
                           </span>
                           <span className="text-slate-400">·</span>
@@ -527,7 +527,7 @@ export default function AlertsPage() {
                         disabled={!canMutate}
                         title={alert.status === 'active' ? 'Click to disable' : 'Click to enable'}
                         className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                          alert.status === 'active' ? 'bg-blue-600' : 'bg-slate-200'
+                          alert.status === 'active' ? 'bg-rose-600' : 'bg-slate-200'
                         } ${!canMutate ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         <span
@@ -542,7 +542,7 @@ export default function AlertsPage() {
                         <button
                           onClick={() => handleTestAlert(alert)}
                           disabled={actionLoading}
-                          className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition"
+                          className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-rose-600 transition"
                           title="Evaluate rule immediately"
                         >
                           <Play className="h-3 w-3" />
@@ -605,7 +605,7 @@ export default function AlertsPage() {
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-slate-200">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
+              <Loader2 className="h-8 w-8 animate-spin text-rose-600 mb-2" />
               <p className="text-xs text-slate-500">Loading incident records...</p>
             </div>
           ) : filteredIncidents.length === 0 ? (
@@ -755,7 +755,7 @@ export default function AlertsPage() {
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-blue-600" />
+                <Zap className="h-5 w-5 text-rose-600" />
                 <h3 className="text-sm font-bold text-slate-900">Alert Evaluation Result</h3>
               </div>
               <button
@@ -824,7 +824,7 @@ export default function AlertsPage() {
                   placeholder="e.g., Scaled database instance; transaction throughput normalized."
                   value={resolutionNotes}
                   onChange={(e) => setResolutionNotes(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:border-rose-500 focus:outline-none"
                 />
               </div>
 

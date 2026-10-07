@@ -77,7 +77,7 @@ export default function Profile({
         onClick={handleToggle}
         className={`group flex items-center gap-2.5 h-10 px-2.5 rounded-xl border transition-all cursor-pointer select-none ${
           isMenuOpen
-            ? 'border-blue-500 bg-blue-50/40 dark:bg-blue-950/40 ring-2 ring-blue-100 dark:ring-blue-900/50 shadow-xs'
+            ? 'border-rose-500 bg-rose-50/40 dark:bg-rose-950/40 ring-2 ring-rose-100 dark:ring-rose-900/50 shadow-xs'
             : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/80 dark:hover:bg-slate-750 shadow-2xs'
         }`}
         aria-label="User Account Menu"
@@ -98,7 +98,7 @@ export default function Profile({
         {/* Dropdown Chevron */}
         <ChevronDown
           className={`h-3.5 w-3.5 text-slate-400 dark:text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-transform duration-150 ${
-            isMenuOpen ? 'rotate-180 text-blue-600 dark:text-blue-400' : ''
+            isMenuOpen ? 'rotate-180 text-rose-600 dark:text-rose-400' : ''
           }`}
         />
       </button>
@@ -109,7 +109,7 @@ export default function Profile({
           role="menu"
           aria-orientation="vertical"
           aria-labelledby="top-profile-menu-button"
-          className="absolute right-0 mt-2 w-72 rounded-2xl border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-850 p-2 shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-slate-800 dark:text-slate-100"
+          className="absolute right-0 mt-2 w-72 rounded-2xl border border-slate-200 dark:border-slate-755 bg-white dark:bg-slate-850 p-2 shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-slate-800 dark:text-slate-100"
         >
           {/* User Account Context Header */}
           <div className="p-3 border-b border-slate-100 dark:border-slate-750 bg-slate-50/70 dark:bg-slate-800/80 rounded-xl mb-1.5">
@@ -162,7 +162,7 @@ export default function Profile({
               }}
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition text-xs font-semibold cursor-pointer"
             >
-              <ShieldCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <ShieldCheck className="h-4 w-4 text-rose-600 dark:text-rose-400" />
               <span>Platform Governance</span>
             </button>
 

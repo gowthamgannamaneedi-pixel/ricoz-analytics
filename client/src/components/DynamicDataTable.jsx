@@ -137,7 +137,7 @@ export default function DynamicDataTable({
               placeholder="Search records..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full h-10 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 pl-9 pr-3 text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition shadow-2xs"
+              className="w-full h-10 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 pl-9 pr-3 text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-800 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none transition shadow-2xs"
             />
           </div>
 
@@ -146,7 +146,7 @@ export default function DynamicDataTable({
             type="button"
             onClick={handleExportCsv}
             disabled={rows.length === 0}
-            className="flex h-10 items-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition disabled:opacity-40 shadow-2xs cursor-pointer"
+            className="flex h-10 items-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-rose-600 dark:hover:text-rose-400 transition disabled:opacity-40 shadow-2xs cursor-pointer"
           >
             <Download className="h-4 w-4 text-slate-500 dark:text-slate-400" />
             <span className="hidden sm:inline">Export CSV</span>
@@ -175,7 +175,7 @@ export default function DynamicDataTable({
                       <span>{formatColumnName(col.name)}</span>
                       <span className="text-slate-400 dark:text-slate-500 ml-1">
                         {isSorted ? (
-                          sortOrder === 'asc' ? <ChevronUp className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" /> : <ChevronDown className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                          sortOrder === 'asc' ? <ChevronUp className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" /> : <ChevronDown className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
                         ) : (
                           <ArrowUpDown className="h-3 w-3 opacity-30 group-hover:opacity-100" />
                         )}
@@ -192,7 +192,7 @@ export default function DynamicDataTable({
               <tr>
                 <td colSpan={columns.length + 1} className="py-16 text-center text-xs text-slate-500 dark:text-slate-400 font-sans">
                   <div className="flex flex-col items-center justify-center space-y-2">
-                    <Loader2 className="h-6 w-6 animate-spin text-blue-600 dark:text-blue-400" />
+                    <Loader2 className="h-6 w-6 animate-spin text-rose-600 dark:text-rose-400" />
                     <span className="font-semibold text-slate-700 dark:text-slate-300">Loading records...</span>
                   </div>
                 </td>
@@ -211,8 +211,8 @@ export default function DynamicDataTable({
               rows.map((row, rowIdx) => {
                 const globalRowNumber = (page - 1) * limit + rowIdx + 1;
                 return (
-                  <tr key={row.id || rowIdx} className="hover:bg-blue-50/40 dark:hover:bg-slate-800/60 transition-colors group">
-                    <td className="py-3 px-3 text-center text-slate-400 dark:text-slate-500 border-r border-slate-100 dark:border-slate-800 font-mono text-[10px] bg-slate-50/70 dark:bg-slate-850 group-hover:bg-blue-50/60 dark:group-hover:bg-slate-800 sticky left-0 z-10 select-none">
+                  <tr key={row.id || rowIdx} className="hover:bg-rose-50/40 dark:hover:bg-slate-800/60 transition-colors group">
+                    <td className="py-3 px-3 text-center text-slate-400 dark:text-slate-500 border-r border-slate-100 dark:border-slate-800 font-mono text-[10px] bg-slate-50/70 dark:bg-slate-850 group-hover:bg-rose-50/60 dark:group-hover:bg-slate-800 sticky left-0 z-10 select-none">
                       {globalRowNumber}
                     </td>
 
@@ -255,7 +255,7 @@ export default function DynamicDataTable({
           <select
             value={limit}
             onChange={(e) => onLimitChange(Number(e.target.value))}
-            className="h-8 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 py-1 px-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none shadow-2xs focus:border-blue-600 cursor-pointer"
+            className="h-8 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 py-1 px-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none shadow-2xs focus:border-rose-600 cursor-pointer"
           >
             <option value={10}>10</option>
             <option value={20}>20</option>

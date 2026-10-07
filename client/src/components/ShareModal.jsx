@@ -146,7 +146,7 @@ export default function ShareModal({
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+            <div className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
               <Share2 className="h-5 w-5" />
             </div>
             <div>
@@ -215,7 +215,7 @@ export default function ShareModal({
                 <select
                   value={selectedTargetId}
                   onChange={(e) => setSelectedTargetId(e.target.value)}
-                  className="w-full h-10 appearance-none rounded-xl border border-slate-300 bg-white pl-3.5 pr-9 text-sm font-medium text-slate-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition shadow-2xs cursor-pointer"
+                  className="w-full h-10 appearance-none rounded-xl border border-slate-300 bg-white pl-3.5 pr-9 text-sm font-medium text-slate-900 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none transition shadow-2xs cursor-pointer"
                 >
                   <option value="">Choose {activeTab}...</option>
                   {activeTab === 'user' ? (
@@ -242,7 +242,7 @@ export default function ShareModal({
                 <select
                   value={permission}
                   onChange={(e) => setPermission(e.target.value)}
-                  className="w-full h-10 appearance-none rounded-xl border border-slate-300 bg-white pl-3.5 pr-9 text-sm font-medium text-slate-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition shadow-2xs cursor-pointer"
+                  className="w-full h-10 appearance-none rounded-xl border border-slate-300 bg-white pl-3.5 pr-9 text-sm font-medium text-slate-900 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none transition shadow-2xs cursor-pointer"
                 >
                   <option value="viewer">Viewer</option>
                   {resourceType !== 'insight' && <option value="editor">Editor</option>}
@@ -285,7 +285,7 @@ export default function ShareModal({
                     {share.target_team_name ? (
                       <Users className="h-4 w-4 text-indigo-600 shrink-0" />
                     ) : (
-                      <User className="h-4 w-4 text-blue-600 shrink-0" />
+                      <User className="h-4 w-4 text-rose-600 shrink-0" />
                     )}
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-800 truncate">
@@ -301,7 +301,7 @@ export default function ShareModal({
                     <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
                       share.permission === 'editor'
                         ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                        : 'bg-blue-50 text-blue-700 border border-blue-200'
+                        : 'bg-rose-50 text-rose-700 border border-rose-200'
                     }`}>
                       {share.permission}
                     </span>

@@ -73,7 +73,7 @@ export default function DataSourceCard({
         onClick ? 'cursor-pointer' : ''
       } ${
         isActive
-          ? 'border-blue-500 bg-blue-50/20 dark:bg-blue-950/30 ring-1 ring-blue-500/25 shadow-2xs'
+          ? 'border-rose-500 bg-rose-50/20 dark:bg-rose-950/30 ring-1 ring-rose-500/25 shadow-2xs'
           : 'border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/40 dark:hover:bg-slate-800/50 shadow-2xs'
       }`}
     >

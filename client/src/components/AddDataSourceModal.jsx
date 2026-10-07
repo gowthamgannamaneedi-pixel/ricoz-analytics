@@ -370,7 +370,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
             disabled={isProcessing}
             className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition ${
               activeTab === 'csv'
-                ? 'border-blue-600 text-blue-700 bg-white'
+                ? 'border-rose-600 text-rose-700 bg-white'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -384,7 +384,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
             disabled={isProcessing}
             className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition ${
               activeTab === 'json'
-                ? 'border-blue-600 text-blue-700 bg-white'
+                ? 'border-rose-600 text-rose-700 bg-white'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -398,7 +398,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
             disabled={isProcessing}
             className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition ${
               activeTab === 'postgresql'
-                ? 'border-blue-600 text-blue-700 bg-white'
+                ? 'border-rose-600 text-rose-700 bg-white'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -412,7 +412,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
             disabled={isProcessing}
             className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition ${
               activeTab === 'rest_api'
-                ? 'border-blue-600 text-blue-700 bg-white'
+                ? 'border-rose-600 text-rose-700 bg-white'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -453,7 +453,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     value={sourceName}
                     onChange={(e) => setSourceName(e.target.value)}
                     disabled={isProcessing}
-                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
                   />
                 </div>
 
@@ -468,7 +468,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     disabled={isProcessing}
-                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
                   />
                 </div>
               </div>
@@ -494,7 +494,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   type="submit"
                   disabled={isProcessing || !selectedFile}
                   id="submit-file-source-btn"
-                  className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50 shadow-2xs"
+                  className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs"
                 >
                   {isProcessing ? (
                     <>
@@ -528,7 +528,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   value={pgForm.name}
                   onChange={handlePgChange}
                   disabled={isProcessing}
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
                 />
               </div>
 
@@ -546,7 +546,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     value={pgForm.host}
                     onChange={handlePgChange}
                     disabled={isProcessing}
-                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
                   />
                 </div>
 
@@ -562,7 +562,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     value={pgForm.port}
                     onChange={handlePgChange}
                     disabled={isProcessing}
-                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none font-mono transition"
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none font-mono transition"
                   />
                 </div>
               </div>
@@ -581,7 +581,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     value={pgForm.database}
                     onChange={handlePgChange}
                     disabled={isProcessing}
-                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
                   />
                 </div>
 
@@ -598,7 +598,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     value={pgForm.user}
                     onChange={handlePgChange}
                     disabled={isProcessing}
-                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
                   />
                 </div>
               </div>
@@ -615,7 +615,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   value={pgForm.password}
                   onChange={handlePgChange}
                   disabled={isProcessing}
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
                 />
               </div>
 
@@ -627,7 +627,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   checked={pgForm.ssl}
                   onChange={handlePgChange}
                   disabled={isProcessing}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
                 />
                 <label htmlFor="pg-ssl" className="text-xs text-slate-700 font-medium cursor-pointer">
                   Require SSL Connection (Recommended for cloud databases)
@@ -670,7 +670,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                 >
                   {isTestingPg ? (
                     <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-rose-600" />
                       <span>Testing...</span>
                     </>
                   ) : (
@@ -694,7 +694,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     type="submit"
                     disabled={isProcessing}
                     id="submit-pg-source-btn"
-                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50 shadow-2xs"
+                    className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs"
                   >
                     {isProcessing ? (
                       <>
@@ -730,7 +730,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     value={apiForm.name}
                     onChange={handleApiChange}
                     disabled={isProcessing}
-                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
                   />
                 </div>
 
@@ -744,7 +744,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     value={apiForm.method}
                     onChange={handleApiChange}
                     disabled={isProcessing}
-                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 focus:border-blue-600 focus:outline-none transition"
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 focus:border-rose-600 focus:outline-none transition"
                   >
                     <option value="GET">GET</option>
                     <option value="POST">POST</option>
@@ -765,7 +765,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   value={apiForm.url}
                   onChange={handleApiChange}
                   disabled={isProcessing}
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
                 />
               </div>
 
@@ -781,7 +781,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   value={apiForm.dataKey}
                   onChange={handleApiChange}
                   disabled={isProcessing}
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
                 />
               </div>
 
@@ -797,7 +797,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   value={apiForm.headers}
                   onChange={handleApiChange}
                   disabled={isProcessing}
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs font-mono text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs font-mono text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
                 />
               </div>
 
@@ -837,7 +837,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                 >
                   {isTestingApi ? (
                     <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-rose-600" />
                       <span>Testing API...</span>
                     </>
                   ) : (
@@ -861,7 +861,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     type="submit"
                     disabled={isProcessing}
                     id="submit-api-source-btn"
-                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50 shadow-2xs"
+                    className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs"
                   >
                     {isProcessing ? (
                       <>

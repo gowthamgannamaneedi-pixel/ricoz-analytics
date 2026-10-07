@@ -84,8 +84,8 @@ const SEVERITY_BADGES = {
   high: 'bg-orange-50 text-orange-700 border-orange-200',
   warning: 'bg-amber-50 text-amber-700 border-amber-200',
   medium: 'bg-amber-50 text-amber-700 border-amber-200',
-  info: 'bg-blue-50 text-blue-700 border-blue-200',
-  low: 'bg-blue-50 text-blue-700 border-blue-200'
+  info: 'bg-rose-50 text-rose-700 border-rose-200',
+  low: 'bg-rose-50 text-rose-700 border-rose-200'
 };
 
 export default function ForecastsPage() {
@@ -493,7 +493,7 @@ export default function ForecastsPage() {
         <nav className="flex items-center gap-2 text-xs font-medium text-slate-500">
           <span className="text-slate-400">RicozAnalytics</span>
           <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-          <span className="text-blue-600 font-semibold">Forecasts</span>
+          <span className="text-rose-600 font-semibold">Forecasts</span>
         </nav>
 
         {/* Page Title & Actions Toolbar */}
@@ -528,7 +528,7 @@ export default function ForecastsPage() {
               variant="secondary"
               className="h-10 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold shadow-2xs text-xs sm:text-sm"
             >
-              <RefreshCw className={`h-4 w-4 text-slate-500 ${loadingInitial ? 'animate-spin text-blue-600' : ''}`} />
+              <RefreshCw className={`h-4 w-4 text-slate-500 ${loadingInitial ? 'animate-spin text-rose-600' : ''}`} />
               <span>{loadingInitial ? 'Refreshing...' : 'Refresh'}</span>
             </Button>
 
@@ -631,7 +631,7 @@ export default function ForecastsPage() {
         {/* Card 3: Forecast Horizon */}
         <div className="rounded-2xl border border-slate-200/90 bg-white p-4.5 shadow-2xs hover:border-slate-300 transition-all">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
               <Calendar className="h-5 w-5" />
             </div>
             <div className="min-w-0">
@@ -683,7 +683,7 @@ export default function ForecastsPage() {
         <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
                 <Sliders className="h-4 w-4" />
               </div>
               <h2 className="text-base font-bold text-slate-900">
@@ -694,10 +694,10 @@ export default function ForecastsPage() {
               type="button"
               id="reset-config-defaults-btn"
               onClick={handleResetDefaults}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 hover:text-blue-600 border border-slate-200/80 shadow-2xs transition-all active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 hover:text-rose-600 border border-slate-200/80 shadow-2xs transition-all active:scale-95 cursor-pointer"
               title="Reset parameters to defaults"
             >
-              <RotateCcw className="h-3 w-3 text-slate-400 group-hover:text-blue-600" />
+              <RotateCcw className="h-3 w-3 text-slate-400 group-hover:text-rose-600" />
               <span>Reset</span>
             </button>
           </div>
@@ -716,7 +716,7 @@ export default function ForecastsPage() {
                   id="forecast-dataset-select"
                   value={selectedDatasetId}
                   onChange={handleDatasetChange}
-                  className="w-full appearance-none pl-9 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-blue-600 shadow-2xs cursor-pointer"
+                  className="w-full appearance-none pl-9 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
                 >
                   {datasets.length === 0 ? (
                     <option value="">No datasets available</option>
@@ -728,7 +728,7 @@ export default function ForecastsPage() {
                     ))
                   )}
                 </select>
-                <Database className="h-4 w-4 text-blue-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Database className="h-4 w-4 text-rose-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
@@ -746,7 +746,7 @@ export default function ForecastsPage() {
                   id="forecast-metric-column-select"
                   value={targetColumn}
                   onChange={(e) => setTargetColumn(e.target.value)}
-                  className="w-full appearance-none pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-blue-600 shadow-2xs cursor-pointer"
+                  className="w-full appearance-none pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
                 >
                   {availableColumns.numericCols.length === 0 ? (
                     <option value="">No numeric columns found</option>
@@ -775,7 +775,7 @@ export default function ForecastsPage() {
                   id="forecast-time-column-select"
                   value={dateColumn}
                   onChange={(e) => setDateColumn(e.target.value)}
-                  className="w-full appearance-none pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-blue-600 shadow-2xs cursor-pointer"
+                  className="w-full appearance-none pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
                 >
                   {availableColumns.dateCols.length === 0 ? (
                     <option value="">No date columns found</option>
@@ -801,7 +801,7 @@ export default function ForecastsPage() {
                   id="forecast-model-select"
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-full appearance-none pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-blue-600 shadow-2xs cursor-pointer"
+                  className="w-full appearance-none pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
                 >
                   <option value="auto">Auto (Best Model)</option>
                   <option value="linear_regression">Linear Regression (Trend)</option>
@@ -827,7 +827,7 @@ export default function ForecastsPage() {
                     max="365"
                     value={horizonPeriods}
                     onChange={(e) => setHorizonPeriods(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                    className="w-full py-2.5 pl-3 pr-14 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 focus:outline-none focus:border-blue-600 shadow-2xs"
+                    className="w-full py-2.5 pl-3 pr-14 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 focus:outline-none focus:border-rose-600 shadow-2xs"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 font-medium pointer-events-none">
                     periods
@@ -844,7 +844,7 @@ export default function ForecastsPage() {
                     id="forecast-interval-select"
                     value={interval}
                     onChange={(e) => setInterval(e.target.value)}
-                    className="w-full appearance-none pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-blue-600 shadow-2xs cursor-pointer"
+                    className="w-full appearance-none pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
                   >
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
@@ -871,7 +871,7 @@ export default function ForecastsPage() {
                     onClick={() => setConfidenceLevel(lvl)}
                     className={`py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                       confidenceLevel === lvl
-                        ? 'border-2 border-blue-600 bg-blue-50 text-blue-700 font-bold shadow-2xs'
+                        ? 'border-2 border-rose-600 bg-rose-50 text-rose-700 font-bold shadow-2xs'
                         : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-medium'
                     }`}
                   >
@@ -902,7 +902,7 @@ export default function ForecastsPage() {
                     onChange={(e) => setDetectAnomaliesActive(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rose-600"></div>
                 </label>
               </div>
 
@@ -910,7 +910,7 @@ export default function ForecastsPage() {
                 <div className="space-y-1.5 bg-slate-50/70 p-3 rounded-xl border border-slate-100">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-semibold text-slate-700">Sensitivity (Z-score)</span>
-                    <span className="font-mono font-bold text-blue-700 px-2 py-0.5 bg-white border border-blue-200 rounded-md">
+                    <span className="font-mono font-bold text-rose-700 px-2 py-0.5 bg-white border border-rose-200 rounded-md">
                       {zThreshold}
                     </span>
                   </div>
@@ -922,7 +922,7 @@ export default function ForecastsPage() {
                     step="0.1"
                     value={zThreshold}
                     onChange={(e) => setZThreshold(parseFloat(e.target.value))}
-                    className="w-full accent-blue-600 cursor-pointer"
+                    className="w-full accent-rose-600 cursor-pointer"
                   />
                   <div className="flex justify-between text-[10px] text-slate-400 font-medium">
                     <span>Lower sensitivity</span>
@@ -967,7 +967,7 @@ export default function ForecastsPage() {
               onClick={() => setActiveTab('chart')}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
                 activeTab === 'chart'
-                  ? 'bg-blue-50 text-blue-700 shadow-2xs border border-blue-200/80 font-bold'
+                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
@@ -981,7 +981,7 @@ export default function ForecastsPage() {
               onClick={() => setActiveTab('table')}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
                 activeTab === 'table'
-                  ? 'bg-blue-50 text-blue-700 shadow-2xs border border-blue-200/80 font-bold'
+                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
@@ -995,7 +995,7 @@ export default function ForecastsPage() {
               onClick={() => setActiveTab('anomalies')}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
                 activeTab === 'anomalies'
-                  ? 'bg-blue-50 text-blue-700 shadow-2xs border border-blue-200/80 font-bold'
+                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
@@ -1014,7 +1014,7 @@ export default function ForecastsPage() {
               onClick={() => setActiveTab('history')}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
                 activeTab === 'history'
-                  ? 'bg-blue-50 text-blue-700 shadow-2xs border border-blue-200/80 font-bold'
+                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
@@ -1054,7 +1054,7 @@ export default function ForecastsPage() {
                         <option value="60">Last 60 days</option>
                         <option value="90">Last 90 days</option>
                       </select>
-                      <Calendar className="h-3.5 w-3.5 text-blue-600 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <Calendar className="h-3.5 w-3.5 text-rose-600 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                       <ChevronRight className="h-3.5 w-3.5 text-slate-400 rotate-90 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     </div>
 
@@ -1247,7 +1247,7 @@ export default function ForecastsPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
                 {/* MAE */}
                 <div className="bg-white rounded-2xl border border-slate-200/90 p-3.5 sm:p-4 shadow-2xs flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
                     <Sigma className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -1313,7 +1313,7 @@ export default function ForecastsPage() {
               {/* Model Insights Card */}
               <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all">
                 <div className="flex items-start sm:items-center gap-4 min-w-0">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100 shrink-0 shadow-2xs">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100 shrink-0 shadow-2xs">
                     <Lightbulb className="h-5 w-5" />
                   </div>
                   <div className="space-y-1 min-w-0 py-0.5">
@@ -1390,13 +1390,13 @@ export default function ForecastsPage() {
                           <td className="py-2.5 px-4">
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase font-sans ${
                               row.type === 'historical'
-                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
                                 : 'bg-purple-50 text-purple-700 border border-purple-200'
                             }`}>
                               {row.type}
                             </span>
                           </td>
-                          <td className="py-2.5 px-4 text-right font-bold text-blue-700">
+                          <td className="py-2.5 px-4 text-right font-bold text-rose-700">
                             {row.historical !== null ? Number(row.historical).toLocaleString() : '—'}
                           </td>
                           <td className="py-2.5 px-4 text-right font-bold text-purple-700">
@@ -1506,7 +1506,7 @@ export default function ForecastsPage() {
             <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-2xs">
               <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
                     <Clock className="h-4 w-4" />
                   </div>
                   <h4 className="font-bold text-slate-900 text-xs">
@@ -1531,7 +1531,7 @@ export default function ForecastsPage() {
                         setActiveTab('chart');
                       }}
                       className={`p-4 flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/80 transition-colors ${
-                        selectedForecastId === f.id ? 'bg-blue-50/50 border-l-4 border-blue-600' : ''
+                        selectedForecastId === f.id ? 'bg-rose-50/50 border-l-4 border-rose-600' : ''
                       }`}
                     >
                       <div className="space-y-1 min-w-0">
@@ -1539,7 +1539,7 @@ export default function ForecastsPage() {
                           <span className="font-bold text-xs text-slate-900">
                             {f.dataset_name || 'Telemetry Forecast'} — {f.target_column || 'Metric'}
                           </span>
-                          <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                          <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200">
                             {f.model_name || 'AUTO'}
                           </span>
                         </div>

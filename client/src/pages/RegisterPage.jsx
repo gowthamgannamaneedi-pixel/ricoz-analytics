@@ -267,7 +267,7 @@ export default function RegisterPage() {
             <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-mono">
               Analytics Workspace
             </span>
-            <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
+            <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
               ENTERPRISE
             </span>
           </div>
@@ -286,9 +286,9 @@ export default function RegisterPage() {
             </div>
 
             {/* Trial Banner */}
-            <div className="mb-4 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 p-3.5 shadow-2xs">
+            <div className="mb-4 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/30 p-3.5 shadow-2xs">
               <div className="flex items-start gap-2.5">
-                <ShieldCheck className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                <ShieldCheck className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
                 <div className="text-xs">
                   <p className="font-semibold text-slate-900 dark:text-slate-100">14-Day Free Enterprise Trial</p>
                   <p className="text-slate-600 dark:text-slate-400 mt-0.5 text-[11px]">
@@ -319,7 +319,7 @@ export default function RegisterPage() {
                     placeholder="Aarav Sharma"
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
                   />
                 </div>
 
@@ -335,7 +335,7 @@ export default function RegisterPage() {
                     placeholder="Acme Analytics Corp"
                     value={formData.organization_name}
                     onChange={handleChange}
-                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
                   />
                 </div>
 
@@ -352,7 +352,7 @@ export default function RegisterPage() {
                     placeholder="name@company.com"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
                   />
                 </div>
 
@@ -369,7 +369,7 @@ export default function RegisterPage() {
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
                   />
                 </div>
 
@@ -386,7 +386,7 @@ export default function RegisterPage() {
                     placeholder="••••••••"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
                   />
                 </div>
 
@@ -394,7 +394,7 @@ export default function RegisterPage() {
                   type="submit"
                   disabled={isLoading}
                   id="register-submit-btn"
-                  className="w-full flex items-center justify-center gap-2 rounded-lg bg-blue-600 py-2.5 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:opacity-50 mt-2 cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 rounded-lg bg-rose-600 py-2.5 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-600 focus:ring-offset-2 disabled:opacity-50 mt-2 cursor-pointer"
                 >
                   {isLoading ? (
                     <>
@@ -412,7 +412,7 @@ export default function RegisterPage() {
 
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
                 Already have credentials?{' '}
-                <Link to="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition">
+                <Link to="/login" className="font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition">
                   Sign in
                 </Link>
               </div>
@@ -424,7 +424,7 @@ export default function RegisterPage() {
         {step === 'verify' && (
           <>
             <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50 mb-3 shadow-xs">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50 mb-3 shadow-xs">
                 <KeyRound className="w-6 h-6" />
               </div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
@@ -453,8 +453,8 @@ export default function RegisterPage() {
 
               {/* Informational Notification */}
               {infoMessage && !error && !isSuccess && (
-                <div className="flex items-start gap-2.5 rounded-lg border border-blue-100 dark:border-blue-900/50 bg-blue-50/80 dark:bg-blue-950/40 p-3 text-xs text-blue-800 dark:text-blue-300">
-                  <Mail className="h-4 w-4 shrink-0 mt-0.5 text-blue-600 dark:text-blue-400" />
+                <div className="flex items-start gap-2.5 rounded-lg border border-rose-100 dark:border-rose-900/50 bg-rose-50/80 dark:bg-rose-950/40 p-3 text-xs text-rose-800 dark:text-rose-300">
+                  <Mail className="h-4 w-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
                   <span>{infoMessage}</span>
                 </div>
               )}
@@ -492,7 +492,7 @@ export default function RegisterPage() {
                           onChange={(e) => handleDigitChange(idx, e.target.value)}
                           onKeyDown={(e) => handleKeyDown(idx, e)}
                           id={`otp-input-${idx}`}
-                          className="h-12 w-full text-center font-mono text-lg font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-blue-600 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600/20"
+                          className="h-12 w-full text-center font-mono text-lg font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-600/20"
                           disabled={isVerifying || isSuccess}
                         />
                       ))}
@@ -504,7 +504,7 @@ export default function RegisterPage() {
                     type="submit"
                     disabled={!isOtpComplete || isVerifying || isSuccess}
                     id="verify-otp-btn"
-                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-blue-600 py-2.5 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-rose-600 py-2.5 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
                     {isVerifying ? (
                       <>
@@ -536,7 +536,7 @@ export default function RegisterPage() {
                         onClick={handleResendOtp}
                         disabled={isResending}
                         id="resend-otp-btn"
-                        className="inline-flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition disabled:opacity-50 cursor-pointer"
+                        className="inline-flex items-center gap-1 font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition disabled:opacity-50 cursor-pointer"
                       >
                         {isResending ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -562,7 +562,7 @@ export default function RegisterPage() {
                       <span>Edit registration details</span>
                     </button>
 
-                    <Link to="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition">
+                    <Link to="/login" className="font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition">
                       Sign in
                     </Link>
                   </div>

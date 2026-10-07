@@ -348,7 +348,7 @@ export default function CollaborationPage() {
   const getResourceIcon = (type) => {
     switch (type) {
       case 'dashboard':
-        return <LayoutDashboard className="h-4 w-4 text-blue-600" />;
+        return <LayoutDashboard className="h-4 w-4 text-rose-600" />;
       case 'report':
         return <FileBarChart className="h-4 w-4 text-purple-600" />;
       case 'ai_insight':
@@ -363,7 +363,7 @@ export default function CollaborationPage() {
     switch (type) {
       case 'dashboard':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
             DASHBOARD
           </span>
         );
@@ -506,7 +506,7 @@ export default function CollaborationPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3.5">
-            <div className="h-12 w-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/20">
+            <div className="h-12 w-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-rose-500/20">
               <Users className="h-6 w-6 text-white" />
             </div>
 
@@ -534,7 +534,7 @@ export default function CollaborationPage() {
         {/* Card 1: Total Items Shared */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs hover:shadow-xs transition">
           <div className="flex items-center justify-between">
-            <div className="h-11 w-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div className="h-11 w-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
               <Users className="w-6 h-6" />
             </div>
             {totalItemsShared > 0 && (
@@ -643,14 +643,14 @@ export default function CollaborationPage() {
             onClick={() => setActiveTab('favorites')}
             className={`pb-3 px-1 flex items-center gap-2 border-b-2 transition cursor-pointer shrink-0 ${
               activeTab === 'favorites'
-                ? 'border-blue-600 text-blue-600 font-bold'
+                ? 'border-rose-600 text-rose-600 font-bold'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <Star className={`w-4 h-4 ${activeTab === 'favorites' ? 'fill-blue-600 text-blue-600' : 'text-slate-400'}`} />
+            <Star className={`w-4 h-4 ${activeTab === 'favorites' ? 'fill-rose-600 text-rose-600' : 'text-slate-400'}`} />
             <span>Favorites</span>
             <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
-              activeTab === 'favorites' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600'
+              activeTab === 'favorites' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'
             }`}>
               {favorites.length}
             </span>
@@ -660,14 +660,14 @@ export default function CollaborationPage() {
             onClick={() => setActiveTab('recent')}
             className={`pb-3 px-1 flex items-center gap-2 border-b-2 transition cursor-pointer shrink-0 ${
               activeTab === 'recent'
-                ? 'border-blue-600 text-blue-600 font-bold'
+                ? 'border-rose-600 text-rose-600 font-bold'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             <Clock className="w-4 h-4" />
             <span>Recently Viewed</span>
             <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
-              activeTab === 'recent' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600'
+              activeTab === 'recent' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'
             }`}>
               {recentlyViewed.length}
             </span>
@@ -677,14 +677,14 @@ export default function CollaborationPage() {
             onClick={() => setActiveTab('shared')}
             className={`pb-3 px-1 flex items-center gap-2 border-b-2 transition cursor-pointer shrink-0 ${
               activeTab === 'shared'
-                ? 'border-blue-600 text-blue-600 font-bold'
+                ? 'border-rose-600 text-rose-600 font-bold'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             <Share2 className="w-4 h-4" />
             <span>Shared with Me</span>
             <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
-              activeTab === 'shared' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600'
+              activeTab === 'shared' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'
             }`}>
               {sharedWithMeTotal}
             </span>
@@ -694,14 +694,14 @@ export default function CollaborationPage() {
             onClick={() => setActiveTab('teams')}
             className={`pb-3 px-1 flex items-center gap-2 border-b-2 transition cursor-pointer shrink-0 ${
               activeTab === 'teams'
-                ? 'border-blue-600 text-blue-600 font-bold'
+                ? 'border-rose-600 text-rose-600 font-bold'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             <Users2 className="w-4 h-4" />
             <span>Teams &amp; Groups</span>
             <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
-              activeTab === 'teams' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600'
+              activeTab === 'teams' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'
             }`}>
               {teams.length}
             </span>
@@ -713,7 +713,7 @@ export default function CollaborationPage() {
           <button
             onClick={() => setShowSharePickerModal(true)}
             id="share-item-btn"
-            className="h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-xs flex items-center gap-2 shadow-2xs transition cursor-pointer"
+            className="h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-semibold text-xs flex items-center gap-2 shadow-2xs transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Share Item</span>
@@ -734,7 +734,7 @@ export default function CollaborationPage() {
               placeholder="Search dashboards, reports, or insights..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 bg-slate-50/60 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+              className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 bg-slate-50/60 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition"
             />
             {searchQuery && (
               <button
@@ -753,7 +753,7 @@ export default function CollaborationPage() {
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="h-10 appearance-none pl-3.5 pr-8 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer shadow-2xs transition"
+                className="h-10 appearance-none pl-3.5 pr-8 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500/20 cursor-pointer shadow-2xs transition"
               >
                 <option value="all">All Types</option>
                 <option value="dashboard">Dashboards</option>
@@ -768,7 +768,7 @@ export default function CollaborationPage() {
               <select
                 value={accessFilter}
                 onChange={(e) => setAccessFilter(e.target.value)}
-                className="h-10 appearance-none pl-3.5 pr-8 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer shadow-2xs transition"
+                className="h-10 appearance-none pl-3.5 pr-8 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500/20 cursor-pointer shadow-2xs transition"
               >
                 <option value="all">All Access Levels</option>
                 <option value="viewer">View Only</option>
@@ -800,7 +800,7 @@ export default function CollaborationPage() {
                 onClick={() => setViewMode('card')}
                 className={`h-8 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
                   viewMode === 'card'
-                    ? 'bg-blue-600 text-white shadow-2xs'
+                    ? 'bg-rose-600 text-white shadow-2xs'
                     : 'text-slate-600 hover:bg-white'
                 }`}
               >
@@ -811,7 +811,7 @@ export default function CollaborationPage() {
                 onClick={() => setViewMode('table')}
                 className={`h-8 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
                   viewMode === 'table'
-                    ? 'bg-blue-600 text-white shadow-2xs'
+                    ? 'bg-rose-600 text-white shadow-2xs'
                     : 'text-slate-600 hover:bg-white'
                 }`}
               >
@@ -852,7 +852,7 @@ export default function CollaborationPage() {
               {(user?.role === 'admin' || user?.role === 'manager') && (
                 <button
                   onClick={() => setShowCreateTeamModal(true)}
-                  className="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold rounded-lg text-xs flex items-center gap-1 transition cursor-pointer"
+                  className="px-2.5 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 font-semibold rounded-lg text-xs flex items-center gap-1 transition cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>New Team</span>
@@ -873,7 +873,7 @@ export default function CollaborationPage() {
                   onClick={() => loadTeamDetails(t.id)}
                   className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition ${
                     selectedTeam?.id === t.id
-                      ? 'bg-blue-50/80 border-blue-200 text-blue-900 shadow-2xs'
+                      ? 'bg-rose-50/80 border-rose-200 text-rose-900 shadow-2xs'
                       : 'bg-white border-slate-200/80 hover:bg-slate-50 text-slate-800'
                   }`}
                 >
@@ -907,7 +907,7 @@ export default function CollaborationPage() {
                   {(user?.role === 'admin' || user?.role === 'manager') && (
                     <button
                       onClick={handleOpenAddMemberModal}
-                      className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-2xs cursor-pointer self-start sm:self-auto"
+                      className="flex items-center gap-1.5 rounded-xl bg-rose-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-rose-700 transition shadow-2xs cursor-pointer self-start sm:self-auto"
                     >
                       <UserPlus className="h-3.5 w-3.5" />
                       <span>Add Member</span>
@@ -924,7 +924,7 @@ export default function CollaborationPage() {
                     {selectedTeam.members?.map(m => (
                       <div key={m.id} className="flex items-center justify-between p-3.5 bg-white text-xs hover:bg-slate-50/60 transition">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-xs">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 text-rose-700 font-bold text-xs">
                             {m.user_name ? m.user_name.slice(0, 2).toUpperCase() : 'U'}
                           </div>
                           <div>
@@ -938,7 +938,7 @@ export default function CollaborationPage() {
                             m.role === 'admin' ? 'bg-purple-50 text-purple-700 border-purple-200' :
                             m.role === 'manager' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
                             m.role === 'lead' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                            'bg-blue-50 text-blue-700 border-blue-200'
+                            'bg-rose-50 text-rose-700 border-rose-200'
                           }`}>
                             {m.role ? m.role.toUpperCase() : 'MEMBER'}
                           </span>
@@ -1002,19 +1002,19 @@ export default function CollaborationPage() {
           <div className="flex flex-wrap items-center justify-center gap-2.5">
             <button
               onClick={() => navigate('/dashboard')}
-              className="px-4 py-2 rounded-xl border border-blue-200/90 bg-white hover:bg-blue-50 hover:border-blue-300 text-blue-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-rose-200/90 bg-white hover:bg-rose-50 hover:border-rose-300 text-rose-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
             >
               Browse Dashboards
             </button>
             <button
               onClick={() => navigate('/reports')}
-              className="px-4 py-2 rounded-xl border border-blue-200/90 bg-white hover:bg-blue-50 hover:border-blue-300 text-blue-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-rose-200/90 bg-white hover:bg-rose-50 hover:border-rose-300 text-rose-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
             >
               Browse Reports
             </button>
             <button
               onClick={() => navigate('/ai-insights')}
-              className="px-4 py-2 rounded-xl border border-blue-200/90 bg-white hover:bg-blue-50 hover:border-blue-300 text-blue-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-rose-200/90 bg-white hover:bg-rose-50 hover:border-rose-300 text-rose-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
             >
               Explore AI Insights
             </button>
@@ -1070,7 +1070,7 @@ export default function CollaborationPage() {
                             onClick={() => handleOpenShare(item.resource_type, item.resource_id, item.title)}
                             className="w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                           >
-                            <Share2 className="w-3.5 h-3.5 text-blue-600" />
+                            <Share2 className="w-3.5 h-3.5 text-rose-600" />
                             <span>Share</span>
                           </button>
                           <button
@@ -1098,11 +1098,11 @@ export default function CollaborationPage() {
                   </div>
 
                   {/* Sleek Visual Thumbnail Graphic */}
-                  <div className="h-20 w-full rounded-xl bg-gradient-to-tr from-slate-50 to-blue-50/40 border border-slate-100 p-3 flex items-center justify-center">
+                  <div className="h-20 w-full rounded-xl bg-gradient-to-tr from-slate-50 to-rose-50/40 border border-slate-100 p-3 flex items-center justify-center">
                     {item.resource_type === 'dashboard' ? (
                       <div className="flex items-end gap-1.5 h-10 w-32 px-2 bg-white rounded-lg border border-slate-200/80 shadow-2xs">
                         {[40, 65, 50, 80, 70, 90].map((h, i) => (
-                          <div key={i} className="flex-1 bg-blue-600 rounded-t-xs" style={{ height: `${h}%`, opacity: 0.5 + i * 0.1 }} />
+                          <div key={i} className="flex-1 bg-rose-600 rounded-t-xs" style={{ height: `${h}%`, opacity: 0.5 + i * 0.1 }} />
                         ))}
                       </div>
                     ) : item.resource_type === 'report' ? (
@@ -1140,7 +1140,7 @@ export default function CollaborationPage() {
                 {/* Card Footer: User & Open Button */}
                 <div className="px-5 pb-5 pt-3 border-t border-slate-100 flex items-center justify-between">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div className="h-6 w-6 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
+                    <div className="h-6 w-6 rounded-full bg-rose-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
                       {item.owner_name ? item.owner_name.slice(0, 1).toUpperCase() : 'U'}
                     </div>
                     <div className="min-w-0">
@@ -1152,7 +1152,7 @@ export default function CollaborationPage() {
 
                   <button
                     onClick={() => handleNavigateResource(item.resource_type, item.resource_id)}
-                    className="h-8 px-3 rounded-lg border border-blue-200 bg-blue-50/60 hover:bg-blue-100 text-blue-700 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                    className="h-8 px-3 rounded-lg border border-rose-200 bg-rose-50/60 hover:bg-rose-100 text-rose-700 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
                   >
                     <span>Open</span>
                     <ExternalLink className="w-3 h-3" />
@@ -1218,13 +1218,13 @@ export default function CollaborationPage() {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => handleNavigateResource(item.resource_type, item.resource_id)}
-                          className="px-2.5 py-1 text-xs font-semibold rounded-lg text-blue-600 hover:bg-blue-50 border border-blue-200 transition cursor-pointer"
+                          className="px-2.5 py-1 text-xs font-semibold rounded-lg text-rose-600 hover:bg-rose-50 border border-rose-200 transition cursor-pointer"
                         >
                           Open
                         </button>
                         <button
                           onClick={() => handleOpenShare(item.resource_type, item.resource_id, item.title)}
-                          className="p-1 text-slate-400 hover:text-blue-600 transition"
+                          className="p-1 text-slate-400 hover:text-rose-600 transition"
                           title="Share"
                         >
                           <Share2 className="w-3.5 h-3.5" />
@@ -1263,7 +1263,7 @@ export default function CollaborationPage() {
               {dashboardsList.length > 0 && (
                 <div className="space-y-2">
                   <span className="font-bold uppercase tracking-wider text-[10px] text-slate-400 flex items-center gap-1.5">
-                    <LayoutDashboard className="w-3.5 h-3.5 text-blue-600" />
+                    <LayoutDashboard className="w-3.5 h-3.5 text-rose-600" />
                     Dashboards
                   </span>
                   <div className="space-y-1.5">
@@ -1274,10 +1274,10 @@ export default function CollaborationPage() {
                           setShowSharePickerModal(false);
                           handleOpenShare('dashboard', d.id, d.title);
                         }}
-                        className="p-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 cursor-pointer transition flex items-center justify-between"
+                        className="p-3 rounded-xl border border-slate-200 hover:border-rose-400 hover:bg-rose-50/40 cursor-pointer transition flex items-center justify-between"
                       >
                         <span className="font-bold text-slate-800 text-xs">{d.title}</span>
-                        <Share2 className="w-4 h-4 text-blue-600" />
+                        <Share2 className="w-4 h-4 text-rose-600" />
                       </div>
                     ))}
                   </div>
@@ -1377,7 +1377,7 @@ export default function CollaborationPage() {
                   placeholder="e.g. Finance Analytics, Sales Ops"
                   value={newTeamName}
                   onChange={(e) => setNewTeamName(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 transition shadow-2xs"
+                  className="w-full rounded-xl border border-slate-300 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 transition shadow-2xs"
                 />
               </div>
               <div>
@@ -1386,7 +1386,7 @@ export default function CollaborationPage() {
                   placeholder="Purpose and responsibilities of this team..."
                   value={newTeamDesc}
                   onChange={(e) => setNewTeamDesc(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 transition shadow-2xs resize-none"
+                  className="w-full rounded-xl border border-slate-300 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 transition shadow-2xs resize-none"
                   rows={3}
                 />
               </div>
@@ -1401,7 +1401,7 @@ export default function CollaborationPage() {
                 <button
                   type="submit"
                   disabled={actionLoading || !newTeamName.trim()}
-                  className="px-4 py-2 text-xs font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition cursor-pointer shadow-2xs"
+                  className="px-4 py-2 text-xs font-semibold bg-rose-600 text-white rounded-xl hover:bg-rose-700 disabled:opacity-50 transition cursor-pointer shadow-2xs"
                 >
                   {actionLoading ? 'Creating...' : 'Create Team'}
                 </button>
@@ -1443,7 +1443,7 @@ export default function CollaborationPage() {
                     value={memberSearchQuery}
                     onChange={(e) => setMemberSearchQuery(e.target.value)}
                     placeholder="Search organization members..."
-                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-blue-600"
+                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-rose-600"
                   />
                   {memberSearchQuery && (
                     <button
@@ -1478,7 +1478,7 @@ export default function CollaborationPage() {
                 <select
                   value={selectedAddRole}
                   onChange={(e) => setSelectedAddRole(e.target.value)}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-600"
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-rose-600"
                 >
                   <option value="member">Member</option>
                   <option value="lead">Team Lead</option>
@@ -1495,7 +1495,7 @@ export default function CollaborationPage() {
                 <div className="max-h-60 overflow-y-auto space-y-2 pr-1 border border-slate-100 rounded-xl p-2 bg-slate-50/50">
                   {memberListLoading ? (
                     <div className="py-8 text-center text-xs text-slate-500 flex flex-col items-center justify-center gap-2">
-                      <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                      <Loader2 className="h-5 w-5 animate-spin text-rose-600" />
                       <span>Loading members...</span>
                     </div>
                   ) : memberListError ? (
@@ -1537,15 +1537,15 @@ export default function CollaborationPage() {
                             isAlreadyMember
                               ? 'bg-slate-100/60 border-slate-200/60 opacity-60 cursor-not-allowed'
                               : isSelected
-                              ? 'bg-blue-50 border-blue-500 shadow-2xs cursor-pointer'
-                              : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50 cursor-pointer'
+                              ? 'bg-rose-50 border-rose-500 shadow-2xs cursor-pointer'
+                              : 'bg-white border-slate-200 hover:border-rose-300 hover:bg-slate-50 cursor-pointer'
                           }`}
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
                             <div
                               className={`h-7 w-7 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${
                                 isSelected
-                                  ? 'bg-blue-600 text-white'
+                                  ? 'bg-rose-600 text-white'
                                   : 'bg-slate-100 text-slate-700'
                               }`}
                             >
@@ -1601,7 +1601,7 @@ export default function CollaborationPage() {
                 type="button"
                 onClick={handleAddTeamMember}
                 disabled={actionLoading || !selectedAddUserId || memberListLoading}
-                className="px-4 py-2 text-xs font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                className="px-4 py-2 text-xs font-semibold bg-rose-600 text-white rounded-xl hover:bg-rose-700 disabled:opacity-50 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
               >
                 {actionLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                 <span>{actionLoading ? 'Adding...' : 'Add Member'}</span>

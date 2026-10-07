@@ -14,7 +14,7 @@ export default function LoadingSpinner({ size = 'md', text = 'Loading analytics.
 
   return (
     <div className={`flex flex-col items-center justify-center gap-3 p-8 text-slate-500 ${className}`}>
-      <Loader2 className={`${sizeMap[size] || sizeMap.md} animate-spin text-blue-600`} />
+      <Loader2 className={`${sizeMap[size] || sizeMap.md} animate-spin text-rose-600`} />
       {text && <span className="text-xs font-semibold tracking-wide text-slate-600">{text}</span>}
     </div>
   );

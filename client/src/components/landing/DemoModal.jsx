@@ -86,14 +86,14 @@ function ModalSelect({ label, value, options, onChange }) {
                   }}
                   className={`w-full text-left px-3 py-2 text-xs rounded-xl flex items-center justify-between transition-colors cursor-pointer ${
                     isSelected
-                      ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-bold'
-                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 hover:text-blue-600 dark:hover:text-blue-400 font-normal'
+                      ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-bold'
+                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 hover:text-rose-600 dark:hover:text-rose-400 font-normal'
                   }`}
                   role="option"
                   aria-selected={isSelected}
                 >
                   <span className="truncate">{opt.label}</span>
-                  {isSelected && <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0 ml-2" />}
+                  {isSelected && <Check size={14} className="text-rose-600 dark:text-rose-400 shrink-0 ml-2" />}
                 </button>
               );
             })}
