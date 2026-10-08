@@ -345,6 +345,9 @@ let nextQualitySnapshotId = 1;
 const fallbackQualityRules = [];
 let nextQualityRuleId = 1;
 
+const fallbackQualityJobs = [];
+let nextQualityJobId = 1;
+
 const fallbackInsights = [
   {
     id: '20b03e6d-14ec-49b3-b9e4-a33476b437fe',
@@ -3074,6 +3077,112 @@ function handleFallbackQuery(text, params = []) {
     const idx = fallbackQualityRules.findIndex(r => String(r.id) === String(id) && String(r.organization_id) === String(orgId));
     if (idx !== -1) {
       const deleted = fallbackQualityRules.splice(idx, 1)[0];
+      return Promise.resolve({ rows: [{ ...deleted }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
+  // --- Phase 15 Enterprise Data Quality Async Jobs ---
+  if (normalizedSql.startsWith('insert into data_quality_jobs')) {
+    const [
+      id,
+      organization_id,
+      dataset_id,
+      job_type,
+      total_rows,
+      scan_mode,
+      sample_size,
+      created_by
+    ] = params;
+
+    const newJob = {
+      id: id || `job-${nextQualityJobId++}`,
+      organization_id: String(organization_id),
+      dataset_id: Number(dataset_id),
+      job_type: job_type || 'FULL_SCAN',
+      status: 'QUEUED',
+      progress_percent: 0,
+      rows_processed: 0,
+      total_rows: Number(total_rows) || 0,
+      stage: 'INITIALIZING',
+      scan_mode: scan_mode || 'FULL_SCAN',
+      sample_size: sample_size !== null && sample_size !== undefined ? Number(sample_size) : null,
+      snapshot_id: null,
+      error_message: null,
+      created_by: created_by ? Number(created_by) : null,
+      started_at: null,
+      completed_at: null,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+
+    fallbackQualityJobs.unshift(newJob);
+    return Promise.resolve({ rows: [{ ...newJob }], rowCount: 1 });
+  }
+
+  if (normalizedSql.startsWith('select') && normalizedSql.includes('from data_quality_jobs') && normalizedSql.includes('where id = $1 and organization_id = $2')) {
+    const [id, orgId] = params;
+    const job = fallbackQualityJobs.find(j => String(j.id) === String(id) && String(j.organization_id) === String(orgId));
+    return Promise.resolve({ rows: job ? [{ ...job }] : [], rowCount: job ? 1 : 0 });
+  }
+
+  if (normalizedSql.startsWith('select') && normalizedSql.includes('from data_quality_jobs') && normalizedSql.includes('where dataset_id = $1 and organization_id = $2')) {
+    const [datasetId, orgId] = params;
+    const job = fallbackQualityJobs.find(j => Number(j.dataset_id) === Number(datasetId) && String(j.organization_id) === String(orgId));
+    return Promise.resolve({ rows: job ? [{ ...job }] : [], rowCount: job ? 1 : 0 });
+  }
+
+  if (normalizedSql.startsWith('select count(*) as count') && normalizedSql.includes('from data_quality_jobs') && normalizedSql.includes("status in ('queued', 'running')")) {
+    const count = fallbackQualityJobs.filter(j => j.status === 'QUEUED' || j.status === 'RUNNING').length;
+    return Promise.resolve({ rows: [{ count }], rowCount: 1 });
+  }
+
+  if (normalizedSql.startsWith('update data_quality_jobs set')) {
+    // Determine which ID is being updated
+    let id = params[params.length - 1];
+    // If last param is organization_id (as in cancelJob), id is previous param
+    if (normalizedSql.includes('where id = $1 and organization_id = $2')) {
+      id = params[0];
+    }
+    const job = fallbackQualityJobs.find(j => String(j.id) === String(id));
+    if (job) {
+      let pIdx = 0;
+      if (normalizedSql.includes('progress_percent = $')) job.progress_percent = Number(params[pIdx++]);
+      if (normalizedSql.includes('rows_processed = $')) job.rows_processed = Number(params[pIdx++]);
+      if (normalizedSql.includes('total_rows = $')) job.total_rows = Number(params[pIdx++]);
+      if (normalizedSql.includes('stage = $')) job.stage = String(params[pIdx++]);
+      if (normalizedSql.includes('status = $')) job.status = String(params[pIdx++]);
+      if (normalizedSql.includes('started_at = $')) job.started_at = params[pIdx++];
+      if (normalizedSql.includes('snapshot_id = $')) {
+        job.status = 'COMPLETED';
+        job.progress_percent = 100;
+        job.stage = 'COMPLETED';
+        job.snapshot_id = params[0];
+        job.completed_at = new Date();
+      }
+      if (normalizedSql.includes('error_message = $')) {
+        job.status = 'FAILED';
+        job.stage = 'FAILED';
+        job.error_message = params[0];
+        job.completed_at = new Date();
+      }
+      if (normalizedSql.includes("status = 'cancelled'")) {
+        job.status = 'CANCELLED';
+        job.stage = 'CANCELLED';
+        job.error_message = 'Job cancelled by user request';
+        job.completed_at = new Date();
+      }
+      job.updated_at = new Date();
+      return Promise.resolve({ rows: [{ ...job }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
+  if (normalizedSql.startsWith('delete from data_quality_jobs')) {
+    const [id] = params;
+    const idx = fallbackQualityJobs.findIndex(j => String(j.dataset_id) === String(id) || String(j.id) === String(id));
+    if (idx !== -1) {
+      const deleted = fallbackQualityJobs.splice(idx, 1)[0];
       return Promise.resolve({ rows: [{ ...deleted }], rowCount: 1 });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });

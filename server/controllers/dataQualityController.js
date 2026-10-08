@@ -41,17 +41,74 @@ const dataQualityController = {
   },
 
   /**
+   * POST /api/data-quality/datasets/:datasetId/audit
+   * Trigger an asynchronous enterprise data quality audit job
+   */
+  async startAuditJob(req, res) {
+    try {
+      const { datasetId } = req.params;
+      const organizationId = req.user.organization_id;
+      const { sampleSize, fullScan, scanMode, expectedRefreshHours } = req.body;
+
+      const jobResult = await dataQualityService.startQualityAuditJob(datasetId, organizationId, {
+        scanMode: scanMode || (fullScan === false ? 'SAMPLED' : 'FULL_SCAN'),
+        sampleSize: sampleSize ? Number(sampleSize) : null,
+        expectedRefreshHours: expectedRefreshHours ? Number(expectedRefreshHours) : null,
+        userId: req.user.id,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent']
+      });
+
+      return res.status(202).json({
+        success: true,
+        message: 'Data quality audit job started successfully.',
+        jobId: jobResult.job_id,
+        data: jobResult,
+        job: jobResult
+      });
+    } catch (err) {
+      console.error('[DataQualityController.startAuditJob] Error:', err);
+      const status = err.status || 500;
+      return res.status(status).json({
+        success: false,
+        message: err.message || 'Failed to initiate data quality audit job.',
+        error: err.message
+      });
+    }
+  },
+
+  /**
    * POST /api/data-quality/datasets/:datasetId/evaluate
-   * Trigger an on-demand data quality evaluation scan
+   * Trigger an on-demand data quality evaluation scan (supports both async jobs and sync evaluation)
    */
   async evaluateDatasetQuality(req, res) {
     try {
       const { datasetId } = req.params;
       const organizationId = req.user.organization_id;
-      const { sampleSize, fullScan, expectedRefreshHours } = req.body;
+      const { sampleSize, fullScan, scanMode, expectedRefreshHours, async: runAsync } = req.body;
+
+      if (runAsync === true) {
+        const jobResult = await dataQualityService.startQualityAuditJob(datasetId, organizationId, {
+          scanMode: scanMode || (fullScan === false ? 'SAMPLED' : 'FULL_SCAN'),
+          sampleSize: sampleSize ? Number(sampleSize) : null,
+          expectedRefreshHours: expectedRefreshHours ? Number(expectedRefreshHours) : null,
+          userId: req.user.id,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent']
+        });
+
+        return res.status(202).json({
+          success: true,
+          message: 'Data quality audit job started.',
+          jobId: jobResult.job_id,
+          data: jobResult,
+          job: jobResult
+        });
+      }
 
       const profile = await dataQualityService.evaluateDatasetQuality(datasetId, organizationId, {
         sampleSize: sampleSize ? Number(sampleSize) : null,
+        scanMode: scanMode || (fullScan === false ? 'SAMPLED' : 'FULL_SCAN'),
         fullScan: fullScan !== false,
         expectedRefreshHours: expectedRefreshHours ? Number(expectedRefreshHours) : null,
         userId: req.user.id,
@@ -71,6 +128,120 @@ const dataQualityController = {
       return res.status(status).json({
         success: false,
         message: err.message || 'Failed to execute dataset quality scan.',
+        error: err.message
+      });
+    }
+  },
+
+  /**
+   * GET /api/data-quality/jobs/:jobId
+   * Poll status of an asynchronous quality audit job
+   */
+  async getJobStatus(req, res) {
+    try {
+      const { jobId } = req.params;
+      const organizationId = req.user.organization_id;
+
+      const job = await dataQualityService.getJobStatus(jobId, organizationId);
+
+      return res.status(200).json({
+        success: true,
+        data: job,
+        job
+      });
+    } catch (err) {
+      console.error('[DataQualityController.getJobStatus] Error:', err);
+      const status = err.status || 500;
+      return res.status(status).json({
+        success: false,
+        message: err.message || 'Failed to fetch job status.',
+        error: err.message
+      });
+    }
+  },
+
+  /**
+   * GET /api/data-quality/datasets/:datasetId/job
+   * Get latest quality job for a dataset
+   */
+  async getDatasetJob(req, res) {
+    try {
+      const { datasetId } = req.params;
+      const organizationId = req.user.organization_id;
+
+      const job = await dataQualityService.getDatasetLatestJob(datasetId, organizationId);
+
+      return res.status(200).json({
+        success: true,
+        data: job,
+        job
+      });
+    } catch (err) {
+      console.error('[DataQualityController.getDatasetJob] Error:', err);
+      const status = err.status || 500;
+      return res.status(status).json({
+        success: false,
+        message: err.message || 'Failed to fetch dataset job.',
+        error: err.message
+      });
+    }
+  },
+
+  /**
+   * POST /api/data-quality/jobs/:jobId/cancel
+   * Cancel an active quality audit job
+   */
+  async cancelJob(req, res) {
+    try {
+      const { jobId } = req.params;
+      const organizationId = req.user.organization_id;
+
+      const cancelled = await dataQualityService.cancelJob(jobId, organizationId);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Data quality audit job cancelled successfully.',
+        data: cancelled
+      });
+    } catch (err) {
+      console.error('[DataQualityController.cancelJob] Error:', err);
+      const status = err.status || 500;
+      return res.status(status).json({
+        success: false,
+        message: err.message || 'Failed to cancel job.',
+        error: err.message
+      });
+    }
+  },
+
+  /**
+   * POST /api/data-quality/jobs/:jobId/retry
+   * Retry a failed or cancelled quality audit job
+   */
+  async retryJob(req, res) {
+    try {
+      const { jobId } = req.params;
+      const organizationId = req.user.organization_id;
+
+      const newJob = await dataQualityService.retryJob(jobId, organizationId, {
+        userId: req.user.id,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent']
+      });
+
+      return res.status(202).json({
+        success: true,
+        message: 'Data quality audit retry job created.',
+        jobId: newJob.job_id,
+        data: newJob,
+        job: newJob
+      });
+    } catch (err) {
+      console.error('[DataQualityController.retryJob] Error:', err);
+      const status = err.status || 500;
+      return res.status(status).json({
+        success: false,
+        message: err.message || 'Failed to retry quality job.',
         error: err.message
       });
     }

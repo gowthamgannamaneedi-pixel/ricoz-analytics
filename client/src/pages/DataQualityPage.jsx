@@ -38,6 +38,11 @@ import {
   getDatasets,
   getDatasetQuality,
   evaluateDatasetQuality,
+  startQualityAudit,
+  getQualityJobStatus,
+  getDatasetActiveJob,
+  cancelQualityJob,
+  retryQualityJob,
   getDatasetQualityHistory,
   getDataQualityRules,
   createDataQualityRule,
@@ -108,6 +113,9 @@ export default function DataQualityPage() {
   const [loading, setLoading] = useState(true);
   const [evaluating, setEvaluating] = useState(false);
   const [scanMode, setScanMode] = useState('full'); // 'full' | 'sampled'
+  const [activeJob, setActiveJob] = useState(null);
+  const [jobError, setJobError] = useState(null);
+  const pollingRef = useRef(null);
   const [columnSearch, setColumnSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [scopeFilter, setScopeFilter] = useState('all');
@@ -176,15 +184,71 @@ export default function DataQualityPage() {
     loadInitialDatasets();
   }, []);
 
+  // Job Polling Mechanism
+  const startPollingJob = useCallback((jobId) => {
+    if (pollingRef.current) clearInterval(pollingRef.current);
+    setEvaluating(true);
+    setJobError(null);
+
+    const poll = async () => {
+      try {
+        const res = await getQualityJobStatus(jobId);
+        const job = res?.data || res?.job;
+        if (!job) return;
+
+        setActiveJob(job);
+
+        if (job.status === 'COMPLETED') {
+          clearInterval(pollingRef.current);
+          pollingRef.current = null;
+          setEvaluating(false);
+          showToast('Quality audit completed successfully!');
+          // Reload profile & history
+          const [profRes, histRes] = await Promise.all([
+            getDatasetQuality(selectedDatasetId).catch(() => null),
+            getDatasetQualityHistory(selectedDatasetId).catch(() => ({ history: [] }))
+          ]);
+          if (profRes && (profRes.profile || profRes.data)) {
+            setQualityProfile(profRes.profile || profRes.data);
+          }
+          setHistory(histRes.history || histRes.data || []);
+        } else if (job.status === 'FAILED') {
+          clearInterval(pollingRef.current);
+          pollingRef.current = null;
+          setEvaluating(false);
+          setJobError(job.error_message || 'Quality audit failed. Dataset is safe and has not been deleted.');
+        } else if (job.status === 'CANCELLED') {
+          clearInterval(pollingRef.current);
+          pollingRef.current = null;
+          setEvaluating(false);
+          showToast('Quality scan cancelled. Dataset is safe.');
+        }
+      } catch (err) {
+        console.error('Job polling error:', err);
+      }
+    };
+
+    poll();
+    pollingRef.current = setInterval(poll, 1200);
+  }, [selectedDatasetId]);
+
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []);
+
   // 2. Fetch Quality Profile, History, and Rules for selected Dataset
   const loadQualityData = useCallback(async () => {
     if (!selectedDatasetId) return;
     try {
       setLoading(true);
-      const [profileRes, historyRes, rulesRes] = await Promise.all([
+      setJobError(null);
+      const [profileRes, historyRes, rulesRes, activeJobRes] = await Promise.all([
         getDatasetQuality(selectedDatasetId).catch(() => null),
         getDatasetQualityHistory(selectedDatasetId).catch(() => ({ history: [] })),
-        getDataQualityRules(selectedDatasetId).catch(() => ({ rules: [] }))
+        getDataQualityRules(selectedDatasetId).catch(() => ({ rules: [] })),
+        getDatasetActiveJob(selectedDatasetId).catch(() => null)
       ]);
 
       if (profileRes && (profileRes.profile || profileRes.data || profileRes.quality_score !== undefined)) {
@@ -195,39 +259,77 @@ export default function DataQualityPage() {
 
       setHistory(historyRes.history || historyRes.data || []);
       setRules(rulesRes.rules || rulesRes.data || []);
+
+      const job = activeJobRes?.data || activeJobRes?.job;
+      if (job && (job.status === 'RUNNING' || job.status === 'QUEUED')) {
+        setActiveJob(job);
+        startPollingJob(job.id);
+      }
     } catch (err) {
       console.error('Error fetching quality details:', err);
       setQualityProfile(null);
     } finally {
       setLoading(false);
     }
-  }, [selectedDatasetId]);
+  }, [selectedDatasetId, startPollingJob]);
 
   useEffect(() => {
     loadQualityData();
   }, [loadQualityData]);
 
-  // 3. Run Quality Audit
+  // 3. Run Quality Audit Asynchronously
   const handleRunAudit = async () => {
     if (!selectedDatasetId) return;
     try {
       setEvaluating(true);
+      setJobError(null);
       const options = {
-        fullScan: scanMode === 'full',
-        sampleSize: scanMode === 'sampled' ? 1000 : null
+        scanMode: scanMode === 'sampled' ? 'SAMPLED' : 'FULL_SCAN',
+        sampleSize: scanMode === 'sampled' ? 10000 : null
       };
-      const res = await evaluateDatasetQuality(selectedDatasetId, options);
-      if (res && (res.profile || res.data)) {
-        setQualityProfile(res.profile || res.data);
+      const res = await startQualityAudit(selectedDatasetId, options);
+      const jobId = res?.jobId || res?.data?.job_id;
+      if (jobId) {
+        setActiveJob(res.data || { id: jobId, status: 'RUNNING', progress_percent: 5, stage: 'INITIALIZING' });
+        startPollingJob(jobId);
+        showToast('Quality audit initiated.');
       }
-      const historyRes = await getDatasetQualityHistory(selectedDatasetId).catch(() => ({ history: [] }));
-      setHistory(historyRes.history || historyRes.data || []);
-      showToast('Quality audit evaluation completed successfully!');
     } catch (err) {
       console.error('Audit run failed:', err);
-      alert(err.message || 'Audit evaluation failed');
-    } finally {
       setEvaluating(false);
+      setJobError(err.message || 'Audit evaluation failed. Dataset is safe and has not been deleted.');
+    }
+  };
+
+  const handleCancelAudit = async () => {
+    if (!activeJob?.id) return;
+    try {
+      await cancelQualityJob(activeJob.id);
+      showToast('Cancelling quality scan...');
+    } catch (err) {
+      console.error('Cancel failed:', err);
+    }
+  };
+
+  const handleRetryAudit = async () => {
+    if (!activeJob?.id) {
+      handleRunAudit();
+      return;
+    }
+    try {
+      setEvaluating(true);
+      setJobError(null);
+      const res = await retryQualityJob(activeJob.id);
+      const jobId = res?.jobId || res?.data?.job_id;
+      if (jobId) {
+        setActiveJob(res.data || { id: jobId, status: 'RUNNING', progress_percent: 5, stage: 'INITIALIZING' });
+        startPollingJob(jobId);
+        showToast('Retry audit initiated.');
+      }
+    } catch (err) {
+      console.error('Retry failed:', err);
+      setEvaluating(false);
+      setJobError(err.message || 'Audit retry failed. Dataset is safe and has not been deleted.');
     }
   };
 
@@ -589,7 +691,7 @@ export default function DataQualityPage() {
               {evaluating ? (
                 <>
                   <RefreshCw className="h-4 w-4 animate-spin" />
-                  <span>Evaluating...</span>
+                  <span>Scanning ({activeJob?.progress_percent || 0}%)...</span>
                 </>
               ) : (
                 <>
@@ -602,22 +704,100 @@ export default function DataQualityPage() {
         </div>
       </div>
 
+      {/* ── Active Background Job Progress Indicator ────────────────────── */}
+      {evaluating && (
+        <div className="bg-white border border-rose-200 rounded-2xl p-6 shadow-sm mb-6 space-y-4 animate-in fade-in duration-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-200">
+                <RefreshCw className="h-5 w-5 animate-spin" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <span>Quality Scan in Progress</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 uppercase font-semibold">
+                    {activeJob?.status || 'RUNNING'}
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Processing {(activeJob?.rows_processed || 0).toLocaleString()} / {(activeJob?.total_rows || 0).toLocaleString()} rows &bull; Stage: <span className="font-mono text-slate-700 font-semibold">{activeJob?.stage || 'INITIALIZING'}</span>
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleCancelAudit}
+                className="h-9 px-3 rounded-lg text-xs font-semibold text-rose-700 hover:bg-rose-50 border-rose-200"
+              >
+                <X className="h-3.5 w-3.5 mr-1" />
+                <span>Cancel Scan</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Animated Progress Bar */}
+          <div className="space-y-1.5">
+            <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-rose-500 to-rose-600 h-2.5 rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${Math.max(5, activeJob?.progress_percent || 0)}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-[11px] text-slate-400 font-mono">
+              <span>{activeJob?.scan_mode || (scanMode === 'sampled' ? 'SAMPLED SCAN' : 'FULL ENTERPRISE SCAN')}</span>
+              <span className="font-bold text-rose-600">{activeJob?.progress_percent || 0}%</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Failed Job Error Banner with Retry ──────────────────────────── */}
+      {jobError && (
+        <div className="bg-rose-50/80 border border-rose-200 rounded-2xl p-5 mb-6 shadow-xs animate-in fade-in duration-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-xs font-bold text-rose-900">Quality Audit Notice</h4>
+                <p className="text-xs text-rose-700 mt-0.5 leading-relaxed">
+                  {jobError}
+                </p>
+                <p className="text-[11px] text-rose-600/80 mt-1 font-medium">
+                  Dataset is safe and has not been deleted. You can retry the audit safely.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-end sm:self-center">
+              <Button
+                variant="primary"
+                onClick={handleRetryAudit}
+                className="h-8 px-4 rounded-lg text-xs font-semibold"
+              >
+                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                <span>Retry Audit</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex flex-col items-center justify-center py-28 space-y-3 bg-white border border-slate-200/90 rounded-2xl shadow-xs">
           <RefreshCw className="h-8 w-8 text-rose-600 animate-spin" />
-          <p className="text-xs font-semibold text-slate-500">Evaluating dataset quality dimensions...</p>
+          <p className="text-xs font-semibold text-slate-500">Loading dataset quality information...</p>
         </div>
-      ) : !qualityProfile ? (
+      ) : !qualityProfile && !evaluating ? (
         <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-4 shadow-xs max-w-lg mx-auto my-6">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 border border-rose-200">
             <ShieldCheck className="h-6 w-6" />
           </div>
           <h3 className="text-base font-bold text-slate-900">No Quality Profile Found</h3>
           <p className="text-xs text-slate-500 leading-relaxed">
-            Run an initial quality audit scan to profile completeness, type validity, uniqueness, and column metrics for this dataset.
+            Run an on-demand quality audit scan to profile completeness, type validity, uniqueness, and column metrics for this dataset.
           </p>
           <Button onClick={handleRunAudit} variant="primary" className="h-10 px-5 rounded-xl font-semibold">
-            <Play className="h-4 w-4 fill-white" />
+            <Play className="h-4 w-4 fill-white mr-1.5" />
             <span>Run Initial Evaluation</span>
           </Button>
         </div>

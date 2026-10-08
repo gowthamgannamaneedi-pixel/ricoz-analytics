@@ -20,6 +20,36 @@ router.post(
   dataQualityController.evaluateDatasetQuality
 );
 
+router.post(
+  '/datasets/:datasetId/audit',
+  requirePermission('quality.evaluate'),
+  dataQualityController.startAuditJob
+);
+
+router.get(
+  '/datasets/:datasetId/job',
+  requirePermission('quality.view'),
+  dataQualityController.getDatasetJob
+);
+
+router.get(
+  '/jobs/:jobId',
+  requirePermission('quality.view'),
+  dataQualityController.getJobStatus
+);
+
+router.post(
+  '/jobs/:jobId/cancel',
+  requirePermission('quality.evaluate'),
+  dataQualityController.cancelJob
+);
+
+router.post(
+  '/jobs/:jobId/retry',
+  requirePermission('quality.evaluate'),
+  dataQualityController.retryJob
+);
+
 router.get(
   '/datasets/:datasetId/columns',
   requirePermission('quality.view'),

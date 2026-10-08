@@ -1293,6 +1293,54 @@ export async function evaluateDatasetQuality(datasetId, options = {}) {
 }
 
 /**
+ * Start an asynchronous data quality audit job
+ * @param {number|string} datasetId 
+ * @param {{ scanMode?: string, sampleSize?: number, fullScan?: boolean }} [options={}]
+ */
+export async function startQualityAudit(datasetId, options = {}) {
+  return apiRequest(`/data-quality/datasets/${datasetId}/audit`, {
+    method: 'POST',
+    body: JSON.stringify(options)
+  });
+}
+
+/**
+ * Get status of an active or completed quality audit job
+ * @param {string} jobId 
+ */
+export async function getQualityJobStatus(jobId) {
+  return apiRequest(`/data-quality/jobs/${jobId}`);
+}
+
+/**
+ * Get active/latest quality audit job for a dataset
+ * @param {number|string} datasetId 
+ */
+export async function getDatasetActiveJob(datasetId) {
+  return apiRequest(`/data-quality/datasets/${datasetId}/job`);
+}
+
+/**
+ * Cancel a running quality audit job
+ * @param {string} jobId 
+ */
+export async function cancelQualityJob(jobId) {
+  return apiRequest(`/data-quality/jobs/${jobId}/cancel`, {
+    method: 'POST'
+  });
+}
+
+/**
+ * Retry a failed or cancelled quality audit job
+ * @param {string} jobId 
+ */
+export async function retryQualityJob(jobId) {
+  return apiRequest(`/data-quality/jobs/${jobId}/retry`, {
+    method: 'POST'
+  });
+}
+
+/**
  * Get column-level quality breakdown for a dataset
  * @param {number|string} datasetId 
  */

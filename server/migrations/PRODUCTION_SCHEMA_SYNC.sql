@@ -788,4 +788,46 @@ BEGIN
     END IF;
 END $$;
 
+-- Phase 15 Enterprise Extension: Data Quality Jobs Table
+CREATE TABLE IF NOT EXISTS public.data_quality_jobs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    dataset_id INTEGER NOT NULL REFERENCES public.datasets(id) ON DELETE CASCADE,
+    job_type VARCHAR(50) NOT NULL DEFAULT 'FULL_SCAN',
+    status VARCHAR(50) NOT NULL DEFAULT 'QUEUED',
+    progress_percent NUMERIC(5, 2) NOT NULL DEFAULT 0.00,
+    rows_processed INTEGER NOT NULL DEFAULT 0,
+    total_rows INTEGER NOT NULL DEFAULT 0,
+    stage VARCHAR(100) NOT NULL DEFAULT 'INITIALIZING',
+    scan_mode VARCHAR(20) NOT NULL DEFAULT 'FULL_SCAN',
+    sample_size INTEGER DEFAULT NULL,
+    snapshot_id UUID REFERENCES public.dataset_quality_snapshots(id) ON DELETE SET NULL,
+    error_message TEXT DEFAULT NULL,
+    created_by INTEGER REFERENCES public.users(id) ON DELETE SET NULL,
+    started_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+    completed_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_quality_jobs_dataset_id ON public.data_quality_jobs(dataset_id);
+CREATE INDEX IF NOT EXISTS idx_quality_jobs_org_id ON public.data_quality_jobs(organization_id);
+CREATE INDEX IF NOT EXISTS idx_quality_jobs_status ON public.data_quality_jobs(status);
+CREATE INDEX IF NOT EXISTS idx_quality_jobs_created_at ON public.data_quality_jobs(created_at DESC);
+
+ALTER TABLE public.data_quality_jobs ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'data_quality_jobs' AND policyname = 'quality_jobs_org_isolation'
+    ) THEN
+        CREATE POLICY quality_jobs_org_isolation ON public.data_quality_jobs
+            USING (organization_id = public.get_auth_org_id() OR organization_id IS NULL)
+            WITH CHECK (organization_id = public.get_auth_org_id());
+    END IF;
+END $$;
+
 COMMIT;
+
