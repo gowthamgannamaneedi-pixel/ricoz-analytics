@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { UploadCloud, FileSpreadsheet, FileCode, File, X, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { MAX_UPLOAD_SIZE_MB } from '../services/api';
 
 /**
  * Enterprise Drag-and-Drop File Upload Component
@@ -13,7 +14,7 @@ import { UploadCloud, FileSpreadsheet, FileCode, File, X, AlertCircle, CheckCirc
  */
 export default function FileUpload({
   accept = '.csv, .json',
-  maxSizeMb = 25,
+  maxSizeMb = MAX_UPLOAD_SIZE_MB,
   selectedFile,
   onFileSelect,
   error

@@ -36,6 +36,13 @@ if (require.main === module) {
       // Start background report & alert scheduler
       schedulerService.start();
     });
+
+    // Configure enterprise upload timeouts (5 minutes request timeout for large 250MB+ datasets)
+    if (server) {
+      server.timeout = 300000;
+      server.keepAliveTimeout = 65000;
+      server.headersTimeout = 66000;
+    }
   });
 }
 

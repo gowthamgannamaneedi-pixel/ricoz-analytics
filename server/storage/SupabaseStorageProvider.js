@@ -91,7 +91,7 @@ class SupabaseStorageProvider extends StorageProvider {
    * @param {Buffer} buffer 
    * @returns {Promise<{ filePath: string, size: number, storage: string }>}
    */
-  async saveFile(userId, originalFilename, buffer) {
+  async saveFile(userId, originalFilename, bufferOrPath) {
     const sanitizedExt = path.extname(originalFilename).toLowerCase() || '.csv';
     const uniqueId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     const safeFilename = `${uniqueId}${sanitizedExt}`;
@@ -99,14 +99,38 @@ class SupabaseStorageProvider extends StorageProvider {
     const cleanKey = this._sanitizeKey(storageKey);
     const mimeType = this._getMimeType(safeFilename);
 
+    const cachedPath = this._getCachedPath(cleanKey);
+    const cachedDir = path.dirname(cachedPath);
+    if (!fs.existsSync(cachedDir)) {
+      fs.mkdirSync(cachedDir, { recursive: true });
+    }
+
+    let fileSize = 0;
+    const isFilePath = typeof bufferOrPath === 'string' && fs.existsSync(bufferOrPath);
+
+    if (isFilePath) {
+      await fs.promises.copyFile(bufferOrPath, cachedPath);
+      const stat = await fs.promises.stat(cachedPath);
+      fileSize = stat.size;
+    } else if (Buffer.isBuffer(bufferOrPath)) {
+      await fs.promises.writeFile(cachedPath, bufferOrPath);
+      fileSize = bufferOrPath.length;
+    } else {
+      const contentStr = String(bufferOrPath || '');
+      await fs.promises.writeFile(cachedPath, contentStr, 'utf8');
+      fileSize = Buffer.byteLength(contentStr, 'utf8');
+    }
+
     // 1. Upload to Supabase Storage (cloud persistence)
     if (this.client && this.client.storage) {
       try {
+        const uploadPayload = isFilePath ? fs.createReadStream(cachedPath) : (Buffer.isBuffer(bufferOrPath) ? bufferOrPath : Buffer.from(String(bufferOrPath || ''), 'utf8'));
         const { data, error } = await this.client.storage
           .from(this.bucket)
-          .upload(cleanKey, buffer, {
+          .upload(cleanKey, uploadPayload, {
             contentType: mimeType,
-            upsert: true
+            upsert: true,
+            duplex: isFilePath ? 'half' : undefined
           });
 
         if (error) {
@@ -117,18 +141,15 @@ class SupabaseStorageProvider extends StorageProvider {
       }
     }
 
-    // 2. Write to local cache for instant sub-millisecond retrieval
-    const cachedPath = this._getCachedPath(cleanKey);
-    const cachedDir = path.dirname(cachedPath);
-    if (!fs.existsSync(cachedDir)) {
-      fs.mkdirSync(cachedDir, { recursive: true });
+    // Clean up temp upload file if applicable
+    if (isFilePath && (bufferOrPath.includes('temp_uploads') || bufferOrPath.includes('temp'))) {
+      fs.unlink(bufferOrPath, () => {});
     }
-    await fs.promises.writeFile(cachedPath, buffer);
 
     return {
       filePath: cleanKey,
       fullPath: cachedPath,
-      size: buffer.length,
+      size: fileSize,
       storage: 'supabase'
     };
   }

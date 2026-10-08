@@ -299,10 +299,11 @@ if (user1DsId) {
     assert(invalidUploadRes.status === 400, 'Test 7: Invalid file type (.exe) is rejected with 400 Bad Request');
 
     // -------------------------------------------------------------
-    // Test 8: Oversized file check (simulated large buffer)
+    // Test 8: Oversized file check (simulated payload exceeding limit)
     // -------------------------------------------------------------
-    // 26 MB dummy payload
-    const largeBuffer = Buffer.alloc(26 * 1024 * 1024, 'a');
+    const savedLimitMb = process.env.MAX_UPLOAD_SIZE_MB;
+    process.env.MAX_UPLOAD_SIZE_MB = '2'; // Set 2MB limit for fast lightweight test
+    const largeBuffer = Buffer.alloc(3 * 1024 * 1024, 'a'); // 3MB payload exceeds 2MB limit
     const oversizedMultipart = createMultipartPayload(
       { name: 'Oversized CSV' },
       { fieldname: 'file', filename: 'giant.csv', mimetype: 'text/csv', content: largeBuffer }
@@ -312,8 +313,13 @@ if (user1DsId) {
       'Content-Type': oversizedMultipart.contentType,
       'Content-Length': oversizedMultipart.body.length
     });
+    if (savedLimitMb) {
+      process.env.MAX_UPLOAD_SIZE_MB = savedLimitMb;
+    } else {
+      delete process.env.MAX_UPLOAD_SIZE_MB;
+    }
 
-    assert(oversizedRes.status === 400 && oversizedRes.data.message.includes('exceeds'), 'Test 8: Oversized file (>25MB) is rejected');
+    assert(oversizedRes.status === 400 && oversizedRes.data.message.includes('exceeds'), 'Test 8: Oversized file exceeding configured limit is rejected');
 
     // -------------------------------------------------------------
     // Test 9: Dataset record has correctly inferred schema data types

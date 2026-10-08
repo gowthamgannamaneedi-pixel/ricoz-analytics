@@ -12,6 +12,7 @@ const config = {
   geminiApiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '',
   geminiModel: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
   mlServiceUrl: process.env.ML_SERVICE_URL || 'http://127.0.0.1:8000',
+  maxUploadSizeMb: parseInt(process.env.MAX_UPLOAD_SIZE_MB || '250', 10),
   supabase: {
     url: process.env.SUPABASE_URL || '',
     anonKey: process.env.SUPABASE_ANON_KEY || '',

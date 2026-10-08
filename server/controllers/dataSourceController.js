@@ -1,9 +1,10 @@
+const fs = require('fs');
 const path = require('path');
 const { validateUrl } = require('../utils/urlSecurity');
 const DataSource = require('../models/dataSourceModel');
 const Dataset = require('../models/datasetModel');
 const storage = require('../storage');
-const { parseDatasetFile } = require('../services/fileParserService');
+const { parseDatasetFile, parseDatasetFileStream } = require('../services/fileParserService');
 const { testPostgresConnection, sanitizePostgresConfig } = require('../services/postgresSourceService');
 
 /**
@@ -196,7 +197,7 @@ const createDataSource = async (req, res, next) => {
         const filename = `${name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_')}_api.json`;
         const buffer = Buffer.from(JSON.stringify(initialRecords, null, 2));
         const saved = await storage.saveFile(userId, filename, buffer);
-        parsedMetadata = parseDatasetFile(buffer, '.json', 50);
+        parsedMetadata = await parseDatasetFile(buffer, '.json', 50);
 
         createdDataset = await Dataset.create({
           userId,
@@ -380,7 +381,7 @@ const syncDataSource = async (req, res, next) => {
       const filename = `${source.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_sync.json`;
       const fileBuffer = Buffer.from(JSON.stringify(records, null, 2));
       const saved = await storage.saveFile(userId, filename, fileBuffer);
-      const parsedMetadata = parseDatasetFile(fileBuffer, '.json', 50);
+      const parsedMetadata = await parseDatasetFile(fileBuffer, '.json', 50);
 
       const datasets = await Dataset.findByDataSourceId(id, userId);
       if (datasets && datasets.length > 0) {
@@ -460,19 +461,25 @@ const uploadDataSource = async (req, res, next) => {
     const description = req.body.description?.trim() || `Imported from ${originalName}`;
     const fileType = ext === '.json' ? 'json' : 'csv';
 
-    // 1. Parse and extract metadata from memory buffer
+    // Support both streaming disk path (large files) and buffer (small files / memory)
+    const fileInput = file.path || file.buffer;
+
+    // 1. Parse and extract metadata from streaming path or memory buffer
     let parsedMetadata;
     try {
-      parsedMetadata = parseDatasetFile(file.buffer, ext, 50);
+      parsedMetadata = await parseDatasetFileStream(fileInput, ext, 50);
     } catch (parseErr) {
+      if (file.path && fs.existsSync(file.path)) {
+        fs.unlink(file.path, () => {});
+      }
       return res.status(400).json({
         success: false,
         message: `Failed to process data file: ${parseErr.message}`
       });
     }
 
-    // 2. Persist file via StorageProvider
-    const savedFile = await storage.saveFile(userId, originalName, file.buffer);
+    // 2. Persist file via StorageProvider (handles copy or stream transfer)
+    const savedFile = await storage.saveFile(userId, originalName, fileInput);
 
     // 3. Create Data Source record
     const dataSource = await DataSource.create({
@@ -482,7 +489,7 @@ const uploadDataSource = async (req, res, next) => {
       status: 'active',
       config: {
         originalFilename: originalName,
-        fileSize: file.size,
+        fileSize: savedFile.size || file.size,
         mimeType: file.mimetype
       }
     });
@@ -522,6 +529,9 @@ const uploadDataSource = async (req, res, next) => {
       }
     });
   } catch (err) {
+    if (req.file?.path && fs.existsSync(req.file.path)) {
+      fs.unlink(req.file.path, () => {});
+    }
     next(err);
   }
 };

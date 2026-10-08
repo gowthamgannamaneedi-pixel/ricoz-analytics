@@ -1,5 +1,9 @@
 // Centralized API utility with authentication token management
 export const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+export const MAX_UPLOAD_SIZE_MB = (() => {
+  const envVal = parseInt(import.meta.env.VITE_MAX_UPLOAD_SIZE_MB, 10);
+  return !isNaN(envVal) && envVal > 0 ? envVal : 250;
+})();
 const TOKEN_STORAGE_KEY = 'ricoz_auth_token';
 
 /**
@@ -1805,3 +1809,73 @@ export async function getOrganizationUsersApi(params = {}) {
 
 export const getUsers = getOrganizationUsersApi;
 
+/**
+ * Upload a dataset file with real-time XMLHttpRequest progress tracking
+ * @param {FormData} formData 
+ * @param {(progressEvent: { loaded: number, total: number, percentage: number, stage: string, message: string }) => void} [onProgress]
+ * @returns {Promise<any>}
+ */
+export function uploadDataSourceFile(formData, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const url = `${API_BASE_URL}/data-sources/upload`;
+
+    xhr.open('POST', url, true);
+    const token = getAuthToken();
+    if (token) {
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    }
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && onProgress) {
+        // Map upload byte transfer to 0-80% progress
+        const percentage = Math.min(80, Math.round((event.loaded / event.total) * 80));
+        const loadedMb = (event.loaded / (1024 * 1024)).toFixed(1);
+        const totalMb = (event.total / (1024 * 1024)).toFixed(1);
+        onProgress({
+          loaded: event.loaded,
+          total: event.total,
+          percentage,
+          stage: 'uploading',
+          message: `Uploading data file (${loadedMb} MB / ${totalMb} MB · ${Math.round((event.loaded / event.total) * 100)}%)...`
+        });
+      }
+    };
+
+    xhr.onload = () => {
+      let data = null;
+      try {
+        data = JSON.parse(xhr.responseText);
+      } catch (_) {}
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        if (onProgress) {
+          onProgress({
+            loaded: 1,
+            total: 1,
+            percentage: 100,
+            stage: 'complete',
+            message: 'Ingestion complete! Generating preview...'
+          });
+        }
+        resolve(data || { success: true });
+      } else {
+        const errorMsg = data?.message || data?.error?.message || `Upload failed with status HTTP ${xhr.status}`;
+        const err = new Error(errorMsg);
+        err.status = xhr.status;
+        err.data = data;
+        reject(err);
+      }
+    };
+
+    xhr.onerror = () => {
+      reject(new Error('Network connection error during file upload.'));
+    };
+
+    xhr.ontimeout = () => {
+      reject(new Error('Upload timed out. Please check your connection.'));
+    };
+
+    xhr.send(formData);
+  });
+}

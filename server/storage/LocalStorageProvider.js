@@ -32,7 +32,7 @@ class LocalStorageProvider extends StorageProvider {
     return resolvedPath;
   }
 
-  async saveFile(userId, originalFilename, buffer) {
+  async saveFile(userId, originalFilename, bufferOrPath) {
     const userDir = path.join(this.baseDir, String(userId));
     if (!fs.existsSync(userDir)) {
       fs.mkdirSync(userDir, { recursive: true });
@@ -43,7 +43,25 @@ class LocalStorageProvider extends StorageProvider {
     const safeFilename = `${uniqueId}${sanitizedExt}`;
     const destinationPath = path.join(userDir, safeFilename);
 
-    await fs.promises.writeFile(destinationPath, buffer);
+    let fileSize = 0;
+    if (typeof bufferOrPath === 'string' && fs.existsSync(bufferOrPath)) {
+      // Direct stream copy from disk without loading full file into memory
+      await fs.promises.copyFile(bufferOrPath, destinationPath);
+      const stat = await fs.promises.stat(destinationPath);
+      fileSize = stat.size;
+
+      // Clean up temp upload file if applicable
+      if (bufferOrPath.includes('temp_uploads') || bufferOrPath.includes('temp')) {
+        fs.unlink(bufferOrPath, () => {});
+      }
+    } else if (Buffer.isBuffer(bufferOrPath)) {
+      await fs.promises.writeFile(destinationPath, bufferOrPath);
+      fileSize = bufferOrPath.length;
+    } else {
+      const contentStr = String(bufferOrPath || '');
+      await fs.promises.writeFile(destinationPath, contentStr, 'utf8');
+      fileSize = Buffer.byteLength(contentStr, 'utf8');
+    }
 
     // Relative storage key to abstract away physical server directory
     const relativeKey = path.relative(this.baseDir, destinationPath).replace(/\\/g, '/');
@@ -51,7 +69,7 @@ class LocalStorageProvider extends StorageProvider {
     return {
       filePath: relativeKey,
       fullPath: destinationPath,
-      size: buffer.length
+      size: fileSize
     };
   }
 

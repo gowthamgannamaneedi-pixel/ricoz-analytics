@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, FileSpreadsheet, FileCode, Database, CheckCircle2, AlertCircle, Loader2, ArrowRight, Server } from 'lucide-react';
 import FileUpload from './FileUpload';
 import UploadProgress from './UploadProgress';
-import { API_BASE_URL, testApiDataSource, createDataSource } from '../services/api';
+import { API_BASE_URL, testApiDataSource, createDataSource, uploadDataSourceFile, MAX_UPLOAD_SIZE_MB } from '../services/api';
 
 /**
  * Enterprise Add Data Source Modal
@@ -248,11 +248,19 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
       return;
     }
 
+    const formatFileSize = (bytes) => {
+      if (!bytes) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+    };
+
     setIsProcessing(true);
     setError('');
-    setUploadProgress(15);
+    setUploadProgress(5);
     setUploadStage('uploading');
-    setStageMessage('Uploading raw file payload...');
+    setStageMessage(`Preparing upload payload (${formatFileSize(selectedFile.size)})...`);
 
     const formData = new FormData();
     formData.append('file', selectedFile);
@@ -260,62 +268,45 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
     formData.append('description', description.trim());
 
     try {
-      // Step simulator for realistic ingest pipeline feedback
-      const progressTimer = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 85) {
-            clearInterval(progressTimer);
-            return prev;
-          }
-          if (prev >= 40 && uploadStage === 'uploading') {
+      let serverProcessingTimer = null;
+
+      const responseData = await uploadDataSourceFile(formData, (progressInfo) => {
+        if (progressInfo.stage === 'uploading') {
+          setUploadStage('uploading');
+          setUploadProgress(progressInfo.percentage);
+          setStageMessage(progressInfo.message);
+
+          if (progressInfo.loaded >= progressInfo.total && !serverProcessingTimer) {
             setUploadStage('parsing');
-            setStageMessage('Parsing data records & validating delimiters...');
-          } else if (prev >= 65 && uploadStage === 'parsing') {
-            setUploadStage('schema');
-            setStageMessage('Inferring column data types and generating statistics...');
+            setUploadProgress(85);
+            setStageMessage('Binary transfer complete. Parsing dataset records & validating delimiters...');
+
+            serverProcessingTimer = setTimeout(() => {
+              setUploadStage('schema');
+              setUploadProgress(92);
+              setStageMessage('Inferring column data types and generating statistics...');
+            }, 600);
           }
-          return prev + 15;
-        });
-      }, 150);
+        }
+      });
 
-      const res = await fetch(`${API_BASE_URL}/data-sources/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      }).catch(() => null);
-
-      clearInterval(progressTimer);
+      if (serverProcessingTimer) clearTimeout(serverProcessingTimer);
 
       setUploadProgress(100);
       setUploadStage('complete');
       setStageMessage('Ingestion complete! Generating preview...');
 
-      if (res && res.ok) {
-        const contentType = res.headers.get('content-type') || '';
-        let responseData = null;
-        if (contentType.includes('application/json')) {
-          responseData = await res.json().catch(() => null);
-        }
-        if (responseData && responseData.success) {
-          setTimeout(() => {
-            onSuccess(responseData);
-            handleClose();
-          }, 300);
-          return;
-        }
+      if (responseData && responseData.success) {
+        setTimeout(() => {
+          onSuccess(responseData);
+          handleClose();
+        }, 300);
+      } else {
+        setError(responseData?.message || 'Failed to upload and ingest file.');
+        setIsProcessing(false);
       }
-
-      let errorMsg = 'Failed to upload and ingest file.';
-      if (res) {
-        const errJson = await res.json().catch(() => ({}));
-        errorMsg = errJson.message || `File upload failed with HTTP ${res.status}`;
-      }
-      setError(errorMsg);
-      setIsProcessing(false);
     } catch (err) {
-      setError(err.message || 'File upload failed');
+      setError(err.message || 'File upload failed.');
       setIsProcessing(false);
     }
   };
@@ -435,7 +426,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
             <form onSubmit={handleFileUploadSubmit} className="space-y-4">
               <FileUpload
                 accept={activeTab === 'csv' ? '.csv' : '.json'}
-                maxSizeMb={25}
+                maxSizeMb={MAX_UPLOAD_SIZE_MB}
                 selectedFile={selectedFile}
                 onFileSelect={handleFileSelect}
               />

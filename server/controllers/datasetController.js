@@ -3,7 +3,7 @@ const db = require('../config/database');
 const Dataset = require('../models/datasetModel');
 const storage = require('../storage');
 const auditService = require('../services/auditService');
-const { parseDatasetFile } = require('../services/fileParserService');
+const { parseDatasetFile, parseDatasetPreviewStream } = require('../services/fileParserService');
 
 /**
  * Dataset Controller
@@ -107,10 +107,10 @@ const getDatasetPreview = async (req, res, next) => {
       });
     }
 
-    // Read file and parse strictly first 50 rows
-    const buffer = await storage.readFile(dataset.file_path);
+    // Stream parse strictly first 50 rows without buffering entire multi-hundred MB file
     const ext = path.extname(dataset.file_path).toLowerCase();
-    const parsed = parseDatasetFile(buffer, ext, 50);
+    const fileStream = storage.getFileStream(dataset.file_path);
+    const parsed = await parseDatasetPreviewStream(fileStream, ext, 50);
 
     return res.status(200).json({
       success: true,
@@ -264,7 +264,7 @@ const refreshDataset = async (req, res, next) => {
               const filename = `${dataset.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_refresh.json`;
               const fileBuffer = Buffer.from(JSON.stringify(records, null, 2));
               const saved = await storage.saveFile(userId, filename, fileBuffer);
-              const meta = parseDatasetFile(fileBuffer, '.json', 50);
+              const meta = await parseDatasetFile(fileBuffer, '.json', 50);
 
               updatedRowCount = meta.rowCount;
               updatedColumnCount = meta.columnCount;
@@ -284,9 +284,8 @@ const refreshDataset = async (req, res, next) => {
 
     // 2. If dataset has a file on storage, re-verify and update counts
     if (dataset.file_path && await storage.exists(dataset.file_path)) {
-      const buffer = await storage.readFile(dataset.file_path);
       const ext = path.extname(dataset.file_path).toLowerCase();
-      const meta = parseDatasetFile(buffer, ext, 50);
+      const meta = await parseDatasetFile(storage.getFileStream(dataset.file_path), ext, 50);
       updatedRowCount = meta.rowCount;
       updatedColumnCount = meta.columnCount;
       updatedSchema = meta.schema;
