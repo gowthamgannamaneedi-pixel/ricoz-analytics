@@ -4,8 +4,10 @@ const { validateUrl } = require('../utils/urlSecurity');
 const DataSource = require('../models/dataSourceModel');
 const Dataset = require('../models/datasetModel');
 const storage = require('../storage');
+const db = require('../config/database');
 const { parseDatasetFile, parseDatasetFileStream } = require('../services/fileParserService');
 const { testPostgresConnection, sanitizePostgresConfig } = require('../services/postgresSourceService');
+const { ingestDatasetFileStream } = require('../services/datasetIngestionService');
 
 /**
  * Data Source Controller
@@ -505,6 +507,19 @@ const uploadDataSource = async (req, res, next) => {
       columnCount: parsedMetadata.columnCount,
       schema: parsedMetadata.schema
     });
+
+    // 5. Ingest rows into PostgreSQL dataset_rows if live DB pool is connected (asynchronously & resiliently)
+    const pool = db.getPool();
+    if (!db.isUsingFallback() && pool) {
+      ingestDatasetFileStream({
+        datasetId: dataset.id,
+        organizationId: req.user?.organization_id,
+        filePath: savedFile.filePath,
+        fileExtension: ext
+      }).catch(err => {
+        console.warn(`[Ingestion] Async PostgreSQL COPY warning for dataset #${dataset.id}:`, err.message);
+      });
+    }
 
     return res.status(201).json({
       success: true,

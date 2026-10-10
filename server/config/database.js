@@ -348,6 +348,8 @@ let nextQualityRuleId = 1;
 const fallbackQualityJobs = [];
 let nextQualityJobId = 1;
 
+const fallbackDatasetRows = [];
+
 const fallbackInsights = [
   {
     id: '20b03e6d-14ec-49b3-b9e4-a33476b437fe',
@@ -1520,6 +1522,43 @@ function handleFallbackQuery(text, params = []) {
     fallbackDatasets.push(newDataset);
     return Promise.resolve({
       rows: [{ ...newDataset }],
+      rowCount: 1
+    });
+  }
+
+  // ----------------- DATASET ROWS -----------------
+  if (normalizedSql.startsWith('delete from dataset_rows where dataset_id = $1')) {
+    const dId = Number(params[0]);
+    const remaining = fallbackDatasetRows.filter(r => Number(r.dataset_id) !== dId);
+    fallbackDatasetRows.length = 0;
+    fallbackDatasetRows.push(...remaining);
+    return Promise.resolve({ rows: [], rowCount: 1 });
+  }
+
+  if (normalizedSql.startsWith('delete from dataset_rows')) {
+    fallbackDatasetRows.length = 0;
+    return Promise.resolve({ rows: [], rowCount: 1 });
+  }
+
+  if (normalizedSql.startsWith('insert into dataset_rows')) {
+    const [datasetId, orgId, rowIndex, data] = params;
+    const newRow = {
+      id: fallbackDatasetRows.length + 1,
+      dataset_id: Number(datasetId),
+      organization_id: orgId || null,
+      row_index: Number(rowIndex),
+      data: typeof data === 'string' ? JSON.parse(data) : data,
+      created_at: new Date()
+    };
+    fallbackDatasetRows.push(newRow);
+    return Promise.resolve({ rows: [newRow], rowCount: 1 });
+  }
+
+  if (normalizedSql.startsWith('select count(*) as count from dataset_rows where dataset_id = $1')) {
+    const dId = Number(params[0]);
+    const matches = fallbackDatasetRows.filter(r => Number(r.dataset_id) === dId);
+    return Promise.resolve({
+      rows: [{ count: matches.length }],
       rowCount: 1
     });
   }
@@ -4104,6 +4143,18 @@ async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_datasets_user_id ON datasets(user_id);
     CREATE INDEX IF NOT EXISTS idx_datasets_data_source_id ON datasets(data_source_id);
 
+    CREATE TABLE IF NOT EXISTS dataset_rows (
+      id BIGSERIAL PRIMARY KEY,
+      dataset_id INTEGER NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
+      organization_id UUID,
+      row_index INTEGER NOT NULL,
+      data JSONB NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_id ON dataset_rows(dataset_id);
+    CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_org ON dataset_rows(dataset_id, organization_id);
+    CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_row_idx ON dataset_rows(dataset_id, row_index);
+
     CREATE TABLE IF NOT EXISTS stripe_webhook_events (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       stripe_event_id VARCHAR(255) UNIQUE NOT NULL,
@@ -4273,5 +4324,7 @@ module.exports = {
     nextNotificationId = 1;
     fallbackDemoRequests.length = 0;
     nextDemoRequestId = 1;
-  }
+    fallbackDatasetRows.length = 0;
+  },
+  fallbackDatasetRows
 };

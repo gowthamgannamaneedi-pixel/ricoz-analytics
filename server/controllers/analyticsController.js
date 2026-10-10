@@ -7,12 +7,18 @@ const {
   computeDatasetTrends,
   computeDatasetBreakdown,
   getPaginatedDatasetRows,
-  getDatasetFilterOptions
+  getDatasetFilterOptions,
+  queryDatasetSummary,
+  queryDatasetKpis,
+  queryDatasetTrends,
+  queryDatasetBreakdowns,
+  queryDatasetRows
 } = require('../services/analyticsService');
 
 /**
  * Analytics Controller
  * Handles dynamic aggregation, filtering, KPIs, and charts for user datasets
+ * Powered by high-efficiency PostgreSQL queries and streaming file aggregation
  */
 
 /**
@@ -27,7 +33,7 @@ async function getVerifiedDataset(datasetId, user) {
 
   // 2. Organization-level dataset access (Enterprise dataset 1 or admin/manager role)
   if (!dataset && organizationId) {
-    if (Number(datasetId) === 1 || user?.role === 'admin' || user?.role === 'manager') {
+    if (Number(datasetId) === 1 || user?.role === 'admin' || user?.role === 'manager' || user?.role === 'viewer' || user?.role === 'analyst') {
       dataset = await Dataset.findByIdAndOrgId(datasetId, organizationId);
     }
   }
@@ -46,33 +52,13 @@ async function getVerifiedDataset(datasetId, user) {
  */
 const getDatasetSummary = async (req, res, next) => {
   try {
-    const userId = req.user.id;
     const { id } = req.params;
-
     const dataset = await getVerifiedDataset(id, req.user);
-    const records = await loadDatasetRecords(dataset.file_path);
-
-    const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : dataset.schema || [];
-    const dimensions = detectDatasetDimensions(schema, records.slice(0, 100));
-    const filterOptions = getDatasetFilterOptions(records, dimensions);
+    const summaryData = await queryDatasetSummary(dataset, req.user);
 
     return res.status(200).json({
       success: true,
-      data: {
-        dataset: {
-          id: dataset.id,
-          name: dataset.name,
-          description: dataset.description,
-          rowCount: dataset.row_count || records.length,
-          columnCount: dataset.column_count || schema.length,
-          schema,
-          createdAt: dataset.created_at,
-          dataSourceName: dataset.data_source_name,
-          dataSourceType: dataset.data_source_type
-        },
-        dimensions,
-        filterOptions
-      }
+      data: summaryData
     });
   } catch (err) {
     if (err.status) {
@@ -88,26 +74,17 @@ const getDatasetSummary = async (req, res, next) => {
  */
 const getDatasetKpis = async (req, res, next) => {
   try {
-    const userId = req.user.id;
     const { id } = req.params;
-
     const dataset = await getVerifiedDataset(id, req.user);
-    const records = await loadDatasetRecords(dataset.file_path);
-
-    const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : dataset.schema || [];
-    const dimensions = detectDatasetDimensions(schema, records.slice(0, 100));
-
-    // Apply active query filters
-    const filteredRecords = applyDatasetFilters(records, req.query, dimensions);
-    const kpis = computeDatasetKpis(records, filteredRecords, dimensions);
+    const result = await queryDatasetKpis(dataset, req.query, req.user);
 
     return res.status(200).json({
       success: true,
       data: {
-        kpis,
-        dimensions,
-        totalFilteredRecords: filteredRecords.length,
-        totalDatasetRecords: records.length
+        kpis: result.kpis,
+        dimensions: result.dimensions,
+        totalFilteredRecords: result.kpis.recordCount,
+        totalDatasetRecords: dataset.row_count || result.kpis.recordCount
       }
     });
   } catch (err) {
@@ -124,17 +101,11 @@ const getDatasetKpis = async (req, res, next) => {
  */
 const getDatasetTrends = async (req, res, next) => {
   try {
-    const userId = req.user.id;
     const { id } = req.params;
-
     const dataset = await getVerifiedDataset(id, req.user);
-    const records = await loadDatasetRecords(dataset.file_path);
-
-    const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : dataset.schema || [];
-    const dimensions = detectDatasetDimensions(schema, records.slice(0, 100));
-
-    const filteredRecords = applyDatasetFilters(records, req.query, dimensions);
-    const trends = computeDatasetTrends(filteredRecords, dimensions);
+    const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : (dataset.schema || []);
+    const dimensions = detectDatasetDimensions(schema);
+    const trends = await queryDatasetTrends(dataset, req.query, req.user);
 
     return res.status(200).json({
       success: true,
@@ -158,20 +129,15 @@ const getDatasetTrends = async (req, res, next) => {
  */
 const getDatasetBreakdowns = async (req, res, next) => {
   try {
-    const userId = req.user.id;
     const { id } = req.params;
     const { groupBy } = req.query;
 
     const dataset = await getVerifiedDataset(id, req.user);
-    const records = await loadDatasetRecords(dataset.file_path);
+    const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : (dataset.schema || []);
+    const dimensions = detectDatasetDimensions(schema);
+    const targetDimension = groupBy || dimensions.regionColumn || dimensions.productColumn || dimensions.categoryColumn || dimensions.channelColumn || 'category';
 
-    const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : dataset.schema || [];
-    const dimensions = detectDatasetDimensions(schema, records.slice(0, 100));
-
-    const targetDimension = groupBy || dimensions.regionColumn || dimensions.productColumn || dimensions.categoryColumn || dimensions.channelColumn;
-
-    const filteredRecords = applyDatasetFilters(records, req.query, dimensions);
-    const breakdown = computeDatasetBreakdown(filteredRecords, targetDimension, dimensions);
+    const breakdown = await queryDatasetBreakdowns(dataset, targetDimension, req.query, req.user);
 
     return res.status(200).json({
       success: true,
@@ -194,17 +160,10 @@ const getDatasetBreakdowns = async (req, res, next) => {
  */
 const getDatasetRows = async (req, res, next) => {
   try {
-    const userId = req.user.id;
     const { id } = req.params;
-
     const dataset = await getVerifiedDataset(id, req.user);
-    const records = await loadDatasetRecords(dataset.file_path);
-
-    const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : dataset.schema || [];
-    const dimensions = detectDatasetDimensions(schema, records.slice(0, 100));
-
-    const filteredRecords = applyDatasetFilters(records, req.query, dimensions);
-    const paginated = getPaginatedDatasetRows(filteredRecords, req.query);
+    const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : (dataset.schema || []);
+    const paginated = await queryDatasetRows(dataset, req.query, req.user);
 
     return res.status(200).json({
       success: true,
@@ -226,5 +185,6 @@ module.exports = {
   getDatasetKpis,
   getDatasetTrends,
   getDatasetBreakdowns,
-  getDatasetRows
+  getDatasetRows,
+  getVerifiedDataset
 };
