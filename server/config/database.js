@@ -439,8 +439,7 @@ if (config.databaseUrl) {
   });
 
   pool.on('error', (err) => {
-    console.error('Unexpected PostgreSQL client error, falling back to memory store:', err.message);
-    useFallbackStore = true;
+    console.error('Unexpected PostgreSQL client pool error:', err.message);
   });
 } else {
   // If no DATABASE_URL provided, default to memory store in local dev
@@ -4150,6 +4149,8 @@ async function initDb() {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_otp VARCHAR(10);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token_expires_at TIMESTAMPTZ;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_password_token VARCHAR(255);
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_password_expires_at TIMESTAMPTZ;
 
     CREATE TABLE IF NOT EXISTS data_sources (
       id SERIAL PRIMARY KEY,
@@ -4189,6 +4190,10 @@ async function initDb() {
 
     ALTER TABLE datasets ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
     ALTER TABLE datasets ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb;
+    ALTER TABLE datasets ADD COLUMN IF NOT EXISTS file_path VARCHAR(500);
+    ALTER TABLE datasets ADD COLUMN IF NOT EXISTS row_count BIGINT DEFAULT 0;
+    ALTER TABLE datasets ADD COLUMN IF NOT EXISTS column_count INTEGER DEFAULT 0;
+    ALTER TABLE datasets ADD COLUMN IF NOT EXISTS schema JSONB DEFAULT '[]'::jsonb;
 
     CREATE TABLE IF NOT EXISTS metrics (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -4281,6 +4286,9 @@ async function initDb() {
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
 
+    ALTER TABLE alerts ADD COLUMN IF NOT EXISTS cooldown_minutes INTEGER DEFAULT 60;
+    ALTER TABLE alerts ADD COLUMN IF NOT EXISTS recipients JSONB DEFAULT '[]'::jsonb;
+
     CREATE TABLE IF NOT EXISTS alert_incidents (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       alert_id UUID NOT NULL REFERENCES alerts(id) ON DELETE CASCADE,
@@ -4315,6 +4323,10 @@ async function initDb() {
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
+
+    ALTER TABLE forecasts ADD COLUMN IF NOT EXISTS metric_id UUID REFERENCES metrics(id) ON DELETE SET NULL;
+    ALTER TABLE forecasts ADD COLUMN IF NOT EXISTS anomalies JSONB DEFAULT '[]'::jsonb;
+    ALTER TABLE forecasts ADD COLUMN IF NOT EXISTS error_message TEXT;
 
     CREATE TABLE IF NOT EXISTS ai_conversations (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -4586,19 +4598,24 @@ async function initDb() {
     CREATE TABLE IF NOT EXISTS invoices (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-      invoice_number VARCHAR(100) UNIQUE NOT NULL,
-      amount_cents INTEGER NOT NULL,
+      invoice_number VARCHAR(100) UNIQUE,
+      amount_cents INTEGER,
       currency VARCHAR(10) NOT NULL DEFAULT 'USD',
       status VARCHAR(50) NOT NULL DEFAULT 'paid',
       plan VARCHAR(50) NOT NULL,
       invoice_url TEXT,
       pdf_url TEXT,
-      period_start TIMESTAMPTZ NOT NULL,
-      period_end TIMESTAMPTZ NOT NULL,
+      period_start TIMESTAMPTZ,
+      period_end TIMESTAMPTZ,
       payment_method JSONB DEFAULT '{}'::jsonb,
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
+
+    ALTER TABLE invoices ADD COLUMN IF NOT EXISTS stripe_invoice_id VARCHAR(255);
+    ALTER TABLE invoices ADD COLUMN IF NOT EXISTS stripe_payment_intent_id VARCHAR(255);
+    ALTER TABLE invoices ADD COLUMN IF NOT EXISTS amount NUMERIC(10, 2);
+    ALTER TABLE invoices ADD COLUMN IF NOT EXISTS invoice_url TEXT;
 
     CREATE TABLE IF NOT EXISTS stripe_webhook_events (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -4635,12 +4652,25 @@ async function initDb() {
     UPDATE users SET organization_id = '00000000-0000-0000-0000-000000000001' WHERE organization_id IS NULL;
   `;
 
-  try {
-    await pool.query(schemaSql);
-    console.log(' PostgreSQL Database schema initialized successfully');
-  } catch (err) {
-    console.error(' Failed to initialize PostgreSQL database schema:', err.message);
+  const statements = schemaSql
+    .split(';')
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+
+  let successCount = 0;
+  let noticeCount = 0;
+  for (const stmt of statements) {
+    try {
+      await pool.query(stmt);
+      successCount++;
+    } catch (err) {
+      noticeCount++;
+      if (!err.message.includes('already exists') && !err.message.includes('permission denied to create extension')) {
+        console.warn(`[initDb notice] ${err.message} (on: ${stmt.slice(0, 50)}...)`);
+      }
+    }
   }
+  console.log(` PostgreSQL Database schema initialized: ${successCount} statements applied (${noticeCount} notices)`);
 }
 
 module.exports = {

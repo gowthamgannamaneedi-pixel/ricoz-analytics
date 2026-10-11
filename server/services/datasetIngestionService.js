@@ -71,6 +71,7 @@ async function ingestDatasetFileStream({
   if (usePostgres) {
     return await ingestToPostgres({
       pool,
+      filePath,
       inputStream,
       datasetId,
       organizationId,
@@ -107,6 +108,7 @@ function pathIsAbsolute(p) {
  */
 async function ingestToPostgres({
   pool,
+  filePath,
   inputStream,
   datasetId,
   organizationId,
@@ -134,6 +136,10 @@ async function ingestToPostgres({
           FROM STDIN WITH (FORMAT csv, DELIMITER E'\\t', QUOTE E'\\b', ESCAPE '\\')
         `;
         const pgStream = client.query(copyFrom(copySql));
+        let streamError = null;
+        pgStream.on('error', (err) => {
+          streamError = err;
+        });
 
         const rl = readline.createInterface({
           input: inputStream,
@@ -146,7 +152,7 @@ async function ingestToPostgres({
 
         for await (const line of rl) {
           if (signal?.aborted) {
-            pgStream.destroy(new Error('Ingestion cancelled by client.'));
+            pgStream.destroy();
             throw new Error('Ingestion cancelled by client.');
           }
 
@@ -192,8 +198,10 @@ async function ingestToPostgres({
           }
         }
 
+        if (streamError) throw streamError;
         pgStream.end();
         await new Promise((resolve, reject) => {
+          if (streamError) return reject(streamError);
           pgStream.on('finish', resolve);
           pgStream.on('error', reject);
         });
@@ -209,6 +217,14 @@ async function ingestToPostgres({
         console.warn(`[Ingestion] pg-copy-streams error, falling back to batch inserts: ${copyErr.message}`);
         // Fall back to batch inserts below
         await client.query('DELETE FROM dataset_rows WHERE dataset_id = $1', [datasetId]);
+        if (filePath) {
+          if (pathIsAbsolute(filePath) && fs.existsSync(filePath)) {
+            inputStream = fs.createReadStream(filePath, { encoding: 'utf8', highWaterMark: 64 * 1024 });
+          } else {
+            inputStream = storage.getFileStream(filePath);
+            inputStream.setEncoding('utf8');
+          }
+        }
       }
     }
 

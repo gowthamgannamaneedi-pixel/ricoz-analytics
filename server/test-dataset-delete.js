@@ -97,11 +97,23 @@ async function runTests() {
   const orgA = '00000000-0000-0000-0000-000000000001';
   const orgB = '00000000-0000-0000-0000-000000000002';
 
+  // Seed Org B and an admin user for Org B to ensure authMiddleware properly resolves Admin B
+  await db.query(`
+    INSERT INTO organizations (id, name, slug, plan, subscription_status, payment_status)
+    VALUES ('00000000-0000-0000-0000-000000000002', 'Beta Global Enterprises', 'beta-global', 'starter', 'active', 'paid')
+    ON CONFLICT (id) DO UPDATE SET subscription_status = 'active', payment_status = 'paid'
+  `);
+  await db.query(`
+    INSERT INTO users (id, name, email, password_hash, role, organization_id, status)
+    VALUES (999, 'Admin B', 'admin_b@other.test', 'dummy', 'admin', '00000000-0000-0000-0000-000000000002', 'active')
+    ON CONFLICT (id) DO UPDATE SET role = 'admin', organization_id = '00000000-0000-0000-0000-000000000002', status = 'active'
+  `);
+
   const adminTokenA = generateToken(1, 'admin@ricoz.test', 'admin', orgA);
   const managerTokenA = generateToken(2, 'manager@ricoz.test', 'manager', orgA);
   const analystTokenA = generateToken(3, 'analyst@ricoz.test', 'analyst', orgA);
   const viewerTokenA = generateToken(4, 'viewer@ricoz.test', 'viewer', orgA);
-  const adminTokenB = generateToken(10, 'admin_b@other.test', 'admin', orgB);
+  const adminTokenB = generateToken(999, 'admin_b@other.test', 'admin', orgB);
 
   let passed = 0;
   let total = 0;

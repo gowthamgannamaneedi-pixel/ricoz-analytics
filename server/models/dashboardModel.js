@@ -150,8 +150,15 @@ const DashboardModel = {
     const newDesc = updates.description !== undefined ? updates.description.trim() : existing.description;
     const newIsDefault = updates.isDefault !== undefined ? Boolean(updates.isDefault) : (updates.is_default !== undefined ? Boolean(updates.is_default) : existing.is_default);
     const newIsPublic = updates.isPublic !== undefined ? Boolean(updates.isPublic) : (updates.is_public !== undefined ? Boolean(updates.is_public) : existing.is_public);
-    const newLayout = updates.layout !== undefined ? (typeof updates.layout === 'object' ? JSON.stringify(updates.layout) : updates.layout) : existing.layout;
-    const newFilters = updates.filters !== undefined ? (typeof updates.filters === 'object' ? JSON.stringify(updates.filters) : updates.filters) : existing.filters;
+    const resolvedLayout = updates.layout !== undefined ? updates.layout : existing.layout;
+    const newLayout = resolvedLayout !== undefined && resolvedLayout !== null
+      ? (typeof resolvedLayout === 'object' ? JSON.stringify(resolvedLayout) : resolvedLayout)
+      : '[]';
+
+    const resolvedFilters = updates.filters !== undefined ? updates.filters : existing.filters;
+    const newFilters = resolvedFilters !== undefined && resolvedFilters !== null
+      ? (typeof resolvedFilters === 'object' ? JSON.stringify(resolvedFilters) : resolvedFilters)
+      : '{}';
 
     const sql = `
       UPDATE dashboards
@@ -338,15 +345,15 @@ const DashboardModel = {
     const newDatasetId = updates.datasetId !== undefined ? updates.datasetId : (updates.dataset_id !== undefined ? updates.dataset_id : existing.dataset_id);
     const newMetricId = updates.metricId !== undefined ? updates.metricId : (updates.metric_id !== undefined ? updates.metric_id : existing.metric_id);
     
-    let newConfig = existing.configuration;
-    if (updates.configuration !== undefined) {
-      newConfig = typeof updates.configuration === 'object' ? JSON.stringify(updates.configuration) : updates.configuration;
-    }
-    
-    let newPosition = existing.position;
-    if (updates.position !== undefined) {
-      newPosition = typeof updates.position === 'object' ? JSON.stringify(updates.position) : updates.position;
-    }
+    const resolvedConfig = updates.configuration !== undefined ? updates.configuration : existing.configuration;
+    const newConfig = resolvedConfig !== undefined && resolvedConfig !== null
+      ? (typeof resolvedConfig === 'object' ? JSON.stringify(resolvedConfig) : resolvedConfig)
+      : '{}';
+
+    const resolvedPosition = updates.position !== undefined ? updates.position : existing.position;
+    const newPosition = resolvedPosition !== undefined && resolvedPosition !== null
+      ? (typeof resolvedPosition === 'object' ? JSON.stringify(resolvedPosition) : resolvedPosition)
+      : '{}';
 
     const sql = `
       UPDATE dashboard_widgets

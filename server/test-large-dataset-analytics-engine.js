@@ -224,7 +224,7 @@ async function runSuite() {
 
     const dataset10kId = upload10kRes.data?.data?.dataset?.id;
     assert(Boolean(dataset10kId), `Dataset #10K created with ID #${dataset10kId}`);
-    assert(upload10kRes.data?.data?.dataset?.rowCount === 10000, `Dataset row count verified at 10,000 rows`);
+    assert(Number(upload10kRes.data?.data?.dataset?.rowCount) === 10000, `Dataset row count verified at 10,000 rows`);
 
     // Verify Summary Endpoint
     const sum10kRes = await request('GET', `/api/analytics/datasets/${dataset10kId}/summary`, null, {
@@ -308,7 +308,7 @@ async function runSuite() {
 
     const dataset100kId = upload100kRes.data?.data?.dataset?.id;
     assert(Boolean(dataset100kId), `Dataset #100K created with ID #${dataset100kId}`);
-    assert(upload100kRes.data?.data?.dataset?.rowCount === 100000, `Row count accurately recorded as 100,000`);
+    assert(Number(upload100kRes.data?.data?.dataset?.rowCount) === 100000, `Row count accurately recorded as 100,000`);
 
     const startKpi100k = Date.now();
     const kpi100kRes = await request('GET', `/api/analytics/datasets/${dataset100kId}/kpis`, null, {
@@ -463,6 +463,14 @@ async function runSuite() {
     const malformedFile = path.join(__dirname, 'temp_malformed.csv');
     fs.writeFileSync(malformedFile, malformedCsv, 'utf8');
 
+    // Ensure dummy dataset records exist in DB so dataset_rows foreign key is satisfied
+    await db.query(`
+      INSERT INTO datasets (id, user_id, name, row_count, column_count)
+      VALUES (9999, $1, 'Malformed Test Dataset', 0, 0),
+             (8888, $1, 'Cancellation Test Dataset', 0, 0)
+      ON CONFLICT (id) DO NOTHING
+    `, [userIdA]);
+
     const ingestMalformedResult = await ingestDatasetFileStream({
       datasetId: 9999,
       filePath: malformedFile,
@@ -488,6 +496,9 @@ async function runSuite() {
       cancelCaught = err.message.includes('cancelled');
     }
     assert(cancelCaught, 'Cancellation signal aborted ingestion cleanly with useful error message');
+
+    // Clean up dummy datasets
+    await db.query('DELETE FROM datasets WHERE id IN (8888, 9999)').catch(() => {});
 
     // Verify dataset safety: physical file remains intact
     const fileStillExists = await storage.exists(savedFile1M.filePath);

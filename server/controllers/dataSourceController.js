@@ -538,8 +538,8 @@ const uploadDataSource = async (req, res, next) => {
           id: dataset.id,
           name: dataset.name,
           description: dataset.description,
-          rowCount: dataset.row_count,
-          columnCount: dataset.column_count,
+          rowCount: Number(dataset.row_count || 0),
+          columnCount: Number(dataset.column_count || 0),
           schema: dataset.schema,
           preview: parsedMetadata.preview,
           createdAt: dataset.created_at
