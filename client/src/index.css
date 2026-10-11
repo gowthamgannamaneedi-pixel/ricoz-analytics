@@ -76,9 +76,9 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   background: #334155;
 }
 
-/* Global focus styling for accessibility */
+/* Global focus styling for accessibility with design handoff red accent */
 *:focus-visible {
-  outline: 2px solid #E11D48;
+  outline: 2px solid #D91542;
   outline-offset: 2px;
 }
 
@@ -87,18 +87,18 @@ html.dark *:focus-visible {
   outline-offset: 2px;
 }
 
-/* ─── P1 Shared Component Utilities ──────────────────────────────────────── */
+/* ─── RicozAnalytics Shared Design System Utilities ───────────────────────── */
 
 @layer components {
 
-  /* Standard card surface */
+  /* Standard card surface (24px padding = p-6, 8-16px radius, subtle border) */
   .rz-card {
-    @apply bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs transition-colors;
+    @apply bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 shadow-2xs transition-colors;
   }
 
   /* Compact card — tighter padding contexts */
   .rz-card-sm {
-    @apply bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs transition-colors;
+    @apply bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 shadow-2xs transition-colors;
   }
 
   /* Page-section header row */
@@ -106,29 +106,63 @@ html.dark *:focus-visible {
     @apply flex flex-wrap items-start justify-between gap-4 mb-6;
   }
 
+  /* Page title typography: 28–32px */
+  .rz-page-title {
+    @apply text-2xl sm:text-[28px] lg:text-[30px] font-bold tracking-tight text-slate-900 dark:text-slate-100;
+  }
+
+  /* Page description typography: 14–16px */
+  .rz-page-description {
+    @apply text-sm sm:text-[15px] leading-relaxed text-slate-500 dark:text-slate-400 mt-1 max-w-4xl;
+  }
+
+  /* Section heading typography: 18–20px */
+  .rz-section-heading {
+    @apply text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100;
+  }
+
   /* Consistent form label */
   .rz-label {
-    @apply block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1;
+    @apply block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5;
   }
 
-  /* Consistent text input */
+  /* Consistent standard text input (40px height, 8px radius) */
   .rz-input {
-    @apply w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 px-3 text-xs text-slate-800 dark:text-slate-100
+    @apply w-full h-10 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 px-3.5 text-sm text-slate-900 dark:text-slate-100
            placeholder-slate-400 dark:placeholder-slate-500
-           hover:border-brand-500 dark:hover:border-brand-500
-           focus:outline-hidden focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20
+           hover:border-rose-300 dark:hover:border-rose-800 hover:bg-[#FFF1F3]/30
+           focus:outline-hidden focus:border-[#D91542] focus:ring-2 focus:ring-[#D91542]/20
            disabled:opacity-50 disabled:bg-slate-50 dark:disabled:bg-slate-900 disabled:cursor-not-allowed
-           transition;
+           transition-all duration-150;
   }
 
-  /* Shared native select — use when not using the Select component */
+  /* Shared native select (40px height, 8px radius, dedicated 16px chevron inset) */
   .rz-select {
-    @apply h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 pl-3.5 pr-9 text-xs text-slate-700 dark:text-slate-200 font-medium
+    @apply h-10 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 pl-4 pr-10 text-sm text-slate-900 dark:text-slate-100 font-medium
            appearance-none cursor-pointer
-           hover:border-brand-500 dark:hover:border-brand-500
-           focus:outline-hidden focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20
+           hover:border-rose-300 hover:bg-[#FFF1F3]/40 dark:hover:border-rose-800 dark:hover:bg-rose-950/20
+           focus:outline-hidden focus:border-[#D91542] focus:ring-2 focus:ring-[#D91542]/20
            disabled:opacity-50 disabled:bg-slate-50 dark:disabled:bg-slate-900 disabled:cursor-not-allowed
-           transition;
+           transition-all duration-150 shadow-2xs;
+  }
+
+  /* Shared highlighted Reset button utility */
+  .rz-btn-reset {
+    @apply h-10 px-4 min-w-[104px] inline-flex items-center justify-center gap-2 rounded-lg
+           border border-rose-200 dark:border-rose-900/60
+           bg-[#FFF1F3] dark:bg-rose-950/40 text-sm font-semibold text-[#D91542] dark:text-rose-300
+           hover:bg-rose-100/90 dark:hover:bg-rose-900/50 hover:border-rose-300 dark:hover:border-rose-700 hover:text-[#B91036]
+           active:bg-rose-200/80 dark:active:bg-rose-900/80
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed select-none
+           transition-all duration-150 cursor-pointer shadow-2xs;
+  }
+
+  /* Shared red icon on pale red container */
+  .rz-icon-container {
+    @apply inline-flex items-center justify-center rounded-lg
+           bg-[#FFF1F3] dark:bg-rose-950/40 text-[#D91542] dark:text-rose-400
+           border border-rose-200/80 dark:border-rose-900/50 shadow-2xs;
   }
 
   /* Role badge chips */
@@ -140,7 +174,7 @@ html.dark *:focus-visible {
 
   /* Semantic state chips */
   .rz-state-success  { @apply inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 rounded-full px-2 py-0.5; }
-  .rz-state-danger   { @apply inline-flex items-center gap-1 text-xs font-semibold text-red-700 dark:text-red-300     bg-red-50 dark:bg-red-950/60     border border-red-200 dark:border-red-800/80     rounded-full px-2 py-0.5; }
+  .rz-state-danger   { @apply inline-flex items-center gap-1 text-xs font-semibold text-[#D91542] dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900/80 rounded-full px-2 py-0.5; }
   .rz-state-warning  { @apply inline-flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-300   bg-amber-50 dark:bg-amber-950/60   border border-amber-200 dark:border-amber-800/80   rounded-full px-2 py-0.5; }
   .rz-state-neutral  { @apply inline-flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300   bg-slate-100 dark:bg-slate-800  border border-slate-200 dark:border-slate-700   rounded-full px-2 py-0.5; }
   .rz-state-info     { @apply inline-flex items-center gap-1 text-xs font-semibold text-blue-700 dark:text-blue-300    bg-blue-50 dark:bg-blue-950/60    border border-blue-200 dark:border-blue-800/80    rounded-full px-2 py-0.5; }
@@ -177,7 +211,6 @@ html.dark *:focus-visible {
 .rz-table-wrap table { min-width: 680px; width: 100%; }
 
 /* ─── Global Dark Mode Container & Surface Consistency Rules ─────────────── */
-/* Guaranteed dark backgrounds for containers, cards, dialogs, dropdowns, forms */
 html.dark .bg-white:not([class*="dark:bg-"]) {
   background-color: #111827 !important;
 }
@@ -221,28 +254,30 @@ html.dark .text-gray-400:not([class*="dark:text-"]) {
   color: #94A3B8 !important;
 }
 
-/* Ensure native select options have soft red highlight on hover/focus across all pages */
+/* ─── Global Dropdown Specifications (Handoff Page 1, 2) ─────────────────── */
+/* Every dropdown must use black text, rounded corners, balanced item padding, and a soft red hover highlight */
 select option {
-  padding: 8px 12px;
+  padding: 10px 14px;
   background-color: #ffffff;
-  color: #1e293b;
+  color: #0f172a;
   font-weight: 500;
+  border-radius: 4px;
 }
 
 select option:hover,
 select option:focus,
 select option:active {
-  background-color: #fef2f2 !important; /* Soft rose red highlight */
-  color: #e11d48 !important;            /* Rose red text */
+  background-color: #FFF1F3 !important; /* Soft rose red highlight */
+  color: #0f172a !important;            /* Black text as mandated */
 }
 
 select option:checked {
-  background-color: #ffe4e6 !important; /* Soft rose red selected highlight */
-  color: #be123c !important;            /* Rose red text */
+  background-color: #FFE4E6 !important; /* Soft rose red selected highlight */
+  color: #D91542 !important;            /* Rose red text */
   font-weight: 600;
 }
 
-/* Dark mode native select option soft red highlight */
+/* Dark mode select options */
 html.dark select option {
   background-color: #0f172a;
   color: #f8fafc;
@@ -251,12 +286,12 @@ html.dark select option {
 html.dark select option:hover,
 html.dark select option:focus,
 html.dark select option:active {
-  background-color: rgba(225, 29, 72, 0.25) !important; /* Soft red dark mode tint */
-  color: #fda4af !important;                            /* Soft red text dark mode */
+  background-color: rgba(217, 21, 66, 0.25) !important;
+  color: #f8fafc !important;
 }
 
 html.dark select option:checked {
-  background-color: rgba(225, 29, 72, 0.4) !important;
+  background-color: rgba(217, 21, 66, 0.45) !important;
   color: #fecdd3 !important;
   font-weight: 600;
 }
@@ -283,4 +318,3 @@ html.dark select option:checked {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.6) !important;
   border-radius: 0.75rem !important;
 }
-

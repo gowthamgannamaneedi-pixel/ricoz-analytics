@@ -161,7 +161,7 @@ export default function AddWidgetModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FFF1F3] text-[#D91542] border border-rose-200/80">
               <Sparkles className="h-5 w-5" />
             </div>
             <div>

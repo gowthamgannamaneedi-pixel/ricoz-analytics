@@ -51,6 +51,7 @@ import {
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
+import { ResetButton } from '../components/ui/ResetButton';
 
 /**
  * Enterprise Circular Donut Gauge for Overall Dataset Health Score
@@ -1140,15 +1141,11 @@ export default function DataQualityPage() {
                   </div>
 
                   {/* Reset Button */}
-                  <button
-                    type="button"
+                  <ResetButton
                     onClick={resetFilters}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
+                    size="sm"
                     title="Reset Search and Filters"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5 text-slate-400" />
-                    <span>Reset</span>
-                  </button>
+                  />
                 </div>
               </div>
 

@@ -47,6 +47,7 @@ import ReportViewerModal from '../components/ReportViewerModal';
 import ShareModal from '../components/ShareModal';
 import { Button } from '../components/ui/Button';
 import { RefreshButton } from '../components/ui/RefreshButton';
+import { ResetButton } from '../components/ui/ResetButton';
 import {
   getReports,
   getDashboards,
@@ -860,13 +861,10 @@ export default function ReportsPage() {
           </div>
 
           {hasActiveFilters && (
-            <button
-              type="button"
+            <ResetButton
               onClick={resetFilters}
-              className="text-xs font-semibold text-rose-600 hover:text-rose-800 px-2 py-1 rounded transition cursor-pointer"
-            >
-              Reset Filters
-            </button>
+              size="sm"
+            />
           )}
         </div>
       </div>

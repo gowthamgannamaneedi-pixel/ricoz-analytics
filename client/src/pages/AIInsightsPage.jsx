@@ -69,6 +69,7 @@ import AlertModal from '../components/AlertModal';
 import MetricModal from '../components/MetricModal';
 import ReportModal from '../components/ReportModal';
 import { Button } from '../components/ui/Button';
+import { ResetButton } from '../components/ui/ResetButton';
 
 // ----------------------------------------------------------------------
 // Helper utilities
@@ -964,12 +965,10 @@ export default function AIInsightsPage() {
 
           {/* Reset Filters Action */}
           {hasActiveFilters && (
-            <button
+            <ResetButton
               onClick={resetFilters}
-              className="h-10 px-3 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition cursor-pointer"
-            >
-              Reset
-            </button>
+              size="sm"
+            />
           )}
 
           <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />

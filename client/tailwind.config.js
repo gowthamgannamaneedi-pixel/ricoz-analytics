@@ -9,14 +9,16 @@ export default {
     extend: {
       colors: {
         brand: {
-          50: '#FFF1F2',
+          50: '#FFF1F3',          // Design handoff: Pale-red icon / hover background
           100: '#FFE4E6',
-          200: '#FECDD3',
+          200: '#FECDD3',         // Subtle red border
           500: '#F43F5E',
-          600: '#E11D48',
+          600: '#D91542',         // Design handoff: Primary UI accent
           700: '#BE123C',
           800: '#9F1239',
           900: '#881337',
+          accent: '#D91542',      // Primary red accent
+          pale: '#FFF1F3',        // Pale red container
         },
         surface: {
           canvas: '#F8FAFC',      // Main page background
@@ -40,6 +42,10 @@ export default {
           warning: '#D97706',
           ai: '#7C3AED',
         }
+      },
+      borderRadius: {
+        'control': '8px',         // Standard control radius
+        'menu': '8px',            // Dropdown menu radius
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],

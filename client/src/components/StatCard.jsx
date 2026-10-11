@@ -4,7 +4,7 @@ import { TrendingUp, TrendingDown, Minus, MoreVertical } from 'lucide-react';
 /**
  * Mini Sparkline SVG Generator
  */
-function SparklineLine({ points = [], color = '#E11D48' }) {
+function SparklineLine({ points = [], color = '#D91542' }) {
   if (!points || points.length < 2) return null;
   const valid = points.map(Number).filter(v => !isNaN(v));
   if (valid.length < 2) return null;
@@ -37,83 +37,42 @@ function SparklineLine({ points = [], color = '#E11D48' }) {
 }
 
 /**
- * Enterprise Metric Stat Card matching reference design
- * @param {{
- *   title: string,
- *   value: string,
- *   change?: string,
- *   isPositive?: boolean,
- *   period?: string,
- *   subtext?: string,
- *   bottomStrip?: string,
- *   bottomValue?: string,
- *   sparklinePoints?: number[],
- *   sparklineColor?: string,
- *   iconTheme?: 'rose' | 'emerald' | 'amber' | 'purple' | 'blue',
- *   icon: React.ComponentType,
- *   className?: string
- * }} props
+ * Enterprise Metric Stat Card matching design handoff (Page 2, 5, 29)
+ * 
+ * Spec:
+ * - Red icon (#D91542) on pale red container (#FFF1F3)
+ * - 20px card icon, 16-24px internal padding (p-5 sm:p-6)
+ * - White surface, subtle border, subtle shadow
+ * - Clear numeric value (28-32px), title (12-14px supporting text)
+ * - Meaningful status trend badge (green positive, red negative)
  */
 export default function StatCard({
   title,
   value,
   change,
   isPositive,
-  period = 'from previous period',
+  period = 'vs previous period',
   subtext,
   bottomStrip,
   bottomValue,
   sparklinePoints,
-  sparklineColor,
-  iconTheme = 'rose',
+  sparklineColor = '#D91542',
   icon: Icon,
   className = ''
 }) {
-  const themeMap = {
-    rose: {
-      iconBg: 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 border-rose-100 dark:border-rose-900/60',
-      bottomBg: 'bg-rose-50/50 dark:bg-rose-950/30 text-rose-900 dark:text-rose-200 border-rose-100/60 dark:border-rose-900/40',
-      sparkColor: '#E11D48'
-    },
-    emerald: {
-      iconBg: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/60',
-      bottomBg: 'bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200 border-emerald-100/60 dark:border-emerald-900/40',
-      sparkColor: '#10B981'
-    },
-    amber: {
-      iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 border-amber-100 dark:border-amber-900/60',
-      bottomBg: 'bg-amber-50/50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 border-amber-100/60 dark:border-amber-900/40',
-      sparkColor: '#F59E0B'
-    },
-    purple: {
-      iconBg: 'bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400 border-purple-100 dark:border-purple-900/60',
-      bottomBg: 'bg-purple-50/50 dark:bg-purple-950/30 text-purple-900 dark:text-purple-200 border-purple-100/60 dark:border-purple-900/40',
-      sparkColor: '#A855F7'
-    },
-    blue: {
-      iconBg: 'bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 border-blue-100 dark:border-blue-900/60',
-      bottomBg: 'bg-blue-50/50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200 border-blue-100/60 dark:border-blue-900/40',
-      sparkColor: '#3B82F6'
-    }
-  }[iconTheme] || {
-    iconBg: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700',
-    bottomBg: 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-100 dark:border-slate-700',
-    sparkColor: '#64748B'
-  };
-
-  const finalSparkColor = sparklineColor || themeMap.sparkColor;
-
   return (
-    <div className={`relative flex flex-col justify-between p-5 bg-white dark:bg-slate-900 border border-slate-100/90 dark:border-slate-800 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_20px_-4px_rgba(0,0,0,0.02)] transition-all duration-200 hover:shadow-md ${className}`}>
+    <div
+      className={`relative flex flex-col justify-between p-5 sm:p-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xs hover:shadow-xs transition-all duration-200 ${className}`}
+    >
       <div>
-        {/* Top Header Row: Icon & 3-Dots */}
+        {/* Top Header Row: Red icon on pale red container */}
         <div className="flex items-center justify-between">
           {Icon ? (
-            <div className={`flex h-9 w-9 items-center justify-center rounded-xl border ${themeMap.iconBg} shadow-2xs`}>
-              <Icon className="h-4.5 w-4.5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-rose-950/40 text-[#D91542] dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/50 shadow-2xs">
+              <Icon className="h-5 w-5" strokeWidth={2} />
             </div>
           ) : (
-            <div className="h-9" />
+            <div className="h-10" />
           )}
 
           <button
@@ -126,32 +85,32 @@ export default function StatCard({
         </div>
 
         {/* Title */}
-        <div className="mt-3">
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+        <div className="mt-3.5">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             {title}
           </span>
         </div>
 
         {/* Main Stat & Sparkline Row */}
         <div className="mt-1 flex items-baseline justify-between gap-2">
-          <span className="text-2xl sm:text-[28px] font-black tracking-tight text-slate-900 dark:text-slate-100">
+          <span className="text-2xl sm:text-[28px] font-black tracking-tight text-slate-900 dark:text-slate-100 font-sans">
             {value}
           </span>
 
           {sparklinePoints && sparklinePoints.length >= 2 && (
-            <SparklineLine points={sparklinePoints} color={finalSparkColor} />
+            <SparklineLine points={sparklinePoints} color={sparklineColor} />
           )}
         </div>
 
         {/* Trend Indicator */}
         {change && (
-          <div className="mt-2 flex items-center gap-1.5 text-xs">
+          <div className="mt-2.5 flex items-center gap-1.5 text-xs">
             <span
               className={`inline-flex items-center gap-1 font-semibold ${
                 isPositive === true
                   ? 'text-emerald-600 dark:text-emerald-400'
                   : isPositive === false
-                  ? 'text-rose-600 dark:text-rose-400'
+                  ? 'text-[#D91542] dark:text-rose-400'
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             >
@@ -173,7 +132,7 @@ export default function StatCard({
 
       {/* Bottom Highlight Strip */}
       {(bottomStrip || subtext) && (
-        <div className={`mt-4 flex items-center justify-between px-3 py-1.5 rounded-xl border text-[11px] font-medium ${themeMap.bottomBg}`}>
+        <div className="mt-4 flex items-center justify-between px-3 py-1.5 rounded-xl border border-rose-100/70 dark:border-rose-950/40 bg-[#FFF1F3]/60 dark:bg-rose-950/20 text-[#D91542] dark:text-rose-300 text-[11px] font-medium">
           <span>{bottomStrip || subtext}</span>
           {bottomValue && (
             <span className="font-bold text-slate-900 dark:text-slate-100 font-mono">

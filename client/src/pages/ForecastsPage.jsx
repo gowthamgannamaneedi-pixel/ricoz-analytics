@@ -62,6 +62,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
 import { RefreshButton } from '../components/ui/RefreshButton';
+import { ResetButton } from '../components/ui/ResetButton';
 
 const MODEL_LABELS = {
   auto: 'Auto (Best Model)',
@@ -690,16 +691,12 @@ export default function ForecastsPage() {
                 Forecast Configuration
               </h2>
             </div>
-            <button
-              type="button"
+            <ResetButton
               id="reset-config-defaults-btn"
               onClick={handleResetDefaults}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 hover:text-rose-600 border border-slate-200/80 shadow-2xs transition-all active:scale-95 cursor-pointer"
+              size="sm"
               title="Reset parameters to defaults"
-            >
-              <RotateCcw className="h-3 w-3 text-slate-400 group-hover:text-rose-600" />
-              <span>Reset</span>
-            </button>
+            />
           </div>
 
           <form onSubmit={(e) => { e.preventDefault(); handleGenerateForecast(); }} className="space-y-4 text-xs">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, AlertCircle, Sparkles, Database, Plus, HelpCircle } from 'lucide-react';
+import { X, CheckCircle2, AlertCircle, Sparkles, Database, Plus, HelpCircle, ChevronDown } from 'lucide-react';
 import Button from './ui/Button';
 import { getDatasets, getDatasetById } from '../services/api';
 
@@ -215,16 +215,19 @@ export default function MetricModal({
                 <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="metric-type">
                   Display Format
                 </label>
-                <select
-                  id="metric-type"
-                  value={type}
-                  onChange={(e) => handleTypeChange(e.target.value)}
-                  className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-900 transition hover:border-rose-300 hover:bg-rose-50/70 hover:text-rose-700 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs cursor-pointer"
-                >
-                  {METRIC_TYPES.map(t => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    id="metric-type"
+                    value={type}
+                    onChange={(e) => handleTypeChange(e.target.value)}
+                    className="w-full h-10 appearance-none rounded-lg border border-slate-300 bg-white pl-3.5 pr-10 text-sm font-medium text-slate-900 transition hover:border-rose-300 hover:bg-[#FFF1F3]/40 focus:border-[#D91542] focus:ring-2 focus:ring-[#D91542]/20 focus:outline-none shadow-2xs cursor-pointer"
+                  >
+                    {METRIC_TYPES.map(t => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                </div>
               </div>
             </div>
 
@@ -233,17 +236,20 @@ export default function MetricModal({
                 <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="dataset-select">
                   Source Dataset (Optional)
                 </label>
-                <select
-                  id="dataset-select"
-                  value={datasetId}
-                  onChange={(e) => setDatasetId(e.target.value)}
-                  className="w-full h-10 rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-900 transition hover:border-rose-300 hover:bg-rose-50/70 hover:text-rose-700 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs cursor-pointer"
-                >
-                  <option value="">-- Standalone (No Dataset) --</option>
-                  {datasets.map(d => (
-                    <option key={d.id} value={d.id}>{d.name}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    id="dataset-select"
+                    value={datasetId}
+                    onChange={(e) => setDatasetId(e.target.value)}
+                    className="w-full h-10 appearance-none rounded-lg border border-slate-300 bg-white pl-3.5 pr-10 text-sm font-medium text-slate-900 transition hover:border-rose-300 hover:bg-[#FFF1F3]/40 focus:border-[#D91542] focus:ring-2 focus:ring-[#D91542]/20 focus:outline-none shadow-2xs cursor-pointer"
+                  >
+                    <option value="">-- Standalone (No Dataset) --</option>
+                    {datasets.map(d => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                </div>
               </div>
 
               <div>

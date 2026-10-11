@@ -1,34 +1,41 @@
 import React from 'react';
+import { Loader2 } from 'lucide-react';
 
 /**
- * Enterprise Button System — RicozAnalytics
+ * Enterprise Button System — RicozAnalytics Design Tokens
+ *
+ * Spec (Handoff Page 2, 25):
+ *   Primary UI accent: #D91542
+ *   Pale-red hover / focus: #FFF1F3
+ *   Standard control height: 40px (h-10)
+ *   Standard control radius: 8px (rounded-lg)
+ *   Standard horizontal padding: 16px (px-4)
+ *   Standard label font: 14px font-semibold (text-sm)
  *
  * Variants:
- *   primary   – Authoritative blue action button (main actions)
- *   secondary – Neutral outlined button with subtle border & shadow (cancel/secondary)
- *   outline   – Transparent border button
- *   tertiary  – Subtle ghost button with hover background (low emphasis)
- *   ghost     – Minimal text button with hover state
- *   danger    – Restrained semantic red destructive button
- *
- * Sizes:
- *   sm – Compact actions (h-8, 32px, text-xs)
- *   md – Standard enterprise control (h-10, 40px, text-sm) - DEFAULT
- *   lg – Hero or primary landing actions (h-11, 44px, text-base)
+ *   primary   – Red accent primary action (#D91542)
+ *   secondary – White/neutral outlined button with subtle border & shadow, soft red hover
+ *   outline   – Transparent button with visible border and soft red hover
+ *   reset     – Dedicated soft-red container with visible border and red glyphs (#FFF1F3)
+ *   tertiary  – Subtle ghost button with soft red hover
+ *   ghost     – Minimal text button with soft red hover
+ *   danger    – Destructive action button
  */
 const variantMap = {
   primary:
-    'bg-rose-600 text-white border border-rose-600 hover:bg-rose-700 hover:border-rose-700 active:bg-rose-800 active:border-rose-800 shadow-xs focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2',
+    'bg-[#D91542] text-white border border-[#D91542] hover:bg-[#BE123C] hover:border-[#BE123C] active:bg-[#9F1239] active:border-[#9F1239] shadow-xs focus-visible:ring-2 focus-visible:ring-[#D91542] focus-visible:ring-offset-2',
   secondary:
-    'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-rose-50/80 hover:border-rose-300 hover:text-rose-700 dark:hover:bg-rose-950/40 dark:hover:border-rose-800 dark:hover:text-rose-300 active:bg-rose-100 shadow-2xs focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2',
+    'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 hover:bg-[#FFF1F3] hover:border-rose-300 hover:text-[#D91542] dark:hover:bg-rose-950/40 dark:hover:border-rose-800 dark:hover:text-rose-300 active:bg-rose-100/90 shadow-2xs focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2',
   outline:
-    'bg-transparent text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-rose-50/80 hover:border-rose-300 hover:text-rose-700 dark:hover:bg-rose-950/40 dark:hover:border-rose-800 dark:hover:text-rose-300 active:bg-rose-100 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2',
+    'bg-transparent text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-[#FFF1F3] hover:border-rose-300 hover:text-[#D91542] dark:hover:bg-rose-950/40 dark:hover:border-rose-800 dark:hover:text-rose-300 active:bg-rose-100/90 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2',
+  reset:
+    'bg-[#FFF1F3] dark:bg-rose-950/40 text-[#D91542] dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 hover:bg-rose-100/90 dark:hover:bg-rose-900/50 hover:border-rose-300 active:bg-rose-200 shadow-2xs focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 min-w-[104px]',
   tertiary:
-    'bg-transparent text-slate-600 dark:text-slate-300 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50/80 dark:hover:bg-rose-950/40 active:bg-rose-100 border border-transparent focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2',
+    'bg-transparent text-slate-600 dark:text-slate-300 hover:text-[#D91542] dark:hover:text-rose-300 hover:bg-[#FFF1F3] dark:hover:bg-rose-950/40 active:bg-rose-100/90 border border-transparent focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2',
   ghost:
-    'bg-transparent text-slate-600 dark:text-slate-300 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50/80 dark:hover:bg-rose-950/40 active:bg-rose-100 border border-transparent focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2',
+    'bg-transparent text-slate-600 dark:text-slate-300 hover:text-[#D91542] dark:hover:text-rose-300 hover:bg-[#FFF1F3] dark:hover:bg-rose-950/40 active:bg-rose-100/90 border border-transparent focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2',
   danger:
-    'bg-rose-600 text-white border border-rose-600 hover:bg-rose-700 hover:border-rose-700 active:bg-rose-800 active:border-rose-800 shadow-xs focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2',
+    'bg-[#D91542] text-white border border-[#D91542] hover:bg-[#BE123C] hover:border-[#BE123C] active:bg-[#9F1239] active:border-[#9F1239] shadow-xs focus-visible:ring-2 focus-visible:ring-[#D91542] focus-visible:ring-offset-2',
 };
 
 const sizeMap = {
@@ -59,6 +66,7 @@ export function Button({
 
   return (
     <button type={type} disabled={disabled || loading} className={base} {...rest}>
+      {loading && <Loader2 className="h-4 w-4 shrink-0 animate-spin mr-1.5" />}
       {children}
     </button>
   );

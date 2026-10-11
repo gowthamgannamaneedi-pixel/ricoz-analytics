@@ -33,6 +33,7 @@ import MetricModal from '../components/MetricModal';
 import MetricDetailsModal from '../components/MetricDetailsModal';
 import { Button } from '../components/ui/Button';
 import { RefreshButton } from '../components/ui/RefreshButton';
+import { ResetButton } from '../components/ui/ResetButton';
 import { API_BASE_URL } from '../services/api';
 
 /**
@@ -605,13 +606,11 @@ export default function KpisPage() {
           </div>
 
           {hasActiveFilters && (
-            <button
+            <ResetButton
               onClick={resetFilters}
               id="reset-kpi-filters-btn"
-              className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 px-2 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
-            >
-              Reset
-            </button>
+              size="sm"
+            />
           )}
 
           {/* View Mode Toggle (Card View vs Table View) */}
