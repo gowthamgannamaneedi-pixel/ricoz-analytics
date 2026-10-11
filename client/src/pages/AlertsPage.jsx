@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Bell,
   ShieldAlert,
@@ -125,6 +126,42 @@ export default function AlertsPage() {
   const [resolutionNotes, setResolutionNotes] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [testResult, setTestResult] = useState(null);
+
+  const resolveTriggerRef = useRef(null);
+  const resolutionTextareaRef = useRef(null);
+
+  // Lock background scrolling, handle Escape, and manage focus for Resolve modal
+  useEffect(() => {
+    if (!resolvingIncident) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    // Auto-focus textarea on modal open
+    const focusTimer = setTimeout(() => {
+      resolutionTextareaRef.current?.focus();
+    }, 50);
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setResolvingIncident(null);
+        resolveTriggerRef.current?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      clearTimeout(focusTimer);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [resolvingIncident]);
+
+  const handleCloseResolveModal = () => {
+    setResolvingIncident(null);
+    resolveTriggerRef.current?.focus();
+  };
 
   const showToast = (msg) => {
     setSuccessToast(msg);
@@ -721,11 +758,12 @@ export default function AlertsPage() {
                                   </button>
                                 )}
                                 <button
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    resolveTriggerRef.current = e.currentTarget;
                                     setResolvingIncident(inc);
                                     setResolutionNotes('');
                                   }}
-                                  className="rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700 transition"
+                                  className="rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700 transition cursor-pointer"
                                 >
                                   Resolve
                                 </button>
@@ -793,60 +831,83 @@ export default function AlertsPage() {
         </div>
       )}
 
-      {/* Incident Resolution Modal */}
-      {resolvingIncident && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl space-y-4">
+      {/* Incident Resolution Modal - Viewport-level backdrop dims entire application (Sidebar, Navbar, Footer) */}
+      {resolvingIncident && typeof document !== 'undefined' && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150"
+          onClick={handleCloseResolveModal}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="resolve-incident-title"
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                <h3 className="text-sm font-bold text-slate-900">Resolve Operational Incident</h3>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">
+                  <CheckCircle2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 id="resolve-incident-title" className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                    Resolve Operational Incident
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-mono">
+                    Incident #{resolvingIncident.id.slice(0, 8)}
+                  </p>
+                </div>
               </div>
               <button
-                onClick={() => setResolvingIncident(null)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+                type="button"
+                onClick={handleCloseResolveModal}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 transition cursor-pointer"
+                aria-label="Close dialog"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-xs text-slate-600">
+            <p className="text-xs text-slate-600 dark:text-slate-300">
               Provide resolution notes to document actions taken for incident <strong>#{resolvingIncident.id.slice(0, 8)}</strong>.
             </p>
 
             <form onSubmit={handleResolveSubmit} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-800 mb-1">
+                <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1" htmlFor="resolution-notes-textarea">
                   Resolution Notes
                 </label>
                 <textarea
+                  id="resolution-notes-textarea"
+                  ref={resolutionTextareaRef}
                   rows={3}
                   placeholder="e.g., Scaled database instance; transaction throughput normalized."
                   value={resolutionNotes}
                   onChange={(e) => setResolutionNotes(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 focus:border-rose-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 p-2.5 text-xs text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 focus:outline-none transition"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setResolvingIncident(null)}
-                  className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition"
+                  onClick={handleCloseResolveModal}
+                  className="px-3.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="px-4 py-1.5 text-xs font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
+                  className="px-4 py-1.5 text-xs font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition cursor-pointer disabled:opacity-50 shadow-2xs"
                 >
                   {actionLoading ? 'Saving...' : 'Confirm Resolution'}
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Alert Rule Creation / Edit Modal */}

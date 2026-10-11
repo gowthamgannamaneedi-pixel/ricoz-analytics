@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Database,
@@ -86,13 +87,15 @@ export default function DataSourcesPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [syncingId, setSyncingId] = useState(null);
   const [actionMenuId, setActionMenuId] = useState(null);
+  const [actionMenuPosition, setActionMenuPosition] = useState(null);
 
   // Selection
   const [selectedIds, setSelectedIds] = useState([]);
 
-  // Refs for outside click
+  // Refs for outside click & focus restoration
   const filterDropdownRef = useRef(null);
   const actionMenuRef = useRef(null);
+  const actionTriggerRefs = useRef({});
 
   // Toast Helper
   const showToast = (message, type = 'success') => {
@@ -100,19 +103,68 @@ export default function DataSourcesPage() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  // Close menus on outside click
+  // Close menus on outside click, Escape, or scroll/resize
   useEffect(() => {
     function handleClickOutside(event) {
       if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
         setIsFilterDropdownOpen(false);
       }
-      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target)) {
+      if (
+        actionMenuRef.current &&
+        !actionMenuRef.current.contains(event.target) &&
+        !actionTriggerRefs.current[actionMenuId]?.contains(event.target)
+      ) {
         setActionMenuId(null);
+        setActionMenuPosition(null);
       }
     }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape' && actionMenuId) {
+        const id = actionMenuId;
+        setActionMenuId(null);
+        setActionMenuPosition(null);
+        actionTriggerRefs.current[id]?.focus();
+      }
+    }
+
+    function handleScrollOrResize() {
+      if (actionMenuId) {
+        setActionMenuId(null);
+        setActionMenuPosition(null);
+      }
+    }
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+    };
+  }, [actionMenuId]);
+
+  const handleToggleActionMenu = (sourceId, event) => {
+    event.stopPropagation();
+    if (actionMenuId === sourceId) {
+      setActionMenuId(null);
+      setActionMenuPosition(null);
+    } else {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const menuHeight = 190;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUpwards = spaceBelow < menuHeight && rect.top > menuHeight;
+      setActionMenuPosition({
+        top: openUpwards ? Math.max(10, rect.top - menuHeight - 4) : Math.min(window.innerHeight - menuHeight - 10, rect.bottom + 4),
+        right: Math.max(12, window.innerWidth - rect.right)
+      });
+      setActionMenuId(sourceId);
+    }
+  };
 
   // Fetch real data sources from backend
   const fetchSources = async (showLoading = true) => {
@@ -1139,78 +1191,21 @@ export default function DataSourcesPage() {
                         {/* 3-dots Menu Button */}
                         <button
                           type="button"
+                          ref={(el) => { actionTriggerRefs.current[source.id] = el; }}
                           id={`menu-source-${source.id}`}
-                          onClick={() => setActionMenuId(actionMenuId === source.id ? null : source.id)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                          onClick={(e) => handleToggleActionMenu(source.id, e)}
+                          aria-haspopup="menu"
+                          aria-expanded={actionMenuId === source.id}
+                          className={`p-1.5 rounded-lg transition cursor-pointer ${
+                            actionMenuId === source.id
+                              ? 'border border-rose-300 bg-rose-50 text-rose-700'
+                              : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+                          }`}
                           title="More options"
                           aria-label={`More options for ${source.name}`}
                         >
                           <MoreVertical className="h-4 w-4" />
                         </button>
-
-                        {/* Dropdown Menu */}
-                        {actionMenuId === source.id && (
-                          <div
-                            ref={actionMenuRef}
-                            className={`absolute right-0 ${
-                              idx >= paginatedSources.length - 2 || paginatedSources.length <= 3
-                                ? 'bottom-full mb-1.5'
-                                : 'top-8 mt-1'
-                            } w-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 p-1 shadow-xl z-50 text-xs text-left animate-in fade-in duration-100 space-y-0.5`}
-                          >
-                            <button
-                              type="button"
-                              onClick={() => handleOpenDetails(source)}
-                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 font-medium cursor-pointer"
-                            >
-                              <Eye className="h-3.5 w-3.5 text-slate-400" />
-                              <span>View Details</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleSync(source.id, source.name)}
-                              disabled={isViewer}
-                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 font-medium cursor-pointer disabled:opacity-40"
-                            >
-                              <RefreshCw className="h-3.5 w-3.5 text-rose-600" />
-                              <span>Sync Pipeline</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => navigate('/datasets')}
-                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 font-medium cursor-pointer"
-                            >
-                              <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
-                              <span>Explore Datasets</span>
-                            </button>
-                            {!isViewer && (
-                              <button
-                                type="button"
-                                onClick={() => handleOpenEdit(source)}
-                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 font-medium cursor-pointer"
-                              >
-                                <Edit2 className="h-3.5 w-3.5 text-slate-400" />
-                                <span>Edit Connection</span>
-                              </button>
-                            )}
-                            {!isViewer && (
-                              <div className="border-t border-slate-100 dark:border-slate-800 my-1 pt-1">
-                                <button
-                                  type="button"
-                                  id={`delete-btn-${source.id}`}
-                                  onClick={() => {
-                                    setActionMenuId(null);
-                                    setSourceToDelete(source);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-700 font-semibold cursor-pointer"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5 text-rose-600" />
-                                  <span>Delete Source</span>
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -1340,6 +1335,101 @@ export default function DataSourcesPage() {
           ))}
         </div>
       )}
+
+      {/* Floating Action Menu Portal (escapes all table/card overflow clipping) */}
+      {actionMenuId && actionMenuPosition && typeof document !== 'undefined' && (() => {
+        const activeSource = sources.find(s => s.id === actionMenuId);
+        if (!activeSource) return null;
+        return createPortal(
+          <div
+            ref={actionMenuRef}
+            style={{
+              position: 'fixed',
+              top: `${actionMenuPosition.top}px`,
+              right: `${actionMenuPosition.right}px`,
+              zIndex: 9999
+            }}
+            role="menu"
+            aria-label={`Actions for ${activeSource.name}`}
+            className="w-48 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 p-1 shadow-2xl z-50 text-xs text-left animate-in fade-in duration-100 space-y-0.5"
+          >
+            <button
+              role="menuitem"
+              type="button"
+              onClick={() => {
+                setActionMenuId(null);
+                setActionMenuPosition(null);
+                handleOpenDetails(activeSource);
+              }}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 font-medium cursor-pointer"
+            >
+              <Eye className="h-3.5 w-3.5 text-slate-400" />
+              <span>View Details</span>
+            </button>
+            <button
+              role="menuitem"
+              type="button"
+              onClick={() => {
+                setActionMenuId(null);
+                setActionMenuPosition(null);
+                handleSync(activeSource.id, activeSource.name);
+              }}
+              disabled={isViewer}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 font-medium cursor-pointer disabled:opacity-40"
+            >
+              <RefreshCw className="h-3.5 w-3.5 text-rose-600" />
+              <span>Sync Pipeline</span>
+            </button>
+            <button
+              role="menuitem"
+              type="button"
+              onClick={() => {
+                setActionMenuId(null);
+                setActionMenuPosition(null);
+                navigate('/datasets');
+              }}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 font-medium cursor-pointer"
+            >
+              <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+              <span>Explore Datasets</span>
+            </button>
+            {!isViewer && (
+              <button
+                role="menuitem"
+                type="button"
+                onClick={() => {
+                  setActionMenuId(null);
+                  setActionMenuPosition(null);
+                  handleOpenEdit(activeSource);
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 font-medium cursor-pointer"
+              >
+                <Edit2 className="h-3.5 w-3.5 text-slate-400" />
+                <span>Edit Connection</span>
+              </button>
+            )}
+            {!isViewer && (
+              <div className="border-t border-slate-100 dark:border-slate-800 my-1 pt-1">
+                <button
+                  role="menuitem"
+                  type="button"
+                  id={`delete-btn-${activeSource.id}`}
+                  onClick={() => {
+                    setActionMenuId(null);
+                    setActionMenuPosition(null);
+                    setSourceToDelete(activeSource);
+                  }}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-700 font-semibold cursor-pointer"
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+                  <span>Delete Source</span>
+                </button>
+              </div>
+            )}
+          </div>,
+          document.body
+        );
+      })()}
 
       {/* ───────────────────────────────────────────────────────────────── */}
       {/* 7. VIEW DETAILS MODAL / DRAWER                                    */}

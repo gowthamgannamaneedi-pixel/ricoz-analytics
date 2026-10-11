@@ -26,6 +26,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
   const [stageMessage, setStageMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({ name: '', file: '' });
 
   // PostgreSQL Connection State
   const [pgForm, setPgForm] = useState({
@@ -56,9 +57,11 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
   const handleFileSelect = (file) => {
     setSelectedFile(file);
     setError('');
+    setFieldErrors(prev => ({ ...prev, file: '' }));
     if (file && !sourceName) {
       const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
       setSourceName(nameWithoutExt);
+      setFieldErrors(prev => ({ ...prev, name: '' }));
     }
   };
 
@@ -243,10 +246,22 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
   // Submit File Upload (CSV/JSON)
   const handleFileUploadSubmit = async (e) => {
     e.preventDefault();
+    
+    // Strict field-level validation
+    const errs = {};
     if (!selectedFile) {
-      setError(`Please select a ${activeTab.toUpperCase()} file to upload.`);
+      errs.file = `Please select a ${activeTab.toUpperCase()} file to upload.`;
+    }
+    if (!sourceName.trim()) {
+      errs.name = 'Data Source Name is required.';
+    }
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      setError('Please provide all required fields before uploading.');
       return;
     }
+
+    setFieldErrors({ name: '', file: '' });
 
     const formatFileSize = (bytes) => {
       if (!bytes) return '0 B';
@@ -423,13 +438,22 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
 
           {/* CSV or JSON Upload Mode */}
           {(activeTab === 'csv' || activeTab === 'json') && (
-            <form onSubmit={handleFileUploadSubmit} className="space-y-4">
-              <FileUpload
-                accept={activeTab === 'csv' ? '.csv' : '.json'}
-                maxSizeMb={MAX_UPLOAD_SIZE_MB}
-                selectedFile={selectedFile}
-                onFileSelect={handleFileSelect}
-              />
+            <form onSubmit={handleFileUploadSubmit} noValidate className="space-y-4">
+              <div>
+                <FileUpload
+                  accept={activeTab === 'csv' ? '.csv' : '.json'}
+                  maxSizeMb={MAX_UPLOAD_SIZE_MB}
+                  selectedFile={selectedFile}
+                  onFileSelect={handleFileSelect}
+                  error={fieldErrors.file}
+                />
+                {fieldErrors.file && (
+                  <p className="text-xs text-rose-600 font-medium flex items-center gap-1.5 mt-1.5">
+                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                    <span>{fieldErrors.file}</span>
+                  </p>
+                )}
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
@@ -442,10 +466,25 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     required
                     placeholder="e.g. Q4 Regional Sales"
                     value={sourceName}
-                    onChange={(e) => setSourceName(e.target.value)}
+                    onChange={(e) => {
+                      setSourceName(e.target.value);
+                      if (e.target.value.trim()) {
+                        setFieldErrors(prev => ({ ...prev, name: '' }));
+                      }
+                    }}
                     disabled={isProcessing}
-                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
+                    className={`w-full rounded-lg border bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none transition ${
+                      fieldErrors.name
+                        ? 'border-rose-400 ring-1 ring-rose-200 focus:border-rose-600'
+                        : 'border-slate-200 focus:border-rose-600'
+                    }`}
                   />
+                  {fieldErrors.name && (
+                    <p className="text-xs text-rose-600 font-medium flex items-center gap-1.5 mt-1">
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                      <span>{fieldErrors.name}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -483,9 +522,10 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                 </button>
                 <button
                   type="submit"
-                  disabled={isProcessing || !selectedFile}
+                  disabled={isProcessing}
                   id="submit-file-source-btn"
-                  className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs"
+                  title={!selectedFile ? 'Select a file to upload & process' : 'Upload and ingest data file'}
+                  className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs cursor-pointer"
                 >
                   {isProcessing ? (
                     <>

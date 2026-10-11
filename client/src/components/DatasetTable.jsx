@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   Table2,
@@ -95,18 +96,69 @@ export default function DatasetTable({
 
   // Active Action Menu (dropdown)
   const [openActionMenuId, setOpenActionMenuId] = useState(null);
+  const [menuPosition, setMenuPosition] = useState(null);
   const actionMenuRef = useRef(null);
+  const triggerButtonRefs = useRef({});
 
-  // Close action dropdown on outside click
+  // Close action dropdown on outside click, Escape, or viewport scroll/resize
   useEffect(() => {
+    if (!openActionMenuId) return;
+
     function handleClickOutside(event) {
-      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target)) {
+      if (
+        actionMenuRef.current &&
+        !actionMenuRef.current.contains(event.target) &&
+        !triggerButtonRefs.current[openActionMenuId]?.contains(event.target)
+      ) {
         setOpenActionMenuId(null);
+        setMenuPosition(null);
       }
     }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        const id = openActionMenuId;
+        setOpenActionMenuId(null);
+        setMenuPosition(null);
+        triggerButtonRefs.current[id]?.focus();
+      }
+    }
+
+    function handleScrollOrResize() {
+      setOpenActionMenuId(null);
+      setMenuPosition(null);
+    }
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+    };
+  }, [openActionMenuId]);
+
+  const handleToggleMenu = (datasetId, event) => {
+    event.stopPropagation();
+    if (openActionMenuId === datasetId) {
+      setOpenActionMenuId(null);
+      setMenuPosition(null);
+    } else {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const menuHeight = 160;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUpwards = spaceBelow < menuHeight && rect.top > menuHeight;
+      setMenuPosition({
+        top: openUpwards ? Math.max(10, rect.top - menuHeight - 4) : Math.min(window.innerHeight - menuHeight - 10, rect.bottom + 4),
+        right: Math.max(12, window.innerWidth - rect.right)
+      });
+      setOpenActionMenuId(datasetId);
+    }
+  };
 
   // Compute status for a dataset
   const getDatasetStatus = (dataset) => {
@@ -693,76 +745,23 @@ export default function DatasetTable({
                         </button>
 
                         {/* More Action Menu (...) */}
-                        <div className="relative inline-block text-left" ref={isMenuOpen ? actionMenuRef : null}>
+                        <div className="relative inline-block text-left">
                           <button
-                            onClick={() => setOpenActionMenuId(isMenuOpen ? null : dataset.id)}
+                            ref={(el) => { triggerButtonRefs.current[dataset.id] = el; }}
+                            onClick={(e) => handleToggleMenu(dataset.id, e)}
                             id={`action-menu-${dataset.id}`}
-                            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50/80 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800 transition shadow-2xs shrink-0 cursor-pointer"
+                            aria-haspopup="menu"
+                            aria-expanded={isMenuOpen}
+                            className={`p-1.5 rounded-lg border transition shadow-2xs shrink-0 cursor-pointer ${
+                              isMenuOpen
+                                ? 'border-rose-400 bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'
+                                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50/80 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800'
+                            }`}
                             title="More actions"
-                            aria-label="More actions"
+                            aria-label={`More actions for ${dataset.name}`}
                           >
                             <MoreVertical className="h-3.5 w-3.5" />
                           </button>
-
-                          {/* Action Dropdown Menu */}
-                          {isMenuOpen && (
-                            <div className={`absolute right-0 ${
-                              isNearBottom ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
-                            } w-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 text-slate-700 dark:text-slate-200`}>
-                              <button
-                                onClick={() => {
-                                  setOpenActionMenuId(null);
-                                  if (onViewDetails) onViewDetails(dataset);
-                                }}
-                                className="w-full text-left px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 flex items-center gap-2 transition cursor-pointer"
-                              >
-                                <Info className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-                                <span>View Details</span>
-                              </button>
-
-                              {!isViewer && onRefreshDataset && (
-                                <button
-                                  onClick={() => {
-                                    setOpenActionMenuId(null);
-                                    onRefreshDataset(dataset.id);
-                                  }}
-                                  disabled={isRefreshingDataset === dataset.id}
-                                  className="w-full text-left px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 flex items-center gap-2 transition disabled:opacity-40 cursor-pointer"
-                                >
-                                  <RefreshCw className={`h-3.5 w-3.5 text-slate-500 dark:text-slate-400 ${isRefreshingDataset === dataset.id ? 'animate-spin text-rose-600' : ''}`} />
-                                  <span>Refresh & Sync</span>
-                                </button>
-                              )}
-
-                              <button
-                                onClick={() => {
-                                  setOpenActionMenuId(null);
-                                  navigate(`/data-quality?datasetId=${dataset.id}`);
-                                }}
-                                className="w-full text-left px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 flex items-center gap-2 transition cursor-pointer"
-                              >
-                                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                                <span>Data Quality</span>
-                              </button>
-
-                              {!isViewer && onDelete && (
-                                <>
-                                  <div className="my-1 border-t border-slate-100 dark:border-slate-750" />
-                                  <button
-                                    onClick={() => {
-                                      setOpenActionMenuId(null);
-                                      onDelete(dataset);
-                                    }}
-                                    disabled={isDeleting === dataset.id}
-                                    className="w-full text-left px-3.5 py-2 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/60 hover:text-rose-700 dark:hover:text-rose-300 flex items-center gap-2 transition disabled:opacity-40 font-medium cursor-pointer"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5 text-rose-500 dark:text-rose-400" />
-                                    <span>Delete Dataset</span>
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          )}
                         </div>
                       </div>
                     </td>
@@ -855,6 +854,88 @@ export default function DatasetTable({
           </div>
         </div>
       </div>
+
+      {/* Floating Action Menu Portal (escapes all table/card overflow clipping) */}
+      {openActionMenuId && menuPosition && typeof document !== 'undefined' && (() => {
+        const activeDataset = datasets.find(d => d.id === openActionMenuId);
+        if (!activeDataset) return null;
+        return createPortal(
+          <div
+            ref={actionMenuRef}
+            style={{
+              position: 'fixed',
+              top: `${menuPosition.top}px`,
+              right: `${menuPosition.right}px`,
+              zIndex: 9999
+            }}
+            role="menu"
+            aria-label={`Actions for ${activeDataset.name}`}
+            className="w-48 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 shadow-2xl py-1 text-slate-700 dark:text-slate-200 text-xs text-left animate-in fade-in zoom-in-95 duration-100"
+          >
+            <button
+              role="menuitem"
+              onClick={() => {
+                setOpenActionMenuId(null);
+                setMenuPosition(null);
+                if (onViewDetails) onViewDetails(activeDataset);
+              }}
+              className="w-full text-left px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 flex items-center gap-2 transition cursor-pointer"
+            >
+              <Info className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
+              <span>View Details</span>
+            </button>
+
+            {!isViewer && onRefreshDataset && (
+              <button
+                role="menuitem"
+                onClick={() => {
+                  setOpenActionMenuId(null);
+                  setMenuPosition(null);
+                  onRefreshDataset(activeDataset.id);
+                }}
+                disabled={isRefreshingDataset === activeDataset.id}
+                className="w-full text-left px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 flex items-center gap-2 transition disabled:opacity-40 cursor-pointer"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 text-slate-500 dark:text-slate-400 ${isRefreshingDataset === activeDataset.id ? 'animate-spin text-rose-600' : ''}`} />
+                <span>Refresh & Sync</span>
+              </button>
+            )}
+
+            <button
+              role="menuitem"
+              onClick={() => {
+                setOpenActionMenuId(null);
+                setMenuPosition(null);
+                navigate(`/data-quality?datasetId=${activeDataset.id}`);
+              }}
+              className="w-full text-left px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 flex items-center gap-2 transition cursor-pointer"
+            >
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Data Quality</span>
+            </button>
+
+            {!isViewer && onDelete && (
+              <>
+                <div className="my-1 border-t border-slate-100 dark:border-slate-750" />
+                <button
+                  role="menuitem"
+                  onClick={() => {
+                    setOpenActionMenuId(null);
+                    setMenuPosition(null);
+                    onDelete(activeDataset);
+                  }}
+                  disabled={isDeleting === activeDataset.id}
+                  className="w-full text-left px-3.5 py-2 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/60 hover:text-rose-700 dark:hover:text-rose-300 flex items-center gap-2 transition disabled:opacity-40 font-medium cursor-pointer"
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-rose-500 dark:text-rose-400" />
+                  <span>Delete Dataset</span>
+                </button>
+              </>
+            )}
+          </div>,
+          document.body
+        );
+      })()}
     </div>
   );
 }
