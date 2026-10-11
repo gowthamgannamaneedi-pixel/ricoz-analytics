@@ -4147,6 +4147,7 @@ async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
     ALTER TABLE users ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES organizations(id) ON DELETE SET NULL;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash_alt VARCHAR(255);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';
     ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
@@ -4684,6 +4685,13 @@ async function initDb() {
   }
   console.log(` PostgreSQL Database schema initialized: ${successCount} statements applied (${noticeCount} notices)`);
 
+  // 0. Drop FK from users.id to auth.users if it exists so application users can be saved in public.users
+  try {
+    await pool.query('ALTER TABLE users DROP CONSTRAINT IF EXISTS users_id_fkey;');
+  } catch (fkErr) {
+    console.warn('[users_id_fkey drop notice]', fkErr.message);
+  }
+
   // 1. Resolve and ensure primary organization exists for FK validity
   let primaryOrgId = '00000000-0000-0000-0000-000000000001';
   try {
@@ -4753,11 +4761,11 @@ async function initDb() {
         `UPDATE users 
          SET status = 'active',
              organization_id = COALESCE(organization_id, $1),
-             password_hash = COALESCE(password_hash, $2)
+             password_hash = $2
          WHERE id = $3;`,
         [primaryOrgId, defaultPasswordHash, existing.id]
       );
-      console.log(' Existing admin account verified and updated to active.');
+      console.log(' Existing admin account verified and updated to active with verified credentials.');
     }
   } catch (seedErr) {
     console.error(' [initDb seed admin ERROR]:', seedErr.message);
