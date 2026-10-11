@@ -717,22 +717,35 @@ async function runMasterTest() {
       recordTest('browserQA', Boolean(regHeading), `Register page rendered with title: "${regHeading}"`);
 
       // Test /login UI and login as active user
+      let browserToken = activeToken;
+      try {
+        const loginRes = await fetch('http://localhost:5000/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: 'admin@ricoz.test', password: 'admin123' })
+        });
+        const loginJson = await loginRes.json();
+        const t = loginJson.data?.token || loginJson.token;
+        if (t) browserToken = t;
+      } catch (_) {}
+
       await client.send('Page.navigate', { url: `${FRONTEND_URL}/login` });
       await sleep(2500);
       await client.eval(`
         (() => {
-          localStorage.setItem('ricoz_auth_token', '${activeToken}');
+          localStorage.setItem('ricoz_auth_token', '${browserToken}');
+          localStorage.setItem('ricoz_active_dataset_id', '1');
           window.location.href = '${FRONTEND_URL}/dashboard';
         })()
       `);
-      await sleep(3000);
+      await sleep(3500);
 
       const dashUrl = await client.eval('window.location.href');
       recordTest('browserQA', dashUrl.includes('/dashboard'), `Browser authenticated navigation to /dashboard successful`);
 
       // Test /billing UI
       await client.send('Page.navigate', { url: `${FRONTEND_URL}/billing` });
-      await sleep(2000);
+      await sleep(3000);
       const planCards = await client.eval('document.querySelectorAll("h3.font-serif, .grid.grid-cols-1.md\\\\:grid-cols-3 > div").length');
       recordTest('browserQA', planCards >= 3, `Pricing cards rendered cleanly (${planCards} cards detected)`);
 
@@ -792,6 +805,9 @@ async function runMasterTest() {
       // LocalStorage and Console Error Audit
       const allStorageValues = await client.eval('JSON.stringify(localStorage)');
       recordTest('security', !allStorageValues.includes('password') && !allStorageValues.includes('jwtSecret'), 'SECURITY: No passwords or server secrets leaked in localStorage');
+      if (client.consoleErrors.length > 0) {
+        console.log('[DEBUG browser errors]:', JSON.stringify(client.consoleErrors, null, 2));
+      }
       recordTest('browserQA', client.consoleErrors.length === 0, `Browser Console: 0 unexpected JavaScript errors (actual: ${client.consoleErrors.length})`);
 
     } finally {

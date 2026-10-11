@@ -22,12 +22,14 @@ import { RefreshCw } from 'lucide-react';
 export function RefreshButton({
   label = 'Refresh',
   loading = false,
+  isRefreshing = false,
   size = 'md',
   onClick,
   className = '',
   id = 'shared-refresh-btn',
   ...rest
 }) {
+  const isLoading = Boolean(loading || isRefreshing);
   const sizeClasses =
     size === 'sm'
       ? 'h-8 px-3 text-xs gap-1.5 rounded-lg'
@@ -40,7 +42,7 @@ export function RefreshButton({
       type="button"
       id={id}
       onClick={onClick}
-      disabled={loading}
+      disabled={isLoading}
       className={[
         'inline-flex items-center justify-center font-semibold select-none shrink-0',
         'text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 shadow-2xs',
@@ -54,7 +56,7 @@ export function RefreshButton({
       {...rest}
     >
       <RefreshCw
-        className={`h-4 w-4 shrink-0 transition-transform ${loading ? 'animate-spin text-[#D91542]' : 'text-slate-500 dark:text-slate-400'}`}
+        className={`h-4 w-4 shrink-0 transition-transform ${isLoading ? 'animate-spin text-[#D91542]' : 'text-slate-500 dark:text-slate-400'}`}
         strokeWidth={2}
       />
       <span>{label}</span>
