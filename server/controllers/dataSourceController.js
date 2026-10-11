@@ -603,28 +603,47 @@ const uploadDataSource = async (req, res, next) => {
 
     // 5. Ingest rows into PostgreSQL dataset_rows if live DB pool is connected (with safe rollback)
     const pool = db.getPool();
+    const isLargeDataset = Number(parsedMetadata.rowCount || 0) > 25000;
+
     if (!db.isUsingFallback() && pool) {
-      try {
-        await ingestDatasetFileStream({
+      if (isLargeDataset) {
+        // Asynchronous background streaming ingestion for large datasets (> 25k rows / multi-hundred MB)
+        // Prevents HTTP proxy timeouts (100s Render limit) while safely completing 100% of row persistence in background
+        console.log(`[Ingestion] Large dataset detected (${parsedMetadata.rowCount} rows). Starting background streaming ingestion for dataset #${dataset.id}...`);
+        ingestDatasetFileStream({
           datasetId: dataset.id,
           organizationId,
           filePath: savedFile.filePath,
           fileExtension: ext
+        }).then(res => {
+          console.log(`[Ingestion] Background streaming completed for dataset #${dataset.id}: ${res.rowsIngested} rows ingested in ${(res.durationMs / 1000).toFixed(1)}s.`);
+        }).catch(err => {
+          console.error(`[Ingestion] Background streaming error for dataset #${dataset.id}:`, err.message);
         });
-      } catch (ingestErr) {
-        console.error(`[Ingestion] Failed to ingest rows into dataset_rows for dataset #${dataset.id}:`, ingestErr.message);
-        await clientCleanup(dataset.id, dataSource.id, organizationId, savedFile?.filePath);
-        dataSource = null;
-        dataset = null;
-        savedFile = null;
-        return res.status(500).json({
-          success: false,
-          error: {
-            code: 'INGESTION_FAILED',
+      } else {
+        // Synchronous ingestion for small/standard datasets
+        try {
+          await ingestDatasetFileStream({
+            datasetId: dataset.id,
+            organizationId,
+            filePath: savedFile.filePath,
+            fileExtension: ext
+          });
+        } catch (ingestErr) {
+          console.error(`[Ingestion] Failed to ingest rows into dataset_rows for dataset #${dataset.id}:`, ingestErr.message);
+          await clientCleanup(dataset.id, dataSource.id, organizationId, savedFile?.filePath);
+          dataSource = null;
+          dataset = null;
+          savedFile = null;
+          return res.status(500).json({
+            success: false,
+            error: {
+              code: 'INGESTION_FAILED',
+              message: `Data ingestion failed: ${ingestErr.message}`
+            },
             message: `Data ingestion failed: ${ingestErr.message}`
-          },
-          message: `Data ingestion failed: ${ingestErr.message}`
-        });
+          });
+        }
       }
     }
 

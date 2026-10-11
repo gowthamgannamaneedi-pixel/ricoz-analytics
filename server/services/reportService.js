@@ -129,7 +129,14 @@ class ReportService {
         const dataset = await DatasetModel.findByIdAndOrgId(targetDatasetId, organizationId);
         if (dataset) {
           datasetName = dataset.name;
-          datasetSchema = dataset.schema || [];
+          let rawSchema = dataset.schema || [];
+          if (typeof rawSchema === 'string') {
+            try { rawSchema = JSON.parse(rawSchema); } catch (_) { rawSchema = []; }
+          }
+          if (!Array.isArray(rawSchema) && rawSchema && Array.isArray(rawSchema.columns)) {
+            rawSchema = rawSchema.columns;
+          }
+          datasetSchema = Array.isArray(rawSchema) ? rawSchema : [];
           const dimensions = analyticsService.detectDatasetDimensions(datasetSchema);
 
           // Query real rows from dataset
@@ -412,8 +419,11 @@ class ReportService {
 
         tableY += 18;
 
-        const tableHeaders = data.datasetSchema.length > 0
-          ? data.datasetSchema.map(s => sanitizeForPdf(s.name)).slice(0, 6)
+        const schemaList = Array.isArray(data.datasetSchema)
+          ? data.datasetSchema
+          : (data.datasetSchema && Array.isArray(data.datasetSchema.columns) ? data.datasetSchema.columns : []);
+        const tableHeaders = schemaList.length > 0
+          ? schemaList.map(s => sanitizeForPdf(typeof s === 'string' ? s : (s?.name || ''))).slice(0, 6)
           : Object.keys(data.rows[0] || {}).map(k => sanitizeForPdf(k)).slice(0, 6);
 
         const colWidth = Math.floor(515 / Math.max(tableHeaders.length, 1));

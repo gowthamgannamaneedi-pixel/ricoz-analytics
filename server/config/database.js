@@ -4107,9 +4107,9 @@ function handleFallbackQuery(text, params = []) {
   if (normalizedSql.startsWith('select') && normalizedSql.includes('from notifications n') && normalizedSql.includes('where n.user_id = $1 and n.organization_id = $2')) {
     const [userId, orgId, limit = 30] = params;
     const list = fallbackNotifications
-      .filter(n => Number(n.user_id) === Number(userId) && String(n.organization_id) === String(orgId))
+      .filter(n => String(n.user_id) === String(userId) && String(n.organization_id) === String(orgId))
       .map(n => {
-        const u = n.actor_id ? fallbackUsers.find(user => Number(user.id) === Number(n.actor_id)) : null;
+        const u = n.actor_id ? fallbackUsers.find(user => String(user.id) === String(n.actor_id)) : null;
         return {
           ...n,
           actor_name: u ? u.name : 'System',
@@ -4123,13 +4123,13 @@ function handleFallbackQuery(text, params = []) {
 
   if (normalizedSql.startsWith('select count(*)::integer as unread_count from notifications')) {
     const [userId, orgId] = params;
-    const unreadCount = fallbackNotifications.filter(n => Number(n.user_id) === Number(userId) && String(n.organization_id) === String(orgId) && !n.read_at).length;
+    const unreadCount = fallbackNotifications.filter(n => String(n.user_id) === String(userId) && String(n.organization_id) === String(orgId) && !n.read_at).length;
     return Promise.resolve({ rows: [{ unread_count: unreadCount }], rowCount: 1 });
   }
 
   if (normalizedSql.startsWith('update notifications set read_at = current_timestamp') && normalizedSql.includes('where id = $1')) {
     const [id, userId, orgId] = params;
-    const notif = fallbackNotifications.find(n => String(n.id) === String(id) && Number(n.user_id) === Number(userId) && String(n.organization_id) === String(orgId));
+    const notif = fallbackNotifications.find(n => String(n.id) === String(id) && String(n.user_id) === String(userId) && String(n.organization_id) === String(orgId));
     if (notif) {
       notif.read_at = new Date();
       return Promise.resolve({ rows: [{ ...notif }], rowCount: 1 });
@@ -4627,15 +4627,21 @@ async function initDb() {
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      type VARCHAR(50) NOT NULL,
+      actor_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      type VARCHAR(100) NOT NULL,
       title VARCHAR(255) NOT NULL,
       message TEXT NOT NULL,
+      resource_type VARCHAR(50),
+      resource_id VARCHAR(255),
       link VARCHAR(500),
       is_read BOOLEAN DEFAULT false,
       read_at TIMESTAMPTZ,
       metadata JSONB DEFAULT '{}'::jsonb,
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
+    ALTER TABLE notifications ADD COLUMN IF NOT EXISTS actor_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+    ALTER TABLE notifications ADD COLUMN IF NOT EXISTS resource_type VARCHAR(50);
+    ALTER TABLE notifications ADD COLUMN IF NOT EXISTS resource_id VARCHAR(255);
 
     CREATE TABLE IF NOT EXISTS dataset_rows (
       id BIGSERIAL PRIMARY KEY,
@@ -5033,6 +5039,60 @@ async function initDb() {
     } catch (_) {}
 
     console.log(` Enterprise quality & job tables verified (datasets.id: ${datasetIdType}, users.id: ${userIdType}).`);
+
+    // 4.4 Ensure notifications table columns and types dynamically match users.id (${userIdType})
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS public.notifications (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+          user_id ${userIdType} NOT NULL,
+          actor_id ${userIdType},
+          type VARCHAR(100) NOT NULL,
+          title VARCHAR(255) NOT NULL,
+          message TEXT NOT NULL,
+          resource_type VARCHAR(50),
+          resource_id VARCHAR(255),
+          link VARCHAR(500),
+          is_read BOOLEAN DEFAULT false,
+          read_at TIMESTAMPTZ,
+          metadata JSONB DEFAULT '{}'::jsonb,
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(user_id);
+        CREATE INDEX IF NOT EXISTS idx_notifications_org_id ON public.notifications(organization_id);
+      `);
+
+      await pool.query(`
+        ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS actor_id ${userIdType};
+        ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS resource_type VARCHAR(50);
+        ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS resource_id VARCHAR(255);
+        ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS link VARCHAR(500);
+        ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT false;
+        ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb;
+        ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS read_at TIMESTAMPTZ;
+      `);
+
+      const notifUserCheck = await pool.query(`
+        SELECT data_type FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'notifications' AND column_name = 'user_id'
+        LIMIT 1;
+      `);
+      if (notifUserCheck.rows[0] && notifUserCheck.rows[0].data_type !== userDtCheck.rows[0]?.data_type) {
+        console.log(`[initDb] Aligning notifications user_id and actor_id to ${userIdType}...`);
+        await pool.query(`
+          ALTER TABLE public.notifications DROP CONSTRAINT IF EXISTS notifications_user_id_fkey;
+          ALTER TABLE public.notifications DROP CONSTRAINT IF EXISTS notifications_actor_id_fkey;
+          ALTER TABLE public.notifications ALTER COLUMN user_id TYPE ${userIdType} USING user_id::text::${userIdType.toLowerCase()};
+          ALTER TABLE public.notifications ALTER COLUMN actor_id TYPE ${userIdType} USING (CASE WHEN actor_id IS NOT NULL AND actor_id::text ~ '^[0-9a-fA-F-]{36}$' THEN actor_id::text::${userIdType.toLowerCase()} ELSE NULL END);
+          ALTER TABLE public.notifications ADD CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+          ALTER TABLE public.notifications ADD CONSTRAINT notifications_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.users(id) ON DELETE SET NULL;
+        `);
+      }
+      console.log(` Enterprise notifications table verified (user_id/actor_id: ${userIdType}).`);
+    } catch (notifErr) {
+      console.warn('[initDb notifications sync notice]:', notifErr.message);
+    }
   } catch (qualityTablesSyncErr) {
     console.warn('[initDb quality tables sync notice]:', qualityTablesSyncErr.message);
   }

@@ -128,7 +128,7 @@ async function ensureDatasetRowsTable(client) {
       CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_id ON public.dataset_rows(dataset_id);
       CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_org ON public.dataset_rows(dataset_id, organization_id);
       CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_row_idx ON public.dataset_rows(dataset_id, row_index);
-      CREATE INDEX IF NOT EXISTS idx_dataset_rows_data_gin ON public.dataset_rows USING gin (data);
+      DROP INDEX IF EXISTS public.idx_dataset_rows_data_gin;
     `);
   } catch (err) {
     console.warn('[Ingestion] ensureDatasetRowsTable notice:', err.message);
@@ -196,6 +196,7 @@ async function ingestToPostgres({
         let headers = null;
         let delimiter = ',';
         let rowIndex = 0;
+        let copyBuffer = '';
 
         for await (const line of rl) {
           if (signal?.aborted) {
@@ -217,7 +218,7 @@ async function ingestToPostgres({
           }
 
           rowIndex++;
-          const values = parseCsvLine(trimmed, delimiter);
+          const values = trimmed.includes('"') ? parseCsvLine(trimmed, delimiter) : trimmed.split(delimiter);
           if (values.length !== headers.length && Math.abs(values.length - headers.length) > 2) {
             malformedRows++;
             continue;
@@ -226,8 +227,14 @@ async function ingestToPostgres({
           const rowObj = {};
           for (let i = 0; i < headers.length; i++) {
             const h = headers[i];
-            const v = values[i] !== undefined ? values[i] : null;
-            rowObj[h] = v === null || v === '' ? null : normalizeParsedValue(v);
+            const v = values[i];
+            if (v === undefined || v === null || v === '') {
+              rowObj[h] = null;
+            } else {
+              const cleaned = v.charCodeAt(0) === 34 ? v.replace(/^["']|["']$/g, '') : v;
+              const num = Number(cleaned);
+              rowObj[h] = !isNaN(num) && isFinite(num) ? num : cleaned;
+            }
           }
 
           // Format tab-separated line for text COPY: dataset_id \t org_id \t row_index \t json
@@ -237,20 +244,23 @@ async function ingestToPostgres({
             .replace(/\n/g, '\\n')
             .replace(/\r/g, '\\r');
           const orgVal = organizationId ? organizationId : '\\N';
-          const copyLine = `${datasetId}\t${orgVal}\t${rowIndex}\t${jsonStr}\n`;
+          copyBuffer += `${datasetId}\t${orgVal}\t${rowIndex}\t${jsonStr}\n`;
 
-          try {
-            if (streamClosed || streamError || !pgStream.writable) {
+          if (copyBuffer.length >= 65536) {
+            try {
+              if (streamClosed || streamError || !pgStream.writable) {
+                break;
+              }
+              const canWrite = pgStream.write(copyBuffer);
+              copyBuffer = '';
+              if (!canWrite) {
+                await new Promise(resolve => pgStream.once('drain', resolve));
+              }
+            } catch (writeErr) {
+              streamError = writeErr;
+              streamClosed = true;
               break;
             }
-            const canWrite = pgStream.write(copyLine);
-            if (!canWrite) {
-              await new Promise(resolve => pgStream.once('drain', resolve));
-            }
-          } catch (writeErr) {
-            streamError = writeErr;
-            streamClosed = true;
-            break;
           }
 
           rowsIngested++;
@@ -260,6 +270,13 @@ async function ingestToPostgres({
               onProgress({ processedRows: rowsIngested, heapUsedMb });
             }
           }
+        }
+
+        if (copyBuffer.length > 0 && !streamClosed && !streamError && pgStream.writable) {
+          try {
+            pgStream.write(copyBuffer);
+            copyBuffer = '';
+          } catch (_) {}
         }
 
         if (streamError) throw streamError;
