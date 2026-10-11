@@ -448,21 +448,14 @@ if (config.databaseUrl) {
 }
 
 /**
- * Execute SQL Query with error fallback
+ * Execute SQL Query
  * @param {string} text 
  * @param {any[]} [params] 
  * @returns {Promise<{ rows: any[], rowCount: number }>}
  */
 async function query(text, params = []) {
   if (!useFallbackStore && pool) {
-    try {
-      const res = await pool.query(text, params);
-      return res;
-    } catch (err) {
-      // If connection fails, switch to fallback in development
-      console.warn(`PostgreSQL query error: ${err.message}. Operating in fallback store.`);
-      useFallbackStore = true;
-    }
+    return await pool.query(text, params);
   }
 
   // Handle fallback in-memory store queries
@@ -4102,46 +4095,436 @@ function handleFallbackQuery(text, params = []) {
  * Initialize database schema
  */
 async function initDb() {
+  if (useFallbackStore || !pool) return;
+
   const schemaSql = `
+    CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+    CREATE TABLE IF NOT EXISTS organizations (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name VARCHAR(255) NOT NULL,
+      slug VARCHAR(255) UNIQUE NOT NULL,
+      plan VARCHAR(50) NOT NULL DEFAULT 'enterprise',
+      trial_started_at TIMESTAMPTZ,
+      trial_ends_at TIMESTAMPTZ,
+      subscription_status VARCHAR(50) DEFAULT 'active',
+      payment_status VARCHAR(50) DEFAULT 'paid',
+      settings JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS plan VARCHAR(50) DEFAULT 'enterprise';
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS trial_started_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ DEFAULT (CURRENT_TIMESTAMP + INTERVAL '14 days');
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(50) DEFAULT 'active';
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50) DEFAULT 'paid';
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255);
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255);
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS stripe_price_id VARCHAR(255);
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS current_period_end TIMESTAMPTZ;
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS settings JSONB DEFAULT '{}'::jsonb;
+
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
+      organization_id UUID REFERENCES organizations(id) ON DELETE SET NULL,
       name VARCHAR(255) NOT NULL,
       email VARCHAR(255) UNIQUE NOT NULL,
       password_hash VARCHAR(255) NOT NULL,
+      password_hash_alt VARCHAR(255),
       role VARCHAR(50) NOT NULL DEFAULT 'viewer' CHECK (role IN ('admin', 'analyst', 'manager', 'viewer')),
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      avatar_url TEXT,
+      status VARCHAR(50) DEFAULT 'active',
+      last_login_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES organizations(id) ON DELETE SET NULL;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash_alt VARCHAR(255);
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token VARCHAR(255);
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_otp VARCHAR(10);
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token_expires_at TIMESTAMPTZ;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ;
+
     CREATE TABLE IF NOT EXISTS data_sources (
       id SERIAL PRIMARY KEY,
+      organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       name VARCHAR(255) NOT NULL,
-      type VARCHAR(50) NOT NULL CHECK (type IN ('csv', 'json', 'postgresql')),
-      status VARCHAR(50) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'connected', 'error', 'pending')),
+      type VARCHAR(50) NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'active',
       config JSONB DEFAULT '{}'::jsonb,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      last_synced_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
     CREATE INDEX IF NOT EXISTS idx_data_sources_user_id ON data_sources(user_id);
     CREATE INDEX IF NOT EXISTS idx_data_sources_type ON data_sources(type);
 
+    ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+    ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS last_synced_at TIMESTAMPTZ;
+
     CREATE TABLE IF NOT EXISTS datasets (
       id SERIAL PRIMARY KEY,
+      organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       data_source_id INTEGER REFERENCES data_sources(id) ON DELETE CASCADE,
       name VARCHAR(255) NOT NULL,
       description TEXT,
       file_path VARCHAR(500),
-      row_count INTEGER DEFAULT 0,
+      row_count BIGINT DEFAULT 0,
       column_count INTEGER DEFAULT 0,
       schema JSONB DEFAULT '[]'::jsonb,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      metadata JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
     CREATE INDEX IF NOT EXISTS idx_datasets_user_id ON datasets(user_id);
     CREATE INDEX IF NOT EXISTS idx_datasets_data_source_id ON datasets(data_source_id);
+
+    ALTER TABLE datasets ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+    ALTER TABLE datasets ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb;
+
+    CREATE TABLE IF NOT EXISTS metrics (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+      dataset_id INTEGER REFERENCES datasets(id) ON DELETE CASCADE,
+      created_by INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      formula TEXT NOT NULL,
+      type VARCHAR(50) NOT NULL DEFAULT 'currency',
+      unit VARCHAR(50),
+      target_value NUMERIC,
+      formatting JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS dashboards (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+      created_by INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      title VARCHAR(255) NOT NULL,
+      description TEXT,
+      is_default BOOLEAN DEFAULT false,
+      is_public BOOLEAN DEFAULT false,
+      layout JSONB DEFAULT '[]'::jsonb,
+      filters JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS dashboard_widgets (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      dashboard_id UUID NOT NULL REFERENCES dashboards(id) ON DELETE CASCADE,
+      dataset_id INTEGER REFERENCES datasets(id) ON DELETE SET NULL,
+      metric_id UUID REFERENCES metrics(id) ON DELETE SET NULL,
+      title VARCHAR(255) NOT NULL,
+      type VARCHAR(50) NOT NULL,
+      configuration JSONB DEFAULT '{}'::jsonb,
+      position JSONB DEFAULT '{"x": 0, "y": 0, "w": 6, "h": 4}'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS reports (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+      created_by INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      dashboard_id UUID REFERENCES dashboards(id) ON DELETE SET NULL,
+      title VARCHAR(255) NOT NULL,
+      description TEXT,
+      format VARCHAR(50) NOT NULL DEFAULT 'pdf',
+      schedule_cron VARCHAR(100),
+      recipients JSONB DEFAULT '[]'::jsonb,
+      last_generated_at TIMESTAMPTZ,
+      status VARCHAR(50) NOT NULL DEFAULT 'draft',
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS report_executions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      report_id UUID NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      executed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'queued',
+      format VARCHAR(50) NOT NULL,
+      started_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      completed_at TIMESTAMPTZ,
+      file_size INTEGER DEFAULT 0,
+      file_path VARCHAR(500),
+      error_message TEXT,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS alerts (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+      created_by INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      metric_id UUID REFERENCES metrics(id) ON DELETE CASCADE,
+      dataset_id INTEGER REFERENCES datasets(id) ON DELETE CASCADE,
+      name VARCHAR(255) NOT NULL,
+      condition VARCHAR(50) NOT NULL,
+      threshold NUMERIC NOT NULL,
+      severity VARCHAR(50) NOT NULL DEFAULT 'medium',
+      status VARCHAR(50) NOT NULL DEFAULT 'active',
+      notification_channels JSONB DEFAULT '["in_app"]'::jsonb,
+      last_triggered_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS alert_incidents (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      alert_id UUID NOT NULL REFERENCES alerts(id) ON DELETE CASCADE,
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      triggered_value NUMERIC NOT NULL,
+      threshold_value NUMERIC NOT NULL,
+      severity VARCHAR(50) NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'open',
+      message TEXT NOT NULL,
+      acknowledged_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      acknowledged_at TIMESTAMPTZ,
+      resolved_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      resolved_at TIMESTAMPTZ,
+      resolution_notes TEXT,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS forecasts (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      dataset_id INTEGER NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
+      created_by INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      target_column VARCHAR(255) NOT NULL,
+      date_column VARCHAR(255) NOT NULL,
+      horizon_periods INTEGER NOT NULL DEFAULT 30,
+      interval VARCHAR(50) NOT NULL DEFAULT 'daily',
+      model_name VARCHAR(100) NOT NULL DEFAULT 'arima',
+      predictions JSONB NOT NULL DEFAULT '[]'::jsonb,
+      confidence_intervals JSONB DEFAULT '{}'::jsonb,
+      metrics JSONB DEFAULT '{}'::jsonb,
+      status VARCHAR(50) NOT NULL DEFAULT 'completed',
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS ai_conversations (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      dataset_id INTEGER REFERENCES datasets(id) ON DELETE SET NULL,
+      title VARCHAR(255) NOT NULL DEFAULT 'New Conversation',
+      is_pinned BOOLEAN DEFAULT false,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS ai_messages (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      conversation_id UUID NOT NULL REFERENCES ai_conversations(id) ON DELETE CASCADE,
+      role VARCHAR(50) NOT NULL,
+      content TEXT NOT NULL,
+      visualization_type VARCHAR(50),
+      chart_data JSONB,
+      query_intent JSONB,
+      tokens_used INTEGER DEFAULT 0,
+      execution_time_ms INTEGER DEFAULT 0,
+      is_bookmarked BOOLEAN DEFAULT false,
+      feedback VARCHAR(50),
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      action VARCHAR(100) NOT NULL,
+      resource_type VARCHAR(100) NOT NULL,
+      resource_id VARCHAR(255),
+      description TEXT NOT NULL,
+      metadata JSONB DEFAULT '{}'::jsonb,
+      ip_address VARCHAR(100),
+      user_agent TEXT,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS dataset_relationships (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      created_by INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      source_dataset_id INTEGER NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
+      source_column VARCHAR(255) NOT NULL,
+      target_dataset_id INTEGER NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
+      target_column VARCHAR(255) NOT NULL,
+      relationship_type VARCHAR(50) NOT NULL DEFAULT 'many_to_one',
+      description TEXT,
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS dataset_quality_snapshots (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      dataset_id INTEGER NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
+      overall_score INTEGER NOT NULL,
+      completeness_score INTEGER NOT NULL,
+      uniqueness_score INTEGER NOT NULL,
+      validity_score INTEGER NOT NULL,
+      consistency_score INTEGER NOT NULL,
+      column_metrics JSONB DEFAULT '{}'::jsonb,
+      anomaly_summary JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS dataset_quality_rules (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      dataset_id INTEGER NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
+      created_by INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      column_name VARCHAR(255) NOT NULL,
+      rule_type VARCHAR(50) NOT NULL,
+      parameters JSONB DEFAULT '{}'::jsonb,
+      severity VARCHAR(50) DEFAULT 'warning',
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS ai_insights (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      dataset_id INTEGER REFERENCES datasets(id) ON DELETE CASCADE,
+      metric_id UUID REFERENCES metrics(id) ON DELETE SET NULL,
+      dashboard_id UUID REFERENCES dashboards(id) ON DELETE SET NULL,
+      type VARCHAR(50) NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      summary TEXT NOT NULL,
+      severity VARCHAR(50) DEFAULT 'neutral',
+      confidence NUMERIC(5,4) DEFAULT 0.85,
+      evidence JSONB DEFAULT '{}'::jsonb,
+      source_metadata JSONB DEFAULT '{}'::jsonb,
+      recommendation JSONB DEFAULT '{}'::jsonb,
+      status VARCHAR(50) DEFAULT 'active',
+      feedback VARCHAR(50),
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      expires_at TIMESTAMPTZ
+    );
+
+    CREATE TABLE IF NOT EXISTS teams (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS team_members (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      role VARCHAR(50) NOT NULL DEFAULT 'member',
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS dashboard_shares (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      dashboard_id UUID NOT NULL REFERENCES dashboards(id) ON DELETE CASCADE,
+      shared_with_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      shared_with_team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
+      permission VARCHAR(50) NOT NULL DEFAULT 'view',
+      shared_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS report_shares (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      report_id UUID NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+      shared_with_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      shared_with_team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
+      permission VARCHAR(50) NOT NULL DEFAULT 'view',
+      shared_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS insight_shares (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      insight_id UUID NOT NULL REFERENCES ai_insights(id) ON DELETE CASCADE,
+      shared_with_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      shared_with_team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
+      shared_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS comments (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      resource_type VARCHAR(50) NOT NULL,
+      resource_id VARCHAR(255) NOT NULL,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      content TEXT NOT NULL,
+      parent_id UUID REFERENCES comments(id) ON DELETE CASCADE,
+      mentions JSONB DEFAULT '[]'::jsonb,
+      is_resolved BOOLEAN DEFAULT false,
+      resolved_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      resolved_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS favorites (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      resource_type VARCHAR(50) NOT NULL,
+      resource_id VARCHAR(255) NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS recently_viewed (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      resource_type VARCHAR(50) NOT NULL,
+      resource_id VARCHAR(255) NOT NULL,
+      viewed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS saved_views (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      dashboard_id UUID NOT NULL REFERENCES dashboards(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name VARCHAR(255) NOT NULL,
+      filters JSONB NOT NULL DEFAULT '{}'::jsonb,
+      is_shared BOOLEAN DEFAULT false,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS notifications (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      type VARCHAR(50) NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      message TEXT NOT NULL,
+      link VARCHAR(500),
+      is_read BOOLEAN DEFAULT false,
+      read_at TIMESTAMPTZ,
+      metadata JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
 
     CREATE TABLE IF NOT EXISTS dataset_rows (
       id BIGSERIAL PRIMARY KEY,
@@ -4149,11 +4532,73 @@ async function initDb() {
       organization_id UUID,
       row_index INTEGER NOT NULL,
       data JSONB NOT NULL,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
     CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_id ON dataset_rows(dataset_id);
     CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_org ON dataset_rows(dataset_id, organization_id);
     CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_row_idx ON dataset_rows(dataset_id, row_index);
+
+    CREATE TABLE IF NOT EXISTS data_quality_jobs (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      dataset_id INTEGER NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
+      organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+      status VARCHAR(50) NOT NULL DEFAULT 'queued',
+      progress INTEGER DEFAULT 0,
+      total_rows BIGINT DEFAULT 0,
+      processed_rows BIGINT DEFAULT 0,
+      result JSONB DEFAULT '{}'::jsonb,
+      error_message TEXT,
+      started_at TIMESTAMPTZ,
+      completed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS demo_requests (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      company VARCHAR(255) NOT NULL,
+      team_size VARCHAR(50) NOT NULL,
+      role VARCHAR(100) NOT NULL,
+      notes TEXT,
+      status VARCHAR(50) NOT NULL DEFAULT 'pending',
+      ip_address VARCHAR(100),
+      user_agent TEXT,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS invitations (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      invited_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      email VARCHAR(255) NOT NULL,
+      role VARCHAR(50) NOT NULL DEFAULT 'viewer',
+      token VARCHAR(255) UNIQUE NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'pending',
+      accepted_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS invoices (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      invoice_number VARCHAR(100) UNIQUE NOT NULL,
+      amount_cents INTEGER NOT NULL,
+      currency VARCHAR(10) NOT NULL DEFAULT 'USD',
+      status VARCHAR(50) NOT NULL DEFAULT 'paid',
+      plan VARCHAR(50) NOT NULL,
+      invoice_url TEXT,
+      pdf_url TEXT,
+      period_start TIMESTAMPTZ NOT NULL,
+      period_end TIMESTAMPTZ NOT NULL,
+      payment_method JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
 
     CREATE TABLE IF NOT EXISTS stripe_webhook_events (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -4163,18 +4608,35 @@ async function initDb() {
       organization_id UUID REFERENCES organizations(id) ON DELETE SET NULL,
       error_message TEXT,
       payload JSONB,
-      processed_at TIMESTAMP WITH TIME ZONE,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      processed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
     CREATE INDEX IF NOT EXISTS idx_stripe_webhook_events_event_id ON stripe_webhook_events(stripe_event_id);
     CREATE INDEX IF NOT EXISTS idx_stripe_webhook_events_org_id ON stripe_webhook_events(organization_id);
     CREATE INDEX IF NOT EXISTS idx_stripe_webhook_events_status ON stripe_webhook_events(status);
     CREATE INDEX IF NOT EXISTS idx_stripe_webhook_events_created_at ON stripe_webhook_events(created_at DESC);
+
+    INSERT INTO organizations (id, name, slug, plan)
+    VALUES 
+      ('00000000-0000-0000-0000-000000000001', 'Ricoz Primary Organization', 'ricoz-primary', 'enterprise'),
+      ('00000000-0000-0000-0000-000000000002', 'Beta Global Enterprises', 'beta-global', 'starter')
+    ON CONFLICT (slug) DO NOTHING;
+
+    INSERT INTO users (id, name, email, password_hash, role, organization_id, status)
+    VALUES 
+      (1, 'Gowtham (Admin)', 'admin@ricoz.test', '${defaultPasswordHash}', 'admin', '00000000-0000-0000-0000-000000000001', 'active'),
+      (2, 'Enterprise Manager', 'manager@ricoz.test', '${managerPasswordHash}', 'manager', '00000000-0000-0000-0000-000000000001', 'active'),
+      (3, 'Data Analyst', 'analyst@ricoz.test', '${analystPasswordHash}', 'analyst', '00000000-0000-0000-0000-000000000001', 'active'),
+      (4, 'Business Viewer', 'viewer@ricoz.test', '${viewerPasswordHash}', 'viewer', '00000000-0000-0000-0000-000000000001', 'active')
+    ON CONFLICT (email) DO UPDATE SET organization_id = EXCLUDED.organization_id;
+
+    UPDATE datasets SET organization_id = '00000000-0000-0000-0000-000000000001' WHERE organization_id IS NULL;
+    UPDATE users SET organization_id = '00000000-0000-0000-0000-000000000001' WHERE organization_id IS NULL;
   `;
 
   try {
-    await query(schemaSql);
+    await pool.query(schemaSql);
     console.log(' PostgreSQL Database schema initialized successfully');
   } catch (err) {
     console.error(' Failed to initialize PostgreSQL database schema:', err.message);

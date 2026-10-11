@@ -268,6 +268,47 @@ export default function ExecutiveDashboard({
     return decisionSignals.filter(s => (s.type || s.severity || 'general').toLowerCase() === signalTab);
   }, [decisionSignals, signalTab]);
 
+  if (!datasets || datasets.length === 0 || !activeDataset) {
+    return (
+      <div className="space-y-6 font-sans">
+        <section className="space-y-2 pb-1">
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-medium">
+            <span className="hover:text-slate-600 dark:hover:text-slate-300 transition cursor-pointer" onClick={() => navigate('/dashboard')}>
+              Workspace
+            </span>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
+            <span className="text-slate-900 dark:text-slate-100 font-bold">
+              Overview
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 font-sans">
+            Overview
+          </h1>
+        </section>
+
+        <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-12 text-center max-w-xl mx-auto my-8 space-y-4 shadow-2xs">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
+            <Database className="h-7 w-7" />
+          </div>
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">No Datasets Available</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+            Upload your first CSV or JSON dataset, or connect a data source to view live executive telemetry and analytics.
+          </p>
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => navigate('/datasets')}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-xs cursor-pointer"
+            >
+              <Database className="h-4 w-4" />
+              <span>Go to Datasets Explorer</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 font-sans">
       {/* ─────────────────────────────────────────────────────────────────── */}
@@ -296,7 +337,7 @@ export default function ExecutiveDashboard({
               Overview
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-normal">
-              <span className="font-semibold text-slate-700 dark:text-slate-300">{activeDataset?.name || 'Product Inventory & Logistics'}</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300">{activeDataset?.name || 'Dataset'}</span>
               <span className="mx-2 text-slate-300 dark:text-slate-700">|</span>
               <span>Telemetry {dateRangeLabel}</span>
               <span className="mx-2 text-slate-300 dark:text-slate-700">|</span>
@@ -310,7 +351,7 @@ export default function ExecutiveDashboard({
               <div className="relative">
                 <select
                   value={selectedDatasetId || (activeDataset?.id ?? '')}
-                  onChange={(e) => onSelectDataset(Number(e.target.value))}
+                  onChange={(e) => onSelectDataset(e.target.value)}
                   aria-label="Active Telemetry Dataset"
                   className="appearance-none pl-9 pr-9 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 hover:border-slate-300 dark:hover:border-slate-600 focus:outline-hidden focus:border-blue-500 shadow-2xs cursor-pointer transition"
                 >

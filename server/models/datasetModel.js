@@ -42,6 +42,7 @@ const Dataset = {
       SELECT 
         d.id,
         d.user_id,
+        COALESCE(d.organization_id, u.organization_id) AS organization_id,
         d.data_source_id,
         d.name,
         d.description,
@@ -51,13 +52,13 @@ const Dataset = {
         d.schema,
         d.created_at,
         d.updated_at,
-        u.organization_id,
+        COALESCE(d.organization_id, u.organization_id) AS organization_id,
         ds.name AS data_source_name,
         ds.type AS data_source_type
       FROM datasets d
-      JOIN users u ON u.id = d.user_id
+      LEFT JOIN users u ON u.id = d.user_id
       LEFT JOIN data_sources ds ON ds.id = d.data_source_id
-      WHERE u.organization_id = $1
+      WHERE (d.organization_id = $1 OR (d.organization_id IS NULL AND u.organization_id = $1))
       ORDER BY d.created_at DESC
     `;
     const res = await db.query(sql, [organizationId]);
@@ -72,6 +73,7 @@ const Dataset = {
       SELECT 
         d.id,
         d.user_id,
+        d.organization_id,
         d.data_source_id,
         d.name,
         d.description,
@@ -99,6 +101,7 @@ const Dataset = {
       SELECT 
         d.id,
         d.user_id,
+        COALESCE(d.organization_id, u.organization_id) AS organization_id,
         d.data_source_id,
         d.name,
         d.description,
@@ -108,13 +111,13 @@ const Dataset = {
         d.schema,
         d.created_at,
         d.updated_at,
-        u.organization_id,
+        COALESCE(d.organization_id, u.organization_id) AS organization_id,
         ds.name AS data_source_name,
         ds.type AS data_source_type
       FROM datasets d
-      JOIN users u ON u.id = d.user_id
+      LEFT JOIN users u ON u.id = d.user_id
       LEFT JOIN data_sources ds ON ds.id = d.data_source_id
-      WHERE d.id = $1 AND u.organization_id = $2
+      WHERE d.id = $1 AND (d.organization_id = $2 OR (d.organization_id IS NULL AND u.organization_id = $2))
       LIMIT 1
     `;
     const res = await db.query(sql, [id, organizationId]);
@@ -129,6 +132,7 @@ const Dataset = {
       SELECT 
         d.id,
         d.user_id,
+        d.organization_id,
         d.data_source_id,
         d.name,
         d.description,
@@ -157,6 +161,7 @@ const Dataset = {
       SELECT 
         id,
         user_id,
+        organization_id,
         data_source_id,
         name,
         description,
@@ -177,14 +182,24 @@ const Dataset = {
   /**
    * Create a new dataset record
    */
-  async create({ userId, dataSourceId, name, description, filePath, rowCount = 0, columnCount = 0, schema = [] }) {
+  async create({ userId, organizationId, dataSourceId, name, description, filePath, rowCount = 0, columnCount = 0, schema = [] }) {
+    let effectiveOrgId = organizationId;
+    if (!effectiveOrgId && userId) {
+      try {
+        const uRes = await db.query('SELECT organization_id FROM users WHERE id = $1', [userId]);
+        effectiveOrgId = uRes.rows[0]?.organization_id || '00000000-0000-0000-0000-000000000001';
+      } catch (_) {
+        effectiveOrgId = '00000000-0000-0000-0000-000000000001';
+      }
+    }
     const sql = `
-      INSERT INTO datasets (user_id, data_source_id, name, description, file_path, row_count, column_count, schema)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING id, user_id, data_source_id, name, description, row_count, column_count, schema, created_at, updated_at
+      INSERT INTO datasets (user_id, organization_id, data_source_id, name, description, file_path, row_count, column_count, schema)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING id, user_id, organization_id, data_source_id, name, description, row_count, column_count, schema, created_at, updated_at
     `;
     const res = await db.query(sql, [
       userId,
+      effectiveOrgId || '00000000-0000-0000-0000-000000000001',
       dataSourceId || null,
       name,
       description || null,

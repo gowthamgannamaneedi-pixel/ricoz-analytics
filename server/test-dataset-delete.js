@@ -240,11 +240,18 @@ async function runTests() {
     await test('Dependent dataset deletion blocked when used by dashboard widget (409 Conflict)', async () => {
       depDataset = await createTestDataset('DependentDataset');
       
+      // Ensure parent dashboard exists
+      await db.query(
+        `INSERT INTO dashboards (id, organization_id, created_by, title) 
+         VALUES ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 1, 'Default Dashboard')
+         ON CONFLICT (id) DO NOTHING`
+      );
+
       // Simulate dashboard widget using this dataset
       await db.query(
         'INSERT INTO dashboard_widgets (id, dashboard_id, dataset_id, title, type) VALUES ($1, $2, $3, $4, $5)',
         ['00000000-0000-0000-0000-000000000099', '00000000-0000-0000-0000-000000000001', depDataset.id, 'Active Widget', 'bar_chart']
-      ).catch(() => null);
+      );
 
       const res = await request('DELETE', `/api/datasets/${depDataset.id}`, null, {
         Authorization: `Bearer ${adminTokenA}`

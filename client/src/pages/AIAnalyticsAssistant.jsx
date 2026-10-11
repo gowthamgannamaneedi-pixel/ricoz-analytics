@@ -758,7 +758,7 @@ export default function AIAnalyticsAssistant() {
                                 {conv.title || 'Analytics Conversation'}
                               </span>
                               <span className="text-[10px] text-slate-400 truncate block mt-0.5 font-normal">
-                                {conv.dataset_name || 'Indian Enterprise Sales Telemetry (Q4)'}
+                                {conv.dataset_name || 'General Conversation'}
                               </span>
                             </div>
                           </div>

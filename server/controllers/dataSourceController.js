@@ -203,6 +203,7 @@ const createDataSource = async (req, res, next) => {
 
         createdDataset = await Dataset.create({
           userId,
+          organizationId: req.user?.organization_id,
           dataSourceId: newSource.id,
           name: name.trim(),
           description: `Auto-ingested from REST API (${config.url})`,
@@ -486,6 +487,7 @@ const uploadDataSource = async (req, res, next) => {
     // 3. Create Data Source record
     const dataSource = await DataSource.create({
       userId,
+      organizationId: req.user?.organization_id,
       name: sourceName,
       type: fileType,
       status: 'active',
@@ -499,6 +501,7 @@ const uploadDataSource = async (req, res, next) => {
     // 4. Create Dataset record
     const dataset = await Dataset.create({
       userId,
+      organizationId: req.user?.organization_id,
       dataSourceId: dataSource.id,
       name: sourceName,
       description,

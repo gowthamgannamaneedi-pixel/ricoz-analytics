@@ -118,59 +118,6 @@ const EnterpriseTooltip = ({ active, payload, label, prefix = '', suffix = '' })
   return null;
 };
 
-// Fallback sample data when backend is not connected
-const FALLBACK_DATASETS = [
-  {
-    id: 1,
-    name: 'Indian Enterprise Sales Telemetry (Q4)',
-    type: 'csv',
-    row_count: 45200,
-    column_count: 8,
-    created_at: '2025-01-15T10:30:00Z'
-  },
-  {
-    id: 2,
-    name: 'Product Inventory & Logistics',
-    type: 'json',
-    row_count: 8400,
-    column_count: 6,
-    created_at: '2025-01-18T14:15:00Z'
-  },
-  {
-    id: 3,
-    name: 'Production PostgreSQL Hub',
-    type: 'postgresql',
-    row_count: 125000,
-    column_count: 9,
-    created_at: '2025-01-20T09:00:00Z'
-  }
-];
-
-const FALLBACK_SCHEMA = [
-  { name: 'order_id', type: 'number' },
-  { name: 'region', type: 'string' },
-  { name: 'category', type: 'string' },
-  { name: 'channel', type: 'string' },
-  { name: 'sales_amount', type: 'number' },
-  { name: 'units_sold', type: 'number' },
-  { name: 'profit', type: 'number' },
-  { name: 'is_discounted', type: 'boolean' },
-  { name: 'order_date', type: 'date' }
-];
-
-const FALLBACK_ROWS = [
-  { order_id: 1001, region: 'Bengaluru', category: 'Hardware', channel: 'Direct Online', sales_amount: 45000.5, units_sold: 12, profit: 6500.0, is_discounted: false, order_date: '2025-01-15' },
-  { order_id: 1002, region: 'Mumbai', category: 'Software', channel: 'Retail Partners', sales_amount: 125000.0, units_sold: 5, profit: 35000.0, is_discounted: true, order_date: '2025-01-16' },
-  { order_id: 1003, region: 'Delhi NCR', category: 'Cloud SaaS', channel: 'B2B Enterprise', sales_amount: 89000.0, units_sold: 20, profit: 22000.0, is_discounted: false, order_date: '2025-01-17' },
-  { order_id: 1004, region: 'Hyderabad', category: 'Hardware', channel: 'Direct Online', sales_amount: 62000.0, units_sold: 18, profit: 9400.0, is_discounted: true, order_date: '2025-01-18' },
-  { order_id: 1005, region: 'Chennai', category: 'Services', channel: 'B2B Enterprise', sales_amount: 34000.0, units_sold: 8, profit: 7100.0, is_discounted: false, order_date: '2025-01-19' },
-  { order_id: 1006, region: 'Bengaluru', category: 'Software', channel: 'Direct Online', sales_amount: 195000.0, units_sold: 10, profit: 48000.0, is_discounted: false, order_date: '2025-01-20' },
-  { order_id: 1007, region: 'Mumbai', category: 'Cloud SaaS', channel: 'B2B Enterprise', sales_amount: 142000.0, units_sold: 25, profit: 38000.0, is_discounted: true, order_date: '2025-01-21' },
-  { order_id: 1008, region: 'Delhi NCR', category: 'Services', channel: 'Retail Partners', sales_amount: 48000.0, units_sold: 15, profit: 11200.0, is_discounted: false, order_date: '2025-01-22' },
-  { order_id: 1009, region: 'Hyderabad', category: 'Hardware', channel: 'Direct Online', sales_amount: 78000.0, units_sold: 22, profit: 14500.0, is_discounted: true, order_date: '2025-01-23' },
-  { order_id: 1010, region: 'Chennai', category: 'Software', channel: 'Retail Partners', sales_amount: 110000.0, units_sold: 7, profit: 29000.0, is_discounted: false, order_date: '2025-01-24' }
-];
-
 export default function DashboardPage() {
   const { token, isViewer } = useAuth();
   const navigate = useNavigate();
@@ -205,29 +152,16 @@ export default function DashboardPage() {
   const [savedMetrics, setSavedMetrics] = useState([]);
 
   // Datasets List & Active Selection for Overview Mode
-  const [datasets, setDatasets] = useState(FALLBACK_DATASETS);
+  const [datasets, setDatasets] = useState([]);
   const [selectedDatasetId, setSelectedDatasetId] = useState(() => {
-    const saved = localStorage.getItem('ricoz_active_dataset_id');
-    return saved ? Number(saved) : 1;
+    return localStorage.getItem('ricoz_active_dataset_id') || null;
   });
 
   // Active Dataset Metadata & Filters
   const [summaryData, setSummaryData] = useState({
-    dataset: { name: 'Indian Enterprise Sales Telemetry (Q4)', schema: FALLBACK_SCHEMA },
-    dimensions: {
-      primaryMetric: 'Sales Amount',
-      quantityMetric: 'Units Sold',
-      dateColumn: 'order_date',
-      regionColumn: 'region',
-      channelColumn: 'channel',
-      productColumn: 'category'
-    },
-    filterOptions: {
-      regions: ['Bengaluru', 'Mumbai', 'Delhi NCR', 'Hyderabad', 'Chennai'],
-      channels: ['Direct Online', 'Retail Partners', 'B2B Enterprise'],
-      categories: ['Hardware', 'Software', 'Cloud SaaS', 'Services'],
-      dateBounds: { min: '2025-01-15', max: '2025-02-03' }
-    }
+    dataset: null,
+    dimensions: {},
+    filterOptions: { regions: [], channels: [], categories: [], dateBounds: {} }
   });
 
   const [filters, setFilters] = useState({ dateRange: 'all' });
@@ -240,7 +174,7 @@ export default function DashboardPage() {
   const [isSignalsLoading, setIsSignalsLoading] = useState(false);
 
   // Table State
-  const [tableData, setTableData] = useState({ rows: FALLBACK_ROWS, totalCount: FALLBACK_ROWS.length });
+  const [tableData, setTableData] = useState({ rows: [], totalCount: 0 });
   const [tablePage, setTablePage] = useState(1);
   const [tableLimit, setTableLimit] = useState(20);
   const [tableSortKey, setTableSortKey] = useState('');
@@ -262,11 +196,6 @@ export default function DashboardPage() {
       const res = await getDashboards();
       if (res && res.success && Array.isArray(res.data)) {
         setDashboards(res.data);
-        // If a default dashboard exists and activeDashboardId is not set, select it
-        const defaultDash = res.data.find(d => d.is_default);
-        if (defaultDash && activeDashboardId === 'overview') {
-          // Keep overview or optionally switch to default
-        }
       }
     } catch (_) {
       // Graceful empty dashboards
@@ -319,24 +248,40 @@ export default function DashboardPage() {
   // --------------------------------------------------------------------------
   const fetchDatasets = async () => {
     try {
+      setIsDatasetsLoading(true);
       const res = await fetch(`${API_BASE_URL}/datasets`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const contentType = res.headers.get('content-type') || '';
       if (res.ok && contentType.includes('application/json')) {
         const json = await res.json();
-        const list = json.data || [];
+        const list = Array.isArray(json.data) ? json.data : [];
+        setDatasets(list);
         if (list.length > 0) {
-          setDatasets(list);
-          if (!selectedDatasetId || !list.some(d => d.id === selectedDatasetId)) {
+          const matched = list.find(d => String(d.id) === String(selectedDatasetId));
+          if (!selectedDatasetId || !matched) {
             setSelectedDatasetId(list[0].id);
+            localStorage.setItem('ricoz_active_dataset_id', String(list[0].id));
           }
-          return;
+        } else {
+          setSelectedDatasetId(null);
+          localStorage.removeItem('ricoz_active_dataset_id');
+          setSummaryData({ dataset: null, dimensions: {}, filterOptions: { regions: [], channels: [], categories: [], dateBounds: {} } });
+          setKpiData(null);
+          setTrendsData([]);
+          setRegionBreakdown([]);
+          setChannelBreakdown([]);
+          setProductBreakdown([]);
+          setTableData({ rows: [], totalCount: 0 });
+          setDecisionSignals([]);
         }
+        return;
       }
-      setDatasets(FALLBACK_DATASETS);
+      setDatasets([]);
+      setSelectedDatasetId(null);
     } catch (_) {
-      setDatasets(FALLBACK_DATASETS);
+      setDatasets([]);
+      setSelectedDatasetId(null);
     } finally {
       setIsDatasetsLoading(false);
     }
@@ -421,140 +366,13 @@ export default function DashboardPage() {
     } catch (_) {}
   };
 
-  // Client-Side Fallback Analytics Calculator (Phase 5)
-  const computeFallbackAnalytics = useCallback(() => {
-    let filtered = [...FALLBACK_ROWS];
-
-    if (filters.region && filters.region !== 'all') {
-      filtered = filtered.filter(r => r.region.toLowerCase() === filters.region.toLowerCase());
-    }
-    if (filters.channel && filters.channel !== 'all') {
-      filtered = filtered.filter(r => r.channel.toLowerCase() === filters.channel.toLowerCase());
-    }
-    if (filters.category && filters.category !== 'all') {
-      filtered = filtered.filter(r => r.category.toLowerCase() === filters.category.toLowerCase());
-    }
-
-    if (filters.dateRange && filters.dateRange !== 'all') {
-      const allDates = filtered.map(r => new Date(r.order_date)).filter(d => !isNaN(d.getTime())).sort((a, b) => b - a);
-      if (allDates.length > 0) {
-        const referenceDate = allDates[0];
-        let startDate = null;
-        if (filters.dateRange === '7d') {
-          startDate = new Date(referenceDate.getTime() - 7 * 24 * 60 * 60 * 1000);
-        } else if (filters.dateRange === '30d') {
-          startDate = new Date(referenceDate.getTime() - 30 * 24 * 60 * 60 * 1000);
-        } else if (filters.dateRange === '90d') {
-          startDate = new Date(referenceDate.getTime() - 90 * 24 * 60 * 60 * 1000);
-        } else if (filters.dateRange === 'ytd') {
-          startDate = new Date(referenceDate.getFullYear(), 0, 1);
-        }
-        if (startDate) {
-          filtered = filtered.filter(r => new Date(r.order_date) >= startDate);
-        }
-      }
-    }
-
-    if (tableSearch.trim()) {
-      const q = tableSearch.toLowerCase();
-      filtered = filtered.filter(r =>
-        Object.values(r).some(val => String(val).toLowerCase().includes(q))
-      );
-    }
-
-    const totalSales = filtered.reduce((sum, r) => sum + r.sales_amount, 0);
-    const uniqueOrderIds = new Set(filtered.map(r => r.order_id).filter(id => id !== undefined && id !== null && String(id).trim() !== ''));
-    const totalOrders = uniqueOrderIds.size > 0 ? uniqueOrderIds.size : filtered.length;
-    const totalQuantity = filtered.reduce((sum, r) => sum + r.units_sold, 0);
-    const aov = totalOrders > 0 ? Math.round(totalSales / totalOrders) : 0;
-    const minSales = totalOrders > 0 ? Math.min(...filtered.map(r => r.sales_amount)) : 0;
-    const maxSales = totalOrders > 0 ? Math.max(...filtered.map(r => r.sales_amount)) : 0;
-
-    let comparison = null;
-    if (filtered.length >= 2) {
-      const mid = Math.floor(filtered.length / 2);
-      const prevHalf = filtered.slice(0, mid);
-      const currHalf = filtered.slice(mid);
-      const prevSum = prevHalf.reduce((sum, r) => sum + (r.sales_amount || 0), 0);
-      const currSum = currHalf.reduce((sum, r) => sum + (r.sales_amount || 0), 0);
-      const prevOrders = prevHalf.length;
-      const currOrders = currHalf.length;
-      const salesChangePct = prevSum > 0 ? ((currSum - prevSum) / prevSum) * 100 : 0;
-      const ordersChangePct = prevOrders > 0 ? ((currOrders - prevOrders) / prevOrders) * 100 : 0;
-      comparison = {
-        hasComparison: true,
-        salesChange: `${salesChangePct >= 0 ? '+' : ''}${salesChangePct.toFixed(1)}%`,
-        isSalesPositive: salesChangePct >= 0,
-        ordersChange: `${ordersChangePct >= 0 ? '+' : ''}${ordersChangePct.toFixed(1)}%`,
-        isOrdersPositive: ordersChangePct >= 0,
-        periodLabel: 'vs previous period'
-      };
-    }
-
-    setKpiData({
-      totalSales,
-      totalOrders,
-      totalQuantity,
-      averageOrderValue: aov,
-      minSales,
-      maxSales,
-      recordCount: filtered.length,
-      comparison
-    });
-
-    const trendsMap = {};
-    filtered.forEach(r => {
-      const dateKey = r.order_date;
-      if (!trendsMap[dateKey]) {
-        trendsMap[dateKey] = { formattedDate: dateKey, revenue: 0, orders: 0, units: 0 };
-      }
-      trendsMap[dateKey].revenue += r.sales_amount;
-      trendsMap[dateKey].orders += 1;
-      trendsMap[dateKey].units += (r.units_sold || 0);
-    });
-    setTrendsData(Object.values(trendsMap));
-
-    const regMap = {};
-    filtered.forEach(r => {
-      regMap[r.region] = (regMap[r.region] || 0) + r.sales_amount;
-    });
-    setRegionBreakdown(Object.entries(regMap).map(([category, value]) => ({ category, value })));
-
-    const chanMap = {};
-    filtered.forEach(r => {
-      chanMap[r.channel] = (chanMap[r.channel] || 0) + r.sales_amount;
-    });
-    setChannelBreakdown(Object.entries(chanMap).map(([category, value]) => ({ category, value })));
-
-    const catMap = {};
-    filtered.forEach(r => {
-      catMap[r.category] = (catMap[r.category] || 0) + r.sales_amount;
-    });
-    setProductBreakdown(Object.entries(catMap).map(([category, value]) => ({ category, value })));
-
-    if (tableSortKey) {
-      filtered.sort((a, b) => {
-        const valA = a[tableSortKey];
-        const valB = b[tableSortKey];
-        if (typeof valA === 'number') {
-          return tableSortOrder === 'asc' ? valA - valB : valB - valA;
-        }
-        return tableSortOrder === 'asc'
-          ? String(valA).localeCompare(String(valB))
-          : String(valB).localeCompare(String(valA));
-      });
-    }
-
-    const startIdx = (tablePage - 1) * tableLimit;
-    setTableData({
-      rows: filtered.slice(startIdx, startIdx + tableLimit),
-      totalCount: filtered.length
-    });
-  }, [filters, tableSearch, tableSortKey, tableSortOrder, tablePage, tableLimit]);
-
   const handleSelectDataset = (id) => {
     setSelectedDatasetId(id);
-    localStorage.setItem('ricoz_active_dataset_id', String(id));
+    if (id) {
+      localStorage.setItem('ricoz_active_dataset_id', String(id));
+    } else {
+      localStorage.removeItem('ricoz_active_dataset_id');
+    }
     setFilters({ dateRange: 'all' });
     setTablePage(1);
     setTableSearch('');
@@ -572,18 +390,29 @@ export default function DashboardPage() {
   }, [filters]);
 
   const fetchDatasetSummary = async (id) => {
+    if (!id) return;
     try {
       const res = await fetch(`${API_BASE_URL}/analytics/datasets/${id}/summary`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         const json = await res.json();
-        setSummaryData(json.data);
+        setSummaryData(json.data || { dataset: null, dimensions: {}, filterOptions: {} });
       }
     } catch (_) {}
   };
 
   const fetchAnalytics = async (id, showLoading = true) => {
+    if (!id) {
+      setKpiData(null);
+      setTrendsData([]);
+      setRegionBreakdown([]);
+      setChannelBreakdown([]);
+      setProductBreakdown([]);
+      setTableData({ rows: [], totalCount: 0 });
+      return;
+    }
+
     if (showLoading) setIsAnalyticsLoading(true);
     setError('');
 
@@ -632,10 +461,25 @@ export default function DashboardPage() {
           setDecisionSignals([]);
         }
       } else {
-        computeFallbackAnalytics();
+        setKpiData(null);
+        setTrendsData([]);
+        setRegionBreakdown([]);
+        setChannelBreakdown([]);
+        setProductBreakdown([]);
+        setTableData({ rows: [], totalCount: 0 });
+        setDecisionSignals([]);
+        if (!kpisRes.ok && kpisRes.status !== 404) {
+          setError('Failed to load dataset telemetry analytics.');
+        }
       }
     } catch (_) {
-      computeFallbackAnalytics();
+      setKpiData(null);
+      setTrendsData([]);
+      setRegionBreakdown([]);
+      setChannelBreakdown([]);
+      setProductBreakdown([]);
+      setTableData({ rows: [], totalCount: 0 });
+      setDecisionSignals([]);
     } finally {
       setIsAnalyticsLoading(false);
       setIsRefreshing(false);
@@ -669,7 +513,12 @@ export default function DashboardPage() {
       fetchDatasetSummary(selectedDatasetId);
       fetchAnalytics(selectedDatasetId, false);
     } else if (activeDashboardId === 'overview') {
-      computeFallbackAnalytics();
+      setKpiData(null);
+      setTrendsData([]);
+      setRegionBreakdown([]);
+      setChannelBreakdown([]);
+      setProductBreakdown([]);
+      setTableData({ rows: [], totalCount: 0 });
     }
   }, [activeDashboardId, selectedDatasetId, filters, tablePage, tableLimit, tableSortKey, tableSortOrder, tableSearch]);
 
@@ -691,7 +540,6 @@ export default function DashboardPage() {
     } else if (selectedDatasetId) {
       fetchAnalytics(selectedDatasetId, false);
     } else {
-      computeFallbackAnalytics();
       setIsRefreshing(false);
     }
   };
