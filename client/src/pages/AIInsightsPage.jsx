@@ -70,6 +70,7 @@ import MetricModal from '../components/MetricModal';
 import ReportModal from '../components/ReportModal';
 import { Button } from '../components/ui/Button';
 import { ResetButton } from '../components/ui/ResetButton';
+import { RefreshButton } from '../components/ui/RefreshButton';
 
 // ----------------------------------------------------------------------
 // Helper utilities
@@ -743,15 +744,12 @@ export default function AIInsightsPage() {
               )}
             </div>
 
-            {/* Refresh Button (Moved to trailing end) */}
-            <button
+            {/* Refresh Button (Standard component) */}
+            <RefreshButton
+              id="refresh-ai-insights-btn"
               onClick={loadData}
-              disabled={loading}
-              className="h-10 px-3.5 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-400 flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
-            >
-              <RefreshCw className={`w-4 h-4 text-slate-600 ${loading ? 'animate-spin' : ''}`} />
-              <span>{loading ? 'Refreshing...' : 'Refresh'}</span>
-            </button>
+              isRefreshing={loading}
+            />
           </div>
         </div>
       </div>
@@ -838,11 +836,11 @@ export default function AIInsightsPage() {
         {/* Card 4: Informational Insights */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs hover:shadow-xs transition">
           <div className="flex items-center justify-between">
-            <div className="h-11 w-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center">
+            <div className="h-11 w-11 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
               <Info className="w-6 h-6" />
             </div>
             {totalCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
                 {infoPercent}%
               </span>
             )}

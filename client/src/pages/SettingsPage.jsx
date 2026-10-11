@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Settings,
   Users,
@@ -54,6 +54,8 @@ import {
   API_BASE_URL
 } from '../services/api';
 import { Button } from '../components/ui/Button';
+import { RefreshButton } from '../components/ui/RefreshButton';
+import { ResetButton } from '../components/ui/ResetButton';
 
 /**
  * Enterprise Settings Page â€” RicozAnalytics
@@ -420,48 +422,45 @@ export default function SettingsPage() {
       {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* 1. PAGE HEADER                                                     */}
       {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-1">
-        <div className="flex items-center gap-3.5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pt-1">
+        <div className="flex items-start gap-3.5">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20 shrink-0">
             <Settings className="h-6 w-6" />
           </div>
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-2xl font-black text-slate-900 tracking-tight">Settings</h1>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                Admin
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Admin'}
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
               Manage organization settings, team access, integrations, notifications, and platform preferences.
             </p>
+
+            {isAdmin && (
+              <div className="mt-3">
+                <Button
+                  id="edit-organization-primary-btn"
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setIsEditOrgModalOpen(true)}
+                  className="h-10 px-4 text-xs font-semibold rounded-xl shadow-xs gap-2"
+                >
+                  <Edit3 className="h-3.5 w-3.5" />
+                  <span>Edit Organization</span>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <Button
-            variant="secondary"
-            size="sm"
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+          <RefreshButton
+            id="refresh-settings-btn"
             onClick={() => loadSettingsData(true)}
-            disabled={refreshing}
-            className="h-9 px-3 text-xs gap-1.5"
-            title="Refresh settings"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </Button>
-
-          {isAdmin && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setIsEditOrgModalOpen(true)}
-              className="h-9 px-3.5 text-xs gap-1.5 shadow-xs"
-            >
-              <Edit3 className="h-3.5 w-3.5" />
-              <span>Edit Organization</span>
-            </Button>
-          )}
+            isRefreshing={refreshing}
+          />
         </div>
       </div>
 
@@ -1576,11 +1575,23 @@ export default function SettingsPage() {
       {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeTab === 'preferences' && (
         <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-6 w-full">
-          <div className="pb-4 border-b border-slate-100">
-            <h2 className="text-base font-bold text-slate-900">Workspace User Experience & Display Preferences</h2>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Customize default landing views, table rendering density, and telemetry refresh frequencies.
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Workspace User Experience & Display Preferences</h2>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Customize default landing views, table rendering density, and telemetry refresh frequencies.
+              </p>
+            </div>
+            <ResetButton
+              id="reset-preferences-btn"
+              onClick={() => handleSavePreferences({
+                defaultLandingPage: '/dashboard',
+                tableDensity: 'comfortable',
+                refreshInterval: 'realtime',
+                numberFormat: 'inr_lakhs'
+              })}
+              title="Reset preferences to defaults"
+            />
           </div>
 
           <div className="space-y-5 text-xs">
@@ -1589,7 +1600,7 @@ export default function SettingsPage() {
               <select
                 value={preferences.defaultLandingPage}
                 onChange={(e) => handleSavePreferences({ ...preferences, defaultLandingPage: e.target.value })}
-                className="w-full h-10 px-3.5 rounded-xl border border-slate-300 text-slate-900 font-semibold bg-white cursor-pointer"
+                className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-slate-900 font-semibold bg-white cursor-pointer shadow-2xs focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none"
               >
                 <option value="/dashboard">Executive Dashboard (/dashboard)</option>
                 <option value="/ai-insights">Automated AI Insights (/ai-insights)</option>
@@ -1634,7 +1645,7 @@ export default function SettingsPage() {
               <select
                 value={preferences.refreshInterval}
                 onChange={(e) => handleSavePreferences({ ...preferences, refreshInterval: e.target.value })}
-                className="w-full h-10 px-3.5 rounded-xl border border-slate-300 text-slate-900 font-semibold bg-white cursor-pointer"
+                className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-slate-900 font-semibold bg-white cursor-pointer shadow-2xs focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none"
               >
                 <option value="realtime">Continuous Live Refresh (30s background sync)</option>
                 <option value="5min">5 Minutes (Balanced power & telemetry)</option>
@@ -1648,10 +1659,10 @@ export default function SettingsPage() {
               <select
                 value={preferences.numberFormat}
                 onChange={(e) => handleSavePreferences({ ...preferences, numberFormat: e.target.value })}
-                className="w-full h-10 px-3.5 rounded-xl border border-slate-300 text-slate-900 font-semibold bg-white cursor-pointer"
+                className="w-full h-10 px-3.5 rounded-xl border border-slate-200 text-slate-900 font-semibold bg-white cursor-pointer shadow-2xs focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none"
               >
-                <option value="inr_lakhs">Indian Numbering Format (â‚¹ Lakhs & Crores â€” e.g. â‚¹17.6L)</option>
-                <option value="standard_millions">International Standard (Millions & Billions â€” e.g. $1.76M)</option>
+                <option value="inr_lakhs">Indian Numbering Format (₹ Lakhs & Crores — e.g. ₹17.6L)</option>
+                <option value="standard_millions">International Standard (Millions & Billions — e.g. $1.76M)</option>
               </select>
             </div>
           </div>

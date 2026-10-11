@@ -141,7 +141,7 @@ export default function BillingPage() {
                 Subscription & Licensing
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-950 font-serif">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
               Plans & Billing
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl">
@@ -353,7 +353,7 @@ export default function BillingPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-purple-50 text-purple-600 border border-purple-100 shrink-0">
+              <div className="p-2.5 rounded-lg bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
                 <HelpCircle className="w-5 h-5" />
               </div>
               <div className="text-xs">

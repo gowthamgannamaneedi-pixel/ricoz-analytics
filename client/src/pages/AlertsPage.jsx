@@ -316,7 +316,7 @@ export default function AlertsPage() {
       )}
 
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <div className="flex items-center gap-2.5">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 border border-rose-200 text-rose-600 shadow-2xs">
@@ -331,28 +331,33 @@ export default function AlertsPage() {
               </p>
             </div>
           </div>
+
+          {/* Primary Action placed below description */}
+          {canMutate && (
+            <div className="mt-3.5">
+              <Button
+                id="create-alert-rule-btn"
+                onClick={() => {
+                  setEditingAlert(null);
+                  setIsAlertModalOpen(true);
+                }}
+                variant="primary"
+                className="h-10 px-4 text-xs font-semibold rounded-xl shadow-xs gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Create Alert Rule</span>
+              </Button>
+            </div>
+          )}
         </div>
 
-        {/* Header Actions */}
-        <div className="flex items-center gap-2.5">
+        {/* Header Actions (Right) */}
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
           <RefreshButton
-            label={refreshing ? 'Refreshing...' : 'Refresh'}
-            loading={refreshing}
+            id="refresh-alerts-btn"
+            isRefreshing={refreshing}
             onClick={handleRefresh}
           />
-
-          {canMutate && (
-            <Button
-              onClick={() => {
-                setEditingAlert(null);
-                setIsAlertModalOpen(true);
-              }}
-              variant="primary"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Create Alert Rule</span>
-            </Button>
-          )}
         </div>
       </div>
 
@@ -362,7 +367,7 @@ export default function AlertsPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">Active Alert Rules</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
               <Bell className="h-4 w-4" />
             </div>
           </div>
@@ -374,7 +379,7 @@ export default function AlertsPage() {
         <div className="rounded-2xl border border-rose-200/80 bg-rose-50/30 p-5 shadow-xs transition hover:shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-rose-700">Open Incidents</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-600 border border-rose-200/80">
               <Flame className="h-4 w-4" />
             </div>
           </div>
@@ -386,7 +391,7 @@ export default function AlertsPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">Critical Severity Rules</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
               <ShieldAlert className="h-4 w-4" />
             </div>
           </div>
@@ -398,7 +403,7 @@ export default function AlertsPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">Resolved MTD</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">
               <CheckCircle2 className="h-4 w-4" />
             </div>
           </div>

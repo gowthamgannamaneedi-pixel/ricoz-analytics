@@ -498,9 +498,9 @@ export default function ForecastsPage() {
         </nav>
 
         {/* Page Title & Actions Toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex items-start gap-3.5">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-500/20">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20">
               <TrendingUp className="h-6 w-6 stroke-[2.2]" />
             </div>
             <div>
@@ -517,41 +517,39 @@ export default function ForecastsPage() {
               <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal max-w-2xl leading-relaxed">
                 Predict future values using available forecasting models and detect anomalies in your data.
               </p>
+
+              {/* Page-level Primary Action placed below description */}
+              <div className="pt-3">
+                <Button
+                  id="generate-forecast-primary-btn"
+                  onClick={handleGenerateForecast}
+                  disabled={generating || isViewer || !selectedDatasetId}
+                  variant="primary"
+                  className="h-10 px-4 rounded-xl font-semibold shadow-xs text-xs sm:text-sm"
+                >
+                  {generating ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin text-white" />
+                      <span>Computing Forecast...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4 fill-white" />
+                      <span>Generate Forecast</span>
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons (Right) */}
           <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
-            <Button
+            <RefreshButton
               id="refresh-forecasts-btn"
               onClick={loadInitialData}
-              disabled={loadingInitial}
-              variant="secondary"
-              className="h-10 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold shadow-2xs text-xs sm:text-sm"
-            >
-              <RefreshCw className={`h-4 w-4 text-slate-500 ${loadingInitial ? 'animate-spin text-rose-600' : ''}`} />
-              <span>{loadingInitial ? 'Refreshing...' : 'Refresh'}</span>
-            </Button>
-
-            <Button
-              id="generate-forecast-primary-btn"
-              onClick={handleGenerateForecast}
-              disabled={generating || isViewer || !selectedDatasetId}
-              variant="primary"
-              className="h-10 px-4 rounded-xl font-semibold shadow-xs text-xs sm:text-sm"
-            >
-              {generating ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin text-white" />
-                  <span>Computing Forecast...</span>
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4 fill-white" />
-                  <span>Generate Forecast</span>
-                </>
-              )}
-            </Button>
+              isRefreshing={loadingInitial}
+            />
           </div>
         </div>
       </div>
@@ -592,7 +590,7 @@ export default function ForecastsPage() {
         {/* Card 1: Selected Dataset */}
         <div className="rounded-2xl border border-slate-200/90 bg-white p-4.5 shadow-2xs hover:border-slate-300 transition-all">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 border border-purple-100 shrink-0">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
               <Database className="h-5 w-5" />
             </div>
             <div className="min-w-0">
@@ -612,7 +610,7 @@ export default function ForecastsPage() {
         {/* Card 2: Model */}
         <div className="rounded-2xl border border-slate-200/90 bg-white p-4.5 shadow-2xs hover:border-slate-300 transition-all">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 shrink-0">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
               <Target className="h-5 w-5" />
             </div>
             <div className="min-w-0">
@@ -713,7 +711,7 @@ export default function ForecastsPage() {
                   id="forecast-dataset-select"
                   value={selectedDatasetId}
                   onChange={handleDatasetChange}
-                  className="w-full appearance-none pl-9 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
+                  className="w-full h-10 appearance-none pl-9 pr-9 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
                 >
                   {datasets.length === 0 ? (
                     <option value="">No datasets available</option>
@@ -743,7 +741,7 @@ export default function ForecastsPage() {
                   id="forecast-metric-column-select"
                   value={targetColumn}
                   onChange={(e) => setTargetColumn(e.target.value)}
-                  className="w-full appearance-none pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
+                  className="w-full h-10 appearance-none pl-3.5 pr-9 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
                 >
                   {availableColumns.numericCols.length === 0 ? (
                     <option value="">No numeric columns found</option>
@@ -772,7 +770,7 @@ export default function ForecastsPage() {
                   id="forecast-time-column-select"
                   value={dateColumn}
                   onChange={(e) => setDateColumn(e.target.value)}
-                  className="w-full appearance-none pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
+                  className="w-full h-10 appearance-none pl-3.5 pr-9 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
                 >
                   {availableColumns.dateCols.length === 0 ? (
                     <option value="">No date columns found</option>
@@ -798,7 +796,7 @@ export default function ForecastsPage() {
                   id="forecast-model-select"
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-full appearance-none pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
+                  className="w-full h-10 appearance-none pl-3.5 pr-9 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
                 >
                   <option value="auto">Auto (Best Model)</option>
                   <option value="linear_regression">Linear Regression (Trend)</option>
@@ -824,7 +822,7 @@ export default function ForecastsPage() {
                     max="365"
                     value={horizonPeriods}
                     onChange={(e) => setHorizonPeriods(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                    className="w-full py-2.5 pl-3 pr-14 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 focus:outline-none focus:border-rose-600 shadow-2xs"
+                    className="w-full h-10 pl-3 pr-14 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 focus:outline-none focus:border-rose-600 shadow-2xs"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 font-medium pointer-events-none">
                     periods
@@ -841,7 +839,7 @@ export default function ForecastsPage() {
                     id="forecast-interval-select"
                     value={interval}
                     onChange={(e) => setInterval(e.target.value)}
-                    className="w-full appearance-none pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
+                    className="w-full h-10 appearance-none pl-3.5 pr-9 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
                   >
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>

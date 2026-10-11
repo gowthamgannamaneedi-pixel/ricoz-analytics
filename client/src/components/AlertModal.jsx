@@ -216,7 +216,7 @@ export default function AlertModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full h-9 rounded-xl border border-slate-300 bg-white px-3.5 text-xs text-slate-900 font-medium placeholder-slate-400 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none shadow-2xs"
+              className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-xs text-slate-900 font-medium placeholder-slate-400 transition focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs"
             />
           </div>
 
@@ -231,7 +231,7 @@ export default function AlertModal({
                 <select
                   value={metricId}
                   onChange={(e) => setMetricId(e.target.value)}
-                  className="w-full h-9 appearance-none rounded-xl border border-slate-300 bg-white pl-3 pr-8 text-xs font-medium text-slate-800 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none cursor-pointer shadow-2xs"
+                  className="w-full h-10 appearance-none rounded-xl border border-slate-200 bg-white pl-3.5 pr-8 text-xs font-medium text-slate-800 transition focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none cursor-pointer shadow-2xs"
                 >
                   <option value="">-- Generic Organization Metric --</option>
                   {metrics.map((m) => (
@@ -253,7 +253,7 @@ export default function AlertModal({
                 <select
                   value={condition}
                   onChange={(e) => setCondition(e.target.value)}
-                  className="w-full h-9 appearance-none rounded-xl border border-slate-300 bg-white pl-3 pr-8 text-xs font-medium text-slate-800 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none cursor-pointer shadow-2xs"
+                  className="w-full h-10 appearance-none rounded-xl border border-slate-200 bg-white pl-3.5 pr-8 text-xs font-medium text-slate-800 transition focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none cursor-pointer shadow-2xs"
                 >
                   {CONDITIONS.map((c) => (
                     <option key={c.value} value={c.value}>
@@ -281,7 +281,7 @@ export default function AlertModal({
                   value={threshold}
                   onChange={(e) => setThreshold(e.target.value)}
                   required
-                  className="w-full h-9 rounded-xl border border-slate-300 bg-white pl-3.5 pr-12 text-xs font-medium text-slate-900 placeholder-slate-400 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none shadow-2xs"
+                  className="w-full h-10 rounded-xl border border-slate-200 bg-white pl-3.5 pr-12 text-xs font-medium text-slate-900 placeholder-slate-400 transition focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 font-mono pointer-events-none">
                   value
@@ -301,7 +301,7 @@ export default function AlertModal({
                   placeholder="60"
                   value={cooldownMinutes}
                   onChange={(e) => setCooldownMinutes(e.target.value)}
-                  className="w-full h-9 rounded-xl border border-slate-300 bg-white pl-3.5 pr-12 text-xs font-medium text-slate-900 placeholder-slate-400 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none shadow-2xs"
+                  className="w-full h-10 rounded-xl border border-slate-200 bg-white pl-3.5 pr-12 text-xs font-medium text-slate-900 placeholder-slate-400 transition focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 font-mono pointer-events-none">
                   mins
@@ -323,9 +323,9 @@ export default function AlertModal({
                     key={sev.value}
                     type="button"
                     onClick={() => setSeverity(sev.value)}
-                    className={`flex items-center justify-center gap-1.5 rounded-xl border h-8 px-2.5 text-xs font-semibold transition cursor-pointer ${
+                    className={`flex items-center justify-center gap-1.5 rounded-xl border h-9 px-2.5 text-xs font-semibold transition cursor-pointer ${
                       isSelected
-                        ? `${sev.color} ring-2 ring-blue-500/20 shadow-xs font-bold`
+                        ? `${sev.color} ring-2 ring-rose-500/20 shadow-xs font-bold`
                         : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                     }`}
                   >
@@ -341,7 +341,7 @@ export default function AlertModal({
           <div className="rounded-xl border border-slate-200/90 bg-slate-50/60 p-3 space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                <Mail className="h-3.5 w-3.5 text-blue-600" />
+                <Mail className="h-3.5 w-3.5 text-rose-600" />
                 <span>Notification Dispatch Channels</span>
               </span>
               <div className="flex items-center gap-1.5">
@@ -350,7 +350,7 @@ export default function AlertModal({
                   onClick={() => toggleChannel('in_app')}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
                     notificationChannels.includes('in_app')
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                      ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
                       : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
@@ -361,7 +361,7 @@ export default function AlertModal({
                   onClick={() => toggleChannel('email')}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
                     notificationChannels.includes('email')
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                      ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
                       : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
@@ -385,12 +385,12 @@ export default function AlertModal({
                         handleAddEmail();
                       }
                     }}
-                    className="flex-1 h-8 rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-600 focus:outline-none"
+                    className="flex-1 h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-800 placeholder-slate-400 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none"
                   />
                   <button
                     type="button"
                     onClick={handleAddEmail}
-                    className="flex items-center gap-1 h-8 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-700 transition cursor-pointer shadow-2xs"
+                    className="flex items-center gap-1 h-9 rounded-xl bg-rose-600 px-3 text-xs font-semibold text-white hover:bg-rose-700 transition cursor-pointer shadow-2xs"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     <span>Add</span>
@@ -429,7 +429,7 @@ export default function AlertModal({
                 type="button"
                 onClick={() => setStatus(status === 'active' ? 'disabled' : 'active')}
                 className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  status === 'active' ? 'bg-blue-600' : 'bg-slate-300'
+                  status === 'active' ? 'bg-rose-600' : 'bg-slate-300'
                 }`}
               >
                 <span

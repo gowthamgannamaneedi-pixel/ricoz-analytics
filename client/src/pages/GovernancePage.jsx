@@ -42,6 +42,8 @@ import {
   getAdminAuditLogs,
   getAdminPermissions
 } from '../services/api';
+import { RefreshButton } from '../components/ui/RefreshButton';
+import { ResetButton } from '../components/ui/ResetButton';
 
 /**
  * Enterprise Governance, Workspace Management & Audit Trails
@@ -359,6 +361,13 @@ export default function GovernancePage() {
   const analystPct = Math.round(((roleDistribution.analyst || 0) / totalMembers) * 100);
   const viewerPct = Math.max(0, 100 - adminPct - managerPct - analystPct);
 
+  const handleRefresh = useCallback(() => {
+    loadOverview();
+    if (activeTab === 'users') loadUsers();
+    else if (activeTab === 'audit') loadAuditLogs();
+    else if (activeTab === 'permissions') loadPermissions();
+  }, [activeTab, loadOverview, loadUsers, loadAuditLogs, loadPermissions]);
+
   return (
     <div className="w-full max-w-full space-y-6 pb-10">
       {/* ------------------------------------------------------------- */}
@@ -379,22 +388,30 @@ export default function GovernancePage() {
           </div>
         </div>
 
-        {/* Right: Organization Badge */}
-        <div className="flex items-center gap-3 bg-white border border-slate-200/90 rounded-xl px-3.5 py-2 shadow-2xs shrink-0 self-start sm:self-auto">
-          <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-            <Building2 className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              ORGANIZATION
+        {/* Right: Organization Badge & Refresh Button */}
+        <div className="flex items-center gap-3 shrink-0 self-start sm:self-auto">
+          <div className="flex items-center gap-3 bg-white border border-slate-200/90 rounded-xl px-3.5 py-2 shadow-2xs">
+            <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+              <Building2 className="w-4 h-4" />
             </div>
-            <div className="text-xs font-bold text-slate-900 truncate max-w-[160px]">
-              {orgData?.name || 'Ricoz Primary Organization'}
+            <div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                ORGANIZATION
+              </div>
+              <div className="text-xs font-bold text-slate-900 truncate max-w-[160px]">
+                {orgData?.name || 'Ricoz Primary Organization'}
+              </div>
             </div>
+            <span className="ml-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+              {orgData?.plan ? String(orgData.plan).toUpperCase() : 'ENTERPRISE'}
+            </span>
           </div>
-          <span className="ml-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-            {orgData?.plan ? String(orgData.plan).toUpperCase() : 'ENTERPRISE'}
-          </span>
+
+          <RefreshButton
+            id="refresh-governance-btn"
+            onClick={handleRefresh}
+            isRefreshing={loading || userLoading || auditLoading}
+          />
         </div>
       </div>
 
@@ -527,10 +544,10 @@ export default function GovernancePage() {
             {/* Card 2: DATASETS CONNECTED */}
             <div
               onClick={() => navigate('/datasets')}
-              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-purple-200 transition-all duration-200 group cursor-pointer"
+              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-rose-200 transition-all duration-200 group cursor-pointer"
             >
               <div className="flex items-center gap-4 min-w-0">
-                <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center shrink-0">
                   <Database className="w-6 h-6" />
                 </div>
                 <div className="min-w-0">
@@ -545,7 +562,7 @@ export default function GovernancePage() {
                   </div>
                 </div>
               </div>
-              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-purple-50 group-hover:text-purple-700 transition-colors shrink-0 ml-2">
+              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-rose-50 group-hover:text-rose-700 transition-colors shrink-0 ml-2">
                 <ChevronRight className="w-4 h-4" />
               </div>
             </div>
@@ -556,7 +573,7 @@ export default function GovernancePage() {
               className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-emerald-200 transition-all duration-200 group cursor-pointer"
             >
               <div className="flex items-center gap-4 min-w-0">
-                <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0">
                   <Layers className="w-6 h-6" />
                 </div>
                 <div className="min-w-0">
@@ -579,10 +596,10 @@ export default function GovernancePage() {
             {/* Card 4: ML & AI TELEMETRY */}
             <div
               onClick={() => navigate('/ai-insights')}
-              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-amber-200 transition-all duration-200 group cursor-pointer"
+              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-rose-200 transition-all duration-200 group cursor-pointer"
             >
               <div className="flex items-center gap-4 min-w-0">
-                <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center shrink-0">
                   <Sparkles className="w-6 h-6" />
                 </div>
                 <div className="min-w-0">
@@ -597,7 +614,7 @@ export default function GovernancePage() {
                   </div>
                 </div>
               </div>
-              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-amber-50 group-hover:text-amber-700 transition-colors shrink-0 ml-2">
+              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-rose-50 group-hover:text-rose-700 transition-colors shrink-0 ml-2">
                 <ChevronRight className="w-4 h-4" />
               </div>
             </div>
