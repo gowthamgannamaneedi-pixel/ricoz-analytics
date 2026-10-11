@@ -78,7 +78,7 @@ const DataQualityModel = {
 
     const result = await db.query(sql, [
       id,
-      Number(datasetId),
+      datasetId,
       String(organizationId),
       Number(qualityScore),
       status,
@@ -115,7 +115,7 @@ const DataQualityModel = {
       LIMIT 1;
     `;
 
-    const result = await db.query(sql, [Number(datasetId), String(organizationId)]);
+    const result = await db.query(sql, [datasetId, String(organizationId)]);
     return result.rows[0] || null;
   },
 
@@ -150,7 +150,7 @@ const DataQualityModel = {
       LIMIT $3;
     `;
 
-    const result = await db.query(sql, [Number(datasetId), String(organizationId), Number(limit)]);
+    const result = await db.query(sql, [datasetId, String(organizationId), Number(limit)]);
     return result.rows || [];
   },
 
@@ -200,13 +200,13 @@ const DataQualityModel = {
     const result = await db.query(sql, [
       id,
       String(organizationId),
-      Number(datasetId),
+      datasetId,
       String(columnName).trim(),
       String(ruleType).trim().toLowerCase(),
       typeof configuration === 'string' ? configuration : JSON.stringify(configuration || {}),
       severity.toLowerCase(),
       Boolean(enabled),
-      createdBy ? Number(createdBy) : null
+      createdBy ? String(createdBy) : null
     ]);
 
     return result.rows[0];
@@ -227,7 +227,7 @@ const DataQualityModel = {
       ORDER BY r.created_at DESC;
     `;
 
-    const result = await db.query(sql, [Number(datasetId), String(organizationId)]);
+    const result = await db.query(sql, [datasetId, String(organizationId)]);
     return result.rows || [];
   },
 

@@ -186,6 +186,7 @@ export default function DashboardPage() {
   const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const activeReqIdRef = useRef(0);
 
   // --------------------------------------------------------------------------
   // 1. Fetch Dashboards List
@@ -291,6 +292,13 @@ export default function DashboardPage() {
     fetchDashboardsList();
     fetchDatasets();
     fetchSavedMetrics();
+
+    // Cross-view dataset event synchronization (after upload or delete)
+    const handleDatasetUpdate = () => {
+      fetchDatasets();
+    };
+    window.addEventListener('ricoz_dataset_updated', handleDatasetUpdate);
+    return () => window.removeEventListener('ricoz_dataset_updated', handleDatasetUpdate);
   }, [token]);
 
   // Sync URL search params if changed
@@ -413,6 +421,7 @@ export default function DashboardPage() {
       return;
     }
 
+    const currentReqId = ++activeReqIdRef.current;
     if (showLoading) setIsAnalyticsLoading(true);
     setError('');
 
@@ -435,6 +444,11 @@ export default function DashboardPage() {
         fetch(`${API_BASE_URL}/insights?datasetId=${id}`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
       ]);
 
+      // Guard against race conditions / older out-of-order responses
+      if (currentReqId !== activeReqIdRef.current) {
+        return;
+      }
+
       const [kpisJson, trendsJson, regionJson, channelJson, productJson, rowsJson, insightsJson] = await Promise.all([
         kpisRes.json().catch(() => null),
         trendsRes.json().catch(() => null),
@@ -444,6 +458,10 @@ export default function DashboardPage() {
         rowsRes.json().catch(() => null),
         insightsRes ? insightsRes.json().catch(() => null) : null
       ]);
+
+      if (currentReqId !== activeReqIdRef.current) {
+        return;
+      }
 
       if (kpisRes.ok && kpisJson?.data?.kpis) {
         setKpiData(kpisJson.data?.kpis || null);
@@ -687,8 +705,10 @@ export default function DashboardPage() {
       const currentDash = dashboards.find(d => d.id === activeDashboardId);
       await exportDashboardDirect({
         dashboard_id: activeDashboardId !== 'overview' ? activeDashboardId : null,
+        dataset_id: selectedDatasetId || null,
+        filters: filters || {},
         format,
-        title: currentDash ? currentDash.title : 'Executive Analytics Overview'
+        title: currentDash ? currentDash.title : (activeDataset ? `${activeDataset.name} Analytics Report` : 'Executive Analytics Overview')
       });
     } catch (err) {
       alert(err.message || 'Export failed. Please try again.');
@@ -881,12 +901,27 @@ export default function DashboardPage() {
 
       {/* 2. Error Banner */}
       {error && (
-        <div className="flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
-          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600" />
-          <div>
-            <p className="font-bold">Dashboard Error</p>
-            <p className="mt-0.5">{error}</p>
+        <div className="flex items-center justify-between gap-2.5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+          <div className="flex items-start gap-2.5">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600" />
+            <div>
+              <p className="font-bold">Dashboard Error</p>
+              <p className="mt-0.5">{error}</p>
+            </div>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (selectedDatasetId) {
+                fetchAnalytics(selectedDatasetId, true);
+              } else {
+                fetchDatasets();
+              }
+            }}
+            className="px-3 py-1.5 rounded-md bg-rose-600 text-white font-semibold hover:bg-rose-700 transition shrink-0 cursor-pointer"
+          >
+            Retry
+          </button>
         </div>
       )}
 

@@ -53,12 +53,12 @@ const DataQualityJobModel = {
     const result = await db.query(sql, [
       id,
       String(organizationId),
-      Number(datasetId),
+      datasetId,
       jobType,
       Number(totalRows) || 0,
       scanMode,
       sampleSize !== null && sampleSize !== undefined ? Number(sampleSize) : null,
-      createdBy ? Number(createdBy) : null
+      createdBy ? String(createdBy) : null
     ]);
 
     return result.rows[0];
@@ -94,7 +94,7 @@ const DataQualityJobModel = {
       ORDER BY created_at DESC
       LIMIT 1;
     `;
-    const result = await db.query(sql, [Number(datasetId), String(organizationId)]);
+    const result = await db.query(sql, [datasetId, String(organizationId)]);
     return result.rows[0] || null;
   },
 

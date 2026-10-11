@@ -508,7 +508,7 @@ const reportController = {
   async exportDashboardDirect(req, res) {
     try {
       const organizationId = req.user.organization_id;
-      const { dashboard_id, format = 'pdf', title } = req.body;
+      const { dashboard_id, dataset_id, filters, format = 'pdf', title } = req.body;
 
       const normalizedFormat = (format || 'pdf').toLowerCase();
       if (!VALID_FORMATS.includes(normalizedFormat)) {
@@ -529,11 +529,15 @@ const reportController = {
         }
       }
 
+      const resolvedFilters = filters || (dashboard?.filters ? (typeof dashboard.filters === 'string' ? JSON.parse(dashboard.filters) : dashboard.filters) : {});
+
       const mockReport = {
-        id: dashboard_id || 'instant_export',
+        id: dashboard_id || dataset_id || 'instant_export',
         title: title || (dashboard ? dashboard.title : 'Analytics Executive Summary'),
         description: 'Instant dashboard analytics export.',
         dashboard_id: dashboard_id || null,
+        dataset_id: dataset_id || null,
+        filters: resolvedFilters,
         dashboard_title: dashboard ? dashboard.title : 'Active Dashboard',
         format: normalizedFormat
       };

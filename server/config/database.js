@@ -3052,7 +3052,7 @@ function handleFallbackQuery(text, params = []) {
 
     const newSnapshot = {
       id: id || `snapshot-${nextQualitySnapshotId++}`,
-      dataset_id: Number(dataset_id),
+      dataset_id: dataset_id,
       organization_id: String(organization_id),
       quality_score: Number(quality_score),
       status: status || 'healthy',
@@ -3080,7 +3080,7 @@ function handleFallbackQuery(text, params = []) {
   if (normalizedSql.startsWith('select') && normalizedSql.includes('from dataset_quality_snapshots') && normalizedSql.includes('order by evaluated_at desc limit 1')) {
     const [datasetId, orgId] = params;
     const snap = fallbackQualitySnapshots.find(s => 
-      Number(s.dataset_id) === Number(datasetId) && String(s.organization_id) === String(orgId)
+      String(s.dataset_id) === String(datasetId) && String(s.organization_id) === String(orgId)
     );
     return Promise.resolve({ rows: snap ? [{ ...snap }] : [], rowCount: snap ? 1 : 0 });
   }
@@ -3088,7 +3088,7 @@ function handleFallbackQuery(text, params = []) {
   if (normalizedSql.startsWith('select') && normalizedSql.includes('from dataset_quality_snapshots') && normalizedSql.includes('limit $3')) {
     const [datasetId, orgId, limit] = params;
     const snaps = fallbackQualitySnapshots
-      .filter(s => Number(s.dataset_id) === Number(datasetId) && String(s.organization_id) === String(orgId))
+      .filter(s => String(s.dataset_id) === String(datasetId) && String(s.organization_id) === String(orgId))
       .slice(0, Number(limit) || 20);
     return Promise.resolve({ rows: snaps.map(s => ({ ...s })), rowCount: snaps.length });
   }
@@ -3109,13 +3109,13 @@ function handleFallbackQuery(text, params = []) {
     const newRule = {
       id: id || `rule-${nextQualityRuleId++}`,
       organization_id: String(organization_id),
-      dataset_id: Number(dataset_id),
+      dataset_id: dataset_id,
       column_name: String(column_name),
       rule_type: String(rule_type),
       configuration: typeof configuration === 'string' ? JSON.parse(configuration) : (configuration || {}),
       severity: severity || 'warning',
       enabled: enabled !== undefined ? Boolean(enabled) : true,
-      created_by: created_by ? Number(created_by) : null,
+      created_by: created_by ? String(created_by) : null,
       created_at: new Date(),
       updated_at: new Date()
     };
@@ -3127,9 +3127,9 @@ function handleFallbackQuery(text, params = []) {
   if (normalizedSql.startsWith('select') && normalizedSql.includes('from dataset_quality_rules') && normalizedSql.includes('r.dataset_id = $1 and r.organization_id = $2')) {
     const [datasetId, orgId] = params;
     const rules = fallbackQualityRules
-      .filter(r => Number(r.dataset_id) === Number(datasetId) && String(r.organization_id) === String(orgId))
+      .filter(r => String(r.dataset_id) === String(datasetId) && String(r.organization_id) === String(orgId))
       .map(r => {
-        const u = fallbackUsers.find(user => Number(user.id) === Number(r.created_by));
+        const u = fallbackUsers.find(user => String(user.id) === String(r.created_by));
         return {
           ...r,
           creator_name: u ? u.name : null,
@@ -3223,7 +3223,7 @@ function handleFallbackQuery(text, params = []) {
     const newJob = {
       id: id || `job-${nextQualityJobId++}`,
       organization_id: String(organization_id),
-      dataset_id: Number(dataset_id),
+      dataset_id: dataset_id,
       job_type: job_type || 'FULL_SCAN',
       status: 'QUEUED',
       progress_percent: 0,
@@ -3234,7 +3234,7 @@ function handleFallbackQuery(text, params = []) {
       sample_size: sample_size !== null && sample_size !== undefined ? Number(sample_size) : null,
       snapshot_id: null,
       error_message: null,
-      created_by: created_by ? Number(created_by) : null,
+      created_by: created_by ? String(created_by) : null,
       started_at: null,
       completed_at: null,
       created_at: new Date(),
@@ -3253,7 +3253,7 @@ function handleFallbackQuery(text, params = []) {
 
   if (normalizedSql.startsWith('select') && normalizedSql.includes('from data_quality_jobs') && normalizedSql.includes('where dataset_id = $1 and organization_id = $2')) {
     const [datasetId, orgId] = params;
-    const job = fallbackQualityJobs.find(j => Number(j.dataset_id) === Number(datasetId) && String(j.organization_id) === String(orgId));
+    const job = fallbackQualityJobs.find(j => String(j.dataset_id) === String(datasetId) && String(j.organization_id) === String(orgId));
     return Promise.resolve({ rows: job ? [{ ...job }] : [], rowCount: job ? 1 : 0 });
   }
 
@@ -4857,6 +4857,164 @@ async function initDb() {
     }
   } catch (seedErr) {
     console.error(' [initDb seed admin ERROR]:', seedErr.message);
+  }
+
+  // 4. Ensure Quality & Jobs Tables match datasets.id and users.id types dynamically
+  try {
+    const dtCheck = await pool.query(`
+      SELECT data_type FROM information_schema.columns 
+      WHERE table_schema = 'public' AND table_name = 'datasets' AND column_name = 'id'
+      LIMIT 1;
+    `);
+    const isDatasetUuid = dtCheck.rows[0]?.data_type === 'uuid';
+    const datasetIdType = isDatasetUuid ? 'UUID' : 'INTEGER';
+
+    const userDtCheck = await pool.query(`
+      SELECT data_type FROM information_schema.columns 
+      WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'id'
+      LIMIT 1;
+    `);
+    const isUserUuid = userDtCheck.rows[0]?.data_type === 'uuid';
+    const userIdType = isUserUuid ? 'UUID' : 'INTEGER';
+
+    // 4.1 Ensure data_quality_jobs table exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS public.data_quality_jobs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+        dataset_id ${datasetIdType} NOT NULL REFERENCES public.datasets(id) ON DELETE CASCADE,
+        job_type VARCHAR(50) NOT NULL DEFAULT 'FULL_SCAN',
+        status VARCHAR(50) NOT NULL DEFAULT 'QUEUED',
+        progress_percent NUMERIC(5, 2) NOT NULL DEFAULT 0.00,
+        rows_processed BIGINT NOT NULL DEFAULT 0,
+        total_rows BIGINT NOT NULL DEFAULT 0,
+        stage VARCHAR(100) NOT NULL DEFAULT 'INITIALIZING',
+        scan_mode VARCHAR(20) NOT NULL DEFAULT 'FULL_SCAN',
+        sample_size INTEGER DEFAULT NULL,
+        snapshot_id UUID,
+        error_message TEXT DEFAULT NULL,
+        created_by ${userIdType},
+        started_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+        completed_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_quality_jobs_dataset_id ON public.data_quality_jobs(dataset_id);
+      CREATE INDEX IF NOT EXISTS idx_quality_jobs_org_id ON public.data_quality_jobs(organization_id);
+      CREATE INDEX IF NOT EXISTS idx_quality_jobs_status ON public.data_quality_jobs(status);
+      CREATE INDEX IF NOT EXISTS idx_quality_jobs_created_at ON public.data_quality_jobs(created_at DESC);
+    `);
+
+    // Ensure all columns exist on data_quality_jobs in case created previously
+    await pool.query(`
+      ALTER TABLE public.data_quality_jobs ADD COLUMN IF NOT EXISTS job_type VARCHAR(50) DEFAULT 'FULL_SCAN';
+      ALTER TABLE public.data_quality_jobs ADD COLUMN IF NOT EXISTS progress_percent NUMERIC(5, 2) DEFAULT 0.00;
+      ALTER TABLE public.data_quality_jobs ADD COLUMN IF NOT EXISTS rows_processed BIGINT DEFAULT 0;
+      ALTER TABLE public.data_quality_jobs ADD COLUMN IF NOT EXISTS total_rows BIGINT DEFAULT 0;
+      ALTER TABLE public.data_quality_jobs ADD COLUMN IF NOT EXISTS stage VARCHAR(100) DEFAULT 'INITIALIZING';
+      ALTER TABLE public.data_quality_jobs ADD COLUMN IF NOT EXISTS scan_mode VARCHAR(20) DEFAULT 'FULL_SCAN';
+      ALTER TABLE public.data_quality_jobs ADD COLUMN IF NOT EXISTS sample_size INTEGER DEFAULT NULL;
+      ALTER TABLE public.data_quality_jobs ADD COLUMN IF NOT EXISTS snapshot_id UUID DEFAULT NULL;
+      ALTER TABLE public.data_quality_jobs ADD COLUMN IF NOT EXISTS error_message TEXT DEFAULT NULL;
+      ALTER TABLE public.data_quality_jobs ADD COLUMN IF NOT EXISTS created_by ${userIdType} DEFAULT NULL;
+    `);
+
+    // 4.2 Ensure dataset_quality_snapshots table exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS public.dataset_quality_snapshots (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        dataset_id ${datasetIdType} NOT NULL REFERENCES public.datasets(id) ON DELETE CASCADE,
+        organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+        quality_score NUMERIC(5, 2) NOT NULL DEFAULT 100.00,
+        status VARCHAR(50) NOT NULL DEFAULT 'healthy',
+        completeness NUMERIC(5, 2) NOT NULL DEFAULT 100.00,
+        validity NUMERIC(5, 2) NOT NULL DEFAULT 100.00,
+        uniqueness NUMERIC(5, 2) NOT NULL DEFAULT 100.00,
+        consistency NUMERIC(5, 2) NOT NULL DEFAULT 100.00,
+        freshness NUMERIC(5, 2) NOT NULL DEFAULT 100.00,
+        row_count BIGINT NOT NULL DEFAULT 0,
+        column_count INTEGER NOT NULL DEFAULT 0,
+        scan_mode VARCHAR(20) NOT NULL DEFAULT 'FULL_SCAN',
+        sample_size INTEGER DEFAULT NULL,
+        schema_hash VARCHAR(64) DEFAULT NULL,
+        dimensions JSONB DEFAULT '{}'::jsonb,
+        column_metrics JSONB DEFAULT '[]'::jsonb,
+        issues JSONB DEFAULT '[]'::jsonb,
+        evaluated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_quality_snapshots_dataset_id ON public.dataset_quality_snapshots(dataset_id);
+      CREATE INDEX IF NOT EXISTS idx_quality_snapshots_org_id ON public.dataset_quality_snapshots(organization_id);
+      CREATE INDEX IF NOT EXISTS idx_quality_snapshots_evaluated_at ON public.dataset_quality_snapshots(evaluated_at DESC);
+    `);
+
+    // Align dataset_quality_snapshots.dataset_id column type if needed
+    const snapDtCheck = await pool.query(`
+      SELECT data_type FROM information_schema.columns 
+      WHERE table_schema = 'public' AND table_name = 'dataset_quality_snapshots' AND column_name = 'dataset_id'
+      LIMIT 1;
+    `);
+    if (snapDtCheck.rows[0] && snapDtCheck.rows[0].data_type !== dtCheck.rows[0]?.data_type) {
+      console.log(`[initDb] Aligning dataset_quality_snapshots.dataset_id to ${datasetIdType}...`);
+      await pool.query(`
+        ALTER TABLE public.dataset_quality_snapshots DROP CONSTRAINT IF EXISTS dataset_quality_snapshots_dataset_id_fkey;
+        ALTER TABLE public.dataset_quality_snapshots ALTER COLUMN dataset_id TYPE ${datasetIdType} USING dataset_id::text::${datasetIdType.toLowerCase()};
+        ALTER TABLE public.dataset_quality_snapshots ADD CONSTRAINT dataset_quality_snapshots_dataset_id_fkey FOREIGN KEY (dataset_id) REFERENCES public.datasets(id) ON DELETE CASCADE;
+      `);
+    }
+
+    // Ensure all columns exist on dataset_quality_snapshots
+    await pool.query(`
+      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS quality_score NUMERIC(5, 2) DEFAULT 100.00;
+      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'healthy';
+      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS completeness NUMERIC(5, 2) DEFAULT 100.00;
+      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS validity NUMERIC(5, 2) DEFAULT 100.00;
+      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS uniqueness NUMERIC(5, 2) DEFAULT 100.00;
+      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS consistency NUMERIC(5, 2) DEFAULT 100.00;
+      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS freshness NUMERIC(5, 2) DEFAULT 100.00;
+      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS row_count BIGINT DEFAULT 0;
+      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS column_count INTEGER DEFAULT 0;
+      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS scan_mode VARCHAR(20) DEFAULT 'FULL_SCAN';
+      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS sample_size INTEGER DEFAULT NULL;
+      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS schema_hash VARCHAR(64) DEFAULT NULL;
+      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS dimensions JSONB DEFAULT '{}'::jsonb;
+      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS column_metrics JSONB DEFAULT '[]'::jsonb;
+      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS issues JSONB DEFAULT '[]'::jsonb;
+      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS evaluated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+    `);
+
+    // 4.3 Ensure dataset_quality_rules matches datasetIdType
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS public.dataset_quality_rules (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+        dataset_id ${datasetIdType} NOT NULL REFERENCES public.datasets(id) ON DELETE CASCADE,
+        created_by ${userIdType},
+        column_name VARCHAR(255) NOT NULL,
+        rule_type VARCHAR(50) NOT NULL,
+        parameters JSONB DEFAULT '{}'::jsonb,
+        severity VARCHAR(50) DEFAULT 'warning',
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    const ruleDtCheck = await pool.query(`
+      SELECT data_type FROM information_schema.columns 
+      WHERE table_schema = 'public' AND table_name = 'dataset_quality_rules' AND column_name = 'dataset_id'
+      LIMIT 1;
+    `);
+    if (ruleDtCheck.rows[0] && ruleDtCheck.rows[0].data_type !== dtCheck.rows[0]?.data_type) {
+      await pool.query(`
+        ALTER TABLE public.dataset_quality_rules DROP CONSTRAINT IF EXISTS dataset_quality_rules_dataset_id_fkey;
+        ALTER TABLE public.dataset_quality_rules ALTER COLUMN dataset_id TYPE ${datasetIdType} USING dataset_id::text::${datasetIdType.toLowerCase()};
+        ALTER TABLE public.dataset_quality_rules ADD CONSTRAINT dataset_quality_rules_dataset_id_fkey FOREIGN KEY (dataset_id) REFERENCES public.datasets(id) ON DELETE CASCADE;
+      `);
+    }
+
+    console.log(` Enterprise quality & job tables verified (datasets.id: ${datasetIdType}, users.id: ${userIdType}).`);
+  } catch (qualityTablesSyncErr) {
+    console.warn('[initDb quality tables sync notice]:', qualityTablesSyncErr.message);
   }
 }
 

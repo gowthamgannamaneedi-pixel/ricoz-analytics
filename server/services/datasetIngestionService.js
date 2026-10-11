@@ -157,6 +157,11 @@ async function ingestToPostgres({
   try {
     client = await pool.connect();
 
+    // Disable statement timeout on dedicated client connection for bulk ingestion
+    try {
+      await client.query('SET statement_timeout = 0');
+    } catch (_) {}
+
     // Ensure target table exists before querying
     await ensureDatasetRowsTable(client);
 
@@ -168,12 +173,19 @@ async function ingestToPostgres({
       try {
         const copySql = `
           COPY dataset_rows (dataset_id, organization_id, row_index, data)
-          FROM STDIN WITH (FORMAT csv, DELIMITER E'\\t', QUOTE E'\\b', ESCAPE '\\')
+          FROM STDIN WITH (FORMAT text, DELIMITER E'\\t', NULL E'\\\\N')
         `;
         const pgStream = client.query(copyFrom(copySql));
         let streamError = null;
+        let streamClosed = false;
+
         pgStream.on('error', (err) => {
           streamError = err;
+          streamClosed = true;
+        });
+
+        pgStream.on('close', () => {
+          streamClosed = true;
         });
 
         const rl = readline.createInterface({
@@ -187,8 +199,12 @@ async function ingestToPostgres({
 
         for await (const line of rl) {
           if (signal?.aborted) {
-            pgStream.destroy();
+            try { pgStream.destroy(); } catch (_) {}
             throw new Error('Ingestion cancelled by client.');
+          }
+
+          if (streamClosed || streamError) {
+            break;
           }
 
           const trimmed = line.trim();
@@ -214,14 +230,27 @@ async function ingestToPostgres({
             rowObj[h] = v === null || v === '' ? null : normalizeParsedValue(v);
           }
 
-          // Format tab-separated line for COPY: dataset_id \t org_id \t row_index \t json
-          const jsonStr = JSON.stringify(rowObj).replace(/\\/g, '\\\\').replace(/\t/g, ' ').replace(/\n/g, ' ');
-          const orgVal = organizationId ? organizationId : '';
+          // Format tab-separated line for text COPY: dataset_id \t org_id \t row_index \t json
+          const jsonStr = JSON.stringify(rowObj)
+            .replace(/\\/g, '\\\\')
+            .replace(/\t/g, '\\t')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r');
+          const orgVal = organizationId ? organizationId : '\\N';
           const copyLine = `${datasetId}\t${orgVal}\t${rowIndex}\t${jsonStr}\n`;
 
-          const canWrite = pgStream.write(copyLine);
-          if (!canWrite) {
-            await new Promise(resolve => pgStream.once('drain', resolve));
+          try {
+            if (streamClosed || streamError || !pgStream.writable) {
+              break;
+            }
+            const canWrite = pgStream.write(copyLine);
+            if (!canWrite) {
+              await new Promise(resolve => pgStream.once('drain', resolve));
+            }
+          } catch (writeErr) {
+            streamError = writeErr;
+            streamClosed = true;
+            break;
           }
 
           rowsIngested++;
@@ -234,11 +263,16 @@ async function ingestToPostgres({
         }
 
         if (streamError) throw streamError;
-        pgStream.end();
+
         await new Promise((resolve, reject) => {
           if (streamError) return reject(streamError);
           pgStream.on('finish', resolve);
           pgStream.on('error', reject);
+          try {
+            pgStream.end();
+          } catch (endErr) {
+            reject(endErr);
+          }
         });
 
         return {
@@ -249,7 +283,8 @@ async function ingestToPostgres({
         };
       } catch (copyErr) {
         if (signal?.aborted) throw copyErr;
-        console.warn(`[Ingestion] pg-copy-streams error, falling back to batch inserts: ${copyErr.message}`);
+        console.warn(`[Ingestion] pg-copy-streams notice, falling back to batch inserts: ${copyErr.message}`);
+        try { await client.query('ROLLBACK'); } catch (_) {}
         // Fall back to batch inserts below
         await client.query('DELETE FROM dataset_rows WHERE dataset_id = $1', [datasetId]);
         if (filePath) {

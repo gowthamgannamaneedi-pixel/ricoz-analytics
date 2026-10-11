@@ -130,6 +130,7 @@ export default function DatasetsPage() {
       setShowDeleteConfirm(false);
       setDatasetToDelete(null);
       await fetchDatasets(false);
+      window.dispatchEvent(new CustomEvent('ricoz_dataset_updated', { detail: { action: 'delete', id } }));
       setTimeout(() => setDeleteSuccess(null), 3500);
     } catch (err) {
       setDeleteError(err?.message || 'Failed to delete dataset.');
@@ -149,6 +150,7 @@ export default function DatasetsPage() {
       const res = await refreshDatasetApi(datasetId);
       setRefreshSuccess(res?.message || 'Dataset schema and row count successfully refreshed.');
       await fetchDatasets(false);
+      window.dispatchEvent(new CustomEvent('ricoz_dataset_updated', { detail: { action: 'refresh', id: datasetId } }));
       setTimeout(() => setRefreshSuccess(null), 3500);
     } catch (err) {
       setError(err?.message || 'Failed to refresh dataset.');
@@ -158,6 +160,7 @@ export default function DatasetsPage() {
   };
 
   const handleUploadSuccess = (data) => {
+    window.dispatchEvent(new CustomEvent('ricoz_dataset_updated', { detail: { action: 'upload', dataset: data?.data?.dataset } }));
     if (data?.data?.dataset) {
       setDatasets(prev => [data.data.dataset, ...prev]);
       handleOpenPreview(data.data.dataset.id);
