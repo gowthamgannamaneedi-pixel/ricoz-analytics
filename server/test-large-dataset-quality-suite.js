@@ -305,7 +305,7 @@ async function runLargeDatasetVerificationSuite() {
 
       console.log(`⏱ Full scan (1,000,000 rows) completed in ${(performanceMetrics.fullScanDurationMs / 1000).toFixed(2)}s (Final Heap: ${finalHeapMb} MB)`);
       assert(fullJob?.status === 'COMPLETED', `Test 12: 1M full scan finished with status COMPLETED (got ${fullJob?.status})`);
-      assert(fullJob?.progress_percent === 100, `Test 13: Job progress reached 100%`);
+      assert(Number(fullJob?.progress_percent) === 100, `Test 13: Job progress reached 100% (got ${fullJob?.progress_percent})`);
       assert(Number(fullJob?.rows_processed) === 1000000, `Test 14: Exactly 1,000,000 rows evaluated in streaming chunks`);
 
       // 7. Test Quality Profile Retrieval
