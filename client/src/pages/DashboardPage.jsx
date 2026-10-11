@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -166,6 +166,11 @@ export default function DashboardPage() {
     filterOptions: { regions: [], channels: [], categories: [], dateBounds: {} }
   });
 
+  // Active Dataset computation - ensures activeDataset is never undefined when datasets exist
+  const activeDataset = useMemo(() => {
+    return datasets.find(d => String(d.id) === String(selectedDatasetId)) || summaryData?.dataset || (datasets.length > 0 ? datasets[0] : null);
+  }, [datasets, selectedDatasetId, summaryData]);
+
   const [filters, setFilters] = useState({ dateRange: 'all' });
   const [kpiData, setKpiData] = useState(null);
   const [trendsData, setTrendsData] = useState([]);
@@ -265,10 +270,12 @@ export default function DashboardPage() {
         if (list.length > 0) {
           const matched = list.find(d => String(d.id) === String(selectedDatasetId));
           if (!selectedDatasetId || !matched) {
-            setSelectedDatasetId(list[0].id);
-            localStorage.setItem('ricoz_active_dataset_id', String(list[0].id));
+            const fallbackId = list[0].id;
+            setSelectedDatasetId(fallbackId);
+            localStorage.setItem('ricoz_active_dataset_id', String(fallbackId));
           }
         } else {
+          // Genuinely empty dataset list returned from API
           setSelectedDatasetId(null);
           localStorage.removeItem('ricoz_active_dataset_id');
           setSummaryData({ dataset: null, dimensions: {}, filterOptions: { regions: [], channels: [], categories: [], dateBounds: {} } });
@@ -280,13 +287,11 @@ export default function DashboardPage() {
           setTableData({ rows: [], totalCount: 0 });
           setDecisionSignals([]);
         }
-        return;
       }
-      setDatasets([]);
-      setSelectedDatasetId(null);
-    } catch (_) {
-      setDatasets([]);
-      setSelectedDatasetId(null);
+      // On non-OK response (e.g. 500 or 429), preserve existing datasets rather than wiping them
+    } catch (fetchErr) {
+      console.warn('[DashboardPage] fetchDatasets network note:', fetchErr.message);
+      // Preserve existing datasets during transient network errors
     } finally {
       setIsDatasetsLoading(false);
     }
@@ -724,8 +729,6 @@ export default function DashboardPage() {
       setIsExporting(false);
     }
   };
-
-  const activeDataset = datasets.find(d => d.id === selectedDatasetId) || datasets[0];
 
   const formatCurrency = (val) => {
     if (val === undefined || val === null || isNaN(val)) return '₹0';

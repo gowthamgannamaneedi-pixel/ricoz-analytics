@@ -368,9 +368,15 @@ function parseCsv(content, maxPreviewRows = 50) {
  * @param {number} maxPreviewRows 
  * @returns {{ rowCount: number, columnCount: number, schema: Array<{ name: string, type: string, sample: any }>, preview: any[] }}
  */
-function parseJson(content, maxPreviewRows = 50) {
+async function parseJson(content, maxPreviewRows = 50) {
   let text;
-  if (typeof content === 'string' && fs.existsSync(content)) {
+  if (content && (typeof content.pipe === 'function' || typeof content.on === 'function')) {
+    const chunks = [];
+    for await (const chunk of content) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    text = Buffer.concat(chunks).toString('utf-8');
+  } else if (typeof content === 'string' && fs.existsSync(content)) {
     text = fs.readFileSync(content, 'utf8');
   } else {
     text = Buffer.isBuffer(content) ? content.toString('utf-8') : String(content);
@@ -451,7 +457,7 @@ function parseJson(content, maxPreviewRows = 50) {
  * @param {string} fileExtension
  * @param {number} maxPreviewRows
  */
-function parseDatasetFile(content, fileExtension, maxPreviewRows = 50) {
+async function parseDatasetFile(content, fileExtension, maxPreviewRows = 50) {
   const ext = (fileExtension || '').toLowerCase().replace('.', '');
   if (ext === 'csv') {
     if (typeof content === 'string' && fs.existsSync(content)) {

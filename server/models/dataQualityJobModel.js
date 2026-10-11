@@ -177,6 +177,7 @@ const DataQualityJobModel = {
       SET 
         status = 'COMPLETED',
         progress_percent = 100.00,
+        rows_processed = CASE WHEN total_rows > 0 THEN total_rows ELSE rows_processed END,
         stage = 'COMPLETED',
         snapshot_id = $1,
         completed_at = CURRENT_TIMESTAMP,

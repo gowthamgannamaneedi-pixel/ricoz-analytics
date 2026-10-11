@@ -79,9 +79,27 @@ class InsightService {
       DatasetRelationshipModel.findByOrganizationId(organizationId).catch(() => [])
     ]);
 
-    const targetDatasets = options.datasetId 
-      ? datasets.filter(d => String(d.id) === String(options.datasetId))
-      : datasets;
+    let targetDatasets = [];
+    if (options.datasetId) {
+      const single = datasets.find(d => String(d.id) === String(options.datasetId)) ||
+        (Dataset.findByIdAndOrgId ? await Dataset.findByIdAndOrgId(options.datasetId, organizationId) : null) ||
+        (Dataset.findById ? await Dataset.findById(options.datasetId) : null);
+      if (single) targetDatasets = [single];
+    } else {
+      targetDatasets = datasets;
+    }
+
+    const targetForecasts = options.datasetId
+      ? forecasts.filter(fc => String(fc.dataset_id) === String(options.datasetId))
+      : forecasts;
+
+    const targetRelationships = options.datasetId
+      ? relationships.filter(rel => String(rel.source_dataset_id) === String(options.datasetId) || String(rel.target_dataset_id) === String(options.datasetId))
+      : relationships;
+
+    const targetAlerts = options.datasetId
+      ? alerts.filter(al => String(al.dataset_id) === String(options.datasetId))
+      : alerts;
 
     // 2. Evaluate Datasets for Growth, Decline, Trends, and Breakdown Insights
     for (const ds of targetDatasets.slice(0, 5)) {
@@ -226,7 +244,92 @@ class InsightService {
           }
         }
 
-        // C. Data Quality Telemetry Integration (Phase 15)
+        // B. Overall Dataset Volume & KPI Metrics
+        if (records.length > 0 && dims.primaryMetric) {
+          const totalMetricVal = records.reduce((acc, r) => acc + (Number(r[dims.primaryMetric]) || 0), 0);
+          const avgMetricVal = records.length > 0 ? (totalMetricVal / records.length) : 0;
+          const formattedMetric = dims.primaryMetric.replace(/_/g, ' ');
+
+          detectedInsights.push({
+            type: 'kpi',
+            title: `Overall ${formattedMetric} across ${ds.name}: ${this._formatNumber(totalMetricVal)}`,
+            summary: `${ds.name} contains ${records.length.toLocaleString()} verified telemetry records with an aggregate ${formattedMetric} of ${this._formatNumber(totalMetricVal)} (average ${this._formatNumber(avgMetricVal)} per transaction).`,
+            severity: 'positive',
+            confidence: 0.98,
+            evidence: {
+              metric: dims.primaryMetric,
+              currentValue: Math.round(totalMetricVal * 100) / 100,
+              current_value: Math.round(totalMetricVal * 100) / 100,
+              recordsAnalyzed: records.length,
+              records_analyzed: records.length,
+              datasetId: ds.id,
+              dataset_id: ds.id,
+              datasetName: ds.name,
+              dataset_name: ds.name,
+              calculation: `SUM(${dims.primaryMetric}) across ${records.length} records = ${totalMetricVal}`,
+              verified: true,
+              verificationReason: `Aggregated ${records.length} physical records directly from ${ds.name}.`
+            },
+            source_metadata: {
+              dataset_id: ds.id,
+              dataset_name: ds.name
+            },
+            recommendation: {
+              action: `View detailed transaction logs in datasets explorer`,
+              target_page: `/datasets`,
+              params: { datasetId: ds.id }
+            }
+          });
+        }
+
+        // C. Categorical Concentration Analysis
+        const catCol = dims.categoryColumn || dims.channelColumn || dims.regionColumn || (dims.categoricalColumns && dims.categoricalColumns[0]);
+        if (catCol && dims.primaryMetric && records.length > 0) {
+          const breakdown = analyticsService.computeDatasetBreakdown(records, catCol, dims);
+          if (breakdown && breakdown.length > 0) {
+            const topSegment = breakdown[0];
+            const pct = topSegment.percentage;
+            if (pct >= 20) {
+              const formattedMetric = dims.primaryMetric.replace(/_/g, ' ');
+              detectedInsights.push({
+                type: 'ranking',
+                title: `${topSegment.name} represents top ${catCol} in ${ds.name} (${pct}% share)`,
+                summary: `"${topSegment.name}" accounts for ${pct}% of total ${formattedMetric} (${this._formatNumber(topSegment.value)}) across ${topSegment.orders.toLocaleString()} records.`,
+                severity: pct > 50 ? 'warning' : 'info',
+                confidence: 0.96,
+                evidence: {
+                  metric: dims.primaryMetric,
+                  segment: topSegment.name,
+                  category: catCol,
+                  currentValue: topSegment.value,
+                  current_value: topSegment.value,
+                  changePercent: pct,
+                  change_percent: pct,
+                  recordsAnalyzed: records.length,
+                  records_analyzed: records.length,
+                  datasetId: ds.id,
+                  dataset_id: ds.id,
+                  datasetName: ds.name,
+                  dataset_name: ds.name,
+                  calculation: `(${topSegment.value} / total) * 100 = ${pct}%`,
+                  verified: true,
+                  verificationReason: `Computed distribution of "${catCol}" across ${records.length} rows.`
+                },
+                source_metadata: {
+                  dataset_id: ds.id,
+                  dataset_name: ds.name
+                },
+                recommendation: {
+                  action: `Inspect ${catCol} performance distribution`,
+                  target_page: `/datasets`,
+                  params: { datasetId: ds.id }
+                }
+              });
+            }
+          }
+        }
+
+        // D. Data Quality Telemetry Integration (Phase 15)
         try {
           const quality = await dataQualityService.getQualityProfile(ds.id, organizationId);
           if (quality && quality.quality_score !== undefined) {
@@ -353,7 +456,7 @@ class InsightService {
     }
 
     // 3. Evaluate Machine Learning Forecasts & Anomalies (Phase 11)
-    for (const fc of forecasts.slice(0, 5)) {
+    for (const fc of targetForecasts.slice(0, 5)) {
       try {
         const predictions = Array.isArray(fc.predictions) ? fc.predictions : [];
         const anomalies = Array.isArray(fc.anomalies) ? fc.anomalies : [];
@@ -442,9 +545,9 @@ class InsightService {
     }
 
     // 4. Evaluate Relational Dataset Joins (Phase 14)
-    if (relationships.length > 0) {
+    if (targetRelationships.length > 0) {
       try {
-        const rel = relationships[0];
+        const rel = targetRelationships[0];
         const srcDs = datasets.find(d => Number(d.id) === Number(rel.source_dataset_id));
         const tgtDs = datasets.find(d => Number(d.id) === Number(rel.target_dataset_id));
 
@@ -504,7 +607,7 @@ class InsightService {
     }
 
     // 5. Evaluate Operational Threshold Alerts (Phase 10)
-    for (const alert of alerts.slice(0, 5)) {
+    for (const alert of targetAlerts.slice(0, 5)) {
       if ((alert.status === 'active' || alert.status === 'triggered') && alert.last_triggered_at) {
         const trigDate = new Date(alert.last_triggered_at);
         const hoursAgo = (Date.now() - trigDate.getTime()) / (1000 * 60 * 60);

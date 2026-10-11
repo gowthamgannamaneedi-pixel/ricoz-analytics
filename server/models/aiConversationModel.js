@@ -214,7 +214,13 @@ class AIConversationModel {
       ORDER BY created_at ASC;
     `;
     const result = await db.query(sql, [conversationId]);
-    return result.rows || [];
+    return (result.rows || []).map(row => ({
+      ...row,
+      query_plan: typeof row.query_plan === 'string' ? JSON.parse(row.query_plan) : (row.query_plan || {}),
+      data: typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || []),
+      visualization: typeof row.visualization === 'string' ? JSON.parse(row.visualization) : (row.visualization || null),
+      sources: typeof row.sources === 'string' ? JSON.parse(row.sources) : (row.sources || [])
+    }));
   }
 
   /**

@@ -98,6 +98,27 @@ async function getFileReadStream(filePath, dataset = null) {
     if (path.isAbsolute(filePath) && fs.existsSync(filePath)) {
       return fs.createReadStream(filePath, { encoding: 'utf8', highWaterMark: 64 * 1024 });
     }
+
+    // Check candidate physical paths across uploads and seeds
+    const candidatePaths = [
+      filePath,
+      path.resolve(__dirname, '../uploads/datasets', filePath),
+      path.resolve(__dirname, '../data/datasets', filePath),
+      path.resolve(__dirname, '../uploads/cache/datasets', filePath),
+      path.resolve(process.cwd(), filePath),
+      path.resolve(process.cwd(), 'server', filePath)
+    ];
+
+    for (const cand of candidatePaths) {
+      if (fs.existsSync(cand)) {
+        try {
+          if (fs.statSync(cand).isFile()) {
+            return fs.createReadStream(cand, { encoding: 'utf8', highWaterMark: 64 * 1024 });
+          }
+        } catch (_) {}
+      }
+    }
+
     try {
       if (await storage.exists(filePath)) {
         if (typeof storage.getFileStream === 'function') {
@@ -108,9 +129,6 @@ async function getFileReadStream(filePath, dataset = null) {
         return Readable.from([fileBuffer.toString('utf8')]);
       }
     } catch (_) {}
-    if (fs.existsSync(filePath)) {
-      return fs.createReadStream(filePath, { encoding: 'utf8', highWaterMark: 64 * 1024 });
-    }
   }
 
   // Database streaming fallback: Stream directly from PostgreSQL dataset_rows
@@ -278,6 +296,11 @@ class DataQualityService {
     const schema = Array.isArray(dataset.schema) ? dataset.schema : [];
     const customRules = await DataQualityModel.findRulesByDatasetId(datasetId, organizationId);
     const activeRules = customRules.filter(r => r.enabled !== false);
+    activeRules.forEach(r => {
+      if (r.rule_type === 'regex' && r.configuration?.pattern) {
+        try { r._compiledRegex = new RegExp(r.configuration.pattern); } catch (_) {}
+      }
+    });
     const currentSchemaHash = this.computeSchemaHash(schema);
     const previousSnapshot = await DataQualityModel.getLatestSnapshot(datasetId, organizationId);
 
@@ -472,9 +495,8 @@ class DataQualityService {
                 break;
               }
               case 'regex': {
-                if (configObj.pattern) {
-                  const reg = new RegExp(configObj.pattern);
-                  if (!reg.test(rawVal)) {
+                if (rule._compiledRegex) {
+                  if (!rule._compiledRegex.test(rawVal)) {
                     isValid = false;
                     stats.ruleBreaches['regex'] = (stats.ruleBreaches['regex'] || 0) + 1;
                   }
@@ -547,6 +569,10 @@ class DataQualityService {
 
     // If 0 rows evaluated
     if (evaluatedRowCount === 0) {
+      if (Number(dataset.row_count || 0) > 0) {
+        throw new Error(`Data quality audit could not read dataset records. Data file "${dataset.file_path || 'file'}" was not found or is empty.`);
+      }
+
       const emptySnapshot = await DataQualityModel.createSnapshot({
         datasetId,
         organizationId,
@@ -764,7 +790,7 @@ class DataQualityService {
 
           // Read target keys from target file stream
           const targetKeys = new Set();
-          const targetStream = await getFileReadStream(targetDataset.file_path);
+          const targetStream = await getFileReadStream(targetDataset.file_path, targetDataset);
           const targetRl = readline.createInterface({ input: targetStream, crlfDelay: Infinity });
           let targetIsHeader = true;
           let targetDelimiter = ',';
@@ -1149,7 +1175,18 @@ class DataQualityService {
    * Get latest job for a dataset
    */
   async getDatasetLatestJob(datasetId, organizationId) {
-    return DataQualityJobModel.findLatestByDatasetId(datasetId, organizationId);
+    const job = await DataQualityJobModel.findLatestByDatasetId(datasetId, organizationId);
+    if (job && (job.status === 'RUNNING' || job.status === 'QUEUED')) {
+      const hasLiveWorker = activeJobAbortControllers.has(String(job.id));
+      const jobAgeMs = Date.now() - new Date(job.created_at || Date.now()).getTime();
+      const timeoutMs = config.qualityJobTimeoutMs || 600000;
+
+      if (!hasLiveWorker && (jobAgeMs > 30000 || jobAgeMs > timeoutMs)) {
+        await DataQualityJobModel.failJob(job.id, 'Audit job was interrupted by server restart or process termination. Dataset is safe. Click "Retry Audit" to evaluate.');
+        return DataQualityJobModel.findByIdAndOrgId(job.id, organizationId);
+      }
+    }
+    return job;
   }
 
   /**

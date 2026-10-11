@@ -63,17 +63,22 @@ export default function App() {
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/data-sources" element={<DataSourcesPage />} />
+                  <Route path="/datasources" element={<DataSourcesPage />} />
                   <Route path="/datasets" element={<DatasetsPage />} />
                   <Route path="/relationships" element={<DataModelingPage />} />
                   <Route path="/data-model" element={<DataModelingPage />} />
+                  <Route path="/datamodeling" element={<DataModelingPage />} />
                   <Route path="/data-quality" element={<DataQualityPage />} />
+                  <Route path="/dataquality" element={<DataQualityPage />} />
                   <Route path="/kpis" element={<KpisPage />} />
                   <Route path="/reports" element={<ReportsPage />} />
                   <Route path="/forecasts" element={<ForecastsPage />} />
                   <Route path="/alerts" element={<AlertsPage />} />
                   <Route path="/ai-insights" element={<AIInsightsPage />} />
-                  <Route path="/ai-assistant" element={<AIAnalyticsAssistant />} />
+                  <Route path="/insights" element={<AIInsightsPage />} />
                   <Route path="/ai" element={<AIInsightsPage />} />
+                  <Route path="/ai-assistant" element={<AIAnalyticsAssistant />} />
+                  <Route path="/assistant" element={<AIAnalyticsAssistant />} />
                   <Route path="/collaboration" element={<CollaborationPage />} />
                   <Route path="/favorites" element={<CollaborationPage />} />
                   <Route path="/billing" element={<BillingPage />} />

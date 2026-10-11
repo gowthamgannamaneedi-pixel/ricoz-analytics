@@ -154,15 +154,37 @@ export default function ForecastsPage() {
     const dateCols = [];
     const numericCols = [];
 
+    const categoricalKeywords = [
+      'channel', 'category', 'type', 'status', 'name', 'rep', 'id', 'method',
+      'mode', 'tier', 'segment', 'region', 'country', 'city', 'state', 'customer',
+      'product', 'vendor', 'sku', 'code', 'email', 'phone', 'address', 'description',
+      'notes', 'comment', 'gender', 'title'
+    ];
+
     schema.forEach(col => {
       const colName = col.name;
       const lower = colName.toLowerCase();
-      if (col.type === 'date' || lower.includes('date') || lower.includes('time') || lower === 'created_at') {
+      const colType = (col.type || '').toLowerCase();
+
+      const isDate = colType === 'date' || colType === 'timestamp' || colType === 'datetime' || lower.includes('date') || lower.includes('time') || lower === 'created_at';
+      if (isDate) {
         dateCols.push(colName);
-      } else if (col.type === 'number') {
+        return;
+      }
+
+      const isCategorical = categoricalKeywords.some(kw => 
+        lower === kw || 
+        lower.endsWith(`_${kw}`) || 
+        lower.startsWith(`${kw}_`) || 
+        lower.includes(`_${kw}_`)
+      );
+
+      const isExplicitNumber = ['number', 'integer', 'int', 'numeric', 'float', 'double', 'decimal', 'real', 'bigint', 'smallint'].includes(colType);
+
+      if (isExplicitNumber && !isCategorical) {
         numericCols.push(colName);
-      } else {
-        if (['revenue', 'sales', 'sales_amount', 'amount', 'total', 'profit', 'orders', 'units', 'units_sold', 'value', 'price', 'cost'].some(k => lower.includes(k))) {
+      } else if (!isCategorical && (colType === '' || colType === 'any' || colType === 'unknown')) {
+        if (['revenue', 'sales_amount', 'amount', 'total', 'profit', 'units_sold', 'unit_price', 'price', 'cost', 'quantity', 'margin'].some(k => lower.includes(k))) {
           numericCols.push(colName);
         }
       }
@@ -172,7 +194,16 @@ export default function ForecastsPage() {
 
     // Set default selections
     if (dateCols.length > 0) setDateColumn(dateCols[0]);
-    if (numericCols.length > 0) setTargetColumn(numericCols[0]);
+    if (numericCols.length > 0) {
+      // Prioritize primary revenue/sales metrics
+      const preferred = numericCols.find(c => {
+        const l = c.toLowerCase();
+        return l.includes('revenue') || l.includes('total') || l.includes('sales_amount') || l === 'sales' || l.includes('amount');
+      }) || numericCols[0];
+      setTargetColumn(preferred);
+    } else {
+      setTargetColumn('');
+    }
   }, []);
 
   // Format saved forecast to display
@@ -305,6 +336,13 @@ export default function ForecastsPage() {
 
     if (!targetColumn) {
       setError('Please select a numerical metric column to predict.');
+      return;
+    }
+
+    const categoricalCheckKeywords = ['channel', 'category', 'type', 'status', 'name', 'rep', 'id', 'method', 'mode', 'segment', 'region', 'city', 'country'];
+    const targetLower = targetColumn.toLowerCase();
+    if (categoricalCheckKeywords.some(kw => targetLower === kw || targetLower.endsWith(`_${kw}`) || targetLower.startsWith(`${kw}_`))) {
+      setError(`"${targetColumn}" is a categorical attribute, not a numeric metric. Please select a numerical metric (e.g. revenue, sales_amount, quantity, unit_price) to forecast.`);
       return;
     }
 

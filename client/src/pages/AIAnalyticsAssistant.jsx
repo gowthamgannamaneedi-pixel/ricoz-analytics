@@ -168,6 +168,96 @@ function formatTimestamp(dateString) {
   }
 }
 
+function renderFormattedInline(text) {
+  if (!text) return '';
+
+  let sanitized = String(text);
+  const boldMatches = sanitized.match(/\*\*/g);
+  if (boldMatches && boldMatches.length % 2 !== 0) {
+    if (sanitized.startsWith('**') && !sanitized.slice(2).includes('**')) {
+      sanitized = sanitized.slice(2).trim();
+    } else if (sanitized.endsWith('**')) {
+      sanitized = sanitized.slice(0, -2).trim();
+    }
+  }
+
+  const parts = sanitized.split(/(\*\*[^*]+?\*\*|`[^`]+?`)/g);
+
+  return parts.map((part, idx) => {
+    if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
+      const boldText = part.slice(2, -2);
+      return (
+        <strong key={idx} className="font-bold text-slate-900">
+          {boldText}
+        </strong>
+      );
+    }
+    if (part.startsWith('`') && part.endsWith('`') && part.length >= 2) {
+      const codeText = part.slice(1, -1);
+      return (
+        <code key={idx} className="px-1.5 py-0.5 mx-0.5 bg-slate-100 border border-slate-200 rounded font-mono text-[11px] text-rose-700">
+          {codeText}
+        </code>
+      );
+    }
+    return part;
+  });
+}
+
+function FormattedMessageContent({ content, isUser }) {
+  if (!content) return null;
+
+  if (isUser) {
+    return <div className="font-sans text-xs sm:text-sm leading-relaxed text-white whitespace-pre-wrap">{content}</div>;
+  }
+
+  const cleanContent = String(content).trim();
+  const lines = cleanContent.split('\n');
+
+  return (
+    <div className="space-y-2 font-sans text-xs sm:text-sm leading-relaxed text-slate-800">
+      {lines.map((line, lineIdx) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          return <div key={lineIdx} className="h-1" />;
+        }
+
+        if (trimmed.startsWith('### ')) {
+          return (
+            <h4 key={lineIdx} className="text-xs sm:text-sm font-bold text-slate-900 mt-2 mb-1">
+              {renderFormattedInline(trimmed.slice(4))}
+            </h4>
+          );
+        }
+
+        if (trimmed.startsWith('## ')) {
+          return (
+            <h3 key={lineIdx} className="text-sm font-bold text-slate-900 mt-2 mb-1">
+              {renderFormattedInline(trimmed.slice(3))}
+            </h3>
+          );
+        }
+
+        if (trimmed.startsWith('• ') || trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+          const bulletText = trimmed.slice(2);
+          return (
+            <div key={lineIdx} className="flex items-start gap-2 pl-1 my-0.5">
+              <span className="text-rose-600 font-bold shrink-0 mt-0.5">•</span>
+              <span className="flex-1">{renderFormattedInline(bulletText)}</span>
+            </div>
+          );
+        }
+
+        return (
+          <p key={lineIdx} className="leading-relaxed">
+            {renderFormattedInline(trimmed)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function AIAnalyticsAssistant() {
   const { user } = useAuth();
   const [conversations, setConversations] = useState([]);
@@ -422,22 +512,45 @@ export default function AIAnalyticsAssistant() {
 
   // Render Visualizations in Assistant Message Bubble
   const renderVisualization = (msg) => {
-    const viz = msg.visualization;
-    const data = msg.data;
+    let viz = msg.visualization;
+    let data = msg.data;
+
+    if (typeof viz === 'string') {
+      try { viz = JSON.parse(viz); } catch (_) { viz = null; }
+    }
+    if (typeof data === 'string') {
+      try { data = JSON.parse(data); } catch (_) { data = null; }
+    }
+
+    // Auto-infer visualization if missing or incomplete
+    if (!viz && data) {
+      if (Array.isArray(data.trends) && data.trends.length > 0) {
+        viz = { type: 'line', data: data.trends, xAxis: 'date', yAxis: 'revenue', title: 'Observed Time-Series Trend' };
+      } else if (Array.isArray(data.ranking) && data.ranking.length > 0) {
+        viz = { type: 'bar', data: data.ranking, xAxis: 'category', yAxis: 'value', title: 'Ranking Breakdown' };
+      } else if (Array.isArray(data.breakdown) && data.breakdown.length > 0) {
+        viz = { type: 'pie', data: data.breakdown, nameKey: 'category', dataKey: 'value', title: 'Categorical Distribution' };
+      } else if (Array.isArray(data.comparison_items) && data.comparison_items.length > 0) {
+        viz = { type: 'bar', data: data.comparison_items, xAxis: 'category', yAxis: 'value', title: 'Comparison Analysis' };
+      } else if (data.value !== undefined && data.metric) {
+        viz = { type: 'kpi_card', metric: data.metric, value: data.value, comparison: data.stats?.comparison };
+      }
+    }
+
     if (!viz || !viz.type) return null;
 
     switch (viz.type) {
       case 'kpi_card': {
         const val = typeof viz.value === 'number'
           ? viz.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-          : viz.value;
+          : (viz.value || '0');
         const comparison = viz.comparison;
 
         return (
           <div className="mt-3.5 p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs flex items-center justify-between">
             <div>
               <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                {viz.metric ? viz.metric.replace(/_/g, ' ') : 'Calculated Aggregate'}
+                {viz.metric ? String(viz.metric).replace(/_/g, ' ') : 'Calculated Aggregate'}
               </div>
               <div className="text-2xl font-extrabold font-mono text-slate-900 mt-0.5 tracking-tight">
                 {viz.unit ? `${viz.unit} ` : '₹ '}{val}
@@ -458,8 +571,16 @@ export default function AIAnalyticsAssistant() {
       }
 
       case 'line': {
-        const chartData = viz.data || (data?.trends) || [];
-        if (!chartData || chartData.length === 0) return null;
+        const rawChartData = viz.data || (data?.trends) || [];
+        if (!Array.isArray(rawChartData) || rawChartData.length === 0) return null;
+
+        const chartData = rawChartData.map(d => ({
+          ...d,
+          displayDate: d.formattedDate || (d.date ? String(d.date).slice(0, 10) : ''),
+          metricVal: Number(d.revenue !== undefined ? d.revenue : (d.value !== undefined ? d.value : (d[viz.yAxis] || 0)))
+        }));
+
+        const xKey = chartData[0]?.displayDate ? 'displayDate' : (viz.xAxis || 'date');
 
         return (
           <div className="mt-3.5 p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-2">
@@ -471,12 +592,12 @@ export default function AIAnalyticsAssistant() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#64748B' }} tickLine={false} minTickGap={20} />
+                  <XAxis dataKey={xKey} tick={{ fontSize: 10, fill: '#64748B' }} tickLine={false} minTickGap={20} />
                   <YAxis tick={{ fontSize: 10, fill: '#64748B' }} tickLine={false} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#0F172A', borderColor: '#1E293B', borderRadius: '8px', color: '#FFF', fontSize: '11px' }}
                   />
-                  <Line type="monotone" dataKey={viz.yAxis || 'revenue'} stroke="#E11D48" strokeWidth={2.5} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="metricVal" name={viz.yAxis || 'Revenue'} stroke="#E11D48" strokeWidth={2.5} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -485,8 +606,14 @@ export default function AIAnalyticsAssistant() {
       }
 
       case 'bar': {
-        const barData = viz.data || (data?.ranking) || (data?.comparison_items) || [];
-        if (!barData || barData.length === 0) return null;
+        const rawBarData = viz.data || (data?.ranking) || (data?.comparison_items) || [];
+        if (!Array.isArray(rawBarData) || rawBarData.length === 0) return null;
+
+        const barData = rawBarData.map(d => ({
+          ...d,
+          categoryName: String(d.name || d.category || d[viz.xAxis] || 'Item'),
+          metricVal: Number(d.value !== undefined ? d.value : (d.total !== undefined ? d.total : (d[viz.yAxis] || 0)))
+        }));
 
         return (
           <div className="mt-3.5 p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-2">
@@ -498,12 +625,12 @@ export default function AIAnalyticsAssistant() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={barData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-                  <XAxis dataKey={viz.xAxis || 'category'} tick={{ fontSize: 10, fill: '#64748B' }} tickLine={false} />
+                  <XAxis dataKey="categoryName" tick={{ fontSize: 10, fill: '#64748B' }} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: '#64748B' }} tickLine={false} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#0F172A', borderColor: '#1E293B', borderRadius: '8px', color: '#FFF', fontSize: '11px' }}
                   />
-                  <Bar dataKey={viz.yAxis || 'value'} fill="#7C3AED" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="metricVal" name={viz.yAxis || 'Value'} fill="#7C3AED" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -512,8 +639,14 @@ export default function AIAnalyticsAssistant() {
       }
 
       case 'pie': {
-        const pieData = viz.data || (data?.breakdown) || [];
-        if (!pieData || pieData.length === 0) return null;
+        const rawPieData = viz.data || (data?.breakdown) || [];
+        if (!Array.isArray(rawPieData) || rawPieData.length === 0) return null;
+
+        const pieData = rawPieData.map(d => ({
+          ...d,
+          segmentName: String(d.name || d.category || d[viz.nameKey] || 'Segment'),
+          segmentVal: Number(d.value !== undefined ? d.value : (d.percentage !== undefined ? d.percentage : (d[viz.dataKey] || 0)))
+        }));
 
         return (
           <div className="mt-3.5 p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-2">
@@ -526,8 +659,8 @@ export default function AIAnalyticsAssistant() {
                 <PieChart>
                   <Pie
                     data={pieData}
-                    dataKey={viz.dataKey || 'value'}
-                    nameKey={viz.nameKey || 'category'}
+                    dataKey="segmentVal"
+                    nameKey="segmentName"
                     cx="50%"
                     cy="50%"
                     outerRadius={75}
@@ -975,9 +1108,7 @@ export default function AIAnalyticsAssistant() {
                           )}
 
                           {/* Message Content */}
-                          <div className="whitespace-pre-line font-sans text-xs sm:text-sm leading-relaxed">
-                            {msg.content}
-                          </div>
+                          <FormattedMessageContent content={msg.content} isUser={isUser} />
 
                           {/* Embedded Visualizations */}
                           {!isUser && renderVisualization(msg)}

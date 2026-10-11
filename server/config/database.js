@@ -3251,7 +3251,7 @@ function handleFallbackQuery(text, params = []) {
     return Promise.resolve({ rows: job ? [{ ...job }] : [], rowCount: job ? 1 : 0 });
   }
 
-  if (normalizedSql.startsWith('select') && normalizedSql.includes('from data_quality_jobs') && normalizedSql.includes('where dataset_id = $1 and organization_id = $2')) {
+  if (normalizedSql.startsWith('select') && normalizedSql.includes('from data_quality_jobs') && (normalizedSql.includes('where dataset_id = $1 and organization_id = $2') || normalizedSql.includes('where dataset_id::text = $1::text and organization_id::text = $2::text'))) {
     const [datasetId, orgId] = params;
     const job = fallbackQualityJobs.find(j => String(j.dataset_id) === String(datasetId) && String(j.organization_id) === String(orgId));
     return Promise.resolve({ rows: job ? [{ ...job }] : [], rowCount: job ? 1 : 0 });
@@ -4452,6 +4452,12 @@ async function initDb() {
       feedback VARCHAR(50),
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
+    ALTER TABLE ai_messages ADD COLUMN IF NOT EXISTS intent VARCHAR(50);
+    ALTER TABLE ai_messages ADD COLUMN IF NOT EXISTS query_plan JSONB;
+    ALTER TABLE ai_messages ADD COLUMN IF NOT EXISTS data JSONB;
+    ALTER TABLE ai_messages ADD COLUMN IF NOT EXISTS visualization JSONB;
+    ALTER TABLE ai_messages ADD COLUMN IF NOT EXISTS sources JSONB;
+    ALTER TABLE ai_messages ADD COLUMN IF NOT EXISTS confidence VARCHAR(50);
 
     CREATE TABLE IF NOT EXISTS audit_logs (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

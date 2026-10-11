@@ -10,6 +10,7 @@ import {
   XCircle,
   RefreshCw,
   FileDown,
+  Download,
   Search,
   X,
   ChevronDown,

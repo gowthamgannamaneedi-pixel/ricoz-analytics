@@ -12,9 +12,14 @@ const VALID_INTERVALS = ['daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'h
  * Helper to extract and aggregate time series from dataset records
  */
 function extractSeriesFromRecords(records, dateCol, targetCol) {
-  if (!records || records.length === 0) return [];
+  if (!records || records.length === 0) return { timeSeries: [], error: 'Dataset has no records.' };
 
   const dateMap = new Map();
+  let invalidDateCount = 0;
+  let nonNumericCount = 0;
+  let sampleNonNumeric = null;
+  let sampleInvalidDate = null;
+  let totalChecked = 0;
 
   for (const row of records) {
     const rawDate = row[dateCol];
@@ -23,13 +28,30 @@ function extractSeriesFromRecords(records, dateCol, targetCol) {
     if (rawDate === undefined || rawDate === null || rawDate === '') continue;
     if (rawVal === undefined || rawVal === null || rawVal === '') continue;
 
+    totalChecked++;
+
     const parsedDate = new Date(rawDate);
-    if (isNaN(parsedDate.getTime())) continue;
+    if (isNaN(parsedDate.getTime())) {
+      invalidDateCount++;
+      if (!sampleInvalidDate) sampleInvalidDate = String(rawDate);
+      continue;
+    }
 
-    const numVal = Number(rawVal);
-    if (isNaN(numVal) || !isFinite(numVal)) continue;
+    // Safe numeric parsing: handle strings with currency symbols and commas, e.g. "₹1,200.50" or "$50"
+    let cleanVal = rawVal;
+    if (typeof cleanVal === 'string') {
+      const sanitized = cleanVal.replace(/[$,₹€£\s]/g, '').replace(/,/g, '');
+      cleanVal = sanitized !== '' ? Number(sanitized) : NaN;
+    } else {
+      cleanVal = Number(cleanVal);
+    }
 
-    // ISO date format YYYY-MM-DD
+    if (isNaN(cleanVal) || !isFinite(cleanVal)) {
+      nonNumericCount++;
+      if (!sampleNonNumeric) sampleNonNumeric = String(rawVal);
+      continue;
+    }
+
     const dateKey = parsedDate.toISOString().split('T')[0];
 
     if (!dateMap.has(dateKey)) {
@@ -42,16 +64,34 @@ function extractSeriesFromRecords(records, dateCol, targetCol) {
     }
 
     const item = dateMap.get(dateKey);
-    item.value += numVal;
+    item.value += cleanVal;
     item.count += 1;
   }
 
-  return Array.from(dateMap.values())
+  // Diagnostic feedback if no series could be formed
+  if (dateMap.size === 0) {
+    if (totalChecked > 0 && nonNumericCount >= totalChecked * 0.8) {
+      return {
+        timeSeries: [],
+        error: `Selected metric column "${targetCol}" contains non-numeric text values (e.g. "${sampleNonNumeric}"). Forecasting requires a numeric target column (such as revenue, unit_price, quantity, or total_sales).`
+      };
+    }
+    if (totalChecked > 0 && invalidDateCount >= totalChecked * 0.8) {
+      return {
+        timeSeries: [],
+        error: `Selected date column "${dateCol}" does not contain valid dates (e.g. "${sampleInvalidDate}"). Please select a valid date/timestamp column.`
+      };
+    }
+  }
+
+  const timeSeries = Array.from(dateMap.values())
     .sort((a, b) => a.timestamp - b.timestamp)
     .map(item => ({
       date: item.date,
       value: Number(item.value.toFixed(4))
     }));
+
+  return { timeSeries, error: null };
 }
 
 /**
@@ -162,7 +202,11 @@ const ForecastController = {
           }
           if (dataset.file_path) {
             const records = await analyticsService.loadDatasetRecords(dataset.file_path);
-            timeSeries = extractSeriesFromRecords(records, effectiveDateCol, effectiveTargetCol);
+            const seriesResult = extractSeriesFromRecords(records, effectiveDateCol, effectiveTargetCol);
+            if (seriesResult.error) {
+              return res.status(400).json({ success: false, message: seriesResult.error });
+            }
+            timeSeries = seriesResult.timeSeries;
           }
         }
 
@@ -342,7 +386,11 @@ const ForecastController = {
           if (!effectiveTargetCol) effectiveTargetCol = detected.primaryMetric || 'revenue';
         }
 
-        timeSeries = extractSeriesFromRecords(records, effectiveDateCol, effectiveTargetCol);
+        const seriesResult = extractSeriesFromRecords(records, effectiveDateCol, effectiveTargetCol);
+        if (seriesResult.error) {
+          return res.status(400).json({ success: false, message: seriesResult.error });
+        }
+        timeSeries = seriesResult.timeSeries;
       }
       // 3. Time-series extraction from Metric ID
       else if (effectiveMetricId) {
@@ -363,7 +411,11 @@ const ForecastController = {
           const detected = analyticsService.detectDatasetDimensions(schema, records.slice(0, 10));
           effectiveDateCol = effectiveDateCol || detected.dateColumn || 'date';
           effectiveTargetCol = effectiveTargetCol || detected.primaryMetric || 'revenue';
-          timeSeries = extractSeriesFromRecords(records, effectiveDateCol, effectiveTargetCol);
+          const seriesResult = extractSeriesFromRecords(records, effectiveDateCol, effectiveTargetCol);
+          if (seriesResult.error) {
+            return res.status(400).json({ success: false, message: seriesResult.error });
+          }
+          timeSeries = seriesResult.timeSeries;
         }
       } else {
         return res.status(400).json({

@@ -285,6 +285,11 @@ export default function DataQualityPage() {
       if (job && (job.status === 'RUNNING' || job.status === 'QUEUED')) {
         setActiveJob(job);
         startPollingJob(job.id);
+      } else if (job && job.status === 'FAILED') {
+        setActiveJob(job);
+        setJobError(job.error_message || 'Quality audit failed or was interrupted. Dataset is safe. Click "Retry Audit" to evaluate.');
+      } else if (job && job.status === 'COMPLETED') {
+        setActiveJob(job);
       }
     } catch (err) {
       console.error('Error fetching quality details:', err);
@@ -666,7 +671,7 @@ export default function DataQualityPage() {
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Sampled (1k)
+                Sampled (10k)
               </button>
             </div>
 

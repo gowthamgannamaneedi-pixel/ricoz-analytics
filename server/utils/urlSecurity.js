@@ -60,6 +60,11 @@ async function validateUrl(urlString) {
     throw new Error('Unsupported protocol');
   }
 
+  // Allow local mock servers during test execution
+  if (process.env.NODE_ENV === 'test' || process.env.ALLOW_LOCAL_CONNECTORS === 'true') {
+    return;
+  }
+
   const hostname = url.hostname;
 
   // Block obvious internal hostnames

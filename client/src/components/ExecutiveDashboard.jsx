@@ -125,7 +125,7 @@ export default function ExecutiveDashboard({
   datasets = [],
   selectedDatasetId,
   onSelectDataset,
-  activeDataset,
+  activeDataset: propActiveDataset,
   summaryData,
   filters = {},
   onFilterChange,
@@ -270,6 +270,8 @@ export default function ExecutiveDashboard({
     if (signalTab === 'all') return decisionSignals;
     return decisionSignals.filter(s => (s.type || s.severity || 'general').toLowerCase() === signalTab);
   }, [decisionSignals, signalTab]);
+
+  const activeDataset = propActiveDataset || datasets.find(d => String(d.id) === String(selectedDatasetId)) || summaryData?.dataset || (datasets.length > 0 ? datasets[0] : null);
 
   if (!datasets || datasets.length === 0 || !activeDataset) {
     return (
