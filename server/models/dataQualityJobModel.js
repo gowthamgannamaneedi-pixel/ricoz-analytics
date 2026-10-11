@@ -90,11 +90,11 @@ const DataQualityJobModel = {
     const sql = `
       SELECT *
       FROM data_quality_jobs
-      WHERE dataset_id = $1 AND organization_id = $2
+      WHERE dataset_id::text = $1::text AND organization_id::text = $2::text
       ORDER BY created_at DESC
       LIMIT 1;
     `;
-    const result = await db.query(sql, [datasetId, String(organizationId)]);
+    const result = await db.query(sql, [String(datasetId), String(organizationId)]);
     return result.rows[0] || null;
   },
 

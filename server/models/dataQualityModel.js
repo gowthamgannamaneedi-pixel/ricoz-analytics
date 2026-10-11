@@ -110,12 +110,12 @@ const DataQualityModel = {
     const sql = `
       SELECT *
       FROM dataset_quality_snapshots
-      WHERE dataset_id = $1 AND organization_id = $2
+      WHERE dataset_id::text = $1::text AND organization_id::text = $2::text
       ORDER BY evaluated_at DESC
       LIMIT 1;
     `;
 
-    const result = await db.query(sql, [datasetId, String(organizationId)]);
+    const result = await db.query(sql, [String(datasetId), String(organizationId)]);
     return result.rows[0] || null;
   },
 
@@ -145,12 +145,12 @@ const DataQualityModel = {
         schema_hash,
         evaluated_at
       FROM dataset_quality_snapshots
-      WHERE dataset_id = $1 AND organization_id = $2
+      WHERE dataset_id::text = $1::text AND organization_id::text = $2::text
       ORDER BY evaluated_at DESC
       LIMIT $3;
     `;
 
-    const result = await db.query(sql, [datasetId, String(organizationId), Number(limit)]);
+    const result = await db.query(sql, [String(datasetId), String(organizationId), Number(limit)]);
     return result.rows || [];
   },
 
@@ -222,12 +222,12 @@ const DataQualityModel = {
     const sql = `
       SELECT r.*, u.name AS creator_name, u.email AS creator_email
       FROM dataset_quality_rules r
-      LEFT JOIN users u ON u.id = r.created_by
-      WHERE r.dataset_id = $1 AND r.organization_id = $2
+      LEFT JOIN users u ON u.id::text = r.created_by::text
+      WHERE r.dataset_id::text = $1::text AND r.organization_id::text = $2::text
       ORDER BY r.created_at DESC;
     `;
 
-    const result = await db.query(sql, [datasetId, String(organizationId)]);
+    const result = await db.query(sql, [String(datasetId), String(organizationId)]);
     return result.rows || [];
   },
 
@@ -240,9 +240,9 @@ const DataQualityModel = {
     const sql = `
       SELECT r.*, d.name AS dataset_name, u.name AS creator_name, u.email AS creator_email
       FROM dataset_quality_rules r
-      LEFT JOIN datasets d ON d.id = r.dataset_id
-      LEFT JOIN users u ON u.id = r.created_by
-      WHERE r.organization_id = $1
+      LEFT JOIN datasets d ON d.id::text = r.dataset_id::text
+      LEFT JOIN users u ON u.id::text = r.created_by::text
+      WHERE r.organization_id::text = $1::text
       ORDER BY r.created_at DESC;
     `;
 

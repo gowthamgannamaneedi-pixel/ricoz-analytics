@@ -4943,74 +4943,89 @@ async function initDb() {
         evaluated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
-      CREATE INDEX IF NOT EXISTS idx_quality_snapshots_dataset_id ON public.dataset_quality_snapshots(dataset_id);
-      CREATE INDEX IF NOT EXISTS idx_quality_snapshots_org_id ON public.dataset_quality_snapshots(organization_id);
-      CREATE INDEX IF NOT EXISTS idx_quality_snapshots_evaluated_at ON public.dataset_quality_snapshots(evaluated_at DESC);
     `);
+
+    // Ensure all columns exist on dataset_quality_snapshots BEFORE creating indexes
+    try {
+      await pool.query(`
+        ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS quality_score NUMERIC(5, 2) DEFAULT 100.00;
+        ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'healthy';
+        ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS completeness NUMERIC(5, 2) DEFAULT 100.00;
+        ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS validity NUMERIC(5, 2) DEFAULT 100.00;
+        ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS uniqueness NUMERIC(5, 2) DEFAULT 100.00;
+        ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS consistency NUMERIC(5, 2) DEFAULT 100.00;
+        ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS freshness NUMERIC(5, 2) DEFAULT 100.00;
+        ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS row_count BIGINT DEFAULT 0;
+        ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS column_count INTEGER DEFAULT 0;
+        ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS scan_mode VARCHAR(20) DEFAULT 'FULL_SCAN';
+        ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS sample_size INTEGER DEFAULT NULL;
+        ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS schema_hash VARCHAR(64) DEFAULT NULL;
+        ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS dimensions JSONB DEFAULT '{}'::jsonb;
+        ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS column_metrics JSONB DEFAULT '[]'::jsonb;
+        ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS issues JSONB DEFAULT '[]'::jsonb;
+        ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS evaluated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+      `);
+    } catch (_) {}
 
     // Align dataset_quality_snapshots.dataset_id column type if needed
-    const snapDtCheck = await pool.query(`
-      SELECT data_type FROM information_schema.columns 
-      WHERE table_schema = 'public' AND table_name = 'dataset_quality_snapshots' AND column_name = 'dataset_id'
-      LIMIT 1;
-    `);
-    if (snapDtCheck.rows[0] && snapDtCheck.rows[0].data_type !== dtCheck.rows[0]?.data_type) {
-      console.log(`[initDb] Aligning dataset_quality_snapshots.dataset_id to ${datasetIdType}...`);
-      await pool.query(`
-        ALTER TABLE public.dataset_quality_snapshots DROP CONSTRAINT IF EXISTS dataset_quality_snapshots_dataset_id_fkey;
-        ALTER TABLE public.dataset_quality_snapshots ALTER COLUMN dataset_id TYPE ${datasetIdType} USING dataset_id::text::${datasetIdType.toLowerCase()};
-        ALTER TABLE public.dataset_quality_snapshots ADD CONSTRAINT dataset_quality_snapshots_dataset_id_fkey FOREIGN KEY (dataset_id) REFERENCES public.datasets(id) ON DELETE CASCADE;
+    try {
+      const snapDtCheck = await pool.query(`
+        SELECT data_type FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'dataset_quality_snapshots' AND column_name = 'dataset_id'
+        LIMIT 1;
       `);
-    }
+      if (snapDtCheck.rows[0] && snapDtCheck.rows[0].data_type !== dtCheck.rows[0]?.data_type) {
+        console.log(`[initDb] Aligning dataset_quality_snapshots.dataset_id to ${datasetIdType}...`);
+        await pool.query(`
+          ALTER TABLE public.dataset_quality_snapshots DROP CONSTRAINT IF EXISTS dataset_quality_snapshots_dataset_id_fkey;
+          ALTER TABLE public.dataset_quality_snapshots ALTER COLUMN dataset_id TYPE ${datasetIdType} USING dataset_id::text::${datasetIdType.toLowerCase()};
+          ALTER TABLE public.dataset_quality_snapshots ADD CONSTRAINT dataset_quality_snapshots_dataset_id_fkey FOREIGN KEY (dataset_id) REFERENCES public.datasets(id) ON DELETE CASCADE;
+        `);
+      }
+    } catch (_) {}
 
-    // Ensure all columns exist on dataset_quality_snapshots
-    await pool.query(`
-      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS quality_score NUMERIC(5, 2) DEFAULT 100.00;
-      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'healthy';
-      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS completeness NUMERIC(5, 2) DEFAULT 100.00;
-      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS validity NUMERIC(5, 2) DEFAULT 100.00;
-      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS uniqueness NUMERIC(5, 2) DEFAULT 100.00;
-      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS consistency NUMERIC(5, 2) DEFAULT 100.00;
-      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS freshness NUMERIC(5, 2) DEFAULT 100.00;
-      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS row_count BIGINT DEFAULT 0;
-      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS column_count INTEGER DEFAULT 0;
-      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS scan_mode VARCHAR(20) DEFAULT 'FULL_SCAN';
-      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS sample_size INTEGER DEFAULT NULL;
-      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS schema_hash VARCHAR(64) DEFAULT NULL;
-      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS dimensions JSONB DEFAULT '{}'::jsonb;
-      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS column_metrics JSONB DEFAULT '[]'::jsonb;
-      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS issues JSONB DEFAULT '[]'::jsonb;
-      ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS evaluated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
-    `);
+    // Safely create indexes on dataset_quality_snapshots
+    try {
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_quality_snapshots_dataset_id ON public.dataset_quality_snapshots(dataset_id);
+        CREATE INDEX IF NOT EXISTS idx_quality_snapshots_org_id ON public.dataset_quality_snapshots(organization_id);
+        CREATE INDEX IF NOT EXISTS idx_quality_snapshots_evaluated_at ON public.dataset_quality_snapshots(evaluated_at DESC);
+      `);
+    } catch (_) {}
 
     // 4.3 Ensure dataset_quality_rules matches datasetIdType
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS public.dataset_quality_rules (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-        dataset_id ${datasetIdType} NOT NULL REFERENCES public.datasets(id) ON DELETE CASCADE,
-        created_by ${userIdType},
-        column_name VARCHAR(255) NOT NULL,
-        rule_type VARCHAR(50) NOT NULL,
-        parameters JSONB DEFAULT '{}'::jsonb,
-        severity VARCHAR(50) DEFAULT 'warning',
-        is_active BOOLEAN DEFAULT true,
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    const ruleDtCheck = await pool.query(`
-      SELECT data_type FROM information_schema.columns 
-      WHERE table_schema = 'public' AND table_name = 'dataset_quality_rules' AND column_name = 'dataset_id'
-      LIMIT 1;
-    `);
-    if (ruleDtCheck.rows[0] && ruleDtCheck.rows[0].data_type !== dtCheck.rows[0]?.data_type) {
+    try {
       await pool.query(`
-        ALTER TABLE public.dataset_quality_rules DROP CONSTRAINT IF EXISTS dataset_quality_rules_dataset_id_fkey;
-        ALTER TABLE public.dataset_quality_rules ALTER COLUMN dataset_id TYPE ${datasetIdType} USING dataset_id::text::${datasetIdType.toLowerCase()};
-        ALTER TABLE public.dataset_quality_rules ADD CONSTRAINT dataset_quality_rules_dataset_id_fkey FOREIGN KEY (dataset_id) REFERENCES public.datasets(id) ON DELETE CASCADE;
+        CREATE TABLE IF NOT EXISTS public.dataset_quality_rules (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+          dataset_id ${datasetIdType} NOT NULL REFERENCES public.datasets(id) ON DELETE CASCADE,
+          created_by ${userIdType},
+          column_name VARCHAR(255) NOT NULL,
+          rule_type VARCHAR(50) NOT NULL,
+          parameters JSONB DEFAULT '{}'::jsonb,
+          severity VARCHAR(50) DEFAULT 'warning',
+          is_active BOOLEAN DEFAULT true,
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        );
       `);
-    }
+    } catch (_) {}
+
+    try {
+      const ruleDtCheck = await pool.query(`
+        SELECT data_type FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'dataset_quality_rules' AND column_name = 'dataset_id'
+        LIMIT 1;
+      `);
+      if (ruleDtCheck.rows[0] && ruleDtCheck.rows[0].data_type !== dtCheck.rows[0]?.data_type) {
+        await pool.query(`
+          ALTER TABLE public.dataset_quality_rules DROP CONSTRAINT IF EXISTS dataset_quality_rules_dataset_id_fkey;
+          ALTER TABLE public.dataset_quality_rules ALTER COLUMN dataset_id TYPE ${datasetIdType} USING dataset_id::text::${datasetIdType.toLowerCase()};
+          ALTER TABLE public.dataset_quality_rules ADD CONSTRAINT dataset_quality_rules_dataset_id_fkey FOREIGN KEY (dataset_id) REFERENCES public.datasets(id) ON DELETE CASCADE;
+        `);
+      }
+    } catch (_) {}
 
     console.log(` Enterprise quality & job tables verified (datasets.id: ${datasetIdType}, users.id: ${userIdType}).`);
   } catch (qualityTablesSyncErr) {
