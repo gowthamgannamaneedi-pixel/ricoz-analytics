@@ -6,6 +6,33 @@ const db = require('../config/database');
  */
 const DataSource = {
   /**
+   * List all data sources belonging to an organization with dataset count
+   */
+  async findByOrganizationId(organizationId) {
+    const sql = `
+      SELECT 
+        ds.id,
+        ds.user_id,
+        ds.organization_id,
+        ds.name,
+        ds.type,
+        ds.status,
+        ds.config,
+        ds.created_at,
+        ds.updated_at,
+        COUNT(d.id)::int AS dataset_count,
+        COALESCE(SUM(d.row_count), 0)::int AS total_rows
+      FROM data_sources ds
+      LEFT JOIN datasets d ON d.data_source_id = ds.id
+      WHERE ds.organization_id = $1
+      GROUP BY ds.id
+      ORDER BY ds.created_at DESC
+    `;
+    const res = await db.query(sql, [organizationId]);
+    return res.rows;
+  },
+
+  /**
    * List all data sources belonging to user with dataset count
    */
   async findByUserId(userId) {
@@ -13,6 +40,7 @@ const DataSource = {
       SELECT 
         ds.id,
         ds.user_id,
+        ds.organization_id,
         ds.name,
         ds.type,
         ds.status,
@@ -39,6 +67,7 @@ const DataSource = {
       SELECT 
         ds.id,
         ds.user_id,
+        ds.organization_id,
         ds.name,
         ds.type,
         ds.status,
@@ -53,16 +82,49 @@ const DataSource = {
   },
 
   /**
-   * Create a new data source
+   * Find single data source by id and organization_id (Tenant isolation guaranteed)
    */
-  async create({ userId, name, type, status = 'active', config = {} }) {
+  async findByIdAndOrgId(id, organizationId) {
     const sql = `
-      INSERT INTO data_sources (user_id, name, type, status, config)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING id, user_id, name, type, status, config, created_at, updated_at
+      SELECT 
+        ds.id,
+        ds.user_id,
+        ds.organization_id,
+        ds.name,
+        ds.type,
+        ds.status,
+        ds.config,
+        ds.created_at,
+        ds.updated_at
+      FROM data_sources ds
+      WHERE ds.id = $1 AND ds.organization_id = $2
+    `;
+    const res = await db.query(sql, [id, organizationId]);
+    return res.rows[0] || null;
+  },
+
+  /**
+   * Create a new data source with explicit organizationId
+   */
+  async create({ userId, organizationId, name, type, status = 'active', config = {} }) {
+    let effectiveOrgId = organizationId;
+    if (!effectiveOrgId && userId) {
+      try {
+        const uRes = await db.query('SELECT organization_id FROM users WHERE id = $1', [userId]);
+        effectiveOrgId = uRes.rows[0]?.organization_id || null;
+      } catch (_) {}
+    }
+    if (!effectiveOrgId) {
+      throw new Error('Organization ID is required to create a data source.');
+    }
+    const sql = `
+      INSERT INTO data_sources (user_id, organization_id, name, type, status, config)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id, user_id, organization_id, name, type, status, config, created_at, updated_at
     `;
     const res = await db.query(sql, [
       userId,
+      effectiveOrgId,
       name,
       type,
       status,
@@ -115,9 +177,22 @@ const DataSource = {
     const sql = `
       DELETE FROM data_sources
       WHERE id = $1 AND user_id = $2
-      RETURNING id, user_id, name, type
+      RETURNING id, user_id, organization_id, name, type
     `;
     const res = await db.query(sql, [id, userId]);
+    return res.rows[0] || null;
+  },
+
+  /**
+   * Delete data source by id and organization_id (Tenant isolation guaranteed)
+   */
+  async deleteByIdAndOrgId(id, organizationId) {
+    const sql = `
+      DELETE FROM data_sources
+      WHERE id = $1 AND organization_id = $2
+      RETURNING id, user_id, organization_id, name, type
+    `;
+    const res = await db.query(sql, [id, organizationId]);
     return res.rows[0] || null;
   }
 };

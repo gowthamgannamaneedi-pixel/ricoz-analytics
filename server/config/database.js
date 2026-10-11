@@ -28,6 +28,19 @@ const fallbackOrganizations = [
     updated_at: new Date('2026-01-01T00:00:00Z')
   },
   {
+    id: 'ffa79386-4693-40d1-81f3-0ca748b41b56',
+    name: 'Ricoz Primary Organization',
+    slug: 'ricoz-primary-org',
+    plan: 'enterprise',
+    trial_started_at: new Date('2026-01-01T00:00:00Z'),
+    trial_ends_at: new Date('2026-12-31T23:59:59Z'),
+    subscription_status: 'active',
+    payment_status: 'paid',
+    settings: { isDefault: true },
+    created_at: new Date('2026-01-01T00:00:00Z'),
+    updated_at: new Date('2026-01-01T00:00:00Z')
+  },
+  {
     id: '00000000-0000-0000-0000-000000000002',
     name: 'Beta Global Enterprises',
     slug: 'beta-global',
@@ -1286,13 +1299,18 @@ function handleFallbackQuery(text, params = []) {
   // DELETE data_sources
   if (normalizedSql.startsWith('delete from data_sources')) {
     const id = Number(params[0]);
-    const userId = Number(params[1]);
-    const idx = fallbackDataSources.findIndex(d => d.id === id && d.user_id === userId);
+    const secondParam = params[1];
+    const idx = fallbackDataSources.findIndex(d => {
+      if (Number(d.id) !== id) return false;
+      if (!secondParam) return true;
+      if (String(d.organization_id) === String(secondParam)) return true;
+      return Number(d.user_id) === Number(secondParam);
+    });
     if (idx !== -1) {
       const deleted = fallbackDataSources.splice(idx, 1)[0];
       // Cascade delete datasets
       for (let i = fallbackDatasets.length - 1; i >= 0; i--) {
-        if (fallbackDatasets[i].data_source_id === id && fallbackDatasets[i].user_id === userId) {
+        if (Number(fallbackDatasets[i].data_source_id) === id) {
           fallbackDatasets.splice(i, 1);
         }
       }
@@ -1301,7 +1319,17 @@ function handleFallbackQuery(text, params = []) {
     return Promise.resolve({ rows: [], rowCount: 0 });
   }
 
-  // SELECT single data source by id and user_id
+  // SELECT single data source by id and user_id OR organization_id
+  if (normalizedSql.startsWith('select') && normalizedSql.includes('from data_sources') && (normalizedSql.includes('organization_id = $2') || normalizedSql.includes('ds.organization_id = $2'))) {
+    const id = Number(params[0]);
+    const orgId = String(params[1]);
+    const ds = fallbackDataSources.find(d => Number(d.id) === id && String(d.organization_id) === orgId);
+    return Promise.resolve({
+      rows: ds ? [{ ...ds }] : [],
+      rowCount: ds ? 1 : 0
+    });
+  }
+
   if (normalizedSql.startsWith('select') && normalizedSql.includes('from data_sources') && (normalizedSql.includes('id = $1 and ds.user_id = $2') || normalizedSql.includes('id = $1 and user_id = $2'))) {
     const id = Number(params[0]);
     const userId = Number(params[1]);
@@ -1310,6 +1338,46 @@ function handleFallbackQuery(text, params = []) {
       rows: ds ? [{ ...ds }] : [],
       rowCount: ds ? 1 : 0
     });
+  }
+
+  // SELECT single data source by id alone
+  if (normalizedSql.startsWith('select') && normalizedSql.includes('from data_sources') && (normalizedSql.includes('where id = $1') || normalizedSql.includes('where ds.id = $1'))) {
+    const id = Number(params[0]);
+    const ds = fallbackDataSources.find(d => Number(d.id) === id);
+    return Promise.resolve({
+      rows: ds ? [{ ...ds }] : [],
+      rowCount: ds ? 1 : 0
+    });
+  }
+
+  // SELECT data_sources by organization_id with dataset count
+  if (normalizedSql.startsWith('select') && normalizedSql.includes('from data_sources') && normalizedSql.includes('organization_id = $1')) {
+    const orgId = String(params[0]);
+    const list = fallbackDataSources
+      .filter(ds => String(ds.organization_id) === orgId)
+      .map(ds => {
+        const datasetCount = fallbackDatasets.filter(d => Number(d.data_source_id) === Number(ds.id)).length;
+        const totalRows = fallbackDatasets
+          .filter(d => Number(d.data_source_id) === Number(ds.id))
+          .reduce((sum, d) => sum + (Number(d.row_count) || 0), 0);
+        return {
+          ...ds,
+          dataset_count: datasetCount,
+          total_rows: totalRows
+        };
+      })
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    return Promise.resolve({
+      rows: list,
+      rowCount: list.length
+    });
+  }
+
+  // COUNT data_sources
+  if (normalizedSql.startsWith('select count') && normalizedSql.includes('from data_sources')) {
+    const total = fallbackDataSources.length;
+    return Promise.resolve({ rows: [{ count: total, c: total }], rowCount: 1 });
   }
 
   // SELECT data_sources by user_id with dataset count
@@ -1338,10 +1406,18 @@ function handleFallbackQuery(text, params = []) {
 
   // INSERT data_sources
   if (normalizedSql.startsWith('insert into data_sources')) {
-    const [userId, name, type, status = 'active', config = {}] = params;
+    let userId, organizationId, name, type, status, config;
+    if (normalizedSql.includes('organization_id')) {
+      [userId, organizationId, name, type, status = 'active', config = {}] = params;
+    } else {
+      [userId, name, type, status = 'active', config = {}] = params;
+    }
+    const u = fallbackUsers.find(user => String(user.id) === String(userId));
+    const effectiveOrgId = organizationId || (u ? String(u.organization_id) : 'ffa79386-4693-40d1-81f3-0ca748b41b56');
     const newDs = {
       id: nextDataSourceId++,
-      user_id: Number(userId),
+      user_id: userId,
+      organization_id: effectiveOrgId,
       name,
       type,
       status,
@@ -1477,6 +1553,12 @@ function handleFallbackQuery(text, params = []) {
     });
   }
 
+  // COUNT datasets
+  if (normalizedSql.startsWith('select count') && normalizedSql.includes('from datasets')) {
+    const total = fallbackDatasets.length;
+    return Promise.resolve({ rows: [{ count: total, c: total }], rowCount: 1 });
+  }
+
   // SELECT datasets list with data_source details for user_id
   if (normalizedSql.startsWith('select') && normalizedSql.includes('from datasets')) {
     const userId = Number(params[0]);
@@ -1501,12 +1583,18 @@ function handleFallbackQuery(text, params = []) {
 
   // INSERT datasets
   if (normalizedSql.startsWith('insert into datasets')) {
-    const [userId, dataSourceId, name, description = '', filePath = '', rowCount = 0, columnCount = 0, schema = []] = params;
-    const u = fallbackUsers.find(user => Number(user.id) === Number(userId));
+    let userId, organizationId, dataSourceId, name, description, filePath, rowCount, columnCount, schema;
+    if (normalizedSql.includes('organization_id')) {
+      [userId, organizationId, dataSourceId, name, description = '', filePath = '', rowCount = 0, columnCount = 0, schema = []] = params;
+    } else {
+      [userId, dataSourceId, name, description = '', filePath = '', rowCount = 0, columnCount = 0, schema = []] = params;
+    }
+    const u = fallbackUsers.find(user => String(user.id) === String(userId));
+    const effectiveOrgId = organizationId || (u ? String(u.organization_id) : 'ffa79386-4693-40d1-81f3-0ca748b41b56');
     const newDataset = {
       id: nextDatasetId++,
-      user_id: Number(userId),
-      organization_id: u ? String(u.organization_id) : '00000000-0000-0000-0000-000000000001',
+      user_id: userId,
+      organization_id: effectiveOrgId,
       data_source_id: dataSourceId ? Number(dataSourceId) : null,
       name,
       description: description || '',

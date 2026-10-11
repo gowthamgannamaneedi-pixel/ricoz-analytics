@@ -154,9 +154,31 @@ const Dataset = {
   },
 
   /**
-   * Find all datasets for a specific data source
+   * Find all datasets for a specific data source (Scoped by user or organization)
    */
-  async findByDataSourceId(dataSourceId, userId) {
+  async findByDataSourceId(dataSourceId, userId, organizationId = null) {
+    if (organizationId) {
+      const sql = `
+        SELECT 
+          id,
+          user_id,
+          organization_id,
+          data_source_id,
+          name,
+          description,
+          file_path,
+          row_count,
+          column_count,
+          schema,
+          created_at,
+          updated_at
+        FROM datasets
+        WHERE data_source_id = $1 AND (organization_id = $2 OR user_id = $3)
+        ORDER BY created_at DESC
+      `;
+      const res = await db.query(sql, [dataSourceId, organizationId, userId]);
+      return res.rows;
+    }
     const sql = `
       SELECT 
         id,
@@ -187,19 +209,20 @@ const Dataset = {
     if (!effectiveOrgId && userId) {
       try {
         const uRes = await db.query('SELECT organization_id FROM users WHERE id = $1', [userId]);
-        effectiveOrgId = uRes.rows[0]?.organization_id || '00000000-0000-0000-0000-000000000001';
-      } catch (_) {
-        effectiveOrgId = '00000000-0000-0000-0000-000000000001';
-      }
+        effectiveOrgId = uRes.rows[0]?.organization_id || null;
+      } catch (_) {}
+    }
+    if (!effectiveOrgId) {
+      throw new Error('Organization ID is required to create a dataset.');
     }
     const sql = `
       INSERT INTO datasets (user_id, organization_id, data_source_id, name, description, file_path, row_count, column_count, schema)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      RETURNING id, user_id, organization_id, data_source_id, name, description, row_count, column_count, schema, created_at, updated_at
+      RETURNING id, user_id, organization_id, data_source_id, name, description, file_path, row_count, column_count, schema, created_at, updated_at
     `;
     const res = await db.query(sql, [
       userId,
-      effectiveOrgId || '00000000-0000-0000-0000-000000000001',
+      effectiveOrgId,
       dataSourceId || null,
       name,
       description || null,

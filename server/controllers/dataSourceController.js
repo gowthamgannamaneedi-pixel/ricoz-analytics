@@ -3,6 +3,8 @@ const path = require('path');
 const { validateUrl } = require('../utils/urlSecurity');
 const DataSource = require('../models/dataSourceModel');
 const Dataset = require('../models/datasetModel');
+const UserModel = require('../models/userModel');
+const OrganizationModel = require('../models/organizationModel');
 const storage = require('../storage');
 const db = require('../config/database');
 const { parseDatasetFile, parseDatasetFileStream } = require('../services/fileParserService');
@@ -15,13 +17,69 @@ const { ingestDatasetFileStream } = require('../services/datasetIngestionService
  */
 
 /**
+ * Resolves and validates the organization ID for an authenticated user.
+ * 1. Checks user.organization_id.
+ * 2. If missing, queries users table for organization_id.
+ * 3. Verifies that the organization actually exists in organizations table.
+ * Returns the verified organization_id UUID, or null if cannot be verified.
+ */
+async function resolveTrustedOrganizationId(user) {
+  if (!user || !user.id) return null;
+  let orgId = user.organization_id || null;
+
+  if (!orgId) {
+    try {
+      const dbUser = await UserModel.findById(user.id);
+      orgId = dbUser?.organization_id || null;
+    } catch (_) {}
+  }
+
+  if (!orgId) return null;
+
+  try {
+    const org = await OrganizationModel.findById(orgId);
+    if (org && org.id) {
+      return org.id;
+    }
+  } catch (_) {}
+
+  return null;
+}
+
+/**
+ * Helper to clean up partial upload artifacts on ingestion failure
+ */
+async function clientCleanup(datasetId, dataSourceId, organizationId, filePath) {
+  try {
+    if (datasetId) {
+      await db.query('DELETE FROM dataset_rows WHERE dataset_id = $1', [datasetId]).catch(() => null);
+      if (organizationId) {
+        await Dataset.deleteByIdAndOrgId(datasetId, organizationId).catch(() => null);
+      }
+    }
+    if (dataSourceId && organizationId) {
+      await DataSource.deleteByIdAndOrgId(dataSourceId, organizationId).catch(() => null);
+    }
+    if (filePath) {
+      await storage.deleteFile(filePath).catch(() => null);
+    }
+  } catch (cleanErr) {
+    console.warn('[UploadCleanup] Cleanup warning:', cleanErr.message);
+  }
+}
+
+/**
  * GET /api/data-sources
- * Get all data sources for authenticated user
+ * Get all data sources for authenticated user or organization
  */
 const getDataSources = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const sources = await DataSource.findByUserId(userId);
+    const organizationId = await resolveTrustedOrganizationId(req.user);
+
+    const sources = organizationId
+      ? await DataSource.findByOrganizationId(organizationId)
+      : await DataSource.findByUserId(userId);
 
     // Sanitize config in all returned sources
     const sanitized = sources.map(src => ({
@@ -41,14 +99,18 @@ const getDataSources = async (req, res, next) => {
 
 /**
  * GET /api/data-sources/:id
- * Get single data source by ID with its datasets (Ownership enforced)
+ * Get single data source by ID with its datasets (Ownership/Tenant enforced)
  */
 const getDataSourceById = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const organizationId = await resolveTrustedOrganizationId(req.user);
     const { id } = req.params;
 
-    const source = await DataSource.findByIdAndUserId(id, userId);
+    const source = organizationId
+      ? await DataSource.findByIdAndOrgId(id, organizationId)
+      : await DataSource.findByIdAndUserId(id, userId);
+
     if (!source) {
       return res.status(404).json({
         success: false,
@@ -56,7 +118,7 @@ const getDataSourceById = async (req, res, next) => {
       });
     }
 
-    const datasets = await Dataset.findByDataSourceId(id, userId);
+    const datasets = await Dataset.findByDataSourceId(id, userId, organizationId);
 
     return res.status(200).json({
       success: true,
@@ -78,6 +140,19 @@ const getDataSourceById = async (req, res, next) => {
 const createDataSource = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const organizationId = await resolveTrustedOrganizationId(req.user);
+
+    if (!organizationId) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'ORGANIZATION_REQUIRED',
+          message: 'User does not belong to a valid organization. Organization membership is required to create data sources.'
+        },
+        message: 'User does not belong to a valid organization. Organization membership is required to create data sources.'
+      });
+    }
+
     const { name, type, config = {} } = req.body;
 
     if (!name || !name.trim()) {
@@ -140,23 +215,16 @@ const createDataSource = async (req, res, next) => {
         });
       }
 
-        // SSRF protection: validate URL safety
-        try {
-          await validateUrl(url);
-        } catch (e) {
-          return res.status(400).json({ success: false, message: e.message });
-        }
-        // Ensure url is explicitly set on config
+      // SSRF protection: validate URL safety
+      try {
+        await validateUrl(url);
+      } catch (e) {
+        return res.status(400).json({ success: false, message: e.message });
+      }
       config.url = url;
       config.endpoint_url = url;
 
       try {
-        // SSRF protection: validate URL safety
-        try {
-          await validateUrl(url);
-        } catch (e) {
-          return res.status(400).json({ success: false, message: e.message });
-        }
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 10000);
         const apiRes = await fetch(url, {
@@ -186,6 +254,7 @@ const createDataSource = async (req, res, next) => {
 
     const newSource = await DataSource.create({
       userId,
+      organizationId,
       name: name.trim(),
       type: effectiveType,
       status,
@@ -203,7 +272,7 @@ const createDataSource = async (req, res, next) => {
 
         createdDataset = await Dataset.create({
           userId,
-          organizationId: req.user?.organization_id,
+          organizationId,
           dataSourceId: newSource.id,
           name: name.trim(),
           description: `Auto-ingested from REST API (${config.url})`,
@@ -444,9 +513,14 @@ const syncDataSource = async (req, res, next) => {
 
 /**
  * POST /api/data-sources/upload
- * Handle CSV or JSON file upload and create dataset
+ * Handle CSV or JSON file upload and create dataset with safe transactional cleanup
  */
 const uploadDataSource = async (req, res, next) => {
+  let savedFile = null;
+  let dataSource = null;
+  let dataset = null;
+  let organizationId = null;
+
   try {
     const userId = req.user.id;
     const file = req.file;
@@ -455,6 +529,22 @@ const uploadDataSource = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: 'No file uploaded. Please provide a CSV or JSON file.'
+      });
+    }
+
+    // 0. Establish trusted organization-resolution method from authenticated user
+    organizationId = await resolveTrustedOrganizationId(req.user);
+    if (!organizationId) {
+      if (file.path && fs.existsSync(file.path)) {
+        fs.unlink(file.path, () => {});
+      }
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'ORGANIZATION_REQUIRED',
+          message: 'User does not belong to a valid organization. Organization membership is required to upload datasets.'
+        },
+        message: 'User does not belong to a valid organization. Organization membership is required to upload datasets.'
       });
     }
 
@@ -481,13 +571,13 @@ const uploadDataSource = async (req, res, next) => {
       });
     }
 
-    // 2. Persist file via StorageProvider (handles copy or stream transfer)
-    const savedFile = await storage.saveFile(userId, originalName, fileInput);
+    // 2. Persist file via StorageProvider
+    savedFile = await storage.saveFile(userId, originalName, fileInput);
 
-    // 3. Create Data Source record
-    const dataSource = await DataSource.create({
+    // 3. Create Data Source record with explicit, validated organizationId
+    dataSource = await DataSource.create({
       userId,
-      organizationId: req.user?.organization_id,
+      organizationId,
       name: sourceName,
       type: fileType,
       status: 'active',
@@ -498,10 +588,10 @@ const uploadDataSource = async (req, res, next) => {
       }
     });
 
-    // 4. Create Dataset record
-    const dataset = await Dataset.create({
+    // 4. Create Dataset record with explicit, validated organizationId
+    dataset = await Dataset.create({
       userId,
-      organizationId: req.user?.organization_id,
+      organizationId,
       dataSourceId: dataSource.id,
       name: sourceName,
       description,
@@ -511,17 +601,36 @@ const uploadDataSource = async (req, res, next) => {
       schema: parsedMetadata.schema
     });
 
-    // 5. Ingest rows into PostgreSQL dataset_rows if live DB pool is connected (asynchronously & resiliently)
+    // 5. Ingest rows into PostgreSQL dataset_rows if live DB pool is connected (with safe rollback)
     const pool = db.getPool();
     if (!db.isUsingFallback() && pool) {
-      ingestDatasetFileStream({
-        datasetId: dataset.id,
-        organizationId: req.user?.organization_id,
-        filePath: savedFile.filePath,
-        fileExtension: ext
-      }).catch(err => {
-        console.warn(`[Ingestion] Async PostgreSQL COPY warning for dataset #${dataset.id}:`, err.message);
-      });
+      try {
+        await ingestDatasetFileStream({
+          datasetId: dataset.id,
+          organizationId,
+          filePath: savedFile.filePath,
+          fileExtension: ext
+        });
+      } catch (ingestErr) {
+        console.error(`[Ingestion] Failed to ingest rows into dataset_rows for dataset #${dataset.id}:`, ingestErr.message);
+        await clientCleanup(dataset.id, dataSource.id, organizationId, savedFile?.filePath);
+        dataSource = null;
+        dataset = null;
+        savedFile = null;
+        return res.status(500).json({
+          success: false,
+          error: {
+            code: 'INGESTION_FAILED',
+            message: `Data ingestion failed: ${ingestErr.message}`
+          },
+          message: `Data ingestion failed: ${ingestErr.message}`
+        });
+      }
+    }
+
+    // Clean up temporary multipart upload file on disk if created by multer
+    if (file.path && fs.existsSync(file.path)) {
+      fs.unlink(file.path, () => {});
     }
 
     return res.status(201).json({
@@ -547,6 +656,8 @@ const uploadDataSource = async (req, res, next) => {
       }
     });
   } catch (err) {
+    // Safe cleanup on unhandled failure
+    await clientCleanup(dataset?.id, dataSource?.id, organizationId, savedFile?.filePath);
     if (req.file?.path && fs.existsSync(req.file.path)) {
       fs.unlink(req.file.path, () => {});
     }
@@ -556,15 +667,19 @@ const uploadDataSource = async (req, res, next) => {
 
 /**
  * DELETE /api/data-sources/:id
- * Delete data source, cascade datasets and cleanup physical files
+ * Delete data source, cascade datasets and cleanup physical files (Tenant enforced)
  */
 const deleteDataSource = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const organizationId = await resolveTrustedOrganizationId(req.user);
     const { id } = req.params;
 
     // Verify ownership and get datasets to clean up files
-    const source = await DataSource.findByIdAndUserId(id, userId);
+    const source = organizationId
+      ? await DataSource.findByIdAndOrgId(id, organizationId)
+      : await DataSource.findByIdAndUserId(id, userId);
+
     if (!source) {
       return res.status(404).json({
         success: false,
@@ -572,14 +687,18 @@ const deleteDataSource = async (req, res, next) => {
       });
     }
 
-    const datasets = await Dataset.findByDataSourceId(id, userId);
+    const datasets = await Dataset.findByDataSourceId(id, userId, organizationId);
     for (const ds of datasets) {
       if (ds.file_path) {
-        await storage.deleteFile(ds.file_path);
+        await storage.deleteFile(ds.file_path).catch(() => null);
       }
     }
 
-    await DataSource.deleteByIdAndUserId(id, userId);
+    if (organizationId) {
+      await DataSource.deleteByIdAndOrgId(id, organizationId);
+    } else {
+      await DataSource.deleteByIdAndUserId(id, userId);
+    }
 
     return res.status(200).json({
       success: true,
