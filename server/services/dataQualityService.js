@@ -12,6 +12,7 @@ const auditService = require('./auditService');
 const AlertModel = require('../models/alertModel');
 const alertEvaluator = require('./alertEvaluatorService');
 const config = require('../config');
+const db = require('../config/database');
 
 // In-memory set of active job abort controllers for cancellation
 const activeJobAbortControllers = new Map();

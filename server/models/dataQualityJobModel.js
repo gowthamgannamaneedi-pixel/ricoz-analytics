@@ -1,6 +1,16 @@
 const db = require('../config/database');
 const crypto = require('crypto');
 
+function formatJob(row) {
+  if (!row) return null;
+  return {
+    ...row,
+    progress_percent: row.progress_percent !== null && row.progress_percent !== undefined ? Number(row.progress_percent) : 0,
+    rows_processed: row.rows_processed !== null && row.rows_processed !== undefined ? Number(row.rows_processed) : 0,
+    total_rows: row.total_rows !== null && row.total_rows !== undefined ? Number(row.total_rows) : 0
+  };
+}
+
 /**
  * Data Quality Job Data Access Model
  * Manages asynchronous audit jobs, progress tracking, and resilient state transitions.
@@ -61,7 +71,7 @@ const DataQualityJobModel = {
       createdBy ? String(createdBy) : null
     ]);
 
-    return result.rows[0];
+    return formatJob(result.rows[0]);
   },
 
   /**
@@ -77,7 +87,7 @@ const DataQualityJobModel = {
       WHERE id = $1 AND organization_id = $2;
     `;
     const result = await db.query(sql, [String(id), String(organizationId)]);
-    return result.rows[0] || null;
+    return formatJob(result.rows[0]);
   },
 
   /**
@@ -95,7 +105,7 @@ const DataQualityJobModel = {
       LIMIT 1;
     `;
     const result = await db.query(sql, [String(datasetId), String(organizationId)]);
-    return result.rows[0] || null;
+    return formatJob(result.rows[0]);
   },
 
   /**
@@ -152,7 +162,7 @@ const DataQualityJobModel = {
     `;
 
     const result = await db.query(sql, values);
-    return result.rows[0] || null;
+    return formatJob(result.rows[0]);
   },
 
   /**
@@ -175,7 +185,7 @@ const DataQualityJobModel = {
       RETURNING *;
     `;
     const result = await db.query(sql, [snapshotId || null, String(id)]);
-    return result.rows[0] || null;
+    return formatJob(result.rows[0]);
   },
 
   /**
@@ -197,7 +207,7 @@ const DataQualityJobModel = {
       RETURNING *;
     `;
     const result = await db.query(sql, [String(errorMessage || 'Unknown evaluation error'), String(id)]);
-    return result.rows[0] || null;
+    return formatJob(result.rows[0]);
   },
 
   /**
@@ -219,7 +229,7 @@ const DataQualityJobModel = {
       RETURNING *;
     `;
     const result = await db.query(sql, [String(id), String(organizationId)]);
-    return result.rows[0] || null;
+    return formatJob(result.rows[0]);
   },
 
   /**
