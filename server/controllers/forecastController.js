@@ -266,8 +266,12 @@ const ForecastController = {
         series
       } = req.body;
 
-      const effectiveDatasetId = dataset_id || datasetId || null;
-      const effectiveMetricId = metric_id || metricId || null;
+      const effectiveDatasetId = (dataset_id !== undefined && dataset_id !== null && dataset_id !== '' && dataset_id !== 'undefined')
+        ? dataset_id
+        : ((datasetId !== undefined && datasetId !== null && datasetId !== '' && datasetId !== 'undefined') ? datasetId : null);
+      const effectiveMetricId = (metric_id !== undefined && metric_id !== null && metric_id !== '' && metric_id !== 'undefined')
+        ? metric_id
+        : ((metricId !== undefined && metricId !== null && metricId !== '' && metricId !== 'undefined') ? metricId : null);
       let effectiveTargetCol = target_column || targetColumn || null;
       let effectiveDateCol = date_column || dateColumn || null;
       const rawHorizon = horizon_periods !== undefined ? horizon_periods : (horizonPeriods !== undefined ? horizonPeriods : (horizon !== undefined ? horizon : 30));
@@ -302,7 +306,9 @@ const ForecastController = {
       } 
       // 2. Time-series extraction from Dataset ID
       else if (effectiveDatasetId) {
-        const dataset = await Dataset.findById(effectiveDatasetId);
+        const dataset = (organizationId && Dataset.findByIdAndOrgId)
+          ? (await Dataset.findByIdAndOrgId(effectiveDatasetId, organizationId) || await Dataset.findById(effectiveDatasetId))
+          : await Dataset.findById(effectiveDatasetId);
         if (!dataset) {
           return res.status(404).json({
             success: false,

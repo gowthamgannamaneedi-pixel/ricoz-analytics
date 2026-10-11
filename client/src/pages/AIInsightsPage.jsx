@@ -358,14 +358,17 @@ export default function AIInsightsPage() {
       setLoading(true);
       setError(null);
 
-      const [insightsRes, datasetsRes, metricsRes, summaryRes, dashboardsRes] = await Promise.all([
+      // 1. Fetch core insights, datasets, metrics, and dashboards in parallel
+      const [insightsRes, datasetsRes, metricsRes, dashboardsRes] = await Promise.all([
         getAIInsights({
           status: statusFilter,
           datasetId: selectedDatasetId || undefined
-        }).catch(() => ({ insights: [] })),
+        }).catch((e) => {
+          console.warn('[AIInsightsPage] getAIInsights notice:', e.message);
+          return { insights: [] };
+        }),
         getDatasets().catch(() => ({ datasets: [] })),
         getMetrics().catch(() => ({ metrics: [] })),
-        getAIExecutiveSummary(selectedDatasetId || null).catch(() => ({ summary: '' })),
         getDashboards ? getDashboards().catch(() => ({ dashboards: [] })) : Promise.resolve({ dashboards: [] })
       ]);
 
@@ -374,7 +377,6 @@ export default function AIInsightsPage() {
       setDatasets(datasetsRes.datasets || datasetsRes.data || []);
       setMetrics(metricsRes.metrics || metricsRes.data || []);
       setDashboards(dashboardsRes.dashboards || dashboardsRes.data || []);
-      setExecutiveSummary(summaryRes.summary || summaryRes.executive_summary || '');
 
       // Prepopulate feedback map
       const initialFeedback = {};
@@ -382,19 +384,6 @@ export default function AIInsightsPage() {
         if (item.feedback) initialFeedback[item.id] = item.feedback;
       });
       setFeedbackState(initialFeedback);
-
-      // Load user favorites
-      try {
-        const favsRes = await getFavoritesApi();
-        if (favsRes?.data) {
-          const insightFavs = new Set(
-            favsRes.data
-              .filter(f => f.resource_type === 'ai_insight' || f.resource_type === 'insight')
-              .map(f => String(f.resource_id))
-          );
-          setFavorites(insightFavs);
-        }
-      } catch (_) {}
 
       // Target insight highlighted from URL
       if (targetInsightId) {
@@ -404,6 +393,30 @@ export default function AIInsightsPage() {
           recordRecentlyViewedApi('ai_insight', targetInsightId).catch(() => {});
         }
       }
+
+      // Load user favorites in non-blocking manner
+      getFavoritesApi().then(favsRes => {
+        if (favsRes?.data) {
+          const insightFavs = new Set(
+            favsRes.data
+              .filter(f => f.resource_type === 'ai_insight' || f.resource_type === 'insight')
+              .map(f => String(f.resource_id))
+          );
+          setFavorites(insightFavs);
+        }
+      }).catch(() => {});
+
+      // Clear loading immediately so cards / empty state render with zero delay!
+      setLoading(false);
+
+      // 2. Fetch executive summary in background without blocking the cards
+      getAIExecutiveSummary(selectedDatasetId || null)
+        .then(summaryRes => {
+          if (summaryRes?.summary || summaryRes?.executive_summary) {
+            setExecutiveSummary(summaryRes.summary || summaryRes.executive_summary);
+          }
+        })
+        .catch(() => {});
     } catch (err) {
       console.error('[AIInsightsPage] Load error:', err);
       setError('Could not connect to the AI Insights service.');

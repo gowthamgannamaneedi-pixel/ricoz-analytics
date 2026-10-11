@@ -77,6 +77,7 @@ import {
   createSavedViewApi,
   getSavedViewsApi,
   deleteSavedViewApi,
+  getAuthToken,
   API_BASE_URL
 } from '../services/api';
 
@@ -120,6 +121,7 @@ const EnterpriseTooltip = ({ active, payload, label, prefix = '', suffix = '' })
 
 export default function DashboardPage() {
   const { token, isViewer } = useAuth();
+  const effectiveToken = token || getAuthToken();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -231,9 +233,10 @@ export default function DashboardPage() {
   // 3. Fetch Saved Metrics (Phase 7) for Widget Linking
   // --------------------------------------------------------------------------
   const fetchSavedMetrics = async () => {
+    if (!effectiveToken) return;
     try {
       const res = await fetch(`${API_BASE_URL}/metrics`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${effectiveToken}` }
       });
       if (res.ok) {
         const json = await res.json();
@@ -248,10 +251,11 @@ export default function DashboardPage() {
   // 4. Fetch Datasets for Overview & Widget Binding
   // --------------------------------------------------------------------------
   const fetchDatasets = async () => {
+    if (!effectiveToken) return;
     try {
       setIsDatasetsLoading(true);
       const res = await fetch(`${API_BASE_URL}/datasets`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${effectiveToken}` }
       });
       const contentType = res.headers.get('content-type') || '';
       if (res.ok && contentType.includes('application/json')) {
@@ -398,10 +402,10 @@ export default function DashboardPage() {
   }, [filters]);
 
   const fetchDatasetSummary = async (id) => {
-    if (!id) return;
+    if (!id || !effectiveToken) return;
     try {
       const res = await fetch(`${API_BASE_URL}/analytics/datasets/${id}/summary`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${effectiveToken}` }
       });
       if (res.ok) {
         const json = await res.json();
@@ -421,6 +425,10 @@ export default function DashboardPage() {
       return;
     }
 
+    if (!effectiveToken) {
+      return;
+    }
+
     const currentReqId = ++activeReqIdRef.current;
     if (showLoading) setIsAnalyticsLoading(true);
     setError('');
@@ -429,19 +437,19 @@ export default function DashboardPage() {
       const queryStr = buildQueryParams();
 
       const [kpisRes, trendsRes, regionRes, channelRes, productRes, rowsRes, insightsRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/analytics/datasets/${id}/kpis?${queryStr}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`${API_BASE_URL}/analytics/datasets/${id}/trends?${queryStr}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`${API_BASE_URL}/analytics/datasets/${id}/breakdowns?${buildQueryParams({ groupBy: 'region' })}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`${API_BASE_URL}/analytics/datasets/${id}/breakdowns?${buildQueryParams({ groupBy: 'channel' })}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`${API_BASE_URL}/analytics/datasets/${id}/breakdowns?${buildQueryParams({ groupBy: 'product' })}`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API_BASE_URL}/analytics/datasets/${id}/kpis?${queryStr}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } }),
+        fetch(`${API_BASE_URL}/analytics/datasets/${id}/trends?${queryStr}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } }),
+        fetch(`${API_BASE_URL}/analytics/datasets/${id}/breakdowns?${buildQueryParams({ groupBy: 'region' })}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } }),
+        fetch(`${API_BASE_URL}/analytics/datasets/${id}/breakdowns?${buildQueryParams({ groupBy: 'channel' })}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } }),
+        fetch(`${API_BASE_URL}/analytics/datasets/${id}/breakdowns?${buildQueryParams({ groupBy: 'product' })}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } }),
         fetch(`${API_BASE_URL}/analytics/datasets/${id}/rows?${buildQueryParams({
           page: tablePage,
           limit: tableLimit,
           sortKey: tableSortKey,
           sortOrder: tableSortOrder,
           search: tableSearch
-        })}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`${API_BASE_URL}/insights?datasetId=${id}`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
+        })}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } }),
+        fetch(`${API_BASE_URL}/insights?datasetId=${id}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } }).catch(() => null)
       ]);
 
       // Guard against race conditions / older out-of-order responses
@@ -511,7 +519,7 @@ export default function DashboardPage() {
       const res = await fetch(`${API_BASE_URL}/insights/generate`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${effectiveToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ datasetId: selectedDatasetId })

@@ -1469,8 +1469,14 @@ export async function generateAIInsights(options = {}) {
  * @param {object} [params={}]
  */
 export async function getAIInsights(params = {}) {
-  const query = new URLSearchParams(params).toString();
-  return apiRequest(`/insights${query ? `?${query}` : ''}`);
+  const query = new URLSearchParams();
+  Object.entries(params || {}).forEach(([key, val]) => {
+    if (val !== undefined && val !== null && val !== '' && val !== 'undefined' && !Number.isNaN(val)) {
+      query.append(key, String(val));
+    }
+  });
+  const queryString = query.toString();
+  return apiRequest(`/insights${queryString ? `?${queryString}` : ''}`);
 }
 
 /**
@@ -1478,7 +1484,8 @@ export async function getAIInsights(params = {}) {
  * @param {number|string|null} [datasetId=null]
  */
 export async function getAIExecutiveSummary(datasetId = null) {
-  const query = datasetId ? `?datasetId=${datasetId}` : '';
+  const cleanId = datasetId && datasetId !== 'undefined' && !Number.isNaN(Number(datasetId)) ? Number(datasetId) : null;
+  const query = cleanId ? `?datasetId=${cleanId}` : '';
   return apiRequest(`/insights/summary${query}`);
 }
 

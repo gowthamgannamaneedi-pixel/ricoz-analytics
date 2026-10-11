@@ -56,14 +56,16 @@ import { ResetButton } from '../components/ui/ResetButton';
 /**
  * Enterprise Circular Donut Gauge for Overall Dataset Health Score
  */
-function QualityHealthGauge({ score = 100, size = 130, strokeWidth = 11 }) {
+function QualityHealthGauge({ score = null, size = 130, strokeWidth = 11, evaluating = false }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const clampedScore = Math.max(0, Math.min(100, score));
+  const isPending = score === null || score === undefined;
+  const clampedScore = isPending ? 0 : Math.max(0, Math.min(100, Number(score) || 0));
   const strokeDashoffset = circumference - (clampedScore / 100) * circumference;
 
   let strokeColor = '#059669'; // emerald-600
-  if (clampedScore < 70) strokeColor = '#e11d48'; // rose-600
+  if (isPending) strokeColor = '#cbd5e1';
+  else if (clampedScore < 70) strokeColor = '#e11d48'; // rose-600
   else if (clampedScore < 85) strokeColor = '#d97706'; // amber-600
 
   return (
@@ -87,17 +89,35 @@ function QualityHealthGauge({ score = 100, size = 130, strokeWidth = 11 }) {
           stroke={strokeColor}
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
+          strokeDashoffset={isPending ? (circumference * 0.75) : strokeDashoffset}
           strokeLinecap="round"
           className="transition-all duration-700 ease-out"
         />
       </svg>
-      {/* Centered Score matching Wireframe */}
+      {/* Centered Score */}
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="text-2xl font-extrabold text-slate-900 tracking-tight font-sans">
-          {clampedScore}%
-        </span>
-        <span className="text-[11px] font-semibold text-slate-400 font-mono">/ 100</span>
+        {evaluating && isPending ? (
+          <>
+            <span className="text-sm font-extrabold text-rose-600 animate-pulse tracking-tight font-sans">
+              Scanning...
+            </span>
+            <span className="text-[10px] font-semibold text-slate-400 font-mono">in progress</span>
+          </>
+        ) : isPending ? (
+          <>
+            <span className="text-2xl font-extrabold text-slate-400 tracking-tight font-sans">
+              —
+            </span>
+            <span className="text-[11px] font-semibold text-slate-400 font-mono">/ 100</span>
+          </>
+        ) : (
+          <>
+            <span className="text-2xl font-extrabold text-slate-900 tracking-tight font-sans">
+              {clampedScore}%
+            </span>
+            <span className="text-[11px] font-semibold text-slate-400 font-mono">/ 100</span>
+          </>
+        )}
       </div>
     </div>
   );
@@ -458,6 +478,14 @@ export default function DataQualityPage() {
 
   // Status Badge Component
   const getStatusBadge = (status) => {
+    if (evaluating && !qualityProfile) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs">
+          <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+          Evaluating
+        </span>
+      );
+    }
     switch (status) {
       case 'healthy':
         return (
@@ -484,7 +512,7 @@ export default function DataQualityPage() {
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs">
             <span className="h-2 w-2 rounded-full bg-slate-400" />
-            Unknown
+            {evaluating ? 'Evaluating' : 'Unknown'}
           </span>
         );
     }
@@ -820,12 +848,12 @@ export default function DataQualityPage() {
                     </div>
                     <span className="text-sm font-bold text-slate-900">Overall Dataset Health</span>
                   </div>
-                  <div>{getStatusBadge(qualityProfile.status)}</div>
+                  <div>{getStatusBadge(qualityProfile?.status)}</div>
                 </div>
 
                 {/* Donut Gauge + Status / Description */}
                 <div className="flex items-center justify-center py-5">
-                  <QualityHealthGauge score={qualityProfile.quality_score} size={140} strokeWidth={12} />
+                  <QualityHealthGauge score={qualityProfile?.quality_score} evaluating={evaluating && !qualityProfile} size={140} strokeWidth={12} />
                 </div>
               </div>
 
@@ -838,9 +866,11 @@ export default function DataQualityPage() {
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-slate-500">Evaluated Rows:</span>
                   <span className="font-bold text-slate-800 font-mono">
-                    {selectedDataset?.row_count !== undefined
+                    {evaluating
+                      ? `${Number(activeJob?.rows_processed || 0).toLocaleString()} / ${Number(activeJob?.total_rows || selectedDataset?.row_count || 0).toLocaleString()} rows`
+                      : selectedDataset?.row_count !== undefined
                       ? `${Number(selectedDataset.row_count).toLocaleString()} rows`
-                      : `${qualityProfile.row_count || 0} rows`}
+                      : `${qualityProfile?.row_count || 0} rows`}
                   </span>
                 </div>
               </div>
@@ -859,18 +889,18 @@ export default function DataQualityPage() {
                   </div>
                   <h4 className="text-xs font-bold text-slate-700 mt-2.5">Completeness</h4>
                   <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
-                    {dimensions.completeness?.score || 100}%
+                    {evaluating && !dimensions.completeness ? '—' : (dimensions.completeness?.score != null ? `${dimensions.completeness.score}%` : '0%')}
                   </div>
                   {/* Progress Bar */}
                   <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2.5 overflow-hidden">
                     <div
-                      className="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
-                      style={{ width: `${dimensions.completeness?.score || 100}%` }}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.completeness ? 'bg-slate-300 animate-pulse' : 'bg-blue-600'}`}
+                      style={{ width: evaluating && !dimensions.completeness ? '0%' : `${dimensions.completeness?.score ?? 0}%` }}
                     />
                   </div>
                 </div>
                 <div className="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-50">
-                  {dimensions.completeness?.null_count || dimensions.completeness?.missing_cells || 0}% missing values
+                  {evaluating && !dimensions.completeness ? 'Evaluating missing values...' : `${dimensions.completeness?.null_count || dimensions.completeness?.missing_cells || 0}% missing values`}
                 </div>
               </div>
 
@@ -885,18 +915,18 @@ export default function DataQualityPage() {
                   </div>
                   <h4 className="text-xs font-bold text-slate-700 mt-2.5">Validity / Types</h4>
                   <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
-                    {dimensions.validity?.score || 100}%
+                    {evaluating && !dimensions.validity ? '—' : (dimensions.validity?.score != null ? `${dimensions.validity.score}%` : '0%')}
                   </div>
                   {/* Progress Bar */}
                   <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2.5 overflow-hidden">
                     <div
-                      className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
-                      style={{ width: `${dimensions.validity?.score || 100}%` }}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.validity ? 'bg-slate-300 animate-pulse' : 'bg-emerald-500'}`}
+                      style={{ width: evaluating && !dimensions.validity ? '0%' : `${dimensions.validity?.score ?? 0}%` }}
                     />
                   </div>
                 </div>
                 <div className="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-50">
-                  {dimensions.validity?.invalid_count || 0} type violations
+                  {evaluating && !dimensions.validity ? 'Evaluating type validity...' : `${dimensions.validity?.invalid_count || 0} type violations`}
                 </div>
               </div>
 
@@ -911,18 +941,18 @@ export default function DataQualityPage() {
                   </div>
                   <h4 className="text-xs font-bold text-slate-700 mt-2.5">Uniqueness</h4>
                   <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
-                    {dimensions.uniqueness?.score || 100}%
+                    {evaluating && !dimensions.uniqueness ? '—' : (dimensions.uniqueness?.score != null ? `${dimensions.uniqueness.score}%` : '0%')}
                   </div>
                   {/* Progress Bar */}
                   <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2.5 overflow-hidden">
                     <div
-                      className="bg-purple-600 h-1.5 rounded-full transition-all duration-500"
-                      style={{ width: `${dimensions.uniqueness?.score || 100}%` }}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.uniqueness ? 'bg-slate-300 animate-pulse' : 'bg-purple-600'}`}
+                      style={{ width: evaluating && !dimensions.uniqueness ? '0%' : `${dimensions.uniqueness?.score ?? 0}%` }}
                     />
                   </div>
                 </div>
                 <div className="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-50">
-                  {dimensions.uniqueness?.duplicate_percentage ?? dimensions.uniqueness?.duplicate_rows ?? 0}% duplicate rows
+                  {evaluating && !dimensions.uniqueness ? 'Evaluating duplicates...' : `${dimensions.uniqueness?.duplicate_percentage ?? dimensions.uniqueness?.duplicate_rows ?? 0}% duplicate rows`}
                 </div>
               </div>
 
@@ -937,20 +967,22 @@ export default function DataQualityPage() {
                   </div>
                   <h4 className="text-xs font-bold text-slate-700 mt-2.5">Consistency & Joins</h4>
                   <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
-                    {dimensions.consistency?.score || 100}%
+                    {evaluating && !dimensions.consistency ? '—' : (dimensions.consistency?.score != null ? `${dimensions.consistency.score}%` : '0%')}
                   </div>
                   {/* Progress Bar */}
                   <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2.5 overflow-hidden">
                     <div
-                      className="bg-teal-500 h-1.5 rounded-full transition-all duration-500"
-                      style={{ width: `${dimensions.consistency?.score || 100}%` }}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.consistency ? 'bg-slate-300 animate-pulse' : 'bg-teal-500'}`}
+                      style={{ width: evaluating && !dimensions.consistency ? '0%' : `${dimensions.consistency?.score ?? 0}%` }}
                     />
                   </div>
                 </div>
                 <div className="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-50">
-                  {dimensions.consistency?.relationship_match_rate !== undefined
+                  {evaluating && !dimensions.consistency
+                    ? 'Evaluating consistency...'
+                    : (dimensions.consistency?.relationship_match_rate !== undefined
                     ? `${dimensions.consistency.relationship_match_rate}% match rate`
-                    : '0 consistency issues'}
+                    : '0 consistency issues')}
                 </div>
               </div>
 
@@ -965,18 +997,18 @@ export default function DataQualityPage() {
                   </div>
                   <h4 className="text-xs font-bold text-slate-700 mt-2.5">Freshness</h4>
                   <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
-                    {dimensions.freshness?.score || 100}%
+                    {evaluating && !dimensions.freshness ? '—' : (dimensions.freshness?.score != null ? `${dimensions.freshness.score}%` : '0%')}
                   </div>
                   {/* Progress Bar */}
                   <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2.5 overflow-hidden">
                     <div
-                      className="bg-amber-500 h-1.5 rounded-full transition-all duration-500"
-                      style={{ width: `${dimensions.freshness?.score || 100}%` }}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.freshness ? 'bg-slate-300 animate-pulse' : 'bg-amber-500'}`}
+                      style={{ width: evaluating && !dimensions.freshness ? '0%' : `${dimensions.freshness?.score ?? 0}%` }}
                     />
                   </div>
                 </div>
                 <div className="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-50">
-                  {dimensions.freshness?.status ? `Status: ${dimensions.freshness.status}` : 'Data is up to date'}
+                  {evaluating && !dimensions.freshness ? 'Evaluating freshness...' : (dimensions.freshness?.status ? `Status: ${dimensions.freshness.status}` : 'Data is up to date')}
                 </div>
               </div>
 
@@ -991,7 +1023,7 @@ export default function DataQualityPage() {
                   </div>
                   <h4 className="text-xs font-bold text-slate-700 mt-2.5">Schema & Volume</h4>
                   <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
-                    {qualityProfile.column_count || columnMetrics.length || 0}
+                    {evaluating && !qualityProfile ? '—' : (qualityProfile?.column_count ?? columnMetrics?.length ?? 0)}
                   </div>
                   {/* Progress Bar */}
                   <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2.5 overflow-hidden">

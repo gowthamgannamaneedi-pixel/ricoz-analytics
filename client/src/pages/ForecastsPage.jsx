@@ -319,12 +319,21 @@ export default function ForecastsPage() {
       return;
     }
 
+    const rawDatasetId = selectedDatasetId
+      ? (!isNaN(Number(selectedDatasetId)) && Number(selectedDatasetId) > 0 ? Number(selectedDatasetId) : String(selectedDatasetId))
+      : null;
+
+    if (!rawDatasetId || rawDatasetId === 'undefined') {
+      setError('Please select a valid dataset to generate forecast.');
+      return;
+    }
+
     try {
       setGenerating(true);
       setError(null);
 
       const payload = {
-        dataset_id: Number(selectedDatasetId),
+        dataset_id: rawDatasetId,
         target_column: targetColumn,
         date_column: dateColumn,
         horizon_periods: horizonNum,

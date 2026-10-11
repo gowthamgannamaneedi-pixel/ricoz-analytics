@@ -281,7 +281,7 @@ class DataQualityService {
     const currentSchemaHash = this.computeSchemaHash(schema);
     const previousSnapshot = await DataQualityModel.getLatestSnapshot(datasetId, organizationId);
 
-    const batchSize = config.qualityBatchSize || 25000;
+    const batchSize = config.qualityBatchSize || 5000;
     const isSampled = Boolean(options.sampleSize) || options.scanMode === 'SAMPLED' || options.fullScan === false;
     const scanMode = isSampled ? 'SAMPLED' : 'FULL_SCAN';
     const sampleLimit = isSampled && options.sampleSize ? Number(options.sampleSize) : (isSampled ? 10000 : null);
@@ -316,8 +316,8 @@ class DataQualityService {
       await options.onProgress({
         rowsProcessed: 0,
         totalRows: totalRows || 1,
-        progressPercent: 10,
-        stage: 'STREAMING_METRICS'
+        progressPercent: 5,
+        stage: 'INITIALIZING_STREAM'
       });
     }
 

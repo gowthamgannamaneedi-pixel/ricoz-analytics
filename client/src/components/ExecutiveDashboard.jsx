@@ -503,7 +503,32 @@ export default function ExecutiveDashboard({
         </div>
       </section>
 
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* Zero Record Dataset Notice */}
+      {Number(activeDataset?.row_count) === 0 && (
+        <div className="rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400 shrink-0">
+              <Database className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                Selected Dataset Contains 0 Usable Records
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed">
+                "{activeDataset?.name}" has no rows recorded. Upload records to this dataset or select an active populated dataset from the selector above to generate live charts and breakdowns.
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="secondary"
+            onClick={() => navigate('/datasets')}
+            className="h-9 px-4 text-xs font-semibold rounded-xl shrink-0 self-start sm:self-center"
+          >
+            Manage Datasets
+          </Button>
+        </div>
+      )}
+
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* 3. TOP ANALYTICS: 2x2 HEADLINE KPIS + REGIONAL PERFORMANCE          */}
       {/* ─────────────────────────────────────────────────────────────────── */}

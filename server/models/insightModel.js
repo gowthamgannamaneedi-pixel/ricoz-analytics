@@ -317,12 +317,15 @@ const InsightModel = {
       params.push(filters.severity.toLowerCase());
     }
 
-    if (filters.datasetId) {
-      conditions.push(`i.dataset_id = $${paramIndex++}`);
-      params.push(Number(filters.datasetId));
+    if (filters.datasetId !== undefined && filters.datasetId !== null && filters.datasetId !== '' && filters.datasetId !== 'undefined') {
+      const numDatasetId = Number(filters.datasetId);
+      if (!Number.isNaN(numDatasetId)) {
+        conditions.push(`i.dataset_id = $${paramIndex++}`);
+        params.push(numDatasetId);
+      }
     }
 
-    if (filters.metricId) {
+    if (filters.metricId && filters.metricId !== 'undefined' && filters.metricId !== 'null') {
       conditions.push(`i.metric_id = $${paramIndex++}`);
       params.push(String(filters.metricId));
     }

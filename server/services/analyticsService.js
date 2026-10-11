@@ -652,6 +652,25 @@ async function queryDatasetKpis(dataset, filters = {}, user = null) {
   const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : (dataset.schema || []);
   const dimensions = detectDatasetDimensions(schema);
 
+  if (!dataset.file_path || Number(dataset.row_count) === 0) {
+    return {
+      kpis: {
+        totalSales: 0,
+        totalOrders: 0,
+        totalQuantity: 0,
+        averageOrderValue: 0,
+        minSales: 0,
+        maxSales: 0,
+        recordCount: 0,
+        primaryMetricName: dimensions.primaryMetric || 'Metric',
+        quantityMetricName: dimensions.quantityMetric || 'Units',
+        comparison: null
+      },
+      dimensions,
+      filtersApplied: filters
+    };
+  }
+
   if (await hasPostgresDatasetRows(dataset.id)) {
     return await queryPostgresKpis(dataset, dimensions, filters, user);
   }
@@ -690,6 +709,10 @@ async function queryDatasetTrends(dataset, filters = {}, user = null) {
   const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : (dataset.schema || []);
   const dimensions = detectDatasetDimensions(schema);
 
+  if (!dataset.file_path || Number(dataset.row_count) === 0) {
+    return [];
+  }
+
   if (await hasPostgresDatasetRows(dataset.id)) {
     return await queryPostgresTrends(dataset, dimensions, filters, user);
   }
@@ -718,6 +741,10 @@ async function queryDatasetBreakdowns(dataset, groupByCol, filters = {}, user = 
   const dimensions = detectDatasetDimensions(schema);
   const targetCol = groupByCol || dimensions.regionColumn || dimensions.categoryColumn || dimensions.channelColumn;
 
+  if (!dataset.file_path || Number(dataset.row_count) === 0) {
+    return [];
+  }
+
   if (await hasPostgresDatasetRows(dataset.id)) {
     return await queryPostgresBreakdowns(dataset, targetCol, dimensions, filters, user);
   }
@@ -744,6 +771,18 @@ async function queryDatasetBreakdowns(dataset, groupByCol, filters = {}, user = 
 async function queryDatasetRows(dataset, queryOptions = {}, user = null) {
   const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : (dataset.schema || []);
   const dimensions = detectDatasetDimensions(schema);
+
+  if (!dataset.file_path || Number(dataset.row_count) === 0) {
+    const page = Math.max(1, Number(queryOptions.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(queryOptions.limit) || 20));
+    return {
+      rows: [],
+      totalCount: 0,
+      page,
+      limit,
+      totalPages: 1
+    };
+  }
 
   if (await hasPostgresDatasetRows(dataset.id)) {
     return await queryPostgresRows(dataset, queryOptions, dimensions, user);
@@ -775,6 +814,16 @@ async function queryDatasetRows(dataset, queryOptions = {}, user = null) {
  * High-performance query for Filter Dropdown Options
  */
 async function queryDatasetFilterOptions(dataset, dimensions, user = null) {
+  if (!dataset.file_path || Number(dataset.row_count) === 0) {
+    return {
+      regions: [],
+      categories: [],
+      products: [],
+      channels: [],
+      dateBounds: { min: null, max: null }
+    };
+  }
+
   if (await hasPostgresDatasetRows(dataset.id)) {
     return await queryPostgresFilterOptions(dataset, dimensions, user);
   }
