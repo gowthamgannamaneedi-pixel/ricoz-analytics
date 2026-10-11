@@ -4684,17 +4684,50 @@ async function initDb() {
   }
   console.log(` PostgreSQL Database schema initialized: ${successCount} statements applied (${noticeCount} notices)`);
 
-  // Guarantee seed admin user exists with a valid ID
+  // 1. Resolve and ensure primary organization exists for FK validity
+  let primaryOrgId = '00000000-0000-0000-0000-000000000001';
   try {
-    const adminCheck = await pool.query("SELECT id FROM users WHERE LOWER(email) = 'admin@ricoz.test' LIMIT 1;");
+    const orgCheck = await pool.query("SELECT id FROM organizations WHERE id = $1 LIMIT 1;", [primaryOrgId]);
+    if (orgCheck.rows.length === 0) {
+      const slugCheck = await pool.query("SELECT id FROM organizations WHERE slug = 'ricoz-primary' LIMIT 1;");
+      if (slugCheck.rows.length > 0) {
+        primaryOrgId = slugCheck.rows[0].id;
+      } else {
+        await pool.query(`
+          INSERT INTO organizations (id, name, slug, plan, subscription_status, payment_status)
+          VALUES ($1, 'Ricoz Primary Organization', 'ricoz-primary', 'enterprise', 'active', 'paid')
+          ON CONFLICT (slug) DO NOTHING;
+        `, [primaryOrgId]);
+        const reCheck = await pool.query("SELECT id FROM organizations WHERE slug = 'ricoz-primary' LIMIT 1;");
+        if (reCheck.rows.length > 0) primaryOrgId = reCheck.rows[0].id;
+      }
+    }
+  } catch (orgErr) {
+    console.warn('[initDb org notice]', orgErr.message);
+  }
+
+  // 2. Ensure users_status_check constraint permits pending_verification & suspended
+  try {
+    await pool.query('ALTER TABLE users DROP CONSTRAINT IF EXISTS users_status_check;');
+    await pool.query("ALTER TABLE users ADD CONSTRAINT users_status_check CHECK (status IN ('active', 'inactive', 'deactivated', 'pending_verification', 'suspended'));");
+  } catch (cErr) {
+    console.warn('[users_status_check update notice]', cErr.message);
+  }
+
+  // 3. Guarantee seed admin user exists with valid credentials & organization
+  try {
+    const adminCheck = await pool.query("SELECT id, status, password_hash, organization_id FROM users WHERE LOWER(email) = 'admin@ricoz.test' LIMIT 1;");
     if (adminCheck.rows.length === 0) {
       let adminId = crypto.randomUUID();
       try {
         await pool.query(
           `INSERT INTO users (id, name, email, password_hash, role, organization_id, status)
-           VALUES ($1, 'Gowtham (Admin)', 'admin@ricoz.test', $2, 'admin', '00000000-0000-0000-0000-000000000001', 'active')
-           ON CONFLICT (email) DO NOTHING;`,
-          [adminId, defaultPasswordHash]
+           VALUES ($1, 'Gowtham (Admin)', 'admin@ricoz.test', $2, 'admin', $3, 'active')
+           ON CONFLICT (email) DO UPDATE SET 
+             password_hash = EXCLUDED.password_hash,
+             organization_id = EXCLUDED.organization_id,
+             status = 'active';`,
+          [adminId, defaultPasswordHash, primaryOrgId]
         );
       } catch (uuidErr) {
         if (uuidErr.message?.includes('type integer') || uuidErr.code === '22P02') {
@@ -4702,16 +4735,32 @@ async function initDb() {
           adminId = Number(maxRes.rows[0]?.next_id) || 1;
           await pool.query(
             `INSERT INTO users (id, name, email, password_hash, role, organization_id, status)
-             VALUES ($1, 'Gowtham (Admin)', 'admin@ricoz.test', $2, 'admin', '00000000-0000-0000-0000-000000000001', 'active')
-             ON CONFLICT (email) DO NOTHING;`,
-            [adminId, defaultPasswordHash]
+             VALUES ($1, 'Gowtham (Admin)', 'admin@ricoz.test', $2, 'admin', $3, 'active')
+             ON CONFLICT (email) DO UPDATE SET 
+               password_hash = EXCLUDED.password_hash,
+               organization_id = EXCLUDED.organization_id,
+               status = 'active';`,
+            [adminId, defaultPasswordHash, primaryOrgId]
           );
+        } else {
+          throw uuidErr;
         }
       }
-      console.log(' Seed admin user ensured with ID:', adminId);
+      console.log(' Admin user seeded successfully with ID:', adminId, 'and org:', primaryOrgId);
+    } else {
+      const existing = adminCheck.rows[0];
+      await pool.query(
+        `UPDATE users 
+         SET status = 'active',
+             organization_id = COALESCE(organization_id, $1),
+             password_hash = COALESCE(password_hash, $2)
+         WHERE id = $3;`,
+        [primaryOrgId, defaultPasswordHash, existing.id]
+      );
+      console.log(' Existing admin account verified and updated to active.');
     }
   } catch (seedErr) {
-    console.warn('[initDb seed admin notice]', seedErr.message);
+    console.error(' [initDb seed admin ERROR]:', seedErr.message);
   }
 }
 
