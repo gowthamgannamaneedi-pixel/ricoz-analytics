@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const config = require('./index');
 
@@ -4683,19 +4684,31 @@ async function initDb() {
   }
   console.log(` PostgreSQL Database schema initialized: ${successCount} statements applied (${noticeCount} notices)`);
 
-  // Guarantee seed admin user exists with a valid integer ID
+  // Guarantee seed admin user exists with a valid ID
   try {
     const adminCheck = await pool.query("SELECT id FROM users WHERE LOWER(email) = 'admin@ricoz.test' LIMIT 1;");
     if (adminCheck.rows.length === 0) {
-      const maxRes = await pool.query('SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM users;');
-      const nextId = Number(maxRes.rows[0]?.next_id) || 1;
-      await pool.query(
-        `INSERT INTO users (id, name, email, password_hash, role, organization_id, status)
-         VALUES ($1, 'Gowtham (Admin)', 'admin@ricoz.test', $2, 'admin', '00000000-0000-0000-0000-000000000001', 'active')
-         ON CONFLICT (email) DO NOTHING;`,
-        [nextId, defaultPasswordHash]
-      );
-      console.log(' Seed admin user ensured with ID:', nextId);
+      let adminId = crypto.randomUUID();
+      try {
+        await pool.query(
+          `INSERT INTO users (id, name, email, password_hash, role, organization_id, status)
+           VALUES ($1, 'Gowtham (Admin)', 'admin@ricoz.test', $2, 'admin', '00000000-0000-0000-0000-000000000001', 'active')
+           ON CONFLICT (email) DO NOTHING;`,
+          [adminId, defaultPasswordHash]
+        );
+      } catch (uuidErr) {
+        if (uuidErr.message?.includes('type integer') || uuidErr.code === '22P02') {
+          const maxRes = await pool.query('SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM users;');
+          adminId = Number(maxRes.rows[0]?.next_id) || 1;
+          await pool.query(
+            `INSERT INTO users (id, name, email, password_hash, role, organization_id, status)
+             VALUES ($1, 'Gowtham (Admin)', 'admin@ricoz.test', $2, 'admin', '00000000-0000-0000-0000-000000000001', 'active')
+             ON CONFLICT (email) DO NOTHING;`,
+            [adminId, defaultPasswordHash]
+          );
+        }
+      }
+      console.log(' Seed admin user ensured with ID:', adminId);
     }
   } catch (seedErr) {
     console.warn('[initDb seed admin notice]', seedErr.message);

@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const db = require('../config/database');
 
 /**
@@ -149,34 +150,52 @@ const UserModel = {
     const orgId = organization_id || organizationId;
     const pwdHash = password_hash || password || 'mock_hash';
 
-    let resolvedId = id;
-    if (!resolvedId) {
-      try {
-        const maxRes = await db.query('SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM users;');
-        resolvedId = Number(maxRes.rows[0]?.next_id) || 1;
-      } catch (_) {
-        resolvedId = 1;
-      }
-    }
-
+    // Production PostgreSQL schema uses UUID for users.id
+    const uuidId = id || crypto.randomUUID();
     const sql = `
       INSERT INTO users (id, name, email, password_hash, role, organization_id, status, verification_token, verification_otp, verification_token_expires_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id, name, email, role, organization_id, COALESCE(status, 'active') as status, verification_token, verification_otp, created_at, updated_at;
     `;
-    const result = await db.query(sql, [
-      resolvedId,
-      name.trim(),
-      email.trim().toLowerCase(),
-      pwdHash,
-      role,
-      orgId,
-      status,
-      verification_token,
-      verification_otp,
-      verification_token_expires_at
-    ]);
-    return result.rows[0];
+
+    try {
+      const result = await db.query(sql, [
+        uuidId,
+        name.trim(),
+        email.trim().toLowerCase(),
+        pwdHash,
+        role,
+        orgId,
+        status,
+        verification_token,
+        verification_otp,
+        verification_token_expires_at
+      ]);
+      return result.rows[0];
+    } catch (err) {
+      // If table uses integer IDs (e.g. legacy/in-memory), retry with integer sequence ID
+      if (err.message?.includes('type integer') || err.code === '22P02') {
+        let intId = 1;
+        try {
+          const maxRes = await db.query('SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM users;');
+          intId = Number(maxRes.rows[0]?.next_id) || 1;
+        } catch (_) {}
+        const result = await db.query(sql, [
+          intId,
+          name.trim(),
+          email.trim().toLowerCase(),
+          pwdHash,
+          role,
+          orgId,
+          status,
+          verification_token,
+          verification_otp,
+          verification_token_expires_at
+        ]);
+        return result.rows[0];
+      }
+      throw err;
+    }
   },
 
   /**
