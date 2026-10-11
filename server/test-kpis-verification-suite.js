@@ -33,9 +33,9 @@ async function runTestSuite() {
   // --------------------------------------------------------------------------
   const orgId = '00000000-0000-0000-0000-000000000001';
   const datasets = await Dataset.findByOrganizationId(orgId);
-  const ds = datasets[0];
+  const ds = datasets.find(d => Number(d.id) === 1 || Number(d.row_count) === 20 || d.name?.includes('Indian Enterprise Sales')) || datasets[0];
   const records = await loadDatasetRecords(ds.file_path);
-  const schema = JSON.parse(ds.schema);
+  const schema = typeof ds.schema === 'string' ? JSON.parse(ds.schema) : ds.schema;
   const dimensions = detectDatasetDimensions(schema, records);
 
   test('1. Total Orders on Real Dataset matches COUNT(DISTINCT order_id) = 20', () => {

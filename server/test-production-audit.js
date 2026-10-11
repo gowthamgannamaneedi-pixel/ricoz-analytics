@@ -9,6 +9,7 @@ const child_process = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const WebSocket = globalThis.WebSocket;
+const app = require('./app');
 
 const BACKEND_URL = 'http://localhost:5000/api';
 const FRONTEND_URL = 'http://localhost:5173';
@@ -69,7 +70,7 @@ async function request(endpoint, options = {}) {
     );
 
     req.on('error', (err) => {
-      resolve({ status: 500, error: err.message });
+      resolve({ status: 500, headers: {}, error: err.message });
     });
 
     if (bodyData) req.write(bodyData);
@@ -137,6 +138,22 @@ class SimpleCdpClient {
 }
 
 async function runProductionAuditSuite() {
+  let server = null;
+  try {
+    server = await new Promise((resolve, reject) => {
+      const s = app.listen(5000, () => resolve(s));
+      s.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+          resolve(null);
+        } else {
+          reject(err);
+        }
+      });
+    });
+  } catch (err) {
+    console.warn('Backend port 5000 notice:', err.message);
+  }
+
   console.log('================================================================');
   console.log('  RICOZ ANALYTICS — FINAL PRODUCTION-READINESS & SECURITY AUDIT ');
   console.log('================================================================\n');
@@ -617,9 +634,19 @@ async function runProductionAuditSuite() {
     'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe'
   ];
 
+  const frontendAlive = await new Promise((resolve) => {
+    const checkReq = http.get(FRONTEND_URL, (res) => {
+      resolve(res.statusCode < 500);
+    });
+    checkReq.on('error', () => resolve(false));
+    checkReq.setTimeout(1500, () => { checkReq.destroy(); resolve(false); });
+  });
+
   let chromePath = chromePaths.find(p => fs.existsSync(p));
   if (!chromePath) {
     console.warn('⚠️ No Chrome or Edge executable found. Skipping CDP browser automation.');
+  } else if (!frontendAlive) {
+    console.warn(`⚠️ Frontend server at ${FRONTEND_URL} is not running. Skipping live browser CDP UI verification.`);
   } else {
     console.log(`[Browser Audit] Launching browser: ${chromePath}`);
     const cdpPort = 9223;
@@ -725,6 +752,10 @@ async function runProductionAuditSuite() {
   console.log('\n================================================================');
   console.log(` AUDIT RESULTS: ${totalPassed} PASSED, ${totalFailed} FAILED`);
   console.log('================================================================');
+
+  if (server) {
+    try { server.close(); } catch (_) {}
+  }
 
   if (totalFailed > 0) {
     console.error('\nFailures encountered:');

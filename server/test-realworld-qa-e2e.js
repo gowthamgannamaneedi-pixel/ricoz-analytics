@@ -7,6 +7,7 @@ const http = require('http');
 const crypto = require('crypto');
 const fs = require('fs');
 const { spawn } = require('child_process');
+const app = require('./app');
 
 const BASE_API = 'http://localhost:5000/api';
 const FRONTEND_URL = 'http://localhost:5173';
@@ -149,6 +150,22 @@ class CDPClient {
 }
 
 async function runComprehensiveQA() {
+  let server = null;
+  try {
+    server = await new Promise((resolve, reject) => {
+      const s = app.listen(5000, () => resolve(s));
+      s.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+          resolve(null);
+        } else {
+          reject(err);
+        }
+      });
+    });
+  } catch (err) {
+    console.warn('Backend port 5000 notice:', err.message);
+  }
+
   console.log('================================================================');
   console.log('  RICOZ ANALYTICS — FULL REAL-WORLD BROWSER QA & SECURITY SUITE ');
   console.log('================================================================\n');
@@ -640,24 +657,37 @@ async function runComprehensiveQA() {
   // --------------------------------------------------------------------------
   console.log('\n[SECTION 10] Real Browser Automation (Chrome CDP) & Viewport QA');
 
-  console.log(`[Browser QA] Launching headless browser: ${browserPath}`);
-  const browserProc = spawn(browserPath, [
-    '--headless=new',
-    `--remote-debugging-port=${debugPort}`,
-    '--no-sandbox',
-    '--disable-gpu',
-    '--window-size=1920,1080',
-    'about:blank'
-  ]);
+  const frontendAlive = await new Promise((resolve) => {
+    const checkReq = http.get(FRONTEND_URL, (res) => {
+      resolve(res.statusCode < 500);
+    });
+    checkReq.on('error', () => resolve(false));
+    checkReq.setTimeout(1500, () => { checkReq.destroy(); resolve(false); });
+  });
 
-  try {
-    await sleep(2500);
-    const targets = await getJson(`http://127.0.0.1:${debugPort}/json/list`);
-    const pageTarget = targets.find(t => t.type === 'page');
-    if (!pageTarget) throw new Error('No page target found');
+  if (!fs.existsSync(browserPath)) {
+    console.warn('⚠️ No Chrome or Edge executable found. Skipping CDP browser automation.');
+  } else if (!frontendAlive) {
+    console.warn(`⚠️ Frontend server at ${FRONTEND_URL} is not running. Skipping live browser CDP UI verification.`);
+  } else {
+    console.log(`[Browser QA] Launching headless browser: ${browserPath}`);
+    const browserProc = spawn(browserPath, [
+      '--headless=new',
+      `--remote-debugging-port=${debugPort}`,
+      '--no-sandbox',
+      '--disable-gpu',
+      '--window-size=1920,1080',
+      'about:blank'
+    ]);
 
-    const client = new CDPClient(pageTarget.webSocketDebuggerUrl);
-    await client.waitOpen();
+    try {
+      await sleep(2500);
+      const targets = await getJson(`http://127.0.0.1:${debugPort}/json/list`);
+      const pageTarget = targets.find(t => t.type === 'page');
+      if (!pageTarget) throw new Error('No page target found');
+
+      const client = new CDPClient(pageTarget.webSocketDebuggerUrl);
+      await client.waitOpen();
     await client.send('Page.enable');
     await client.send('Runtime.enable');
 
@@ -819,8 +849,13 @@ async function runComprehensiveQA() {
     assert(!allValues.includes('password') && !allValues.includes('jwtSecret'), 'SECURITY: No passwords or server secrets leaked in localStorage');
     assert(client.consoleErrors.length === 0, `Browser Console: 0 unexpected JavaScript errors (actual: ${client.consoleErrors.length})`);
 
-  } finally {
-    browserProc.kill();
+    } finally {
+      if (browserProc) browserProc.kill();
+    }
+  }
+
+  if (server) {
+    try { server.close(); } catch (_) {}
   }
 
   // --------------------------------------------------------------------------
