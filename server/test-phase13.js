@@ -184,6 +184,8 @@ async function runTests() {
     const res5 = await request('PUT', '/api/admin/users/4/role', { role: 'analyst' }, { Authorization: `Bearer ${adminToken}` });
     assert(res5.statusCode === 200 && res5.body.user.role === 'analyst',
       'Test 5: Admin can update team member role');
+    // Restore user 4 back to viewer for test suite stability
+    await request('PUT', '/api/admin/users/4/role', { role: 'viewer' }, { Authorization: `Bearer ${adminToken}` });
 
     // -------------------------------------------------------------
     // Test 6: Permission enforcement

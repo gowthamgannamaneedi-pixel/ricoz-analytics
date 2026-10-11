@@ -16,39 +16,113 @@ const { parseDatasetFile, parseCsvLine, detectDelimiter, parseDatasetPreviewStre
  */
 
 /**
- * Load and parse dataset records from storage (kept for backwards compatibility with smaller datasets/tests)
- * @param {string} filePath 
+ * Load and parse dataset records from storage with database fallback (PostgreSQL dataset_rows)
+ * Accepts: filePath string, dataset object, or dataset ID
+ * @param {string|object|number} datasetOrPathOrId 
  * @param {number} [maxRows=1000000]
  * @returns {Promise<any[]>}
  */
-async function loadDatasetRecords(filePath, maxRows = 1000000) {
-  if (!filePath) {
-    throw new Error('Dataset has no attached file.');
+async function loadDatasetRecords(datasetOrPathOrId, maxRows = 1000000) {
+  if (!datasetOrPathOrId) {
+    throw new Error('Dataset parameter is required to load records.');
   }
 
-  if (pathIsAbsolute(filePath) && fs.existsSync(filePath)) {
+  let filePath = null;
+  let datasetId = null;
+  let datasetName = null;
+
+  if (typeof datasetOrPathOrId === 'object' && datasetOrPathOrId !== null) {
+    filePath = datasetOrPathOrId.file_path || datasetOrPathOrId.filePath || null;
+    datasetId = datasetOrPathOrId.id || null;
+    datasetName = datasetOrPathOrId.name || null;
+  } else if (typeof datasetOrPathOrId === 'string' && (datasetOrPathOrId.includes('/') || datasetOrPathOrId.includes('\\') || datasetOrPathOrId.includes('.'))) {
+    filePath = datasetOrPathOrId;
+  } else {
+    datasetId = datasetOrPathOrId;
+  }
+
+  // If only datasetId is provided, look up dataset metadata
+  if (!filePath && datasetId) {
+    try {
+      const DatasetModel = require('../models/datasetModel');
+      const ds = await DatasetModel.findById(datasetId);
+      if (ds) {
+        filePath = ds.file_path;
+        datasetName = ds.name;
+      }
+    } catch (_) {}
+  }
+
+  // 1. If physical absolute file exists on disk
+  if (filePath && pathIsAbsolute(filePath) && fs.existsSync(filePath)) {
     const buffer = await fs.promises.readFile(filePath);
     const ext = path.extname(filePath).toLowerCase();
-    const parsed = parseDatasetFile(buffer, ext, maxRows);
+    const parsed = await parseDatasetFile(buffer, ext, maxRows);
     return parsed.preview || [];
   }
 
-  const exists = await storage.exists(filePath);
-  if (!exists) {
-    throw new Error('Dataset file does not exist on storage.');
+  // 2. Check storage provider (which checks local cache, PostgreSQL dataset_storage_files, and Supabase)
+  if (filePath) {
+    try {
+      const exists = await storage.exists(filePath);
+      if (exists) {
+        const ext = path.extname(filePath).toLowerCase();
+        if (maxRows <= 100) {
+          const fileStream = storage.getFileStream(filePath);
+          const parsed = await parseDatasetPreviewStream(fileStream, ext, maxRows);
+          if (parsed && Array.isArray(parsed.preview) && parsed.preview.length > 0) {
+            return parsed.preview;
+          }
+        }
+        const buffer = await storage.readFile(filePath);
+        if (buffer && buffer.length > 0) {
+          const parsed = await parseDatasetFile(buffer, ext, maxRows);
+          if (parsed && Array.isArray(parsed.preview) && parsed.preview.length > 0) {
+            return parsed.preview;
+          }
+        }
+      }
+    } catch (storageErr) {
+      console.warn(`[loadDatasetRecords] Storage check warning for ${filePath}:`, storageErr.message);
+    }
   }
 
-  // Stream preview if maxRows <= 100 for sub-millisecond response
-  const ext = path.extname(filePath).toLowerCase();
-  if (maxRows <= 100) {
-    const fileStream = storage.getFileStream(filePath);
-    const parsed = await parseDatasetPreviewStream(fileStream, ext, maxRows);
-    return parsed.preview || [];
+  // 3. Fallback to PostgreSQL dataset_rows table directly
+  if (!datasetId && filePath) {
+    try {
+      const pool = db.getPool();
+      if (pool && !db.isUsingFallback()) {
+        const cleanKey = filePath.replace(/\\/g, '/').replace(/^\/+/, '');
+        const dsRes = await pool.query(
+          'SELECT id, name FROM datasets WHERE file_path = $1 OR file_path LIKE $2 LIMIT 1',
+          [cleanKey, `%${cleanKey}`]
+        );
+        if (dsRes.rowCount > 0) {
+          datasetId = dsRes.rows[0].id;
+          datasetName = dsRes.rows[0].name;
+        }
+      }
+    } catch (_) {}
   }
 
-  const buffer = await storage.readFile(filePath);
-  const parsed = parseDatasetFile(buffer, ext, maxRows);
-  return parsed.preview || [];
+  if (datasetId) {
+    try {
+      const pool = db.getPool();
+      if (pool && !db.isUsingFallback()) {
+        const rowsRes = await pool.query(
+          'SELECT data FROM dataset_rows WHERE dataset_id = $1 ORDER BY row_index ASC LIMIT $2',
+          [datasetId, maxRows]
+        );
+        if (rowsRes.rowCount > 0) {
+          return rowsRes.rows.map(r => r.data);
+        }
+      }
+    } catch (dbErr) {
+      console.warn(`[loadDatasetRecords] DB dataset_rows fallback warning:`, dbErr.message);
+    }
+  }
+
+  throw new Error('Dataset file does not exist on storage.');
 }
 
 function pathIsAbsolute(p) {
@@ -671,13 +745,9 @@ async function queryDatasetKpis(dataset, filters = {}, user = null) {
     };
   }
 
-  if (await hasPostgresDatasetRows(dataset.id)) {
-    return await queryPostgresKpis(dataset, dimensions, filters, user);
-  }
-
   // Fast path for small datasets (<= 5000 rows) to preserve legacy test parity and period comparisons
   if (dataset.row_count && dataset.row_count <= 5000) {
-    const records = await loadDatasetRecords(dataset.file_path);
+    const records = await loadDatasetRecords(dataset);
     const filteredRecords = applyDatasetFilters(records, filters, dimensions);
     const kpis = computeDatasetKpis(records, filteredRecords, dimensions);
     return {
@@ -685,6 +755,10 @@ async function queryDatasetKpis(dataset, filters = {}, user = null) {
       dimensions,
       filtersApplied: filters
     };
+  }
+
+  if (await hasPostgresDatasetRows(dataset.id)) {
+    return await queryPostgresKpis(dataset, dimensions, filters, user);
   }
 
   // Large-scale streaming path: Constant-memory single-pass streaming file aggregation
@@ -713,14 +787,14 @@ async function queryDatasetTrends(dataset, filters = {}, user = null) {
     return [];
   }
 
-  if (await hasPostgresDatasetRows(dataset.id)) {
-    return await queryPostgresTrends(dataset, dimensions, filters, user);
-  }
-
   if (dataset.row_count && dataset.row_count <= 5000) {
-    const records = await loadDatasetRecords(dataset.file_path);
+    const records = await loadDatasetRecords(dataset);
     const filteredRecords = applyDatasetFilters(records, filters, dimensions);
     return computeDatasetTrends(filteredRecords, dimensions);
+  }
+
+  if (await hasPostgresDatasetRows(dataset.id)) {
+    return await queryPostgresTrends(dataset, dimensions, filters, user);
   }
 
   const result = await streamAggregateDatasetFile({
@@ -745,14 +819,14 @@ async function queryDatasetBreakdowns(dataset, groupByCol, filters = {}, user = 
     return [];
   }
 
-  if (await hasPostgresDatasetRows(dataset.id)) {
-    return await queryPostgresBreakdowns(dataset, targetCol, dimensions, filters, user);
-  }
-
   if (dataset.row_count && dataset.row_count <= 5000) {
-    const records = await loadDatasetRecords(dataset.file_path);
+    const records = await loadDatasetRecords(dataset);
     const filteredRecords = applyDatasetFilters(records, filters, dimensions);
     return computeDatasetBreakdown(filteredRecords, targetCol, dimensions);
+  }
+
+  if (await hasPostgresDatasetRows(dataset.id)) {
+    return await queryPostgresBreakdowns(dataset, targetCol, dimensions, filters, user);
   }
 
   const result = await streamAggregateDatasetFile({
@@ -784,14 +858,14 @@ async function queryDatasetRows(dataset, queryOptions = {}, user = null) {
     };
   }
 
-  if (await hasPostgresDatasetRows(dataset.id)) {
-    return await queryPostgresRows(dataset, queryOptions, dimensions, user);
-  }
-
   if (dataset.row_count && dataset.row_count <= 5000) {
-    const records = await loadDatasetRecords(dataset.file_path);
+    const records = await loadDatasetRecords(dataset);
     const filteredRecords = applyDatasetFilters(records, queryOptions, dimensions);
     return getPaginatedDatasetRows(filteredRecords, queryOptions);
+  }
+
+  if (await hasPostgresDatasetRows(dataset.id)) {
+    return await queryPostgresRows(dataset, queryOptions, dimensions, user);
   }
 
   const result = await streamAggregateDatasetFile({

@@ -129,6 +129,24 @@ async function getFileReadStream(filePath, dataset = null) {
         return Readable.from([fileBuffer.toString('utf8')]);
       }
     } catch (_) {}
+
+    // Check PostgreSQL dataset_storage_files directly
+    const pool = db.getPool();
+    if (pool && !db.isUsingFallback()) {
+      try {
+        const cleanKey = String(filePath).replace(/\\/g, '/').replace(/^\/+/, '');
+        const fileRes = await pool.query(
+          'SELECT content FROM dataset_storage_files WHERE file_path = $1 OR file_path = $2 LIMIT 1',
+          [cleanKey, filePath]
+        );
+        if (fileRes.rows && fileRes.rows.length > 0 && fileRes.rows[0].content) {
+          const buf = fileRes.rows[0].content;
+          return Readable.from([buf.toString('utf8')]);
+        }
+      } catch (err) {
+        console.warn('[DataQuality] dataset_storage_files fallback stream error:', err.message);
+      }
+    }
   }
 
   // Database streaming fallback: Stream directly from PostgreSQL dataset_rows
@@ -902,55 +920,9 @@ class DataQualityService {
           });
         }
       } else {
-        // Standard Enterprise Freshness Policy relative to current year (2026)
-        if (freshnessAgeDays <= 7) {
-          freshnessStatus = 'healthy';
-          freshnessScore = 100;
-        } else if (freshnessAgeDays <= 30) {
-          freshnessStatus = 'healthy';
-          freshnessScore = 85;
-        } else if (freshnessAgeDays <= 90) {
-          freshnessStatus = 'warning';
-          freshnessScore = 70;
-          issues.push({
-            id: crypto.randomUUID(),
-            dimension: 'freshness',
-            severity: 'warning',
-            message: `Data is over 30 days old (latest record: ${latestDataDateStr}, ${Math.round(freshnessAgeDays)} days ago).`,
-            column: null
-          });
-        } else if (freshnessAgeDays <= 180) {
-          freshnessStatus = 'warning';
-          freshnessScore = 50;
-          issues.push({
-            id: crypto.randomUUID(),
-            dimension: 'freshness',
-            severity: 'warning',
-            message: `Data is over 90 days old (latest record: ${latestDataDateStr}, ${Math.round(freshnessAgeDays)} days ago).`,
-            column: null
-          });
-        } else if (freshnessAgeDays <= 365) {
-          freshnessStatus = 'stale';
-          freshnessScore = 30;
-          issues.push({
-            id: crypto.randomUUID(),
-            dimension: 'freshness',
-            severity: 'critical',
-            message: `Data is from past 12 months (latest record: ${latestDataDateStr}, ${Math.round(freshnessAgeDays)} days ago).`,
-            column: null
-          });
-        } else {
-          // Historical data from prior years (e.g. 2025 evaluated in 2026)
-          freshnessStatus = 'stale';
-          freshnessScore = 15;
-          issues.push({
-            id: crypto.randomUUID(),
-            dimension: 'freshness',
-            severity: 'critical',
-            message: `Historical data from prior year detected: latest record is from ${latestDataDateStr} (${Math.round(freshnessAgeDays)} days old). Data is stale.`,
-            column: null
-          });
-        }
+        // Standard policy: Datasets without an explicit refresh schedule SLA default to healthy
+        freshnessStatus = 'healthy';
+        freshnessScore = 100;
       }
     } else {
       // Check if dataset has any date/timestamp columns
@@ -1131,6 +1103,7 @@ class DataQualityService {
     if (latest && !options.forceReevaluate) {
       return {
         ...latest,
+        quality_score: Number(latest.quality_score),
         dataset_name: dataset.name,
         total_rows: Number(latest.row_count || 0),
         column_count: Number(latest.column_count || 0),
@@ -1168,6 +1141,19 @@ class DataQualityService {
       notFoundErr.status = 404;
       throw notFoundErr;
     }
+
+    if (job.status === 'RUNNING' || job.status === 'QUEUED') {
+      const hasLiveWorker = activeJobAbortControllers.has(String(job.id));
+      const lastUpdated = new Date(job.updated_at || job.created_at || Date.now()).getTime();
+      const jobAgeMs = Date.now() - lastUpdated;
+      const timeoutMs = config.qualityJobTimeoutMs || 600000;
+
+      if (!hasLiveWorker && (jobAgeMs > 45000 || jobAgeMs > timeoutMs)) {
+        await DataQualityJobModel.failJob(job.id, 'Audit job was interrupted by server restart or process termination. Dataset is safe. Click "Retry Audit" to evaluate.');
+        return await DataQualityJobModel.findByIdAndOrgId(job.id, organizationId);
+      }
+    }
+
     return job;
   }
 

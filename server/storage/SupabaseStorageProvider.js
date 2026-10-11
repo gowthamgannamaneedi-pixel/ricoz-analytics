@@ -3,6 +3,7 @@ const path = require('path');
 const crypto = require('crypto');
 const stream = require('stream');
 const StorageProvider = require('./StorageProvider');
+const db = require('../config/database');
 
 /**
  * Enterprise Supabase Storage Provider
@@ -85,10 +86,10 @@ class SupabaseStorageProvider extends StorageProvider {
   }
 
   /**
-   * Save a file buffer to persistent Supabase Storage & local cache
+   * Save a file buffer to persistent storage (PostgreSQL dataset_storage_files + Supabase + local cache)
    * @param {string|number} userId 
    * @param {string} originalFilename 
-   * @param {Buffer} buffer 
+   * @param {Buffer|string} bufferOrPath 
    * @returns {Promise<{ filePath: string, size: number, storage: string }>}
    */
   async saveFile(userId, originalFilename, bufferOrPath) {
@@ -106,38 +107,54 @@ class SupabaseStorageProvider extends StorageProvider {
     }
 
     let fileSize = 0;
+    let fileBuffer = null;
     const isFilePath = typeof bufferOrPath === 'string' && fs.existsSync(bufferOrPath);
 
     if (isFilePath) {
       await fs.promises.copyFile(bufferOrPath, cachedPath);
-      const stat = await fs.promises.stat(cachedPath);
-      fileSize = stat.size;
+      fileBuffer = await fs.promises.readFile(cachedPath);
+      fileSize = fileBuffer.length;
     } else if (Buffer.isBuffer(bufferOrPath)) {
+      fileBuffer = bufferOrPath;
       await fs.promises.writeFile(cachedPath, bufferOrPath);
       fileSize = bufferOrPath.length;
     } else {
       const contentStr = String(bufferOrPath || '');
+      fileBuffer = Buffer.from(contentStr, 'utf8');
       await fs.promises.writeFile(cachedPath, contentStr, 'utf8');
-      fileSize = Buffer.byteLength(contentStr, 'utf8');
+      fileSize = fileBuffer.length;
     }
 
-    // 1. Upload to Supabase Storage (cloud persistence)
+    // 1. Persistent Database Storage: Save in PostgreSQL dataset_storage_files
+    try {
+      await db.query(`
+        INSERT INTO dataset_storage_files (file_path, content, size, mime_type, updated_at)
+        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+        ON CONFLICT (file_path) DO UPDATE
+        SET content = EXCLUDED.content,
+            size = EXCLUDED.size,
+            mime_type = EXCLUDED.mime_type,
+            updated_at = CURRENT_TIMESTAMP
+      `, [cleanKey, fileBuffer, fileSize, mimeType]);
+    } catch (pgErr) {
+      console.warn(`[SupabaseStorageProvider] PostgreSQL storage backup notice: ${pgErr.message}`);
+    }
+
+    // 2. Upload to Supabase Storage (cloud persistence)
     if (this.client && this.client.storage) {
       try {
-        const uploadPayload = isFilePath ? fs.createReadStream(cachedPath) : (Buffer.isBuffer(bufferOrPath) ? bufferOrPath : Buffer.from(String(bufferOrPath || ''), 'utf8'));
-        const { data, error } = await this.client.storage
+        const { error } = await this.client.storage
           .from(this.bucket)
-          .upload(cleanKey, uploadPayload, {
+          .upload(cleanKey, fileBuffer, {
             contentType: mimeType,
-            upsert: true,
-            duplex: isFilePath ? 'half' : undefined
+            upsert: true
           });
 
         if (error) {
-          console.warn(`[SupabaseStorageProvider] Cloud upload notice: ${error.message}. Caching locally.`);
+          console.warn(`[SupabaseStorageProvider] Cloud upload notice: ${error.message}. Persisted in database and local cache.`);
         }
       } catch (err) {
-        console.warn(`[SupabaseStorageProvider] Cloud upload exception: ${err.message}. Caching locally.`);
+        console.warn(`[SupabaseStorageProvider] Cloud upload exception: ${err.message}. Persisted in database and local cache.`);
       }
     }
 
@@ -156,7 +173,7 @@ class SupabaseStorageProvider extends StorageProvider {
 
   /**
    * Read file content from storage as a buffer
-   * Tiers: Local Cache -> Supabase Cloud Storage -> Bundled Seed -> Legacy Disk
+   * Tiers: Local Cache -> PostgreSQL dataset_storage_files -> Supabase Cloud Storage -> PostgreSQL dataset_rows reconstruction -> Bundled Seed -> Legacy Disk
    * @param {string} filePath 
    * @returns {Promise<Buffer>}
    */
@@ -169,7 +186,28 @@ class SupabaseStorageProvider extends StorageProvider {
       return await fs.promises.readFile(cachedPath);
     }
 
-    // 2. Download from Supabase Cloud Storage
+    // 2. Check PostgreSQL persistent storage (survives container restarts)
+    try {
+      const pgRes = await db.query(
+        'SELECT content FROM dataset_storage_files WHERE file_path = $1',
+        [cleanKey]
+      );
+      if (pgRes.rowCount > 0 && pgRes.rows[0].content) {
+        const buffer = Buffer.isBuffer(pgRes.rows[0].content)
+          ? pgRes.rows[0].content
+          : Buffer.from(pgRes.rows[0].content);
+
+        // Populate local cache for fast subsequent reads
+        const cachedDir = path.dirname(cachedPath);
+        if (!fs.existsSync(cachedDir)) {
+          fs.mkdirSync(cachedDir, { recursive: true });
+        }
+        await fs.promises.writeFile(cachedPath, buffer).catch(() => {});
+        return buffer;
+      }
+    } catch (_) {}
+
+    // 3. Download from Supabase Cloud Storage
     if (this.client && this.client.storage) {
       try {
         const { data, error } = await this.client.storage
@@ -179,52 +217,94 @@ class SupabaseStorageProvider extends StorageProvider {
         if (!error && data) {
           const buffer = Buffer.from(await data.arrayBuffer());
 
-          // Populate local cache for subsequent read performance
+          // Populate local cache and PostgreSQL backup
           const cachedDir = path.dirname(cachedPath);
           if (!fs.existsSync(cachedDir)) {
             fs.mkdirSync(cachedDir, { recursive: true });
           }
           await fs.promises.writeFile(cachedPath, buffer).catch(() => {});
 
+          db.query(`
+            INSERT INTO dataset_storage_files (file_path, content, size, mime_type, updated_at)
+            VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+            ON CONFLICT (file_path) DO NOTHING
+          `, [cleanKey, buffer, buffer.length, this._getMimeType(cleanKey)]).catch(() => {});
+
           return buffer;
         }
       } catch (cloudErr) {
-        // Fall through to bundled seed / legacy
+        // Fall through to next tier
       }
     }
 
-    // 3. Check bundled seed directory (server/data/datasets)
+    // 4. Reconstruct from PostgreSQL dataset_rows if rows exist for this dataset
+    try {
+      const dsRes = await db.query(
+        'SELECT id, schema, row_count, name FROM datasets WHERE file_path = $1 OR file_path LIKE $2 LIMIT 1',
+        [cleanKey, `%${cleanKey}`]
+      );
+      if (dsRes.rowCount > 0) {
+        const ds = dsRes.rows[0];
+        const rowsRes = await db.query(
+          'SELECT data FROM dataset_rows WHERE dataset_id = $1 ORDER BY row_index ASC',
+          [ds.id]
+        );
+        if (rowsRes.rowCount > 0) {
+          const ext = path.extname(cleanKey).toLowerCase();
+          let reconstructedBuffer;
+          if (ext === '.json') {
+            const records = rowsRes.rows.map(r => r.data);
+            reconstructedBuffer = Buffer.from(JSON.stringify(records, null, 2), 'utf8');
+          } else {
+            // CSV
+            let schema = ds.schema;
+            if (typeof schema === 'string') {
+              try { schema = JSON.parse(schema); } catch (_) { schema = []; }
+            }
+            const firstRow = rowsRes.rows[0].data || {};
+            const headers = Array.isArray(schema) && schema.length > 0
+              ? schema.map(s => s.name || s)
+              : Object.keys(firstRow);
+            let csvText = headers.join(',') + '\n';
+            for (const r of rowsRes.rows) {
+              const row = r.data || {};
+              const line = headers.map(h => {
+                const val = row[h] !== undefined && row[h] !== null ? String(row[h]) : '';
+                return val.includes(',') || val.includes('"') || val.includes('\n')
+                  ? `"${val.replace(/"/g, '""')}"`
+                  : val;
+              }).join(',');
+              csvText += line + '\n';
+            }
+            reconstructedBuffer = Buffer.from(csvText, 'utf8');
+          }
+
+          // Populate local cache and PostgreSQL persistent storage table
+          const cachedDir = path.dirname(cachedPath);
+          if (!fs.existsSync(cachedDir)) {
+            fs.mkdirSync(cachedDir, { recursive: true });
+          }
+          await fs.promises.writeFile(cachedPath, reconstructedBuffer).catch(() => {});
+
+          db.query(`
+            INSERT INTO dataset_storage_files (file_path, content, size, mime_type, updated_at)
+            VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+            ON CONFLICT (file_path) DO NOTHING
+          `, [cleanKey, reconstructedBuffer, reconstructedBuffer.length, this._getMimeType(cleanKey)]).catch(() => {});
+
+          return reconstructedBuffer;
+        }
+      }
+    } catch (_) {}
+
+    // 5. Check bundled seed directory (server/data/datasets)
     const seedPath = path.join(this.seedDir, cleanKey);
     if (fs.existsSync(seedPath)) {
       const buffer = await fs.promises.readFile(seedPath);
-
-      // Self-healing: auto-backfill into Supabase Storage if cloud client is present
-      if (this.client && this.client.storage) {
-        this.client.storage
-          .from(this.bucket)
-          .upload(cleanKey, buffer, {
-            contentType: this._getMimeType(cleanKey),
-            upsert: true
-          })
-          .then(() => {
-            console.log(`[SupabaseStorageProvider] Auto-backfilled seed dataset to cloud: ${cleanKey}`);
-          })
-          .catch((e) => {
-            console.warn(`[SupabaseStorageProvider] Auto-backfill notice for ${cleanKey}:`, e.message);
-          });
-      }
-
-      // Populate local cache
-      const cachedDir = path.dirname(cachedPath);
-      if (!fs.existsSync(cachedDir)) {
-        fs.mkdirSync(cachedDir, { recursive: true });
-      }
-      await fs.promises.writeFile(cachedPath, buffer).catch(() => {});
-
       return buffer;
     }
 
-    // 4. Check legacy uploads directory
+    // 6. Check legacy uploads directory
     const legacyPath = path.join(this.legacyDir, cleanKey);
     if (fs.existsSync(legacyPath)) {
       const buffer = await fs.promises.readFile(legacyPath);
@@ -247,7 +327,7 @@ class SupabaseStorageProvider extends StorageProvider {
       return fs.createReadStream(cachedPath);
     }
 
-    // If not cached, create a pass-through stream and populate async
+    // If not cached, create a pass-through stream and populate from readFile
     const pass = new stream.PassThrough();
     this.readFile(cleanKey)
       .then(buffer => {
@@ -267,6 +347,7 @@ class SupabaseStorageProvider extends StorageProvider {
    * @returns {Promise<boolean>}
    */
   async exists(filePath) {
+    if (!filePath) return false;
     try {
       const cleanKey = this._sanitizeKey(filePath);
 
@@ -274,15 +355,39 @@ class SupabaseStorageProvider extends StorageProvider {
       const cachedPath = this._getCachedPath(cleanKey);
       if (fs.existsSync(cachedPath)) return true;
 
-      // 2. Bundled seed check
+      // 2. PostgreSQL dataset_storage_files table check
+      try {
+        const pgRes = await db.query(
+          'SELECT 1 FROM dataset_storage_files WHERE file_path = $1 LIMIT 1',
+          [cleanKey]
+        );
+        if (pgRes.rowCount > 0) return true;
+      } catch (_) {}
+
+      // 3. PostgreSQL dataset_rows table check for corresponding dataset
+      try {
+        const dsRes = await db.query(
+          'SELECT id FROM datasets WHERE file_path = $1 OR file_path LIKE $2 LIMIT 1',
+          [cleanKey, `%${cleanKey}`]
+        );
+        if (dsRes.rowCount > 0) {
+          const rowRes = await db.query(
+            'SELECT 1 FROM dataset_rows WHERE dataset_id = $1 LIMIT 1',
+            [dsRes.rows[0].id]
+          );
+          if (rowRes.rowCount > 0) return true;
+        }
+      } catch (_) {}
+
+      // 4. Bundled seed check
       const seedPath = path.join(this.seedDir, cleanKey);
       if (fs.existsSync(seedPath)) return true;
 
-      // 3. Legacy uploads check
+      // 5. Legacy uploads check
       const legacyPath = path.join(this.legacyDir, cleanKey);
       if (fs.existsSync(legacyPath)) return true;
 
-      // 4. Supabase Cloud Storage check
+      // 6. Supabase Cloud Storage check
       if (this.client && this.client.storage) {
         const folder = path.dirname(cleanKey).replace(/\\/g, '/');
         const filename = path.basename(cleanKey);
@@ -307,7 +412,7 @@ class SupabaseStorageProvider extends StorageProvider {
   }
 
   /**
-   * Delete a file from persistent Supabase Storage & local cache
+   * Delete a file from persistent Supabase Storage, PostgreSQL, and local cache
    * @param {string} filePath 
    * @returns {Promise<boolean>}
    */
@@ -315,7 +420,12 @@ class SupabaseStorageProvider extends StorageProvider {
     try {
       const cleanKey = this._sanitizeKey(filePath);
 
-      // 1. Remove from Supabase Storage
+      // 1. Remove from PostgreSQL dataset_storage_files
+      try {
+        await db.query('DELETE FROM dataset_storage_files WHERE file_path = $1', [cleanKey]);
+      } catch (_) {}
+
+      // 2. Remove from Supabase Storage
       if (this.client && this.client.storage) {
         await this.client.storage
           .from(this.bucket)
@@ -323,13 +433,13 @@ class SupabaseStorageProvider extends StorageProvider {
           .catch(() => {});
       }
 
-      // 2. Remove from local cache
+      // 3. Remove from local cache
       const cachedPath = this._getCachedPath(cleanKey);
       if (fs.existsSync(cachedPath)) {
         await fs.promises.unlink(cachedPath).catch(() => {});
       }
 
-      // 3. Remove from legacy uploads dir if exists
+      // 4. Remove from legacy uploads dir if exists
       const legacyPath = path.join(this.legacyDir, cleanKey);
       if (fs.existsSync(legacyPath)) {
         await fs.promises.unlink(legacyPath).catch(() => {});

@@ -77,10 +77,11 @@ const authenticateToken = async (req, res, next) => {
       let userId = decoded.id;
       let userEmail = decoded.email;
 
-      // Query database for real, unforgeable user record
-      const dbUser = decoded.id 
-        ? (await UserModel.findById(decoded.id).catch(() => null))
-        : (decoded.email ? (await UserModel.findByEmail(decoded.email).catch(() => null)) : null);
+      // Query database for real, unforgeable user record (lookup by email first for identity fidelity, fallback to ID)
+      let dbUser = decoded.email ? (await UserModel.findByEmail(decoded.email).catch(() => null)) : null;
+      if (!dbUser && decoded.id) {
+        dbUser = await UserModel.findById(decoded.id).catch(() => null);
+      }
 
       if (dbUser) {
         // Enforce account status check

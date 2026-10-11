@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const db = require('../config/database');
 const Dataset = require('../models/datasetModel');
@@ -89,8 +90,8 @@ const getDatasetPreview = async (req, res, next) => {
         data: {
           id: dataset.id,
           name: dataset.name,
-          rowCount: dataset.row_count,
-          columnCount: dataset.column_count,
+          rowCount: Number(dataset.row_count !== undefined ? dataset.row_count : dataset.rowCount || 0),
+          columnCount: Number(dataset.column_count !== undefined ? dataset.column_count : dataset.columnCount || 0),
           schema: dataset.schema,
           preview: [],
           message: 'No physical file attached to this dataset (direct connection).'
@@ -116,8 +117,8 @@ const getDatasetPreview = async (req, res, next) => {
                 id: dataset.id,
                 name: dataset.name,
                 description: dataset.description,
-                rowCount: dataset.row_count,
-                columnCount: dataset.column_count,
+                rowCount: Number(dataset.row_count !== undefined ? dataset.row_count : dataset.rowCount || 0),
+                columnCount: Number(dataset.column_count !== undefined ? dataset.column_count : dataset.columnCount || 0),
                 schema: dataset.schema,
                 preview,
                 previewCount: preview.length
@@ -143,8 +144,8 @@ const getDatasetPreview = async (req, res, next) => {
         id: dataset.id,
         name: dataset.name,
         description: dataset.description,
-        rowCount: dataset.row_count,
-        columnCount: dataset.column_count,
+        rowCount: Number(dataset.row_count !== undefined ? dataset.row_count : dataset.rowCount || 0),
+        columnCount: Number(dataset.column_count !== undefined ? dataset.column_count : dataset.columnCount || 0),
         schema: dataset.schema,
         preview: parsed.preview.slice(0, 50), // Hard guarantee: strictly maximum 50 rows
         previewCount: Math.min(parsed.preview.length, 50)
@@ -374,11 +375,119 @@ const devCreateDataset = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/datasets/:id/rehydrate
+ * Rehydrate a dataset's storage file and PostgreSQL rows from an uploaded file
+ */
+const rehydrateDataset = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const organizationId = req.user.organization_id;
+    const { id } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded for rehydration. Expected multipart "file".'
+      });
+    }
+
+    const dataset = organizationId
+      ? await Dataset.findByIdAndOrgId(id, organizationId)
+      : await Dataset.findByIdAndUserId(id, userId);
+
+    if (!dataset) {
+      if (req.file.path && fs.existsSync(req.file.path)) {
+        try { fs.unlinkSync(req.file.path); } catch (_) {}
+      }
+      return res.status(404).json({
+        success: false,
+        message: 'Dataset not found or access denied.'
+      });
+    }
+
+    const tempFilePath = req.file.path;
+    const fileBuffer = fs.readFileSync(tempFilePath);
+    const targetFilePath = dataset.file_path || `datasets/${organizationId || 'default'}/${id}_${req.file.originalname}`;
+
+    // 1. Persist raw file into storage (writes to dataset_storage_files table in DB, local cache, and Supabase)
+    const mimeType = req.file.mimetype || (req.file.originalname.endsWith('.json') ? 'application/json' : 'text/csv');
+    await storage.saveFile(targetFilePath, fileBuffer, mimeType);
+
+    // 2. Ingest stream into dataset_rows table in PostgreSQL
+    const ingestionService = require('../services/datasetIngestionService');
+    const ingestionResult = await ingestionService.ingestDatasetFileStream({
+      filePath: tempFilePath,
+      datasetId: dataset.id,
+      organizationId: dataset.organization_id || organizationId,
+      format: req.file.originalname.endsWith('.json') ? 'json' : 'csv'
+    });
+
+    // 3. Update dataset row count, column count, schema, and file_path
+    const updatedRowCount = ingestionResult.rowCount || dataset.row_count;
+    const updatedColumnCount = ingestionResult.columnCount || dataset.column_count;
+    const updatedSchema = ingestionResult.schema || dataset.schema;
+
+    if (typeof Dataset.update === 'function') {
+      await Dataset.update(dataset.id, {
+        rowCount: updatedRowCount,
+        columnCount: updatedColumnCount,
+        schema: updatedSchema,
+        filePath: targetFilePath
+      });
+    } else {
+      const pool = db.getPool();
+      if (pool && !db.isUsingFallback()) {
+        await pool.query(
+          'UPDATE datasets SET row_count = $1, column_count = $2, schema = $3, file_path = $4, updated_at = NOW() WHERE id = $5',
+          [updatedRowCount, updatedColumnCount, JSON.stringify(updatedSchema), targetFilePath, dataset.id]
+        );
+      }
+    }
+
+    // Clean up temporary upload file
+    if (fs.existsSync(tempFilePath)) {
+      try { fs.unlinkSync(tempFilePath); } catch (_) {}
+    }
+
+    // Audit Log
+    await auditService.logAuditEvent({
+      organizationId: organizationId || '00000000-0000-0000-0000-000000000001',
+      userId,
+      action: 'DATASET_REHYDRATED',
+      resourceType: 'dataset',
+      resourceId: String(id),
+      description: `Rehydrated dataset "${dataset.name}" (${updatedRowCount} rows) to persistent storage.`,
+      metadata: { datasetId: id, rowCount: updatedRowCount, columnCount: updatedColumnCount, filePath: targetFilePath },
+      req
+    }).catch(() => null);
+
+    return res.status(200).json({
+      success: true,
+      message: `Dataset "${dataset.name}" rehydrated successfully with ${updatedRowCount} rows.`,
+      data: {
+        id: dataset.id,
+        name: dataset.name,
+        rowCount: updatedRowCount,
+        columnCount: updatedColumnCount,
+        schema: updatedSchema,
+        file_path: targetFilePath
+      }
+    });
+  } catch (err) {
+    if (req.file?.path && fs.existsSync(req.file.path)) {
+      try { fs.unlinkSync(req.file.path); } catch (_) {}
+    }
+    next(err);
+  }
+};
+
 module.exports = {
   getDatasets,
   getDatasetById,
   getDatasetPreview,
   refreshDataset,
   deleteDataset,
-  devCreateDataset
+  devCreateDataset,
+  rehydrateDataset
 };

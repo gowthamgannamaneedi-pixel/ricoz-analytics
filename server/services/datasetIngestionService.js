@@ -129,6 +129,16 @@ async function ensureDatasetRowsTable(client) {
       CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_org ON public.dataset_rows(dataset_id, organization_id);
       CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_row_idx ON public.dataset_rows(dataset_id, row_index);
       DROP INDEX IF EXISTS public.idx_dataset_rows_data_gin;
+
+      CREATE TABLE IF NOT EXISTS public.dataset_storage_files (
+        file_path TEXT PRIMARY KEY,
+        content BYTEA NOT NULL,
+        size BIGINT NOT NULL,
+        mime_type TEXT,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_dataset_storage_files_path ON public.dataset_storage_files(file_path);
     `);
   } catch (err) {
     console.warn('[Ingestion] ensureDatasetRowsTable notice:', err.message);
@@ -315,7 +325,97 @@ async function ingestToPostgres({
       }
     }
 
-    // Standard batched transactional inserts
+    // If ext === 'json', parse JSON records directly (handles standard array, object with array, or NDJSON)
+    if (ext === 'json') {
+      let jsonText = '';
+      if (typeof filePath === 'string' && pathIsAbsolute(filePath) && fs.existsSync(filePath)) {
+        jsonText = await fs.promises.readFile(filePath, 'utf8');
+      } else {
+        const chunks = [];
+        for await (const chunk of inputStream) {
+          chunks.push(typeof chunk === 'string' ? chunk : chunk.toString('utf8'));
+        }
+        jsonText = chunks.join('');
+      }
+
+      let parsedRecords = [];
+      try {
+        const parsed = JSON.parse(jsonText);
+        if (Array.isArray(parsed)) {
+          parsedRecords = parsed;
+        } else if (typeof parsed === 'object' && parsed !== null) {
+          const arrayKey = Object.keys(parsed).find(k => Array.isArray(parsed[k]));
+          parsedRecords = arrayKey ? parsed[arrayKey] : [parsed];
+        }
+      } catch (jsonErr) {
+        // Fallback: parse line-by-line for NDJSON
+        const lines = jsonText.split(/\r?\n/);
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed === '[' || trimmed === ']') continue;
+          try {
+            const clean = trimmed.replace(/^\[|,$/g, '');
+            parsedRecords.push(JSON.parse(clean));
+          } catch (_) {
+            malformedRows++;
+          }
+        }
+      }
+
+      await client.query('BEGIN');
+      let rowIndex = 0;
+      let batch = [];
+
+      const flushJsonBatch = async () => {
+        if (batch.length === 0) return;
+        const valuesSql = [];
+        const params = [];
+        let paramIdx = 1;
+
+        for (const item of batch) {
+          valuesSql.push(`($${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++})`);
+          params.push(item.datasetId, item.organizationId, item.rowIndex, JSON.stringify(item.data));
+        }
+
+        const insertSql = `
+          INSERT INTO dataset_rows (dataset_id, organization_id, row_index, data)
+          VALUES ${valuesSql.join(', ')}
+        `;
+        await client.query(insertSql, params);
+        batch = [];
+      };
+
+      for (const record of parsedRecords) {
+        if (signal?.aborted) {
+          await client.query('ROLLBACK');
+          throw new Error('Ingestion cancelled by client.');
+        }
+
+        rowIndex++;
+        batch.push({ datasetId, organizationId, rowIndex, data: record });
+        rowsIngested++;
+
+        if (batch.length >= 2000) {
+          await flushJsonBatch();
+          if (onProgress && rowsIngested % batchSize === 0) {
+            const heapUsedMb = Math.round(process.memoryUsage().heapUsed / (1024 * 1024) * 10) / 10;
+            onProgress({ processedRows: rowsIngested, heapUsedMb });
+          }
+        }
+      }
+
+      await flushJsonBatch();
+      await client.query('COMMIT');
+
+      return {
+        success: true,
+        rowsIngested,
+        malformedRows,
+        durationMs: Date.now() - startTime
+      };
+    }
+
+    // Standard batched transactional inserts for CSV
     await client.query('BEGIN');
     const rl = readline.createInterface({ input: inputStream, crlfDelay: Infinity });
 
@@ -352,39 +452,25 @@ async function ingestToPostgres({
       const trimmed = line.trim();
       if (!trimmed) continue;
 
-      if (ext === 'csv') {
-        if (!headers) {
-          delimiter = detectDelimiter(trimmed);
-          headers = parseCsvLine(trimmed, delimiter).map(h => h.trim().replace(/^["']|["']$/g, ''));
-          continue;
-        }
-
-        rowIndex++;
-        const values = parseCsvLine(trimmed, delimiter);
-        if (values.length !== headers.length && Math.abs(values.length - headers.length) > 2) {
-          malformedRows++;
-          continue;
-        }
-
-        const rowObj = {};
-        for (let i = 0; i < headers.length; i++) {
-          rowObj[headers[i]] = normalizeParsedValue(values[i]);
-        }
-
-        batch.push({ datasetId, organizationId, rowIndex, data: rowObj });
-      } else {
-        // JSON or NDJSON line
-        try {
-          const cleanLine = trimmed.replace(/^\[|,$/g, '');
-          if (!cleanLine || cleanLine === ']') continue;
-          const parsed = JSON.parse(cleanLine);
-          rowIndex++;
-          batch.push({ datasetId, organizationId, rowIndex, data: parsed });
-        } catch (_) {
-          malformedRows++;
-          continue;
-        }
+      if (!headers) {
+        delimiter = detectDelimiter(trimmed);
+        headers = parseCsvLine(trimmed, delimiter).map(h => h.trim().replace(/^["']|["']$/g, ''));
+        continue;
       }
+
+      rowIndex++;
+      const values = parseCsvLine(trimmed, delimiter);
+      if (values.length !== headers.length && Math.abs(values.length - headers.length) > 2) {
+        malformedRows++;
+        continue;
+      }
+
+      const rowObj = {};
+      for (let i = 0; i < headers.length; i++) {
+        rowObj[headers[i]] = normalizeParsedValue(values[i]);
+      }
+
+      batch.push({ datasetId, organizationId, rowIndex, data: rowObj });
 
       rowsIngested++;
       if (batch.length >= 2000) {
@@ -431,6 +517,54 @@ async function ingestStreamLocal({
   signal,
   startTime
 }) {
+  let rowsIngested = 0;
+  let malformedRows = 0;
+
+  if (ext === 'json') {
+    const chunks = [];
+    for await (const chunk of inputStream) {
+      chunks.push(typeof chunk === 'string' ? chunk : chunk.toString('utf8'));
+    }
+    const jsonText = chunks.join('');
+    let parsedRecords = [];
+    try {
+      const parsed = JSON.parse(jsonText);
+      if (Array.isArray(parsed)) parsedRecords = parsed;
+      else if (typeof parsed === 'object' && parsed !== null) {
+        const arrayKey = Object.keys(parsed).find(k => Array.isArray(parsed[k]));
+        parsedRecords = arrayKey ? parsed[arrayKey] : [parsed];
+      }
+    } catch (_) {
+      const lines = jsonText.split(/\r?\n/);
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed === '[' || trimmed === ']') continue;
+        try {
+          const clean = trimmed.replace(/^\[|,$/g, '');
+          parsedRecords.push(JSON.parse(clean));
+        } catch (_) {
+          malformedRows++;
+        }
+      }
+    }
+
+    for (const r of parsedRecords) {
+      if (signal?.aborted) throw new Error('Ingestion cancelled by client.');
+      rowsIngested++;
+      if (onProgress && rowsIngested % batchSize === 0) {
+        const heapUsedMb = Math.round(process.memoryUsage().heapUsed / (1024 * 1024) * 10) / 10;
+        onProgress({ processedRows: rowsIngested, heapUsedMb });
+      }
+    }
+
+    return {
+      success: true,
+      rowsIngested,
+      malformedRows,
+      durationMs: Date.now() - startTime
+    };
+  }
+
   const rl = readline.createInterface({
     input: inputStream,
     crlfDelay: Infinity
@@ -438,8 +572,6 @@ async function ingestStreamLocal({
 
   let headers = null;
   let delimiter = ',';
-  let rowsIngested = 0;
-  let malformedRows = 0;
 
   for await (const line of rl) {
     if (signal?.aborted) {
@@ -449,26 +581,15 @@ async function ingestStreamLocal({
     const trimmed = line.trim();
     if (!trimmed) continue;
 
-    if (ext === 'csv') {
-      if (!headers) {
-        delimiter = detectDelimiter(trimmed);
-        headers = parseCsvLine(trimmed, delimiter);
-        continue;
-      }
-      const values = parseCsvLine(trimmed, delimiter);
-      if (values.length !== headers.length && Math.abs(values.length - headers.length) > 2) {
-        malformedRows++;
-        continue;
-      }
-    } else {
-      try {
-        const cleanLine = trimmed.replace(/^\[|,$/g, '');
-        if (!cleanLine || cleanLine === ']') continue;
-        JSON.parse(cleanLine);
-      } catch (_) {
-        malformedRows++;
-        continue;
-      }
+    if (!headers) {
+      delimiter = detectDelimiter(trimmed);
+      headers = parseCsvLine(trimmed, delimiter);
+      continue;
+    }
+    const values = parseCsvLine(trimmed, delimiter);
+    if (values.length !== headers.length && Math.abs(values.length - headers.length) > 2) {
+      malformedRows++;
+      continue;
     }
 
     rowsIngested++;

@@ -29,9 +29,11 @@ class CollaborationService {
     }
 
     const cleanRole = (userRole || 'viewer').toLowerCase();
+    const isValidUuid = (val) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(val));
 
     // 1. Check Dashboard access
     if (resourceType === 'dashboard') {
+      if (!isValidUuid(resourceId)) return { hasAccess: false, permission: null, isOwner: false };
       const dashboard = await DashboardModel.findByIdAndOrgId(resourceId, organizationId);
       if (!dashboard) return { hasAccess: false, permission: null, isOwner: false };
 
@@ -64,6 +66,7 @@ class CollaborationService {
 
     // 2. Check Report access
     if (resourceType === 'report') {
+      if (!isValidUuid(resourceId)) return { hasAccess: false, permission: null, isOwner: false };
       const report = await ReportModel.findByIdAndOrgId(resourceId, organizationId);
       if (!report) return { hasAccess: false, permission: null, isOwner: false };
 
@@ -93,6 +96,7 @@ class CollaborationService {
 
     // 3. Check AI Insight access
     if (resourceType === 'ai_insight' || resourceType === 'insight') {
+      if (!isValidUuid(resourceId)) return { hasAccess: false, permission: null, isOwner: false };
       const insight = await InsightModel.findByIdAndOrgId(resourceId, organizationId);
       if (!insight) return { hasAccess: false, permission: null, isOwner: false };
 

@@ -27,7 +27,11 @@ function getErrorCode(statusCode, customCode) {
 
 const errorHandler = (err, req, res, next) => {
   const isProd = process.env.NODE_ENV === 'production';
-  const statusCode = err.statusCode || err.status || 500;
+  let statusCode = err.statusCode || err.status || 500;
+  if (err.code === '22P02') {
+    statusCode = 404;
+    err.message = 'Resource not found or invalid identifier format.';
+  }
   const requestId = req?.id || req?.requestId || 'unknown';
 
   // Record metrics

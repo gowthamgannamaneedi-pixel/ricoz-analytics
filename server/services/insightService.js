@@ -105,7 +105,7 @@ class InsightService {
     for (const ds of targetDatasets.slice(0, 5)) {
       try {
         if (!ds.file_path) continue;
-        const records = await analyticsService.loadDatasetRecords(ds.file_path);
+        const records = await analyticsService.loadDatasetRecords(ds);
         if (!records || records.length === 0) continue;
 
         const schema = Array.isArray(ds.schema) ? ds.schema : [];
@@ -552,8 +552,8 @@ class InsightService {
         const tgtDs = datasets.find(d => Number(d.id) === Number(rel.target_dataset_id));
 
         if (srcDs && tgtDs && srcDs.file_path && tgtDs.file_path) {
-          const srcRecords = await analyticsService.loadDatasetRecords(srcDs.file_path);
-          const tgtRecords = await analyticsService.loadDatasetRecords(tgtDs.file_path);
+          const srcRecords = await analyticsService.loadDatasetRecords(srcDs);
+          const tgtRecords = await analyticsService.loadDatasetRecords(tgtDs);
 
           const relationalRes = await analyticsService.executeRelationalQuery({
             baseDataset: srcDs,
@@ -621,7 +621,7 @@ class InsightService {
 
           if (linkedDs && linkedDs.file_path) {
             try {
-              linkedRecords = await analyticsService.loadDatasetRecords(linkedDs.file_path);
+              linkedRecords = await analyticsService.loadDatasetRecords(linkedDs);
               const schema = Array.isArray(linkedDs.schema) ? linkedDs.schema : [];
               linkedDims = analyticsService.detectDatasetDimensions(schema, linkedRecords.slice(0, 20));
             } catch (_) {}

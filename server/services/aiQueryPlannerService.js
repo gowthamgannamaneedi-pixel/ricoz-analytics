@@ -147,13 +147,13 @@ class AIQueryPlannerService {
 
     // 5. Load physical dataset records ONLY for real analytics computations
     let datasetRecords = [];
-    if (targetDataset && targetDataset.file_path) {
+    if (targetDataset) {
       try {
-        datasetRecords = await analyticsService.loadDatasetRecords(targetDataset.file_path);
+        datasetRecords = await analyticsService.loadDatasetRecords(targetDataset);
         // Refresh dimensions with actual record sample if available
         dimensions = analyticsService.detectDatasetDimensions(datasetSchema, datasetRecords.slice(0, 10));
       } catch (fileErr) {
-        console.warn(`[AIQueryPlanner] Could not load physical dataset file for ${targetDataset.name}:`, fileErr.message);
+        console.warn(`[AIQueryPlanner] Could not load physical dataset records for ${targetDataset.name}:`, fileErr.message);
       }
     }
 
@@ -297,7 +297,7 @@ class AIQueryPlannerService {
       if (plan.joins && plan.joins.length > 0 && groupBy.includes('.')) {
         // keep dotted group_by for relational joins
       } else {
-        groupBy = dimensions.regionColumn || dimensions.categoryColumn || null;
+        groupBy = dimensions.productColumn || dimensions.categoryColumn || dimensions.regionColumn || null;
       }
     }
 
@@ -583,7 +583,7 @@ class AIQueryPlannerService {
 
     // 3. Ranking Intent
     if (plan.intent === 'ranking') {
-      const groupByCol = plan.group_by || effectiveDimensions.regionColumn || effectiveDimensions.productColumn || 'category';
+      const groupByCol = plan.group_by || effectiveDimensions.productColumn || effectiveDimensions.categoryColumn || effectiveDimensions.regionColumn || 'category';
       let breakdown = analyticsService.computeDatasetBreakdown(records, groupByCol, effectiveDimensions);
       
       if (plan.order === 'asc') {

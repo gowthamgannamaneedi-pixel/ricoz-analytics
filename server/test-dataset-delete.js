@@ -103,10 +103,11 @@ async function runTests() {
     VALUES ('00000000-0000-0000-0000-000000000002', 'Beta Global Enterprises', 'beta-global', 'starter', 'active', 'paid')
     ON CONFLICT (id) DO UPDATE SET subscription_status = 'active', payment_status = 'paid'
   `);
+  const defaultHash = require('bcryptjs').hashSync('admin123', 10);
   await db.query(`
     INSERT INTO users (id, name, email, password_hash, role, organization_id, status)
-    VALUES (999, 'Admin B', 'admin_b@other.test', 'dummy', 'admin', '00000000-0000-0000-0000-000000000002', 'active')
-    ON CONFLICT (id) DO UPDATE SET role = 'admin', organization_id = '00000000-0000-0000-0000-000000000002', status = 'active'
+    VALUES (999, 'Admin B', 'admin_b@other.test', '${defaultHash}', 'admin', '00000000-0000-0000-0000-000000000002', 'active')
+    ON CONFLICT (id) DO UPDATE SET password_hash = '${defaultHash}', role = 'admin', organization_id = '00000000-0000-0000-0000-000000000002', status = 'active'
   `);
 
   const adminTokenA = generateToken(1, 'admin@ricoz.test', 'admin', orgA);

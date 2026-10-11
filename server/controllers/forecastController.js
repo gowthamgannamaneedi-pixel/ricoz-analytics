@@ -201,7 +201,7 @@ const ForecastController = {
             return res.status(404).json({ success: false, message: 'Dataset not found.' });
           }
           if (dataset.file_path) {
-            const records = await analyticsService.loadDatasetRecords(dataset.file_path);
+            const records = await analyticsService.loadDatasetRecords(dataset);
             const seriesResult = extractSeriesFromRecords(records, effectiveDateCol, effectiveTargetCol);
             if (seriesResult.error) {
               return res.status(400).json({ success: false, message: seriesResult.error });
@@ -367,7 +367,7 @@ const ForecastController = {
           });
         }
 
-        const records = await analyticsService.loadDatasetRecords(dataset.file_path);
+        const records = await analyticsService.loadDatasetRecords(dataset);
         if (!records || records.length === 0) {
           return res.status(400).json({
             success: false,
@@ -547,7 +547,7 @@ const ForecastController = {
           return res.status(404).json({ success: false, message: 'Dataset not found.' });
         }
         if (dataset.file_path) {
-          const records = await analyticsService.loadDatasetRecords(dataset.file_path);
+          const records = await analyticsService.loadDatasetRecords(dataset);
           timeSeries = extractSeriesFromRecords(records, effectiveDateCol, effectiveTargetCol);
         }
       } else {

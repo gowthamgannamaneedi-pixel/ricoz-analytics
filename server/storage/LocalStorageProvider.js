@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const StorageProvider = require('./StorageProvider');
+const db = require('../config/database');
 
 class LocalStorageProvider extends StorageProvider {
   constructor(baseDir) {
@@ -44,27 +45,41 @@ class LocalStorageProvider extends StorageProvider {
     const destinationPath = path.join(userDir, safeFilename);
 
     let fileSize = 0;
+    let fileBuffer = null;
     if (typeof bufferOrPath === 'string' && fs.existsSync(bufferOrPath)) {
-      // Direct stream copy from disk without loading full file into memory
       await fs.promises.copyFile(bufferOrPath, destinationPath);
-      const stat = await fs.promises.stat(destinationPath);
-      fileSize = stat.size;
+      fileBuffer = await fs.promises.readFile(destinationPath);
+      fileSize = fileBuffer.length;
 
       // Clean up temp upload file if applicable
       if (bufferOrPath.includes('temp_uploads') || bufferOrPath.includes('temp')) {
         fs.unlink(bufferOrPath, () => {});
       }
     } else if (Buffer.isBuffer(bufferOrPath)) {
+      fileBuffer = bufferOrPath;
       await fs.promises.writeFile(destinationPath, bufferOrPath);
       fileSize = bufferOrPath.length;
     } else {
       const contentStr = String(bufferOrPath || '');
+      fileBuffer = Buffer.from(contentStr, 'utf8');
       await fs.promises.writeFile(destinationPath, contentStr, 'utf8');
-      fileSize = Buffer.byteLength(contentStr, 'utf8');
+      fileSize = fileBuffer.length;
     }
 
     // Relative storage key to abstract away physical server directory
     const relativeKey = path.relative(this.baseDir, destinationPath).replace(/\\/g, '/');
+
+    // Database backup
+    try {
+      await db.query(`
+        INSERT INTO dataset_storage_files (file_path, content, size, mime_type, updated_at)
+        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+        ON CONFLICT (file_path) DO UPDATE
+        SET content = EXCLUDED.content,
+            size = EXCLUDED.size,
+            updated_at = CURRENT_TIMESTAMP
+      `, [relativeKey, fileBuffer, fileSize, sanitizedExt === '.json' ? 'application/json' : 'text/csv']);
+    } catch (_) {}
 
     return {
       filePath: relativeKey,
@@ -74,14 +89,23 @@ class LocalStorageProvider extends StorageProvider {
   }
 
   async readFile(filePath) {
+    const cleanKey = String(filePath || '').replace(/\\/g, '/').replace(/^\/+/, '');
     try {
       const safePath = this._getSafePath(filePath);
       if (fs.existsSync(safePath)) {
         return await fs.promises.readFile(safePath);
       }
     } catch (err) {
-      // Check seed fallback
+      // Check next tier
     }
+
+    // Check database dataset_storage_files
+    try {
+      const pgRes = await db.query('SELECT content FROM dataset_storage_files WHERE file_path = $1', [cleanKey]);
+      if (pgRes.rowCount > 0 && pgRes.rows[0].content) {
+        return Buffer.isBuffer(pgRes.rows[0].content) ? pgRes.rows[0].content : Buffer.from(pgRes.rows[0].content);
+      }
+    } catch (_) {}
 
     const seedPath = path.resolve(__dirname, '../data/datasets', filePath);
     if (fs.existsSync(seedPath)) {
@@ -99,7 +123,7 @@ class LocalStorageProvider extends StorageProvider {
         return fs.createReadStream(safePath);
       }
     } catch (err) {
-      // Check seed fallback
+      // Check next tier
     }
 
     const seedPath = path.resolve(__dirname, '../data/datasets', filePath);
@@ -112,6 +136,11 @@ class LocalStorageProvider extends StorageProvider {
   }
 
   async deleteFile(filePath) {
+    const cleanKey = String(filePath || '').replace(/\\/g, '/').replace(/^\/+/, '');
+    try {
+      await db.query('DELETE FROM dataset_storage_files WHERE file_path = $1', [cleanKey]);
+    } catch (_) {}
+
     try {
       const safePath = this._getSafePath(filePath);
       if (fs.existsSync(safePath)) {
@@ -126,12 +155,19 @@ class LocalStorageProvider extends StorageProvider {
   }
 
   async exists(filePath) {
+    if (!filePath) return false;
+    const cleanKey = String(filePath || '').replace(/\\/g, '/').replace(/^\/+/, '');
     try {
       const safePath = this._getSafePath(filePath);
       if (fs.existsSync(safePath)) return true;
     } catch (err) {
-      // Check seed fallback
+      // Check next tier
     }
+
+    try {
+      const pgRes = await db.query('SELECT 1 FROM dataset_storage_files WHERE file_path = $1 LIMIT 1', [cleanKey]);
+      if (pgRes.rowCount > 0) return true;
+    } catch (_) {}
 
     const seedPath = path.resolve(__dirname, '../data/datasets', filePath);
     if (fs.existsSync(seedPath)) return true;

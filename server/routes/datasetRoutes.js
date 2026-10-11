@@ -2,13 +2,15 @@ const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/authMiddleware');
 const { requirePermission } = require('../middleware/roleMiddleware');
+const { handleUpload } = require('../middleware/uploadMiddleware');
 const {
   getDatasets,
   getDatasetById,
   getDatasetPreview,
   refreshDataset,
   deleteDataset,
-  devCreateDataset
+  devCreateDataset,
+  rehydrateDataset
 } = require('../controllers/datasetController');
 
 // All dataset routes require JWT authentication
@@ -20,6 +22,7 @@ router.post('/dev-create', devCreateDataset);
 router.get('/:id', requirePermission('datasets.view'), getDatasetById);
 router.get('/:id/preview', requirePermission('datasets.view'), getDatasetPreview);
 router.post('/:id/refresh', requirePermission('datasets.create'), refreshDataset);
+router.post('/:id/rehydrate', requirePermission('datasets.create'), handleUpload('file'), rehydrateDataset);
 router.delete('/:id', requirePermission('datasets.delete'), deleteDataset);
 
 module.exports = router;

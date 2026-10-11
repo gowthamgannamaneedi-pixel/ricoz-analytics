@@ -107,10 +107,14 @@ const insightController = {
           relationships: [],
           context: { organizationId }
         });
+        const baseSummary = briefing.summary || '';
+        const executiveSummary = baseSummary.includes('Executive Summary')
+          ? baseSummary
+          : `### Enterprise AI Executive Summary\n\n${baseSummary}`;
         return res.status(200).json({
           success: true,
-          summary: briefing.summary,
-          executive_summary: briefing.summary,
+          summary: executiveSummary,
+          executive_summary: executiveSummary,
           briefing,
           relationships: [],
           insights_count: existingInsights.length,

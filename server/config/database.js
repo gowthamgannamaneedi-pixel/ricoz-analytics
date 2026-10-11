@@ -439,6 +439,9 @@ let nextNotificationId = 1;
 const fallbackDemoRequests = [];
 let nextDemoRequestId = 1;
 
+const fallbackDatasetStorageFiles = new Map();
+
+
 /**
  * Initialize PostgreSQL connection pool
  */
@@ -1647,6 +1650,47 @@ function handleFallbackQuery(text, params = []) {
       rows: [{ count: matches.length }],
       rowCount: 1
     });
+  }
+
+  // ----------------- DATASET STORAGE FILES -----------------
+  if (normalizedSql.startsWith('insert into dataset_storage_files')) {
+    const [filePath, content, size, mimeType] = params;
+    const cleanKey = String(filePath).replace(/\\/g, '/').replace(/^\/+/, '');
+    fallbackDatasetStorageFiles.set(cleanKey, {
+      file_path: cleanKey,
+      content: Buffer.isBuffer(content) ? content : Buffer.from(content),
+      size: Number(size) || (Buffer.isBuffer(content) ? content.length : Buffer.byteLength(String(content))),
+      mime_type: mimeType || 'application/octet-stream',
+      updated_at: new Date()
+    });
+    return Promise.resolve({ rows: [{ file_path: cleanKey }], rowCount: 1 });
+  }
+
+  if (normalizedSql.includes('from dataset_storage_files') && normalizedSql.includes('where file_path = $1')) {
+    const rawKey = String(params[0] || '').replace(/\\/g, '/').replace(/^\/+/, '');
+    const entry = fallbackDatasetStorageFiles.get(rawKey);
+    if (entry) {
+      return Promise.resolve({
+        rows: [{
+          file_path: entry.file_path,
+          content: entry.content,
+          size: entry.size,
+          mime_type: entry.mime_type
+        }],
+        rowCount: 1
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
+  if (normalizedSql.startsWith('delete from dataset_storage_files')) {
+    if (params[0]) {
+      const cleanKey = String(params[0]).replace(/\\/g, '/').replace(/^\/+/, '');
+      fallbackDatasetStorageFiles.delete(cleanKey);
+    } else {
+      fallbackDatasetStorageFiles.clear();
+    }
+    return Promise.resolve({ rows: [], rowCount: 1 });
   }
 
   // ----------------- METRICS -----------------
@@ -4404,6 +4448,14 @@ async function initDb() {
       resolution_notes TEXT,
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
+    ALTER TABLE alert_incidents ADD COLUMN IF NOT EXISTS metric_value NUMERIC;
+    ALTER TABLE alert_incidents ADD COLUMN IF NOT EXISTS triggered_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+    ALTER TABLE alert_incidents ADD COLUMN IF NOT EXISTS condition VARCHAR(100);
+    ALTER TABLE alert_incidents ADD COLUMN IF NOT EXISTS notification_delivery JSONB DEFAULT '{}'::jsonb;
+    ALTER TABLE alert_incidents ALTER COLUMN triggered_value DROP NOT NULL;
+    ALTER TABLE alert_incidents ALTER COLUMN message DROP NOT NULL;
+    UPDATE alert_incidents SET metric_value = triggered_value WHERE metric_value IS NULL;
+    UPDATE alert_incidents SET triggered_at = created_at WHERE triggered_at IS NULL;
 
     CREATE TABLE IF NOT EXISTS forecasts (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -4422,6 +4474,7 @@ async function initDb() {
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
+    ALTER TABLE forecasts ALTER COLUMN dataset_id DROP NOT NULL;
 
     ALTER TABLE forecasts ADD COLUMN IF NOT EXISTS metric_id UUID REFERENCES metrics(id) ON DELETE SET NULL;
     ALTER TABLE forecasts ADD COLUMN IF NOT EXISTS anomalies JSONB DEFAULT '[]'::jsonb;
@@ -4437,6 +4490,7 @@ async function initDb() {
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
+    ALTER TABLE ai_conversations ADD COLUMN IF NOT EXISTS dashboard_id UUID REFERENCES dashboards(id) ON DELETE SET NULL;
 
     CREATE TABLE IF NOT EXISTS ai_messages (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -4515,6 +4569,8 @@ async function initDb() {
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
+    ALTER TABLE dataset_quality_rules ADD COLUMN IF NOT EXISTS configuration JSONB DEFAULT '{}'::jsonb;
+    ALTER TABLE dataset_quality_rules ADD COLUMN IF NOT EXISTS enabled BOOLEAN DEFAULT true;
 
     CREATE TABLE IF NOT EXISTS ai_insights (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -4557,71 +4613,76 @@ async function initDb() {
 
     CREATE TABLE IF NOT EXISTS dashboard_shares (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
       dashboard_id UUID NOT NULL REFERENCES dashboards(id) ON DELETE CASCADE,
-      shared_with_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-      shared_with_team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
-      permission VARCHAR(50) NOT NULL DEFAULT 'view',
-      shared_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      shared_by BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+      team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
+      permission VARCHAR(50) NOT NULL DEFAULT 'viewer',
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS report_shares (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
       report_id UUID NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
-      shared_with_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-      shared_with_team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
-      permission VARCHAR(50) NOT NULL DEFAULT 'view',
-      shared_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      shared_by BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+      team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
+      permission VARCHAR(50) NOT NULL DEFAULT 'viewer',
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS insight_shares (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
       insight_id UUID NOT NULL REFERENCES ai_insights(id) ON DELETE CASCADE,
-      shared_with_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-      shared_with_team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
-      shared_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      shared_by BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+      team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
+      permission VARCHAR(50) NOT NULL DEFAULT 'viewer',
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS comments (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       resource_type VARCHAR(50) NOT NULL,
       resource_id VARCHAR(255) NOT NULL,
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      parent_comment_id UUID REFERENCES comments(id) ON DELETE CASCADE,
       content TEXT NOT NULL,
-      parent_id UUID REFERENCES comments(id) ON DELETE CASCADE,
       mentions JSONB DEFAULT '[]'::jsonb,
-      is_resolved BOOLEAN DEFAULT false,
-      resolved_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
-      resolved_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      deleted_at TIMESTAMPTZ DEFAULT NULL
     );
 
     CREATE TABLE IF NOT EXISTS favorites (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       resource_type VARCHAR(50) NOT NULL,
       resource_id VARCHAR(255) NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (user_id, resource_type, resource_id)
     );
 
     CREATE TABLE IF NOT EXISTS recently_viewed (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       resource_type VARCHAR(50) NOT NULL,
       resource_id VARCHAR(255) NOT NULL,
-      viewed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      viewed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (user_id, resource_type, resource_id)
     );
 
     CREATE TABLE IF NOT EXISTS saved_views (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
       dashboard_id UUID NOT NULL REFERENCES dashboards(id) ON DELETE CASCADE,
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       name VARCHAR(255) NOT NULL,
       filters JSONB NOT NULL DEFAULT '{}'::jsonb,
       is_shared BOOLEAN DEFAULT false,
@@ -4660,6 +4721,16 @@ async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_id ON dataset_rows(dataset_id);
     CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_org ON dataset_rows(dataset_id, organization_id);
     CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_row_idx ON dataset_rows(dataset_id, row_index);
+
+    CREATE TABLE IF NOT EXISTS public.dataset_storage_files (
+      file_path TEXT PRIMARY KEY,
+      content BYTEA NOT NULL,
+      size BIGINT NOT NULL,
+      mime_type TEXT,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_dataset_storage_files_path ON public.dataset_storage_files(file_path);
 
     CREATE TABLE IF NOT EXISTS data_quality_jobs (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -5248,6 +5319,7 @@ module.exports = {
     fallbackDemoRequests.length = 0;
     nextDemoRequestId = 1;
     fallbackDatasetRows.length = 0;
+    fallbackDatasetStorageFiles.clear();
   },
   fallbackDatasetRows
 };

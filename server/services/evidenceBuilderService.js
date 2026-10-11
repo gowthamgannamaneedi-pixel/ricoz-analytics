@@ -46,7 +46,7 @@ class EvidenceBuilderService {
     let records = [];
     if (dataset.file_path) {
       try {
-        records = await analyticsService.loadDatasetRecords(dataset.file_path);
+        records = await analyticsService.loadDatasetRecords(dataset);
       } catch (err) {
         console.warn(`[EvidenceBuilderService] Could not load records for dataset #${datasetId}:`, err.message);
       }
