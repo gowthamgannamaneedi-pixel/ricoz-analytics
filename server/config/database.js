@@ -4152,6 +4152,10 @@ async function initDb() {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_password_token VARCHAR(255);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_password_expires_at TIMESTAMPTZ;
 
+    CREATE SEQUENCE IF NOT EXISTS users_id_seq;
+    ALTER TABLE users ALTER COLUMN id SET DEFAULT nextval('users_id_seq');
+    SELECT setval('users_id_seq', GREATEST(COALESCE((SELECT MAX(id) FROM users), 0), 1));
+
     CREATE TABLE IF NOT EXISTS data_sources (
       id SERIAL PRIMARY KEY,
       organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
@@ -4640,13 +4644,15 @@ async function initDb() {
       ('00000000-0000-0000-0000-000000000002', 'Beta Global Enterprises', 'beta-global', 'starter')
     ON CONFLICT (slug) DO NOTHING;
 
-    INSERT INTO users (id, name, email, password_hash, role, organization_id, status)
+    INSERT INTO users (name, email, password_hash, role, organization_id, status)
     VALUES 
-      (1, 'Gowtham (Admin)', 'admin@ricoz.test', '${defaultPasswordHash}', 'admin', '00000000-0000-0000-0000-000000000001', 'active'),
-      (2, 'Enterprise Manager', 'manager@ricoz.test', '${managerPasswordHash}', 'manager', '00000000-0000-0000-0000-000000000001', 'active'),
-      (3, 'Data Analyst', 'analyst@ricoz.test', '${analystPasswordHash}', 'analyst', '00000000-0000-0000-0000-000000000001', 'active'),
-      (4, 'Business Viewer', 'viewer@ricoz.test', '${viewerPasswordHash}', 'viewer', '00000000-0000-0000-0000-000000000001', 'active')
-    ON CONFLICT (email) DO UPDATE SET organization_id = EXCLUDED.organization_id;
+      ('Gowtham (Admin)', 'admin@ricoz.test', '${defaultPasswordHash}', 'admin', '00000000-0000-0000-0000-000000000001', 'active'),
+      ('Enterprise Manager', 'manager@ricoz.test', '${managerPasswordHash}', 'manager', '00000000-0000-0000-0000-000000000001', 'active'),
+      ('Data Analyst', 'analyst@ricoz.test', '${analystPasswordHash}', 'analyst', '00000000-0000-0000-0000-000000000001', 'active'),
+      ('Business Viewer', 'viewer@ricoz.test', '${viewerPasswordHash}', 'viewer', '00000000-0000-0000-0000-000000000001', 'active')
+    ON CONFLICT (email) DO UPDATE SET 
+      organization_id = COALESCE(users.organization_id, EXCLUDED.organization_id),
+      password_hash = COALESCE(users.password_hash, EXCLUDED.password_hash);
 
     UPDATE datasets SET organization_id = '00000000-0000-0000-0000-000000000001' WHERE organization_id IS NULL;
     UPDATE users SET organization_id = '00000000-0000-0000-0000-000000000001' WHERE organization_id IS NULL;

@@ -479,10 +479,32 @@ const login = async (req, res, next) => {
     }
 
     // 4. Verify password with bcrypt
-    let isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch && user.password_hash_alt) {
-      isMatch = await bcrypt.compare(password, user.password_hash_alt);
+    let isMatch = false;
+    const primaryHash = typeof user.password_hash === 'string' && user.password_hash.trim().length > 0 
+      ? user.password_hash 
+      : null;
+
+    if (primaryHash) {
+      try {
+        isMatch = await bcrypt.compare(password, primaryHash);
+      } catch (_) {
+        isMatch = false;
+      }
     }
+
+    if (!isMatch) {
+      const altHash = typeof user.password_hash_alt === 'string' && user.password_hash_alt.trim().length > 0
+        ? user.password_hash_alt
+        : null;
+      if (altHash) {
+        try {
+          isMatch = await bcrypt.compare(password, altHash);
+        } catch (_) {
+          isMatch = false;
+        }
+      }
+    }
+
     if (!isMatch) {
       return res.status(401).json({
         success: false,
