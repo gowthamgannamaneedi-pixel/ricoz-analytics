@@ -133,6 +133,7 @@ const UserModel = {
    * @returns {Promise<{ id: number|string, name: string, email: string, role: string, organization_id: string, status: string, created_at: Date }>}
    */
   async create({ 
+    id = null,
     name, 
     email, 
     password_hash, 
@@ -147,12 +148,24 @@ const UserModel = {
   }) {
     const orgId = organization_id || organizationId;
     const pwdHash = password_hash || password || 'mock_hash';
+
+    let resolvedId = id;
+    if (!resolvedId) {
+      try {
+        const maxRes = await db.query('SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM users;');
+        resolvedId = Number(maxRes.rows[0]?.next_id) || 1;
+      } catch (_) {
+        resolvedId = 1;
+      }
+    }
+
     const sql = `
-      INSERT INTO users (name, email, password_hash, role, organization_id, status, verification_token, verification_otp, verification_token_expires_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      INSERT INTO users (id, name, email, password_hash, role, organization_id, status, verification_token, verification_otp, verification_token_expires_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id, name, email, role, organization_id, COALESCE(status, 'active') as status, verification_token, verification_otp, created_at, updated_at;
     `;
     const result = await db.query(sql, [
+      resolvedId,
       name.trim(),
       email.trim().toLowerCase(),
       pwdHash,
