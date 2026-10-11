@@ -4639,7 +4639,7 @@ async function initDb() {
 
     CREATE TABLE IF NOT EXISTS dataset_rows (
       id BIGSERIAL PRIMARY KEY,
-      dataset_id INTEGER NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
+      dataset_id UUID NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
       organization_id UUID,
       row_index INTEGER NOT NULL,
       data JSONB NOT NULL,

@@ -104,6 +104,38 @@ function pathIsAbsolute(p) {
 }
 
 /**
+ * Ensures dataset_rows table exists and is compatible with datasets.id
+ */
+async function ensureDatasetRowsTable(client) {
+  try {
+    const dtCheck = await client.query(`
+      SELECT data_type FROM information_schema.columns 
+      WHERE table_schema = 'public' AND table_name = 'datasets' AND column_name = 'id'
+      LIMIT 1;
+    `);
+    const isUuid = dtCheck.rows[0]?.data_type === 'uuid';
+    const fkType = isUuid ? 'UUID' : 'INTEGER';
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS public.dataset_rows (
+        id BIGSERIAL PRIMARY KEY,
+        dataset_id ${fkType} NOT NULL REFERENCES public.datasets(id) ON DELETE CASCADE,
+        organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+        row_index INTEGER NOT NULL,
+        data JSONB NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_id ON public.dataset_rows(dataset_id);
+      CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_org ON public.dataset_rows(dataset_id, organization_id);
+      CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_row_idx ON public.dataset_rows(dataset_id, row_index);
+      CREATE INDEX IF NOT EXISTS idx_dataset_rows_data_gin ON public.dataset_rows USING gin (data);
+    `);
+  } catch (err) {
+    console.warn('[Ingestion] ensureDatasetRowsTable notice:', err.message);
+  }
+}
+
+/**
  * Stream into PostgreSQL using COPY or batched transactions
  */
 async function ingestToPostgres({
@@ -124,6 +156,9 @@ async function ingestToPostgres({
 
   try {
     client = await pool.connect();
+
+    // Ensure target table exists before querying
+    await ensureDatasetRowsTable(client);
 
     // Clean up any existing partial records for this datasetId to prevent duplicates
     await client.query('DELETE FROM dataset_rows WHERE dataset_id = $1', [datasetId]);
