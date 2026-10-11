@@ -135,41 +135,36 @@ class ReportService {
           // Query real rows from dataset
           const rowsResult = await analyticsService.queryDatasetRows(
             dataset,
-            dimensions,
-            report.filters || {},
-            1,
-            50,
-            null,
-            'desc',
+            { page: 1, limit: 50, filters: report.filters || {} },
             { organization_id: organizationId }
           );
-          sampleRows = rowsResult.rows || [];
+          sampleRows = rowsResult?.rows || [];
 
           // Query real aggregations from dataset
           calculatedKpis = await analyticsService.queryDatasetKpis(
             dataset,
-            dimensions,
             report.filters || {},
             { organization_id: organizationId }
           );
 
           // Real trends and breakdowns for charts
           const [tRes, cRes, rRes] = await Promise.all([
-            analyticsService.queryDatasetTrends(dataset, dimensions, report.filters || {}, 'month', { organization_id: organizationId }).catch(() => ({ trends: [] })),
+            analyticsService.queryDatasetTrends(dataset, report.filters || {}, { organization_id: organizationId }).catch(() => []),
             dimensions.channelColumn
-              ? analyticsService.queryDatasetBreakdowns(dataset, dimensions, report.filters || {}, dimensions.channelColumn, { organization_id: organizationId }).catch(() => ({ breakdown: [] }))
-              : Promise.resolve({ breakdown: [] }),
+              ? analyticsService.queryDatasetBreakdowns(dataset, dimensions.channelColumn, report.filters || {}, { organization_id: organizationId }).catch(() => [])
+              : Promise.resolve([]),
             dimensions.regionColumn
-              ? analyticsService.queryDatasetBreakdowns(dataset, dimensions, report.filters || {}, dimensions.regionColumn, { organization_id: organizationId }).catch(() => ({ breakdown: [] }))
-              : Promise.resolve({ breakdown: [] })
+              ? analyticsService.queryDatasetBreakdowns(dataset, dimensions.regionColumn, report.filters || {}, { organization_id: organizationId }).catch(() => [])
+              : Promise.resolve([])
           ]);
-          trendsResult = tRes;
-          channelBreakdown = cRes;
-          regionBreakdown = rRes;
+          trendsResult = Array.isArray(tRes) ? tRes : (tRes?.trends || []);
+          channelBreakdown = Array.isArray(cRes) ? cRes : (cRes?.breakdown || []);
+          regionBreakdown = Array.isArray(rRes) ? rRes : (rRes?.breakdown || []);
 
           // If no custom MetricModel KPIs exist, use real verified dataset KPIs
           if (kpis.length === 0 && calculatedKpis?.kpis) {
             const rawKpis = calculatedKpis.kpis;
+            const totalUnits = rawKpis.totalQuantity ?? rawKpis.unitsSold ?? 0;
             kpis = [
               {
                 id: 'kpi-revenue',
@@ -198,10 +193,10 @@ class ReportService {
               {
                 id: 'kpi-units',
                 name: 'Units Sold',
-                value: rawKpis.unitsSold,
+                value: totalUnits,
                 unit: '',
                 type: 'count',
-                target: Math.round(rawKpis.unitsSold * 1.1),
+                target: Math.round(totalUnits * 1.1),
                 progress: 100,
                 status: 'verified',
                 calculation: `SUM(${dimensions.quantityMetric || 'quantity'})`,
@@ -230,24 +225,24 @@ class ReportService {
                 title: 'Revenue Velocity Trend',
                 type: 'line_chart',
                 position: { w: 6, h: 4 },
-                chart_data: (trendsResult.trends || []).map(t => ({ name: t.formattedDate || t.date, value: t.revenue })),
-                series: [{ name: 'Revenue', data: (trendsResult.trends || []).map(t => ({ category: t.formattedDate || t.date, value: t.revenue })) }]
+                chart_data: trendsResult.map(t => ({ name: t.formattedDate || t.date, value: t.revenue })),
+                series: [{ name: 'Revenue', data: trendsResult.map(t => ({ category: t.formattedDate || t.date, value: t.revenue })) }]
               },
               {
                 id: 'widget-channel-distribution',
                 title: 'Sales Channel Distribution',
                 type: 'bar_chart',
                 position: { w: 6, h: 4 },
-                chart_data: (channelBreakdown.breakdown || []).map(c => ({ name: c.category, value: c.value })),
-                series: [{ name: 'Sales', data: (channelBreakdown.breakdown || []).map(c => ({ category: c.category, value: c.value })) }]
+                chart_data: channelBreakdown.map(c => ({ name: c.category, value: c.value })),
+                series: [{ name: 'Sales', data: channelBreakdown.map(c => ({ category: c.category, value: c.value })) }]
               },
               {
                 id: 'widget-regional-breakdown',
                 title: 'Regional Revenue Share',
                 type: 'pie_chart',
                 position: { w: 6, h: 4 },
-                chart_data: (regionBreakdown.breakdown || []).map(r => ({ name: r.category, value: r.value })),
-                series: [{ name: 'Revenue', data: (regionBreakdown.breakdown || []).map(r => ({ category: r.category, value: r.value })) }]
+                chart_data: regionBreakdown.map(r => ({ name: r.category, value: r.value })),
+                series: [{ name: 'Revenue', data: regionBreakdown.map(r => ({ category: r.category, value: r.value })) }]
               }
             ];
           } else {

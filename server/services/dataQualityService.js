@@ -57,26 +57,79 @@ function detectDelimiter(line) {
 }
 
 /**
- * Create a readable stream for a dataset file path
+ * Generator to stream dataset records directly from PostgreSQL dataset_rows as CSV
  */
-async function getFileReadStream(filePath) {
-  if (!filePath) {
-    return Readable.from(['']);
-  }
-  if (path.isAbsolute(filePath) && fs.existsSync(filePath)) {
-    return fs.createReadStream(filePath, { encoding: 'utf8', highWaterMark: 64 * 1024 });
-  }
-  if (await storage.exists(filePath)) {
-    if (typeof storage.getFileStream === 'function') {
-      const fileStream = storage.getFileStream(filePath);
-      if (fileStream) return fileStream;
+async function* streamDatasetRowsAsCsv(datasetId, schema = []) {
+  const pool = db.getPool();
+  if (!pool || db.isUsingFallback()) return;
+  const headers = schema.map(s => s.name || s);
+  if (headers.length === 0) return;
+  yield headers.join(',') + '\n';
+
+  const batchSize = 2500;
+  let offset = 0;
+  while (true) {
+    const res = await pool.query(
+      'SELECT data FROM dataset_rows WHERE dataset_id = $1 ORDER BY row_index ASC LIMIT $2 OFFSET $3',
+      [datasetId, batchSize, offset]
+    );
+    if (!res.rows || res.rows.length === 0) break;
+    for (const r of res.rows) {
+      const row = r.data || {};
+      const line = headers.map(h => {
+        const val = row[h] !== undefined && row[h] !== null ? String(row[h]) : '';
+        return val.includes(',') || val.includes('"') || val.includes('\n')
+          ? `"${val.replace(/"/g, '""')}"`
+          : val;
+      }).join(',');
+      yield line + '\n';
     }
-    const fileBuffer = await storage.readFile(filePath);
-    return Readable.from([fileBuffer.toString('utf8')]);
+    offset += res.rows.length;
+    if (res.rows.length < batchSize) break;
   }
-  if (fs.existsSync(filePath)) {
-    return fs.createReadStream(filePath, { encoding: 'utf8', highWaterMark: 64 * 1024 });
+}
+
+/**
+ * Create a readable stream for a dataset file path with database-fallback
+ */
+async function getFileReadStream(filePath, dataset = null) {
+  if (filePath) {
+    if (path.isAbsolute(filePath) && fs.existsSync(filePath)) {
+      return fs.createReadStream(filePath, { encoding: 'utf8', highWaterMark: 64 * 1024 });
+    }
+    try {
+      if (await storage.exists(filePath)) {
+        if (typeof storage.getFileStream === 'function') {
+          const fileStream = storage.getFileStream(filePath);
+          if (fileStream) return fileStream;
+        }
+        const fileBuffer = await storage.readFile(filePath);
+        return Readable.from([fileBuffer.toString('utf8')]);
+      }
+    } catch (_) {}
+    if (fs.existsSync(filePath)) {
+      return fs.createReadStream(filePath, { encoding: 'utf8', highWaterMark: 64 * 1024 });
+    }
   }
+
+  // Database streaming fallback: Stream directly from PostgreSQL dataset_rows
+  if (dataset?.id) {
+    const pool = db.getPool();
+    if (pool && !db.isUsingFallback()) {
+      try {
+        const countRes = await pool.query('SELECT 1 FROM dataset_rows WHERE dataset_id = $1 LIMIT 1', [dataset.id]);
+        if (countRes.rowCount > 0) {
+          const schema = Array.isArray(dataset.schema)
+            ? dataset.schema
+            : (typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : []);
+          return Readable.from(streamDatasetRowsAsCsv(dataset.id, schema));
+        }
+      } catch (err) {
+        console.warn('[DataQuality] DB stream fallback error:', err.message);
+      }
+    }
+  }
+
   return Readable.from(['']);
 }
 
@@ -232,7 +285,7 @@ class DataQualityService {
     const scanMode = isSampled ? 'SAMPLED' : 'FULL_SCAN';
     const sampleLimit = isSampled && options.sampleSize ? Number(options.sampleSize) : (isSampled ? 10000 : null);
 
-    const inputStream = await getFileReadStream(dataset.file_path);
+    const inputStream = await getFileReadStream(dataset.file_path, dataset);
 
     const rl = readline.createInterface({
       input: inputStream,

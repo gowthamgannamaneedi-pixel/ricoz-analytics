@@ -98,9 +98,34 @@ const getDatasetPreview = async (req, res, next) => {
       });
     }
 
-    // Check file existence
-    const fileExists = await storage.exists(dataset.file_path);
+    // Check file existence or fallback to PostgreSQL dataset_rows
+    const fileExists = dataset.file_path ? await storage.exists(dataset.file_path) : false;
     if (!fileExists) {
+      const pool = db.getPool();
+      if (pool && !db.isUsingFallback()) {
+        try {
+          const pgRowsRes = await pool.query(
+            'SELECT data FROM dataset_rows WHERE dataset_id = $1 ORDER BY row_index ASC LIMIT 50',
+            [dataset.id]
+          );
+          if (pgRowsRes.rowCount > 0) {
+            const preview = pgRowsRes.rows.map(r => r.data);
+            return res.status(200).json({
+              success: true,
+              data: {
+                id: dataset.id,
+                name: dataset.name,
+                description: dataset.description,
+                rowCount: dataset.row_count,
+                columnCount: dataset.column_count,
+                schema: dataset.schema,
+                preview,
+                previewCount: preview.length
+              }
+            });
+          }
+        } catch (_) {}
+      }
       return res.status(404).json({
         success: false,
         message: 'Underlying dataset file could not be found on storage.'
