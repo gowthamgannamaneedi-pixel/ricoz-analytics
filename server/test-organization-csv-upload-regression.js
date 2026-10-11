@@ -23,29 +23,35 @@ async function runRegressionSuite() {
   let port;
 
   await new Promise((resolve) => {
-    server.listen(0, () => {
+    server.listen(0, async () => {
       port = server.address().port;
       console.log(`[Server] Test server listening on port ${port}`);
       resolve();
     });
   });
 
-  const validOrgA = 'ffa79386-4693-40d1-81f3-0ca748b41b56'; // Ricoz Primary Org
+  await db.initDb();
+
+  const orgARes = await db.query("SELECT id FROM organizations WHERE slug = 'ricoz-primary' OR name ILIKE '%primary%' LIMIT 1");
+  const validOrgA = orgARes.rows[0]?.id || '00000000-0000-0000-0000-000000000001';
   const validOrgB = '00000000-0000-0000-0000-000000000002'; // Secondary Org
   const nonExistentOrg = '99999999-9999-9999-9999-999999999999';
 
-  // Seed Org B in DB if not present
+  const adminRes = await db.query("SELECT id FROM users WHERE email = 'admin@ricoz.test' LIMIT 1");
+  const adminIdA = adminRes.rows[0]?.id || '1524dec9-6e5b-43d6-9438-8e2b8829f243';
+
+  // Seed Org B in DB if not present with enterprise plan and active subscription
   try {
     await db.query(`
-      INSERT INTO organizations (id, name, slug, plan) 
-      VALUES ($1, 'Tenant B Org', 'tenant-b-org', 'enterprise')
-      ON CONFLICT (id) DO NOTHING
-    `, [validOrgB]).catch(() => null);
+      INSERT INTO organizations (id, name, slug, plan, subscription_status, trial_ends_at) 
+      VALUES ('00000000-0000-0000-0000-000000000002', 'Tenant B Org', 'tenant-b-org', 'enterprise', 'active', NOW() + INTERVAL '30 days')
+      ON CONFLICT (id) DO UPDATE SET subscription_status = 'active'
+    `).catch(() => null);
   } catch (_) {}
 
   // 1. Token for Admin in Org A
   const adminTokenA = jwt.sign(
-    { id: '1524dec9-6e5b-43d6-9438-8e2b8829f243', email: 'admin@ricoz.test', role: 'admin', organization_id: validOrgA },
+    { id: adminIdA, email: 'admin@ricoz.test', role: 'admin', organization_id: validOrgA },
     config.jwtSecret || 'super_secret_jwt_key_ricoz_2026',
     { expiresIn: '2h' }
   );

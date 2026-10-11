@@ -4486,11 +4486,11 @@ async function initDb() {
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
       dataset_id INTEGER NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
-      overall_score INTEGER NOT NULL,
-      completeness_score INTEGER NOT NULL,
-      uniqueness_score INTEGER NOT NULL,
-      validity_score INTEGER NOT NULL,
-      consistency_score INTEGER NOT NULL,
+      overall_score INTEGER DEFAULT 100,
+      completeness_score INTEGER DEFAULT 100,
+      uniqueness_score INTEGER DEFAULT 100,
+      validity_score INTEGER DEFAULT 100,
+      consistency_score INTEGER DEFAULT 100,
       column_metrics JSONB DEFAULT '{}'::jsonb,
       anomaly_summary JSONB DEFAULT '{}'::jsonb,
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
@@ -4964,6 +4964,11 @@ async function initDb() {
         ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS column_metrics JSONB DEFAULT '[]'::jsonb;
         ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS issues JSONB DEFAULT '[]'::jsonb;
         ALTER TABLE public.dataset_quality_snapshots ADD COLUMN IF NOT EXISTS evaluated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+        ALTER TABLE public.dataset_quality_snapshots ALTER COLUMN overall_score DROP NOT NULL;
+        ALTER TABLE public.dataset_quality_snapshots ALTER COLUMN completeness_score DROP NOT NULL;
+        ALTER TABLE public.dataset_quality_snapshots ALTER COLUMN uniqueness_score DROP NOT NULL;
+        ALTER TABLE public.dataset_quality_snapshots ALTER COLUMN validity_score DROP NOT NULL;
+        ALTER TABLE public.dataset_quality_snapshots ALTER COLUMN consistency_score DROP NOT NULL;
       `);
     } catch (_) {}
 
