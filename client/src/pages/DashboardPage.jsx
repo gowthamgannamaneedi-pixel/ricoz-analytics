@@ -1348,6 +1348,8 @@ export default function DashboardPage() {
           onResetFilters={handleResetFilters}
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
+          onExport={handleExportDashboard}
+          isExporting={isExporting}
           kpiData={kpiData}
           trendsData={trendsData}
           regionBreakdown={regionBreakdown}

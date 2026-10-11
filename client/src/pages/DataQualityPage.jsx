@@ -572,10 +572,32 @@ export default function DataQualityPage() {
             <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal leading-relaxed">
               Continuous telemetry, anomaly detection, schema tracking, and relational integrity.
             </p>
+            {/* Run Quality Audit Button (Primary Action - Left Aligned per Screenshot A12) */}
+            <div className="mt-3">
+              <Button
+                id="run-audit-button"
+                onClick={handleRunAudit}
+                disabled={evaluating || !selectedDatasetId}
+                variant="primary"
+                className="h-10 px-4 rounded-xl font-semibold shadow-xs"
+              >
+                {evaluating ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>Scanning ({activeJob?.progress_percent || 0}%)...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4 fill-white" />
+                    <span>Run Quality Audit</span>
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
 
           {/* Right Action Controls Toolbar matching Wireframe */}
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start xl:self-auto">
             {/* Dataset Selector Dropdown */}
             <div className="relative">
               <select
@@ -630,7 +652,7 @@ export default function DataQualityPage() {
                 className="flex items-center gap-2 h-10 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-xs sm:text-sm font-semibold text-slate-700 transition shadow-2xs cursor-pointer disabled:opacity-50 select-none"
               >
                 <FileDown className="h-4 w-4 text-slate-500" />
-                <span>Export like PDF</span>
+                <span>Export Report</span>
                 <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
               </button>
 
@@ -680,27 +702,6 @@ export default function DataQualityPage() {
                 </div>
               )}
             </div>
-
-            {/* Run Quality Audit Button (Primary Action) */}
-            <Button
-              id="run-audit-button"
-              onClick={handleRunAudit}
-              disabled={evaluating || !selectedDatasetId}
-              variant="primary"
-              className="h-10 px-4 rounded-xl font-semibold shadow-xs"
-            >
-              {evaluating ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  <span>Scanning ({activeJob?.progress_percent || 0}%)...</span>
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4 fill-white" />
-                  <span>Run Quality Audit</span>
-                </>
-              )}
-            </Button>
           </div>
         </div>
       </div>
@@ -848,10 +849,10 @@ export default function DataQualityPage() {
             {/* Right: 6 Quality Dimensions (7 cols in 3x2 Grid) */}
             <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
               {/* Card 1: Completeness */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-blue-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
                       <Droplet className="h-4 w-4" />
                     </div>
                     <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">25% Wgt</span>
@@ -874,10 +875,10 @@ export default function DataQualityPage() {
               </div>
 
               {/* Card 2: Validity / Types */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-emerald-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
                       <Check className="h-4 w-4 stroke-[2.5]" />
                     </div>
                     <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">25% Wgt</span>
@@ -900,10 +901,10 @@ export default function DataQualityPage() {
               </div>
 
               {/* Card 3: Uniqueness */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-purple-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
                       <Layers className="h-4 w-4" />
                     </div>
                     <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">20% Wgt</span>
@@ -926,10 +927,10 @@ export default function DataQualityPage() {
               </div>
 
               {/* Card 4: Consistency & Joins */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-teal-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-50 text-teal-600">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
                       <Link2 className="h-4 w-4" />
                     </div>
                     <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">20% Wgt</span>
@@ -954,10 +955,10 @@ export default function DataQualityPage() {
               </div>
 
               {/* Card 5: Freshness */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-amber-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
                       <Clock className="h-4 w-4" />
                     </div>
                     <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">10% Wgt</span>
@@ -980,10 +981,10 @@ export default function DataQualityPage() {
               </div>
 
               {/* Card 6: Schema & Volume */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-indigo-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
                       <GitBranch className="h-4 w-4" />
                     </div>
                     <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">Volume</span>

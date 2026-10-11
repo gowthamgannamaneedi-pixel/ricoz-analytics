@@ -239,29 +239,26 @@ export default function DatasetsPage() {
           </p>
           {!isViewer && (
             <div className="mt-2.5">
-              <button
+              <Button
+                variant="primary"
                 onClick={() => setIsUploadModalOpen(true)}
                 id="upload-dataset-header-btn"
-                className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 h-10 text-xs font-semibold text-white hover:bg-rose-700 transition shadow-xs cursor-pointer"
+                className="h-10 px-4 text-xs font-semibold rounded-xl shadow-xs gap-2"
               >
                 <Plus className="h-4 w-4" />
                 <span>Ingest New Dataset</span>
-              </button>
+              </Button>
             </div>
           )}
         </div>
 
         {/* Header Action Buttons */}
         <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
-          <button
+          <RefreshButton
             onClick={handleRefresh}
-            disabled={isRefreshing}
+            isRefreshing={isRefreshing}
             id="refresh-datasets-btn"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 h-10 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs disabled:opacity-50 cursor-pointer"
-          >
-            <RefreshCw className={`h-4 w-4 text-slate-500 ${isRefreshing ? 'animate-spin text-rose-600' : ''}`} />
-            <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
-          </button>
+          />
         </div>
       </div>
 
@@ -336,7 +333,7 @@ export default function DatasetsPage() {
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
               Total Record Volume
             </span>
-            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+            <div className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
               <CheckCircle2 className="h-4 w-4" />
             </div>
           </div>
@@ -356,7 +353,7 @@ export default function DatasetsPage() {
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
               Inferred Dimensions
             </span>
-            <div className="p-2 rounded-xl bg-purple-50 text-purple-600 border border-purple-100">
+            <div className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
               <LayoutGrid className="h-4 w-4" />
             </div>
           </div>

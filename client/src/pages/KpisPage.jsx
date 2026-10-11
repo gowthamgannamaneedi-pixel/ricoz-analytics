@@ -341,11 +341,24 @@ export default function KpisPage() {
             <span className="mx-2 text-slate-300 dark:text-slate-700">|</span>
             <span>Define, customize, and monitor business metrics with targets and performance thresholds.</span>
           </p>
+          {!isViewer && (
+            <div className="mt-3">
+              <Button
+                variant="primary"
+                onClick={handleCreateNew}
+                id="define-metric-header-btn"
+                className="h-10 px-4 text-xs font-semibold rounded-xl shadow-xs gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Define Metric</span>
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Header Action Controls */}
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          {/* Active Dataset Selector Dropdown Button (Matching Overview Wireframe Pill) */}
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start lg:self-auto">
+          {/* Active Dataset Selector Dropdown Button */}
           {datasets.length > 0 && (
             <div className="relative">
               <select
@@ -366,28 +379,11 @@ export default function KpisPage() {
             </div>
           )}
 
-          <Button
-            variant="secondary"
+          <RefreshButton
             onClick={handleRefresh}
-            disabled={isRefreshing}
+            isRefreshing={isRefreshing}
             id="refresh-kpis-btn"
-            className="h-10 px-4 text-xs font-semibold rounded-xl shadow-2xs gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin text-rose-600 dark:text-rose-400' : ''}`} />
-            <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
-          </Button>
-
-          {!isViewer && (
-            <Button
-              variant="primary"
-              onClick={handleCreateNew}
-              id="define-metric-header-btn"
-              className="h-10 px-4 text-xs font-semibold rounded-xl shadow-xs gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Define Metric</span>
-            </Button>
-          )}
+          />
         </div>
       </div>
 
@@ -557,7 +553,7 @@ export default function KpisPage() {
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               aria-label="Filter by metric type"
-              className="appearance-none rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800 hover:text-rose-700 dark:hover:text-rose-300 focus:bg-white dark:focus:bg-slate-850 focus:border-rose-600 dark:focus:border-rose-500 focus:outline-hidden cursor-pointer transition-all"
+              className="appearance-none h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 py-2 pl-3 pr-8 text-xs font-semibold text-slate-800 dark:text-slate-100 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800 hover:text-rose-700 dark:hover:text-rose-300 focus:bg-white dark:focus:bg-slate-850 focus:border-rose-600 dark:focus:border-rose-500 focus:outline-hidden cursor-pointer transition-all"
             >
               <option value="all">All Metric Types</option>
               <option value="currency">Currency (₹)</option>
@@ -576,7 +572,7 @@ export default function KpisPage() {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               aria-label="Filter by performance status"
-              className="appearance-none rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800 hover:text-rose-700 dark:hover:text-rose-300 focus:bg-white dark:focus:bg-slate-850 focus:border-rose-600 dark:focus:border-rose-500 focus:outline-hidden cursor-pointer transition-all"
+              className="appearance-none h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 py-2 pl-3 pr-8 text-xs font-semibold text-slate-800 dark:text-slate-100 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800 hover:text-rose-700 dark:hover:text-rose-300 focus:bg-white dark:focus:bg-slate-850 focus:border-rose-600 dark:focus:border-rose-500 focus:outline-hidden cursor-pointer transition-all"
             >
               <option value="all">All Statuses</option>
               <option value="on_track">On Track</option>
@@ -593,7 +589,7 @@ export default function KpisPage() {
               value={datasetFilter}
               onChange={(e) => setDatasetFilter(e.target.value)}
               aria-label="Filter by linked dataset"
-              className="appearance-none rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800 hover:text-rose-700 dark:hover:text-rose-300 focus:bg-white dark:focus:bg-slate-850 focus:border-rose-600 dark:focus:border-rose-500 focus:outline-hidden cursor-pointer transition-all max-w-[180px] truncate"
+              className="appearance-none h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 py-2 pl-3 pr-8 text-xs font-semibold text-slate-800 dark:text-slate-100 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800 hover:text-rose-700 dark:hover:text-rose-300 focus:bg-white dark:focus:bg-slate-850 focus:border-rose-600 dark:focus:border-rose-500 focus:outline-hidden cursor-pointer transition-all max-w-[180px] truncate"
             >
               <option value="all">All Datasets</option>
               {datasets.map(d => (

@@ -18,7 +18,7 @@ async function validatePdfIntegrity() {
     dashboardTitle: 'Executive Sales Command',
     generatedAt: new Date(),
     kpis: [
-      { name: 'Total Revenue', value: 2450000, unit: 'INR', type: 'currency', target: 2000000, progress: 122.5, status: 'on_track' },
+      { name: 'Total Revenue', value: 3745000, unit: 'INR', type: 'currency', target: 3500000, progress: 107.0, status: 'on_track' },
       { name: 'Active Subscriptions', value: 1420, unit: '', type: 'count', target: 1200, progress: 118.3, status: 'on_track' },
       { name: 'Average Deal Size', value: 85400, unit: 'INR', type: 'currency', target: 75000, progress: 113.8, status: 'on_track' },
       { name: 'Customer Churn Rate', value: 1.8, unit: '%', type: 'percentage', target: 2.0, progress: 90.0, status: 'on_track' }
