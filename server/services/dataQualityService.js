@@ -13,6 +13,7 @@ const AlertModel = require('../models/alertModel');
 const alertEvaluator = require('./alertEvaluatorService');
 const config = require('../config');
 const db = require('../config/database');
+const analyticsService = require('./analyticsService');
 
 // In-memory set of active job abort controllers for cancellation
 const activeJobAbortControllers = new Map();
@@ -326,14 +327,6 @@ class DataQualityService {
     const isSampled = Boolean(options.sampleSize) || options.scanMode === 'SAMPLED' || options.fullScan === false;
     const scanMode = isSampled ? 'SAMPLED' : 'FULL_SCAN';
     const sampleLimit = isSampled && options.sampleSize ? Number(options.sampleSize) : (isSampled ? 10000 : null);
-
-    const inputStream = await getFileReadStream(dataset.file_path, dataset);
-
-    const rl = readline.createInterface({
-      input: inputStream,
-      crlfDelay: Infinity
-    });
-
     let isHeader = true;
     let delimiter = ',';
     let headers = [];
@@ -364,14 +357,224 @@ class DataQualityService {
 
     let lastYieldTime = Date.now();
 
-    for await (const rawLine of rl) {
-      if (options.abortSignal?.aborted) {
-        rl.close();
-        throw new Error('Quality audit cancelled by user.');
+    const isJson = Boolean(dataset.file_path && dataset.file_path.toLowerCase().endsWith('.json'));
+
+    if (isJson) {
+      let records = [];
+      try {
+        records = await analyticsService.loadDatasetRecords(dataset, sampleLimit || 1000000);
+      } catch (e) {
+        console.warn('[DataQuality] Failed to load JSON records directly:', e.message);
       }
 
-      const line = rawLine.trim();
-      if (!line) continue;
+      if (records && records.length > 0) {
+        headers = (Array.isArray(schema) && schema.length > 0)
+          ? schema.map(s => s.name || s)
+          : Object.keys(records[0]);
+
+        headers.forEach(h => {
+          const colSchema = schema.find(s => s.name?.toLowerCase() === h.toLowerCase());
+          const colType = (colSchema?.type || 'string').toLowerCase();
+          const colRules = activeRules.filter(r => r.column_name?.toLowerCase() === h.toLowerCase());
+
+          columnStats[h] = {
+            name: h,
+            type: colType,
+            rules: colRules,
+            nullCount: 0,
+            emptyCount: 0,
+            presentCount: 0,
+            validCount: 0,
+            invalidCount: 0,
+            distinctSamples: new Set(),
+            observedTypes: {},
+            ruleBreaches: {}
+          };
+          sourceColumnValues[h] = [];
+        });
+
+        for (const row of records) {
+          if (options.abortSignal?.aborted) {
+            throw new Error('Quality audit cancelled by user.');
+          }
+
+          processedRows++;
+          if (sampleLimit && processedRows > sampleLimit) {
+            break;
+          }
+
+          const lineStr = JSON.stringify(row);
+          if (hashSampleCount < MAX_HASH_SAMPLES) {
+            const rowHash = crypto.createHash('md5').update(lineStr).digest('hex');
+            if (sampleRowHashes.has(rowHash)) {
+              sampleDuplicates++;
+            } else {
+              sampleRowHashes.add(rowHash);
+              hashSampleCount++;
+            }
+          }
+
+          headers.forEach((header) => {
+            const stats = columnStats[header];
+            if (!stats) return;
+
+            const val = row[header];
+            const rawVal = (val !== undefined && val !== null) ? String(val).trim() : '';
+            const isNullOrEmpty = rawVal === '' || rawVal.toLowerCase() === 'null' || rawVal.toLowerCase() === 'undefined';
+
+            if (sourceColumnValues[header].length < 10000 && !isNullOrEmpty) {
+              sourceColumnValues[header].push(rawVal);
+            }
+
+            if (isNullOrEmpty) {
+              if (rawVal === '') stats.emptyCount++;
+              else stats.nullCount++;
+
+              const notNullRule = stats.rules.find(r => r.rule_type === 'not_null');
+              if (notNullRule) {
+                stats.invalidCount++;
+                stats.ruleBreaches['not_null'] = (stats.ruleBreaches['not_null'] || 0) + 1;
+              }
+              return;
+            }
+
+            stats.presentCount++;
+            if (stats.distinctSamples.size < 500) {
+              stats.distinctSamples.add(rawVal);
+            }
+
+            let isValid = true;
+            const colType = stats.type;
+
+            if (colType.includes('int') || colType.includes('float') || colType.includes('double') || colType.includes('num') || colType.includes('dec')) {
+              const num = Number(rawVal);
+              if (isNaN(num)) isValid = false;
+            } else if (colType.includes('date') || colType.includes('time')) {
+              const d = Date.parse(rawVal);
+              if (isNaN(d)) isValid = false;
+            } else if (colType.includes('bool')) {
+              const lower = rawVal.toLowerCase();
+              if (!['true', 'false', '1', '0', 'yes', 'no', 't', 'f'].includes(lower)) {
+                isValid = false;
+              }
+            }
+
+            if (isValid && (header.toLowerCase().includes('email') || rawVal.includes('@'))) {
+              if (header.toLowerCase().includes('email')) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(rawVal)) {
+                  isValid = false;
+                }
+              }
+            }
+
+            // Custom Quality Rules
+            if (isValid && stats.rules.length > 0) {
+              for (const rule of stats.rules) {
+                const configObj = rule.configuration || {};
+                switch (rule.rule_type) {
+                  case 'min_value': {
+                    const num = Number(rawVal);
+                    if (configObj.min !== undefined && num < Number(configObj.min)) {
+                      isValid = false;
+                      stats.ruleBreaches['min_value'] = (stats.ruleBreaches['min_value'] || 0) + 1;
+                    }
+                    break;
+                  }
+                  case 'max_value': {
+                    const num = Number(rawVal);
+                    if (configObj.max !== undefined && num > Number(configObj.max)) {
+                      isValid = false;
+                      stats.ruleBreaches['max_value'] = (stats.ruleBreaches['max_value'] || 0) + 1;
+                    }
+                    break;
+                  }
+                  case 'range': {
+                    const num = Number(rawVal);
+                    if ((configObj.min !== undefined && num < Number(configObj.min)) || (configObj.max !== undefined && num > Number(configObj.max))) {
+                      isValid = false;
+                      stats.ruleBreaches['range'] = (stats.ruleBreaches['range'] || 0) + 1;
+                    }
+                    break;
+                  }
+                  case 'regex': {
+                    if (rule._compiledRegex) {
+                      if (!rule._compiledRegex.test(rawVal)) {
+                        isValid = false;
+                        stats.ruleBreaches['regex'] = (stats.ruleBreaches['regex'] || 0) + 1;
+                      }
+                    }
+                    break;
+                  }
+                  case 'allowed_values': {
+                    if (Array.isArray(configObj.values) && configObj.values.length > 0) {
+                      const allowed = configObj.values.map(v => String(v).trim().toLowerCase());
+                      if (!allowed.includes(rawVal.toLowerCase())) {
+                        isValid = false;
+                        stats.ruleBreaches['allowed_values'] = (stats.ruleBreaches['allowed_values'] || 0) + 1;
+                      }
+                    }
+                    break;
+                  }
+                }
+                if (!isValid) break;
+              }
+            }
+
+            if (isValid) stats.validCount++;
+            else stats.invalidCount++;
+
+            let valType = typeof rawVal;
+            if (!isNaN(Number(rawVal)) && rawVal.trim() !== '') {
+              valType = 'number_string';
+            } else {
+              const parsedTs = Date.parse(rawVal);
+              if (!isNaN(parsedTs) && rawVal.length >= 8 && rawVal.length <= 35) {
+                valType = 'date_string';
+                if (parsedTs > maxDataTimestamp) {
+                  const yr = new Date(parsedTs).getFullYear();
+                  if (yr >= 1990 && yr <= 2050) {
+                    maxDataTimestamp = parsedTs;
+                  }
+                }
+              }
+            }
+            stats.observedTypes[valType] = (stats.observedTypes[valType] || 0) + 1;
+          });
+
+          if (processedRows % batchSize === 0 || Date.now() - lastYieldTime > 300) {
+            lastYieldTime = Date.now();
+            const effectiveTotal = sampleLimit || (totalRows > 0 ? totalRows : records.length);
+            const percent = Math.min(85, Math.max(10, Math.round((processedRows / effectiveTotal) * 75) + 10));
+
+            if (options.onProgress) {
+              await options.onProgress({
+                rowsProcessed: processedRows,
+                totalRows: effectiveTotal,
+                progressPercent: percent,
+                stage: `STREAMING_ROWS (${processedRows.toLocaleString()} rows)`
+              });
+            }
+            await new Promise(r => setImmediate(r));
+          }
+        }
+      }
+    } else {
+      const inputStream = await getFileReadStream(dataset.file_path, dataset);
+
+      const rl = readline.createInterface({
+        input: inputStream,
+        crlfDelay: Infinity
+      });
+
+      for await (const rawLine of rl) {
+        if (options.abortSignal?.aborted) {
+          rl.close();
+          throw new Error('Quality audit cancelled by user.');
+        }
+
+        const line = rawLine.trim();
+        if (!line) continue;
 
       if (isHeader) {
         delimiter = detectDelimiter(line);
@@ -575,6 +778,7 @@ class DataQualityService {
         await new Promise(r => setImmediate(r));
       }
     }
+  }
 
     if (totalRows === 0 && processedRows > 0) {
       totalRows = processedRows;
