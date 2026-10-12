@@ -131,7 +131,7 @@ export default function BillingPage() {
       )}
 
       {/* Main Container */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
           <div>
@@ -249,11 +249,11 @@ export default function BillingPage() {
 
                 <div>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-slate-950 font-serif">{p.name}</h3>
+                    <h3 className="text-lg font-bold text-slate-950 font-sans">{p.name}</h3>
                     {p.id === 'growth' ? (
                       <Zap className="h-5 w-5 text-rose-600" />
                     ) : p.id === 'enterprise' ? (
-                      <ShieldCheck className="h-5 w-5 text-indigo-600" />
+                      <ShieldCheck className="h-5 w-5 text-rose-600" />
                     ) : (
                       <Layers className="h-5 w-5 text-slate-400" />
                     )}
@@ -262,7 +262,7 @@ export default function BillingPage() {
 
                   {/* Price */}
                   <div className="mt-5 pb-5 border-b border-slate-100 flex items-baseline gap-1">
-                    <span className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight font-serif">
+                    <span className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight font-sans">
                       ${price}
                     </span>
                     <span className="text-xs text-slate-500 font-medium">
@@ -278,7 +278,7 @@ export default function BillingPage() {
                     <ul className="space-y-2.5 text-xs text-slate-700">
                       {p.features.map((feat, idx) => (
                         <li key={idx} className="flex items-start gap-2.5">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                          <CheckCircle2 className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
                           <span>{feat}</span>
                         </li>
                       ))}
@@ -329,7 +329,7 @@ export default function BillingPage() {
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-2xs">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 shrink-0">
+              <div className="p-2.5 rounded-lg bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
                 <Lock className="w-5 h-5" />
               </div>
               <div className="text-xs">

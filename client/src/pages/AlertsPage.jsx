@@ -316,25 +316,25 @@ export default function AlertsPage() {
       )}
 
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-slate-200 pb-5">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 border border-rose-200 text-rose-600 shadow-2xs">
-              <Bell className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-                Real-Time Alerts & Incident Center
-              </h1>
-              <p className="text-xs text-slate-500">
-                Rule-based threshold evaluation, operational alerts, and incident resolution
-              </p>
-            </div>
+      <div className="space-y-4 border-b border-slate-200 pb-5">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 border border-rose-200 text-rose-600 shadow-2xs">
+            <Bell className="h-5 w-5" />
           </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight font-sans">
+              Real-Time Alerts & Incident Center
+            </h1>
+            <p className="text-xs text-slate-500">
+              Rule-based threshold evaluation, operational alerts, and incident resolution
+            </p>
+          </div>
+        </div>
 
-          {/* Primary Action placed below description */}
-          {canMutate && (
-            <div className="mt-3.5">
+        {/* Action Row below description: Create Alert Rule on left, Refresh on right */}
+        <div className="flex items-center justify-between gap-4 pt-0.5">
+          <div>
+            {canMutate && (
               <Button
                 id="create-alert-rule-btn"
                 onClick={() => {
@@ -347,17 +347,16 @@ export default function AlertsPage() {
                 <Plus className="h-4 w-4" />
                 <span>Create Alert Rule</span>
               </Button>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Header Actions (Right) */}
-        <div className="flex items-center gap-2.5 self-start sm:self-auto">
-          <RefreshButton
-            id="refresh-alerts-btn"
-            isRefreshing={refreshing}
-            onClick={handleRefresh}
-          />
+          <div className="flex items-center gap-2.5">
+            <RefreshButton
+              id="refresh-alerts-btn"
+              isRefreshing={refreshing}
+              onClick={handleRefresh}
+            />
+          </div>
         </div>
       </div>
 
@@ -403,7 +402,7 @@ export default function AlertsPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">Resolved MTD</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
               <CheckCircle2 className="h-4 w-4" />
             </div>
           </div>

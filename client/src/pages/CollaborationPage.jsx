@@ -53,6 +53,7 @@ import { useAuth } from '../context/AuthContext';
 import ShareModal from '../components/ShareModal';
 import { Button } from '../components/ui/Button';
 import { RefreshButton } from '../components/ui/RefreshButton';
+import { ResetButton } from '../components/ui/ResetButton';
 
 export default function CollaborationPage() {
   const { user } = useAuth();
@@ -569,7 +570,7 @@ export default function CollaborationPage() {
         {/* Card 2: Shared with Me */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs hover:shadow-xs transition">
           <div className="flex items-center justify-between">
-            <div className="h-11 w-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <div className="h-11 w-11 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
               <Share2 className="w-6 h-6" />
             </div>
             {sharedWithMeTotal > 0 && (
@@ -619,7 +620,7 @@ export default function CollaborationPage() {
         {/* Card 4: Teams & Groups */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs hover:shadow-xs transition">
           <div className="flex items-center justify-between">
-            <div className="h-11 w-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <div className="h-11 w-11 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
               <Users2 className="w-6 h-6" />
             </div>
             {activeTeamsCount > 0 && (
@@ -789,16 +790,14 @@ export default function CollaborationPage() {
 
             {/* Clear Filters Button */}
             {(searchQuery || typeFilter !== 'all' || accessFilter !== 'all') && (
-              <button
+              <ResetButton
                 onClick={() => {
                   setSearchQuery('');
                   setTypeFilter('all');
                   setAccessFilter('all');
                 }}
-                className="h-10 px-3 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition cursor-pointer"
-              >
-                Reset
-              </button>
+                size="default"
+              />
             )}
 
             <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
@@ -975,11 +974,11 @@ export default function CollaborationPage() {
         </div>
       ) : currentTabItems.length === 0 ? (
         /* TAB EMPTY STATE */
-        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-2xs max-w-2xl mx-auto">
+        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-2xs w-full">
           {activeTab === 'favorites' ? (
             <>
-              <div className="h-12 w-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-3">
-                <Star className="h-6 w-6 fill-amber-400" />
+              <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center mx-auto mb-3">
+                <Star className="h-6 w-6 text-rose-600" />
               </div>
               <h3 className="text-base font-bold text-slate-900">No favorites yet</h3>
               <p className="text-xs sm:text-sm text-slate-500 mt-1 mb-5 leading-relaxed max-w-md mx-auto">
@@ -988,8 +987,8 @@ export default function CollaborationPage() {
             </>
           ) : activeTab === 'recent' ? (
             <>
-              <div className="h-12 w-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-3">
-                <Clock className="h-6 w-6" />
+              <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center mx-auto mb-3">
+                <Clock className="h-6 w-6 text-rose-600" />
               </div>
               <h3 className="text-base font-bold text-slate-900">No recent activity</h3>
               <p className="text-xs sm:text-sm text-slate-500 mt-1 mb-5 leading-relaxed max-w-md mx-auto">
@@ -998,8 +997,8 @@ export default function CollaborationPage() {
             </>
           ) : (
             <>
-              <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
-                <Share2 className="h-6 w-6" />
+              <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center mx-auto mb-3">
+                <Share2 className="h-6 w-6 text-rose-600" />
               </div>
               <h3 className="text-base font-bold text-slate-900">No items shared with you yet</h3>
               <p className="text-xs sm:text-sm text-slate-500 mt-1 mb-5 leading-relaxed max-w-md mx-auto">

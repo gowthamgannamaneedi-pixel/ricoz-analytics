@@ -81,7 +81,7 @@ const PREBUILT_TEMPLATES = [
     title: 'Financial Performance',
     description: 'Comprehensive revenue breakdown, realization rates, and channel contribution.',
     format: 'pdf',
-    iconBg: 'bg-indigo-50 text-indigo-600 border-indigo-200/80',
+    iconBg: 'bg-rose-50 text-rose-600 border-rose-200/80',
     category: 'Finance'
   },
   {
@@ -89,7 +89,7 @@ const PREBUILT_TEMPLATES = [
     title: 'Sales & Channel Analysis',
     description: 'Detailed channel performance, partner distribution, and conversion volume.',
     format: 'excel',
-    iconBg: 'bg-emerald-50 text-emerald-600 border-emerald-200/80',
+    iconBg: 'bg-rose-50 text-rose-600 border-rose-200/80',
     category: 'Sales'
   },
   {
@@ -105,7 +105,7 @@ const PREBUILT_TEMPLATES = [
     title: 'Data Quality Report',
     description: 'Dataset completeness, validation issues, schema integrity, and health score.',
     format: 'pdf',
-    iconBg: 'bg-amber-50 text-amber-600 border-amber-200/80',
+    iconBg: 'bg-rose-50 text-rose-600 border-rose-200/80',
     category: 'Governance'
   }
 ];
@@ -598,7 +598,7 @@ export default function ReportsPage() {
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* 1. PAGE HEADER                                                      */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="space-y-4">
         <div className="flex items-start gap-3.5">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20 shrink-0 mt-0.5">
             <FileBarChart className="h-6 w-6" />
@@ -615,35 +615,40 @@ export default function ReportsPage() {
             <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal">
               Generate, schedule, and export business summaries across your organization's datasets and KPIs.
             </p>
+          </div>
+        </div>
+
+        {/* Action Row below description: Create Report on left, Refresh on right */}
+        <div className="flex items-center justify-between gap-4 pt-0.5">
+          <div>
             {!isViewer ? (
-              <div className="mt-3">
-                <Button
-                  onClick={() => {
-                    setSelectedReport(null);
-                    setIsModalOpen(true);
-                  }}
-                  id="create-report-btn"
-                  variant="primary"
-                >
-                  <Plus className="h-4 w-4" />
-                  Create Report
-                </Button>
-              </div>
+              <Button
+                onClick={() => {
+                  setSelectedReport(null);
+                  setIsModalOpen(true);
+                }}
+                id="create-report-btn"
+                variant="primary"
+                className="h-10 px-4 rounded-xl font-semibold shadow-xs text-xs gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Create Report</span>
+              </Button>
             ) : (
-              <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-500 text-xs font-medium border border-slate-200">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-500 text-xs font-medium border border-slate-200">
                 <Lock className="h-3.5 w-3.5" />
                 <span>Read-Only (Viewer)</span>
               </div>
             )}
           </div>
-        </div>
 
-        <div className="flex items-center gap-3 shrink-0 self-start sm:self-auto">
-          <RefreshButton
-            label={loading ? 'Refreshing...' : 'Refresh'}
-            loading={loading}
-            onClick={loadData}
-          />
+          <div className="flex items-center gap-2.5">
+            <RefreshButton
+              label={loading ? 'Refreshing...' : 'Refresh'}
+              loading={loading}
+              onClick={loadData}
+            />
+          </div>
         </div>
       </div>
 
@@ -835,7 +840,7 @@ export default function ReportsPage() {
               id="filter-type-select"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="appearance-none pl-3 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 focus:outline-hidden focus:border-rose-500 cursor-pointer shadow-2xs"
+              className="appearance-none pl-3.5 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 focus:outline-hidden focus:border-rose-500 cursor-pointer shadow-2xs"
             >
               <option value="all">All Types</option>
               <option value="pdf">PDF Document</option>
@@ -843,7 +848,7 @@ export default function ReportsPage() {
               <option value="csv">CSV Spreadsheet</option>
               <option value="json">JSON Data</option>
             </select>
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           <div className="relative">
@@ -851,20 +856,20 @@ export default function ReportsPage() {
               id="filter-status-select"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="appearance-none pl-3 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 focus:outline-hidden focus:border-rose-500 cursor-pointer shadow-2xs"
+              className="appearance-none pl-3.5 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 focus:outline-hidden focus:border-rose-500 cursor-pointer shadow-2xs"
             >
               <option value="all">All Statuses</option>
               <option value="active">Active Only</option>
               <option value="draft">Draft Only</option>
               <option value="paused">Paused Only</option>
             </select>
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           {hasActiveFilters && (
             <ResetButton
               onClick={resetFilters}
-              size="sm"
+              size="default"
             />
           )}
         </div>

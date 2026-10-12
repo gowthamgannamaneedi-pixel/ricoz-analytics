@@ -667,7 +667,7 @@ export default function AIInsightsPage() {
           <span className="text-slate-700 font-semibold">AI Insights</span>
         </div>
 
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="space-y-4">
           <div className="flex items-start sm:items-center gap-3.5">
             {/* Glowing Rose Sparkle Icon Badge */}
             <div className="h-12 w-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-rose-500/20">
@@ -676,7 +676,7 @@ export default function AIInsightsPage() {
 
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-sans">
                   AI Insights
                 </h1>
                 <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
@@ -689,81 +689,84 @@ export default function AIInsightsPage() {
             </div>
           </div>
 
-          {/* Header Action Controls */}
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            {/* Dataset Scope Selector */}
-            <div className="relative">
-              <select
-                value={selectedDatasetId}
-                onChange={(e) => setSelectedDatasetId(e.target.value)}
-                className="h-10 appearance-none pl-3.5 pr-9 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-600 transition cursor-pointer"
-              >
-                <option value="">All Datasets</option>
-                {datasets.map(d => (
-                  <option key={d.id} value={d.id}>
-                    {d.name} ({d.row_count || 0} rows)
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-
-            {/* Generate Insights CTA */}
-            <button
-              onClick={handleGenerateInsights}
-              disabled={generating}
-              id="generate-insights-btn"
-              className="h-10 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs sm:text-sm font-semibold shadow-xs flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
-            >
-              <Sparkles className={`w-4 h-4 ${generating ? 'animate-spin' : ''}`} />
-              <span>{generating ? 'Analyzing Data...' : 'Generate Insights'}</span>
-            </button>
-
-            {/* Export Dropdown */}
-            <div className="relative" ref={exportMenuRef}>
+          {/* Action row below description: Generate Insights on left, Toolbar on right */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-0.5">
+            <div>
               <button
-                onClick={() => setExportMenuOpen(prev => !prev)}
-                disabled={exporting}
-                className="h-10 px-3.5 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-400 flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                onClick={handleGenerateInsights}
+                disabled={generating}
+                id="generate-insights-btn"
+                className="h-10 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs sm:text-sm font-semibold shadow-xs flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
               >
-                <FileDown className="w-4 h-4 text-slate-600" />
-                <span>Export</span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                <Sparkles className={`w-4 h-4 ${generating ? 'animate-spin' : ''}`} />
+                <span>{generating ? 'Analyzing Data...' : 'Generate Insights'}</span>
               </button>
-
-              {exportMenuOpen && (
-                <div className="absolute right-0 mt-2 w-44 rounded-xl bg-white border border-slate-200 shadow-lg py-1.5 z-40 animate-fade-in text-xs">
-                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                    Export Format
-                  </div>
-                  <button
-                    onClick={() => handleExport('csv')}
-                    className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium cursor-pointer"
-                  >
-                    <FileText className="w-3.5 h-3.5 text-slate-500" /> CSV Spreadsheet
-                  </button>
-                  <button
-                    onClick={() => handleExport('excel')}
-                    className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium cursor-pointer"
-                  >
-                    <PieChart className="w-3.5 h-3.5 text-emerald-600" /> Excel Workbook (.xlsx)
-                  </button>
-                  <button
-                    onClick={() => handleExport('pdf')}
-                    className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium cursor-pointer"
-                  >
-                    <Download className="w-3.5 h-3.5 text-rose-600" /> PDF Document
-                  </button>
-                </div>
-              )}
             </div>
 
-            {/* Refresh Button (Standard component) */}
-            <RefreshButton
-              id="refresh-ai-insights-btn"
-              onClick={loadData}
-              isRefreshing={loading}
-            />
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              {/* Dataset Scope Selector */}
+              <div className="relative">
+                <select
+                  value={selectedDatasetId}
+                  onChange={(e) => setSelectedDatasetId(e.target.value)}
+                  className="h-10 appearance-none pl-3.5 pr-9 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-600 transition cursor-pointer"
+                >
+                  <option value="">All Datasets</option>
+                  {datasets.map(d => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} ({d.row_count || 0} rows)
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* Export Dropdown */}
+              <div className="relative" ref={exportMenuRef}>
+                <button
+                  onClick={() => setExportMenuOpen(prev => !prev)}
+                  disabled={exporting}
+                  className="h-10 px-3.5 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-400 flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                >
+                  <FileDown className="w-4 h-4 text-slate-600" />
+                  <span>Export</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                </button>
+
+                {exportMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-44 rounded-xl bg-white border border-slate-200 shadow-lg py-1.5 z-40 animate-fade-in text-xs">
+                    <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                      Export Format
+                    </div>
+                    <button
+                      onClick={() => handleExport('csv')}
+                      className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium cursor-pointer"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-slate-500" /> CSV Spreadsheet
+                    </button>
+                    <button
+                      onClick={() => handleExport('excel')}
+                      className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium cursor-pointer"
+                    >
+                      <PieChart className="w-3.5 h-3.5 text-emerald-600" /> Excel Workbook (.xlsx)
+                    </button>
+                    <button
+                      onClick={() => handleExport('pdf')}
+                      className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5 text-rose-600" /> PDF Document
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Refresh Button (Standard component) */}
+              <RefreshButton
+                id="refresh-ai-insights-btn"
+                onClick={loadData}
+                isRefreshing={loading}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -799,7 +802,7 @@ export default function AIInsightsPage() {
         {/* Card 2: Positive Insights */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs hover:shadow-xs transition">
           <div className="flex items-center justify-between">
-            <div className="h-11 w-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <div className="h-11 w-11 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
               <TrendingUp className="w-6 h-6" />
             </div>
             {totalCount > 0 && (
@@ -825,7 +828,7 @@ export default function AIInsightsPage() {
         {/* Card 3: Critical Insights */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs hover:shadow-xs transition">
           <div className="flex items-center justify-between">
-            <div className="h-11 w-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <div className="h-11 w-11 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
               <AlertTriangle className="w-6 h-6" />
             </div>
             {criticalCount > 0 && (
@@ -979,7 +982,7 @@ export default function AIInsightsPage() {
           {hasActiveFilters && (
             <ResetButton
               onClick={resetFilters}
-              size="sm"
+              size="default"
             />
           )}
 

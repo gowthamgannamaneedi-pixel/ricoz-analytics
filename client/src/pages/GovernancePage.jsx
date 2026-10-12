@@ -570,10 +570,10 @@ export default function GovernancePage() {
             {/* Card 3: DASHBOARDS & REPORTS */}
             <div
               onClick={() => navigate('/dashboard')}
-              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-emerald-200 transition-all duration-200 group cursor-pointer"
+              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-rose-200 transition-all duration-200 group cursor-pointer"
             >
               <div className="flex items-center gap-4 min-w-0">
-                <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center shrink-0">
                   <Layers className="w-6 h-6" />
                 </div>
                 <div className="min-w-0">
@@ -588,7 +588,7 @@ export default function GovernancePage() {
                   </div>
                 </div>
               </div>
-              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-700 transition-colors shrink-0 ml-2">
+              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-rose-50 group-hover:text-rose-700 transition-colors shrink-0 ml-2">
                 <ChevronRight className="w-4 h-4" />
               </div>
             </div>
@@ -661,9 +661,9 @@ export default function GovernancePage() {
               {/* 4 Role Sub-Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
                 {/* Administrators */}
-                <div className="bg-gradient-to-br from-purple-50/60 via-white to-purple-50/20 border border-purple-100/90 rounded-2xl p-4.5 relative overflow-hidden">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-700">
-                    <Crown className="w-4 h-4 text-purple-600" />
+                <div className="bg-white border border-slate-200/90 rounded-2xl p-4.5 shadow-2xs hover:border-rose-200 transition">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-700">
+                    <Crown className="w-4 h-4 text-rose-600" />
                     <span>Administrators</span>
                   </div>
                   <div className="text-2xl font-bold text-slate-900 mt-2.5">
@@ -672,16 +672,12 @@ export default function GovernancePage() {
                   <div className="text-xs text-slate-400 mt-0.5">
                     {adminPct}% of team
                   </div>
-                  {/* Subtle Wave Silhouette */}
-                  <svg className="absolute -bottom-2 -right-2 w-20 h-16 pointer-events-none opacity-20" viewBox="0 0 100 60" fill="none">
-                    <path d="M0 60 C30 40 70 50 100 20 L100 60 Z" fill="#8b5cf6" />
-                  </svg>
                 </div>
 
                 {/* Managers */}
-                <div className="bg-gradient-to-br from-blue-50/60 via-white to-blue-50/20 border border-blue-100/90 rounded-2xl p-4.5 relative overflow-hidden">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-700">
-                    <Users className="w-4 h-4 text-blue-600" />
+                <div className="bg-white border border-slate-200/90 rounded-2xl p-4.5 shadow-2xs hover:border-rose-200 transition">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-700">
+                    <Users className="w-4 h-4 text-rose-600" />
                     <span>Managers</span>
                   </div>
                   <div className="text-2xl font-bold text-slate-900 mt-2.5">
@@ -690,15 +686,12 @@ export default function GovernancePage() {
                   <div className="text-xs text-slate-400 mt-0.5">
                     {managerPct}% of team
                   </div>
-                  <svg className="absolute -bottom-2 -right-2 w-20 h-16 pointer-events-none opacity-20" viewBox="0 0 100 60" fill="none">
-                    <path d="M0 60 C30 40 70 50 100 20 L100 60 Z" fill="#3b82f6" />
-                  </svg>
                 </div>
 
                 {/* Analysts */}
-                <div className="bg-gradient-to-br from-amber-50/60 via-white to-amber-50/20 border border-amber-100/90 rounded-2xl p-4.5 relative overflow-hidden">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-700">
-                    <TrendingUp className="w-4 h-4 text-amber-500" />
+                <div className="bg-white border border-slate-200/90 rounded-2xl p-4.5 shadow-2xs hover:border-rose-200 transition">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-700">
+                    <TrendingUp className="w-4 h-4 text-rose-600" />
                     <span>Analysts</span>
                   </div>
                   <div className="text-2xl font-bold text-slate-900 mt-2.5">
@@ -707,14 +700,11 @@ export default function GovernancePage() {
                   <div className="text-xs text-slate-400 mt-0.5">
                     {analystPct}% of team
                   </div>
-                  <svg className="absolute -bottom-2 -right-2 w-20 h-16 pointer-events-none opacity-20" viewBox="0 0 100 60" fill="none">
-                    <path d="M0 60 C30 40 70 50 100 20 L100 60 Z" fill="#f59e0b" />
-                  </svg>
                 </div>
 
                 {/* Viewers */}
-                <div className="bg-gradient-to-br from-slate-50/80 via-white to-slate-100/30 border border-slate-200/80 rounded-2xl p-4.5 relative overflow-hidden">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                <div className="bg-white border border-slate-200/90 rounded-2xl p-4.5 shadow-2xs hover:border-rose-200 transition">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                     <Eye className="w-4 h-4 text-slate-500" />
                     <span>Viewers</span>
                   </div>
@@ -724,9 +714,6 @@ export default function GovernancePage() {
                   <div className="text-xs text-slate-400 mt-0.5">
                     {viewerPct}% of team
                   </div>
-                  <svg className="absolute -bottom-2 -right-2 w-20 h-16 pointer-events-none opacity-20" viewBox="0 0 100 60" fill="none">
-                    <path d="M0 60 C30 40 70 50 100 20 L100 60 Z" fill="#64748b" />
-                  </svg>
                 </div>
               </div>
             </div>

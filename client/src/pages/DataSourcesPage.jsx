@@ -539,7 +539,7 @@ export default function DataSourcesPage() {
         </nav>
 
         {/* Page Title & Controls Toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+        <div className="space-y-3.5 pt-1">
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
@@ -554,8 +554,12 @@ export default function DataSourcesPage() {
             <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal leading-relaxed">
               Connect and manage your business data.
             </p>
-            {!isViewer && (
-              <div className="mt-2.5">
+          </div>
+
+          {/* Action Row below description: Add Data Sources on left, Refresh on right */}
+          <div className="flex items-center justify-between gap-4 pt-0.5">
+            <div>
+              {!isViewer && (
                 <Button
                   id="connect-source-btn"
                   onClick={() => setIsAddModalOpen(true)}
@@ -565,22 +569,17 @@ export default function DataSourcesPage() {
                   <Plus className="h-4 w-4" />
                   <span>Add Data Sources</span>
                 </Button>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Right Action Controls Toolbar */}
-          <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
-            <Button
-              id="refresh-sources-btn"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              variant="secondary"
-              className="h-10 px-4 rounded-xl font-semibold shadow-2xs text-xs gap-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin text-rose-600' : ''}`} />
-              <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
-            </Button>
+            <div className="flex items-center gap-2.5">
+              <RefreshButton
+                id="refresh-sources-btn"
+                onClick={handleRefresh}
+                isRefreshing={isRefreshing}
+                title="Refresh Sources"
+              />
+            </div>
           </div>
         </div>
       </div>

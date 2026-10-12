@@ -285,28 +285,34 @@ export default function MetricModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
                     <span className="block text-[10px] font-medium text-slate-600 mb-1">Aggregation</span>
-                    <select
-                      value={aggregationType}
-                      onChange={(e) => handleColumnOrAggChange(targetColumn, e.target.value)}
-                      className="w-full rounded border border-slate-200 bg-white py-1 px-2 text-xs text-slate-800 focus:border-rose-600 focus:outline-none"
-                    >
-                      {AGGREGATIONS.map(a => (
-                        <option key={a.value} value={a.value}>{a.label}</option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={aggregationType}
+                        onChange={(e) => handleColumnOrAggChange(targetColumn, e.target.value)}
+                        className="w-full appearance-none rounded border border-slate-200 bg-white py-1 pl-2 pr-7 text-xs text-slate-800 focus:border-rose-600 focus:outline-none cursor-pointer"
+                      >
+                        {AGGREGATIONS.map(a => (
+                          <option key={a.value} value={a.value}>{a.label}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
+                    </div>
                   </div>
                   <div>
                     <span className="block text-[10px] font-medium text-slate-600 mb-1">Column Field</span>
-                    <select
-                      value={targetColumn}
-                      onChange={(e) => handleColumnOrAggChange(e.target.value, aggregationType)}
-                      className="w-full rounded border border-slate-200 bg-white py-1 px-2 text-xs text-slate-800 focus:border-rose-600 focus:outline-none"
-                    >
-                      <option value="">-- Choose Column --</option>
-                      {datasetColumns.map(c => (
-                        <option key={c.name} value={c.name}>{c.name} ({c.type})</option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={targetColumn}
+                        onChange={(e) => handleColumnOrAggChange(e.target.value, aggregationType)}
+                        className="w-full appearance-none rounded border border-slate-200 bg-white py-1 pl-2 pr-7 text-xs text-slate-800 focus:border-rose-600 focus:outline-none cursor-pointer"
+                      >
+                        <option value="">-- Choose Column --</option>
+                        {datasetColumns.map(c => (
+                          <option key={c.name} value={c.name}>{c.name} ({c.type})</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
+                    </div>
                   </div>
                 </div>
               </div>

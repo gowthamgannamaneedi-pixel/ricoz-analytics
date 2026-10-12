@@ -52,6 +52,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
 import { ResetButton } from '../components/ui/ResetButton';
+import { RefreshButton } from '../components/ui/RefreshButton';
 
 /**
  * Enterprise Circular Donut Gauge for Overall Dataset Health Score
@@ -735,6 +736,14 @@ export default function DataQualityPage() {
                 </div>
               )}
             </div>
+
+            {/* Refresh Metrics Button */}
+            <RefreshButton
+              id="refresh-quality-btn"
+              onClick={() => selectedDatasetId && loadDatasetQuality(selectedDatasetId)}
+              isRefreshing={loading}
+              title="Refresh Quality Telemetry"
+            />
           </div>
         </div>
       </div>
@@ -1152,13 +1161,13 @@ export default function DataQualityPage() {
                       id="filter-column-scope"
                       value={scopeFilter}
                       onChange={(e) => setScopeFilter(e.target.value)}
-                      className="appearance-none pl-3 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-hidden focus:border-rose-500 cursor-pointer shadow-2xs"
+                      className="appearance-none pl-3.5 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-hidden focus:border-rose-500 cursor-pointer shadow-2xs"
                     >
                       <option value="all">All Columns ({columnMetrics.length})</option>
                       <option value="missing">With Missing Values</option>
                       <option value="pk">Candidate Keys</option>
                     </select>
-                    <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
 
                   {/* Data Type filter */}
@@ -1167,7 +1176,7 @@ export default function DataQualityPage() {
                       id="filter-column-type"
                       value={typeFilter}
                       onChange={(e) => setTypeFilter(e.target.value)}
-                      className="appearance-none pl-3 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-hidden focus:border-rose-500 cursor-pointer shadow-2xs"
+                      className="appearance-none pl-3.5 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-hidden focus:border-rose-500 cursor-pointer shadow-2xs"
                     >
                       <option value="all">All Data Types</option>
                       <option value="string">String / Text</option>
@@ -1175,13 +1184,13 @@ export default function DataQualityPage() {
                       <option value="date">Date / Time</option>
                       <option value="boolean">Boolean</option>
                     </select>
-                    <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
 
                   {/* Reset Button */}
                   <ResetButton
                     onClick={resetFilters}
-                    size="sm"
+                    size="default"
                     title="Reset Search and Filters"
                   />
                 </div>

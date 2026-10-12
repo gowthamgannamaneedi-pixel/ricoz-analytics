@@ -320,7 +320,7 @@ export default function KpisPage() {
       </nav>
 
       {/* 2. Top Header with Title, Telemetry Context, Dataset Pill & Action Buttons */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-1">
+      <div className="space-y-4 pb-1">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 font-sans">
@@ -341,8 +341,12 @@ export default function KpisPage() {
             <span className="mx-2 text-slate-300 dark:text-slate-700">|</span>
             <span>Define, customize, and monitor business metrics with targets and performance thresholds.</span>
           </p>
-          {!isViewer && (
-            <div className="mt-3">
+        </div>
+
+        {/* Action Buttons Row: Define Metric on Left, Dataset Selector & Refresh on Right */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-0.5">
+          <div>
+            {!isViewer && (
               <Button
                 variant="primary"
                 onClick={handleCreateNew}
@@ -352,38 +356,37 @@ export default function KpisPage() {
                 <Plus className="h-4 w-4" />
                 <span>Define Metric</span>
               </Button>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Header Action Controls */}
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start lg:self-auto">
-          {/* Active Dataset Selector Dropdown Button */}
-          {datasets.length > 0 && (
-            <div className="relative">
-              <select
-                value={datasetFilter}
-                onChange={(e) => setDatasetFilter(e.target.value)}
-                aria-label="Active Telemetry Dataset"
-                className="appearance-none pl-9 pr-9 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 focus:outline-hidden focus:border-rose-500 shadow-2xs cursor-pointer transition"
-              >
-                <option value="all">All Linked Datasets</option>
-                {datasets.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-              <Database className="h-4 w-4 text-rose-600 dark:text-rose-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            {/* Active Dataset Selector Dropdown Button */}
+            {datasets.length > 0 && (
+              <div className="relative">
+                <select
+                  value={datasetFilter}
+                  onChange={(e) => setDatasetFilter(e.target.value)}
+                  aria-label="Active Telemetry Dataset"
+                  className="appearance-none pl-9 pr-9 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 focus:outline-hidden focus:border-rose-500 shadow-2xs cursor-pointer transition"
+                >
+                  <option value="all">All Linked Datasets</option>
+                  {datasets.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+                <Database className="h-4 w-4 text-rose-600 dark:text-rose-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            )}
 
-          <RefreshButton
-            onClick={handleRefresh}
-            isRefreshing={isRefreshing}
-            id="refresh-kpis-btn"
-          />
+            <RefreshButton
+              onClick={handleRefresh}
+              isRefreshing={isRefreshing}
+              id="refresh-kpis-btn"
+            />
+          </div>
         </div>
       </div>
 
@@ -605,7 +608,7 @@ export default function KpisPage() {
             <ResetButton
               onClick={resetFilters}
               id="reset-kpi-filters-btn"
-              size="sm"
+              size="default"
             />
           )}
 

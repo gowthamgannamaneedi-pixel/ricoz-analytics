@@ -545,7 +545,7 @@ export default function ForecastsPage() {
         </nav>
 
         {/* Page Title & Actions Toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div className="space-y-4">
           <div className="flex items-start gap-3.5">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20">
               <TrendingUp className="h-6 w-6 stroke-[2.2]" />
@@ -564,39 +564,40 @@ export default function ForecastsPage() {
               <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal max-w-2xl leading-relaxed">
                 Predict future values using available forecasting models and detect anomalies in your data.
               </p>
-
-              {/* Page-level Primary Action placed below description */}
-              <div className="pt-3">
-                <Button
-                  id="generate-forecast-primary-btn"
-                  onClick={handleGenerateForecast}
-                  disabled={generating || isViewer || !selectedDatasetId}
-                  variant="primary"
-                  className="h-10 px-4 rounded-xl font-semibold shadow-xs text-xs sm:text-sm"
-                >
-                  {generating ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 animate-spin text-white" />
-                      <span>Computing Forecast...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-4 w-4 fill-white" />
-                      <span>Generate Forecast</span>
-                    </>
-                  )}
-                </Button>
-              </div>
             </div>
           </div>
 
-          {/* Action Buttons (Right) */}
-          <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
-            <RefreshButton
-              id="refresh-forecasts-btn"
-              onClick={loadInitialData}
-              isRefreshing={loadingInitial}
-            />
+          {/* Action row below description: Generate Forecast on left, Refresh on right */}
+          <div className="flex items-center justify-between gap-4 pt-0.5">
+            <div>
+              <Button
+                id="generate-forecast-primary-btn"
+                onClick={handleGenerateForecast}
+                disabled={generating || isViewer || !selectedDatasetId}
+                variant="primary"
+                className="h-10 px-4 rounded-xl font-semibold shadow-xs text-xs sm:text-sm"
+              >
+                {generating ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin text-white" />
+                    <span>Computing Forecast...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4 fill-white" />
+                    <span>Generate Forecast</span>
+                  </>
+                )}
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <RefreshButton
+                id="refresh-forecasts-btn"
+                onClick={loadInitialData}
+                isRefreshing={loadingInitial}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -697,11 +698,7 @@ export default function ForecastsPage() {
         {/* Card 4: Anomalies Detected */}
         <div className="rounded-2xl border border-slate-200/90 bg-white p-4.5 shadow-2xs hover:border-slate-300 transition-all">
           <div className="flex items-center gap-3">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-xl shrink-0 ${
-              anomaliesCount > 0
-                ? 'bg-amber-50 text-amber-600 border border-amber-200'
-                : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-            }`}>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
               <AlertTriangle className="h-5 w-5" />
             </div>
             <div className="min-w-0">
