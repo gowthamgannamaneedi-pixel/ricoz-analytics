@@ -27,7 +27,10 @@ export default function DashboardLayout() {
         {/* Minimal Enterprise Footer */}
         <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3.5 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 transition-colors">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-700 dark:text-slate-300">RicozAnalytics</span>
+            <span className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-[#D91542]" />
+              RicozAnalytics
+            </span>
             <span className="text-slate-300 dark:text-slate-700">|</span>
             <span>Enterprise Intelligence Suite</span>
           </div>

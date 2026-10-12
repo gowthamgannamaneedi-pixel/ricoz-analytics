@@ -24,6 +24,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import UserAvatar, { getCleanDisplayName } from './ui/UserAvatar';
 import RoleBadge from './ui/RoleBadge';
+import Logo from './ui/Logo';
 
 const navigation = [
   { label: 'OVERVIEW', items: [
@@ -84,22 +85,13 @@ export default function Sidebar({ isOpen, onClose }) {
 
       {/* Sidebar Shell */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 flex w-66 flex-col border-r border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 transition-transform duration-200 ease-in-out lg:translate-x-0 select-none shadow-xs ${
+        className={`fixed top-0 bottom-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 transition-transform duration-200 ease-in-out lg:translate-x-0 select-none shadow-xs ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Top Brand Header */}
-        <div className="flex h-16 shrink-0 items-center justify-between px-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <img 
-              src="/ricoz-logo.png" 
-              alt="ricoz" 
-              className="h-7 w-auto max-w-[110px] object-contain shrink-0" 
-            />
-            <span className="text-[10px] font-medium tracking-tight text-slate-400">
-              Analytics
-            </span>
-          </div>
+        <div className="flex h-16 shrink-0 items-center justify-between px-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <Logo size="lg" linkTo="/dashboard" onClick={onClose} />
 
           <button
             onClick={onClose}

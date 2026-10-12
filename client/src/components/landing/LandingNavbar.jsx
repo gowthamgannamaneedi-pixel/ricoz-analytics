@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Menu, X, PhoneCall, ChevronRight } from 'lucide-react';
 import ThemeToggle from '../ui/ThemeToggle';
+import Logo from '../ui/Logo';
 
 export default function LandingNavbar({ onOpenDemo }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -65,18 +66,8 @@ export default function LandingNavbar({ onOpenDemo }) {
     >
       <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
         <div className="flex items-center justify-between gap-4 lg:gap-6 xl:gap-8">
-          {/* Brand Logo */}
-          <Link to="/" className="flex items-center gap-2.5 sm:gap-3 group shrink-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-red-600 to-red-700 text-white flex items-center justify-center font-black text-lg sm:text-xl shadow-md shadow-red-500/20 group-hover:scale-105 transition-transform duration-200 shrink-0">
-              <span className="tracking-tighter">rZ</span>
-            </div>
-            <div className="flex items-baseline gap-1.5 shrink-0">
-              <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Ricoz</span>
-              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60 px-2 py-0.5 rounded border border-red-100 dark:border-red-900/50">
-                Analytics
-              </span>
-            </div>
-          </Link>
+          {/* Official Brand Logo */}
+          <Logo size="lg" linkTo="/" />
 
           {/* Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center gap-3.5 xl:gap-6 2xl:gap-8 shrink-0">

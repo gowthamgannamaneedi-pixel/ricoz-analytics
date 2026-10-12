@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AlertCircle, Loader2, Mail, RefreshCw, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import Logo from '../components/ui/Logo';
 
 export default function VerifyOtpPage() {
   const { verifyOtp, resendOtp } = useAuth();
@@ -135,9 +136,9 @@ export default function VerifyOtpPage() {
   return (
     <div className="relative min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] text-[#0F172A] dark:text-slate-100 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans transition-colors duration-200">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex flex-col items-center justify-center gap-2 mb-6">
-          <img src="/ricoz-logo.png" alt="RicoZ" className="h-10 w-auto object-contain" />
-          <div className="flex items-center gap-1.5 mt-1">
+        <div className="flex flex-col items-center justify-center gap-3 mb-6">
+          <Logo size="2xl" linkTo="/" />
+          <div className="flex items-center gap-1.5">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-mono">Analytics Workspace</span>
             <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">ENTERPRISE</span>
           </div>

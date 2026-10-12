@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Building2, ShieldCheck, Mail, CheckCircle2, AlertCircle, Loader2, ArrowRight } from 'lucide-react';
 import { getInvitationDetailsApi, acceptInvitationApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import Logo from '../components/ui/Logo';
 
 /**
  * Enterprise Team Member Invitation Acceptance Page — RicozAnalytics
@@ -120,16 +121,9 @@ export default function AcceptInvitePage() {
     <div className="relative min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] text-[#0F172A] dark:text-slate-100 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans transition-colors duration-200">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Brand Header */}
-        <div className="flex flex-col items-center justify-center gap-2 mb-6">
-          <img 
-            src="/ricoz-logo.png" 
-            alt="RicoZ" 
-            className="h-10 w-auto object-contain" 
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-          <div className="flex items-center gap-1.5 mt-1">
+        <div className="flex flex-col items-center justify-center gap-3 mb-6">
+          <Logo size="2xl" linkTo="/" />
+          <div className="flex items-center gap-1.5">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-mono">
               Analytics Workspace
             </span>

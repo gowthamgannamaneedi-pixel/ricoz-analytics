@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AlertCircle, ArrowRight, ArrowLeft, Loader2, Mail, CheckCircle2, RefreshCw, KeyRound, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import ThemeToggle from '../components/ui/ThemeToggle';
+import Logo from '../components/ui/Logo';
 
 export default function RegisterPage() {
   const { register, verifyOtp, resendOtp } = useAuth();
@@ -257,13 +258,9 @@ export default function RegisterPage() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Brand Header */}
-        <div className="flex flex-col items-center justify-center gap-2 mb-6">
-          <img 
-            src="/ricoz-logo.png" 
-            alt="RicoZ" 
-            className="h-10 w-auto object-contain" 
-          />
-          <div className="flex items-center gap-1.5 mt-1">
+        <div className="flex flex-col items-center justify-center gap-3 mb-6">
+          <Logo size="2xl" linkTo="/" />
+          <div className="flex items-center gap-1.5">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-mono">
               Analytics Workspace
             </span>

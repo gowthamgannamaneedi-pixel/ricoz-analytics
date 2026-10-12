@@ -8,11 +8,12 @@ import {
   AlertTriangle,
   Sparkles
 } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Notification from './ui/Notification';
 import Profile from './ui/Profile';
 import ThemeToggle from './ui/ThemeToggle';
+import Logo from './ui/Logo';
 
 const routeTitleMap = {
   '/':               'Overview',
@@ -84,8 +85,8 @@ export default function Navbar({ onOpenSidebar }) {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 sm:px-6 lg:px-8 shadow-2xs transition-colors duration-200">
-      {/* Left: Mobile Navigation Drawer Toggle & Global Search */}
-      <div className="flex items-center gap-3 flex-1 max-w-xl">
+      {/* Left: Mobile Navigation Drawer Toggle, Mobile Brand Logo & Global Search */}
+      <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-xl">
         <button
           type="button"
           onClick={onOpenSidebar}
@@ -94,6 +95,9 @@ export default function Navbar({ onOpenSidebar }) {
         >
           <Menu className="h-5 w-5" />
         </button>
+
+        {/* Mobile Brand Logo */}
+        <Logo size="sm" linkTo="/dashboard" className="lg:hidden shrink-0" />
 
         {/* Global Search Bar */}
         <div className="relative w-full max-w-md">

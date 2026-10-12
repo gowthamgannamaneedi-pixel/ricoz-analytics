@@ -9,6 +9,7 @@ import {
   ShieldCheck, 
   Globe
 } from 'lucide-react';
+import Logo from '../ui/Logo';
 
 export default function LandingFooter() {
   const [email, setEmail] = useState('');
@@ -28,17 +29,7 @@ export default function LandingFooter() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 pb-12 border-b border-red-800/80">
           {/* Column 1: Brand & Contact Info */}
           <div className="lg:col-span-2 space-y-5">
-            <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-xl bg-white text-red-600 flex items-center justify-center font-black text-xl shadow-md">
-                <span className="tracking-tighter">rZ</span>
-              </div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl font-black text-white tracking-tight">Ricoz</span>
-                <span className="text-xs font-bold uppercase tracking-wider text-white bg-red-800/80 px-2 py-0.5 rounded border border-red-700">
-                  Analytics
-                </span>
-              </div>
-            </Link>
+            <Logo size="md" linkTo="/" className="bg-white/95 p-1.5 rounded-xl shadow-xs" theme="light" />
 
             <p className="text-sm text-red-100/90 leading-relaxed max-w-sm">
               Next-generation enterprise data intelligence platform for fast-growing businesses, multi-branch franchises, and leadership teams across India.
