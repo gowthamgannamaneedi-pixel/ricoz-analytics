@@ -84,25 +84,25 @@ export default function LandingHero({ onOpenDemo }) {
               <span>Schedule Enterprise Demo</span>
             </button>
           </div>
+        </div>
 
-          {/* Trust Value Badges — Clean Symmetrical Grid Layout */}
-          <div className="pt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
-            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">
-              <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span>Sub-second multi-source queries</span>
-            </div>
-            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">
-              <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span>Zero code KPI metric builder</span>
-            </div>
-            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">
-              <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span>SOC2 &amp; Granular RBAC ready</span>
-            </div>
-            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">
-              <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span>Real-time anomaly AI alerts</span>
-            </div>
+        {/* Trust Value Badges — Flexible Multi-Screen Layout with Zero Overflow */}
+        <div className="pt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-4 max-w-6xl mx-auto px-2">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 shrink-0">
+            <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span>Sub-second multi-source queries</span>
+          </div>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 shrink-0">
+            <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span>Zero code KPI metric builder</span>
+          </div>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 shrink-0">
+            <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span>SOC2 &amp; Granular RBAC ready</span>
+          </div>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 shrink-0">
+            <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span>Real-time anomaly AI alerts</span>
           </div>
         </div>
 
