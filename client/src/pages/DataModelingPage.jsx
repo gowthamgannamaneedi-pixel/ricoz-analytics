@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Network,
   Plus,
@@ -82,6 +83,16 @@ export default function DataModelingPage() {
     loadData();
   }, []);
 
+  // Lock body scroll when any modal is open
+  useEffect(() => {
+    if (!isModalOpen && !testQueryModalOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isModalOpen, testQueryModalOpen]);
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -125,9 +136,20 @@ export default function DataModelingPage() {
         relationship_type: 'many_to_one',
         description: ''
       });
+    } else if (datasets.length === 1) {
+      const srcDs = datasets[0];
+      const srcCols = parseSchemaColumns(srcDs);
+      setModalForm({
+        source_dataset_id: String(srcDs.id),
+        source_column: srcCols[0]?.name || '',
+        target_dataset_id: String(srcDs.id),
+        target_column: srcCols[1]?.name || srcCols[0]?.name || '',
+        relationship_type: 'many_to_one',
+        description: ''
+      });
     } else {
       setModalForm({
-        source_dataset_id: datasets[0]?.id ? String(datasets[0].id) : '',
+        source_dataset_id: '',
         source_column: '',
         target_dataset_id: '',
         target_column: '',
@@ -180,9 +202,9 @@ export default function DataModelingPage() {
         setFormSuccess('Relationship updated successfully!');
       } else {
         await createDatasetRelationship({
-          source_dataset_id: Number(modalForm.source_dataset_id),
+          source_dataset_id: modalForm.source_dataset_id,
           source_column: modalForm.source_column,
-          target_dataset_id: Number(modalForm.target_dataset_id),
+          target_dataset_id: modalForm.target_dataset_id,
           target_column: modalForm.target_column,
           relationship_type: modalForm.relationship_type,
           description: modalForm.description
@@ -222,8 +244,8 @@ export default function DataModelingPage() {
 
     try {
       const res = await executeRelationalQuery({
-        base_dataset_id: Number(testBaseDatasetId),
-        joins: testJoinedDatasetId ? [{ dataset_id: Number(testJoinedDatasetId), type: 'left' }] : [],
+        base_dataset_id: testBaseDatasetId,
+        joins: testJoinedDatasetId ? [{ dataset_id: testJoinedDatasetId, type: 'left' }] : [],
         dimensions: testDimension ? [testDimension] : [],
         metrics: testMetric ? [{ column: testMetric, aggregation: testAggregation }] : [],
         limit: 20
@@ -546,9 +568,16 @@ export default function DataModelingPage() {
       </div>
 
       {/* Create / Edit Relationship Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-xl border border-slate-200/90 dark:border-slate-800">
+      {isModalOpen && typeof document !== 'undefined' && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4 overflow-y-auto animate-fadeIn"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+        >
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200/90 dark:border-slate-800 my-auto">
             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/80 shadow-2xs">
@@ -729,13 +758,21 @@ export default function DataModelingPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Relational Query Tester Modal */}
-      {testQueryModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-xl border border-slate-200/90 dark:border-slate-800">
+      {testQueryModalOpen && typeof document !== 'undefined' && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4 overflow-y-auto animate-fadeIn"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setTestQueryModalOpen(false);
+          }}
+        >
+          <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200/90 dark:border-slate-800 my-auto">
             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/80 shadow-2xs">
@@ -885,7 +922,8 @@ export default function DataModelingPage() {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
