@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Bell,
@@ -39,6 +40,8 @@ export default function AlertModal({
   alert = null,
   metrics = []
 }) {
+  const modalRef = useRef(null);
+  const triggerRef = useRef(null);
   const [name, setName] = useState('');
   const [metricId, setMetricId] = useState('');
   const [condition, setCondition] = useState('greater_than');
@@ -52,6 +55,59 @@ export default function AlertModal({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Focus trap, focus restoration, and scroll lock
+  useEffect(() => {
+    if (!isOpen) return;
+
+    triggerRef.current = document.activeElement;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const timer = setTimeout(() => {
+      if (modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll(
+          'input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex="0"]'
+        );
+        if (focusable.length > 0) focusable[0].focus();
+      }
+    }, 50);
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      } else if (e.key === 'Tab' && modalRef.current) {
+        const focusables = modalRef.current.querySelectorAll(
+          'input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex="0"]'
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      clearTimeout(timer);
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+      if (triggerRef.current && typeof triggerRef.current.focus === 'function') {
+        triggerRef.current.focus();
+      }
+    };
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (alert) {
@@ -170,9 +226,22 @@ export default function AlertModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-xs p-3 sm:p-4 animate-fadeIn">
-      <div className="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all max-h-[96vh] flex flex-col">
+  if (!isOpen) return null;
+
+  const modalContent = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="alert-modal-title"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-3 sm:p-4 animate-fadeIn"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        ref={modalRef}
+        className="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all max-h-[92vh] flex flex-col overflow-hidden my-auto"
+      >
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5 shrink-0">
           <div className="flex items-center gap-2.5">
@@ -180,7 +249,7 @@ export default function AlertModal({
               <Bell className="h-4.5 w-4.5" />
             </div>
             <div>
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
+              <h2 id="alert-modal-title" className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
                 {alert ? 'Edit Alert Rule' : 'Create Real-Time Alert Rule'}
               </h2>
               <p className="text-[11px] text-slate-500 mt-0.5">
@@ -477,4 +546,6 @@ export default function AlertModal({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 }

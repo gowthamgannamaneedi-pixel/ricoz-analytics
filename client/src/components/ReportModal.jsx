@@ -11,7 +11,8 @@ import {
   CheckCircle2,
   Clock,
   Plus,
-  Trash2
+  Trash2,
+  ChevronDown
 } from 'lucide-react';
 import { Button } from './ui/Button';
 
@@ -166,35 +167,35 @@ export default function ReportModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+      <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[88vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/70">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-600 text-white shadow-xs">
+        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-slate-100 bg-slate-50/70 shrink-0">
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-600 text-white shadow-xs shrink-0">
               <FileBarChart className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-900">
+              <h2 className="text-base font-bold text-slate-900 leading-tight">
                 {report ? 'Edit Report Configuration' : 'Create Automated Report'}
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 mt-1">
                 Configure data scopes, output formatting, and automated delivery schedule
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200/70 hover:text-slate-700 transition cursor-pointer"
+            className="rounded-lg p-2 text-slate-400 hover:bg-slate-200/70 hover:text-slate-700 transition cursor-pointer shrink-0"
             aria-label="Close modal"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Form Body — increased top padding, clear section rhythm */}
-        <form onSubmit={handleSubmit} className="px-6 pt-5 pb-6 space-y-5 max-h-[72vh] overflow-y-auto">
+        {/* Form Body — internal scrolling, clear section rhythm */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           {error && (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs">
               <AlertCircle className="h-4 w-4 shrink-0" />
@@ -212,7 +213,7 @@ export default function ReportModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Q4 Executive Performance Digest"
-              className="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500 transition"
+              className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:border-rose-500 focus:outline-hidden focus:ring-2 focus:ring-rose-500/20 transition"
               required
             />
           </div>
@@ -227,7 +228,7 @@ export default function ReportModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Summary of KPIs, key focus metrics, and target stakeholders..."
               rows={2}
-              className="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500 transition"
+              className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:border-rose-500 focus:outline-hidden focus:ring-2 focus:ring-rose-500/20 transition"
             />
           </div>
 
@@ -237,33 +238,39 @@ export default function ReportModal({
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Dashboard Telemetry Source
               </label>
-              <select
-                value={dashboardId}
-                onChange={(e) => setDashboardId(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500"
-              >
-                <option value="">Executive Organization KPIs (All)</option>
-                {dashboards.map((dash) => (
-                  <option key={dash.id} value={dash.id}>
-                    {dash.title} {dash.is_default ? '(Default)' : ''}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={dashboardId}
+                  onChange={(e) => setDashboardId(e.target.value)}
+                  className="w-full appearance-none pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-800 font-medium hover:border-rose-300 hover:bg-rose-50/40 hover:text-rose-700 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-hidden cursor-pointer transition truncate shadow-2xs"
+                >
+                  <option value="">Executive Organization KPIs (All)</option>
+                  {dashboards.map((dash) => (
+                    <option key={dash.id} value={dash.id}>
+                      {dash.title} {dash.is_default ? '(Default)' : ''}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 shrink-0" />
+              </div>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Report State / Pipeline Status
               </label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500"
-              >
-                <option value="active">Active (Running on schedule)</option>
-                <option value="draft">Draft (On-demand only)</option>
-                <option value="paused">Paused (Temporarily halted)</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full appearance-none pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-800 font-medium hover:border-rose-300 hover:bg-rose-50/40 hover:text-rose-700 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-hidden cursor-pointer transition truncate shadow-2xs"
+                >
+                  <option value="active">Active (Running on schedule)</option>
+                  <option value="draft">Draft (On-demand only)</option>
+                  <option value="paused">Paused (Temporarily halted)</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 shrink-0" />
+              </div>
             </div>
           </div>
 
@@ -304,17 +311,20 @@ export default function ReportModal({
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
               Automated Schedule Cadence
             </label>
-            <select
-              value={schedulePreset}
-              onChange={(e) => setSchedulePreset(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500"
-            >
-              {SCHEDULE_PRESETS.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={schedulePreset}
+                onChange={(e) => setSchedulePreset(e.target.value)}
+                className="w-full appearance-none pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-800 font-medium hover:border-rose-300 hover:bg-rose-50/40 hover:text-rose-700 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-hidden cursor-pointer transition truncate shadow-2xs"
+              >
+                {SCHEDULE_PRESETS.map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 shrink-0" />
+            </div>
 
             {schedulePreset === 'custom' && (
               <div className="mt-2.5">
@@ -323,7 +333,7 @@ export default function ReportModal({
                   value={customCron}
                   onChange={(e) => setCustomCron(e.target.value)}
                   placeholder="e.g. 0 18 * * 5 (Every Friday at 6:00 PM)"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-mono text-slate-800 focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500"
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-mono text-slate-800 focus:border-rose-500 focus:outline-hidden focus:ring-2 focus:ring-rose-500/20"
                 />
                 <p className="text-[10px] text-slate-500 mt-1">
                   Standard 5-field cron syntax: <code>minute hour day-of-month month day-of-week</code>

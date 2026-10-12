@@ -317,15 +317,15 @@ export default function AlertsPage() {
 
       {/* Page Header */}
       <div className="space-y-4 border-b border-slate-200 pb-5">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 border border-rose-200 text-rose-600 shadow-2xs">
-            <Bell className="h-5 w-5" />
+        <div className="flex items-start gap-3.5">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20 shrink-0 mt-0.5">
+            <Bell className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight font-sans">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
               Real-Time Alerts & Incident Center
             </h1>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal">
               Rule-based threshold evaluation, operational alerts, and incident resolution
             </p>
           </div>

@@ -634,82 +634,89 @@ export default function ForecastsPage() {
       {/* ───────────────────────────────────────────────────────────────── */}
       {/* 3. FOUR SUMMARY METRIC CARDS                                      */}
       {/* ───────────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4.5">
         {/* Card 1: Selected Dataset */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-4.5 shadow-2xs hover:border-slate-300 transition-all">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 min-h-[112px] flex items-center shadow-2xs hover:border-slate-300 transition-all">
+          <div className="flex items-start gap-4 w-full min-w-0">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80 shrink-0 mt-0.5">
               <Database className="h-5 w-5" />
             </div>
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
                 Selected Dataset
               </p>
-              <h3 className="font-bold text-slate-900 text-sm truncate mt-0.5" title={selectedDataset ? selectedDataset.name : 'Select a Dataset'}>
+              <h3
+                className="font-bold text-slate-900 text-sm sm:text-base leading-snug truncate block cursor-default"
+                title={selectedDataset ? selectedDataset.name : 'Select a Dataset'}
+                aria-label={selectedDataset ? `Dataset: ${selectedDataset.name}` : 'No dataset selected'}
+              >
                 {selectedDataset ? selectedDataset.name : 'Select a Dataset'}
               </h3>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                {selectedDataset ? `${selectedDataset.row_count || 0} observations` : 'Time series data'}
+              <p className="text-xs text-slate-400 truncate block">
+                {selectedDataset ? `${(selectedDataset.row_count || 0).toLocaleString()} observations` : 'Time series data'}
               </p>
             </div>
           </div>
         </div>
 
         {/* Card 2: Model */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-4.5 shadow-2xs hover:border-slate-300 transition-all">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 min-h-[112px] flex items-center shadow-2xs hover:border-slate-300 transition-all">
+          <div className="flex items-start gap-4 w-full min-w-0">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80 shrink-0 mt-0.5">
               <Target className="h-5 w-5" />
             </div>
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
                 Model
               </p>
-              <h3 className="font-bold text-slate-900 text-sm truncate mt-0.5">
+              <h3
+                className="font-bold text-slate-900 text-sm sm:text-base leading-snug truncate block cursor-default"
+                title={MODEL_LABELS[selectedModel] || 'Auto (Best Model)'}
+              >
                 {MODEL_LABELS[selectedModel] || 'Auto (Best Model)'}
               </h3>
-              <p className="text-[11px] text-slate-400 truncate mt-0.5" title={MODEL_DESCRIPTIONS[selectedModel]}>
-                {selectedModel === 'auto' ? 'Automatically selects the best model' : 'Configured ML algorithm'}
+              <p className="text-xs text-slate-400 truncate block" title={MODEL_DESCRIPTIONS[selectedModel]}>
+                {selectedModel === 'auto' ? 'Automatically selects best ML model' : 'Configured ML algorithm'}
               </p>
             </div>
           </div>
         </div>
 
         {/* Card 3: Forecast Horizon */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-4.5 shadow-2xs hover:border-slate-300 transition-all">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 min-h-[112px] flex items-center shadow-2xs hover:border-slate-300 transition-all">
+          <div className="flex items-start gap-4 w-full min-w-0">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80 shrink-0 mt-0.5">
               <Calendar className="h-5 w-5" />
             </div>
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
                 Forecast Horizon
               </p>
-              <h3 className="font-bold text-slate-900 text-sm mt-0.5">
+              <h3 className="font-bold text-slate-900 text-sm sm:text-base leading-snug block">
                 Next {horizonPeriods} periods
               </h3>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                {interval.charAt(0).toUpperCase() + interval.slice(1)} interval
+              <p className="text-xs text-slate-400 truncate block">
+                {interval.charAt(0).toUpperCase() + interval.slice(1)} intervals
               </p>
             </div>
           </div>
         </div>
 
         {/* Card 4: Anomalies Detected */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-4.5 shadow-2xs hover:border-slate-300 transition-all">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 min-h-[112px] flex items-center shadow-2xs hover:border-slate-300 transition-all">
+          <div className="flex items-start gap-4 w-full min-w-0">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80 shrink-0 mt-0.5">
               <AlertTriangle className="h-5 w-5" />
             </div>
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
                 Anomalies Detected
               </p>
-              <h3 className={`font-bold text-sm mt-0.5 ${anomaliesCount > 0 ? 'text-amber-700' : 'text-slate-900'}`}>
+              <h3 className={`font-bold text-sm sm:text-base leading-snug block ${anomaliesCount > 0 ? 'text-amber-700' : 'text-slate-900'}`}>
                 {anomaliesCount} {anomaliesCount === 1 ? 'anomaly' : 'anomalies'}
               </h3>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                {anomaliesCount > 0 ? 'Requires review' : 'Within expected range'}
+              <p className="text-xs text-slate-400 truncate block">
+                {anomaliesCount > 0 ? 'Requires operational review' : 'Within normal variance'}
               </p>
             </div>
           </div>

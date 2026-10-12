@@ -659,59 +659,59 @@ export default function GovernancePage() {
               </div>
 
               {/* 4 Role Sub-Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">
                 {/* Administrators */}
-                <div className="bg-white border border-slate-200/90 rounded-2xl p-4.5 shadow-2xs hover:border-rose-200 transition">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-700">
-                    <Crown className="w-4 h-4 text-rose-600" />
-                    <span>Administrators</span>
+                <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-5.5 min-h-[120px] flex flex-col justify-between shadow-2xs hover:border-rose-200 transition">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-rose-700">
+                    <Crown className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span className="truncate">Administrators</span>
                   </div>
-                  <div className="text-2xl font-bold text-slate-900 mt-2.5">
+                  <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight my-2">
                     {roleDistribution.admin || 0}
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">
+                  <div className="text-xs text-slate-400 font-medium">
                     {adminPct}% of team
                   </div>
                 </div>
 
                 {/* Managers */}
-                <div className="bg-white border border-slate-200/90 rounded-2xl p-4.5 shadow-2xs hover:border-rose-200 transition">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-700">
-                    <Users className="w-4 h-4 text-rose-600" />
-                    <span>Managers</span>
+                <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-5.5 min-h-[120px] flex flex-col justify-between shadow-2xs hover:border-rose-200 transition">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-rose-700">
+                    <Users className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span className="truncate">Managers</span>
                   </div>
-                  <div className="text-2xl font-bold text-slate-900 mt-2.5">
+                  <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight my-2">
                     {roleDistribution.manager || 0}
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">
+                  <div className="text-xs text-slate-400 font-medium">
                     {managerPct}% of team
                   </div>
                 </div>
 
                 {/* Analysts */}
-                <div className="bg-white border border-slate-200/90 rounded-2xl p-4.5 shadow-2xs hover:border-rose-200 transition">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-700">
-                    <TrendingUp className="w-4 h-4 text-rose-600" />
-                    <span>Analysts</span>
+                <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-5.5 min-h-[120px] flex flex-col justify-between shadow-2xs hover:border-rose-200 transition">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-rose-700">
+                    <TrendingUp className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span className="truncate">Analysts</span>
                   </div>
-                  <div className="text-2xl font-bold text-slate-900 mt-2.5">
+                  <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight my-2">
                     {roleDistribution.analyst || 0}
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">
+                  <div className="text-xs text-slate-400 font-medium">
                     {analystPct}% of team
                   </div>
                 </div>
 
                 {/* Viewers */}
-                <div className="bg-white border border-slate-200/90 rounded-2xl p-4.5 shadow-2xs hover:border-rose-200 transition">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                    <Eye className="w-4 h-4 text-slate-500" />
-                    <span>Viewers</span>
+                <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-5.5 min-h-[120px] flex flex-col justify-between shadow-2xs hover:border-rose-200 transition">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                    <Eye className="w-4 h-4 text-slate-500 shrink-0" />
+                    <span className="truncate">Viewers</span>
                   </div>
-                  <div className="text-2xl font-bold text-slate-900 mt-2.5">
+                  <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight my-2">
                     {roleDistribution.viewer || 0}
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">
+                  <div className="text-xs text-slate-400 font-medium">
                     {viewerPct}% of team
                   </div>
                 </div>

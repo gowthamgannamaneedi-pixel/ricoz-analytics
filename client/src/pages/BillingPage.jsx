@@ -131,9 +131,9 @@ export default function BillingPage() {
       )}
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+      <div className="space-y-6 max-w-7xl mx-auto">
         {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
               <CreditCard className="h-5 w-5 text-rose-600" />
@@ -144,13 +144,13 @@ export default function BillingPage() {
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
               Plans & Billing
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl">
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl font-normal">
               Scale your business intelligence workspace with enterprise security, live alerts, and AI copilot compute.
             </p>
           </div>
 
           {/* Current Subscription Status Card */}
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs min-w-[280px]">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4.5 shadow-2xs min-w-[280px] shrink-0">
             <div className="flex items-center justify-between gap-3 mb-2">
               <span className="text-xs text-slate-500 font-medium">Workspace Status</span>
               {isActivePaid ? (

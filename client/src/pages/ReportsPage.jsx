@@ -756,9 +756,9 @@ export default function ReportsPage() {
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* 3. SEGMENTED TABS & FILTERS TOOLBAR                                 */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3.5">
         {/* Left: Segmented Tab Buttons */}
-        <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200 overflow-x-auto">
+        <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200 overflow-x-auto shrink-0">
           <button
             type="button"
             onClick={() => setActiveTab('library')}
@@ -813,16 +813,16 @@ export default function ReportsPage() {
         </div>
 
         {/* Right: Search + Filters Toolbar */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="relative min-w-[260px] sm:min-w-[300px] flex-1 sm:flex-initial">
-            <Search className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full xl:w-auto">
+          <div className="relative flex-1 sm:w-60 md:w-64 shrink-0">
+            <Search className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               id="search-reports-input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by report name, description..."
-              className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-rose-500 shadow-2xs"
+              placeholder="Search reports..."
+              className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 shadow-2xs"
             />
             {searchQuery && (
               <button
@@ -835,12 +835,12 @@ export default function ReportsPage() {
             )}
           </div>
 
-          <div className="relative">
+          <div className="relative shrink-0">
             <select
               id="filter-type-select"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="appearance-none pl-3.5 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 focus:outline-hidden focus:border-rose-500 cursor-pointer shadow-2xs"
+              className="appearance-none pl-3.5 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-rose-300 hover:bg-rose-50/40 hover:text-rose-700 focus:outline-hidden focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 cursor-pointer shadow-2xs"
             >
               <option value="all">All Types</option>
               <option value="pdf">PDF Document</option>
@@ -851,12 +851,12 @@ export default function ReportsPage() {
             <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
-          <div className="relative">
+          <div className="relative shrink-0">
             <select
               id="filter-status-select"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="appearance-none pl-3.5 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 focus:outline-hidden focus:border-rose-500 cursor-pointer shadow-2xs"
+              className="appearance-none pl-3.5 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-rose-300 hover:bg-rose-50/40 hover:text-rose-700 focus:outline-hidden focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 cursor-pointer shadow-2xs"
             >
               <option value="all">All Statuses</option>
               <option value="active">Active Only</option>
@@ -867,10 +867,12 @@ export default function ReportsPage() {
           </div>
 
           {hasActiveFilters && (
-            <ResetButton
-              onClick={resetFilters}
-              size="default"
-            />
+            <div className="shrink-0">
+              <ResetButton
+                onClick={resetFilters}
+                size="default"
+              />
+            </div>
           )}
         </div>
       </div>

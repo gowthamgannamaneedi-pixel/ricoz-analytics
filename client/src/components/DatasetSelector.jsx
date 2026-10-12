@@ -151,7 +151,7 @@ export default function DatasetSelector({
                     className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition cursor-pointer ${
                       isSelected
                         ? 'bg-[#FFF1F3] dark:bg-rose-950/60 text-[#D91542] dark:text-rose-200 font-semibold border border-rose-200/80 dark:border-rose-900/50'
-                        : 'text-slate-800 dark:text-slate-200 hover:bg-[#FFF1F3] hover:text-[#0F172A] dark:hover:bg-rose-950/40 dark:hover:text-rose-300'
+                        : 'text-slate-800 dark:text-slate-200 hover:bg-[#FFF1F3] hover:text-[#D91542] dark:hover:bg-rose-950/40 dark:hover:text-rose-300'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">

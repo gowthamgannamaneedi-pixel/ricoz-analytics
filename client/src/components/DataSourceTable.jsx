@@ -67,32 +67,32 @@ export default function DataSourceTable({
     switch (type) {
       case 'csv':
         return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/90 font-mono whitespace-nowrap shrink-0">
             CSV File
           </span>
         );
       case 'json':
         return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/80">
+          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-amber-50 text-amber-700 border border-amber-200/90 font-mono whitespace-nowrap shrink-0">
             JSON File
           </span>
         );
       case 'postgresql':
         return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80">
-            PostgreSQL DB
+          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200/90 font-mono whitespace-nowrap shrink-0">
+            PostgreSQL
           </span>
         );
       case 'rest_api':
       case 'api':
         return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200/80">
+          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-purple-50 text-purple-700 border border-purple-200/90 font-mono whitespace-nowrap shrink-0">
             REST API
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200/80">
+          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-mono whitespace-nowrap shrink-0">
             {(type || 'SOURCE').toUpperCase()}
           </span>
         );

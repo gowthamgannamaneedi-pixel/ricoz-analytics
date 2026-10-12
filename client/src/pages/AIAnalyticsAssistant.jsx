@@ -700,47 +700,47 @@ export default function AIAnalyticsAssistant() {
       {/* ------------------------------------------------------------------ */}
       {/* TOP HEADER BAR                                                     */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200 pb-3">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-200 pb-4 shrink-0">
         {/* Left Title & Status */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-3.5 min-w-0 flex-1">
           <button
             onClick={() => setMobileHistoryOpen(prev => !prev)}
-            className="lg:hidden p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition"
+            className="lg:hidden p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition shrink-0 mt-0.5"
             aria-label="Toggle conversation history"
           >
             <Menu className="w-5 h-5" />
           </button>
 
-          <div className="h-11 w-11 rounded-2xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-rose-500/20">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20 shrink-0 mt-0.5">
             <Bot className="h-6 w-6 text-white" />
           </div>
 
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">AI Analytics Assistant</h1>
-            </div>
-            <p className="text-xs text-slate-500 font-normal mt-0.5">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
+              AI Analytics Assistant
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal">
               Your AI analyst for business data. Ask questions in plain English and get instant insights, visualizations, and recommendations.
             </p>
           </div>
         </div>
 
         {/* Right Dataset Context Card Selector */}
-        <div className="relative" ref={datasetDropdownRef}>
+        <div className="relative shrink-0 lg:ml-4" ref={datasetDropdownRef}>
           <div
             onClick={() => setDatasetDropdownOpen(prev => !prev)}
-            className="border border-slate-200 bg-white rounded-xl px-4 py-2 flex items-center gap-3 shadow-2xs hover:border-slate-300 transition cursor-pointer"
+            className="border border-slate-200 bg-white rounded-xl px-4 py-2.5 flex items-center gap-3 shadow-2xs hover:border-rose-300 hover:bg-rose-50/30 transition cursor-pointer"
           >
             <Database className="h-5 w-5 text-rose-600 shrink-0" />
             <div className="text-left">
               <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block leading-none">
                 Dataset Context
               </span>
-              <span className="text-xs font-bold text-slate-800 truncate block max-w-[200px] mt-0.5">
+              <span className="text-xs font-bold text-slate-800 truncate block max-w-[200px] mt-0.5" title={currentDataset ? currentDataset.name : 'No Dataset Selected'}>
                 {currentDataset ? currentDataset.name : 'No Dataset Selected'}
               </span>
               <span className="text-[10px] text-slate-500 block leading-tight mt-0.5">
-                {currentDataset ? `${currentDataset.row_count || 0} rows • ${currentDataset.column_count || 10} columns` : 'Connect a dataset'}
+                {currentDataset ? `${(currentDataset.row_count || 0).toLocaleString()} rows • ${currentDataset.column_count || 10} columns` : 'Connect a dataset'}
               </span>
             </div>
             <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${datasetDropdownOpen ? 'rotate-180' : ''}`} />
@@ -771,7 +771,7 @@ export default function AIAnalyticsAssistant() {
                         className={`p-2.5 rounded-xl cursor-pointer transition flex items-center justify-between gap-2 ${
                           isSelected
                             ? 'bg-rose-50 text-rose-900 font-semibold'
-                            : 'hover:bg-slate-50 text-slate-700'
+                            : 'hover:bg-rose-50/70 hover:text-rose-700 text-slate-700'
                         }`}
                       >
                         <div className="min-w-0">

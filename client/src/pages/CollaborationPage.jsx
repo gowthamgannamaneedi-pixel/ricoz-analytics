@@ -31,7 +31,8 @@ import {
   PieChart,
   Tag,
   Filter,
-  CheckCheck
+  CheckCheck,
+  ChevronRight
 } from 'lucide-react';
 import {
   getFavoritesApi,
@@ -499,29 +500,29 @@ export default function CollaborationPage() {
       {/* ------------------------------------------------------------------ */}
       {/* 1. TOP HEADER & BREADCRUMB                                         */}
       {/* ------------------------------------------------------------------ */}
-      <div className="space-y-2">
-        <div className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
-          <span>RicozAnalytics</span>
-          <span>&gt;</span>
-          <span className="text-slate-700 font-semibold">Collaboration</span>
-        </div>
+      <div className="space-y-3">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+          <span className="hover:text-slate-600 transition">RicozAnalytics</span>
+          <ChevronRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+          <span className="text-rose-600 font-semibold">Collaboration</span>
+        </nav>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="h-12 w-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-rose-500/20">
+          <div className="flex items-start gap-3.5">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20 shrink-0 mt-0.5">
               <Users className="h-6 w-6 text-white" />
             </div>
 
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
                   Collaboration
                 </h1>
-                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
                   {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Admin'}
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5 leading-relaxed font-normal">
+              <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal">
                 Share dashboards, reports, and AI insights securely across your organization. Control access, manage permissions, and work together.
               </p>
             </div>

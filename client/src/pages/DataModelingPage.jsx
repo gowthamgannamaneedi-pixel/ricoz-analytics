@@ -20,6 +20,7 @@ import {
   Eye,
   Key,
   ChevronRight,
+  ChevronDown,
   ShieldCheck,
   X
 } from 'lucide-react';
@@ -584,42 +585,48 @@ export default function DataModelingPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Source Dataset</label>
-                  <select
-                    disabled={Boolean(editingId)}
-                    value={modalForm.source_dataset_id}
-                    onChange={(e) => {
-                      const newSrcId = e.target.value;
-                      const ds = datasets.find(d => String(d.id) === newSrcId);
-                      const cols = parseSchemaColumns(ds);
-                      setModalForm({
-                        ...modalForm,
-                        source_dataset_id: newSrcId,
-                        source_column: cols[0]?.name || ''
-                      });
-                    }}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-slate-100 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:outline-none cursor-pointer transition shadow-2xs"
-                  >
-                    <option value="">Select source...</option>
-                    {datasets.map((d) => (
-                      <option key={d.id} value={d.id}>{d.name}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      disabled={Boolean(editingId)}
+                      value={modalForm.source_dataset_id}
+                      onChange={(e) => {
+                        const newSrcId = e.target.value;
+                        const ds = datasets.find(d => String(d.id) === newSrcId);
+                        const cols = parseSchemaColumns(ds);
+                        setModalForm({
+                          ...modalForm,
+                          source_dataset_id: newSrcId,
+                          source_column: cols[0]?.name || ''
+                        });
+                      }}
+                      className="w-full appearance-none pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 font-medium hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none cursor-pointer transition shadow-2xs truncate disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="">Select source...</option>
+                      {datasets.map((d) => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
+                  </div>
                 </div>
 
                 <div>
                   <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Source Column</label>
-                  <select
-                    value={modalForm.source_column}
-                    onChange={(e) => setModalForm({ ...modalForm, source_column: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-mono text-slate-900 dark:text-slate-100 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:outline-none cursor-pointer transition shadow-2xs"
-                  >
-                    <option value="">Select column...</option>
-                    {sourceColumns.map((col) => (
-                      <option key={col.name} value={col.name}>
-                        {col.name} ({col.type || 'text'})
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={modalForm.source_column}
+                      onChange={(e) => setModalForm({ ...modalForm, source_column: e.target.value })}
+                      className="w-full appearance-none pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono text-slate-900 dark:text-slate-100 font-medium hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none cursor-pointer transition shadow-2xs truncate"
+                    >
+                      <option value="">Select column...</option>
+                      {sourceColumns.map((col) => (
+                        <option key={col.name} value={col.name}>
+                          {col.name} ({col.type || 'text'})
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
+                  </div>
                 </div>
               </div>
 
@@ -627,58 +634,67 @@ export default function DataModelingPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Target Dataset</label>
-                  <select
-                    disabled={Boolean(editingId)}
-                    value={modalForm.target_dataset_id}
-                    onChange={(e) => {
-                      const newTgtId = e.target.value;
-                      const ds = datasets.find(d => String(d.id) === newTgtId);
-                      const cols = parseSchemaColumns(ds);
-                      setModalForm({
-                        ...modalForm,
-                        target_dataset_id: newTgtId,
-                        target_column: cols[0]?.name || ''
-                      });
-                    }}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-slate-100 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:outline-none cursor-pointer transition shadow-2xs"
-                  >
-                    <option value="">Select target...</option>
-                    {datasets.map((d) => (
-                      <option key={d.id} value={d.id}>{d.name}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      disabled={Boolean(editingId)}
+                      value={modalForm.target_dataset_id}
+                      onChange={(e) => {
+                        const newTgtId = e.target.value;
+                        const ds = datasets.find(d => String(d.id) === newTgtId);
+                        const cols = parseSchemaColumns(ds);
+                        setModalForm({
+                          ...modalForm,
+                          target_dataset_id: newTgtId,
+                          target_column: cols[0]?.name || ''
+                        });
+                      }}
+                      className="w-full appearance-none pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 font-medium hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none cursor-pointer transition shadow-2xs truncate disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="">Select target...</option>
+                      {datasets.map((d) => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
+                  </div>
                 </div>
 
                 <div>
                   <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Target Column</label>
-                  <select
-                    value={modalForm.target_column}
-                    onChange={(e) => setModalForm({ ...modalForm, target_column: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-mono text-slate-900 dark:text-slate-100 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:outline-none cursor-pointer transition shadow-2xs"
-                  >
-                    <option value="">Select column...</option>
-                    {targetColumns.map((col) => (
-                      <option key={col.name} value={col.name}>
-                        {col.name} ({col.type || 'text'})
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={modalForm.target_column}
+                      onChange={(e) => setModalForm({ ...modalForm, target_column: e.target.value })}
+                      className="w-full appearance-none pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono text-slate-900 dark:text-slate-100 font-medium hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none cursor-pointer transition shadow-2xs truncate"
+                    >
+                      <option value="">Select column...</option>
+                      {targetColumns.map((col) => (
+                        <option key={col.name} value={col.name}>
+                          {col.name} ({col.type || 'text'})
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
+                  </div>
                 </div>
               </div>
 
               {/* Relationship Type */}
               <div>
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Relationship Type</label>
-                <select
-                  value={modalForm.relationship_type}
-                  onChange={(e) => setModalForm({ ...modalForm, relationship_type: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-slate-100 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:outline-none cursor-pointer transition shadow-2xs"
-                >
-                  <option value="many_to_one">Many-to-One (N:1) - (e.g. Orders to Customers)</option>
-                  <option value="one_to_many">One-to-Many (1:N) - (e.g. Customers to Orders)</option>
-                  <option value="one_to_one">One-to-One (1:1)</option>
-                  <option value="many_to_many">Many-to-Many (N:N)</option>
-                </select>
+                <div className="relative">
+                  <select
+                    value={modalForm.relationship_type}
+                    onChange={(e) => setModalForm({ ...modalForm, relationship_type: e.target.value })}
+                    className="w-full appearance-none pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 font-medium hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none cursor-pointer transition shadow-2xs truncate"
+                  >
+                    <option value="many_to_one">Many-to-One (N:1) - (e.g. Orders to Customers)</option>
+                    <option value="one_to_many">One-to-Many (1:N) - (e.g. Customers to Orders)</option>
+                    <option value="one_to_one">One-to-One (1:1)</option>
+                    <option value="many_to_many">Many-to-Many (N:N)</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
+                </div>
               </div>
 
               {/* Description */}
