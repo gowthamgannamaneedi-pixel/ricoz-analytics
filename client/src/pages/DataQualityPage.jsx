@@ -53,6 +53,7 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
 import { ResetButton } from '../components/ui/ResetButton';
 import { RefreshButton } from '../components/ui/RefreshButton';
+import { Select } from '../components/ui/Select';
 
 /**
  * Enterprise Circular Donut Gauge for Overall Dataset Health Score
@@ -633,22 +634,19 @@ export default function DataQualityPage() {
           {/* Right Action Controls Toolbar matching Wireframe */}
           <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start xl:self-auto">
             {/* Dataset Selector Dropdown */}
-            <div className="relative">
-              <select
-                id="dataset-select"
-                value={selectedDatasetId}
-                onChange={(e) => setSelectedDatasetId(e.target.value)}
-                className="appearance-none pl-9 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-800 hover:border-slate-300 focus:outline-hidden focus:border-rose-500 shadow-2xs cursor-pointer"
-              >
-                {datasets.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name} {d.row_count ? `(${Number(d.row_count).toLocaleString()} rows)` : ''}
-                  </option>
-                ))}
-              </select>
-              <Database className="h-4 w-4 text-rose-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
+            <Select
+              id="dataset-select"
+              value={selectedDatasetId}
+              onChange={(e) => setSelectedDatasetId(e.target.value)}
+              icon={Database}
+              className="min-w-[220px]"
+            >
+              {datasets.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name} {d.row_count ? `(${Number(d.row_count).toLocaleString()} rows)` : ''}
+                </option>
+              ))}
+            </Select>
 
             {/* Scan Mode Pill Toggle */}
             <div className="flex items-center rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
@@ -695,13 +693,13 @@ export default function DataQualityPage() {
                   <button
                     type="button"
                     onClick={() => handleExport('pdf')}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 hover:text-rose-700 transition text-xs font-semibold cursor-pointer"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition text-xs font-medium cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
                       <FileText className="h-4 w-4 text-rose-500" />
-                      <span>Export PDF Report</span>
+                      <span>PDF</span>
                     </div>
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
                       PDF
                     </span>
                   </button>
@@ -709,13 +707,13 @@ export default function DataQualityPage() {
                   <button
                     type="button"
                     onClick={() => handleExport('excel')}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 hover:text-emerald-700 transition text-xs font-semibold cursor-pointer"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition text-xs font-medium cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
                       <FileSpreadsheet className="h-4 w-4 text-emerald-500" />
-                      <span>Export Excel Sheet</span>
+                      <span>Excel Sheet</span>
                     </div>
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
                       XLSX
                     </span>
                   </button>
@@ -723,13 +721,13 @@ export default function DataQualityPage() {
                   <button
                     type="button"
                     onClick={() => handleExport('json')}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 hover:text-purple-700 transition text-xs font-semibold cursor-pointer"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition text-xs font-medium cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
                       <Database className="h-4 w-4 text-purple-500" />
-                      <span>Export JSON Schema</span>
+                      <span>JSON</span>
                     </div>
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
                       JSON
                     </span>
                   </button>
@@ -891,17 +889,17 @@ export default function DataQualityPage() {
             </div>
 
             {/* Right: 6 Quality Dimensions (7 cols in 3x2 Grid) */}
-            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
+            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
               {/* Card 1: Completeness */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
-                      <Droplet className="h-4 w-4" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+                      <Droplet className="h-5 w-5" />
                     </div>
                     <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">25% Wgt</span>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-700 mt-2.5">Completeness</h4>
+                  <h4 className="text-xs font-bold text-slate-700 mt-3">Completeness</h4>
                   <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
                     {evaluating && !dimensions.completeness ? '—' : (dimensions.completeness?.score != null ? `${dimensions.completeness.score}%` : '0%')}
                   </div>
@@ -919,15 +917,15 @@ export default function DataQualityPage() {
               </div>
 
               {/* Card 2: Validity / Types */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
-                      <Check className="h-4 w-4 stroke-[2.5]" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+                      <Check className="h-5 w-5 stroke-[2.5]" />
                     </div>
                     <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">25% Wgt</span>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-700 mt-2.5">Validity / Types</h4>
+                  <h4 className="text-xs font-bold text-slate-700 mt-3">Validity / Types</h4>
                   <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
                     {evaluating && !dimensions.validity ? '—' : (dimensions.validity?.score != null ? `${dimensions.validity.score}%` : '0%')}
                   </div>
@@ -945,15 +943,15 @@ export default function DataQualityPage() {
               </div>
 
               {/* Card 3: Uniqueness */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
-                      <Layers className="h-4 w-4" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+                      <Layers className="h-5 w-5" />
                     </div>
                     <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">20% Wgt</span>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-700 mt-2.5">Uniqueness</h4>
+                  <h4 className="text-xs font-bold text-slate-700 mt-3">Uniqueness</h4>
                   <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
                     {evaluating && !dimensions.uniqueness ? '—' : (dimensions.uniqueness?.score != null ? `${dimensions.uniqueness.score}%` : '0%')}
                   </div>
@@ -971,15 +969,15 @@ export default function DataQualityPage() {
               </div>
 
               {/* Card 4: Consistency & Joins */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
-                      <Link2 className="h-4 w-4" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+                      <Link2 className="h-5 w-5" />
                     </div>
                     <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">20% Wgt</span>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-700 mt-2.5">Consistency & Joins</h4>
+                  <h4 className="text-xs font-bold text-slate-700 mt-3">Consistency & Joins</h4>
                   <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
                     {evaluating && !dimensions.consistency ? '—' : (dimensions.consistency?.score != null ? `${dimensions.consistency.score}%` : '0%')}
                   </div>
@@ -1001,15 +999,15 @@ export default function DataQualityPage() {
               </div>
 
               {/* Card 5: Freshness */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
-                      <Clock className="h-4 w-4" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+                      <Clock className="h-5 w-5" />
                     </div>
                     <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">10% Wgt</span>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-700 mt-2.5">Freshness</h4>
+                  <h4 className="text-xs font-bold text-slate-700 mt-3">Freshness</h4>
                   <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
                     {evaluating && !dimensions.freshness ? '—' : (dimensions.freshness?.score != null ? `${dimensions.freshness.score}%` : '0%')}
                   </div>
@@ -1027,15 +1025,15 @@ export default function DataQualityPage() {
               </div>
 
               {/* Card 6: Schema & Volume */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
-                      <GitBranch className="h-4 w-4" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+                      <GitBranch className="h-5 w-5" />
                     </div>
                     <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">Volume</span>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-700 mt-2.5">Schema & Volume</h4>
+                  <h4 className="text-xs font-bold text-slate-700 mt-3">Schema & Volume</h4>
                   <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
                     {evaluating && !qualityProfile ? '—' : (qualityProfile?.column_count ?? columnMetrics?.length ?? 0)}
                   </div>
@@ -1156,36 +1154,30 @@ export default function DataQualityPage() {
                 {/* Right Filter Controls Row */}
                 <div className="flex flex-wrap items-center gap-2.5">
                   {/* Scope filter */}
-                  <div className="relative">
-                    <select
-                      id="filter-column-scope"
-                      value={scopeFilter}
-                      onChange={(e) => setScopeFilter(e.target.value)}
-                      className="appearance-none pl-3.5 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-hidden focus:border-rose-500 cursor-pointer shadow-2xs"
-                    >
-                      <option value="all">All Columns ({columnMetrics.length})</option>
-                      <option value="missing">With Missing Values</option>
-                      <option value="pk">Candidate Keys</option>
-                    </select>
-                    <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  </div>
+                  <Select
+                    id="filter-column-scope"
+                    value={scopeFilter}
+                    onChange={(e) => setScopeFilter(e.target.value)}
+                    className="min-w-[170px]"
+                  >
+                    <option value="all">All Columns ({columnMetrics.length})</option>
+                    <option value="missing">With Missing Values</option>
+                    <option value="pk">Candidate Keys</option>
+                  </Select>
 
                   {/* Data Type filter */}
-                  <div className="relative">
-                    <select
-                      id="filter-column-type"
-                      value={typeFilter}
-                      onChange={(e) => setTypeFilter(e.target.value)}
-                      className="appearance-none pl-3.5 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-slate-300 focus:outline-hidden focus:border-rose-500 cursor-pointer shadow-2xs"
-                    >
-                      <option value="all">All Data Types</option>
-                      <option value="string">String / Text</option>
-                      <option value="number">Numeric</option>
-                      <option value="date">Date / Time</option>
-                      <option value="boolean">Boolean</option>
-                    </select>
-                    <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  </div>
+                  <Select
+                    id="filter-column-type"
+                    value={typeFilter}
+                    onChange={(e) => setTypeFilter(e.target.value)}
+                    className="min-w-[150px]"
+                  >
+                    <option value="all">All Data Types</option>
+                    <option value="string">String / Text</option>
+                    <option value="number">Numeric</option>
+                    <option value="date">Date / Time</option>
+                    <option value="boolean">Boolean</option>
+                  </Select>
 
                   {/* Reset Button */}
                   <ResetButton
@@ -1706,10 +1698,10 @@ export default function DataQualityPage() {
             <form onSubmit={handleCreateRule} className="space-y-4 text-xs">
               <div>
                 <label className="block text-slate-700 font-semibold mb-1">Target Column</label>
-                <select
+                <Select
                   value={ruleForm.columnName}
                   onChange={(e) => setRuleForm({ ...ruleForm, columnName: e.target.value })}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-hidden focus:border-rose-600 shadow-2xs cursor-pointer font-medium"
+                  className="w-full"
                   required
                 >
                   <option value="">Select a column</option>
@@ -1718,15 +1710,15 @@ export default function DataQualityPage() {
                       {c.column_name} ({c.data_type})
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div>
                 <label className="block text-slate-700 font-semibold mb-1">Rule Type</label>
-                <select
+                <Select
                   value={ruleForm.ruleType}
                   onChange={(e) => setRuleForm({ ...ruleForm, ruleType: e.target.value })}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-hidden focus:border-rose-600 shadow-2xs cursor-pointer font-medium"
+                  className="w-full"
                 >
                   <option value="not_null">Must Not Be Null / Empty</option>
                   <option value="unique">Must Be Unique</option>
@@ -1735,20 +1727,20 @@ export default function DataQualityPage() {
                   <option value="range">Range [min, max]</option>
                   <option value="regex">Regex Pattern Match</option>
                   <option value="allowed_values">Allowed Values Set</option>
-                </select>
+                </Select>
               </div>
 
               <div>
                 <label className="block text-slate-700 font-semibold mb-1">Severity Level</label>
-                <select
+                <Select
                   value={ruleForm.severity}
                   onChange={(e) => setRuleForm({ ...ruleForm, severity: e.target.value })}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-hidden focus:border-rose-600 shadow-2xs cursor-pointer font-medium"
+                  className="w-full"
                 >
                   <option value="warning">Warning (Non-blocking alert)</option>
                   <option value="critical">Critical (Fails ingestion quality score)</option>
                   <option value="info">Info (Informational telemetry)</option>
-                </select>
+                </Select>
               </div>
 
               <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">

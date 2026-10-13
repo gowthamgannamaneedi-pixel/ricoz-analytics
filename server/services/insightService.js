@@ -14,6 +14,9 @@ const evidenceBuilderService = require('./evidenceBuilderService');
 const insightPrioritizationService = require('./insightPrioritizationService');
 const insightRelationshipService = require('./insightRelationshipService');
 
+// In-memory cache for high-throughput AI insight lookups (3-minute TTL)
+const insightMemoryCache = new Map();
+
 /**
  * Enterprise AI Automated Insights Engine Service
  * Proactively identifies statistically and evidentially meaningful events across:
@@ -27,6 +30,21 @@ const insightRelationshipService = require('./insightRelationshipService');
 class InsightService {
   constructor() {
     this.cooldownMinutes = 60; // Deduplication window
+  }
+
+  /**
+   * Invalidate cached insights for an organization
+   */
+  invalidateCache(organizationId = null) {
+    if (!organizationId) {
+      insightMemoryCache.clear();
+    } else {
+      for (const key of insightMemoryCache.keys()) {
+        if (key.startsWith(`${organizationId}:`)) {
+          insightMemoryCache.delete(key);
+        }
+      }
+    }
   }
 
   /**
@@ -46,25 +64,18 @@ class InsightService {
 
   /**
    * Generate comprehensive organization insights across all available subsystems
-   * @param {string} organizationId 
-   * @param {{
-   *   userId?: number|string|null,
-   *   datasetId?: number|string|null,
-   *   persist?: boolean,
-   *   forceReevaluate?: boolean,
-   *   ipAddress?: string|null,
-   *   userAgent?: string|null
-   * }} [options={}]
-   * @returns {Promise<{
-   *   insights: Array<any>,
-   *   executive_summary: string,
-   *   count: number,
-   *   generated_at: Date
-   * }>}
    */
   async generateInsights(organizationId, options = {}) {
     if (!organizationId) {
       throw new Error('Organization ID is required to generate insights.');
+    }
+
+    const cacheKey = `${organizationId}:${options.datasetId || 'all'}`;
+    if (!options.forceFresh && insightMemoryCache.has(cacheKey)) {
+      const cached = insightMemoryCache.get(cacheKey);
+      if (Date.now() - cached.timestamp < 180000) {
+        return cached.data;
+      }
     }
 
     const detectedInsights = [];
@@ -105,7 +116,7 @@ class InsightService {
     for (const ds of targetDatasets.slice(0, 5)) {
       try {
         if (!ds.file_path) continue;
-        const records = await analyticsService.loadDatasetRecords(ds);
+        const records = await analyticsService.loadDatasetRecords(ds, 5000);
         if (!records || records.length === 0) continue;
 
         const schema = Array.isArray(ds.schema) ? ds.schema : [];
@@ -548,12 +559,12 @@ class InsightService {
     if (targetRelationships.length > 0) {
       try {
         const rel = targetRelationships[0];
-        const srcDs = datasets.find(d => Number(d.id) === Number(rel.source_dataset_id));
-        const tgtDs = datasets.find(d => Number(d.id) === Number(rel.target_dataset_id));
+        const srcDs = datasets.find(d => String(d.id) === String(rel.source_dataset_id) || d.name === rel.source_dataset_id);
+        const tgtDs = datasets.find(d => String(d.id) === String(rel.target_dataset_id) || d.name === rel.target_dataset_id);
 
         if (srcDs && tgtDs && srcDs.file_path && tgtDs.file_path) {
-          const srcRecords = await analyticsService.loadDatasetRecords(srcDs);
-          const tgtRecords = await analyticsService.loadDatasetRecords(tgtDs);
+          const srcRecords = await analyticsService.loadDatasetRecords(srcDs, 5000);
+          const tgtRecords = await analyticsService.loadDatasetRecords(tgtDs, 5000);
 
           const relationalRes = await analyticsService.executeRelationalQuery({
             baseDataset: srcDs,
@@ -614,14 +625,14 @@ class InsightService {
         if (hoursAgo <= 48 || isNaN(hoursAgo)) {
           // Link to tenant dataset if specified or available to calculate real metrics
           const linkedDs = alert.dataset_id 
-            ? datasets.find(d => Number(d.id) === Number(alert.dataset_id))
+            ? datasets.find(d => String(d.id) === String(alert.dataset_id) || d.name === alert.dataset_id)
             : (datasets.length > 0 ? datasets[0] : null);
           let linkedRecords = [];
           let linkedDims = {};
 
           if (linkedDs && linkedDs.file_path) {
             try {
-              linkedRecords = await analyticsService.loadDatasetRecords(linkedDs);
+              linkedRecords = await analyticsService.loadDatasetRecords(linkedDs, 5000);
               const schema = Array.isArray(linkedDs.schema) ? linkedDs.schema : [];
               linkedDims = analyticsService.detectDatasetDimensions(schema, linkedRecords.slice(0, 20));
             } catch (_) {}
@@ -855,7 +866,7 @@ class InsightService {
       }).catch(() => {});
     }
 
-    return {
+    const finalResult = {
       insights: rankedInsights,
       executive_summary: executiveSummary,
       briefing,
@@ -863,6 +874,8 @@ class InsightService {
       count: rankedInsights.length,
       generated_at: new Date()
     };
+    insightMemoryCache.set(cacheKey, { timestamp: Date.now(), data: finalResult });
+    return finalResult;
   }
 
   /**

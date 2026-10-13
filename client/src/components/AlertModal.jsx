@@ -16,6 +16,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { Button } from './ui/Button';
+import { Select } from './ui/Select';
 
 const CONDITIONS = [
   { value: 'greater_than', label: 'Greater Than (>)' },
@@ -296,21 +297,18 @@ export default function AlertModal({
               <label className="block text-xs font-semibold text-slate-800 mb-1">
                 Target Metric / KPI
               </label>
-              <div className="relative">
-                <select
-                  value={metricId}
-                  onChange={(e) => setMetricId(e.target.value)}
-                  className="w-full h-10 appearance-none rounded-xl border border-slate-200 bg-white pl-3.5 pr-8 text-xs font-medium text-slate-800 transition focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none cursor-pointer shadow-2xs"
-                >
-                  <option value="">-- Generic Organization Metric --</option>
-                  {metrics.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} {m.unit ? `(${m.unit})` : ''}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-              </div>
+              <Select
+                value={metricId}
+                onChange={(e) => setMetricId(e.target.value)}
+                placeholder="Generic Organization Metric"
+              >
+                <option value="">-- Generic Organization Metric --</option>
+                {metrics.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} {m.unit ? `(${m.unit})` : ''}
+                  </option>
+                ))}
+              </Select>
             </div>
 
             {/* Condition Expression */}
@@ -318,20 +316,16 @@ export default function AlertModal({
               <label className="block text-xs font-semibold text-slate-800 mb-1">
                 Condition Trigger <span className="text-rose-500">*</span>
               </label>
-              <div className="relative">
-                <select
-                  value={condition}
-                  onChange={(e) => setCondition(e.target.value)}
-                  className="w-full h-10 appearance-none rounded-xl border border-slate-200 bg-white pl-3.5 pr-8 text-xs font-medium text-slate-800 transition focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none cursor-pointer shadow-2xs"
-                >
-                  {CONDITIONS.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-              </div>
+              <Select
+                value={condition}
+                onChange={(e) => setCondition(e.target.value)}
+              >
+                {CONDITIONS.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </Select>
             </div>
           </div>
 

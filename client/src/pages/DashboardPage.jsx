@@ -406,6 +406,10 @@ export default function DashboardPage() {
     return params.toString();
   }, [filters]);
 
+  const isFirstLoadRef = useRef(true);
+  const prevDatasetIdRef = useRef(null);
+  const prevFiltersRef = useRef(filters);
+
   const fetchDatasetSummary = async (id) => {
     if (!id || !effectiveToken) return;
     try {
@@ -415,6 +419,26 @@ export default function DashboardPage() {
       if (res.ok) {
         const json = await res.json();
         setSummaryData(json.data || { dataset: null, dimensions: {}, filterOptions: {} });
+      }
+    } catch (_) {}
+  };
+
+  const fetchTableRows = async (id) => {
+    if (!id || !effectiveToken) return;
+    try {
+      const rowsRes = await fetch(`${API_BASE_URL}/analytics/datasets/${id}/rows?${buildQueryParams({
+        page: tablePage,
+        limit: tableLimit,
+        sortKey: tableSortKey,
+        sortOrder: tableSortOrder,
+        search: tableSearch
+      })}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } });
+      if (rowsRes.ok) {
+        const rowsJson = await rowsRes.json();
+        setTableData({
+          rows: rowsJson?.data?.rows || [],
+          totalCount: rowsJson?.data?.totalCount || 0
+        });
       }
     } catch (_) {}
   };
@@ -439,9 +463,52 @@ export default function DashboardPage() {
     setError('');
 
     try {
-      const queryStr = buildQueryParams();
+      const queryStr = buildQueryParams({
+        page: tablePage,
+        limit: tableLimit,
+        sortKey: tableSortKey,
+        sortOrder: tableSortOrder,
+        search: tableSearch
+      });
 
-      const [kpisRes, trendsRes, regionRes, channelRes, productRes, rowsRes, insightsRes] = await Promise.all([
+      // 1. High-speed unified overview endpoint (single pass)
+      const [overviewRes, insightsRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/analytics/datasets/${id}/overview?${queryStr}`, {
+          headers: { 'Authorization': `Bearer ${effectiveToken}` }
+        }),
+        fetch(`${API_BASE_URL}/insights?datasetId=${id}`, {
+          headers: { 'Authorization': `Bearer ${effectiveToken}` }
+        }).catch(() => null)
+      ]);
+
+      if (currentReqId !== activeReqIdRef.current) return;
+
+      if (overviewRes.ok) {
+        const overviewJson = await overviewRes.json();
+        const data = overviewJson?.data || {};
+
+        if (data.summary) {
+          setSummaryData(data.summary);
+        }
+        setKpiData(data.kpis || null);
+        setTrendsData(data.trends || []);
+        setRegionBreakdown(data.regionBreakdown || []);
+        setChannelBreakdown(data.channelBreakdown || []);
+        setProductBreakdown(data.productBreakdown || []);
+        setTableData({
+          rows: data.rows || [],
+          totalCount: data.totalCount || 0
+        });
+
+        if (insightsRes && insightsRes.ok) {
+          const insightsJson = await insightsRes.json().catch(() => null);
+          setDecisionSignals(insightsJson?.insights || insightsJson?.data || []);
+        }
+        return;
+      }
+
+      // 2. Resilient fallback to individual parallel endpoints
+      const [kpisRes, trendsRes, regionRes, channelRes, productRes, rowsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/analytics/datasets/${id}/kpis?${queryStr}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } }),
         fetch(`${API_BASE_URL}/analytics/datasets/${id}/trends?${queryStr}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } }),
         fetch(`${API_BASE_URL}/analytics/datasets/${id}/breakdowns?${buildQueryParams({ groupBy: 'region' })}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } }),
@@ -453,14 +520,10 @@ export default function DashboardPage() {
           sortKey: tableSortKey,
           sortOrder: tableSortOrder,
           search: tableSearch
-        })}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } }),
-        fetch(`${API_BASE_URL}/insights?datasetId=${id}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } }).catch(() => null)
+        })}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } })
       ]);
 
-      // Guard against race conditions / older out-of-order responses
-      if (currentReqId !== activeReqIdRef.current) {
-        return;
-      }
+      if (currentReqId !== activeReqIdRef.current) return;
 
       const [kpisJson, trendsJson, regionJson, channelJson, productJson, rowsJson, insightsJson] = await Promise.all([
         kpisRes.json().catch(() => null),
@@ -472,9 +535,7 @@ export default function DashboardPage() {
         insightsRes ? insightsRes.json().catch(() => null) : null
       ]);
 
-      if (currentReqId !== activeReqIdRef.current) {
-        return;
-      }
+      if (currentReqId !== activeReqIdRef.current) return;
 
       if (kpisRes.ok && kpisJson?.data?.kpis) {
         setKpiData(kpisJson.data?.kpis || null);
@@ -541,8 +602,19 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (activeDashboardId === 'overview' && selectedDatasetId) {
-      fetchDatasetSummary(selectedDatasetId);
-      fetchAnalytics(selectedDatasetId, false);
+      const datasetChanged = prevDatasetIdRef.current !== selectedDatasetId;
+      const filtersChanged = JSON.stringify(prevFiltersRef.current) !== JSON.stringify(filters);
+
+      prevDatasetIdRef.current = selectedDatasetId;
+      prevFiltersRef.current = filters;
+
+      if (datasetChanged || filtersChanged || isFirstLoadRef.current) {
+        isFirstLoadRef.current = false;
+        fetchDatasetSummary(selectedDatasetId);
+        fetchAnalytics(selectedDatasetId, false);
+      } else {
+        fetchTableRows(selectedDatasetId);
+      }
     } else if (activeDashboardId === 'overview') {
       setKpiData(null);
       setTrendsData([]);

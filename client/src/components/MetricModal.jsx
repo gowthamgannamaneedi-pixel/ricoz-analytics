@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle2, AlertCircle, Sparkles, Database, Plus, HelpCircle, ChevronDown } from 'lucide-react';
 import Button from './ui/Button';
+import { Select } from './ui/Select';
 import { getDatasets, getDatasetById } from '../services/api';
 
 const METRIC_TYPES = [
@@ -21,6 +22,8 @@ export default function MetricModal({
   isOpen,
   onClose,
   onSubmit,
+  onSuccess,
+  token,
   metricToEdit = null,
   isLoading = false
 }) {
@@ -40,6 +43,25 @@ export default function MetricModal({
   const [aggregationType, setAggregationType] = useState('SUM');
   const [targetColumn, setTargetColumn] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const parseDatasetCols = (ds) => {
+    if (!ds) return [];
+    let schema = ds.schema || ds.schema_json?.columns || [];
+    if (typeof schema === 'string') {
+      try { schema = JSON.parse(schema); } catch (_) { schema = []; }
+    }
+    if (!Array.isArray(schema)) return [];
+    return schema
+      .map(col => {
+        if (!col) return null;
+        if (typeof col === 'string') return { name: col.trim(), type: 'string' };
+        const cname = (col.name || col.column_name || col.field || col.key || '').trim();
+        const ctype = (col.type || col.data_type || 'string').toLowerCase();
+        return cname ? { name: cname, type: ctype } : null;
+      })
+      .filter(Boolean);
+  };
 
   // Fetch datasets list on modal open
   useEffect(() => {
@@ -61,17 +83,22 @@ export default function MetricModal({
       getDatasetById(datasetId)
         .then((res) => {
           const ds = res.dataset || res.data;
-          if (ds && ds.schema_json && Array.isArray(ds.schema_json.columns)) {
-            setDatasetColumns(ds.schema_json.columns);
+          const cols = parseDatasetCols(ds);
+          if (cols.length > 0) {
+            setDatasetColumns(cols);
           } else {
-            setDatasetColumns([]);
+            const localDs = datasets.find(d => String(d.id) === String(datasetId));
+            setDatasetColumns(parseDatasetCols(localDs));
           }
         })
-        .catch(() => setDatasetColumns([]));
+        .catch(() => {
+          const localDs = datasets.find(d => String(d.id) === String(datasetId));
+          setDatasetColumns(parseDatasetCols(localDs));
+        });
     } else {
       setDatasetColumns([]);
     }
-  }, [datasetId]);
+  }, [datasetId, datasets]);
 
   // Populate fields if editing
   useEffect(() => {
@@ -123,12 +150,12 @@ export default function MetricModal({
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     if (!name.trim()) {
-      setError('Please provide a metric name.');
+      setError('Please provide a metric title.');
       return;
     }
     if (!formula.trim()) {
@@ -141,18 +168,45 @@ export default function MetricModal({
       type,
       unit: unit.trim(),
       formula: formula.trim(),
-      target_value: targetValue !== '' ? Number(targetValue) : null,
+      target_value: targetValue !== '' && !isNaN(Number(targetValue)) ? Number(targetValue) : null,
       description: description.trim(),
-      dataset_id: datasetId ? Number(datasetId) : null,
+      dataset_id: datasetId ? (isNaN(Number(datasetId)) ? String(datasetId) : Number(datasetId)) : null,
       formatting: {
-        warning_threshold: warningThreshold !== '' ? Number(warningThreshold) : null,
-        critical_threshold: criticalThreshold !== '' ? Number(criticalThreshold) : null,
+        warning_threshold: warningThreshold !== '' && !isNaN(Number(warningThreshold)) ? Number(warningThreshold) : null,
+        critical_threshold: criticalThreshold !== '' && !isNaN(Number(criticalThreshold)) ? Number(criticalThreshold) : null,
         aggregation_type: aggregationType,
         target_column: targetColumn
       }
     };
 
-    onSubmit(payload);
+    setSubmitting(true);
+    try {
+      if (onSubmit) {
+        await onSubmit(payload);
+      } else {
+        const authToken = token || localStorage.getItem('token');
+        const url = metricToEdit ? `/api/metrics/${metricToEdit.id}` : '/api/metrics';
+        const method = metricToEdit ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+          },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || `Failed to ${metricToEdit ? 'update' : 'create'} KPI.`);
+        }
+      }
+      if (onSuccess) onSuccess();
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Failed to save KPI metric.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -215,19 +269,15 @@ export default function MetricModal({
                 <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="metric-type">
                   Display Format
                 </label>
-                <div className="relative">
-                  <select
-                    id="metric-type"
-                    value={type}
-                    onChange={(e) => handleTypeChange(e.target.value)}
-                    className="w-full h-10 appearance-none rounded-lg border border-slate-300 bg-white pl-3.5 pr-10 text-sm font-medium text-slate-900 transition hover:border-rose-300 hover:bg-[#FFF1F3]/40 focus:border-[#D91542] focus:ring-2 focus:ring-[#D91542]/20 focus:outline-none shadow-2xs cursor-pointer"
-                  >
-                    {METRIC_TYPES.map(t => (
-                      <option key={t.value} value={t.value}>{t.label}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                </div>
+                <Select
+                  id="metric-type"
+                  value={type}
+                  onChange={(e) => handleTypeChange(e.target.value)}
+                >
+                  {METRIC_TYPES.map(t => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </Select>
               </div>
             </div>
 
@@ -236,20 +286,17 @@ export default function MetricModal({
                 <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="dataset-select">
                   Source Dataset (Optional)
                 </label>
-                <div className="relative">
-                  <select
-                    id="dataset-select"
-                    value={datasetId}
-                    onChange={(e) => setDatasetId(e.target.value)}
-                    className="w-full h-10 appearance-none rounded-lg border border-slate-300 bg-white pl-3.5 pr-10 text-sm font-medium text-slate-900 transition hover:border-rose-300 hover:bg-[#FFF1F3]/40 focus:border-[#D91542] focus:ring-2 focus:ring-[#D91542]/20 focus:outline-none shadow-2xs cursor-pointer"
-                  >
-                    <option value="">-- Standalone (No Dataset) --</option>
-                    {datasets.map(d => (
-                      <option key={d.id} value={d.id}>{d.name}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                </div>
+                <Select
+                  id="dataset-select"
+                  value={datasetId}
+                  onChange={(e) => setDatasetId(e.target.value)}
+                  placeholder="Standalone (No Dataset)"
+                >
+                  <option value="">-- Standalone (No Dataset) --</option>
+                  {datasets.map(d => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </Select>
               </div>
 
               <div>
@@ -285,34 +332,29 @@ export default function MetricModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
                     <span className="block text-[10px] font-medium text-slate-600 mb-1">Aggregation</span>
-                    <div className="relative">
-                      <select
-                        value={aggregationType}
-                        onChange={(e) => handleColumnOrAggChange(targetColumn, e.target.value)}
-                        className="w-full appearance-none rounded border border-slate-200 bg-white py-1 pl-2 pr-7 text-xs text-slate-800 focus:border-rose-600 focus:outline-none cursor-pointer"
-                      >
-                        {AGGREGATIONS.map(a => (
-                          <option key={a.value} value={a.value}>{a.label}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
-                    </div>
+                    <Select
+                      value={aggregationType}
+                      onChange={(e) => handleColumnOrAggChange(targetColumn, e.target.value)}
+                      size="sm"
+                    >
+                      {AGGREGATIONS.map(a => (
+                        <option key={a.value} value={a.value}>{a.label}</option>
+                      ))}
+                    </Select>
                   </div>
                   <div>
                     <span className="block text-[10px] font-medium text-slate-600 mb-1">Column Field</span>
-                    <div className="relative">
-                      <select
-                        value={targetColumn}
-                        onChange={(e) => handleColumnOrAggChange(e.target.value, aggregationType)}
-                        className="w-full appearance-none rounded border border-slate-200 bg-white py-1 pl-2 pr-7 text-xs text-slate-800 focus:border-rose-600 focus:outline-none cursor-pointer"
-                      >
-                        <option value="">-- Choose Column --</option>
-                        {datasetColumns.map(c => (
-                          <option key={c.name} value={c.name}>{c.name} ({c.type})</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
-                    </div>
+                    <Select
+                      value={targetColumn}
+                      onChange={(e) => handleColumnOrAggChange(e.target.value, aggregationType)}
+                      placeholder="Choose Column"
+                      size="sm"
+                    >
+                      <option value="">-- Choose Column --</option>
+                      {datasetColumns.map(c => (
+                        <option key={c.name} value={c.name}>{c.name} ({c.type})</option>
+                      ))}
+                    </Select>
                   </div>
                 </div>
               </div>
@@ -426,8 +468,8 @@ export default function MetricModal({
             <Button
               type="submit"
               variant="primary"
-              disabled={isLoading}
-              loading={isLoading}
+              disabled={isLoading || submitting}
+              loading={isLoading || submitting}
               id="save-metric-btn"
             >
               <CheckCircle2 className="h-4 w-4" />

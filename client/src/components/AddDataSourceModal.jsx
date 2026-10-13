@@ -3,6 +3,7 @@ import { X, FileSpreadsheet, FileCode, Database, CheckCircle2, AlertCircle, Load
 import FileUpload from './FileUpload';
 import UploadProgress from './UploadProgress';
 import { API_BASE_URL, testApiDataSource, createDataSource, uploadDataSourceFile, MAX_UPLOAD_SIZE_MB } from '../services/api';
+import { Select } from './ui/Select';
 
 /**
  * Enterprise Add Data Source Modal
@@ -769,17 +770,17 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="api-method">
                     HTTP Method
                   </label>
-                  <select
+                  <Select
                     id="api-method"
                     name="method"
                     value={apiForm.method}
                     onChange={handleApiChange}
                     disabled={isProcessing}
-                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 focus:border-rose-600 focus:outline-none transition"
+                    className="w-full"
                   >
                     <option value="GET">GET</option>
                     <option value="POST">POST</option>
-                  </select>
+                  </Select>
                 </div>
               </div>
 

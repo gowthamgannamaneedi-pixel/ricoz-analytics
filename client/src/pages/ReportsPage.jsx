@@ -48,6 +48,7 @@ import ShareModal from '../components/ShareModal';
 import { Button } from '../components/ui/Button';
 import { RefreshButton } from '../components/ui/RefreshButton';
 import { ResetButton } from '../components/ui/ResetButton';
+import { Select } from '../components/ui/Select';
 import {
   getReports,
   getDashboards,
@@ -655,24 +656,24 @@ export default function ReportsPage() {
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* 2. SUMMARY METRICS AREA (4 Professional Real-Data KPI Cards)        */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
         {/* Card 1: Total Reports */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all flex flex-col justify-between min-h-[140px]">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all flex flex-col justify-between min-h-[156px]">
           <div>
-            <div className="flex items-center gap-2.5 text-slate-600">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80">
+            <div className="flex items-center gap-3 text-slate-600">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80 shrink-0">
                 <FileBarChart className="h-5 w-5" />
               </div>
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Reports</span>
             </div>
-            <div className="mt-3 flex items-baseline justify-between">
+            <div className="mt-3.5 flex items-baseline justify-between">
               <span className="text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
                 {loading ? '—' : totalReportsCount}
               </span>
               <MiniSparklineBars count={totalReportsCount} color="#e11d48" />
             </div>
           </div>
-          <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center gap-1.5 text-xs">
+          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs">
             <span className="font-semibold text-emerald-600 flex items-center gap-0.5">
               <ArrowUpRight className="h-3.5 w-3.5" />
               {totalReportsCount > 0 ? `${reports.filter(r => r.status === 'active').length} active` : '0 active'}
@@ -682,22 +683,22 @@ export default function ReportsPage() {
         </div>
 
         {/* Card 2: Active Schedules */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all flex flex-col justify-between min-h-[140px]">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all flex flex-col justify-between min-h-[156px]">
           <div>
-            <div className="flex items-center gap-2.5 text-slate-600">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80">
+            <div className="flex items-center gap-3 text-slate-600">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80 shrink-0">
                 <Calendar className="h-5 w-5" />
               </div>
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Schedules</span>
             </div>
-            <div className="mt-3 flex items-baseline justify-between">
+            <div className="mt-3.5 flex items-baseline justify-between">
               <span className="text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
                 {loading ? '—' : activeSchedulesCount}
               </span>
               <MiniSparklineBars count={activeSchedulesCount} color="#059669" />
             </div>
           </div>
-          <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center gap-1.5 text-xs">
+          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs">
             <span className="font-semibold text-emerald-600 flex items-center gap-0.5">
               <ArrowUpRight className="h-3.5 w-3.5" />
               {totalReportsCount > 0 ? `${Math.round((activeSchedulesCount / totalReportsCount) * 100)}%` : '0%'}
@@ -707,22 +708,22 @@ export default function ReportsPage() {
         </div>
 
         {/* Card 3: Draft Reports */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all flex flex-col justify-between min-h-[140px]">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all flex flex-col justify-between min-h-[156px]">
           <div>
-            <div className="flex items-center gap-2.5 text-slate-600">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80">
+            <div className="flex items-center gap-3 text-slate-600">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80 shrink-0">
                 <Edit3 className="h-5 w-5" />
               </div>
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Draft Reports</span>
             </div>
-            <div className="mt-3 flex items-baseline justify-between">
+            <div className="mt-3.5 flex items-baseline justify-between">
               <span className="text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
                 {loading ? '—' : draftReportsCount}
               </span>
               <MiniSparklineBars count={draftReportsCount} color="#7c3aed" />
             </div>
           </div>
-          <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center gap-1.5 text-xs">
+          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs">
             <span className="font-semibold text-slate-600">
               {draftReportsCount > 0 ? `${draftReportsCount} pending publish` : 'All reports configured'}
             </span>
@@ -730,22 +731,22 @@ export default function ReportsPage() {
         </div>
 
         {/* Card 4: Executions Logged */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all flex flex-col justify-between min-h-[140px]">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all flex flex-col justify-between min-h-[156px]">
           <div>
-            <div className="flex items-center gap-2.5 text-slate-600">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80">
+            <div className="flex items-center gap-3 text-slate-600">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80 shrink-0">
                 <Clock className="h-5 w-5" />
               </div>
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Executions Logged</span>
             </div>
-            <div className="mt-3 flex items-baseline justify-between">
+            <div className="mt-3.5 flex items-baseline justify-between">
               <span className="text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
                 {loading ? '—' : executionsCount}
               </span>
               <MiniSparklineBars count={executionsCount} color="#d97706" />
             </div>
           </div>
-          <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center gap-1.5 text-xs">
+          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs">
             <span className="font-semibold text-rose-600">
               {executionsCount > 0 ? `${executions.filter(e => e.status === 'completed').length} completed` : 'Audit log ready'}
             </span>
@@ -835,35 +836,33 @@ export default function ReportsPage() {
             )}
           </div>
 
-          <div className="relative shrink-0">
-            <select
+          <div className="w-40 sm:w-44 shrink-0">
+            <Select
               id="filter-type-select"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="appearance-none pl-3.5 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-rose-300 hover:bg-rose-50/40 hover:text-rose-700 focus:outline-hidden focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 cursor-pointer shadow-2xs"
+              size="sm"
             >
               <option value="all">All Types</option>
-              <option value="pdf">PDF Document</option>
-              <option value="excel">Excel (.xlsx)</option>
-              <option value="csv">CSV Spreadsheet</option>
-              <option value="json">JSON Data</option>
-            </select>
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <option value="pdf" badge="PDF">PDF Document</option>
+              <option value="excel" badge="XLSX">Excel Sheet</option>
+              <option value="csv" badge="CSV">CSV Spreadsheet</option>
+              <option value="json" badge="JSON">JSON Data</option>
+            </Select>
           </div>
 
-          <div className="relative shrink-0">
-            <select
+          <div className="w-36 sm:w-40 shrink-0">
+            <Select
               id="filter-status-select"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="appearance-none pl-3.5 pr-9 h-10 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:border-rose-300 hover:bg-rose-50/40 hover:text-rose-700 focus:outline-hidden focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 cursor-pointer shadow-2xs"
+              size="sm"
             >
               <option value="all">All Statuses</option>
               <option value="active">Active Only</option>
               <option value="draft">Draft Only</option>
               <option value="paused">Paused Only</option>
-            </select>
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </Select>
           </div>
 
           {hasActiveFilters && (

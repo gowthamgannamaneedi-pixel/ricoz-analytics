@@ -15,6 +15,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { Button } from './ui/Button';
+import { Select } from './ui/Select';
 
 const FORMAT_OPTIONS = [
   { value: 'pdf', label: 'PDF Document', desc: 'Formatted executive summary with charts & KPI cards', icon: '📄' },
@@ -238,39 +239,32 @@ export default function ReportModal({
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Dashboard Telemetry Source
               </label>
-              <div className="relative">
-                <select
-                  value={dashboardId}
-                  onChange={(e) => setDashboardId(e.target.value)}
-                  className="w-full appearance-none pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-800 font-medium hover:border-rose-300 hover:bg-rose-50/40 hover:text-rose-700 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-hidden cursor-pointer transition truncate shadow-2xs"
-                >
-                  <option value="">Executive Organization KPIs (All)</option>
-                  {dashboards.map((dash) => (
-                    <option key={dash.id} value={dash.id}>
-                      {dash.title} {dash.is_default ? '(Default)' : ''}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 shrink-0" />
-              </div>
+              <Select
+                value={dashboardId}
+                onChange={(e) => setDashboardId(e.target.value)}
+                placeholder="Executive Organization KPIs (All)"
+              >
+                <option value="">Executive Organization KPIs (All)</option>
+                {dashboards.map((dash) => (
+                  <option key={dash.id} value={dash.id}>
+                    {dash.title} {dash.is_default ? '(Default)' : ''}
+                  </option>
+                ))}
+              </Select>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Report State / Pipeline Status
               </label>
-              <div className="relative">
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="w-full appearance-none pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-800 font-medium hover:border-rose-300 hover:bg-rose-50/40 hover:text-rose-700 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-hidden cursor-pointer transition truncate shadow-2xs"
-                >
-                  <option value="active">Active (Running on schedule)</option>
-                  <option value="draft">Draft (On-demand only)</option>
-                  <option value="paused">Paused (Temporarily halted)</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 shrink-0" />
-              </div>
+              <Select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="active">Active (Running on schedule)</option>
+                <option value="draft">Draft (On-demand only)</option>
+                <option value="paused">Paused (Temporarily halted)</option>
+              </Select>
             </div>
           </div>
 
@@ -311,20 +305,16 @@ export default function ReportModal({
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
               Automated Schedule Cadence
             </label>
-            <div className="relative">
-              <select
-                value={schedulePreset}
-                onChange={(e) => setSchedulePreset(e.target.value)}
-                className="w-full appearance-none pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-800 font-medium hover:border-rose-300 hover:bg-rose-50/40 hover:text-rose-700 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-hidden cursor-pointer transition truncate shadow-2xs"
-              >
-                {SCHEDULE_PRESETS.map((p) => (
-                  <option key={p.value} value={p.value}>
-                    {p.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 shrink-0" />
-            </div>
+            <Select
+              value={schedulePreset}
+              onChange={(e) => setSchedulePreset(e.target.value)}
+            >
+              {SCHEDULE_PRESETS.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
+            </Select>
 
             {schedulePreset === 'custom' && (
               <div className="mt-2.5">

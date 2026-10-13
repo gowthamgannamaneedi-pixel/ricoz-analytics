@@ -55,6 +55,7 @@ import ShareModal from '../components/ShareModal';
 import { Button } from '../components/ui/Button';
 import { RefreshButton } from '../components/ui/RefreshButton';
 import { ResetButton } from '../components/ui/ResetButton';
+import { Select } from '../components/ui/Select';
 
 export default function CollaborationPage() {
   const { user } = useAuth();
@@ -541,15 +542,15 @@ export default function CollaborationPage() {
       {/* ------------------------------------------------------------------ */}
       {/* 2. 4-CARD KPI SUMMARY ROW                                          */}
       {/* ------------------------------------------------------------------ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
         {/* Card 1: Total Items Shared */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs hover:shadow-xs transition">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="h-11 w-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
+            <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
               <Users className="w-6 h-6" />
             </div>
             {totalItemsShared > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                 <ExternalLink className="w-3 h-3" />
                 Active
               </span>
@@ -559,7 +560,7 @@ export default function CollaborationPage() {
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
               Total Items Shared
             </span>
-            <div className="text-3xl font-extrabold text-slate-900 mt-1">
+            <div className="text-3xl font-extrabold text-slate-900 mt-1.5">
               {totalItemsShared}
             </div>
             <p className="text-xs text-slate-500 mt-1">
@@ -569,13 +570,13 @@ export default function CollaborationPage() {
         </div>
 
         {/* Card 2: Shared with Me */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs hover:shadow-xs transition">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="h-11 w-11 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
+            <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
               <Share2 className="w-6 h-6" />
             </div>
             {sharedWithMeTotal > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                 Received
               </span>
             )}
@@ -584,7 +585,7 @@ export default function CollaborationPage() {
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
               Shared with Me
             </span>
-            <div className="text-3xl font-extrabold text-slate-900 mt-1">
+            <div className="text-3xl font-extrabold text-slate-900 mt-1.5">
               {sharedWithMeTotal}
             </div>
             <p className="text-xs text-slate-500 mt-1">
@@ -594,13 +595,13 @@ export default function CollaborationPage() {
         </div>
 
         {/* Card 3: My Shares */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs hover:shadow-xs transition">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="h-11 w-11 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
+            <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
               <UserCheck className="w-6 h-6" />
             </div>
             {mySharesTotal > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200">
                 Bookmarks
               </span>
             )}
@@ -609,7 +610,7 @@ export default function CollaborationPage() {
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
               My Shares
             </span>
-            <div className="text-3xl font-extrabold text-slate-900 mt-1">
+            <div className="text-3xl font-extrabold text-slate-900 mt-1.5">
               {mySharesTotal}
             </div>
             <p className="text-xs text-slate-500 mt-1">
@@ -619,13 +620,13 @@ export default function CollaborationPage() {
         </div>
 
         {/* Card 4: Teams & Groups */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs hover:shadow-xs transition">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="h-11 w-11 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
+            <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
               <Users2 className="w-6 h-6" />
             </div>
             {activeTeamsCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
                 Workspace
               </span>
             )}
@@ -634,7 +635,7 @@ export default function CollaborationPage() {
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
               Teams &amp; Groups
             </span>
-            <div className="text-3xl font-extrabold text-slate-900 mt-1">
+            <div className="text-3xl font-extrabold text-slate-900 mt-1.5">
               {activeTeamsCount}
             </div>
             <p className="text-xs text-slate-500 mt-1">
@@ -760,34 +761,28 @@ export default function CollaborationPage() {
           {/* Filter Dropdowns */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Type Filter */}
-            <div className="relative">
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="h-10 appearance-none pl-3.5 pr-8 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500/20 cursor-pointer shadow-2xs transition"
-              >
-                <option value="all">All Types</option>
-                <option value="dashboard">Dashboards</option>
-                <option value="report">Reports</option>
-                <option value="ai_insight">AI Insights</option>
-              </select>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
+            <Select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="min-w-[140px]"
+            >
+              <option value="all">All Types</option>
+              <option value="dashboard">Dashboards</option>
+              <option value="report">Reports</option>
+              <option value="ai_insight">AI Insights</option>
+            </Select>
 
             {/* Access Filter */}
-            <div className="relative">
-              <select
-                value={accessFilter}
-                onChange={(e) => setAccessFilter(e.target.value)}
-                className="h-10 appearance-none pl-3.5 pr-8 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500/20 cursor-pointer shadow-2xs transition"
-              >
-                <option value="all">All Access Levels</option>
-                <option value="viewer">View Only</option>
-                <option value="editor">Editor</option>
-                <option value="admin">Admin / Owner</option>
-              </select>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
+            <Select
+              value={accessFilter}
+              onChange={(e) => setAccessFilter(e.target.value)}
+              className="min-w-[160px]"
+            >
+              <option value="all">All Access Levels</option>
+              <option value="viewer">View Only</option>
+              <option value="editor">Editor</option>
+              <option value="admin">Admin / Owner</option>
+            </Select>
 
             {/* Clear Filters Button */}
             {(searchQuery || typeFilter !== 'all' || accessFilter !== 'all') && (
@@ -1484,14 +1479,14 @@ export default function CollaborationPage() {
                   <label className="block text-xs font-bold text-slate-800">Team Role</label>
                   <p className="text-[11px] text-slate-500">Select role granted within this team</p>
                 </div>
-                <select
+                <Select
                   value={selectedAddRole}
                   onChange={(e) => setSelectedAddRole(e.target.value)}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-rose-600"
+                  className="min-w-[130px]"
                 >
                   <option value="member">Member</option>
                   <option value="lead">Team Lead</option>
-                </select>
+                </Select>
               </div>
 
               {/* Eligible Members List */}

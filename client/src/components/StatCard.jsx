@@ -62,22 +62,22 @@ export default function StatCard({
 }) {
   return (
     <div
-      className={`relative flex flex-col justify-between p-5 sm:p-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xs hover:shadow-xs transition-all duration-200 ${className}`}
+      className={`relative flex flex-col justify-between p-6 sm:p-7 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all duration-200 min-h-[180px] ${className}`}
     >
       <div>
         {/* Top Header Row: Red icon on pale red container */}
         <div className="flex items-center justify-between">
           {Icon ? (
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-rose-950/40 text-[#D91542] dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/50 shadow-2xs">
-              <Icon className="h-5 w-5" strokeWidth={2} />
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-rose-950/40 text-[#D91542] dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/50 shadow-2xs">
+              <Icon className="h-5.5 w-5.5" strokeWidth={2} />
             </div>
           ) : (
-            <div className="h-10" />
+            <div className="h-11" />
           )}
 
           <button
             type="button"
-            className="p-1 rounded-lg text-slate-300 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-300 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
             aria-label="More options"
           >
             <MoreVertical className="h-4 w-4" />
@@ -85,14 +85,14 @@ export default function StatCard({
         </div>
 
         {/* Title */}
-        <div className="mt-3.5">
+        <div className="mt-4">
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             {title}
           </span>
         </div>
 
         {/* Main Stat & Sparkline Row */}
-        <div className="mt-1 flex items-baseline justify-between gap-2">
+        <div className="mt-1.5 flex items-baseline justify-between gap-3">
           <span className="text-2xl sm:text-[28px] font-black tracking-tight text-slate-900 dark:text-slate-100 font-sans">
             {value}
           </span>
@@ -104,7 +104,7 @@ export default function StatCard({
 
         {/* Trend Indicator */}
         {change && (
-          <div className="mt-2.5 flex items-center gap-1.5 text-xs">
+          <div className="mt-3 flex items-center gap-1.5 text-xs">
             <span
               className={`inline-flex items-center gap-1 font-semibold ${
                 isPositive === true
@@ -132,7 +132,7 @@ export default function StatCard({
 
       {/* Bottom Highlight Strip */}
       {(bottomStrip || subtext) && (
-        <div className="mt-4 flex items-center justify-between px-3 py-1.5 rounded-xl border border-rose-100/70 dark:border-rose-950/40 bg-[#FFF1F3]/60 dark:bg-rose-950/20 text-[#D91542] dark:text-rose-300 text-[11px] font-medium">
+        <div className="mt-4.5 flex items-center justify-between px-3.5 py-2 rounded-xl border border-rose-100/70 dark:border-rose-950/40 bg-[#FFF1F3]/60 dark:bg-rose-950/20 text-[#D91542] dark:text-rose-300 text-[11px] font-medium">
           <span>{bottomStrip || subtext}</span>
           {bottomValue && (
             <span className="font-bold text-slate-900 dark:text-slate-100 font-mono">

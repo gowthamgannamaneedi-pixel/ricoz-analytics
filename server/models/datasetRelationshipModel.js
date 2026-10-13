@@ -49,13 +49,18 @@ const DatasetRelationshipModel = {
       RETURNING *;
     `;
 
+    const formatDatasetId = (val) => {
+      if (val === null || val === undefined) return val;
+      return String(val).trim();
+    };
+
     const result = await db.query(sql, [
       id,
       organizationId,
-      createdBy ? Number(createdBy) : null,
-      Number(sourceDatasetId),
+      createdBy ? (isNaN(Number(createdBy)) ? createdBy : Number(createdBy)) : null,
+      formatDatasetId(sourceDatasetId),
       sourceColumn.trim(),
-      Number(targetDatasetId),
+      formatDatasetId(targetDatasetId),
       targetColumn.trim(),
       relationshipType.toLowerCase(),
       description || ''
@@ -90,8 +95,8 @@ const DatasetRelationshipModel = {
         u.name AS creator_name,
         u.email AS creator_email
       FROM dataset_relationships r
-      LEFT JOIN datasets sd ON sd.id = r.source_dataset_id
-      LEFT JOIN datasets td ON td.id = r.target_dataset_id
+      LEFT JOIN datasets sd ON CAST(sd.id AS TEXT) = CAST(r.source_dataset_id AS TEXT) OR sd.name = r.source_dataset_id
+      LEFT JOIN datasets td ON CAST(td.id AS TEXT) = CAST(r.target_dataset_id AS TEXT) OR td.name = r.target_dataset_id
       LEFT JOIN users u ON u.id = r.created_by
       WHERE r.organization_id = $1
       ORDER BY r.created_at DESC;
@@ -126,8 +131,8 @@ const DatasetRelationshipModel = {
         td.name AS target_dataset_name,
         td.file_path AS target_file_path
       FROM dataset_relationships r
-      LEFT JOIN datasets sd ON sd.id = r.source_dataset_id
-      LEFT JOIN datasets td ON td.id = r.target_dataset_id
+      LEFT JOIN datasets sd ON CAST(sd.id AS TEXT) = CAST(r.source_dataset_id AS TEXT) OR sd.name = r.source_dataset_id
+      LEFT JOIN datasets td ON CAST(td.id AS TEXT) = CAST(r.target_dataset_id AS TEXT) OR td.name = r.target_dataset_id
       WHERE r.id = $1 AND r.organization_id = $2
       LIMIT 1;
     `;
@@ -149,12 +154,17 @@ const DatasetRelationshipModel = {
       FROM dataset_relationships
       WHERE organization_id = $3
         AND (
-          (source_dataset_id = $1 AND target_dataset_id = $2)
-          OR (source_dataset_id = $2 AND target_dataset_id = $1)
+          (CAST(source_dataset_id AS TEXT) = $1 AND CAST(target_dataset_id AS TEXT) = $2)
+          OR (CAST(source_dataset_id AS TEXT) = $2 AND CAST(target_dataset_id AS TEXT) = $1)
         );
     `;
 
-    const result = await db.query(sql, [Number(datasetA), Number(datasetB), organizationId]);
+    const formatDatasetId = (val) => {
+      if (val === null || val === undefined) return val;
+      return String(val).trim();
+    };
+
+    const result = await db.query(sql, [formatDatasetId(datasetA), formatDatasetId(datasetB), organizationId]);
     return result.rows || [];
   },
 

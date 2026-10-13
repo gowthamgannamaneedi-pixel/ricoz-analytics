@@ -34,6 +34,7 @@ import MetricDetailsModal from '../components/MetricDetailsModal';
 import { Button } from '../components/ui/Button';
 import { RefreshButton } from '../components/ui/RefreshButton';
 import { ResetButton } from '../components/ui/ResetButton';
+import { Select } from '../components/ui/Select';
 import { API_BASE_URL } from '../services/api';
 
 /**
@@ -204,6 +205,29 @@ export default function KpisPage() {
     }
   };
 
+  const handleMetricSubmit = async (payload) => {
+    const isEdit = !!editingMetric;
+    const url = isEdit ? `${API_BASE_URL}/metrics/${editingMetric.id}` : `${API_BASE_URL}/metrics`;
+    const method = isEdit ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.message || `Failed to ${isEdit ? 'update' : 'create'} KPI metric.`);
+    }
+
+    await fetchData(false);
+    setIsModalOpen(false);
+  };
+
   const handleModalSuccess = () => {
     fetchData(false);
   };
@@ -362,12 +386,13 @@ export default function KpisPage() {
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             {/* Active Dataset Selector Dropdown Button */}
             {datasets.length > 0 && (
-              <div className="relative">
-                <select
+              <div className="w-56">
+                <Select
                   value={datasetFilter}
                   onChange={(e) => setDatasetFilter(e.target.value)}
                   aria-label="Active Telemetry Dataset"
-                  className="appearance-none pl-9 pr-9 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 focus:outline-hidden focus:border-rose-500 shadow-2xs cursor-pointer transition"
+                  icon={Database}
+                  size="sm"
                 >
                   <option value="all">All Linked Datasets</option>
                   {datasets.map((d) => (
@@ -375,9 +400,7 @@ export default function KpisPage() {
                       {d.name}
                     </option>
                   ))}
-                </select>
-                <Database className="h-4 w-4 text-rose-600 dark:text-rose-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </Select>
               </div>
             )}
 
@@ -428,22 +451,22 @@ export default function KpisPage() {
       )}
 
       {/* 3. Summary KPI Cards (4 Cards Grid) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
         {/* Card 1: Total KPIs */}
-        <div className="rounded-2xl border border-rose-200/90 dark:border-rose-900/60 bg-white dark:bg-slate-900 p-5 shadow-2xs ring-1 ring-rose-500/10">
+        <div className="rounded-2xl border border-rose-200/90 dark:border-rose-900/60 bg-white dark:bg-slate-900 p-6 sm:p-7 min-h-[148px] shadow-2xs ring-1 ring-rose-500/10 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/80">
-              <BarChart3 className="h-5 w-5" />
+            <div className="h-12 w-12 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/80 flex items-center justify-center shrink-0">
+              <BarChart3 className="h-6 w-6" />
             </div>
             {totalCount > 0 && (
-              <span className="inline-flex items-center text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-900/60 px-2 py-0.5 rounded-full">
+              <span className="inline-flex items-center text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-900/60 px-2.5 py-0.5 rounded-full">
                 Active
               </span>
             )}
           </div>
           <div className="mt-4">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Total KPIs</span>
-            <span className="text-2xl font-bold font-mono tracking-tight text-slate-900 dark:text-slate-100 mt-1 block">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block uppercase tracking-wider">Total KPIs</span>
+            <span className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-slate-900 dark:text-slate-100 mt-1 block">
               {totalCount}
             </span>
             <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
@@ -453,20 +476,20 @@ export default function KpisPage() {
         </div>
 
         {/* Card 2: On Track */}
-        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 min-h-[148px] shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/80">
-              <CheckCircle2 className="h-5 w-5" />
+            <div className="h-12 w-12 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/80 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="h-6 w-6" />
             </div>
             {totalCount > 0 && (
-              <span className="inline-flex items-center text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-900/60 px-2 py-0.5 rounded-full">
+              <span className="inline-flex items-center text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-900/60 px-2.5 py-0.5 rounded-full">
                 {onTrackPercentage}%
               </span>
             )}
           </div>
           <div className="mt-4">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">On Track</span>
-            <span className="text-2xl font-bold font-mono tracking-tight text-slate-900 dark:text-slate-100 mt-1 block">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block uppercase tracking-wider">On Track</span>
+            <span className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-slate-900 dark:text-slate-100 mt-1 block">
               {onTrackCount}
             </span>
             <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
@@ -476,20 +499,20 @@ export default function KpisPage() {
         </div>
 
         {/* Card 3: At Risk */}
-        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 min-h-[148px] shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/80">
-              <AlertTriangle className="h-5 w-5" />
+            <div className="h-12 w-12 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/80 flex items-center justify-center shrink-0">
+              <AlertTriangle className="h-6 w-6" />
             </div>
             {totalCount > 0 && atRiskCount > 0 && (
-              <span className="inline-flex items-center text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-900/60 px-2 py-0.5 rounded-full">
+              <span className="inline-flex items-center text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-900/60 px-2.5 py-0.5 rounded-full">
                 {atRiskPercentage}%
               </span>
             )}
           </div>
           <div className="mt-4">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">At Risk</span>
-            <span className="text-2xl font-bold font-mono tracking-tight text-slate-900 dark:text-slate-100 mt-1 block">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block uppercase tracking-wider">At Risk</span>
+            <span className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-slate-900 dark:text-slate-100 mt-1 block">
               {atRiskCount}
             </span>
             <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
@@ -499,20 +522,20 @@ export default function KpisPage() {
         </div>
 
         {/* Card 4: Behind Target */}
-        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 min-h-[148px] shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/80">
-              <AlertCircle className="h-5 w-5" />
+            <div className="h-12 w-12 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/80 flex items-center justify-center shrink-0">
+              <AlertCircle className="h-6 w-6" />
             </div>
             {totalCount > 0 && behindCount > 0 && (
-              <span className="inline-flex items-center text-[11px] font-semibold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 border border-rose-200/80 dark:border-rose-900/60 px-2 py-0.5 rounded-full">
+              <span className="inline-flex items-center text-[11px] font-semibold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 border border-rose-200/80 dark:border-rose-900/60 px-2.5 py-0.5 rounded-full">
                 {behindPercentage}%
               </span>
             )}
           </div>
           <div className="mt-4">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Behind Target</span>
-            <span className="text-2xl font-bold font-mono tracking-tight text-slate-900 dark:text-slate-100 mt-1 block">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block uppercase tracking-wider">Behind Target</span>
+            <span className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-slate-900 dark:text-slate-100 mt-1 block">
               {behindCount}
             </span>
             <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
@@ -550,13 +573,13 @@ export default function KpisPage() {
         {/* Dropdowns & View Mode */}
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Metric Type */}
-          <div className="relative">
-            <select
+          <div className="w-40 sm:w-44">
+            <Select
               id="kpis-type-filter"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               aria-label="Filter by metric type"
-              className="appearance-none h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 py-2 pl-3 pr-8 text-xs font-semibold text-slate-800 dark:text-slate-100 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800 hover:text-rose-700 dark:hover:text-rose-300 focus:bg-white dark:focus:bg-slate-850 focus:border-rose-600 dark:focus:border-rose-500 focus:outline-hidden cursor-pointer transition-all"
+              size="sm"
             >
               <option value="all">All Metric Types</option>
               <option value="currency">Currency (₹)</option>
@@ -564,35 +587,33 @@ export default function KpisPage() {
               <option value="count">Count (Volume)</option>
               <option value="decimal">Decimal Number</option>
               <option value="custom">Custom Calculation</option>
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            </Select>
           </div>
 
           {/* Status */}
-          <div className="relative">
-            <select
+          <div className="w-36 sm:w-40">
+            <Select
               id="kpis-status-filter"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               aria-label="Filter by performance status"
-              className="appearance-none h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 py-2 pl-3 pr-8 text-xs font-semibold text-slate-800 dark:text-slate-100 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800 hover:text-rose-700 dark:hover:text-rose-300 focus:bg-white dark:focus:bg-slate-850 focus:border-rose-600 dark:focus:border-rose-500 focus:outline-hidden cursor-pointer transition-all"
+              size="sm"
             >
               <option value="all">All Statuses</option>
               <option value="on_track">On Track</option>
               <option value="at_risk">At Risk</option>
               <option value="behind">Behind Target</option>
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            </Select>
           </div>
 
           {/* Dataset */}
-          <div className="relative">
-            <select
+          <div className="w-44 sm:w-48">
+            <Select
               id="kpis-dataset-filter"
               value={datasetFilter}
               onChange={(e) => setDatasetFilter(e.target.value)}
               aria-label="Filter by linked dataset"
-              className="appearance-none h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 py-2 pl-3 pr-8 text-xs font-semibold text-slate-800 dark:text-slate-100 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800 hover:text-rose-700 dark:hover:text-rose-300 focus:bg-white dark:focus:bg-slate-850 focus:border-rose-600 dark:focus:border-rose-500 focus:outline-hidden cursor-pointer transition-all max-w-[180px] truncate"
+              size="sm"
             >
               <option value="all">All Datasets</option>
               {datasets.map(d => (
@@ -600,8 +621,7 @@ export default function KpisPage() {
                   {d.name}
                 </option>
               ))}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            </Select>
           </div>
 
           {hasActiveFilters && (
@@ -986,6 +1006,7 @@ export default function KpisPage() {
       <MetricModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onSubmit={handleMetricSubmit}
         onSuccess={handleModalSuccess}
         token={token}
         metricToEdit={editingMetric}

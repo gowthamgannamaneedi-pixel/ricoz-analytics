@@ -36,6 +36,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
 import { RefreshButton } from '../components/ui/RefreshButton';
+import { Select } from '../components/ui/Select';
 
 /**
  * Enterprise Relational Data Modeling & Dataset Joins Page (Phase 14)
@@ -128,11 +129,20 @@ export default function DataModelingPage() {
       const srcCols = parseSchemaColumns(srcDs);
       const tgtCols = parseSchemaColumns(tgtDs);
 
+      // Smart match: look for linking column with common name (e.g. customer_id)
+      const matchingCol = tgtCols.find(tc => 
+        srcCols.some(sc => sc.name.toLowerCase() === tc.name.toLowerCase())
+      );
+      const initialSrcCol = matchingCol
+        ? (srcCols.find(sc => sc.name.toLowerCase() === matchingCol.name.toLowerCase())?.name || srcCols[0]?.name || '')
+        : (srcCols[0]?.name || '');
+      const initialTgtCol = matchingCol?.name || tgtCols[0]?.name || '';
+
       setModalForm({
         source_dataset_id: String(srcDs.id),
-        source_column: srcCols[0]?.name || '',
+        source_column: initialSrcCol,
         target_dataset_id: String(tgtDs.id),
-        target_column: tgtCols[0]?.name || '',
+        target_column: initialTgtCol,
         relationship_type: 'many_to_one',
         description: ''
       });
@@ -180,12 +190,21 @@ export default function DataModelingPage() {
     setFormError('');
     setFormSuccess('');
 
-    if (!modalForm.source_dataset_id || !modalForm.target_dataset_id) {
+    const payload = {
+      source_dataset_id: String(modalForm.source_dataset_id || '').trim(),
+      source_column: String(modalForm.source_column || '').trim(),
+      target_dataset_id: String(modalForm.target_dataset_id || '').trim(),
+      target_column: String(modalForm.target_column || '').trim(),
+      relationship_type: modalForm.relationship_type || 'many_to_one',
+      description: modalForm.description ? String(modalForm.description).trim() : ''
+    };
+
+    if (!payload.source_dataset_id || !payload.target_dataset_id) {
       setFormError('Please select both a source and target dataset.');
       return;
     }
 
-    if (!modalForm.source_column || !modalForm.target_column) {
+    if (!payload.source_column || !payload.target_column) {
       setFormError('Please choose the linking columns for both datasets.');
       return;
     }
@@ -194,21 +213,14 @@ export default function DataModelingPage() {
     try {
       if (editingId) {
         await updateDatasetRelationship(editingId, {
-          source_column: modalForm.source_column,
-          target_column: modalForm.target_column,
-          relationship_type: modalForm.relationship_type,
-          description: modalForm.description
+          source_column: payload.source_column,
+          target_column: payload.target_column,
+          relationship_type: payload.relationship_type,
+          description: payload.description
         });
         setFormSuccess('Relationship updated successfully!');
       } else {
-        await createDatasetRelationship({
-          source_dataset_id: modalForm.source_dataset_id,
-          source_column: modalForm.source_column,
-          target_dataset_id: modalForm.target_dataset_id,
-          target_column: modalForm.target_column,
-          relationship_type: modalForm.relationship_type,
-          description: modalForm.description
-        });
+        await createDatasetRelationship(payload);
         setFormSuccess('Relationship established successfully!');
       }
 
@@ -265,7 +277,16 @@ export default function DataModelingPage() {
     if (typeof schema === 'string') {
       try { schema = JSON.parse(schema); } catch (_) { schema = []; }
     }
-    return Array.isArray(schema) ? schema : [];
+    if (!Array.isArray(schema)) return [];
+    return schema
+      .map(col => {
+        if (!col) return null;
+        if (typeof col === 'string') return { name: col.trim(), type: 'string' };
+        const name = (col.name || col.column_name || col.field || col.key || '').trim();
+        const type = (col.type || col.data_type || 'string').toLowerCase();
+        return name ? { name, type } : null;
+      })
+      .filter(Boolean);
   };
 
   const filteredRelationships = relationships.filter((rel) => {
@@ -287,6 +308,24 @@ export default function DataModelingPage() {
   const selectedTargetDs = datasets.find(d => String(d.id) === String(modalForm.target_dataset_id));
   const sourceColumns = parseSchemaColumns(selectedSourceDs);
   const targetColumns = parseSchemaColumns(selectedTargetDs);
+
+  const testBaseDs = datasets.find(d => String(d.id) === String(testBaseDatasetId));
+  const testJoinedDs = datasets.find(d => String(d.id) === String(testJoinedDatasetId));
+  const testBaseCols = parseSchemaColumns(testBaseDs);
+  const testJoinedCols = parseSchemaColumns(testJoinedDs);
+
+  useEffect(() => {
+    if (testBaseDatasetId) {
+      const bDs = datasets.find(d => String(d.id) === String(testBaseDatasetId));
+      const cols = parseSchemaColumns(bDs);
+      if (cols.length > 0) {
+        const numCol = cols.find(c => ['number', 'numeric', 'integer', 'float', 'double'].includes(c.type));
+        const strCol = cols.find(c => ['string', 'text', 'varchar'].includes(c.type));
+        if (!testMetric && numCol) setTestMetric(numCol.name);
+        if (!testDimension && strCol) setTestDimension(strCol.name);
+      }
+    }
+  }, [testBaseDatasetId, datasets]);
 
   return (
     <div className="space-y-6 pb-12 font-sans">
@@ -386,11 +425,11 @@ export default function DataModelingPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {relationships.slice(0, 3).map((rel) => (
               <div
                 key={rel.id}
-                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/70 p-4 flex flex-col justify-between"
+                className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/70 p-5 sm:p-6 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400 pb-2 border-b border-slate-200 dark:border-slate-700">
@@ -400,8 +439,8 @@ export default function DataModelingPage() {
                     </span>
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between gap-2 text-xs">
-                    <div className="bg-white dark:bg-slate-900 rounded-xl p-2.5 flex-1 border border-slate-200 dark:border-slate-800 min-w-0 shadow-2xs">
+                  <div className="mt-3.5 flex items-center justify-between gap-3 text-xs">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl p-3 flex-1 border border-slate-200 dark:border-slate-800 min-w-0 shadow-2xs">
                       <div className="font-bold text-slate-800 dark:text-slate-200 truncate">{rel.source_dataset_name || 'Source Dataset'}</div>
                       <div className="text-[11px] text-rose-600 dark:text-rose-400 font-mono truncate mt-0.5">.{rel.source_column}</div>
                     </div>
@@ -411,7 +450,7 @@ export default function DataModelingPage() {
                       <span className="text-[9px] text-slate-400 dark:text-slate-500 font-mono">LEFT JOIN</span>
                     </div>
 
-                    <div className="bg-white dark:bg-slate-900 rounded-xl p-2.5 flex-1 border border-slate-200 dark:border-slate-800 min-w-0 shadow-2xs">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl p-3 flex-1 border border-slate-200 dark:border-slate-800 min-w-0 shadow-2xs">
                       <div className="font-bold text-slate-800 dark:text-slate-200 truncate">{rel.target_dataset_name || 'Target Dataset'}</div>
                       <div className="text-[11px] text-indigo-600 dark:text-indigo-400 font-mono truncate mt-0.5">.{rel.target_column}</div>
                     </div>
@@ -419,7 +458,7 @@ export default function DataModelingPage() {
                 </div>
 
                 {rel.description && (
-                  <p className="mt-2.5 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 italic">
+                  <p className="mt-3 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 italic">
                     "{rel.description}"
                   </p>
                 )}
@@ -444,17 +483,18 @@ export default function DataModelingPage() {
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Filter className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
-          <select
+          <Select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 h-10 text-xs font-medium text-slate-700 dark:text-slate-200 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:outline-none cursor-pointer shadow-2xs transition"
+            className="w-full sm:w-56"
+            size="sm"
           >
             <option value="all">All Relationship Types</option>
             <option value="many_to_one">Many-to-One (N:1)</option>
             <option value="one_to_many">One-to-Many (1:N)</option>
             <option value="one_to_one">One-to-One (1:1)</option>
             <option value="many_to_many">Many-to-Many (N:N)</option>
-          </select>
+          </Select>
 
           <button
             onClick={loadData}
@@ -614,48 +654,59 @@ export default function DataModelingPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Source Dataset</label>
-                  <div className="relative">
-                    <select
-                      disabled={Boolean(editingId)}
-                      value={modalForm.source_dataset_id}
-                      onChange={(e) => {
-                        const newSrcId = e.target.value;
-                        const ds = datasets.find(d => String(d.id) === newSrcId);
-                        const cols = parseSchemaColumns(ds);
-                        setModalForm({
-                          ...modalForm,
-                          source_dataset_id: newSrcId,
-                          source_column: cols[0]?.name || ''
-                        });
-                      }}
-                      className="w-full appearance-none pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 font-medium hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none cursor-pointer transition shadow-2xs truncate disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <option value="">Select source...</option>
-                      {datasets.map((d) => (
-                        <option key={d.id} value={d.id}>{d.name}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
-                  </div>
+                  <Select
+                    disabled={Boolean(editingId)}
+                    value={modalForm.source_dataset_id}
+                    onChange={(e) => {
+                      const newSrcId = e.target.value;
+                      const ds = datasets.find(d => String(d.id) === newSrcId);
+                      const srcCols = parseSchemaColumns(ds);
+                      const tgtDs = datasets.find(d => String(d.id) === String(modalForm.target_dataset_id));
+                      const tgtCols = parseSchemaColumns(tgtDs);
+                      const match = tgtCols.find(tc => srcCols.some(sc => sc.name.toLowerCase() === tc.name.toLowerCase()));
+                      const newSrcCol = match
+                        ? (srcCols.find(sc => sc.name.toLowerCase() === match.name.toLowerCase())?.name || srcCols[0]?.name || '')
+                        : (srcCols[0]?.name || '');
+                      const newTgtCol = match ? match.name : (modalForm.target_column || tgtCols[0]?.name || '');
+
+                      setModalForm(prev => ({
+                        ...prev,
+                        source_dataset_id: newSrcId,
+                        source_column: newSrcCol,
+                        target_column: newTgtCol
+                      }));
+                    }}
+                    placeholder="Select source..."
+                  >
+                    <option value="">Select source...</option>
+                    {datasets.map((d) => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </Select>
                 </div>
 
                 <div>
                   <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Source Column</label>
-                  <div className="relative">
-                    <select
-                      value={modalForm.source_column}
-                      onChange={(e) => setModalForm({ ...modalForm, source_column: e.target.value })}
-                      className="w-full appearance-none pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono text-slate-900 dark:text-slate-100 font-medium hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none cursor-pointer transition shadow-2xs truncate"
-                    >
-                      <option value="">Select column...</option>
-                      {sourceColumns.map((col) => (
-                        <option key={col.name} value={col.name}>
-                          {col.name} ({col.type || 'text'})
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
-                  </div>
+                  <Select
+                    value={modalForm.source_column}
+                    onChange={(e) => {
+                      const newSrcCol = e.target.value;
+                      const match = targetColumns.find(tc => tc.name.toLowerCase() === newSrcCol.toLowerCase());
+                      setModalForm(prev => ({
+                        ...prev,
+                        source_column: newSrcCol,
+                        target_column: match ? match.name : prev.target_column
+                      }));
+                    }}
+                    placeholder="Select column..."
+                  >
+                    <option value="">Select column...</option>
+                    {sourceColumns.map((col) => (
+                      <option key={col.name} value={col.name}>
+                        {col.name} ({col.type || 'text'})
+                      </option>
+                    ))}
+                  </Select>
                 </div>
               </div>
 
@@ -663,67 +714,59 @@ export default function DataModelingPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Target Dataset</label>
-                  <div className="relative">
-                    <select
-                      disabled={Boolean(editingId)}
-                      value={modalForm.target_dataset_id}
-                      onChange={(e) => {
-                        const newTgtId = e.target.value;
-                        const ds = datasets.find(d => String(d.id) === newTgtId);
-                        const cols = parseSchemaColumns(ds);
-                        setModalForm({
-                          ...modalForm,
-                          target_dataset_id: newTgtId,
-                          target_column: cols[0]?.name || ''
-                        });
-                      }}
-                      className="w-full appearance-none pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 font-medium hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none cursor-pointer transition shadow-2xs truncate disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <option value="">Select target...</option>
-                      {datasets.map((d) => (
-                        <option key={d.id} value={d.id}>{d.name}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
-                  </div>
+                  <Select
+                    disabled={Boolean(editingId)}
+                    value={modalForm.target_dataset_id}
+                    onChange={(e) => {
+                      const newTgtId = e.target.value;
+                      const ds = datasets.find(d => String(d.id) === newTgtId);
+                      const tgtCols = parseSchemaColumns(ds);
+                      const match = tgtCols.find(tc => tc.name.toLowerCase() === String(modalForm.source_column).toLowerCase());
+
+                      setModalForm(prev => ({
+                        ...prev,
+                        target_dataset_id: newTgtId,
+                        target_column: match ? match.name : (tgtCols[0]?.name || '')
+                      }));
+                    }}
+                    placeholder="Select target..."
+                  >
+                    <option value="">Select target...</option>
+                    {datasets.map((d) => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </Select>
                 </div>
 
                 <div>
                   <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Target Column</label>
-                  <div className="relative">
-                    <select
-                      value={modalForm.target_column}
-                      onChange={(e) => setModalForm({ ...modalForm, target_column: e.target.value })}
-                      className="w-full appearance-none pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono text-slate-900 dark:text-slate-100 font-medium hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none cursor-pointer transition shadow-2xs truncate"
-                    >
-                      <option value="">Select column...</option>
-                      {targetColumns.map((col) => (
-                        <option key={col.name} value={col.name}>
-                          {col.name} ({col.type || 'text'})
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
-                  </div>
+                  <Select
+                    value={modalForm.target_column}
+                    onChange={(e) => setModalForm(prev => ({ ...prev, target_column: e.target.value }))}
+                    placeholder="Select column..."
+                  >
+                    <option value="">Select column...</option>
+                    {targetColumns.map((col) => (
+                      <option key={col.name} value={col.name}>
+                        {col.name} ({col.type || 'text'})
+                      </option>
+                    ))}
+                  </Select>
                 </div>
               </div>
 
               {/* Relationship Type */}
               <div>
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Relationship Type</label>
-                <div className="relative">
-                  <select
-                    value={modalForm.relationship_type}
-                    onChange={(e) => setModalForm({ ...modalForm, relationship_type: e.target.value })}
-                    className="w-full appearance-none pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 font-medium hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none cursor-pointer transition shadow-2xs truncate"
-                  >
-                    <option value="many_to_one">Many-to-One (N:1) - (e.g. Orders to Customers)</option>
-                    <option value="one_to_many">One-to-Many (1:N) - (e.g. Customers to Orders)</option>
-                    <option value="one_to_one">One-to-One (1:1)</option>
-                    <option value="many_to_many">Many-to-Many (N:N)</option>
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
-                </div>
+                <Select
+                  value={modalForm.relationship_type}
+                  onChange={(e) => setModalForm({ ...modalForm, relationship_type: e.target.value })}
+                >
+                  <option value="many_to_one">Many-to-One (N:1) - (e.g. Orders to Customers)</option>
+                  <option value="one_to_many">One-to-Many (1:N) - (e.g. Customers to Orders)</option>
+                  <option value="one_to_one">One-to-One (1:1)</option>
+                  <option value="many_to_many">Many-to-Many (N:N)</option>
+                </Select>
               </div>
 
               {/* Description */}
@@ -804,64 +847,83 @@ export default function DataModelingPage() {
             <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
               <div>
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Base Dataset</label>
-                <select
+                <Select
                   value={testBaseDatasetId}
                   onChange={(e) => setTestBaseDatasetId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-slate-100 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:outline-none cursor-pointer transition shadow-2xs"
+                  placeholder="Select base dataset..."
                 >
                   <option value="">Select base dataset...</option>
                   {datasets.map((d) => (
                     <option key={d.id} value={d.id}>{d.name}</option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div>
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Join With (Related Dataset)</label>
-                <select
+                <Select
                   value={testJoinedDatasetId}
                   onChange={(e) => setTestJoinedDatasetId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-slate-100 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:outline-none cursor-pointer transition shadow-2xs"
+                  placeholder="Select target dataset..."
                 >
                   <option value="">Select target dataset...</option>
                   {datasets.map((d) => (
                     <option key={d.id} value={d.id}>{d.name}</option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Dimension (e.g. region, name)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. region or customers.region"
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Dimension (Grouping Column)</label>
+                <Select
                   value={testDimension}
                   onChange={(e) => setTestDimension(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-slate-100 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 focus:border-rose-600 focus:outline-none font-mono transition shadow-2xs"
-                />
+                >
+                  <option value="">-- No Grouping (Total Aggregation) --</option>
+                  {testBaseCols.map((c) => (
+                    <option key={`base-dim-${c.name}`} value={c.name}>
+                      {testBaseDs?.name ? `${testBaseDs.name}.${c.name}` : c.name} ({c.type})
+                    </option>
+                  ))}
+                  {testJoinedCols.map((c) => (
+                    <option key={`tgt-dim-${c.name}`} value={c.name}>
+                      {testJoinedDs?.name ? `${testJoinedDs.name}.${c.name}` : c.name} ({c.type})
+                    </option>
+                  ))}
+                </Select>
               </div>
 
               <div>
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Metric & Aggregation</label>
                 <div className="flex gap-2">
-                  <select
+                  <Select
                     value={testAggregation}
                     onChange={(e) => setTestAggregation(e.target.value)}
-                    className="w-24 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-slate-100 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 focus:border-rose-600 focus:outline-none font-mono cursor-pointer transition shadow-2xs"
+                    className="w-28 shrink-0"
                   >
                     <option value="SUM">SUM</option>
                     <option value="AVG">AVG</option>
                     <option value="COUNT">COUNT</option>
                     <option value="MIN">MIN</option>
                     <option value="MAX">MAX</option>
-                  </select>
-                  <input
-                    type="text"
-                    placeholder="e.g. revenue or amount"
+                  </Select>
+                  <Select
                     value={testMetric}
                     onChange={(e) => setTestMetric(e.target.value)}
-                    className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-slate-100 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 focus:border-rose-600 focus:outline-none font-mono transition shadow-2xs"
-                  />
+                    className="flex-1"
+                  >
+                    <option value="">-- Select Metric Column --</option>
+                    {testBaseCols.map((c) => (
+                      <option key={`base-metric-${c.name}`} value={c.name}>
+                        {testBaseDs?.name ? `${testBaseDs.name}.${c.name}` : c.name} ({c.type})
+                      </option>
+                    ))}
+                    {testJoinedCols.map((c) => (
+                      <option key={`tgt-metric-${c.name}`} value={c.name}>
+                        {testJoinedDs?.name ? `${testJoinedDs.name}.${c.name}` : c.name} ({c.type})
+                      </option>
+                    ))}
+                  </Select>
                 </div>
               </div>
             </div>

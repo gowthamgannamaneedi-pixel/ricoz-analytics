@@ -26,6 +26,7 @@ import {
   ChevronDown,
   Info
 } from 'lucide-react';
+import { Select } from './ui/Select';
 
 /**
  * Format relative time (e.g. 'Updated 2 hours ago')
@@ -472,46 +473,40 @@ export default function DatasetTable({
           </div>
 
           {/* Status Dropdown */}
-          <div className="relative">
-            <select
-              id="datasets-status-filter"
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              aria-label="Filter datasets by status"
-              className="appearance-none rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-750 focus:bg-white dark:focus:bg-slate-850 focus:border-rose-600 dark:focus:border-rose-500 focus:outline-hidden cursor-pointer transition-all"
-            >
-              <option value="all" className="dark:bg-slate-850 dark:text-slate-100">All Statuses</option>
-              <option value="ready" className="dark:bg-slate-850 dark:text-slate-100">Ready</option>
-              <option value="processing" className="dark:bg-slate-850 dark:text-slate-100">Processing</option>
-              <option value="error" className="dark:bg-slate-850 dark:text-slate-100">Error</option>
-              <option value="empty" className="dark:bg-slate-850 dark:text-slate-100">Empty</option>
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-          </div>
+          <Select
+            id="datasets-status-filter"
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            aria-label="Filter datasets by status"
+            className="min-w-[140px]"
+          >
+            <option value="all">All Statuses</option>
+            <option value="ready">Ready</option>
+            <option value="processing">Processing</option>
+            <option value="error">Error</option>
+            <option value="empty">Empty</option>
+          </Select>
 
           {/* Source Dropdown */}
-          <div className="relative">
-            <select
-              id="datasets-source-filter"
-              value={sourceFilter}
-              onChange={(e) => {
-                setSourceFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              aria-label="Filter datasets by source type"
-              className="appearance-none rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-750 focus:bg-white dark:focus:bg-slate-850 focus:border-rose-600 dark:focus:border-rose-500 focus:outline-hidden cursor-pointer transition-all"
-            >
-              <option value="all" className="dark:bg-slate-850 dark:text-slate-100">All Sources</option>
-              <option value="csv" className="dark:bg-slate-850 dark:text-slate-100">CSV Upload</option>
-              <option value="postgresql" className="dark:bg-slate-850 dark:text-slate-100">PostgreSQL</option>
-              <option value="json" className="dark:bg-slate-850 dark:text-slate-100">JSON Upload</option>
-              <option value="rest_api" className="dark:bg-slate-850 dark:text-slate-100">REST API</option>
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-          </div>
+          <Select
+            id="datasets-source-filter"
+            value={sourceFilter}
+            onChange={(e) => {
+              setSourceFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            aria-label="Filter datasets by source type"
+            className="min-w-[140px]"
+          >
+            <option value="all">All Sources</option>
+            <option value="csv">CSV Upload</option>
+            <option value="postgresql">PostgreSQL</option>
+            <option value="json">JSON Upload</option>
+            <option value="rest_api">REST API</option>
+          </Select>
 
           {hasActiveFilters && (
             <button
@@ -834,24 +829,21 @@ export default function DatasetTable({
           </div>
 
           {/* Page Size Selector */}
-          <div className="relative">
-            <select
-              id="pagination-page-size"
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              aria-label="Datasets per page"
-              className="appearance-none rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-1.5 pl-2.5 pr-7 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 focus:border-rose-600 dark:focus:border-rose-500 focus:outline-hidden cursor-pointer transition"
-            >
-              <option value={5} className="dark:bg-slate-850 dark:text-slate-100">5 / page</option>
-              <option value={10} className="dark:bg-slate-850 dark:text-slate-100">10 / page</option>
-              <option value={25} className="dark:bg-slate-850 dark:text-slate-100">25 / page</option>
-              <option value={50} className="dark:bg-slate-850 dark:text-slate-100">50 / page</option>
-            </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-          </div>
+          <Select
+            id="pagination-page-size"
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+            aria-label="Datasets per page"
+            className="w-28"
+          >
+            <option value={5}>5 / page</option>
+            <option value={10}>10 / page</option>
+            <option value={25}>25 / page</option>
+            <option value={50}>50 / page</option>
+          </Select>
         </div>
       </div>
 

@@ -44,6 +44,7 @@ import {
 } from '../services/api';
 import { RefreshButton } from '../components/ui/RefreshButton';
 import { ResetButton } from '../components/ui/ResetButton';
+import { Select } from '../components/ui/Select';
 
 /**
  * Enterprise Governance, Workspace Management & Audit Trails
@@ -659,14 +660,14 @@ export default function GovernancePage() {
               </div>
 
               {/* 4 Role Sub-Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 sm:gap-6 mt-6">
                 {/* Administrators */}
-                <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-5.5 min-h-[120px] flex flex-col justify-between shadow-2xs hover:border-rose-200 transition">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-rose-700">
-                    <Crown className="w-4 h-4 text-rose-600 shrink-0" />
-                    <span className="truncate">Administrators</span>
+                <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 transition">
+                  <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700">
+                    <Crown className="w-4.5 h-4.5 text-rose-600 shrink-0" />
+                    <span className="truncate uppercase tracking-wider">Administrators</span>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight my-2">
+                  <div className="text-3xl font-extrabold text-slate-900 tracking-tight my-2">
                     {roleDistribution.admin || 0}
                   </div>
                   <div className="text-xs text-slate-400 font-medium">
@@ -675,12 +676,12 @@ export default function GovernancePage() {
                 </div>
 
                 {/* Managers */}
-                <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-5.5 min-h-[120px] flex flex-col justify-between shadow-2xs hover:border-rose-200 transition">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-rose-700">
-                    <Users className="w-4 h-4 text-rose-600 shrink-0" />
-                    <span className="truncate">Managers</span>
+                <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 transition">
+                  <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700">
+                    <Users className="w-4.5 h-4.5 text-rose-600 shrink-0" />
+                    <span className="truncate uppercase tracking-wider">Managers</span>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight my-2">
+                  <div className="text-3xl font-extrabold text-slate-900 tracking-tight my-2">
                     {roleDistribution.manager || 0}
                   </div>
                   <div className="text-xs text-slate-400 font-medium">
@@ -689,12 +690,12 @@ export default function GovernancePage() {
                 </div>
 
                 {/* Analysts */}
-                <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-5.5 min-h-[120px] flex flex-col justify-between shadow-2xs hover:border-rose-200 transition">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-rose-700">
-                    <TrendingUp className="w-4 h-4 text-rose-600 shrink-0" />
-                    <span className="truncate">Analysts</span>
+                <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 transition">
+                  <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700">
+                    <TrendingUp className="w-4.5 h-4.5 text-rose-600 shrink-0" />
+                    <span className="truncate uppercase tracking-wider">Analysts</span>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight my-2">
+                  <div className="text-3xl font-extrabold text-slate-900 tracking-tight my-2">
                     {roleDistribution.analyst || 0}
                   </div>
                   <div className="text-xs text-slate-400 font-medium">
@@ -703,12 +704,12 @@ export default function GovernancePage() {
                 </div>
 
                 {/* Viewers */}
-                <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-5.5 min-h-[120px] flex flex-col justify-between shadow-2xs hover:border-rose-200 transition">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                    <Eye className="w-4 h-4 text-slate-500 shrink-0" />
-                    <span className="truncate">Viewers</span>
+                <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 transition">
+                  <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700">
+                    <Eye className="w-4.5 h-4.5 text-slate-500 shrink-0" />
+                    <span className="truncate uppercase tracking-wider">Viewers</span>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight my-2">
+                  <div className="text-3xl font-extrabold text-slate-900 tracking-tight my-2">
                     {roleDistribution.viewer || 0}
                   </div>
                   <div className="text-xs text-slate-400 font-medium">
@@ -824,28 +825,32 @@ export default function GovernancePage() {
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <select
-                value={userRoleFilter}
-                onChange={(e) => { setUserRoleFilter(e.target.value); setUserPage(1); }}
-                className="px-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
-              >
-                <option value="all">All Roles</option>
-                <option value="admin">Admin</option>
-                <option value="manager">Manager</option>
-                <option value="analyst">Analyst</option>
-                <option value="viewer">Viewer</option>
-              </select>
+              <div className="w-36 sm:w-40">
+                <Select
+                  value={userRoleFilter}
+                  onChange={(e) => { setUserRoleFilter(e.target.value); setUserPage(1); }}
+                  size="sm"
+                >
+                  <option value="all">All Roles</option>
+                  <option value="admin">Admin</option>
+                  <option value="manager">Manager</option>
+                  <option value="analyst">Analyst</option>
+                  <option value="viewer">Viewer</option>
+                </Select>
+              </div>
 
-              <select
-                value={userStatusFilter}
-                onChange={(e) => { setUserStatusFilter(e.target.value); setUserPage(1); }}
-                className="px-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
-              >
-                <option value="all">All Statuses</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="deactivated">Deactivated</option>
-              </select>
+              <div className="w-36 sm:w-40">
+                <Select
+                  value={userStatusFilter}
+                  onChange={(e) => { setUserStatusFilter(e.target.value); setUserPage(1); }}
+                  size="sm"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="deactivated">Deactivated</option>
+                </Select>
+              </div>
 
               <button
                 onClick={loadUsers}
@@ -995,42 +1000,46 @@ export default function GovernancePage() {
               />
             </div>
 
-            <select
-              value={auditActionFilter}
-              onChange={(e) => { setAuditActionFilter(e.target.value); setAuditPage(1); }}
-              className="px-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
-            >
-              <option value="all">All Actions</option>
-              <option value="USER_LOGIN">User Login</option>
-              <option value="USER_ROLE_CHANGED">Role Changed</option>
-              <option value="USER_STATUS_CHANGED">Status Changed</option>
-              <option value="DASHBOARD_CREATED">Dashboard Created</option>
-              <option value="DASHBOARD_UPDATED">Dashboard Updated</option>
-              <option value="DASHBOARD_DELETED">Dashboard Deleted</option>
-              <option value="REPORT_CREATED">Report Created</option>
-              <option value="REPORT_RUN">Report Run</option>
-              <option value="ALERT_CREATED">Alert Created</option>
-              <option value="ALERT_RESOLVED">Alert Resolved</option>
-              <option value="FORECAST_GENERATED">Forecast Generated</option>
-              <option value="AI_QUERY">AI Query</option>
-              <option value="ORGANIZATION_UPDATED">Org Updated</option>
-            </select>
+            <div className="w-44 sm:w-48">
+              <Select
+                value={auditActionFilter}
+                onChange={(e) => { setAuditActionFilter(e.target.value); setAuditPage(1); }}
+                size="sm"
+              >
+                <option value="all">All Actions</option>
+                <option value="USER_LOGIN">User Login</option>
+                <option value="USER_ROLE_CHANGED">Role Changed</option>
+                <option value="USER_STATUS_CHANGED">Status Changed</option>
+                <option value="DASHBOARD_CREATED">Dashboard Created</option>
+                <option value="DASHBOARD_UPDATED">Dashboard Updated</option>
+                <option value="DASHBOARD_DELETED">Dashboard Deleted</option>
+                <option value="REPORT_CREATED">Report Created</option>
+                <option value="REPORT_RUN">Report Run</option>
+                <option value="ALERT_CREATED">Alert Created</option>
+                <option value="ALERT_RESOLVED">Alert Resolved</option>
+                <option value="FORECAST_GENERATED">Forecast Generated</option>
+                <option value="AI_QUERY">AI Query</option>
+                <option value="ORGANIZATION_UPDATED">Org Updated</option>
+              </Select>
+            </div>
 
-            <select
-              value={auditResourceFilter}
-              onChange={(e) => { setAuditResourceFilter(e.target.value); setAuditPage(1); }}
-              className="px-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
-            >
-              <option value="all">All Resources</option>
-              <option value="auth">Auth</option>
-              <option value="user">User</option>
-              <option value="dashboard">Dashboard</option>
-              <option value="report">Report</option>
-              <option value="alert">Alert</option>
-              <option value="forecast">Forecast</option>
-              <option value="ai">AI</option>
-              <option value="organization">Organization</option>
-            </select>
+            <div className="w-40 sm:w-44">
+              <Select
+                value={auditResourceFilter}
+                onChange={(e) => { setAuditResourceFilter(e.target.value); setAuditPage(1); }}
+                size="sm"
+              >
+                <option value="all">All Resources</option>
+                <option value="auth">Auth</option>
+                <option value="user">User</option>
+                <option value="dashboard">Dashboard</option>
+                <option value="report">Report</option>
+                <option value="alert">Alert</option>
+                <option value="forecast">Forecast</option>
+                <option value="ai">AI</option>
+                <option value="organization">Organization</option>
+              </Select>
+            </div>
 
             <button
               onClick={loadAuditLogs}
@@ -1265,33 +1274,31 @@ export default function GovernancePage() {
                 <label className="block text-xs font-semibold uppercase text-slate-500 mb-1.5">
                   Default Timezone
                 </label>
-                <select
+                <Select
                   value={orgTimezone}
                   onChange={(e) => setOrgTimezone(e.target.value)}
                   disabled={!isAdmin}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 disabled:opacity-50 transition-colors"
                 >
                   <option value="UTC">UTC (Coordinated Universal Time)</option>
                   <option value="Asia/Kolkata">Asia/Kolkata (IST +5:30)</option>
                   <option value="America/New_York">America/New_York (EST/EDT)</option>
                   <option value="Europe/London">Europe/London (GMT/BST)</option>
-                </select>
+                </Select>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold uppercase text-slate-500 mb-1.5">
                   Date Format
                 </label>
-                <select
+                <Select
                   value={orgDateFormat}
                   onChange={(e) => setOrgDateFormat(e.target.value)}
                   disabled={!isAdmin}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 disabled:opacity-50 transition-colors"
                 >
                   <option value="YYYY-MM-DD">YYYY-MM-DD (ISO)</option>
                   <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                   <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                </select>
+                </Select>
               </div>
             </div>
 
@@ -1339,16 +1346,15 @@ export default function GovernancePage() {
               <label className="block text-xs font-semibold uppercase text-slate-500">
                 Select Assigned Role
               </label>
-              <select
+              <Select
                 value={newRole}
                 onChange={(e) => setNewRole(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500"
               >
                 <option value="admin">Administrator (Universal Full Access)</option>
                 <option value="manager">Manager (Create/Edit, Reports, Alerts, Audit View)</option>
                 <option value="analyst">Analyst (Dashboards, Datasets, Predictions)</option>
                 <option value="viewer">Viewer (Read-Only Consumption)</option>
-              </select>
+              </Select>
             </div>
 
             <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2">

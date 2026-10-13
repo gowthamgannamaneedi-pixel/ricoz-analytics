@@ -15,6 +15,7 @@ import {
   Layers,
   Sparkles
 } from 'lucide-react';
+import { Select } from './ui/Select';
 
 const WIDGET_TYPES = [
   { id: 'kpi_card', label: 'KPI Stat Card', icon: Activity, desc: 'Single aggregated business metric with target comparison' },
@@ -243,15 +244,15 @@ export default function AddWidgetModal({
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Grid Width
               </label>
-              <select
+              <Select
                 value={widthSpan}
                 onChange={(e) => setWidthSpan(Number(e.target.value))}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-900 bg-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full"
               >
                 {WIDTH_OPTIONS.map((w) => (
                   <option key={w.value} value={w.value}>{w.label}</option>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
 
@@ -268,7 +269,7 @@ export default function AddWidgetModal({
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Connect to Saved KPI (Phase 7) <span className="text-slate-400 font-normal">(Optional)</span>
                 </label>
-                <select
+                <Select
                   value={metricId}
                   onChange={(e) => {
                     const mId = e.target.value;
@@ -280,7 +281,7 @@ export default function AddWidgetModal({
                       if (selectedM.target_value) setTargetValue(String(selectedM.target_value));
                     }
                   }}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-900 bg-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full"
                 >
                   <option value="">-- Custom Dataset Calculation --</option>
                   {metrics.map((m) => (
@@ -288,7 +289,7 @@ export default function AddWidgetModal({
                       {m.name} ({m.formula})
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
             )}
 
@@ -297,11 +298,11 @@ export default function AddWidgetModal({
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Target Dataset <span className="text-rose-500">*</span>
               </label>
-              <select
+              <Select
                 required
                 value={datasetId}
                 onChange={(e) => setDatasetId(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-900 bg-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full"
               >
                 <option value="">Select a Dataset...</option>
                 {datasets.map((d) => (
@@ -309,7 +310,7 @@ export default function AddWidgetModal({
                     {d.name} ({d.row_count || 0} rows)
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             {/* Chart Dimension & Value Mapping */}
@@ -320,15 +321,15 @@ export default function AddWidgetModal({
                     Category / Timeline Field (X-Axis)
                   </label>
                   {datasetColumns.length > 0 ? (
-                    <select
+                    <Select
                       value={categoryColumn}
                       onChange={(e) => setCategoryColumn(e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-900 bg-white focus:border-blue-500 focus:outline-none"
+                      className="w-full"
                     >
                       {datasetColumns.map(col => (
                         <option key={col} value={col}>{col}</option>
                       ))}
-                    </select>
+                    </Select>
                   ) : (
                     <input
                       type="text"
@@ -345,15 +346,15 @@ export default function AddWidgetModal({
                     Value / Metric Field (Y-Axis)
                   </label>
                   {datasetColumns.length > 0 ? (
-                    <select
+                    <Select
                       value={valueColumn}
                       onChange={(e) => setValueColumn(e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-900 bg-white focus:border-blue-500 focus:outline-none"
+                      className="w-full"
                     >
                       {datasetColumns.map(col => (
                         <option key={col} value={col}>{col}</option>
                       ))}
-                    </select>
+                    </Select>
                   ) : (
                     <input
                       type="text"
@@ -374,15 +375,15 @@ export default function AddWidgetModal({
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Aggregation Method
                   </label>
-                  <select
+                  <Select
                     value={aggregation}
                     onChange={(e) => setAggregation(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-900 bg-white"
+                    className="w-full"
                   >
                     {AGGREGATION_OPTIONS.map(agg => (
                       <option key={agg} value={agg}>{agg}</option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
                 <div>

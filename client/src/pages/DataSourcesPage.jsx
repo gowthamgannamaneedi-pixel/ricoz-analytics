@@ -38,6 +38,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
 import { RefreshButton } from '../components/ui/RefreshButton';
+import { Select } from '../components/ui/Select';
 import AddDataSourceModal from '../components/AddDataSourceModal';
 import {
   getDataSources,
@@ -618,11 +619,11 @@ export default function DataSourcesPage() {
       {/* ───────────────────────────────────────────────────────────────── */}
       {/* 3. FOUR METRIC SUMMARY CARDS (Wireframe Layout)                    */}
       {/* ───────────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
         {/* Card 1: All Sources */}
         <div
           onClick={() => setActiveTab('all')}
-          className={`rounded-2xl border p-5 transition-all text-left cursor-pointer shadow-2xs ${
+          className={`rounded-2xl border p-6 sm:p-7 min-h-[148px] transition-all text-left cursor-pointer shadow-2xs flex flex-col justify-between ${
             activeTab === 'all'
               ? 'border-rose-500 bg-rose-50/20 ring-1 ring-rose-500/25 shadow-xs'
               : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/40'
@@ -632,11 +633,11 @@ export default function DataSourcesPage() {
             <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
               All Sources
             </p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
-              <Database className="h-4 w-4" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
+              <Database className="h-5 w-5" />
             </div>
           </div>
-          <div className="mt-2.5">
+          <div className="mt-3">
             <p className="font-mono text-3xl font-extrabold tracking-tight text-slate-900">
               {totalCount}
             </p>
@@ -649,7 +650,7 @@ export default function DataSourcesPage() {
         {/* Card 2: CSV Uploads */}
         <div
           onClick={() => setActiveTab('csv')}
-          className={`rounded-2xl border p-5 transition-all text-left cursor-pointer shadow-2xs ${
+          className={`rounded-2xl border p-6 sm:p-7 min-h-[148px] transition-all text-left cursor-pointer shadow-2xs flex flex-col justify-between ${
             activeTab === 'csv'
               ? 'border-emerald-500 bg-emerald-50/20 ring-1 ring-emerald-500/25 shadow-xs'
               : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/40'
@@ -659,11 +660,11 @@ export default function DataSourcesPage() {
             <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
               CSV Uploads
             </p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
-              <FileSpreadsheet className="h-4 w-4" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 shrink-0">
+              <FileSpreadsheet className="h-5 w-5" />
             </div>
           </div>
-          <div className="mt-2.5">
+          <div className="mt-3">
             <p className="font-mono text-3xl font-extrabold tracking-tight text-slate-900">
               {csvCount}
             </p>
@@ -676,7 +677,7 @@ export default function DataSourcesPage() {
         {/* Card 3: JSON Datasets */}
         <div
           onClick={() => setActiveTab('json')}
-          className={`rounded-2xl border p-5 transition-all text-left cursor-pointer shadow-2xs ${
+          className={`rounded-2xl border p-6 sm:p-7 min-h-[148px] transition-all text-left cursor-pointer shadow-2xs flex flex-col justify-between ${
             activeTab === 'json'
               ? 'border-amber-500 bg-amber-50/20 ring-1 ring-amber-500/25 shadow-xs'
               : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/40'
@@ -686,11 +687,11 @@ export default function DataSourcesPage() {
             <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
               JSON Datasets
             </p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
-              <FileCode className="h-4 w-4" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-100 shrink-0">
+              <FileCode className="h-5 w-5" />
             </div>
           </div>
-          <div className="mt-2.5">
+          <div className="mt-3">
             <p className="font-mono text-3xl font-extrabold tracking-tight text-slate-900">
               {jsonCount}
             </p>
@@ -703,7 +704,7 @@ export default function DataSourcesPage() {
         {/* Card 4: PostgreSQL */}
         <div
           onClick={() => setActiveTab('postgresql')}
-          className={`rounded-2xl border p-5 transition-all text-left cursor-pointer shadow-2xs ${
+          className={`rounded-2xl border p-6 sm:p-7 min-h-[148px] transition-all text-left cursor-pointer shadow-2xs flex flex-col justify-between ${
             activeTab === 'postgresql'
               ? 'border-blue-500 bg-blue-50/20 ring-1 ring-blue-500/25 shadow-xs'
               : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/40'
@@ -713,11 +714,11 @@ export default function DataSourcesPage() {
             <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
               PostgreSQL
             </p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
-              <Database className="h-4 w-4" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
+              <Database className="h-5 w-5" />
             </div>
           </div>
-          <div className="mt-2.5">
+          <div className="mt-3">
             <p className="font-mono text-3xl font-extrabold tracking-tight text-slate-900">
               {pgCount}
             </p>
@@ -1258,18 +1259,20 @@ export default function DataSourcesPage() {
               </div>
 
               {/* Page size selector */}
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"
-              >
-                <option value={5}>5 / page</option>
-                <option value={10}>10 / page</option>
-                <option value={20}>20 / page</option>
-              </select>
+              <div className="w-28">
+                <Select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  size="sm"
+                >
+                  <option value={5}>5 / page</option>
+                  <option value={10}>10 / page</option>
+                  <option value={20}>20 / page</option>
+                </Select>
+              </div>
             </div>
           </div>
         </div>
@@ -1600,16 +1603,16 @@ export default function DataSourcesPage() {
 
               <div>
                 <label className="block text-slate-700 font-semibold mb-1">Status</label>
-                <select
+                <Select
                   value={editForm.status}
                   onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer font-medium"
+                  className="w-full"
                 >
                   <option value="active">Active & Ready</option>
                   <option value="connected">Connected</option>
                   <option value="disconnected">Disconnected</option>
                   <option value="error">Error</option>
-                </select>
+                </Select>
               </div>
 
               <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">

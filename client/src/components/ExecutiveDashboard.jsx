@@ -46,6 +46,7 @@ import DynamicFilterBar from './DynamicFilterBar';
 import DynamicDataTable from './DynamicDataTable';
 import { Button } from './ui/Button';
 import { ResetButton } from './ui/ResetButton';
+import { Select } from './ui/Select';
 
 // Format currency for general tooltips and labels (Indian numbering)
 const formatCurrency = (val) => {
@@ -359,21 +360,19 @@ export default function ExecutiveDashboard({
           {/* Active Dataset Selector Dropdown Button (Wireframe Pill) */}
           <div className="flex items-center gap-3 shrink-0">
             {datasets.length > 0 && (
-              <div className="relative">
-                <select
+              <div className="min-w-[240px] max-w-[320px]">
+                <Select
                   value={selectedDatasetId || (activeDataset?.id ?? '')}
                   onChange={(e) => onSelectDataset(e.target.value)}
-                  aria-label="Active Telemetry Dataset"
-                  className="appearance-none pl-9 pr-9 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 focus:outline-hidden focus:border-rose-500 shadow-2xs cursor-pointer transition"
+                  icon={Database}
+                  ariaLabel="Active Telemetry Dataset"
                 >
                   {datasets.map((d) => (
-                    <option key={d.id} value={d.id} className="dark:bg-slate-800 dark:text-slate-100">
+                    <option key={d.id} value={d.id}>
                       {d.name}
                     </option>
                   ))}
-                </select>
-                <Database className="h-4 w-4 text-rose-600 dark:text-rose-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </Select>
               </div>
             )}
           </div>
@@ -388,30 +387,28 @@ export default function ExecutiveDashboard({
           {/* Left Filters */}
           <div className="flex flex-wrap items-center gap-2.5">
             {/* Time Filter Dropdown */}
-            <div className="relative">
-              <select
+            <div className="min-w-[140px]">
+              <Select
                 value={filters.dateRange || 'all'}
                 onChange={(e) => onFilterChange('dateRange', e.target.value)}
-                aria-label="Time Filter"
-                className="appearance-none pl-8 pr-8 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-rose-300 dark:hover:border-rose-800 hover:text-rose-700 dark:hover:text-rose-300 focus:outline-hidden focus:border-rose-500 shadow-2xs cursor-pointer transition"
+                icon={Calendar}
+                ariaLabel="Time Filter"
               >
                 <option value="all">All Time</option>
                 <option value="7d">Last 7 Days</option>
                 <option value="30d">Last 30 Days</option>
                 <option value="90d">Last 90 Days</option>
                 <option value="ytd">Year to Date</option>
-              </select>
-              <Calendar className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <ChevronDown className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </Select>
             </div>
 
             {/* Region Filter Dropdown */}
-            <div className="relative">
-              <select
+            <div className="min-w-[150px]">
+              <Select
                 value={filters[summaryData?.dimensions?.regionColumn || 'region'] || 'all'}
                 onChange={(e) => onFilterChange(summaryData?.dimensions?.regionColumn || 'region', e.target.value)}
-                aria-label="Region Filter"
-                className="appearance-none pl-8 pr-8 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-rose-300 dark:hover:border-rose-800 hover:text-rose-700 dark:hover:text-rose-300 focus:outline-hidden focus:border-rose-500 shadow-2xs cursor-pointer transition"
+                icon={Globe}
+                ariaLabel="Region Filter"
               >
                 <option value="all">Regions{summaryData?.filterOptions?.regions?.length ? ` (${summaryData.filterOptions.regions.length})` : ''}</option>
                 {(summaryData?.filterOptions?.regions || []).map((reg) => (
@@ -419,18 +416,16 @@ export default function ExecutiveDashboard({
                     {reg}
                   </option>
                 ))}
-              </select>
-              <Globe className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <ChevronDown className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </Select>
             </div>
 
             {/* Channel Filter Dropdown */}
-            <div className="relative">
-              <select
+            <div className="min-w-[155px]">
+              <Select
                 value={filters[summaryData?.dimensions?.channelColumn || 'channel'] || 'all'}
                 onChange={(e) => onFilterChange(summaryData?.dimensions?.channelColumn || 'channel', e.target.value)}
-                aria-label="Channel Filter"
-                className="appearance-none pl-8 pr-8 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-rose-300 dark:hover:border-rose-800 hover:text-rose-700 dark:hover:text-rose-300 focus:outline-hidden focus:border-rose-500 shadow-2xs cursor-pointer transition"
+                icon={Network}
+                ariaLabel="Channel Filter"
               >
                 <option value="all">All Channels{summaryData?.filterOptions?.channels?.length ? ` (${summaryData.filterOptions.channels.length})` : ''}</option>
                 {(summaryData?.filterOptions?.channels || []).map((chan) => (
@@ -438,9 +433,7 @@ export default function ExecutiveDashboard({
                     {chan}
                   </option>
                 ))}
-              </select>
-              <Network className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <ChevronDown className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </Select>
             </div>
 
             {/* Reset Filters button */}
@@ -536,17 +529,17 @@ export default function ExecutiveDashboard({
       {/* ─────────────────────────────────────────────────────────────────── */}
       <section className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-stretch">
         {/* Left 7 Cols: 2x2 Grid of Headline KPI Cards */}
-        <div className="xl:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="xl:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
           {/* KPI 1: Total Sales */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[175px]">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[190px]">
             <div>
               <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60">
-                  <BarChart3 className="h-4.5 w-4.5" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs">
+                  <BarChart3 className="h-5 w-5" />
                 </div>
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Total Sales</span>
               </div>
-              <div className="mt-3 flex items-baseline justify-between">
+              <div className="mt-3.5 flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
                   {kpiData?.totalSales !== undefined && kpiData?.totalSales !== null
                     ? formatCurrency(kpiData.totalSales)
@@ -555,7 +548,7 @@ export default function ExecutiveDashboard({
                 <Sparkline points={revenueSparkline} color="#2563EB" />
               </div>
               {/* Real Comparison Metric */}
-              <div className="mt-2 flex items-center gap-1.5 text-xs sm:text-sm font-semibold">
+              <div className="mt-2.5 flex items-center gap-1.5 text-xs sm:text-sm font-semibold">
                 {kpiData?.comparison?.hasComparison ? (
                   <>
                     <span className={kpiData.comparison.isSalesPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
@@ -569,7 +562,7 @@ export default function ExecutiveDashboard({
               </div>
             </div>
             {/* Real Secondary Metric */}
-            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+            <div className="mt-3.5 pt-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
               {kpiData?.target ? (
                 <>
                   <span>Target {formatCurrency(kpiData.target)}</span>
@@ -597,15 +590,15 @@ export default function ExecutiveDashboard({
           </div>
 
           {/* KPI 2: Total Orders */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[175px]">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[190px]">
             <div>
               <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60">
-                  <ShoppingCart className="h-4.5 w-4.5" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs">
+                  <ShoppingCart className="h-5 w-5" />
                 </div>
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Total Orders</span>
               </div>
-              <div className="mt-3 flex items-baseline justify-between">
+              <div className="mt-3.5 flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
                   {kpiData?.totalOrders !== undefined && kpiData?.totalOrders !== null
                     ? Number(kpiData.totalOrders).toLocaleString()
@@ -614,7 +607,7 @@ export default function ExecutiveDashboard({
                 <Sparkline points={ordersSparkline} color="#059669" />
               </div>
               {/* Real Comparison Metric */}
-              <div className="mt-2 flex items-center gap-1.5 text-xs sm:text-sm font-semibold">
+              <div className="mt-2.5 flex items-center gap-1.5 text-xs sm:text-sm font-semibold">
                 {kpiData?.comparison?.hasComparison ? (
                   <>
                     <span className={kpiData.comparison.isOrdersPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
@@ -628,7 +621,7 @@ export default function ExecutiveDashboard({
               </div>
             </div>
             {/* Target or Real Secondary Metric */}
-            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+            <div className="mt-3.5 pt-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
               <span>Avg Order Volume:</span>
               <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
                 {kpiData?.totalOrders > 0
@@ -639,15 +632,15 @@ export default function ExecutiveDashboard({
           </div>
 
           {/* KPI 3: Total Unit Sold */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[175px]">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[190px]">
             <div>
               <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60">
-                  <Package className="h-4.5 w-4.5" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs">
+                  <Package className="h-5 w-5" />
                 </div>
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Total Unit Sold</span>
               </div>
-              <div className="mt-3 flex items-baseline justify-between">
+              <div className="mt-3.5 flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
                   {kpiData?.totalQuantity !== undefined && kpiData?.totalQuantity !== null
                     ? Number(kpiData.totalQuantity).toLocaleString()
@@ -656,13 +649,13 @@ export default function ExecutiveDashboard({
                 <Sparkline points={unitsSparkline} color="#d97706" />
               </div>
               {/* Real Secondary Metric */}
-              <div className="mt-2 flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
+              <div className="mt-2.5 flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
                 <span className="font-bold text-slate-700 dark:text-slate-300">{kpiData?.recordCount || 0}</span>
                 <span className="text-slate-400 dark:text-slate-500 font-normal">verified line items</span>
               </div>
             </div>
             {/* Real Secondary Metric */}
-            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+            <div className="mt-3.5 pt-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
               <span>Avg Unit Realization:</span>
               <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
                 {kpiData?.totalQuantity > 0
@@ -673,15 +666,15 @@ export default function ExecutiveDashboard({
           </div>
 
           {/* KPI 4: Average Order Value */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[175px]">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[190px]">
             <div>
               <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60">
-                  <IndianRupee className="h-4.5 w-4.5" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs">
+                  <IndianRupee className="h-5 w-5" />
                 </div>
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Average Order Value</span>
               </div>
-              <div className="mt-3 flex items-baseline justify-between">
+              <div className="mt-3.5 flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
                   {kpiData?.averageOrderValue !== undefined && kpiData?.averageOrderValue !== null
                     ? formatCurrency(kpiData.averageOrderValue)
@@ -690,7 +683,7 @@ export default function ExecutiveDashboard({
                 <Sparkline points={aovSparkline} color="#7c3aed" />
               </div>
               {/* Real Comparison Metric */}
-              <div className="mt-2 flex items-center gap-1.5 text-xs sm:text-sm font-semibold">
+              <div className="mt-2.5 flex items-center gap-1.5 text-xs sm:text-sm font-semibold">
                 {kpiData?.comparison?.hasComparison ? (
                   <>
                     <span className={kpiData.comparison.isSalesPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
@@ -704,7 +697,7 @@ export default function ExecutiveDashboard({
               </div>
             </div>
             {/* Real Secondary Metric */}
-            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+            <div className="mt-3.5 pt-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
               <span>Orders Sampled:</span>
               <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
                 {kpiData?.totalOrders || 0} orders
@@ -714,7 +707,7 @@ export default function ExecutiveDashboard({
         </div>
 
         {/* Right 5 Cols: Regional Performance Card (Wireframe Placement) */}
-        <div className="xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
+        <div className="xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-7 shadow-2xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3">

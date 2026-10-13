@@ -14,6 +14,7 @@ import {
   Loader2,
   Inbox
 } from 'lucide-react';
+import { Select } from './ui/Select';
 
 /**
  * Enterprise Dynamic Paginated Data Table for Dashboard
@@ -252,15 +253,15 @@ export default function DynamicDataTable({
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-slate-50/70 dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
         <div className="flex items-center gap-2">
           <span className="font-medium text-slate-600 dark:text-slate-300">Rows per page:</span>
-          <select
+          <Select
             value={limit}
             onChange={(e) => onLimitChange(Number(e.target.value))}
-            className="h-8 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 py-1 px-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none shadow-2xs focus:border-rose-600 cursor-pointer"
+            className="w-20"
           >
             <option value={10}>10</option>
             <option value={20}>20</option>
             <option value={50}>50</option>
-          </select>
+          </Select>
           <span className="text-slate-500 dark:text-slate-400 font-mono text-xs ml-1">
             Showing {rows.length > 0 ? (page - 1) * limit + 1 : 0}–{Math.min(page * limit, totalCount)} of {totalCount}
           </span>

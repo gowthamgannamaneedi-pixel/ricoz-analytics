@@ -17,6 +17,38 @@ const { parseDatasetFile, parseCsvLine, detectDelimiter, parseDatasetPreviewStre
 
 /**
  * Load and parse dataset records from storage with database fallback (PostgreSQL dataset_rows)
+ */
+// In-memory cache for parsed dataset records to eliminate duplicate disk reads & CSV parsing
+const parsedDatasetCache = new Map();
+const datasetFlightPromises = new Map();
+const PARSED_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes TTL
+
+function getParsedCacheKey(datasetOrPathOrId) {
+  if (!datasetOrPathOrId) return null;
+  if (typeof datasetOrPathOrId === 'object') {
+    if (datasetOrPathOrId.id) return `id:${datasetOrPathOrId.id}`;
+    if (datasetOrPathOrId.file_path) return `path:${datasetOrPathOrId.file_path}`;
+    if (datasetOrPathOrId.filePath) return `path:${datasetOrPathOrId.filePath}`;
+    return JSON.stringify(datasetOrPathOrId);
+  }
+  return String(datasetOrPathOrId);
+}
+
+function invalidateParsedDatasetCache(identifier = null) {
+  if (!identifier) {
+    parsedDatasetCache.clear();
+    datasetFlightPromises.clear();
+    return;
+  }
+  const key = getParsedCacheKey(identifier);
+  if (key) {
+    parsedDatasetCache.delete(key);
+    datasetFlightPromises.delete(key);
+  }
+}
+
+/**
+ * Loads parsed records for a dataset
  * Accepts: filePath string, dataset object, or dataset ID
  * @param {string|object|number} datasetOrPathOrId 
  * @param {number} [maxRows=1000000]
@@ -27,102 +59,145 @@ async function loadDatasetRecords(datasetOrPathOrId, maxRows = 1000000) {
     throw new Error('Dataset parameter is required to load records.');
   }
 
-  let filePath = null;
-  let datasetId = null;
-  let datasetName = null;
+  const primaryKey = getParsedCacheKey(datasetOrPathOrId);
 
-  if (typeof datasetOrPathOrId === 'object' && datasetOrPathOrId !== null) {
-    filePath = datasetOrPathOrId.file_path || datasetOrPathOrId.filePath || null;
-    datasetId = datasetOrPathOrId.id || null;
-    datasetName = datasetOrPathOrId.name || null;
-  } else if (typeof datasetOrPathOrId === 'string' && (datasetOrPathOrId.includes('/') || datasetOrPathOrId.includes('\\') || datasetOrPathOrId.includes('.'))) {
-    filePath = datasetOrPathOrId;
-  } else {
-    datasetId = datasetOrPathOrId;
-  }
-
-  // If only datasetId is provided, look up dataset metadata
-  if (!filePath && datasetId) {
-    try {
-      const DatasetModel = require('../models/datasetModel');
-      const ds = await DatasetModel.findById(datasetId);
-      if (ds) {
-        filePath = ds.file_path;
-        datasetName = ds.name;
-      }
-    } catch (_) {}
-  }
-
-  // 1. If physical absolute file exists on disk
-  if (filePath && pathIsAbsolute(filePath) && fs.existsSync(filePath)) {
-    const buffer = await fs.promises.readFile(filePath);
-    const ext = path.extname(filePath).toLowerCase();
-    const parsed = await parseDatasetFile(buffer, ext, maxRows);
-    return parsed.preview || [];
-  }
-
-  // 2. Check storage provider (which checks local cache, PostgreSQL dataset_storage_files, and Supabase)
-  if (filePath) {
-    try {
-      const exists = await storage.exists(filePath);
-      if (exists) {
-        const ext = path.extname(filePath).toLowerCase();
-        if (maxRows <= 100) {
-          const fileStream = storage.getFileStream(filePath);
-          const parsed = await parseDatasetPreviewStream(fileStream, ext, maxRows);
-          if (parsed && Array.isArray(parsed.preview) && parsed.preview.length > 0) {
-            return parsed.preview;
-          }
-        }
-        const buffer = await storage.readFile(filePath);
-        if (buffer && buffer.length > 0) {
-          const parsed = await parseDatasetFile(buffer, ext, maxRows);
-          if (parsed && Array.isArray(parsed.preview) && parsed.preview.length > 0) {
-            return parsed.preview;
-          }
-        }
-      }
-    } catch (storageErr) {
-      console.warn(`[loadDatasetRecords] Storage check warning for ${filePath}:`, storageErr.message);
+  // 1. Check in-memory parsed cache
+  if (primaryKey && parsedDatasetCache.has(primaryKey)) {
+    const entry = parsedDatasetCache.get(primaryKey);
+    if (entry && entry.expiresAt > Date.now()) {
+      const records = entry.records;
+      return maxRows >= records.length ? records : records.slice(0, maxRows);
+    } else {
+      parsedDatasetCache.delete(primaryKey);
     }
   }
 
-  // 3. Fallback to PostgreSQL dataset_rows table directly
-  if (!datasetId && filePath) {
-    try {
-      const pool = db.getPool();
-      if (pool && !db.isUsingFallback()) {
-        const cleanKey = filePath.replace(/\\/g, '/').replace(/^\/+/, '');
-        const dsRes = await pool.query(
-          'SELECT id, name FROM datasets WHERE file_path = $1 OR file_path LIKE $2 LIMIT 1',
-          [cleanKey, `%${cleanKey}`]
-        );
-        if (dsRes.rowCount > 0) {
-          datasetId = dsRes.rows[0].id;
-          datasetName = dsRes.rows[0].name;
-        }
-      }
-    } catch (_) {}
+  // 2. Coalesce concurrent in-flight loading promises for identical dataset
+  if (primaryKey && datasetFlightPromises.has(primaryKey)) {
+    const records = await datasetFlightPromises.get(primaryKey);
+    return maxRows >= records.length ? records : records.slice(0, maxRows);
   }
 
-  if (datasetId) {
-    try {
-      const pool = db.getPool();
-      if (pool && !db.isUsingFallback()) {
-        const rowsRes = await pool.query(
-          'SELECT data FROM dataset_rows WHERE dataset_id = $1 ORDER BY row_index ASC LIMIT $2',
-          [datasetId, maxRows]
-        );
-        if (rowsRes.rowCount > 0) {
-          return rowsRes.rows.map(r => r.data);
+  const loadPromise = (async () => {
+    let filePath = null;
+    let datasetId = null;
+    let datasetName = null;
+
+    if (typeof datasetOrPathOrId === 'object' && datasetOrPathOrId !== null) {
+      filePath = datasetOrPathOrId.file_path || datasetOrPathOrId.filePath || null;
+      datasetId = datasetOrPathOrId.id || null;
+      datasetName = datasetOrPathOrId.name || null;
+    } else if (typeof datasetOrPathOrId === 'string' && (datasetOrPathOrId.includes('/') || datasetOrPathOrId.includes('\\') || datasetOrPathOrId.includes('.'))) {
+      filePath = datasetOrPathOrId;
+    } else {
+      datasetId = datasetOrPathOrId;
+    }
+
+    // If only datasetId is provided, look up dataset metadata
+    if (!filePath && datasetId) {
+      try {
+        const DatasetModel = require('../models/datasetModel');
+        const ds = await DatasetModel.findById(datasetId);
+        if (ds) {
+          filePath = ds.file_path;
+          datasetName = ds.name;
         }
+      } catch (_) {}
+    }
+
+    // 1. If physical absolute file exists on disk
+    if (filePath && pathIsAbsolute(filePath) && fs.existsSync(filePath)) {
+      const buffer = await fs.promises.readFile(filePath);
+      const ext = path.extname(filePath).toLowerCase();
+      const parsed = await parseDatasetFile(buffer, ext, 1000000);
+      return parsed.preview || [];
+    }
+
+    // 2. Check storage provider (which checks local cache, PostgreSQL dataset_storage_files, and Supabase)
+    if (filePath) {
+      try {
+        const exists = await storage.exists(filePath);
+        if (exists) {
+          const ext = path.extname(filePath).toLowerCase();
+          const buffer = await storage.readFile(filePath);
+          if (buffer && buffer.length > 0) {
+            const parsed = await parseDatasetFile(buffer, ext, 1000000);
+            if (parsed && Array.isArray(parsed.preview) && parsed.preview.length > 0) {
+              return parsed.preview;
+            }
+          }
+        }
+      } catch (storageErr) {
+        console.warn(`[loadDatasetRecords] Storage check warning for ${filePath}:`, storageErr.message);
       }
-    } catch (dbErr) {
-      console.warn(`[loadDatasetRecords] DB dataset_rows fallback warning:`, dbErr.message);
+    }
+
+    // 3. Fallback to PostgreSQL dataset_rows table directly
+    if (!datasetId && filePath) {
+      try {
+        const pool = db.getPool();
+        if (pool && !db.isUsingFallback()) {
+          const cleanKey = filePath.replace(/\\/g, '/').replace(/^\/+/, '');
+          const dsRes = await pool.query(
+            'SELECT id, name FROM datasets WHERE file_path = $1 OR file_path LIKE $2 LIMIT 1',
+            [cleanKey, `%${cleanKey}`]
+          );
+          if (dsRes.rowCount > 0) {
+            datasetId = dsRes.rows[0].id;
+            datasetName = dsRes.rows[0].name;
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (datasetId) {
+      try {
+        const pool = db.getPool();
+        if (pool && !db.isUsingFallback()) {
+          const rowsRes = await pool.query(
+            'SELECT data FROM dataset_rows WHERE dataset_id = $1 ORDER BY row_index ASC LIMIT 1000000',
+            [datasetId]
+          );
+          if (rowsRes.rowCount > 0) {
+            return rowsRes.rows.map(r => r.data);
+          }
+        }
+      } catch (dbErr) {
+        console.warn(`[loadDatasetRecords] DB dataset_rows fallback warning:`, dbErr.message);
+      }
+    }
+
+    throw new Error('Dataset file does not exist on storage.');
+  })();
+
+  if (primaryKey) {
+    datasetFlightPromises.set(primaryKey, loadPromise);
+  }
+
+  let loadedRecords;
+  try {
+    loadedRecords = await loadPromise;
+  } finally {
+    if (primaryKey) {
+      datasetFlightPromises.delete(primaryKey);
     }
   }
 
-  throw new Error('Dataset file does not exist on storage.');
+  // Cache in-memory
+  if (primaryKey && Array.isArray(loadedRecords)) {
+    parsedDatasetCache.set(primaryKey, {
+      records: loadedRecords,
+      expiresAt: Date.now() + PARSED_CACHE_TTL_MS
+    });
+    if (typeof datasetOrPathOrId === 'object' && datasetOrPathOrId.file_path) {
+      parsedDatasetCache.set(`path:${datasetOrPathOrId.file_path}`, {
+        records: loadedRecords,
+        expiresAt: Date.now() + PARSED_CACHE_TTL_MS
+      });
+    }
+  }
+
+  return maxRows >= loadedRecords.length ? loadedRecords : loadedRecords.slice(0, maxRows);
 }
 
 function pathIsAbsolute(p) {
@@ -1861,5 +1936,6 @@ module.exports = {
   queryDatasetBreakdowns,
   queryDatasetRows,
   queryDatasetFilterOptions,
-  streamAggregateDatasetFile
+  streamAggregateDatasetFile,
+  invalidateParsedDatasetCache
 };

@@ -57,6 +57,7 @@ import {
 import { Button } from '../components/ui/Button';
 import { RefreshButton } from '../components/ui/RefreshButton';
 import { ResetButton } from '../components/ui/ResetButton';
+import { Select } from '../components/ui/Select';
 
 /**
  * Enterprise Settings Page â€” RicozAnalytics
@@ -1042,55 +1043,43 @@ export default function SettingsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="font-bold text-slate-700">Workspace Cloud Region</label>
-                <div className="relative">
-                  <select
-                    value={editOrgRegion}
-                    onChange={(e) => setEditOrgRegion(e.target.value)}
-                    className="w-full h-10 px-3.5 pr-10 appearance-none rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-900 font-semibold bg-white cursor-pointer"
-                  >
-                    <option value="Mumbai (ap-south-1)">Mumbai (ap-south-1) â€” Primary Indian Hub</option>
-                    <option value="Singapore (ap-southeast-1)">Singapore (ap-southeast-1) â€” APAC Gateway</option>
-                    <option value="Frankfurt (eu-central-1)">Frankfurt (eu-central-1) â€” EU Compliance</option>
-                    <option value="N. Virginia (us-east-1)">N. Virginia (us-east-1) â€” US Global</option>
-                  </select>
-                  <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
+                <Select
+                  value={editOrgRegion}
+                  onChange={(e) => setEditOrgRegion(e.target.value)}
+                >
+                  <option value="Mumbai (ap-south-1)">Mumbai (ap-south-1) — Primary Indian Hub</option>
+                  <option value="Singapore (ap-southeast-1)">Singapore (ap-southeast-1) — APAC Gateway</option>
+                  <option value="Frankfurt (eu-central-1)">Frankfurt (eu-central-1) — EU Compliance</option>
+                  <option value="N. Virginia (us-east-1)">N. Virginia (us-east-1) — US Global</option>
+                </Select>
               </div>
 
               <div className="space-y-1.5">
                 <label className="font-bold text-slate-700">Default Currency</label>
-                <div className="relative">
-                  <select
-                    value={editOrgCurrency}
-                    onChange={(e) => setEditOrgCurrency(e.target.value)}
-                    className="w-full h-10 px-3.5 pr-10 appearance-none rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-900 font-semibold bg-white cursor-pointer"
-                  >
-                    <option value="INR">INR â€” Indian Rupee (â‚¹)</option>
-                    <option value="USD">USD â€” US Dollar ($)</option>
-                    <option value="EUR">EUR â€” Euro (â‚¬)</option>
-                    <option value="GBP">GBP â€” British Pound (Â£)</option>
-                  </select>
-                  <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
+                <Select
+                  value={editOrgCurrency}
+                  onChange={(e) => setEditOrgCurrency(e.target.value)}
+                >
+                  <option value="INR">INR — Indian Rupee (₹)</option>
+                  <option value="USD">USD — US Dollar ($)</option>
+                  <option value="EUR">EUR — Euro (€)</option>
+                  <option value="GBP">GBP — British Pound (£)</option>
+                </Select>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="font-bold text-slate-700">Workspace Timezone</label>
-                <div className="relative">
-                  <select
-                    value={editOrgTimezone}
-                    onChange={(e) => setEditOrgTimezone(e.target.value)}
-                    className="w-full h-10 px-3.5 pr-10 appearance-none rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-900 font-semibold bg-white cursor-pointer"
-                  >
-                    <option value="Asia/Kolkata">Asia/Kolkata (IST, UTC+05:30)</option>
-                    <option value="UTC">UTC (Coordinated Universal Time)</option>
-                    <option value="Asia/Singapore">Asia/Singapore (SGT, UTC+08:00)</option>
-                    <option value="America/New_York">America/New_York (EST, UTC-05:00)</option>
-                  </select>
-                  <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
+                <Select
+                  value={editOrgTimezone}
+                  onChange={(e) => setEditOrgTimezone(e.target.value)}
+                >
+                  <option value="Asia/Kolkata">Asia/Kolkata (IST, UTC+05:30)</option>
+                  <option value="UTC">UTC (Coordinated Universal Time)</option>
+                  <option value="Asia/Singapore">Asia/Singapore (SGT, UTC+08:00)</option>
+                  <option value="America/New_York">America/New_York (EST, UTC-05:00)</option>
+                </Select>
               </div>
 
               <div className="space-y-1.5">
@@ -1162,19 +1151,18 @@ export default function SettingsPage() {
               />
             </div>
 
-            <div className="relative">
-              <select
+            <div className="w-36 sm:w-40">
+              <Select
                 value={userRoleFilter}
                 onChange={(e) => setUserRoleFilter(e.target.value)}
-                className="h-10 pl-3.5 pr-8 appearance-none rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 bg-white cursor-pointer hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                size="sm"
               >
                 <option value="all">All Roles</option>
                 <option value="admin">Administrators</option>
                 <option value="manager">Managers</option>
                 <option value="analyst">Analysts</option>
                 <option value="viewer">Viewers</option>
-              </select>
-              <ChevronDown className="h-3.5 w-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </Select>
             </div>
           </div>
 
@@ -1614,19 +1602,15 @@ export default function SettingsPage() {
           <div className="space-y-5 text-xs">
             <div className="space-y-2">
               <label className="font-bold text-slate-700">Default Landing View</label>
-              <div className="relative">
-                <select
-                  value={preferences.defaultLandingPage}
-                  onChange={(e) => handleSavePreferences({ ...preferences, defaultLandingPage: e.target.value })}
-                  className="w-full h-10 px-3.5 pr-10 appearance-none rounded-xl border border-slate-200 text-slate-900 font-semibold bg-white cursor-pointer shadow-2xs focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none"
-                >
-                  <option value="/dashboard">Executive Dashboard (/dashboard)</option>
-                  <option value="/ai-insights">Automated AI Insights (/ai-insights)</option>
-                  <option value="/datasets">Dataset Explorer (/datasets)</option>
-                  <option value="/reports">Automated Reports (/reports)</option>
-                </select>
-                <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
+              <Select
+                value={preferences.defaultLandingPage}
+                onChange={(e) => handleSavePreferences({ ...preferences, defaultLandingPage: e.target.value })}
+              >
+                <option value="/dashboard">Executive Dashboard (/dashboard)</option>
+                <option value="/ai-insights">Automated AI Insights (/ai-insights)</option>
+                <option value="/datasets">Dataset Explorer (/datasets)</option>
+                <option value="/reports">Automated Reports (/reports)</option>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -1662,34 +1646,26 @@ export default function SettingsPage() {
 
             <div className="space-y-2">
               <label className="font-bold text-slate-700">Telemetry Auto-Refresh Rate</label>
-              <div className="relative">
-                <select
-                  value={preferences.refreshInterval}
-                  onChange={(e) => handleSavePreferences({ ...preferences, refreshInterval: e.target.value })}
-                  className="w-full h-10 px-3.5 pr-10 appearance-none rounded-xl border border-slate-200 text-slate-900 font-semibold bg-white cursor-pointer shadow-2xs focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none"
-                >
-                  <option value="realtime">Continuous Live Refresh (30s background sync)</option>
-                  <option value="5min">5 Minutes (Balanced power & telemetry)</option>
-                  <option value="15min">15 Minutes (Low network bandwidth)</option>
-                  <option value="manual">Manual Refresh Only</option>
-                </select>
-                <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
+              <Select
+                value={preferences.refreshInterval}
+                onChange={(e) => handleSavePreferences({ ...preferences, refreshInterval: e.target.value })}
+              >
+                <option value="realtime">Continuous Live Refresh (30s background sync)</option>
+                <option value="5min">5 Minutes (Balanced power & telemetry)</option>
+                <option value="15min">15 Minutes (Low network bandwidth)</option>
+                <option value="manual">Manual Refresh Only</option>
+              </Select>
             </div>
 
             <div className="space-y-2">
               <label className="font-bold text-slate-700">Numeric Scale & Currency Notation</label>
-              <div className="relative">
-                <select
-                  value={preferences.numberFormat}
-                  onChange={(e) => handleSavePreferences({ ...preferences, numberFormat: e.target.value })}
-                  className="w-full h-10 px-3.5 pr-10 appearance-none rounded-xl border border-slate-200 text-slate-900 font-semibold bg-white cursor-pointer shadow-2xs focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none"
-                >
-                  <option value="inr_lakhs">Indian Numbering Format (₹ Lakhs & Crores — e.g. ₹17.6L)</option>
-                  <option value="standard_millions">International Standard (Millions & Billions — e.g. $1.76M)</option>
-                </select>
-                <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
+              <Select
+                value={preferences.numberFormat}
+                onChange={(e) => handleSavePreferences({ ...preferences, numberFormat: e.target.value })}
+              >
+                <option value="inr_lakhs">Indian Numbering Format (₹ Lakhs & Crores — e.g. ₹17.6L)</option>
+                <option value="standard_millions">International Standard (Millions & Billions — e.g. $1.76M)</option>
+              </Select>
             </div>
           </div>
         </div>
@@ -1731,29 +1707,27 @@ export default function SettingsPage() {
 
               <div className="space-y-1.5">
                 <label className="font-bold text-slate-700">Primary Region</label>
-                <select
+                <Select
                   value={editOrgRegion}
                   onChange={(e) => setEditOrgRegion(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 font-semibold text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500"
                 >
-                  <option value="Mumbai (ap-south-1)">Mumbai (ap-south-1) â€” Primary Indian Hub</option>
+                  <option value="Mumbai (ap-south-1)">Mumbai (ap-south-1) — Primary Indian Hub</option>
                   <option value="Singapore (ap-southeast-1)">Singapore (ap-southeast-1)</option>
                   <option value="Frankfurt (eu-central-1)">Frankfurt (eu-central-1)</option>
                   <option value="N. Virginia (us-east-1)">N. Virginia (us-east-1)</option>
-                </select>
+                </Select>
               </div>
 
               <div className="space-y-1.5">
                 <label className="font-bold text-slate-700">Default Currency</label>
-                <select
+                <Select
                   value={editOrgCurrency}
                   onChange={(e) => setEditOrgCurrency(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 font-semibold text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500"
                 >
-                  <option value="INR">INR â€” Indian Rupee (â‚¹)</option>
-                  <option value="USD">USD â€” US Dollar ($)</option>
-                  <option value="EUR">EUR â€” Euro (â‚¬)</option>
-                </select>
+                  <option value="INR">INR — Indian Rupee (₹)</option>
+                  <option value="USD">USD — US Dollar ($)</option>
+                  <option value="EUR">EUR — Euro (€)</option>
+                </Select>
               </div>
 
               <div className="pt-3 flex items-center justify-end gap-2.5">
@@ -1830,16 +1804,15 @@ export default function SettingsPage() {
 
                 <div className="space-y-1.5">
                   <label className="font-bold text-slate-700">Role & Access Level</label>
-                  <select
+                  <Select
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value)}
-                    className="w-full h-10 px-3.5 rounded-xl border border-slate-300 font-semibold text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500"
                   >
                     <option value="viewer">Viewer (Read-only analytics access)</option>
                     <option value="analyst">Analyst (Create reports, charts, forecasts)</option>
                     <option value="manager">Manager (Manage datasets, alerts, teams)</option>
                     <option value="admin">Administrator (Full workspace governance)</option>
-                  </select>
+                  </Select>
                 </div>
 
                 <div className="pt-3 flex items-center justify-end gap-2.5">

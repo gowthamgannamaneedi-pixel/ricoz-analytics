@@ -994,14 +994,73 @@ class CollaborationService {
   // -------------------------------------------------------------
 
   async getNotifications(userId, organizationId, limit = 30) {
-    const [notifications, unreadCount] = await Promise.all([
+    let [notifications, unreadCount] = await Promise.all([
       NotificationModel.listByUser(userId, organizationId, limit),
       NotificationModel.getUnreadCount(userId, organizationId)
     ]);
 
+    // If user has 0 notifications, seed inbox from actual organization activity
+    if ((!notifications || notifications.length === 0) && organizationId) {
+      try {
+        const db = require('../config/database');
+        const incidentsRes = await db.query(
+          `SELECT ai.id, ai.alert_id, ai.metric_value, ai.threshold_value, ai.condition, ai.severity, a.name as alert_name
+           FROM alert_incidents ai
+           LEFT JOIN alerts a ON a.id = ai.alert_id
+           WHERE ai.organization_id = $1
+           ORDER BY ai.triggered_at DESC
+           LIMIT 3`,
+          [organizationId]
+        );
+
+        for (const inc of (incidentsRes.rows || [])) {
+          await NotificationModel.create({
+            organizationId,
+            userId,
+            actorId: null,
+            type: 'alert',
+            title: `Alert Triggered: "${inc.alert_name || 'Metric Threshold'}"`,
+            message: `Severity: ${inc.severity}. Metric value reached ${inc.metric_value} (${inc.condition} ${inc.threshold_value}).`,
+            resourceType: 'alert',
+            resourceId: inc.alert_id
+          });
+        }
+
+        const reportsRes = await db.query(
+          `SELECT re.id, re.report_id, re.status, r.title as report_title
+           FROM report_executions re
+           LEFT JOIN reports r ON r.id = re.report_id
+           WHERE re.organization_id = $1
+           ORDER BY re.created_at DESC
+           LIMIT 2`,
+          [organizationId]
+        );
+
+        for (const rep of (reportsRes.rows || [])) {
+          await NotificationModel.create({
+            organizationId,
+            userId,
+            actorId: null,
+            type: 'report',
+            title: `Report Generated: "${rep.report_title || 'Executive Overview'}"`,
+            message: `Scheduled report execution completed with status: ${rep.status}.`,
+            resourceType: 'report',
+            resourceId: rep.report_id
+          });
+        }
+
+        [notifications, unreadCount] = await Promise.all([
+          NotificationModel.listByUser(userId, organizationId, limit),
+          NotificationModel.getUnreadCount(userId, organizationId)
+        ]);
+      } catch (seedErr) {
+        console.warn('[getNotifications] Auto-seed warning:', seedErr.message);
+      }
+    }
+
     return {
-      notifications,
-      unreadCount
+      notifications: notifications || [],
+      unreadCount: unreadCount || 0
     };
   }
 

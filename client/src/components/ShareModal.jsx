@@ -12,6 +12,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { Button } from './ui/Button';
+import { Select } from './ui/Select';
 import {
   shareDashboardApi,
   getDashboardSharesApi,
@@ -211,44 +212,38 @@ export default function ShareModal({
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Select {activeTab === 'user' ? 'Organization User' : 'Team'}
               </label>
-              <div className="relative">
-                <select
-                  value={selectedTargetId}
-                  onChange={(e) => setSelectedTargetId(e.target.value)}
-                  className="w-full h-10 appearance-none rounded-xl border border-slate-300 bg-white pl-3.5 pr-9 text-sm font-medium text-slate-900 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none transition shadow-2xs cursor-pointer"
-                >
-                  <option value="">Choose {activeTab}...</option>
-                  {activeTab === 'user' ? (
-                    users.map(u => (
-                      <option key={u.id} value={u.id}>
-                        {u.name} ({u.email}) — {u.role?.toUpperCase()}
-                      </option>
-                    ))
-                  ) : (
-                    teams.map(t => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} ({t.member_count || 0} members)
-                      </option>
-                    ))
-                  )}
-                </select>
-                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
+              <Select
+                value={selectedTargetId}
+                onChange={(e) => setSelectedTargetId(e.target.value)}
+                className="w-full"
+              >
+                <option value="">Choose {activeTab}...</option>
+                {activeTab === 'user' ? (
+                  users.map(u => (
+                    <option key={u.id} value={u.id}>
+                      {u.name} ({u.email}) — {u.role?.toUpperCase()}
+                    </option>
+                  ))
+                ) : (
+                  teams.map(t => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.member_count || 0} members)
+                    </option>
+                  ))
+                )}
+              </Select>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Permission</label>
-              <div className="relative">
-                <select
-                  value={permission}
-                  onChange={(e) => setPermission(e.target.value)}
-                  className="w-full h-10 appearance-none rounded-xl border border-slate-300 bg-white pl-3.5 pr-9 text-sm font-medium text-slate-900 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none transition shadow-2xs cursor-pointer"
-                >
-                  <option value="viewer">Viewer</option>
-                  {resourceType !== 'insight' && <option value="editor">Editor</option>}
-                </select>
-                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
+              <Select
+                value={permission}
+                onChange={(e) => setPermission(e.target.value)}
+                className="w-full"
+              >
+                <option value="viewer">Viewer</option>
+                {resourceType !== 'insight' && <option value="editor">Editor</option>}
+              </Select>
             </div>
           </div>
 

@@ -1484,13 +1484,13 @@ function handleFallbackQuery(text, params = []) {
   }
 
   if (normalizedSql.startsWith('select') && normalizedSql.includes('from datasets') && normalizedSql.includes('organization_id = $2')) {
-    const id = Number(params[0]);
+    const id = params[0];
     const orgId = String(params[1]);
-    const dataset = fallbackDatasets.find(d => Number(d.id) === id);
+    const dataset = fallbackDatasets.find(d => String(d.id) === String(id));
     if (dataset) {
-      const u = fallbackUsers.find(user => Number(user.id) === Number(dataset.user_id));
+      const u = fallbackUsers.find(user => String(user.id) === String(dataset.user_id));
       if ((u && String(u.organization_id) === orgId) || String(dataset.organization_id) === orgId) {
-        const ds = fallbackDataSources.find(s => s.id === dataset.data_source_id);
+        const ds = fallbackDataSources.find(s => String(s.id) === String(dataset.data_source_id));
         return Promise.resolve({
           rows: [{
             ...dataset,
@@ -1506,10 +1506,10 @@ function handleFallbackQuery(text, params = []) {
   }
 
   if (normalizedSql.startsWith('select') && normalizedSql.includes('from datasets') && (normalizedSql.includes('d.id = $1 limit 1') || normalizedSql.includes('where d.id = $1') || normalizedSql.includes('where id = $1'))) {
-    const id = Number(params[0]);
-    const dataset = fallbackDatasets.find(d => Number(d.id) === id);
+    const id = params[0];
+    const dataset = fallbackDatasets.find(d => String(d.id) === String(id));
     if (dataset) {
-      const ds = fallbackDataSources.find(s => s.id === dataset.data_source_id);
+      const ds = fallbackDataSources.find(s => String(s.id) === String(dataset.data_source_id));
       return Promise.resolve({
         rows: [{
           ...dataset,
@@ -2971,10 +2971,10 @@ function handleFallbackQuery(text, params = []) {
     const newRel = {
       id: id || `00000000-0000-0000-0000-00000000000${nextRelationshipId++}`,
       organization_id: String(orgId),
-      created_by: createdBy ? Number(createdBy) : null,
-      source_dataset_id: Number(sourceDatasetId),
+      created_by: createdBy ? (isNaN(Number(createdBy)) ? createdBy : Number(createdBy)) : null,
+      source_dataset_id: sourceDatasetId,
       source_column: String(sourceColumn),
-      target_dataset_id: Number(targetDatasetId),
+      target_dataset_id: targetDatasetId,
       target_column: String(targetColumn),
       relationship_type: String(relationshipType || 'many_to_one').toLowerCase(),
       description: String(description || ''),
@@ -2994,9 +2994,9 @@ function handleFallbackQuery(text, params = []) {
       .filter(r => String(r.organization_id) === orgId)
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
       .map(r => {
-        const sd = fallbackDatasets.find(d => Number(d.id) === Number(r.source_dataset_id));
-        const td = fallbackDatasets.find(d => Number(d.id) === Number(r.target_dataset_id));
-        const u = fallbackUsers.find(user => Number(user.id) === Number(r.created_by));
+        const sd = fallbackDatasets.find(d => String(d.id) === String(r.source_dataset_id));
+        const td = fallbackDatasets.find(d => String(d.id) === String(r.target_dataset_id));
+        const u = fallbackUsers.find(user => String(user.id) === String(r.created_by));
         return {
           ...r,
           source_dataset_name: sd ? sd.name : null,
@@ -3014,8 +3014,8 @@ function handleFallbackQuery(text, params = []) {
     const [id, orgId] = params;
     const r = fallbackRelationships.find(rel => String(rel.id) === String(id) && String(rel.organization_id) === String(orgId));
     if (!r) return Promise.resolve({ rows: [], rowCount: 0 });
-    const sd = fallbackDatasets.find(d => Number(d.id) === Number(r.source_dataset_id));
-    const td = fallbackDatasets.find(d => Number(d.id) === Number(r.target_dataset_id));
+    const sd = fallbackDatasets.find(d => String(d.id) === String(r.source_dataset_id));
+    const td = fallbackDatasets.find(d => String(d.id) === String(r.target_dataset_id));
     return Promise.resolve({
       rows: [{
         ...r,
@@ -3032,8 +3032,8 @@ function handleFallbackQuery(text, params = []) {
     const [d1, d2, orgId] = params;
     const list = fallbackRelationships.filter(r => 
       String(r.organization_id) === String(orgId) &&
-      ((Number(r.source_dataset_id) === Number(d1) && Number(r.target_dataset_id) === Number(d2)) ||
-       (Number(r.source_dataset_id) === Number(d2) && Number(r.target_dataset_id) === Number(d1)))
+      ((String(r.source_dataset_id) === String(d1) && String(r.target_dataset_id) === String(d2)) ||
+       (String(r.source_dataset_id) === String(d2) && String(r.target_dataset_id) === String(d1)))
     );
     return Promise.resolve({ rows: list, rowCount: list.length });
   }

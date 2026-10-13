@@ -18,6 +18,7 @@ const insightRoutes = require('./insightRoutes');
 const collaborationRoutes = require('./collaborationRoutes');
 const demoRequestRoutes = require('./demoRequestRoutes');
 const billingRoutes = require('./billingRoutes');
+const searchRoutes = require('./searchRoutes');
 
 const authenticateToken = require('../middleware/authMiddleware');
 const { requireActiveSubscription } = require('../middleware/subscriptionMiddleware');
@@ -47,6 +48,7 @@ router.use('/forecasts', ...protectedWorkspace, forecastRoutes);
 router.use('/ai', ...protectedWorkspace, aiRoutes);
 router.use('/insights', ...protectedWorkspace, insightRoutes);
 router.use('/collaboration', ...protectedWorkspace, collaborationRoutes);
+router.use('/search', ...protectedWorkspace, searchRoutes);
 
 // Workspace Administration (accessible with authentication)
 router.use('/admin', adminRoutes);

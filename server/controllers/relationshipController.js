@@ -86,11 +86,16 @@ const relationshipController = {
         description = ''
       } = req.body;
 
-      const srcId = source_dataset_id || sourceDatasetId;
-      const srcCol = source_column || sourceColumn;
-      const tgtId = target_dataset_id || targetDatasetId;
-      const tgtCol = target_column || targetColumn;
+      const rawSrcId = source_dataset_id !== undefined && source_dataset_id !== null ? source_dataset_id : sourceDatasetId;
+      const rawSrcCol = source_column !== undefined && source_column !== null ? source_column : sourceColumn;
+      const rawTgtId = target_dataset_id !== undefined && target_dataset_id !== null ? target_dataset_id : targetDatasetId;
+      const rawTgtCol = target_column !== undefined && target_column !== null ? target_column : targetColumn;
       const relType = relationship_type || relationshipType || 'many_to_one';
+
+      const srcId = rawSrcId !== undefined && rawSrcId !== null && String(rawSrcId).trim() !== '' ? String(rawSrcId).trim() : null;
+      const srcCol = rawSrcCol !== undefined && rawSrcCol !== null && String(rawSrcCol).trim() !== '' ? String(rawSrcCol).trim() : null;
+      const tgtId = rawTgtId !== undefined && rawTgtId !== null && String(rawTgtId).trim() !== '' ? String(rawTgtId).trim() : null;
+      const tgtCol = rawTgtCol !== undefined && rawTgtCol !== null && String(rawTgtCol).trim() !== '' ? String(rawTgtCol).trim() : null;
 
       // 1. Basic validation
       if (!srcId || !srcCol || !tgtId || !tgtCol) {
@@ -199,7 +204,7 @@ const relationshipController = {
       console.error('[RelationshipController.createRelationship] Error:', err);
       return res.status(500).json({
         success: false,
-        message: 'Failed to create dataset relationship.',
+        message: err.message || 'Failed to create dataset relationship.',
         error: err.message
       });
     }
@@ -399,8 +404,11 @@ const relationshipController = {
       }
 
       let baseRecords = [];
-      if (baseDataset.file_path) {
-        baseRecords = await analyticsService.loadDatasetRecords(baseDataset.file_path).catch(() => []);
+      try {
+        baseRecords = await analyticsService.loadDatasetRecords(baseDataset);
+      } catch (e) {
+        console.warn('[executeRelationalQuery] baseRecords load fallback:', e.message);
+        baseRecords = [];
       }
 
       // 2. Resolve and verify Joins
@@ -457,8 +465,11 @@ const relationshipController = {
         }
 
         let targetRecords = [];
-        if (targetDataset.file_path) {
-          targetRecords = await analyticsService.loadDatasetRecords(targetDataset.file_path).catch(() => []);
+        try {
+          targetRecords = await analyticsService.loadDatasetRecords(targetDataset);
+        } catch (e) {
+          console.warn('[executeRelationalQuery] targetRecords load fallback:', e.message);
+          targetRecords = [];
         }
 
         populatedJoins.push({

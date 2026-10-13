@@ -5,6 +5,7 @@ const Dataset = require('../models/datasetModel');
 const storage = require('../storage');
 const auditService = require('../services/auditService');
 const { parseDatasetFile, parseDatasetPreviewStream } = require('../services/fileParserService');
+const { invalidateParsedDatasetCache } = require('../services/analyticsService');
 
 /**
  * Dataset Controller
@@ -211,6 +212,10 @@ const deleteDataset = async (req, res, next) => {
       await Dataset.deleteByIdAndUserId(id, userId);
     }
 
+    // Invalidate cached parsed dataset records
+    invalidateParsedDatasetCache(id);
+    if (dataset.file_path) invalidateParsedDatasetCache(dataset.file_path);
+
     // Log audit event
     await auditService.logAuditEvent({
       organizationId: organizationId || '00000000-0000-0000-0000-000000000001',
@@ -334,6 +339,10 @@ const refreshDataset = async (req, res, next) => {
       metadata: { datasetId: id, rowCount: updatedRowCount, columnCount: updatedColumnCount },
       req
     }).catch(() => null);
+
+    // Invalidate cached parsed dataset records
+    invalidateParsedDatasetCache(id);
+    if (dataset.file_path) invalidateParsedDatasetCache(dataset.file_path);
 
     return res.status(200).json({
       success: true,
@@ -461,6 +470,10 @@ const rehydrateDataset = async (req, res, next) => {
       metadata: { datasetId: id, rowCount: updatedRowCount, columnCount: updatedColumnCount, filePath: targetFilePath },
       req
     }).catch(() => null);
+
+    // Invalidate cached parsed dataset records
+    invalidateParsedDatasetCache(id);
+    if (targetFilePath) invalidateParsedDatasetCache(targetFilePath);
 
     return res.status(200).json({
       success: true,

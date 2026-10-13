@@ -87,9 +87,9 @@ const Dataset = {
         ds.type AS data_source_type
       FROM datasets d
       LEFT JOIN data_sources ds ON ds.id = d.data_source_id
-      WHERE d.id = $1 AND d.user_id = $2
+      WHERE (CAST(d.id AS TEXT) = $1 OR d.name = $1) AND d.user_id = $2
     `;
-    const res = await db.query(sql, [id, userId]);
+    const res = await db.query(sql, [String(id).trim(), userId]);
     return res.rows[0] || null;
   },
 
@@ -117,10 +117,10 @@ const Dataset = {
       FROM datasets d
       LEFT JOIN users u ON u.id = d.user_id
       LEFT JOIN data_sources ds ON ds.id = d.data_source_id
-      WHERE d.id = $1 AND (d.organization_id = $2 OR (d.organization_id IS NULL AND u.organization_id = $2))
+      WHERE (CAST(d.id AS TEXT) = $1 OR d.name = $1) AND (d.organization_id = $2 OR (d.organization_id IS NULL AND u.organization_id = $2))
       LIMIT 1
     `;
-    const res = await db.query(sql, [id, organizationId]);
+    const res = await db.query(sql, [String(id).trim(), organizationId]);
     return res.rows[0] || null;
   },
 
@@ -146,10 +146,10 @@ const Dataset = {
         ds.type AS data_source_type
       FROM datasets d
       LEFT JOIN data_sources ds ON ds.id = d.data_source_id
-      WHERE d.id = $1
+      WHERE (CAST(d.id AS TEXT) = $1 OR d.name = $1)
       LIMIT 1
     `;
-    const res = await db.query(sql, [id]);
+    const res = await db.query(sql, [String(id).trim()]);
     return res.rows[0] || null;
   },
 
@@ -240,10 +240,10 @@ const Dataset = {
   async deleteByIdAndUserId(id, userId) {
     const sql = `
       DELETE FROM datasets
-      WHERE id = $1 AND user_id = $2
+      WHERE (CAST(id AS TEXT) = $1 OR name = $1) AND user_id = $2
       RETURNING id, user_id, name, file_path, data_source_id
     `;
-    const res = await db.query(sql, [id, userId]);
+    const res = await db.query(sql, [String(id).trim(), userId]);
     return res.rows[0] || null;
   },
 
@@ -253,10 +253,10 @@ const Dataset = {
   async deleteByIdAndOrgId(id, organizationId) {
     const sql = `
       DELETE FROM datasets
-      WHERE id = $1 AND (organization_id = $2 OR user_id IN (SELECT id FROM users WHERE organization_id = $2))
+      WHERE (CAST(id AS TEXT) = $1 OR name = $1) AND (organization_id = $2 OR user_id IN (SELECT id FROM users WHERE organization_id = $2))
       RETURNING id, user_id, name, file_path, data_source_id
     `;
-    const res = await db.query(sql, [id, organizationId]);
+    const res = await db.query(sql, [String(id).trim(), organizationId]);
     return res.rows[0] || null;
   },
 
@@ -266,10 +266,10 @@ const Dataset = {
   async deleteById(id) {
     const sql = `
       DELETE FROM datasets
-      WHERE id = $1
+      WHERE (CAST(id AS TEXT) = $1 OR name = $1)
       RETURNING id, user_id, name, file_path, data_source_id
     `;
-    const res = await db.query(sql, [id]);
+    const res = await db.query(sql, [String(id).trim()]);
     return res.rows[0] || null;
   },
 
@@ -287,11 +287,11 @@ const Dataset = {
     if (columnCount !== undefined) { fields.push(`column_count = $${idx++}`); values.push(columnCount); }
     if (schema !== undefined) { fields.push(`schema = $${idx++}`); values.push(typeof schema === 'object' ? JSON.stringify(schema) : schema); }
     fields.push(`updated_at = CURRENT_TIMESTAMP`);
-    values.push(id);
+    values.push(String(id).trim());
     const sql = `
       UPDATE datasets
       SET ${fields.join(', ')}
-      WHERE id = $${idx}
+      WHERE (CAST(id AS TEXT) = $${idx} OR name = $${idx})
       RETURNING *
     `;
     const res = await db.query(sql, values);

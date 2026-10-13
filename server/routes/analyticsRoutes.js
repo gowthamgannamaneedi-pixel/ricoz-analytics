@@ -8,13 +8,15 @@ const {
   getDatasetKpis,
   getDatasetTrends,
   getDatasetBreakdowns,
-  getDatasetRows
+  getDatasetRows,
+  getDatasetOverview
 } = require('../controllers/analyticsController');
 
 // All analytics endpoints require valid JWT authentication
 router.use(authenticateToken);
 
 // Dataset Analytics Endpoints
+router.get('/datasets/:id/overview', getDatasetOverview);
 router.get('/datasets/:id/summary', getDatasetSummary);
 router.get('/datasets/:id/kpis', getDatasetKpis);
 router.get('/datasets/:id/trends', getDatasetTrends);

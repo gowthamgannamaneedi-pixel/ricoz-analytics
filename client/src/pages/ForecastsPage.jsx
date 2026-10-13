@@ -63,6 +63,7 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
 import { RefreshButton } from '../components/ui/RefreshButton';
 import { ResetButton } from '../components/ui/ResetButton';
+import { Select } from '../components/ui/Select';
 
 const MODEL_LABELS = {
   auto: 'Auto (Best Model)',
@@ -634,25 +635,25 @@ export default function ForecastsPage() {
       {/* ───────────────────────────────────────────────────────────────── */}
       {/* 3. FOUR SUMMARY METRIC CARDS                                      */}
       {/* ───────────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 lg:gap-6">
         {/* Card 1: Selected Dataset */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 min-h-[112px] flex items-center shadow-2xs hover:border-slate-300 transition-all">
-          <div className="flex items-start gap-4 w-full min-w-0">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80 shrink-0 mt-0.5">
-              <Database className="h-5 w-5" />
+        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 min-h-[136px] flex flex-col justify-center shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all">
+          <div className="flex items-start gap-4.5 sm:gap-5 w-full min-w-0">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-rose-950/50 text-[#D91542] dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/60 shrink-0 shadow-2xs">
+              <Database className="h-6 w-6" />
             </div>
-            <div className="min-w-0 flex-1 space-y-1">
-              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                 Selected Dataset
               </p>
               <h3
-                className="font-bold text-slate-900 text-sm sm:text-base leading-snug truncate block cursor-default"
+                className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-lg leading-snug truncate block cursor-default"
                 title={selectedDataset ? selectedDataset.name : 'Select a Dataset'}
                 aria-label={selectedDataset ? `Dataset: ${selectedDataset.name}` : 'No dataset selected'}
               >
                 {selectedDataset ? selectedDataset.name : 'Select a Dataset'}
               </h3>
-              <p className="text-xs text-slate-400 truncate block">
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate block leading-normal">
                 {selectedDataset ? `${(selectedDataset.row_count || 0).toLocaleString()} observations` : 'Time series data'}
               </p>
             </div>
@@ -660,22 +661,22 @@ export default function ForecastsPage() {
         </div>
 
         {/* Card 2: Model */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 min-h-[112px] flex items-center shadow-2xs hover:border-slate-300 transition-all">
-          <div className="flex items-start gap-4 w-full min-w-0">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80 shrink-0 mt-0.5">
-              <Target className="h-5 w-5" />
+        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 min-h-[136px] flex flex-col justify-center shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all">
+          <div className="flex items-start gap-4.5 sm:gap-5 w-full min-w-0">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-rose-950/50 text-[#D91542] dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/60 shrink-0 shadow-2xs">
+              <Target className="h-6 w-6" />
             </div>
-            <div className="min-w-0 flex-1 space-y-1">
-              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                 Model
               </p>
               <h3
-                className="font-bold text-slate-900 text-sm sm:text-base leading-snug truncate block cursor-default"
+                className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-lg leading-snug truncate block cursor-default"
                 title={MODEL_LABELS[selectedModel] || 'Auto (Best Model)'}
               >
                 {MODEL_LABELS[selectedModel] || 'Auto (Best Model)'}
               </h3>
-              <p className="text-xs text-slate-400 truncate block" title={MODEL_DESCRIPTIONS[selectedModel]}>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate block leading-normal" title={MODEL_DESCRIPTIONS[selectedModel]}>
                 {selectedModel === 'auto' ? 'Automatically selects best ML model' : 'Configured ML algorithm'}
               </p>
             </div>
@@ -683,19 +684,19 @@ export default function ForecastsPage() {
         </div>
 
         {/* Card 3: Forecast Horizon */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 min-h-[112px] flex items-center shadow-2xs hover:border-slate-300 transition-all">
-          <div className="flex items-start gap-4 w-full min-w-0">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80 shrink-0 mt-0.5">
-              <Calendar className="h-5 w-5" />
+        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 min-h-[136px] flex flex-col justify-center shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all">
+          <div className="flex items-start gap-4.5 sm:gap-5 w-full min-w-0">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-rose-950/50 text-[#D91542] dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/60 shrink-0 shadow-2xs">
+              <Calendar className="h-6 w-6" />
             </div>
-            <div className="min-w-0 flex-1 space-y-1">
-              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                 Forecast Horizon
               </p>
-              <h3 className="font-bold text-slate-900 text-sm sm:text-base leading-snug block">
+              <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-lg leading-snug block">
                 Next {horizonPeriods} periods
               </h3>
-              <p className="text-xs text-slate-400 truncate block">
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate block leading-normal">
                 {interval.charAt(0).toUpperCase() + interval.slice(1)} intervals
               </p>
             </div>
@@ -703,19 +704,19 @@ export default function ForecastsPage() {
         </div>
 
         {/* Card 4: Anomalies Detected */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 min-h-[112px] flex items-center shadow-2xs hover:border-slate-300 transition-all">
-          <div className="flex items-start gap-4 w-full min-w-0">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80 shrink-0 mt-0.5">
-              <AlertTriangle className="h-5 w-5" />
+        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 min-h-[136px] flex flex-col justify-center shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all">
+          <div className="flex items-start gap-4.5 sm:gap-5 w-full min-w-0">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-rose-950/50 text-[#D91542] dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/60 shrink-0 shadow-2xs">
+              <AlertTriangle className="h-6 w-6" />
             </div>
-            <div className="min-w-0 flex-1 space-y-1">
-              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                 Anomalies Detected
               </p>
-              <h3 className={`font-bold text-sm sm:text-base leading-snug block ${anomaliesCount > 0 ? 'text-amber-700' : 'text-slate-900'}`}>
+              <h3 className={`font-bold text-base sm:text-lg leading-snug block ${anomaliesCount > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100'}`}>
                 {anomaliesCount} {anomaliesCount === 1 ? 'anomaly' : 'anomalies'}
               </h3>
-              <p className="text-xs text-slate-400 truncate block">
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate block leading-normal">
                 {anomaliesCount > 0 ? 'Requires operational review' : 'Within normal variance'}
               </p>
             </div>
@@ -730,13 +731,13 @@ export default function ForecastsPage() {
         {/* =============================================================== */}
         {/* LEFT COLUMN: FORECAST CONFIGURATION                             */}
         {/* =============================================================== */}
-        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+        <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-7 shadow-2xs space-y-5">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60">
                 <Sliders className="h-4 w-4" />
               </div>
-              <h2 className="text-base font-bold text-slate-900">
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
                 Forecast Configuration
               </h2>
             </div>
@@ -748,121 +749,106 @@ export default function ForecastsPage() {
             />
           </div>
 
-          <form onSubmit={(e) => { e.preventDefault(); handleGenerateForecast(); }} className="space-y-4 text-xs">
+          <form onSubmit={(e) => { e.preventDefault(); handleGenerateForecast(); }} className="space-y-4.5 text-xs">
             {/* 1. Dataset Selector */}
-            <div className="space-y-1">
-              <label className="block text-xs font-bold text-slate-800">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
                 Dataset
               </label>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">
                 Choose the dataset to forecast
               </p>
-              <div className="relative mt-1">
-                <select
+              <div className="mt-1">
+                <Select
                   id="forecast-dataset-select"
                   value={selectedDatasetId}
                   onChange={handleDatasetChange}
-                  className="w-full h-10 appearance-none pl-9 pr-9 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
+                  icon={Database}
+                  placeholder={datasets.length === 0 ? "No datasets available" : "Select a dataset..."}
                 >
-                  {datasets.length === 0 ? (
-                    <option value="">No datasets available</option>
-                  ) : (
-                    datasets.map(ds => (
-                      <option key={ds.id} value={ds.id}>
-                        {ds.name}
-                      </option>
-                    ))
-                  )}
-                </select>
-                <Database className="h-4 w-4 text-rose-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  {datasets.map(ds => (
+                    <option key={ds.id} value={ds.id}>
+                      {ds.name}
+                    </option>
+                  ))}
+                </Select>
               </div>
             </div>
 
             {/* 2. Metric Column Selector */}
-            <div className="space-y-1">
-              <label className="block text-xs font-bold text-slate-800">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
                 Metric Column
               </label>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">
                 Select the numeric column to predict
               </p>
-              <div className="relative mt-1">
-                <select
+              <div className="mt-1">
+                <Select
                   id="forecast-metric-column-select"
                   value={targetColumn}
                   onChange={(e) => setTargetColumn(e.target.value)}
-                  className="w-full h-10 appearance-none pl-3.5 pr-9 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
+                  placeholder={availableColumns.numericCols.length === 0 ? "No numeric columns found" : "Select metric column..."}
                 >
-                  {availableColumns.numericCols.length === 0 ? (
-                    <option value="">No numeric columns found</option>
-                  ) : (
-                    availableColumns.numericCols.map(col => (
-                      <option key={col} value={col}>
-                        {col}
-                      </option>
-                    ))
-                  )}
-                </select>
-                <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  {availableColumns.numericCols.map(col => (
+                    <option key={col} value={col}>
+                      {col}
+                    </option>
+                  ))}
+                </Select>
               </div>
             </div>
 
             {/* 3. Time Column Selector */}
-            <div className="space-y-1">
-              <label className="block text-xs font-bold text-slate-800">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
                 Time Column
               </label>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">
                 Select the time column
               </p>
-              <div className="relative mt-1">
-                <select
+              <div className="mt-1">
+                <Select
                   id="forecast-time-column-select"
                   value={dateColumn}
                   onChange={(e) => setDateColumn(e.target.value)}
-                  className="w-full h-10 appearance-none pl-3.5 pr-9 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
+                  icon={Calendar}
+                  placeholder={availableColumns.dateCols.length === 0 ? "No date columns found" : "Select date column..."}
                 >
-                  {availableColumns.dateCols.length === 0 ? (
-                    <option value="">No date columns found</option>
-                  ) : (
-                    availableColumns.dateCols.map(col => (
-                      <option key={col} value={col}>
-                        {col}
-                      </option>
-                    ))
-                  )}
-                </select>
-                <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  {availableColumns.dateCols.map(col => (
+                    <option key={col} value={col}>
+                      {col}
+                    </option>
+                  ))}
+                </Select>
               </div>
             </div>
 
             {/* 4. Model Selector */}
-            <div className="space-y-1">
-              <label className="block text-xs font-bold text-slate-800">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
                 Model
               </label>
-              <div className="relative mt-1">
-                <select
+              <div className="mt-1">
+                <Select
                   id="forecast-model-select"
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-full h-10 appearance-none pl-3.5 pr-9 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
+                  icon={Target}
                 >
                   <option value="auto">Auto (Best Model)</option>
                   <option value="linear_regression">Linear Regression (Trend)</option>
                   <option value="holt_winters">Holt-Winters (Seasonality)</option>
                   <option value="arima">ARIMA (Auto-Regressive)</option>
                   <option value="exponential_smoothing">Exponential Smoothing</option>
-                </select>
-                <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </Select>
               </div>
             </div>
 
             {/* 5. Horizon & Interval (Two columns) */}
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-800">
+            <div className="grid grid-cols-2 gap-3.5 pt-1">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
                   Forecast Horizon
                 </label>
                 <div className="relative mt-1">
@@ -873,32 +859,30 @@ export default function ForecastsPage() {
                     max="365"
                     value={horizonPeriods}
                     onChange={(e) => setHorizonPeriods(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                    className="w-full h-10 pl-3 pr-14 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 focus:outline-none focus:border-rose-600 shadow-2xs"
+                    className="w-full h-10 pl-3.5 pr-14 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-rose-600 shadow-2xs"
                   />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 font-medium pointer-events-none">
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 dark:text-slate-500 font-medium pointer-events-none">
                     periods
                   </span>
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-800">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
                   Interval
                 </label>
-                <div className="relative mt-1">
-                  <select
+                <div className="mt-1">
+                  <Select
                     id="forecast-interval-select"
                     value={interval}
                     onChange={(e) => setInterval(e.target.value)}
-                    className="w-full h-10 appearance-none pl-3.5 pr-9 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:border-rose-600 shadow-2xs cursor-pointer"
                   >
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
                     <option value="quarterly">Quarterly</option>
                     <option value="yearly">Yearly</option>
-                  </select>
-                  <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </Select>
                 </div>
               </div>
             </div>
@@ -1089,19 +1073,18 @@ export default function ForecastsPage() {
 
                   <div className="flex items-center gap-2">
                     {/* Time range selector */}
-                    <div className="relative">
-                      <select
+                    <div className="w-36">
+                      <Select
+                        size="sm"
+                        icon={Calendar}
                         value={timeRangeFilter}
                         onChange={(e) => setTimeRangeFilter(e.target.value)}
-                        className="appearance-none pl-8 pr-7 h-9 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:border-slate-300 focus:outline-none cursor-pointer shadow-2xs"
                       >
                         <option value="all">All Available</option>
                         <option value="30">Last 30 days</option>
                         <option value="60">Last 60 days</option>
                         <option value="90">Last 90 days</option>
-                      </select>
-                      <Calendar className="h-3.5 w-3.5 text-rose-600 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      <ChevronRight className="h-3.5 w-3.5 text-slate-400 rotate-90 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      </Select>
                     </div>
 
                     {/* Download CSV button */}
@@ -1290,66 +1273,66 @@ export default function ForecastsPage() {
               </div>
 
               {/* 4 Result Metrics KPI Cards in a row */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 lg:gap-6">
                 {/* MAE */}
-                <div className="bg-white rounded-2xl border border-slate-200/90 p-3.5 sm:p-4 shadow-2xs flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
-                    <Sigma className="h-5 w-5" />
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex items-center gap-4 min-h-[108px]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shrink-0 shadow-2xs">
+                    <Sigma className="h-6 w-6" />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
                       <span>MAE</span>
-                      <Info className="h-3 w-3 text-slate-400" title="Mean Absolute Error" />
+                      <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" title="Mean Absolute Error" />
                     </div>
-                    <p className="font-mono text-base sm:text-lg font-bold text-slate-900 truncate mt-0.5">
+                    <p className="font-mono text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 truncate">
                       {forecastResult?.metrics?.mae !== undefined ? Number(forecastResult.metrics.mae).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 }) : '—'}
                     </p>
                   </div>
                 </div>
 
                 {/* RMSE */}
-                <div className="bg-white rounded-2xl border border-slate-200/90 p-3.5 sm:p-4 shadow-2xs flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-purple-600 border border-purple-100 shrink-0">
-                    <BarChart2 className="h-5 w-5" />
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex items-center gap-4 min-h-[108px]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/60 shrink-0 shadow-2xs">
+                    <BarChart2 className="h-6 w-6" />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
                       <span>RMSE</span>
-                      <Info className="h-3 w-3 text-slate-400" title="Root Mean Squared Error" />
+                      <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" title="Root Mean Squared Error" />
                     </div>
-                    <p className="font-mono text-base sm:text-lg font-bold text-slate-900 truncate mt-0.5">
+                    <p className="font-mono text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 truncate">
                       {forecastResult?.metrics?.rmse !== undefined ? Number(forecastResult.metrics.rmse).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 }) : '—'}
                     </p>
                   </div>
                 </div>
 
                 {/* MAPE */}
-                <div className="bg-white rounded-2xl border border-slate-200/90 p-3.5 sm:p-4 shadow-2xs flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 shrink-0">
-                    <Percent className="h-5 w-5" />
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex items-center gap-4 min-h-[108px]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/60 shrink-0 shadow-2xs">
+                    <Percent className="h-6 w-6" />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
                       <span>MAPE</span>
-                      <Info className="h-3 w-3 text-slate-400" title="Mean Absolute Percentage Error" />
+                      <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" title="Mean Absolute Percentage Error" />
                     </div>
-                    <p className="font-mono text-base sm:text-lg font-bold text-emerald-600 truncate mt-0.5">
+                    <p className="font-mono text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 truncate">
                       {forecastResult?.metrics?.mape !== undefined ? `${Number(forecastResult.metrics.mape).toFixed(1)}%` : '—'}
                     </p>
                   </div>
                 </div>
 
                 {/* R² Score */}
-                <div className="bg-white rounded-2xl border border-slate-200/90 p-3.5 sm:p-4 shadow-2xs flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-100 shrink-0 font-bold font-mono text-sm">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex items-center gap-4 min-h-[108px]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/60 shrink-0 font-bold font-mono text-base shadow-2xs">
                     R²
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
                       <span>R² Score</span>
-                      <Info className="h-3 w-3 text-slate-400" title="Coefficient of Determination (R-squared)" />
+                      <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" title="Coefficient of Determination (R-squared)" />
                     </div>
-                    <p className="font-mono text-base sm:text-lg font-bold text-indigo-600 truncate mt-0.5">
+                    <p className="font-mono text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-400 truncate">
                       {forecastResult?.metrics?.r2 !== undefined ? Number(forecastResult.metrics.r2).toFixed(3) : '—'}
                     </p>
                   </div>
@@ -1357,22 +1340,22 @@ export default function ForecastsPage() {
               </div>
 
               {/* Model Insights Card */}
-              <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all">
-                <div className="flex items-start sm:items-center gap-4 min-w-0">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100 shrink-0 shadow-2xs">
-                    <Lightbulb className="h-5 w-5" />
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-7 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-5 transition-all">
+                <div className="flex items-start sm:items-center gap-4.5 min-w-0">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shrink-0 shadow-2xs">
+                    <Lightbulb className="h-6 w-6" />
                   </div>
-                  <div className="space-y-1 min-w-0 py-0.5">
-                    <h4 className="text-xs sm:text-sm font-bold text-slate-900">
+                  <div className="space-y-1.5 min-w-0 py-0.5">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
                       Model Insights
                     </h4>
-                    <p className="text-xs text-slate-600 leading-relaxed">
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                       {forecastResult ? (
                         <>
-                          Selected <strong className="text-slate-900 font-semibold">{MODEL_LABELS[forecastResult.model] || forecastResult.model}</strong> across {forecastResult.historical_points || 0} observations.
+                          Selected <strong className="text-slate-900 dark:text-slate-100 font-semibold">{MODEL_LABELS[forecastResult.model] || forecastResult.model}</strong> across {forecastResult.historical_points || 0} observations.
                           {forecastResult.metrics?.mape !== undefined && ` Model achieved ${Number(forecastResult.metrics.mape).toFixed(1)}% MAPE accuracy.`}
                           {anomaliesCount > 0 ? (
-                            <> Detected <strong className="text-amber-700 font-semibold">{anomaliesCount} statistical outliers</strong> in the historical data.</>
+                            <> Detected <strong className="text-amber-700 dark:text-amber-400 font-semibold">{anomaliesCount} statistical outliers</strong> in the historical data.</>
                           ) : (
                             <> Historical values remained within normal statistical boundaries.</>
                           )}

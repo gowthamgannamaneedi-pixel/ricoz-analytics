@@ -180,11 +180,57 @@ const getDatasetRows = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/analytics/datasets/:id/overview
+ * High-speed unified analytics endpoint returning summary, KPIs, trends, breakdowns, and initial rows in a single pass
+ */
+const getDatasetOverview = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const dataset = await getVerifiedDataset(id, req.user);
+    const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : (dataset.schema || []);
+    const dimensions = detectDatasetDimensions(schema);
+
+    // Parallel execution on pre-cached dataset records
+    const [summary, kpisResult, trends, regionBreakdown, channelBreakdown, productBreakdown, rowsResult] = await Promise.all([
+      queryDatasetSummary(dataset, req.user),
+      queryDatasetKpis(dataset, req.query, req.user),
+      queryDatasetTrends(dataset, req.query, req.user),
+      queryDatasetBreakdowns(dataset, dimensions.regionColumn || 'region', req.query, req.user),
+      queryDatasetBreakdowns(dataset, dimensions.channelColumn || 'channel', req.query, req.user),
+      queryDatasetBreakdowns(dataset, dimensions.productColumn || 'product', req.query, req.user),
+      queryDatasetRows(dataset, req.query, req.user)
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        summary,
+        kpis: kpisResult.kpis,
+        dimensions: kpisResult.dimensions,
+        trends,
+        regionBreakdown,
+        channelBreakdown,
+        productBreakdown,
+        rows: rowsResult.rows,
+        totalCount: rowsResult.totalCount,
+        schema
+      }
+    });
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ success: false, message: err.message });
+    }
+    next(err);
+  }
+};
+
 module.exports = {
   getDatasetSummary,
   getDatasetKpis,
   getDatasetTrends,
   getDatasetBreakdowns,
   getDatasetRows,
+  getDatasetOverview,
   getVerifiedDataset
 };
