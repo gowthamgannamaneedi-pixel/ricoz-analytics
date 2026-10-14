@@ -831,21 +831,26 @@ export default function DatasetTable({
           </div>
 
           {/* Page Size Selector */}
-          <Select
-            id="pagination-page-size"
-            value={pageSize}
-            onChange={(e) => {
-              setPageSize(Number(e.target.value));
-              setCurrentPage(1);
-            }}
-            aria-label="Datasets per page"
-            className="w-28"
-          >
-            <option value={5}>5 / page</option>
-            <option value={10}>10 / page</option>
-            <option value={25}>25 / page</option>
-            <option value={50}>50 / page</option>
-          </Select>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap hidden sm:inline">
+              Rows per page:
+            </span>
+            <Select
+              id="pagination-page-size"
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              aria-label="Rows per page"
+              className="w-44 sm:w-48"
+            >
+              <option value={5}>5 rows per page</option>
+              <option value={10}>10 rows per page</option>
+              <option value={25}>25 rows per page</option>
+              <option value={50}>50 rows per page</option>
+            </Select>
+          </div>
         </div>
       </div>
 

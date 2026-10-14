@@ -1259,7 +1259,10 @@ export default function DataSourcesPage() {
               </div>
 
               {/* Page size selector */}
-              <div className="w-28">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500 font-medium whitespace-nowrap hidden sm:inline">
+                  Rows per page:
+                </span>
                 <Select
                   value={pageSize}
                   onChange={(e) => {
@@ -1267,10 +1270,12 @@ export default function DataSourcesPage() {
                     setCurrentPage(1);
                   }}
                   size="sm"
+                  aria-label="Rows per page"
+                  className="w-44 sm:w-48"
                 >
-                  <option value={5}>5 / page</option>
-                  <option value={10}>10 / page</option>
-                  <option value={20}>20 / page</option>
+                  <option value={5}>5 rows per page</option>
+                  <option value={10}>10 rows per page</option>
+                  <option value={20}>20 rows per page</option>
                 </Select>
               </div>
             </div>

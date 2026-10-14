@@ -1003,23 +1003,23 @@ export default function ExecutiveDashboard({
               </button>
             </div>
 
-            {/* Donut and Legend Side-by-Side with Real Channels */}
+            {/* Donut and Legend with Proper Spacing and Full Visibility */}
             {channelData.length === 0 ? (
               <div className="py-8 text-center text-slate-400 dark:text-slate-500 text-sm">
                 No channel breakdown available for this dataset.
               </div>
             ) : (
-              <div className="mt-5 flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="mt-4 flex flex-col items-center gap-4">
                 {/* Donut Chart with Real Total Revenue */}
-                <div className="relative flex items-center justify-center h-44 w-44 shrink-0">
+                <div className="relative flex items-center justify-center h-36 w-36 shrink-0 mx-auto">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={channelData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={46}
-                        outerRadius={68}
+                        innerRadius={42}
+                        outerRadius={62}
                         paddingAngle={2.5}
                         dataKey="value"
                       >
@@ -1031,25 +1031,32 @@ export default function ExecutiveDashboard({
                   </ResponsiveContainer>
                   {/* Center Text with Real Total Sales */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-                    <span className="text-base font-black text-slate-900 dark:text-slate-100 font-sans tracking-tight">
+                    <span className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 font-sans tracking-tight">
                       {kpiData?.totalSales !== undefined && kpiData?.totalSales !== null
                         ? formatCurrency(kpiData.totalSales)
                         : '—'}
                     </span>
-                    <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Total Revenue</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Total Revenue</span>
                   </div>
                 </div>
 
-                {/* Real Channel Legend List */}
-                <div className="space-y-2.5 flex-1 w-full min-w-0">
+                {/* Real Channel Legend List: Full Width, No Truncation, Generous Spacing */}
+                <div className="space-y-2 w-full pt-1">
                   {channelData.map(c => (
-                    <div key={c.name} className="flex items-center justify-between text-xs sm:text-sm">
-                      <div className="flex items-center gap-2 truncate">
+                    <div
+                      key={c.name}
+                      className="flex items-center justify-between text-xs sm:text-sm py-1 border-b border-slate-100 dark:border-slate-800/60 last:border-b-0"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 pr-3">
                         <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
-                        <span className="text-slate-700 dark:text-slate-300 font-medium truncate">{c.name}</span>
+                        <span className="text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap" title={c.name}>
+                          {c.name}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2.5 shrink-0 ml-2">
-                        <span className="text-slate-400 dark:text-slate-500 font-mono text-xs">{c.share}%</span>
+                      <div className="flex items-center gap-3 shrink-0 ml-auto">
+                        <span className="text-slate-400 dark:text-slate-500 font-mono text-xs font-medium">
+                          {c.share}%
+                        </span>
                         <span className="font-bold text-slate-900 dark:text-slate-100 font-mono text-xs sm:text-sm">
                           {formatCurrency(c.value)}
                         </span>

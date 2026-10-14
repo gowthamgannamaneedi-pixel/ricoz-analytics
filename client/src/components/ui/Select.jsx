@@ -307,7 +307,7 @@ export function Select({
         )}
 
         {/* Selected Label Display */}
-        <span className="truncate pr-4 block font-semibold text-slate-800 dark:text-slate-100">
+        <span className="truncate pr-1 block font-semibold text-slate-800 dark:text-slate-100">
           {selectedOption ? selectedOption.label : (
             <span className="text-slate-400 dark:text-slate-500 font-normal">{placeholder}</span>
           )}
