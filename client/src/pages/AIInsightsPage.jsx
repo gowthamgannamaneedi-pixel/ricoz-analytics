@@ -903,36 +903,38 @@ export default function AIInsightsPage() {
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 4. FILTER / SEARCH TOOLBAR                                         */}
+      {/* 4. FILTER / SEARCH TOOLBAR (Row 1: Filters; Row 2: View Switcher)  */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-        {/* Search Input */}
-        <div className="relative flex-1 min-w-[240px]">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search insights by title, description, or tags..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs transition"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
+      <div className="space-y-3.5">
+        {/* Row 1: Search -> All Types -> All Impact Levels -> All Statuses (Horizontal desktop row) */}
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full">
+          {/* Search Input (wider) */}
+          <div className="relative flex-1 sm:w-64 md:w-80 min-w-[200px]">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search insights by title, description, or tags..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs transition"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
 
-        {/* Dropdown Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Type Filter */}
+          {/* Type Filter (compact, equal width and height) */}
           <Select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="min-w-[140px]"
+            className="w-36 sm:w-40 shrink-0"
+            size="md"
           >
             <option value="all">All Types</option>
             <option value="growth">Growth</option>
@@ -945,11 +947,12 @@ export default function AIInsightsPage() {
             <option value="relationship">Relationship</option>
           </Select>
 
-          {/* Impact Level Filter */}
+          {/* Impact Level Filter (compact, equal width and height) */}
           <Select
             value={impactFilter}
             onChange={(e) => setImpactFilter(e.target.value)}
-            className="min-w-[160px]"
+            className="w-36 sm:w-40 shrink-0"
+            size="md"
           >
             <option value="all">All Impact Levels</option>
             <option value="critical">Critical</option>
@@ -958,11 +961,12 @@ export default function AIInsightsPage() {
             <option value="low">Low</option>
           </Select>
 
-          {/* Status Filter */}
+          {/* Status Filter (compact, equal width and height) */}
           <Select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="min-w-[170px]"
+            className="w-36 sm:w-40 shrink-0"
+            size="md"
           >
             <option value="active">All Statuses (Active)</option>
             <option value="dismissed">Dismissed</option>
@@ -973,19 +977,20 @@ export default function AIInsightsPage() {
             <ResetButton
               onClick={resetFilters}
               size="default"
+              title="Reset Search and Filters"
             />
           )}
+        </div>
 
-          <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
-
-          {/* View Mode Toggle */}
+        {/* Row 2: View Mode Toggle aligned below filter row with deliberate spacing */}
+        <div className="flex items-center">
           <div className="flex items-center gap-1 border border-slate-200 rounded-xl p-1 bg-white shadow-2xs">
             <button
               onClick={() => setViewMode('card')}
               className={`h-8 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
                 viewMode === 'card'
                   ? 'bg-rose-600 text-white shadow-2xs'
-                  : 'text-slate-600 hover:bg-white'
+                  : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -996,7 +1001,7 @@ export default function AIInsightsPage() {
               className={`h-8 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
                 viewMode === 'table'
                   ? 'bg-rose-600 text-white shadow-2xs'
-                  : 'text-slate-600 hover:bg-white'
+                  : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
               <TableIcon className="w-3.5 h-3.5" />

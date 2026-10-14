@@ -425,6 +425,27 @@ export default function SettingsPage() {
       {/* 1. PAGE HEADER                                                     */}
       {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="space-y-4 pt-1">
+        {/* Breadcrumb Navigation */}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="hover:text-slate-600 transition-colors focus:outline-hidden"
+          >
+            Workspace
+          </button>
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="hover:text-slate-600 transition-colors focus:outline-hidden"
+          >
+            Production
+          </button>
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+          <span className="text-slate-900 font-bold">Settings</span>
+        </nav>
+
         <div className="flex items-start gap-3.5">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20 shrink-0 mt-0.5">
             <Settings className="h-6 w-6" />

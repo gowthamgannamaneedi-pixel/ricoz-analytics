@@ -631,15 +631,16 @@ export default function DataQualityPage() {
             </div>
           </div>
 
-          {/* Right Action Controls Toolbar matching Wireframe */}
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start xl:self-auto">
-            {/* Dataset Selector Dropdown */}
+          {/* Right Action Controls Toolbar (Compact, grouped, and aligned) */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 shrink-0 self-start xl:self-auto">
+            {/* Dataset Selector Dropdown (Compact, usable width with truncation) */}
             <Select
               id="dataset-select"
               value={selectedDatasetId}
               onChange={(e) => setSelectedDatasetId(e.target.value)}
               icon={Database}
-              className="min-w-[220px]"
+              className="w-56 sm:w-60 lg:w-64 shrink-0"
+              size="md"
             >
               {datasets.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -649,7 +650,7 @@ export default function DataQualityPage() {
             </Select>
 
             {/* Scan Mode Pill Toggle */}
-            <div className="flex items-center rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
+            <div className="flex items-center h-10 rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs shrink-0">
               <button
                 type="button"
                 onClick={() => setScanMode('full')}
@@ -1135,10 +1136,10 @@ export default function DataQualityPage() {
           {/* ───────────────────────────────────────────────────────────────── */}
           {activeTab === 'matrix' && (
             <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-              {/* Header + Controls Toolbar */}
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+              {/* Header + Controls Toolbar (Horizontal Desktop Row: Search -> All Columns -> All Data Types -> Reset) */}
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 shrink-0">
                     <Layers className="h-4 w-4" />
                   </div>
                   <div>
@@ -1151,26 +1152,51 @@ export default function DataQualityPage() {
                   </div>
                 </div>
 
-                {/* Right Filter Controls Row */}
-                <div className="flex flex-wrap items-center gap-2.5">
-                  {/* Scope filter */}
+                {/* Right Filter Controls Row (Search -> All Columns -> All Data Types -> Reset) */}
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full xl:w-auto">
+                  {/* Search input (wider) */}
+                  <div className="relative flex-1 sm:w-64 md:w-72 min-w-[180px]">
+                    <Search className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      id="search-columns-input"
+                      placeholder="Search columns..."
+                      value={columnSearch}
+                      onChange={(e) => setColumnSearch(e.target.value)}
+                      className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 hover:border-slate-300 focus:border-rose-600 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-100 transition shadow-2xs"
+                    />
+                    {columnSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setColumnSearch('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                        title="Clear column search"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Scope filter (All Columns, compact equal width) */}
                   <Select
                     id="filter-column-scope"
                     value={scopeFilter}
                     onChange={(e) => setScopeFilter(e.target.value)}
-                    className="min-w-[170px]"
+                    className="w-40 sm:w-44 shrink-0"
+                    size="md"
                   >
                     <option value="all">All Columns ({columnMetrics.length})</option>
                     <option value="missing">With Missing Values</option>
                     <option value="pk">Candidate Keys</option>
                   </Select>
 
-                  {/* Data Type filter */}
+                  {/* Data Type filter (All Data Types, compact equal width) */}
                   <Select
                     id="filter-column-type"
                     value={typeFilter}
                     onChange={(e) => setTypeFilter(e.target.value)}
-                    className="min-w-[150px]"
+                    className="w-40 sm:w-44 shrink-0"
+                    size="md"
                   >
                     <option value="all">All Data Types</option>
                     <option value="string">String / Text</option>
@@ -1186,28 +1212,6 @@ export default function DataQualityPage() {
                     title="Reset Search and Filters"
                   />
                 </div>
-              </div>
-
-              {/* Search Bar */}
-              <div className="relative w-full max-w-md">
-                <Search className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  id="search-columns-input"
-                  placeholder="Search columns..."
-                  value={columnSearch}
-                  onChange={(e) => setColumnSearch(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 bg-slate-50/70 text-xs sm:text-sm text-slate-800 placeholder-slate-400 hover:border-slate-300 focus:border-rose-600 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-100 transition shadow-2xs"
-                />
-                {columnSearch && (
-                  <button
-                    type="button"
-                    onClick={() => setColumnSearch('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
               </div>
 
               {/* Table */}

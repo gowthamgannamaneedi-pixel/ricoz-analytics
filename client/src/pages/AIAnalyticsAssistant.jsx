@@ -61,6 +61,7 @@ import {
   deleteAIConversation,
   getDatasets
 } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const PIE_COLORS = ['#E11D48', '#7C3AED', '#059669', '#D97706', '#DB2777', '#0891B2', '#4B5563'];
@@ -259,6 +260,7 @@ function FormattedMessageContent({ content, isUser }) {
 }
 
 export default function AIAnalyticsAssistant() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [conversations, setConversations] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
@@ -700,9 +702,33 @@ export default function AIAnalyticsAssistant() {
       {/* ------------------------------------------------------------------ */}
       {/* TOP HEADER BAR                                                     */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-200 pb-4 shrink-0">
-        {/* Left Title & Status */}
-        <div className="flex items-start gap-3.5 min-w-0 flex-1">
+      <div className="space-y-3 border-b border-slate-200 pb-4 shrink-0">
+        {/* Breadcrumb Navigation matching Reference */}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="hover:text-slate-600 transition-colors focus:outline-hidden"
+          >
+            Workspace
+          </button>
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="hover:text-slate-600 transition-colors focus:outline-hidden"
+          >
+            Production
+          </button>
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+          <span className="text-slate-900 font-bold">
+            AI Analytics Assistant
+          </span>
+        </nav>
+
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          {/* Left Title & Status */}
+          <div className="flex items-start gap-3.5 min-w-0 flex-1">
           <button
             onClick={() => setMobileHistoryOpen(prev => !prev)}
             className="lg:hidden p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition shrink-0 mt-0.5"
@@ -746,7 +772,7 @@ export default function AIAnalyticsAssistant() {
             <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${datasetDropdownOpen ? 'rotate-180' : ''}`} />
           </div>
 
-          {/* Dataset Dropdown Menu */}
+        {/* Dataset Dropdown Menu */}
           {datasetDropdownOpen && (
             <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-white border border-slate-200 shadow-xl py-2 z-50 animate-fade-in text-xs">
               <div className="px-4 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
@@ -790,6 +816,7 @@ export default function AIAnalyticsAssistant() {
           )}
         </div>
       </div>
+    </div>
 
       {/* ------------------------------------------------------------------ */}
       {/* MAIN ASSISTANT WORKSPACE                                           */}

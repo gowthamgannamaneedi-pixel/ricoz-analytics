@@ -38,6 +38,7 @@ import {
   resolveIncident,
   getMetrics
 } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AlertModal from '../components/AlertModal';
 import { Button } from '../components/ui/Button';
@@ -93,6 +94,7 @@ const CONDITION_LABELS = {
 };
 
 export default function AlertsPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const isViewer = user?.role === 'viewer';
   const isAnalyst = user?.role === 'analyst';
@@ -317,7 +319,22 @@ export default function AlertsPage() {
       )}
 
       {/* Page Header */}
-      <div className="space-y-4 border-b border-slate-200 pb-5">
+      <div className="space-y-3 border-b border-slate-200 pb-5">
+        {/* Breadcrumb Navigation matching Reference */}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+          <span className="hover:text-slate-600 transition cursor-pointer" onClick={() => navigate('/dashboard')}>
+            Workspace
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+          <span className="hover:text-slate-600 transition cursor-pointer" onClick={() => navigate('/dashboard')}>
+            Production
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+          <span className="text-slate-900 font-bold">
+            Real-Time Alerts & Incident Center
+          </span>
+        </nav>
+
         <div className="flex items-start gap-3.5">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20 shrink-0 mt-0.5">
             <Bell className="h-6 w-6" />

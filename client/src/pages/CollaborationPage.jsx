@@ -736,35 +736,40 @@ export default function CollaborationPage() {
       {/* ------------------------------------------------------------------ */}
       {/* 4. FILTER / SEARCH TOOLBAR (FOR RESOURCE TABS)                     */}
       {/* ------------------------------------------------------------------ */}
+      {/* ------------------------------------------------------------------ */}
+      {/* 4. FILTER / SEARCH TOOLBAR (FOR RESOURCE TABS)                     */}
+      {/* ------------------------------------------------------------------ */}
       {activeTab !== 'teams' && (
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
-          {/* Search Input */}
-          <div className="relative flex-1 min-w-[240px]">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search dashboards, reports, or insights..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 bg-slate-50/60 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
+        <div className="space-y-3.5 bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+          {/* Row 1: Search -> All Types -> All Access Levels (Horizontal desktop row) */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full">
+            {/* Search Input (wider) */}
+            <div className="relative flex-1 sm:w-64 md:w-80 min-w-[200px]">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search dashboards, reports, or insights..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 bg-slate-50/60 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  title="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
 
-          {/* Filter Dropdowns */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Type Filter */}
+            {/* Type Filter (compact, equal width and height) */}
             <Select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="min-w-[140px]"
+              className="w-36 sm:w-40 shrink-0"
+              size="md"
             >
               <option value="all">All Types</option>
               <option value="dashboard">Dashboards</option>
@@ -772,11 +777,12 @@ export default function CollaborationPage() {
               <option value="ai_insight">AI Insights</option>
             </Select>
 
-            {/* Access Filter */}
+            {/* Access Filter (compact, equal width and height) */}
             <Select
               value={accessFilter}
               onChange={(e) => setAccessFilter(e.target.value)}
-              className="min-w-[160px]"
+              className="w-36 sm:w-40 shrink-0"
+              size="md"
             >
               <option value="all">All Access Levels</option>
               <option value="viewer">View Only</option>
@@ -793,12 +799,13 @@ export default function CollaborationPage() {
                   setAccessFilter('all');
                 }}
                 size="default"
+                title="Reset Search and Filters"
               />
             )}
+          </div>
 
-            <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
-
-            {/* View Mode Switcher */}
+          {/* Row 2: View Mode Switcher neatly aligned below the filter row */}
+          <div className="flex items-center">
             <div className="flex items-center gap-1 border border-slate-200 rounded-xl p-1 bg-slate-50/70">
               <button
                 onClick={() => setViewMode('card')}

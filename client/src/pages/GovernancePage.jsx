@@ -375,17 +375,40 @@ export default function GovernancePage() {
       {/* 1. NATIVE HEADER: Light Enterprise Header matching application */}
       {/* ------------------------------------------------------------- */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
-        <div className="flex items-center gap-3.5">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 shadow-2xs shrink-0">
-            <Shield className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Workspace Governance & Audit Logs
-            </h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Enterprise tenant administration, team access controls, RBAC matrix, and immutable audit trails
-            </p>
+        <div>
+          {/* Breadcrumb Navigation */}
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400 mb-2">
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard')}
+              className="hover:text-slate-600 transition-colors focus:outline-hidden"
+            >
+              Workspace
+            </button>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard')}
+              className="hover:text-slate-600 transition-colors focus:outline-hidden"
+            >
+              Production
+            </button>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+            <span className="text-slate-900 font-bold">Workspace Governance & Audit Logs</span>
+          </nav>
+
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 shadow-2xs shrink-0">
+              <Shield className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Workspace Governance & Audit Logs
+              </h1>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Enterprise tenant administration, team access controls, RBAC matrix, and immutable audit trails
+              </p>
+            </div>
           </div>
         </div>
 
@@ -483,6 +506,7 @@ export default function GovernancePage() {
           </button>
 
           <button
+            id="rbac-matrix-tab-btn"
             onClick={() => setActiveTab('permissions')}
             className={`flex items-center gap-2 py-3 px-1 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'permissions'
@@ -1186,8 +1210,8 @@ export default function GovernancePage() {
                                     <Check className="w-3 h-3 text-emerald-600" /> Allowed
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
-                                    <X className="w-3 h-3 text-slate-400" /> Denied
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                                    <X className="w-3 h-3 text-rose-600" /> Denied
                                   </span>
                                 )}
                               </td>
@@ -1197,8 +1221,8 @@ export default function GovernancePage() {
                                     <Check className="w-3 h-3 text-emerald-600" /> Allowed
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
-                                    <X className="w-3 h-3 text-slate-400" /> Denied
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                                    <X className="w-3 h-3 text-rose-600" /> Denied
                                   </span>
                                 )}
                               </td>
@@ -1208,8 +1232,8 @@ export default function GovernancePage() {
                                     <Check className="w-3 h-3 text-emerald-600" /> Allowed
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
-                                    <X className="w-3 h-3 text-slate-400" /> Denied
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                                    <X className="w-3 h-3 text-rose-600" /> Denied
                                   </span>
                                 )}
                               </td>
@@ -1219,8 +1243,8 @@ export default function GovernancePage() {
                                     <Check className="w-3 h-3 text-emerald-600" /> Allowed
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
-                                    <X className="w-3 h-3 text-slate-400" /> Denied
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                                    <X className="w-3 h-3 text-rose-600" /> Denied
                                   </span>
                                 )}
                               </td>

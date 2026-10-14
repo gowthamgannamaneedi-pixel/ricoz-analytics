@@ -248,8 +248,10 @@ export function Select({
     lg: 'h-4.5 w-4.5 right-3.5'
   };
 
+  const hasExplicitWidth = /\bw-[^\s]+/.test(className);
+
   return (
-    <div className={`relative inline-block w-full ${className}`}>
+    <div className={`relative inline-block ${hasExplicitWidth ? '' : 'w-full'} ${className}`}>
       {/* Hidden native select for form serialization / accessibility */}
       <select
         ref={hiddenSelectRef}
@@ -281,6 +283,7 @@ export function Select({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={ariaLabel || ariaLabelProp || (typeof selectedOption?.label === 'string' ? selectedOption.label : placeholder)}
+        title={typeof selectedOption?.label === 'string' ? selectedOption.label : (typeof placeholder === 'string' ? placeholder : undefined)}
         className={[
           'group relative w-full text-left font-medium select-none',
           'flex items-center justify-between',

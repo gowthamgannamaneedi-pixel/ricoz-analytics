@@ -441,11 +441,11 @@ export default function DatasetTable({
           </span>
         </div>
 
-        {/* Right: Search + Status filter + Source filter */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
-          {/* Search bar */}
-          <div className="relative flex-1 sm:w-80 min-w-[220px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
+        {/* Right: Search + Status filter + Source filter (Horizontal desktop row) */}
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full lg:w-auto">
+          {/* Search bar (wider) */}
+          <div className="relative flex-1 sm:w-80 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
             <input
               type="text"
               id="datasets-search-input"
@@ -455,7 +455,7 @@ export default function DatasetTable({
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 py-2 pl-9 pr-8 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-850 focus:border-rose-600 dark:focus:border-rose-500 focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/40 focus:outline-hidden transition-all shadow-2xs"
+              className="w-full h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 pl-9 pr-8 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-850 focus:border-rose-600 dark:focus:border-rose-500 focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/40 focus:outline-hidden transition-all shadow-2xs"
             />
             {searchQuery && (
               <button
@@ -463,7 +463,7 @@ export default function DatasetTable({
                   setSearchQuery('');
                   setCurrentPage(1);
                 }}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
                 title="Clear search"
                 id="clear-search-btn"
               >
@@ -472,7 +472,7 @@ export default function DatasetTable({
             )}
           </div>
 
-          {/* Status Dropdown */}
+          {/* Status Dropdown (compact, equal width and height) */}
           <Select
             id="datasets-status-filter"
             value={statusFilter}
@@ -481,7 +481,8 @@ export default function DatasetTable({
               setCurrentPage(1);
             }}
             aria-label="Filter datasets by status"
-            className="min-w-[140px]"
+            className="w-36 sm:w-40 shrink-0"
+            size="md"
           >
             <option value="all">All Statuses</option>
             <option value="ready">Ready</option>
@@ -490,7 +491,7 @@ export default function DatasetTable({
             <option value="empty">Empty</option>
           </Select>
 
-          {/* Source Dropdown */}
+          {/* Source Dropdown (compact, equal width and height) */}
           <Select
             id="datasets-source-filter"
             value={sourceFilter}
@@ -499,7 +500,8 @@ export default function DatasetTable({
               setCurrentPage(1);
             }}
             aria-label="Filter datasets by source type"
-            className="min-w-[140px]"
+            className="w-36 sm:w-40 shrink-0"
+            size="md"
           >
             <option value="all">All Sources</option>
             <option value="csv">CSV Upload</option>
@@ -512,7 +514,7 @@ export default function DatasetTable({
             <button
               onClick={resetFilters}
               id="reset-filters-btn"
-              className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 px-2 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+              className="h-10 inline-flex items-center text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 px-2.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 transition shrink-0 cursor-pointer"
             >
               Reset
             </button>

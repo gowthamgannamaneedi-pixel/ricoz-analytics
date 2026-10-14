@@ -16,8 +16,8 @@ import {
   Calendar,
   Layers,
   Users,
-  Database,
-  BarChart3
+  BarChart3,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getBillingPlans, getBillingSubscription, createBillingCheckoutSession, cancelBillingSubscription } from '../services/api';
@@ -135,6 +135,27 @@ export default function BillingPage() {
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
           <div>
+            {/* Breadcrumb Navigation */}
+            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400 mb-2">
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard')}
+                className="hover:text-slate-600 transition-colors focus:outline-hidden"
+              >
+                Workspace
+              </button>
+              <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard')}
+                className="hover:text-slate-600 transition-colors focus:outline-hidden"
+              >
+                Production
+              </button>
+              <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+              <span className="text-slate-900 font-bold">Plans & Billing</span>
+            </nav>
+
             <div className="flex items-center gap-2 mb-1.5">
               <CreditCard className="h-5 w-5 text-rose-600" />
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">
@@ -149,32 +170,32 @@ export default function BillingPage() {
             </p>
           </div>
 
-          {/* Current Subscription Status Card */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-4.5 shadow-2xs min-w-[280px] shrink-0">
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <span className="text-xs text-slate-500 font-medium">Workspace Status</span>
+          {/* Current Subscription Status Card (Enlarged with comfortable padding and clear spacing) */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs min-w-[320px] sm:min-w-[360px] shrink-0 space-y-3 sm:space-y-3.5">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-xs sm:text-sm text-slate-500 font-medium">Workspace Status</span>
               {isActivePaid ? (
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/90 whitespace-nowrap shadow-2xs">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                   Active Paid
                 </span>
               ) : isExpired ? (
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200/90 whitespace-nowrap shadow-2xs">
                   <Clock className="w-3.5 h-3.5 text-rose-600" />
                   Free Trial Expired
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200/90 whitespace-nowrap shadow-2xs">
                   <Clock className="w-3.5 h-3.5 text-rose-600" />
                   {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining
                 </span>
               )}
             </div>
-            <div className="text-sm font-bold text-slate-900 capitalize">
-              {currentSub?.plan || 'Starter'} Plan {isActivePaid ? `(${currentSub?.billingInterval || 'Monthly'})` : '(14-Day Free Trial)'}
+            <div className="text-base sm:text-lg font-bold text-slate-900 capitalize leading-snug">
+              {currentSub?.plan || 'Enterprise'} Plan {isActivePaid ? `(${currentSub?.billingInterval || 'Monthly'})` : '(Monthly)'}
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">
-              Organization: <span className="font-semibold text-slate-700">{user?.organization_name || 'Enterprise'}</span>
+            <p className="text-xs text-slate-500">
+              Organization: <span className="font-semibold text-slate-700">{user?.organization_name || 'Ricoz Primary Organization'}</span>
             </p>
           </div>
         </div>

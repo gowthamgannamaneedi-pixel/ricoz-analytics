@@ -1340,16 +1340,16 @@ export default function ForecastsPage() {
               </div>
 
               {/* Model Insights Card */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-7 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-5 transition-all">
-                <div className="flex items-start sm:items-center gap-4.5 min-w-0">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shrink-0 shadow-2xs">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-7 shadow-2xs transition-all">
+                <div className="flex items-start gap-4 sm:gap-5 min-w-0">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shrink-0 shadow-2xs mt-0.5">
                     <Lightbulb className="h-6 w-6" />
                   </div>
-                  <div className="space-y-1.5 min-w-0 py-0.5">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  <div className="space-y-1.5 min-w-0 flex-1">
+                    <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
                       Model Insights
                     </h4>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                       {forecastResult ? (
                         <>
                           Selected <strong className="text-slate-900 dark:text-slate-100 font-semibold">{MODEL_LABELS[forecastResult.model] || forecastResult.model}</strong> across {forecastResult.historical_points || 0} observations.
@@ -1365,9 +1365,6 @@ export default function ForecastsPage() {
                       )}
                     </p>
                   </div>
-                </div>
-                <div className="hidden sm:flex items-center text-slate-400 shrink-0">
-                  <ChevronRight className="h-4 w-4" />
                 </div>
               </div>
             </div>
