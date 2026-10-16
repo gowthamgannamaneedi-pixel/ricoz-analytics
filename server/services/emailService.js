@@ -782,32 +782,36 @@ class EmailService {
 
     console.log(`[EmailService] ✉️ Verification email dispatch initiated for: ${email} via ${provider}`);
 
-    // Check if recipient is a test or placeholder address
+    // Check if recipient is a test or placeholder address (e.g. example.com, *.test)
     const isTestRecipient = this.isTestOrPlaceholderRecipient(email);
     const mockMode = process.env.MOCK_EMAIL === 'true' || process.env.NODE_ENV === 'test';
-    const testInbox = process.env.TEST_EMAIL_INBOX || process.env.TEST_EMAIL_RECIPIENT;
+    const testRoutingEnabled = process.env.ENABLE_TEST_EMAIL_ROUTING === 'true';
+    const testInbox = (testRoutingEnabled || process.env.NODE_ENV === 'test')
+      ? (process.env.TEST_EMAIL_INBOX || process.env.TEST_EMAIL_RECIPIENT)
+      : null;
 
-    // In mock mode or when an unrouteable test address is used without a test inbox, mock the dispatch safely
-    if (isTestRecipient && (mockMode || !testInbox)) {
-      console.log(`[EmailService] 🧪 Safe Mock: Skipping SMTP delivery for placeholder address "${email}" (Credentials & tokens safely generated in DB)`);
-      return {
-        attempted: true,
-        mocked: true,
-        success: true,
-        recipient: email,
-        provider: 'MockTestService',
-        messageId: `<mock-${Date.now()}@ricozanalytics.test>`,
-        response: '250 Mock email accepted for test recipient'
-      };
-    }
-
-    // Determine actual delivery destination
+    // Real users' emails are NEVER routed to TEST_EMAIL_INBOX; they are always delivered directly to their submitted email!
     let deliveryRecipient = email;
     let isTestRedirect = false;
-    if (isTestRecipient && testInbox) {
-      deliveryRecipient = testInbox;
-      isTestRedirect = true;
-      console.log(`[EmailService] 🧪 Routing test verification email for placeholder "${email}" -> configured test inbox: "${testInbox}"`);
+
+    if (isTestRecipient) {
+      if (testInbox && !mockMode) {
+        deliveryRecipient = testInbox;
+        isTestRedirect = true;
+        console.log(`[EmailService] 🧪 [Explicit Test Routing Active] Placeholder "${email}" routed to test inbox: "${testInbox}"`);
+      } else {
+        // Safe mock for placeholder domains when test inbox routing is not explicitly enabled or mock mode is requested
+        console.log(`[EmailService] 🧪 Safe Mock: Skipping SMTP delivery for placeholder address "${email}" (Credentials & tokens safely generated in DB)`);
+        return {
+          attempted: true,
+          mocked: true,
+          success: true,
+          recipient: email,
+          provider: 'MockTestService',
+          messageId: `<mock-${Date.now()}@ricozanalytics.test>`,
+          response: '250 Mock email accepted for test placeholder'
+        };
+      }
     }
 
     if (!this.isConfigured()) {

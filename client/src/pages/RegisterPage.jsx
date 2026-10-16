@@ -26,6 +26,7 @@ export default function RegisterPage() {
   const inputRefs = useRef([]);
 
   const [error, setError] = useState('');
+  const [errorData, setErrorData] = useState(null);
   const [infoMessage, setInfoMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -66,7 +67,10 @@ export default function RegisterPage() {
       ...prev,
       [e.target.name]: e.target.value
     }));
-    if (error) setError('');
+    if (error) {
+      setError('');
+      setErrorData(null);
+    }
   };
 
   // Handle Form Registration
@@ -100,6 +104,7 @@ export default function RegisterPage() {
 
     setIsLoading(true);
     setError('');
+    setErrorData(null);
     setInfoMessage('');
 
     try {
@@ -114,9 +119,10 @@ export default function RegisterPage() {
       setOtpDigits(['', '', '', '', '', '']);
       setResendCountdown(60);
       setStep('verify');
-      setInfoMessage('A 6-digit verification code has been sent to your email.');
+      setInfoMessage(result?.message || 'A 6-digit verification code has been sent to your email.');
     } catch (err) {
       setError(err.message || 'Failed to create account.');
+      setErrorData(err.data || null);
     } finally {
       setIsLoading(false);
     }
@@ -297,9 +303,42 @@ export default function RegisterPage() {
 
             <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-sm space-y-5">
               {error && (
-                <div className="flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
-                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600" />
-                  <span className="font-medium">{error}</span>
+                <div className="rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/40 p-3.5 text-xs text-rose-800 dark:text-rose-200 space-y-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
+                    <span className="font-medium leading-relaxed">{error}</span>
+                  </div>
+
+                  {/* Contextual actions if email already exists or is unverified */}
+                  {(error.toLowerCase().includes('already exists') || errorData?.code === 'EMAIL_ALREADY_VERIFIED' || errorData?.isVerified || errorData?.isExistingUnverified) && (
+                    <div className="pt-2 flex flex-wrap items-center gap-3 border-t border-rose-200/60 dark:border-rose-800/60 text-[11px]">
+                      <Link
+                        to="/login"
+                        state={{ email: formData.email }}
+                        className="font-semibold text-rose-700 dark:text-rose-300 hover:underline flex items-center gap-1"
+                      >
+                        Sign in to account &rarr;
+                      </Link>
+                      <Link
+                        to="/forgot-password"
+                        state={{ email: formData.email }}
+                        className="text-slate-600 dark:text-slate-400 hover:underline"
+                      >
+                        Reset password
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStep('verify');
+                          setInfoMessage('Enter the 6-digit verification code sent to your email, or request a fresh code.');
+                          setError('');
+                        }}
+                        className="font-semibold text-rose-700 dark:text-rose-300 hover:underline"
+                      >
+                        Verify account &rarr;
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
