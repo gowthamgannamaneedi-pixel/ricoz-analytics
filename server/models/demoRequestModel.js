@@ -80,7 +80,8 @@ class DemoRequestModel {
     try {
       const sql = `
         INSERT INTO demo_requests (
-          id,
+          name,
+          email,
           full_name,
           work_email,
           company,
@@ -88,14 +89,16 @@ class DemoRequestModel {
           primary_data_source,
           phone,
           notes,
-          metadata
+          metadata,
+          status
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *;
       `;
 
       const result = await db.query(sql, [
-        id,
+        recordData.full_name,
+        recordData.work_email,
         recordData.full_name,
         recordData.work_email,
         recordData.company,
@@ -103,12 +106,14 @@ class DemoRequestModel {
         recordData.primary_data_source,
         recordData.phone,
         recordData.notes,
-        JSON.stringify(recordData.metadata)
+        JSON.stringify(recordData.metadata),
+        'pending'
       ]);
 
       const dbRecord = result?.rows?.[0] || recordData;
       return {
         ...dbRecord,
+        id: dbRecord.id || id,
         supabase_stored: supabaseStored || Boolean(supabaseRecord)
       };
     } catch (dbErr) {

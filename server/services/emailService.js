@@ -1,8 +1,10 @@
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const nodemailer = require('nodemailer');
 
 /**
  * Enterprise Email Dispatch Service for Scheduled Reports, Alerts & Inbound Demo Inquiries
- * Configured with Zoho Mail SMTP integration.
+ * Configured with dynamic SMTP integration (Gmail, Zoho Mail, or custom SMTP).
  */
 class EmailService {
   constructor() {
@@ -10,12 +12,23 @@ class EmailService {
     this._initTransporter();
   }
 
+  _getProviderName(host = '') {
+    const h = (host || '').toLowerCase();
+    if (h.includes('gmail.com')) return 'Gmail';
+    if (h.includes('zoho.com')) return 'Zoho Mail';
+    if (h.includes('sendgrid.net')) return 'SendGrid';
+    if (h.includes('mailgun.org')) return 'Mailgun';
+    if (h.includes('office365.com') || h.includes('outlook.com')) return 'Microsoft 365';
+    return 'Custom SMTP';
+  }
+
   _initTransporter() {
-    const host = process.env.SMTP_HOST || 'smtp.zoho.com';
-    const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
-    const user = process.env.SMTP_USER || 'care@ricoz.in';
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 465;
+    const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASSWORD;
     const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+    const provider = this._getProviderName(host);
 
     if (host && user && pass) {
       try {
@@ -33,9 +46,9 @@ class EmailService {
         });
         const maskedUser = user.length > 4 ? `${user.slice(0, 2)}***${user.slice(-2)}` : '***';
         const isPlaceholder = pass.includes('your_') || pass.includes('placeholder') || pass === 'your_zoho_app_password_here';
-        console.log(`[EmailService] ✅ Zoho SMTP Transporter initialized (Host: ${host}:${port}, Secure: ${secure}, Sender: ${maskedUser}, App Password: ${isPlaceholder ? 'Placeholder' : 'Configured'})`);
+        console.log(`[EmailService] ✅ ${provider} SMTP Transporter initialized (Host: ${host}:${port}, Secure: ${secure}, Sender: ${maskedUser}, Password: ${isPlaceholder ? 'Placeholder' : 'Configured'})`);
       } catch (err) {
-        console.error('[EmailService] ❌ Zoho SMTP transport initialization exception:', err.message);
+        console.error(`[EmailService] ❌ ${provider} SMTP transport initialization exception:`, err.message);
         this.transporter = null;
       }
     } else {
@@ -61,16 +74,17 @@ class EmailService {
 
   /**
    * Safe Diagnostic Status Inspector
-   * @returns {{ configured: boolean, host?: string, port?: number, secure?: boolean, senderUser?: string, fromEmail: string, demoRecipient: string, isPlaceholderPassword: boolean, missingVars: Array<string> }}
+   * @returns {{ configured: boolean, provider: string, host?: string, port?: number, secure?: boolean, senderUser?: string, fromEmail: string, demoRecipient: string, isPlaceholderPassword: boolean, missingVars: Array<string> }}
    */
   getSmtpStatus() {
-    const host = process.env.SMTP_HOST || 'smtp.zoho.com';
-    const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
-    const user = process.env.SMTP_USER || 'care@ricoz.in';
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 465;
+    const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASSWORD;
     const secure = process.env.SMTP_SECURE === 'true' || port === 465;
-    const fromEmail = process.env.SMTP_FROM || process.env.REPORT_FROM_EMAIL || 'care@ricoz.in';
-    const demoRecipient = process.env.DEMO_REQUEST_EMAIL || 'care@ricoz.in';
+    const fromEmail = process.env.SMTP_FROM || process.env.REPORT_FROM_EMAIL || user || 'care@ricoz.in';
+    const demoRecipient = process.env.DEMO_REQUEST_EMAIL || user || 'care@ricoz.in';
+    const provider = this._getProviderName(host);
 
     const missingVars = [];
     if (!host) missingVars.push('SMTP_HOST');
@@ -82,6 +96,7 @@ class EmailService {
 
     return {
       configured: missingVars.length === 0,
+      provider,
       host: host || null,
       port: host ? port : null,
       secure: host ? secure : null,
@@ -95,7 +110,7 @@ class EmailService {
 
   /**
    * Test live SMTP handshake connection
-   * @returns {Promise<{ configured: boolean, success: boolean, message: string, errorCode?: string }>}
+   * @returns {Promise<{ configured: boolean, success: boolean, provider: string, message: string, errorCode?: string }>}
    */
   async verifyConnection() {
     if (!this.isConfigured()) {
@@ -103,26 +118,32 @@ class EmailService {
       return {
         configured: false,
         success: false,
-        message: `Zoho SMTP not configured. Missing: ${status.missingVars.join(', ')}`
+        provider: status.provider,
+        message: `${status.provider} SMTP not configured. Missing: ${status.missingVars.join(', ')}`
       };
     }
+
+    const host = process.env.SMTP_HOST || '';
+    const provider = this._getProviderName(host);
 
     try {
       await this.transporter.verify();
       return {
         configured: true,
         success: true,
-        message: 'Zoho SMTP handshake and authentication verified successfully.'
+        provider,
+        message: `${provider} SMTP connection and authentication verified successfully.`
       };
     } catch (err) {
       let advice = err.message;
       if (err.code === 'EAUTH' || err.message.includes('535') || err.message.includes('Authentication Failed')) {
-        advice = 'Zoho SMTP Authentication Failed (535 5.7.8). Please provide a dedicated Zoho App Password (from accounts.zoho.com -> Security -> App Passwords) in SMTP_PASSWORD.';
+        advice = `${provider} SMTP Authentication Failed (535 5.7.8). Check your credentials / App Password in SMTP_PASSWORD.`;
       }
       return {
         configured: true,
         success: false,
-        message: `Zoho SMTP connection verification failed: ${advice}`,
+        provider,
+        message: `${provider} SMTP connection verification failed: ${advice}`,
         errorCode: err.code || 'EAUTH'
       };
     }
@@ -332,7 +353,136 @@ class EmailService {
   }
 
   /**
-   * Send Enterprise Demo Request Notification Email to the Ricoz Team via Zoho Mail SMTP
+   * Safe Diagnostic Test Email Dispatcher
+   * Sends a single diagnostic test email to the specified recipient.
+   * @param {{ recipient: string, subject?: string }} options
+   * @returns {Promise<{ attempted: boolean, success: boolean, recipient: string, messageId?: string, response?: string, error?: string, provider?: string }>}
+   */
+  async sendTestEmail({ recipient, subject = 'RicozAnalytics SMTP Test Verification' }) {
+    if (!recipient) {
+      return { attempted: false, success: false, recipient: '', error: 'Recipient email address is required' };
+    }
+
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const provider = this._getProviderName(host);
+    const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'ricozanalytics@gmail.com';
+
+    if (!this.isConfigured()) {
+      const status = this.getSmtpStatus();
+      return {
+        attempted: false,
+        success: false,
+        recipient,
+        provider,
+        error: `${provider} SMTP transport not configured. Missing: ${status.missingVars.join(', ')}`
+      };
+    }
+
+    const timestamp = new Date().toISOString();
+    const formattedDate = new Date().toLocaleString('en-US', {
+      timeZone: 'Asia/Kolkata',
+      dateStyle: 'full',
+      timeStyle: 'long'
+    }) + ` (${new Date().toUTCString()})`;
+
+    const htmlContent = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b;">
+        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 20px 24px; border-radius: 8px; color: #ffffff; border-bottom: 3px solid #10b981;">
+          <h1 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">
+            <span style="color: #10b981;">RICOZ</span> ANALYTICS
+          </h1>
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8; font-weight: 500;">
+            SMTP Delivery Verification Dispatcher
+          </p>
+        </div>
+
+        <div style="padding: 24px 0 12px 0;">
+          <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">
+            Email Delivery Confirmed ✅
+          </h2>
+          <p style="font-size: 14px; color: #64748b; margin: 0; line-height: 1.5;">
+            This test email confirms that the <strong>${provider} SMTP</strong> transport configured on RicozAnalytics is active, authenticated, and successfully routing outbound messages to your mailbox.
+          </p>
+        </div>
+
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 16px 0; font-size: 13px;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 6px 0; color: #64748b; font-weight: 600; width: 35%;">Provider:</td>
+              <td style="padding: 6px 0; color: #0f172a; font-weight: 700;">${provider} SMTP</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Host:</td>
+              <td style="padding: 6px 0; color: #0f172a; font-family: monospace;">${host}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Sender:</td>
+              <td style="padding: 6px 0; color: #0f172a; font-family: monospace;">${fromEmail}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Target Recipient:</td>
+              <td style="padding: 6px 0; color: #10b981; font-weight: 700; font-family: monospace;">${recipient}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Timestamp:</td>
+              <td style="padding: 6px 0; color: #64748b; font-size: 12px;">${formattedDate}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 12px 16px; border-radius: 4px; margin-bottom: 20px;">
+          <p style="margin: 0; font-size: 13px; color: #065f46; line-height: 1.4;">
+            <strong>Diagnostics Succeeded:</strong> Transport verification passed and Google SMTP accepted delivery.
+          </p>
+        </div>
+
+        <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
+          Sent by RicozAnalytics Automated Email Verification Service. All rights reserved.
+        </div>
+      </div>
+    `;
+
+    const mailOptions = {
+      from: `"RicozAnalytics" <${fromEmail}>`,
+      to: recipient,
+      subject: `[RicozAnalytics] ${subject}`,
+      html: htmlContent,
+      text: `RicozAnalytics Test Delivery: SMTP connection and delivery verified successfully.\nProvider: ${provider}\nSender: ${fromEmail}\nRecipient: ${recipient}\nTimestamp: ${timestamp}`
+    };
+
+    console.log(`[EmailService] 📨 Attempting test email dispatch to: ${recipient} via ${provider}`);
+
+    try {
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log(`[EmailService] ✅ Test email dispatched successfully to: ${recipient}`);
+      console.log(`  -> Message ID: ${info.messageId}`);
+      console.log(`  -> SMTP Response: ${info.response || '250 OK'}`);
+
+      return {
+        attempted: true,
+        success: true,
+        provider,
+        recipient,
+        messageId: info.messageId,
+        response: info.response || '250 OK',
+        accepted: info.accepted || [recipient],
+        rejected: info.rejected || []
+      };
+    } catch (err) {
+      console.error(`[EmailService] ❌ Test email dispatch failed to ${recipient}:`, err.message);
+      return {
+        attempted: true,
+        success: false,
+        provider,
+        recipient,
+        error: err.message,
+        code: err.code || 'SMTP_SEND_FAILED'
+      };
+    }
+  }
+
+  /**
+   * Send Enterprise Demo Request Notification Email to the Ricoz Team and Confirmation to the Prospect
    * @param {{
    *   fullName: string,
    *   workEmail: string,
@@ -343,7 +493,7 @@ class EmailService {
    *   notes?: string,
    *   requestedAt?: Date|string
    * }} options
-   * @returns {Promise<{ attempted: boolean, success: boolean, messageId?: string, response?: string, error?: string, recipient: string, missingVars?: Array<string> }>}
+   * @returns {Promise<{ attempted: boolean, success: boolean, messageId?: string, response?: string, error?: string, recipient: string, prospectConfirmation?: { attempted: boolean, success: boolean, messageId?: string, error?: string }, missingVars?: Array<string> }>}
    */
   async sendDemoRequestEmail({
     fullName,
@@ -355,8 +505,10 @@ class EmailService {
     notes = null,
     requestedAt = new Date()
   }) {
-    const recipient = process.env.DEMO_REQUEST_EMAIL || 'care@ricoz.in';
-    const fromEmail = process.env.SMTP_FROM || process.env.REPORT_FROM_EMAIL || 'care@ricoz.in';
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const provider = this._getProviderName(host);
+    const recipient = process.env.DEMO_REQUEST_EMAIL || process.env.SMTP_USER || 'care@ricoz.in';
+    const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'care@ricoz.in';
     const formattedDate = new Date(requestedAt).toLocaleString('en-US', {
       timeZone: 'Asia/Kolkata',
       dateStyle: 'full',
@@ -445,7 +597,7 @@ class EmailService {
 
         <!-- Footer -->
         <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; font-size: 12px; color: #94a3b8; text-align: center;">
-          <p style="margin: 0;">Sent automatically by RicozAnalytics Inbound Notification Engine via Zoho Mail</p>
+          <p style="margin: 0;">Sent automatically by RicozAnalytics Inbound Notification Engine via ${provider} Mail</p>
           <p style="margin: 4px 0 0 0;">Recipient: ${recipient}</p>
         </div>
       </div>
@@ -467,25 +619,80 @@ class EmailService {
 
     if (!this.isConfigured()) {
       const status = this.getSmtpStatus();
-      console.warn(`[EmailService] ⚠️ Zoho SMTP transport is NOT configured. Missing: ${status.missingVars.join(', ')}.`);
+      console.warn(`[EmailService] ⚠️ ${provider} SMTP transport is NOT configured. Missing: ${status.missingVars.join(', ')}.`);
       return {
         attempted: false,
         success: false,
         recipient,
         missingVars: status.missingVars,
-        error: `Zoho SMTP transport not configured. Missing environment variables: ${status.missingVars.join(', ')}`
+        error: `${provider} SMTP transport not configured. Missing environment variables: ${status.missingVars.join(', ')}`
       };
     }
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(`[EmailService] ✅ Zoho SMTP Dispatch SUCCESS:`);
+      console.log(`[EmailService] ✅ ${provider} SMTP Internal Dispatch SUCCESS:`);
       console.log(`  -> Recipient: ${recipient}`);
       console.log(`  -> Message ID: ${info.messageId}`);
       console.log(`  -> SMTP Response: ${info.response || '250 OK'}`);
-      console.log(`  -> Accepted: ${info.accepted ? info.accepted.join(', ') : 'none'}`);
-      if (info.rejected && info.rejected.length > 0) {
-        console.warn(`  -> Rejected: ${info.rejected.join(', ')}`);
+
+      // Prospect Automatic Confirmation Dispatch
+      let prospectConfirmation = { attempted: false, success: false };
+      if (workEmail && workEmail.includes('@')) {
+        try {
+          const prospectHtml = `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b;">
+              <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 20px 24px; border-radius: 8px; color: #ffffff;">
+                <h1 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">
+                  <span style="color: #ef4444;">RICOZ</span> ANALYTICS
+                </h1>
+                <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Demo Request Confirmation</p>
+              </div>
+              <div style="padding: 24px 0;">
+                <h2 style="font-size: 18px; color: #0f172a; margin: 0 0 12px 0;">Hello ${fullName},</h2>
+                <p style="font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 16px 0;">
+                  Thank you for your interest in RicozAnalytics. We have received your request for an enterprise architecture walkthrough for <strong>${company}</strong>.
+                </p>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 16px 0; font-size: 13px;">
+                  <p style="margin: 0 0 8px 0; color: #64748b;"><strong>What happens next:</strong></p>
+                  <ul style="margin: 0; padding-left: 20px; color: #334155; line-height: 1.6;">
+                    <li>An enterprise solutions architect will review your data requirements (${primaryDataSource}).</li>
+                    <li>We will reach out to schedule your personalized live cockpit demo.</li>
+                  </ul>
+                </div>
+                <p style="font-size: 14px; color: #475569; line-height: 1.6;">
+                  If you have urgent questions, reply directly to this email or contact us at <a href="mailto:${fromEmail}" style="color: #ef4444;">${fromEmail}</a>.
+                </p>
+              </div>
+              <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
+                © ${new Date().getFullYear()} RicozAnalytics Inc.
+              </div>
+            </div>
+          `;
+
+          const prospectInfo = await this.transporter.sendMail({
+            from: `"RicozAnalytics Team" <${fromEmail}>`,
+            to: workEmail,
+            subject: `We've received your RicozAnalytics demo request, ${fullName}`,
+            html: prospectHtml
+          });
+
+          prospectConfirmation = {
+            attempted: true,
+            success: true,
+            recipient: workEmail,
+            messageId: prospectInfo.messageId
+          };
+          console.log(`[EmailService] ✅ Confirmation email sent to prospect: ${workEmail} (${prospectInfo.messageId})`);
+        } catch (prospectErr) {
+          console.warn(`[EmailService] ⚠️ Prospect confirmation email warning: ${prospectErr.message}`);
+          prospectConfirmation = {
+            attempted: true,
+            success: false,
+            recipient: workEmail,
+            error: prospectErr.message
+          };
+        }
       }
 
       return {
@@ -495,17 +702,18 @@ class EmailService {
         messageId: info.messageId,
         response: info.response || '250 OK',
         accepted: info.accepted || [recipient],
-        rejected: info.rejected || []
+        rejected: info.rejected || [],
+        prospectConfirmation
       };
     } catch (err) {
-      console.error(`[EmailService] ❌ Zoho SMTP Dispatch FAILED:`);
+      console.error(`[EmailService] ❌ ${provider} SMTP Dispatch FAILED:`);
       console.error(`  -> Recipient: ${recipient}`);
       console.error(`  -> Error Code: ${err.code || 'UNKNOWN'}`);
       console.error(`  -> Error Message: ${err.message}`);
 
       let helpfulAdvice = '';
       if (err.code === 'EAUTH' || err.message.includes('535') || err.message.includes('Authentication Failed')) {
-        helpfulAdvice = 'Zoho SMTP Authentication Failed (535 5.7.8). Please provide a dedicated Zoho App Password (from accounts.zoho.com -> Security -> App Passwords) in SMTP_PASSWORD.';
+        helpfulAdvice = `${provider} SMTP Authentication Failed (535 5.7.8). Check your credentials / App Password in SMTP_PASSWORD.`;
       }
 
       return {

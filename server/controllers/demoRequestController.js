@@ -1,6 +1,11 @@
 const demoRequestModel = require('../models/demoRequestModel');
 const emailService = require('../services/emailService');
 
+// In-memory rate limiting map for test-email endpoint (ip -> [timestamps])
+const testEmailRateLimits = new Map();
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+const MAX_TEST_EMAILS_PER_WINDOW = 5;
+
 /**
  * Enterprise Demo Request Controller
  * Handles validation, Supabase & DB persistence, and email dispatch to the Ricoz team.
@@ -86,7 +91,7 @@ class DemoRequestController {
         }
       });
 
-      // 3. Dispatch Email Notification to care@ricoz.in
+      // 3. Dispatch Email Notification & Prospect Confirmation
       console.log(`[DemoRequestController] Processing inquiry for "${resolvedName}" <${resolvedEmail}> (${resolvedCompany})`);
       const emailResult = await emailService.sendDemoRequestEmail({
         fullName: resolvedName,
@@ -123,6 +128,7 @@ class DemoRequestController {
             success: emailResult.success || false,
             recipient: emailResult.recipient || 'care@ricoz.in',
             messageId: emailResult.messageId || null,
+            prospect_confirmation: emailResult.prospectConfirmation || null,
             note: !emailResult.attempted ? 'SMTP transport unconfigured in environment' : undefined
           },
           supabase_stored: createdRecord.supabase_stored || false
@@ -157,7 +163,7 @@ class DemoRequestController {
   }
 
   /**
-   * Test SMTP Connection Verification
+   * Test SMTP Connection Verification (Handshake only)
    * POST /api/demo-request/verify-smtp
    */
   async verifySmtp(req, res) {
@@ -171,6 +177,90 @@ class DemoRequestController {
       return res.status(500).json({
         success: false,
         message: error.message
+      });
+    }
+  }
+
+  /**
+   * Safe Diagnostic Test Email Endpoint
+   * POST /api/demo-request/test-email
+   * Sends a single test email to the specified recipient with rate limiting & zero credential exposure.
+   */
+  async sendTestEmail(req, res) {
+    try {
+      const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+      const now = Date.now();
+
+      // Rate limit check
+      const windowStart = now - RATE_LIMIT_WINDOW_MS;
+      let timestamps = testEmailRateLimits.get(clientIp) || [];
+      timestamps = timestamps.filter(ts => ts > windowStart);
+
+      if (timestamps.length >= MAX_TEST_EMAILS_PER_WINDOW) {
+        return res.status(429).json({
+          success: false,
+          error: {
+            code: 'RATE_LIMIT_EXCEEDED',
+            message: `Rate limit exceeded: maximum ${MAX_TEST_EMAILS_PER_WINDOW} test emails allowed per 10 minutes. Please wait before retrying.`
+          }
+        });
+      }
+
+      const { recipient, subject } = req.body || {};
+      const targetRecipient = (recipient || '').trim();
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!targetRecipient || !emailRegex.test(targetRecipient)) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_RECIPIENT',
+            message: 'Please provide a valid recipient email address in request body: { recipient: "you@example.com" }'
+          }
+        });
+      }
+
+      // Record rate limit hit
+      timestamps.push(now);
+      testEmailRateLimits.set(clientIp, timestamps);
+
+      console.log(`[DemoRequestController] Test email requested for recipient: ${targetRecipient} from IP: ${clientIp}`);
+
+      const result = await emailService.sendTestEmail({
+        recipient: targetRecipient,
+        subject: subject || 'RicozAnalytics SMTP Test Verification'
+      });
+
+      if (!result.success) {
+        return res.status(502).json({
+          success: false,
+          error: {
+            code: 'EMAIL_DELIVERY_FAILED',
+            message: result.error || 'Failed to dispatch test email',
+            provider: result.provider
+          }
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: `Test email successfully sent to ${targetRecipient}`,
+        data: {
+          recipient: result.recipient,
+          provider: result.provider,
+          messageId: result.messageId,
+          smtpResponse: result.response,
+          deliveredAt: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      console.error('[DemoRequestController] ❌ Error in sendTestEmail endpoint:', error);
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'SERVER_ERROR',
+          message: error.message
+        }
       });
     }
   }

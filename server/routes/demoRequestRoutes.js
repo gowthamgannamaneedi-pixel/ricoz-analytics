@@ -8,6 +8,9 @@ router.get('/smtp-status', (req, res) => demoRequestController.getSmtpStatus(req
 // POST /api/demo-request/verify-smtp (Handshake Check)
 router.post('/verify-smtp', (req, res) => demoRequestController.verifySmtp(req, res));
 
+// POST /api/demo-request/test-email (Safe Test Email Delivery)
+router.post('/test-email', (req, res) => demoRequestController.sendTestEmail(req, res));
+
 // POST /api/demo-request or /api/demo-requests (Form Submit)
 router.post('/', (req, res) => demoRequestController.submitDemoRequest(req, res));
 
