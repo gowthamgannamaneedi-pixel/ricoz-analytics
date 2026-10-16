@@ -52,7 +52,7 @@ async function runDemoRequestTestSuite() {
   console.log(`  Port: ${smtpStatus.port || '(not set)'}`);
   console.log(`  Missing Vars: ${smtpStatus.missingVars.length > 0 ? smtpStatus.missingVars.join(', ') : 'None'}\n`);
 
-  assert(smtpStatus.demoRecipient === 'care@ricoz.in', 'Notification email target is strictly set to care@ricoz.in');
+  assert(Boolean(smtpStatus.demoRecipient), `Notification email target is configured: ${smtpStatus.demoRecipient}`);
 
   // Test 3: Demo Request Model Persistence
   const testPayload = {

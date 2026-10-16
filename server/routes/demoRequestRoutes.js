@@ -5,6 +5,9 @@ const demoRequestController = require('../controllers/demoRequestController');
 // GET /api/demo-request/smtp-status (Diagnostics)
 router.get('/smtp-status', (req, res) => demoRequestController.getSmtpStatus(req, res));
 
+// GET /api/demo-request/queue-status (Background Email Queue Diagnostics)
+router.get('/queue-status', (req, res) => demoRequestController.getQueueStatus(req, res));
+
 // POST /api/demo-request/verify-smtp (Handshake Check)
 router.post('/verify-smtp', (req, res) => demoRequestController.verifySmtp(req, res));
 

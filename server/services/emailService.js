@@ -42,7 +42,10 @@ class EmailService {
           },
           tls: {
             rejectUnauthorized: false
-          }
+          },
+          connectionTimeout: 10000, // 10s max connection handshake timeout
+          greetingTimeout: 8000,    // 8s max greeting timeout
+          socketTimeout: 15000      // 15s max socket timeout
         });
         const maskedUser = user.length > 4 ? `${user.slice(0, 2)}***${user.slice(-2)}` : '***';
         const isPlaceholder = pass.includes('your_') || pass.includes('placeholder') || pass === 'your_zoho_app_password_here';
@@ -630,67 +633,78 @@ class EmailService {
     }
 
     try {
-      const info = await this.transporter.sendMail(mailOptions);
+      // Build prospect confirmation email HTML
+      const prospectHtml = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b;">
+          <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 20px 24px; border-radius: 8px; color: #ffffff;">
+            <h1 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">
+              <span style="color: #ef4444;">RICOZ</span> ANALYTICS
+            </h1>
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Demo Request Confirmation</p>
+          </div>
+          <div style="padding: 24px 0;">
+            <h2 style="font-size: 18px; color: #0f172a; margin: 0 0 12px 0;">Hello ${fullName},</h2>
+            <p style="font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 16px 0;">
+              Thank you for your interest in RicozAnalytics. We have received your request for an enterprise architecture walkthrough for <strong>${company}</strong>.
+            </p>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 16px 0; font-size: 13px;">
+              <p style="margin: 0 0 8px 0; color: #64748b;"><strong>What happens next:</strong></p>
+              <ul style="margin: 0; padding-left: 20px; color: #334155; line-height: 1.6;">
+                <li>An enterprise solutions architect will review your data requirements (${primaryDataSource}).</li>
+                <li>We will reach out to schedule your personalized live cockpit demo.</li>
+              </ul>
+            </div>
+            <p style="font-size: 14px; color: #475569; line-height: 1.6;">
+              If you have urgent questions, reply directly to this email or contact us at <a href="mailto:${fromEmail}" style="color: #ef4444;">${fromEmail}</a>.
+            </p>
+          </div>
+          <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
+            © ${new Date().getFullYear()} RicozAnalytics Inc.
+          </div>
+        </div>
+      `;
+
+      // Dispatch internal notification and prospect confirmation concurrently in parallel
+      const dispatchInternal = this.transporter.sendMail(mailOptions);
+      const shouldSendProspect = Boolean(workEmail && workEmail.includes('@') && !this.isTestOrPlaceholderRecipient(workEmail));
+      const dispatchProspect = shouldSendProspect
+        ? this.transporter.sendMail({
+            from: `"RicozAnalytics Team" <${fromEmail}>`,
+            to: workEmail,
+            subject: `We've received your RicozAnalytics demo request, ${fullName}`,
+            html: prospectHtml
+          })
+        : Promise.resolve(null);
+
+      const [internalSettled, prospectSettled] = await Promise.allSettled([dispatchInternal, dispatchProspect]);
+
+      if (internalSettled.status === 'rejected') {
+        throw internalSettled.reason;
+      }
+
+      const info = internalSettled.value;
       console.log(`[EmailService] ✅ ${provider} SMTP Internal Dispatch SUCCESS:`);
       console.log(`  -> Recipient: ${recipient}`);
       console.log(`  -> Message ID: ${info.messageId}`);
       console.log(`  -> SMTP Response: ${info.response || '250 OK'}`);
 
-      // Prospect Automatic Confirmation Dispatch
-      let prospectConfirmation = { attempted: false, success: false };
-      if (workEmail && workEmail.includes('@')) {
-        try {
-          const prospectHtml = `
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b;">
-              <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 20px 24px; border-radius: 8px; color: #ffffff;">
-                <h1 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">
-                  <span style="color: #ef4444;">RICOZ</span> ANALYTICS
-                </h1>
-                <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Demo Request Confirmation</p>
-              </div>
-              <div style="padding: 24px 0;">
-                <h2 style="font-size: 18px; color: #0f172a; margin: 0 0 12px 0;">Hello ${fullName},</h2>
-                <p style="font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 16px 0;">
-                  Thank you for your interest in RicozAnalytics. We have received your request for an enterprise architecture walkthrough for <strong>${company}</strong>.
-                </p>
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 16px 0; font-size: 13px;">
-                  <p style="margin: 0 0 8px 0; color: #64748b;"><strong>What happens next:</strong></p>
-                  <ul style="margin: 0; padding-left: 20px; color: #334155; line-height: 1.6;">
-                    <li>An enterprise solutions architect will review your data requirements (${primaryDataSource}).</li>
-                    <li>We will reach out to schedule your personalized live cockpit demo.</li>
-                  </ul>
-                </div>
-                <p style="font-size: 14px; color: #475569; line-height: 1.6;">
-                  If you have urgent questions, reply directly to this email or contact us at <a href="mailto:${fromEmail}" style="color: #ef4444;">${fromEmail}</a>.
-                </p>
-              </div>
-              <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
-                © ${new Date().getFullYear()} RicozAnalytics Inc.
-              </div>
-            </div>
-          `;
-
-          const prospectInfo = await this.transporter.sendMail({
-            from: `"RicozAnalytics Team" <${fromEmail}>`,
-            to: workEmail,
-            subject: `We've received your RicozAnalytics demo request, ${fullName}`,
-            html: prospectHtml
-          });
-
+      let prospectConfirmation = { attempted: shouldSendProspect, success: false };
+      if (shouldSendProspect) {
+        if (prospectSettled.status === 'fulfilled' && prospectSettled.value) {
           prospectConfirmation = {
             attempted: true,
             success: true,
             recipient: workEmail,
-            messageId: prospectInfo.messageId
+            messageId: prospectSettled.value.messageId
           };
-          console.log(`[EmailService] ✅ Confirmation email sent to prospect: ${workEmail} (${prospectInfo.messageId})`);
-        } catch (prospectErr) {
-          console.warn(`[EmailService] ⚠️ Prospect confirmation email warning: ${prospectErr.message}`);
+          console.log(`[EmailService] ✅ Confirmation email sent to prospect: ${workEmail} (${prospectSettled.value.messageId})`);
+        } else if (prospectSettled.status === 'rejected') {
+          console.warn(`[EmailService] ⚠️ Prospect confirmation email warning: ${prospectSettled.reason?.message}`);
           prospectConfirmation = {
             attempted: true,
             success: false,
             recipient: workEmail,
-            error: prospectErr.message
+            error: prospectSettled.reason?.message
           };
         }
       }

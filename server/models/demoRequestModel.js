@@ -29,16 +29,45 @@ class DemoRequestModel {
     primaryDataSource,
     phone = null,
     notes = null,
+    idempotencyKey = null,
     metadata = {}
   }) {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
+    const cleanEmail = workEmail.trim().toLowerCase();
+    const cleanName = fullName.trim();
+    const cleanCompany = company.trim();
+
+    // 1. Duplicate Submission Protection (Prevent double-clicks within 30 seconds or matching idempotency key)
+    try {
+      const dupCheckSql = `
+        SELECT * FROM demo_requests 
+        WHERE LOWER(work_email) = LOWER($1)
+          AND (
+            ($2::text IS NOT NULL AND idempotency_key = $2)
+            OR created_at >= NOW() - INTERVAL '30 seconds'
+          )
+        ORDER BY created_at DESC 
+        LIMIT 1;
+      `;
+      const dupRes = await db.query(dupCheckSql, [cleanEmail, idempotencyKey || null]);
+      if (dupRes?.rows?.length > 0) {
+        const existing = dupRes.rows[0];
+        console.log(`[DemoRequestModel] ℹ️ Duplicate submission detected for "${cleanEmail}" (ID: ${existing.id}). Reusing existing record.`);
+        return {
+          ...existing,
+          isDuplicate: true
+        };
+      }
+    } catch (checkErr) {
+      // Table may not have idempotency_key yet, proceed safely
+    }
 
     const recordData = {
       id,
-      full_name: fullName.trim(),
-      work_email: workEmail.trim().toLowerCase(),
-      company: company.trim(),
+      full_name: cleanName,
+      work_email: cleanEmail,
+      company: cleanCompany,
       team_size: teamSize.trim(),
       primary_data_source: primaryDataSource.trim(),
       phone: phone ? phone.trim() : null,
@@ -49,34 +78,10 @@ class DemoRequestModel {
       updated_at: now
     };
 
-    let supabaseStored = false;
-    let supabaseRecord = null;
+    let dbRecord = null;
+    const tDbStart = performance.now();
 
-    // 1. Direct Supabase Storage
-    if (isConfigured) {
-      try {
-        const client = supabaseAdmin || supabase;
-        if (client) {
-          const { data, error } = await client
-            .from('demo_requests')
-            .insert([recordData])
-            .select()
-            .single();
-
-          if (!error && data) {
-            supabaseStored = true;
-            supabaseRecord = data;
-            console.log(` Demo request successfully persisted in Supabase [${id}]`);
-          } else if (error) {
-            console.warn(` Supabase demo_requests insert note (${error.message}). Syncing via database layer.`);
-          }
-        }
-      } catch (sbErr) {
-        console.warn(' Supabase client dispatch exception:', sbErr.message);
-      }
-    }
-
-    // 2. PostgreSQL / In-Memory Fallback Persistence
+    // 2. Primary Fast PostgreSQL Persistence
     try {
       const sql = `
         INSERT INTO demo_requests (
@@ -86,51 +91,79 @@ class DemoRequestModel {
           work_email,
           company,
           team_size,
+          role,
           primary_data_source,
           phone,
           notes,
           metadata,
-          status
+          status,
+          idempotency_key
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING *;
       `;
 
       const result = await db.query(sql, [
-        recordData.full_name,
-        recordData.work_email,
-        recordData.full_name,
-        recordData.work_email,
-        recordData.company,
+        cleanName,
+        cleanEmail,
+        cleanName,
+        cleanEmail,
+        cleanCompany,
         recordData.team_size,
+        'Enterprise Lead',
         recordData.primary_data_source,
         recordData.phone,
         recordData.notes,
         JSON.stringify(recordData.metadata),
-        'pending'
+        'pending',
+        idempotencyKey || null
       ]);
 
-      const dbRecord = result?.rows?.[0] || recordData;
-      return {
-        ...dbRecord,
-        id: dbRecord.id || id,
-        supabase_stored: supabaseStored || Boolean(supabaseRecord)
-      };
+      dbRecord = result?.rows?.[0] || recordData;
+      const dbDuration = Math.round(performance.now() - tDbStart);
+      console.log(`[DemoRequestModel] ⚡ Demo request persisted to PostgreSQL in ${dbDuration}ms (ID: ${dbRecord.id})`);
     } catch (dbErr) {
-      console.error(' Database store demo_requests error:', dbErr.message);
-      // If DB failed but supabase succeeded, return supabase record
-      if (supabaseRecord) {
-        return {
-          ...supabaseRecord,
-          supabase_stored: true
-        };
+      console.warn('[DemoRequestModel] Primary DB insert warning, falling back to legacy schema:', dbErr.message);
+      try {
+        const fallbackSql = `
+          INSERT INTO demo_requests (
+            name, email, full_name, work_email, company, team_size,
+            primary_data_source, phone, notes, metadata, status
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          RETURNING *;
+        `;
+        const res = await db.query(fallbackSql, [
+          cleanName, cleanEmail, cleanName, cleanEmail, cleanCompany,
+          recordData.team_size, recordData.primary_data_source,
+          recordData.phone, recordData.notes, JSON.stringify(recordData.metadata), 'pending'
+        ]);
+        dbRecord = res?.rows?.[0] || recordData;
+      } catch (fErr) {
+        console.error('[DemoRequestModel] ❌ Database store failed:', fErr.message);
+        dbRecord = recordData;
       }
-      // Return normalized record to avoid data loss
-      return {
-        ...recordData,
-        supabase_stored: supabaseStored
-      };
     }
+
+    // 3. Asynchronous Non-Blocking Supabase Sync (Runs in background, never delays response)
+    if (isConfigured) {
+      setImmediate(async () => {
+        try {
+          const client = supabaseAdmin || supabase;
+          if (client) {
+            await client.from('demo_requests').insert([recordData]);
+            console.log(`[DemoRequestModel] ☁️ Async Supabase sync completed for [${id}]`);
+          }
+        } catch (sbErr) {
+          console.warn('[DemoRequestModel] Async Supabase sync note:', sbErr.message);
+        }
+      });
+    }
+
+    return {
+      ...dbRecord,
+      id: dbRecord.id || id,
+      supabase_stored: isConfigured
+    };
   }
 
   /**
@@ -139,7 +172,7 @@ class DemoRequestModel {
    * @returns {Promise<Array<any>>}
    */
   async listDemoRequests({ limit = 50, offset = 0 } = {}) {
-    // Try Supabase first
+    // Try Supabase first if available
     if (isConfigured) {
       try {
         const client = supabaseAdmin || supabase;
@@ -150,7 +183,7 @@ class DemoRequestModel {
             .order('created_at', { ascending: false })
             .range(offset, offset + limit - 1);
 
-          if (!error && Array.isArray(data)) {
+          if (!error && Array.isArray(data) && data.length > 0) {
             return data;
           }
         }

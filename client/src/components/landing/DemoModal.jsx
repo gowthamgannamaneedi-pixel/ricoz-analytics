@@ -107,7 +107,11 @@ function ModalSelect({ label, value, options, onChange }) {
 export default function DemoModal({ isOpen, onClose }) {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionStage, setSubmissionStage] = useState('Securing your walkthrough slot...');
   const [errorMessage, setErrorMessage] = useState('');
+  const isSubmittingRef = useRef(false);
+  const idempotencyKeyRef = useRef(null);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -118,10 +122,29 @@ export default function DemoModal({ isOpen, onClose }) {
     notes: ''
   });
 
+  // Dynamic progress stage updates during submission
+  useEffect(() => {
+    let t1, t2;
+    if (isSubmitting) {
+      setSubmissionStage('Securing your walkthrough slot...');
+      t1 = setTimeout(() => {
+        setSubmissionStage('Confirming enterprise details & persisting inquiry...');
+      }, 3000);
+      t2 = setTimeout(() => {
+        setSubmissionStage('Server is warming up, finalizing your request...');
+      }, 10000);
+    }
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [isSubmitting]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmittingRef.current) return; // Prevent double-clicks
     setErrorMessage('');
 
     const trimmedName = formData.name.trim();
@@ -144,13 +167,25 @@ export default function DemoModal({ isOpen, onClose }) {
       return;
     }
 
+    // Stable idempotency key per form data to prevent duplicate records
+    if (!idempotencyKeyRef.current) {
+      idempotencyKeyRef.current = `demo_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    }
+
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
+
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => {
+      abortController.abort();
+    }, 25000); // 25s client timeout
 
     try {
       const response = await fetch(`${API_BASE_URL}/demo-request`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Idempotency-Key': idempotencyKeyRef.current
         },
         body: JSON.stringify({
           fullName: trimmedName,
@@ -159,21 +194,31 @@ export default function DemoModal({ isOpen, onClose }) {
           teamSize: formData.teamSize,
           primaryDataSource: formData.primaryDataSource,
           phone: formData.phone.trim() || undefined,
-          notes: formData.notes.trim() || undefined
-        })
+          notes: formData.notes.trim() || undefined,
+          idempotencyKey: idempotencyKeyRef.current
+        }),
+        signal: abortController.signal
       });
 
+      clearTimeout(timeoutId);
       const data = await response.json().catch(() => null);
 
       if (response.ok && data?.success) {
         setSubmitted(true);
+        idempotencyKeyRef.current = null;
       } else {
         setErrorMessage(data?.message || 'Something went wrong while submitting your request. Please try again.');
       }
     } catch (err) {
+      clearTimeout(timeoutId);
       console.error('Demo request submission error:', err);
-      setErrorMessage('Something went wrong while submitting your request. Please try again.');
+      if (err.name === 'AbortError') {
+        setErrorMessage('Request timed out while connecting to the server. If the backend is waking up from a cold start, please try again in a few seconds.');
+      } else {
+        setErrorMessage('Unable to reach the server. Please check your network connection and try again.');
+      }
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -316,12 +361,12 @@ export default function DemoModal({ isOpen, onClose }) {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-bold text-sm transition shadow-lg shadow-red-600/20 flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-red-500/80 disabled:cursor-not-allowed text-white font-bold text-sm transition shadow-lg shadow-red-600/20 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 size={16} className="animate-spin" />
-                      <span>Submitting Request...</span>
+                      <Loader2 size={16} className="animate-spin shrink-0 text-white" />
+                      <span className="truncate">{submissionStage}</span>
                     </>
                   ) : (
                     <>

@@ -1,5 +1,6 @@
 const demoRequestModel = require('../models/demoRequestModel');
 const emailService = require('../services/emailService');
+const demoEmailQueueService = require('../services/demoEmailQueueService');
 
 // In-memory rate limiting map for test-email endpoint (ip -> [timestamps])
 const testEmailRateLimits = new Map();
@@ -8,7 +9,7 @@ const MAX_TEST_EMAILS_PER_WINDOW = 5;
 
 /**
  * Enterprise Demo Request Controller
- * Handles validation, Supabase & DB persistence, and email dispatch to the Ricoz team.
+ * Handles validation, fast DB persistence, durable background email queueing, and status checks.
  */
 class DemoRequestController {
   /**
@@ -16,6 +17,7 @@ class DemoRequestController {
    * POST /api/demo-request or POST /api/demo-requests
    */
   async submitDemoRequest(req, res) {
+    const tStart = performance.now();
     try {
       const {
         fullName,
@@ -26,7 +28,8 @@ class DemoRequestController {
         teamSize,
         primaryDataSource,
         phone,
-        notes
+        notes,
+        idempotencyKey
       } = req.body || {};
 
       const resolvedName = (fullName || name || '').trim();
@@ -36,6 +39,9 @@ class DemoRequestController {
       const resolvedDataSource = (primaryDataSource || 'PostgreSQL').trim();
       const resolvedPhone = (phone || '').trim();
       const resolvedNotes = (notes || '').trim();
+      const resolvedIdempotency = (idempotencyKey || req.headers['x-idempotency-key'] || '').trim();
+
+      console.log(`[DemoRequestController] [Timing] 📥 Incoming request received for: "${resolvedEmail}"`);
 
       // 1. Rigorous Field Validation
       if (!resolvedName || resolvedName.length < 2) {
@@ -74,7 +80,10 @@ class DemoRequestController {
         });
       }
 
-      // 2. Persist in Supabase and Database layer
+      const tVal = Math.round(performance.now() - tStart);
+
+      // 2. Persist in Database layer with duplicate protection
+      const tDbStart = performance.now();
       const createdRecord = await demoRequestModel.createDemoRequest({
         fullName: resolvedName,
         workEmail: resolvedEmail,
@@ -83,6 +92,7 @@ class DemoRequestController {
         primaryDataSource: resolvedDataSource,
         phone: resolvedPhone || null,
         notes: resolvedNotes || null,
+        idempotencyKey: resolvedIdempotency || null,
         metadata: {
           ip: req.ip || req.headers['x-forwarded-for'] || null,
           userAgent: req.headers['user-agent'] || null,
@@ -90,28 +100,51 @@ class DemoRequestController {
           timestamp: new Date().toISOString()
         }
       });
+      const tDb = Math.round(performance.now() - tDbStart);
 
-      // 3. Dispatch Email Notification & Prospect Confirmation
-      console.log(`[DemoRequestController] Processing inquiry for "${resolvedName}" <${resolvedEmail}> (${resolvedCompany})`);
-      const emailResult = await emailService.sendDemoRequestEmail({
-        fullName: resolvedName,
-        workEmail: resolvedEmail,
-        company: resolvedCompany,
-        teamSize: resolvedTeamSize,
-        primaryDataSource: resolvedDataSource,
-        phone: resolvedPhone || null,
-        notes: resolvedNotes || null,
-        requestedAt: createdRecord.created_at || new Date()
-      });
-
-      if (emailResult.attempted && !emailResult.success) {
-        console.error(`[DemoRequestController] ❌ Email dispatch failed for inquiry [${createdRecord.id}]:`, emailResult.error);
-      } else if (emailResult.success) {
-        console.log(`[DemoRequestController] ✅ Email dispatched for inquiry [${createdRecord.id}] (Message ID: ${emailResult.messageId})`);
-      } else {
-        console.warn(`[DemoRequestController] ⚠️ Email dispatch skipped for inquiry [${createdRecord.id}] — SMTP not configured.`);
+      // Handle duplicate submission
+      if (createdRecord.isDuplicate) {
+        const tTotal = Math.round(performance.now() - tStart);
+        console.log(`[DemoRequestController] [Timing] ℹ️ Returning existing record for duplicate submission in ${tTotal}ms`);
+        return res.status(200).json({
+          success: true,
+          isDuplicate: true,
+          message: 'Thanks! Your demo request has already been securely received. Our team will contact you shortly.',
+          data: {
+            id: createdRecord.id,
+            fullName: createdRecord.full_name,
+            workEmail: createdRecord.work_email,
+            company: createdRecord.company,
+            created_at: createdRecord.created_at,
+            processing_time_ms: tTotal
+          }
+        });
       }
 
+      // 3. Decouple Email Delivery — Enqueue durable background job
+      const tQueueStart = performance.now();
+      const recipientEmail = process.env.SMTP_FROM || process.env.DEMO_REQUEST_EMAIL || process.env.SMTP_USER || 'ricozanalytics@gmail.com';
+      const queueResult = await demoEmailQueueService.enqueueJob({
+        demoRequestId: createdRecord.id,
+        recipient: recipientEmail,
+        prospectEmail: resolvedEmail,
+        payload: {
+          fullName: resolvedName,
+          workEmail: resolvedEmail,
+          company: resolvedCompany,
+          teamSize: resolvedTeamSize,
+          primaryDataSource: resolvedDataSource,
+          phone: resolvedPhone || null,
+          notes: resolvedNotes || null,
+          requestedAt: createdRecord.created_at || new Date()
+        }
+      });
+      const tQueue = Math.round(performance.now() - tQueueStart);
+
+      const totalTime = Math.round(performance.now() - tStart);
+      console.log(`[DemoRequestController] [Timing] ⚡ Response ready in ${totalTime}ms (Validation: ${tVal}ms, DB: ${tDb}ms, Enqueue: ${tQueue}ms)`);
+
+      // 4. Return fast response to client immediately
       return res.status(201).json({
         success: true,
         message: 'Thanks! Your demo request has been received. The Ricoz team will contact you shortly.',
@@ -124,18 +157,18 @@ class DemoRequestController {
           primaryDataSource: createdRecord.primary_data_source,
           created_at: createdRecord.created_at,
           email_delivery: {
-            attempted: emailResult.attempted || false,
-            success: emailResult.success || false,
-            recipient: emailResult.recipient || 'care@ricoz.in',
-            messageId: emailResult.messageId || null,
-            prospect_confirmation: emailResult.prospectConfirmation || null,
-            note: !emailResult.attempted ? 'SMTP transport unconfigured in environment' : undefined
+            status: 'queued',
+            jobId: queueResult.jobId,
+            recipient: recipientEmail,
+            prospect_recipient: resolvedEmail
           },
-          supabase_stored: createdRecord.supabase_stored || false
+          supabase_stored: createdRecord.supabase_stored || false,
+          processing_time_ms: totalTime
         }
       });
     } catch (error) {
-      console.error('[DemoRequestController] ❌ Error handling demo request submission:', error);
+      const totalTime = Math.round(performance.now() - tStart);
+      console.error(`[DemoRequestController] ❌ Error handling demo request submission after ${totalTime}ms:`, error);
       return res.status(500).json({
         success: false,
         message: 'Something went wrong while submitting your request. Please try again.'
@@ -158,6 +191,25 @@ class DemoRequestController {
       return res.status(500).json({
         success: false,
         message: error.message
+      });
+    }
+  }
+
+  /**
+   * Background Email Queue Diagnostics
+   * GET /api/demo-request/queue-status
+   */
+  async getQueueStatus(req, res) {
+    try {
+      const stats = await demoEmailQueueService.getQueueStats();
+      return res.status(200).json({
+        success: true,
+        queue: stats
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        error: error.message
       });
     }
   }

@@ -37,6 +37,12 @@ if (require.main === module) {
 
       // Start background report & alert scheduler
       schedulerService.start();
+
+      // Initialize durable demo email queue worker
+      const demoEmailQueueService = require('./services/demoEmailQueueService');
+      demoEmailQueueService.init().catch(err => {
+        console.warn(' Demo email queue worker init warning:', err.message);
+      });
     });
 
     // Configure enterprise upload timeouts (5 minutes request timeout for large 250MB+ datasets)
