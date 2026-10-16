@@ -24,6 +24,12 @@ router.post('/register', register);
 // POST & GET /api/auth/verify-email & /api/auth/verify-otp - Verify email
 router.post('/verify-email', verifyEmail);
 router.get('/verify-email/:token', (req, res, next) => {
+  if (req.headers.accept && req.headers.accept.includes('text/html')) {
+    const envUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || process.env.APP_URL;
+    const origin = req.headers.origin || (envUrl && envUrl.startsWith('http') ? envUrl : 'http://localhost:5173');
+    const frontendBase = origin.replace(/\/+$/, '');
+    return res.redirect(`${frontendBase}/auth/verify-email?token=${encodeURIComponent(req.params.token)}`);
+  }
   req.body = { token: req.params.token };
   return verifyEmail(req, res, next);
 });

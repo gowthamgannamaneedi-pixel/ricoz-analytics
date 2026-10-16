@@ -33,6 +33,30 @@ function generateToken(user) {
 }
 
 /**
+ * Resolve client frontend base URL dynamically from environment or request headers
+ */
+function resolveFrontendUrl(req) {
+  const envUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || process.env.APP_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.startsWith('http')) {
+    return envUrl.replace(/\/+$/, '');
+  }
+  const origin = req?.headers?.origin;
+  if (origin && typeof origin === 'string' && origin.startsWith('http') && !origin.includes('localhost:5000')) {
+    return origin.replace(/\/+$/, '');
+  }
+  const referer = req?.headers?.referer;
+  if (referer && typeof referer === 'string' && referer.startsWith('http')) {
+    try {
+      const u = new URL(referer);
+      if (!u.host.includes('localhost:5000')) {
+        return `${u.protocol}//${u.host}`;
+      }
+    } catch (_) {}
+  }
+  return config.clientUrl || 'http://localhost:5173';
+}
+
+/**
  * Basic email validator
  */
 function isValidEmail(email) {
@@ -152,14 +176,27 @@ const register = async (req, res, next) => {
       verification_token_expires_at: tokenExpiresAt
     });
 
-    // 9. Dispatch verification email
-    await emailService.sendVerificationEmail({
+    // 9. Dispatch verification email with dynamic frontend domain resolution
+    const frontendBase = resolveFrontendUrl(req);
+    const verifyUrl = `${frontendBase}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`;
+
+    console.log(`[AuthController] Dispatching registration verification email to "${cleanEmail}" (Frontend: ${frontendBase})`);
+    const emailResult = await emailService.sendVerificationEmail({
       email: cleanEmail,
       name: newUser.name,
       token: verificationToken,
       otp: verificationOtp,
-      verifyUrl: `http://localhost:5173/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`
+      verifyUrl
     });
+
+    if (!emailResult.success) {
+      console.error(`[AuthController] ❌ Verification email dispatch failed for "${cleanEmail}":`, emailResult.error);
+    } else {
+      console.log(`[AuthController] ✅ Verification email dispatched for "${cleanEmail}" (Message ID: ${emailResult.messageId})`);
+    }
+
+    // Initialize 60s resend cooldown timer upon registration
+    resendRateLimits.set(cleanEmail, Date.now());
 
     // 10. Audit Log
     await logAuditEvent({
@@ -192,10 +229,15 @@ const register = async (req, res, next) => {
         organization_id: organizationId,
         created_at: newUser.created_at
       },
-      ...(process.env.NODE_ENV !== 'production' ? {
-        _devVerificationToken: verificationToken,
-        _devVerificationOtp: verificationOtp
-      } : {})
+      email_delivery: {
+        attempted: emailResult.attempted,
+        success: emailResult.success,
+        provider: emailResult.provider || 'SMTP',
+        recipient: cleanEmail,
+        deliveredTo: emailResult.deliveredTo || cleanEmail,
+        isTestRedirect: Boolean(emailResult.isTestRedirect),
+        mocked: Boolean(emailResult.mocked)
+      }
     });
   } catch (err) {
     if (err.code === '23505') {
@@ -412,18 +454,37 @@ const resendOtp = async (req, res, next) => {
       await supabase.auth.resend({ type: 'signup', email: cleanEmail }).catch(() => null);
     }
 
-    // Dispatch verification email
-    await emailService.sendVerificationEmail({
+    // Dispatch verification email with dynamic frontend domain resolution
+    const frontendBase = resolveFrontendUrl(req);
+    const verifyUrl = `${frontendBase}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`;
+
+    console.log(`[AuthController] Resending verification email to "${cleanEmail}" (Frontend: ${frontendBase})`);
+    const emailResult = await emailService.sendVerificationEmail({
       email: cleanEmail,
       name: user.name,
       token: verificationToken,
       otp: verificationOtp,
-      verifyUrl: `http://localhost:5173/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`
+      verifyUrl
     });
+
+    if (!emailResult.success) {
+      console.error(`[AuthController] ❌ Resend verification email failed for "${cleanEmail}":`, emailResult.error);
+    } else {
+      console.log(`[AuthController] ✅ Resend verification email delivered for "${cleanEmail}" (Message ID: ${emailResult.messageId})`);
+    }
 
     return res.status(200).json({
       success: true,
-      message: 'A new 6-digit verification code has been sent to your email.'
+      message: 'A new 6-digit verification code has been sent to your email.',
+      email_delivery: {
+        attempted: emailResult.attempted,
+        success: emailResult.success,
+        provider: emailResult.provider || 'SMTP',
+        recipient: cleanEmail,
+        deliveredTo: emailResult.deliveredTo || cleanEmail,
+        isTestRedirect: Boolean(emailResult.isTestRedirect),
+        mocked: Boolean(emailResult.mocked)
+      }
     });
   } catch (err) {
     next(err);
@@ -553,6 +614,7 @@ const login = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        status: user.status || 'active',
         organization_id: orgId,
         organization_name: org?.name || 'Workspace',
         created_at: user.created_at
