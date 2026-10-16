@@ -148,6 +148,22 @@ const relationshipController = {
         });
       }
 
+      // 3b. Physical Data Type and Cardinality Validation (inspects actual data rows)
+      const dataValidation = await analyticsService.validateRelationshipWithData({
+        sourceDataset,
+        sourceColumn: srcCol,
+        targetDataset,
+        targetColumn: tgtCol,
+        relationshipType: relType
+      });
+
+      if (!dataValidation.valid) {
+        return res.status(400).json({
+          success: false,
+          message: dataValidation.error
+        });
+      }
+
       // 4. Duplicate Check
       const existingRels = await DatasetRelationshipModel.findByOrganizationId(organizationId);
       const duplicate = existingRels.find(r => 
@@ -258,6 +274,20 @@ const relationshipController = {
           return res.status(400).json({
             success: false,
             message: validation.error
+          });
+        }
+
+        const dataValidation = await analyticsService.validateRelationshipWithData({
+          sourceDataset,
+          sourceColumn: srcCol,
+          targetDataset,
+          targetColumn: tgtCol,
+          relationshipType: relType
+        });
+        if (!dataValidation.valid) {
+          return res.status(400).json({
+            success: false,
+            message: dataValidation.error
           });
         }
       }

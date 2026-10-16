@@ -65,7 +65,9 @@ const billingController = {
   async createCheckoutSession(req, res) {
     try {
       const orgId = req.user.organization_id;
-      const { planId, billingCycle = 'monthly', successUrl, cancelUrl } = req.body;
+      const { planId, interval, billingCycle, successUrl, cancelUrl } = req.body;
+      const rawCycle = (billingCycle || interval || 'monthly').toLowerCase();
+      const effectiveCycle = rawCycle === 'yearly' || rawCycle === 'annual' ? 'yearly' : 'monthly';
 
       if (!planId) {
         return res.status(400).json({
@@ -77,7 +79,7 @@ const billingController = {
       const session = await paymentService.createCheckoutSession({
         organizationId: orgId,
         planId,
-        billingCycle,
+        billingCycle: effectiveCycle,
         successUrl,
         cancelUrl,
         userEmail: req.user.email

@@ -17,14 +17,84 @@ import {
   Layers,
   Users,
   BarChart3,
-  ChevronRight
+  ChevronRight,
+  Tag
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getBillingPlans, getBillingSubscription, createBillingCheckoutSession, cancelBillingSubscription } from '../services/api';
 
 /**
- * Enterprise SaaS Billing & 14-Day Free Trial Management Page — RicozAnalytics
- * Provides trial countdown status, expiration access gateway, tiered pricing, and Stripe checkout.
+ * Proposed RicozAnalytics Launch Pricing Plans
+ */
+const DEFAULT_LAUNCH_PLANS = [
+  {
+    id: 'starter',
+    name: 'Starter',
+    audience: 'Individuals and small teams',
+    regularPriceMonthly: 999,
+    priceMonthly: 699,
+    discountPercentMonthly: 30,
+    regularPriceYearly: 11988,
+    priceYearly: 6999,
+    priceAnnual: 6999,
+    discountPercentYearly: 42,
+    currency: 'inr',
+    currencySymbol: '₹',
+    priceSuffix: '',
+    popular: false,
+    hasContactSales: false,
+    maxDatasets: 10,
+    maxUsers: 5,
+    description: 'Essential analytics, datasets, and executive reporting for individuals and agile small teams.',
+    features: ['10 Connected Datasets', '5 Team Members', 'Automated Daily Reports', 'Standard Email Support']
+  },
+  {
+    id: 'growth',
+    name: 'Growth',
+    audience: 'Growing businesses and analytics teams',
+    regularPriceMonthly: 2999,
+    priceMonthly: 1999,
+    discountPercentMonthly: 33,
+    regularPriceYearly: 35988,
+    priceYearly: 19999,
+    priceAnnual: 19999,
+    discountPercentYearly: 44,
+    currency: 'inr',
+    currencySymbol: '₹',
+    priceSuffix: '',
+    popular: true,
+    hasContactSales: false,
+    maxDatasets: 50,
+    maxUsers: 25,
+    description: 'High-performance relational modeling, automated anomaly alerts, and executive AI copilot.',
+    features: ['50 Connected Datasets', '25 Team Members', 'Executive AI Insights', 'Real-time Anomaly Alerts', 'Priority SLA Support']
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    audience: 'Larger organizations requiring advanced governance and support',
+    regularPriceMonthly: 9999,
+    priceMonthly: 6999,
+    discountPercentMonthly: 30,
+    regularPriceYearly: 119988,
+    priceYearly: 69999,
+    priceAnnual: 69999,
+    discountPercentYearly: 42,
+    currency: 'inr',
+    currencySymbol: '₹',
+    priceSuffix: ' onwards',
+    popular: false,
+    hasContactSales: true,
+    maxDatasets: -1,
+    maxUsers: -1,
+    description: 'Unlimited compute, customized AI query planner, dedicated infrastructure, and 24/7 support.',
+    features: ['Unlimited Datasets & Warehouses', 'Unlimited Team Members', 'Custom AI Query Planner', 'Dedicated Infrastructure', '24/7 Dedicated Support']
+  }
+];
+
+/**
+ * Enterprise SaaS Billing & Launch Pricing Management Page — RicozAnalytics
+ * Provides trial countdown status, expiration access gateway, tiered launch pricing, and payment checkout.
  */
 export default function BillingPage() {
   const location = useLocation();
@@ -32,12 +102,25 @@ export default function BillingPage() {
   const { user, subscription, refreshSubscription, isTrialExpired } = useAuth();
 
   const [billingInterval, setBillingInterval] = useState('monthly'); // 'monthly' | 'yearly'
-  const [plans, setPlans] = useState([]);
+  const [plans, setPlans] = useState(DEFAULT_LAUNCH_PLANS);
   const [currentSub, setCurrentSub] = useState(subscription || null);
   const [loading, setLoading] = useState(true);
   const [upgradingPlanId, setUpgradingPlanId] = useState(null);
   const [error, setError] = useState(location.state?.trialExpired ? 'Your 14-day free trial has completed. Please choose a plan to continue accessing your workspace.' : '');
   const [successMessage, setSuccessMessage] = useState(location.state?.paymentSuccess ? 'Payment confirmed! Your enterprise workspace is now active.' : '');
+
+  // Handle URL query parameters from checkout redirect
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('payment') === 'success') {
+      setSuccessMessage('Payment confirmed! Your workspace subscription is now active.');
+      if (typeof refreshSubscription === 'function') {
+        refreshSubscription();
+      }
+    } else if (params.get('payment') === 'cancelled') {
+      setError('Payment checkout was cancelled. No charges were incurred.');
+    }
+  }, [location.search]);
 
   // Load plans & subscription telemetry
   useEffect(() => {
@@ -51,8 +134,13 @@ export default function BillingPage() {
         ]);
 
         if (isMounted) {
-          if (plansRes && plansRes.plans) {
-            setPlans(plansRes.plans);
+          if (plansRes && Array.isArray(plansRes.plans) && plansRes.plans.length > 0) {
+            // Merge backend plans with launch defaults to ensure complete metadata
+            const merged = DEFAULT_LAUNCH_PLANS.map(def => {
+              const fromServer = plansRes.plans.find(p => p.id === def.id);
+              return fromServer ? { ...def, ...fromServer } : def;
+            });
+            setPlans(merged);
           }
           if (subRes && subRes.subscription) {
             setCurrentSub(subRes.subscription);
@@ -82,7 +170,8 @@ export default function BillingPage() {
     try {
       const data = await createBillingCheckoutSession({
         planId,
-        interval: billingInterval
+        interval: billingInterval,
+        billingCycle: billingInterval
       });
 
       if (data && data.checkoutUrl) {
@@ -90,7 +179,9 @@ export default function BillingPage() {
         window.location.href = data.checkoutUrl;
       } else {
         // Fallback local update
-        await refreshSubscription();
+        if (typeof refreshSubscription === 'function') {
+          await refreshSubscription();
+        }
         setSuccessMessage('Checkout initiated successfully.');
       }
     } catch (err) {
@@ -117,7 +208,7 @@ export default function BillingPage() {
               <div>
                 <p className="font-bold text-sm">Your 14-day free trial has ended</p>
                 <p className="text-xs text-rose-200 mt-0.5">
-                  Your datasets, dashboards, and automated reports are safely preserved. Select a plan below to continue.
+                  Your datasets, dashboards, and automated reports are safely preserved. Select a launch plan below to continue.
                 </p>
               </div>
             </div>
@@ -131,7 +222,7 @@ export default function BillingPage() {
       )}
 
       {/* Main Container */}
-      <div className="space-y-6 max-w-7xl mx-auto">
+      <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 pt-6">
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
           <div>
@@ -140,7 +231,7 @@ export default function BillingPage() {
               <button
                 type="button"
                 onClick={() => navigate('/dashboard')}
-                className="hover:text-slate-600 transition-colors focus:outline-hidden"
+                className="hover:text-slate-600 transition-colors focus:outline-hidden cursor-pointer"
               >
                 Workspace
               </button>
@@ -148,9 +239,9 @@ export default function BillingPage() {
               <button
                 type="button"
                 onClick={() => navigate('/dashboard')}
-                className="hover:text-slate-600 transition-colors focus:outline-hidden"
+                className="hover:text-slate-600 transition-colors focus:outline-hidden cursor-pointer"
               >
-                Production
+                Settings
               </button>
               <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
               <span className="text-slate-900 font-bold">Plans & Billing</span>
@@ -166,11 +257,11 @@ export default function BillingPage() {
               Plans & Billing
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl font-normal">
-              Scale your business intelligence workspace with enterprise security, live alerts, and AI copilot compute.
+              Scale your business intelligence workspace with enterprise security, relational modeling, and AI copilot compute.
             </p>
           </div>
 
-          {/* Current Subscription Status Card (Enlarged with comfortable padding and clear spacing) */}
+          {/* Current Subscription Status Card */}
           <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs min-w-[320px] sm:min-w-[360px] shrink-0 space-y-3 sm:space-y-3.5">
             <div className="flex items-center justify-between gap-4">
               <span className="text-xs sm:text-sm text-slate-500 font-medium">Workspace Status</span>
@@ -192,7 +283,7 @@ export default function BillingPage() {
               )}
             </div>
             <div className="text-base sm:text-lg font-bold text-slate-900 capitalize leading-snug">
-              {currentSub?.plan || 'Enterprise'} Plan {isActivePaid ? `(${currentSub?.billingInterval || 'Monthly'})` : '(Monthly)'}
+              {currentSub?.plan || 'Enterprise'} Plan {isActivePaid ? `(${currentSub?.billingInterval || 'Monthly'})` : '(Trial Period)'}
             </div>
             <p className="text-xs text-slate-500">
               Organization: <span className="font-semibold text-slate-700">{user?.organization_name || 'Ricoz Primary Organization'}</span>
@@ -215,13 +306,24 @@ export default function BillingPage() {
           </div>
         )}
 
-        {/* Billing Interval Toggle (Monthly / Annual with 20% discount) */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+        {/* Limited-Time Launch Offer Banner */}
+        <div className="flex flex-col items-center justify-center pt-2">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-linear-to-r from-rose-50 via-amber-50 to-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold shadow-2xs">
+            <Sparkles className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+            <span>Limited-Time Launch Offer: Save up to 44% with special early-adopter pricing</span>
+            <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+            <span className="hidden sm:inline-block text-[11px] text-rose-600 font-bold uppercase tracking-wider">Launch Pricing</span>
+          </div>
+        </div>
+
+        {/* Billing Interval Toggle (Monthly / Annual) */}
+        <div className="flex flex-col items-center justify-center gap-2 pt-1 pb-2">
           <div className="inline-flex p-1 rounded-xl bg-slate-200/80 border border-slate-300/80 shadow-2xs">
             <button
               type="button"
+              id="billing-monthly-toggle"
               onClick={() => setBillingInterval('monthly')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              className={`px-5 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
                 billingInterval === 'monthly'
                   ? 'bg-white text-slate-900 shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -231,84 +333,148 @@ export default function BillingPage() {
             </button>
             <button
               type="button"
+              id="billing-annual-toggle"
               onClick={() => setBillingInterval('yearly')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+              className={`px-5 py-2 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
                 billingInterval === 'yearly'
                   ? 'bg-white text-slate-900 shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <span>Annual Billing</span>
-              <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800">
-                Save 20%
+              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
+                Save up to 44%
               </span>
             </button>
           </div>
+          <span className="text-[11px] text-slate-500 font-medium">
+            {billingInterval === 'yearly'
+              ? '✨ Billed annually — includes discounted monthly equivalent & maximum launch savings'
+              : '⚡ Billed monthly with flexible month-to-month cancellation'}
+          </span>
         </div>
 
-        {/* Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+        {/* Pricing Cards Grid — Consistent Heights & Aligned Elements */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2 items-stretch">
           {plans.map((p) => {
-            const isPopular = p.popular;
-            const price = billingInterval === 'yearly' ? p.priceAnnual : p.priceMonthly;
+            const isPopular = Boolean(p.popular);
             const isCurrentPlan = currentSub?.plan === p.id && isActivePaid;
+            const currencySym = p.currencySymbol || '₹';
+
+            // Prices
+            const isYearly = billingInterval === 'yearly';
+            const launchPrice = isYearly ? (p.priceAnnual || p.priceYearly) : p.priceMonthly;
+            const regularPrice = isYearly ? (p.regularPriceYearly || (p.regularPriceMonthly * 12)) : p.regularPriceMonthly;
+            const discountPct = isYearly ? (p.discountPercentYearly || 42) : p.discountPercentMonthly;
+            const priceSuffix = p.priceSuffix || '';
+
+            // Monthly equivalent & annual savings
+            const monthlyEquivalent = isYearly ? Math.round(launchPrice / 12) : launchPrice;
+            const annualSavings = isYearly ? Math.max(0, regularPrice - launchPrice) : 0;
 
             return (
               <div
                 key={p.id}
                 className={`relative flex flex-col justify-between rounded-2xl border bg-white p-6 sm:p-7 shadow-xs transition hover:shadow-md ${
                   isPopular
-                    ? 'border-rose-500 ring-2 ring-rose-500/20 shadow-rose-50'
+                    ? 'border-rose-500 ring-2 ring-rose-500/20 shadow-md shadow-rose-100'
                     : 'border-slate-200 hover:border-slate-300'
                 }`}
               >
+                {/* Most Popular Badge */}
                 {isPopular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-rose-600 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-xs">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-rose-600 px-3.5 py-0.5 text-[10.5px] font-extrabold uppercase tracking-wider text-white shadow-xs">
                     Most Popular
                   </div>
                 )}
 
                 <div>
+                  {/* Card Header & Icon */}
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-slate-950 font-sans">{p.name}</h3>
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-950 font-sans tracking-tight">{p.name}</h3>
+                      <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-rose-700 bg-rose-50/80 px-2 py-0.5 rounded-md mt-1 border border-rose-100">
+                        <Users className="h-3 w-3 text-rose-500 shrink-0" />
+                        <span>{p.audience}</span>
+                      </div>
+                    </div>
                     {p.id === 'growth' ? (
-                      <Zap className="h-5 w-5 text-rose-600" />
+                      <div className="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 border border-rose-100">
+                        <Zap className="h-5 w-5" />
+                      </div>
                     ) : p.id === 'enterprise' ? (
-                      <ShieldCheck className="h-5 w-5 text-rose-600" />
+                      <div className="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 border border-indigo-100">
+                        <ShieldCheck className="h-5 w-5" />
+                      </div>
                     ) : (
-                      <Layers className="h-5 w-5 text-slate-400" />
+                      <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600 border border-slate-100">
+                        <Layers className="h-5 w-5" />
+                      </div>
                     )}
                   </div>
-                  <p className="text-xs text-slate-500 mt-1 min-h-[32px]">{p.description}</p>
 
-                  {/* Price */}
-                  <div className="mt-5 pb-5 border-b border-slate-100 flex items-baseline gap-1">
-                    <span className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight font-sans">
-                      ${price}
-                    </span>
-                    <span className="text-xs text-slate-500 font-medium">
-                      /month {billingInterval === 'yearly' && '(billed annually)'}
-                    </span>
+                  <p className="text-xs text-slate-500 mt-2.5 min-h-[36px] leading-relaxed">
+                    {p.description}
+                  </p>
+
+                  {/* Pricing Block with Regular Price Crossed Out & Discount Badge */}
+                  <div className="mt-4 pt-4 border-t border-slate-100 min-h-[96px] flex flex-col justify-center">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs text-slate-400 line-through font-semibold">
+                        {currencySym}{regularPrice.toLocaleString('en-IN')}{isYearly ? '/year' : '/month'}
+                      </span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200">
+                        {discountPct}% OFF
+                      </span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                        Launch Offer
+                      </span>
+                    </div>
+
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight font-sans">
+                        {currencySym}{launchPrice.toLocaleString('en-IN')}
+                      </span>
+                      <span className="text-xs text-slate-600 font-medium">
+                        {isYearly ? '/year' : '/month'}
+                        {priceSuffix}
+                      </span>
+                    </div>
+
+                    {isYearly ? (
+                      <div className="mt-1 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-600 font-medium">
+                          ≈ {currencySym}{monthlyEquivalent.toLocaleString('en-IN')}/mo equivalent
+                        </span>
+                        <span className="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                          Save {currencySym}{annualSavings.toLocaleString('en-IN')}/yr
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="mt-1 text-[11px] text-slate-500">
+                        Billed monthly • Cancel anytime
+                      </div>
+                    )}
                   </div>
 
                   {/* Features List */}
-                  <div className="mt-6 space-y-3">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <div className="mt-5 space-y-2.5">
+                    <p className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
                       What is included
                     </p>
-                    <ul className="space-y-2.5 text-xs text-slate-700">
+                    <ul className="space-y-2 text-xs text-slate-700">
                       {p.features.map((feat, idx) => (
                         <li key={idx} className="flex items-start gap-2.5">
                           <CheckCircle2 className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
-                          <span>{feat}</span>
+                          <span className="leading-tight">{feat}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
                 </div>
 
-                {/* Call to action button */}
-                <div className="mt-8 pt-4 border-t border-slate-100">
+                {/* Call to Action Button & Contact Sales */}
+                <div className="mt-7 pt-4 border-t border-slate-100 space-y-2">
                   <button
                     type="button"
                     disabled={isCurrentPlan || upgradingPlanId === p.id}
@@ -330,7 +496,7 @@ export default function BillingPage() {
                       <span>Current Active Plan</span>
                     ) : isExpired ? (
                       <>
-                        <span>Choose Plan & Unlock Access</span>
+                        <span>Choose {p.name} & Unlock Access</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     ) : (
@@ -340,10 +506,28 @@ export default function BillingPage() {
                       </>
                     )}
                   </button>
+
+                  {/* Contact Sales / Custom Pricing for Enterprise */}
+                  {p.hasContactSales && (
+                    <a
+                      href="mailto:sales@ricoz.in?subject=Enterprise%20Plan%20Custom%20Pricing%20Inquiry%20-%20RicozAnalytics"
+                      className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 transition text-center flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Contact Enterprise Sales</span>
+                    </a>
+                  )}
                 </div>
               </div>
             );
           })}
+        </div>
+
+        {/* GST Information Note */}
+        <div className="text-center py-2">
+          <p className="text-xs text-slate-500 font-medium">
+            * All displayed prices are in INR (₹) and exclusive of 18% GST where applicable. Official tax invoices with GSTIN provided upon checkout.
+          </p>
         </div>
 
         {/* Enterprise Security & Guarantee Badges */}
@@ -356,7 +540,7 @@ export default function BillingPage() {
               <div className="text-xs">
                 <p className="font-bold text-slate-900">256-Bit SSL Encryption</p>
                 <p className="text-slate-500 mt-0.5 text-[11px]">
-                  All transactions are cryptographically verified via Stripe PCI-DSS Level 1.
+                  All transactions are cryptographically verified via Stripe PCI-DSS Level 1 compliant gateway.
                 </p>
               </div>
             </div>
@@ -380,7 +564,10 @@ export default function BillingPage() {
               <div className="text-xs">
                 <p className="font-bold text-slate-900">Enterprise Support & Invoicing</p>
                 <p className="text-slate-500 mt-0.5 text-[11px]">
-                  Need custom PO billing or wire transfer? <a href="mailto:support@ricoz.in" className="text-rose-600 underline font-semibold">Contact Enterprise Sales</a>
+                  Need custom PO billing or wire transfer?{' '}
+                  <a href="mailto:sales@ricoz.in" className="text-rose-600 underline font-semibold">
+                    Contact Enterprise Sales
+                  </a>
                 </p>
               </div>
             </div>
@@ -409,27 +596,35 @@ export default function BillingPage() {
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {currentSub?.invoices && currentSub.invoices.length > 0 ? (
-                  currentSub.invoices.map((inv) => (
-                    <tr key={inv.id} className="hover:bg-slate-50/50">
-                      <td className="py-3 px-6 font-mono font-medium text-slate-900">{inv.id}</td>
-                      <td className="py-3 px-6">{new Date(inv.created_at || Date.now()).toLocaleDateString()}</td>
-                      <td className="py-3 px-6 font-semibold">${((inv.amount_paid || 0) / 100).toFixed(2)}</td>
-                      <td className="py-3 px-6">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
-                          {inv.status || 'Paid'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-6 text-right">
-                        <button
-                          type="button"
-                          onClick={() => alert(`Downloading invoice ${inv.id}`)}
-                          className="text-rose-600 hover:text-rose-700 font-semibold cursor-pointer"
-                        >
-                          PDF &darr;
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                  currentSub.invoices.map((inv) => {
+                    const isINR = (inv.currency || 'inr').toLowerCase() === 'inr';
+                    const sym = isINR ? '₹' : '$';
+                    const formattedAmt = typeof inv.amount === 'number'
+                      ? inv.amount.toLocaleString('en-IN')
+                      : ((inv.amount_paid || 0) / 100).toLocaleString('en-IN');
+
+                    return (
+                      <tr key={inv.id} className="hover:bg-slate-50/50">
+                        <td className="py-3 px-6 font-mono font-medium text-slate-900">{inv.id}</td>
+                        <td className="py-3 px-6">{new Date(inv.created_at || Date.now()).toLocaleDateString()}</td>
+                        <td className="py-3 px-6 font-semibold">{sym}{formattedAmt}</td>
+                        <td className="py-3 px-6">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
+                            {inv.status || 'Paid'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-6 text-right">
+                          <button
+                            type="button"
+                            onClick={() => alert(`Downloading invoice ${inv.id}`)}
+                            className="text-rose-600 hover:text-rose-700 font-semibold cursor-pointer"
+                          >
+                            PDF &darr;
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
                     <td colSpan={5} className="py-8 text-center text-slate-400 text-xs">

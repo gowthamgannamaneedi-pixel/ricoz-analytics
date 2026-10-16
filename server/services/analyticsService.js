@@ -1676,7 +1676,7 @@ function validateRelationshipDefinition(sourceDataset, sourceCol, targetDataset,
 
   const normalizeType = (t) => {
     const clean = (t || 'string').toLowerCase();
-    if (clean === 'integer' || clean === 'float' || clean === 'decimal' || clean === 'numeric' || clean === 'bigint') return 'number';
+    if (clean === 'integer' || clean === 'int' || clean === 'smallint' || clean === 'float' || clean === 'double' || clean === 'decimal' || clean === 'numeric' || clean === 'bigint') return 'number';
     if (clean === 'timestamp' || clean === 'timestamptz' || clean === 'datetime') return 'date';
     if (clean === 'varchar' || clean === 'text' || clean === 'char') return 'string';
     return clean;
@@ -1697,6 +1697,233 @@ function validateRelationshipDefinition(sourceDataset, sourceCol, targetDataset,
     return { valid: false, error: `Invalid relationship type "${relationshipType}". Allowed types: ${validTypes.join(', ')}.` };
   }
 
+  return { valid: true };
+}
+
+/**
+ * Detect physical data type of an array of values
+ * Returns: 'integer' | 'number' | 'date' | 'boolean' | 'string'
+ */
+function detectPhysicalType(values) {
+  if (!values || values.length === 0) return 'string';
+  let numCount = 0;
+  let intCount = 0;
+  let dateCount = 0;
+  let boolCount = 0;
+  let total = 0;
+
+  for (const val of values) {
+    if (val === null || val === undefined || val === '') continue;
+    total++;
+    const s = String(val).trim();
+    if (s.toLowerCase() === 'true' || s.toLowerCase() === 'false') {
+      boolCount++;
+    } else if (!isNaN(Number(s)) && isFinite(Number(s))) {
+      numCount++;
+      if (Number.isInteger(Number(s)) && !s.includes('.')) {
+        intCount++;
+      }
+    } else if (s.length >= 8 && /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(s) && !isNaN(Date.parse(s))) {
+      dateCount++;
+    }
+  }
+
+  if (total === 0) return 'string';
+  if (intCount / total >= 0.7) return 'integer';
+  if (numCount / total >= 0.7) return 'number';
+  if (dateCount / total >= 0.7) return 'date';
+  if (boolCount / total >= 0.7) return 'boolean';
+  return 'string';
+}
+
+/**
+ * Validate dataset relationship with schema, physical data types, and cardinality
+ */
+async function validateRelationshipWithData({
+  sourceDataset,
+  sourceColumn,
+  targetDataset,
+  targetColumn,
+  relationshipType = 'many_to_one'
+}) {
+  // 1. Basic schema definition validation
+  const baseValidation = validateRelationshipDefinition(
+    sourceDataset,
+    sourceColumn,
+    targetDataset,
+    targetColumn,
+    relationshipType
+  );
+  if (!baseValidation.valid) {
+    return baseValidation;
+  }
+
+  const relType = String(relationshipType || 'many_to_one').toLowerCase();
+
+  // 2. Load dataset records to inspect physical types and check cardinality
+  let srcRecords = [];
+  let tgtRecords = [];
+
+  try {
+    srcRecords = await loadDatasetRecords(sourceDataset, 10000);
+  } catch (_) {
+    srcRecords = [];
+  }
+
+  try {
+    tgtRecords = await loadDatasetRecords(targetDataset, 10000);
+  } catch (_) {
+    tgtRecords = [];
+  }
+
+  // 3. Physical Type Compatibility Verification (Do not rely only on UI/schema string label)
+  if (srcRecords.length > 0 && tgtRecords.length > 0) {
+    const srcValues = srcRecords.map(r => r[sourceColumn]).filter(v => v !== undefined && v !== null && v !== '');
+    const tgtValues = tgtRecords.map(r => r[targetColumn]).filter(v => v !== undefined && v !== null && v !== '');
+
+    const srcPhysType = detectPhysicalType(srcValues);
+    const tgtPhysType = detectPhysicalType(tgtValues);
+
+    const isNumericType = (t) => t === 'integer' || t === 'number';
+
+    // Incompatible if one is strictly numeric and the other is non-numeric text
+    if ((isNumericType(srcPhysType) && tgtPhysType === 'string') || (srcPhysType === 'string' && isNumericType(tgtPhysType))) {
+      return {
+        valid: false,
+        error: `Cannot establish relationship: "${sourceColumn}" in "${sourceDataset.name}" is ${srcPhysType} but "${targetColumn}" in "${targetDataset.name}" is ${tgtPhysType}. Incompatible column data types cannot be linked.`
+      };
+    }
+  }
+
+  // 4. Cardinality & Duplicate Key Validation
+  // Many-to-One (N:1): Target must be unique key (no duplicates, no nulls)
+  if (relType === 'many_to_one' && tgtRecords.length > 0) {
+    const seen = new Map();
+    let nullCount = 0;
+    let dupKey = null;
+    let dupCount = 0;
+
+    for (const r of tgtRecords) {
+      const v = r[targetColumn];
+      if (v === null || v === undefined || String(v).trim() === '') {
+        nullCount++;
+        continue;
+      }
+      const norm = String(v).trim().toLowerCase();
+      const count = (seen.get(norm) || 0) + 1;
+      seen.set(norm, count);
+      if (count > 1 && !dupKey) {
+        dupKey = String(v).trim();
+        dupCount = count;
+      } else if (dupKey && dupKey.toLowerCase() === norm) {
+        dupCount = count;
+      }
+    }
+
+    if (dupKey) {
+      return {
+        valid: false,
+        error: `Cannot establish Many-to-One (N:1) relationship: Target column "${targetColumn}" in dataset "${targetDataset.name}" contains duplicate keys (e.g. "${dupKey}" occurs ${dupCount} times). Many-to-One relationships require unique keys in the target dataset. Consider choosing Many-to-Many (N:N) instead.`
+      };
+    }
+
+    if (nullCount > 0 && seen.size > 0) {
+      return {
+        valid: false,
+        error: `Cannot establish Many-to-One (N:1) relationship: Target column "${targetColumn}" in dataset "${targetDataset.name}" contains ${nullCount} null/empty values. Target key column cannot contain nulls.`
+      };
+    }
+  }
+
+  // One-to-Many (1:N): Source must be unique key (no duplicates, no nulls)
+  if (relType === 'one_to_many' && srcRecords.length > 0) {
+    const seen = new Map();
+    let nullCount = 0;
+    let dupKey = null;
+    let dupCount = 0;
+
+    for (const r of srcRecords) {
+      const v = r[sourceColumn];
+      if (v === null || v === undefined || String(v).trim() === '') {
+        nullCount++;
+        continue;
+      }
+      const norm = String(v).trim().toLowerCase();
+      const count = (seen.get(norm) || 0) + 1;
+      seen.set(norm, count);
+      if (count > 1 && !dupKey) {
+        dupKey = String(v).trim();
+        dupCount = count;
+      } else if (dupKey && dupKey.toLowerCase() === norm) {
+        dupCount = count;
+      }
+    }
+
+    if (dupKey) {
+      return {
+        valid: false,
+        error: `Cannot establish One-to-Many (1:N) relationship: Source column "${sourceColumn}" in dataset "${sourceDataset.name}" contains duplicate keys (e.g. "${dupKey}" occurs ${dupCount} times). One-to-Many relationships require unique keys in the source dataset. Consider choosing Many-to-Many (N:N) instead.`
+      };
+    }
+
+    if (nullCount > 0 && seen.size > 0) {
+      return {
+        valid: false,
+        error: `Cannot establish One-to-Many (1:N) relationship: Source column "${sourceColumn}" in dataset "${sourceDataset.name}" contains ${nullCount} null/empty values. Source key column cannot contain nulls.`
+      };
+    }
+  }
+
+  // One-to-One (1:1): Both Source and Target must be unique keys (no duplicates, no nulls)
+  if (relType === 'one_to_one') {
+    if (srcRecords.length > 0) {
+      const seen = new Map();
+      let dupKey = null;
+      let dupCount = 0;
+      for (const r of srcRecords) {
+        const v = r[sourceColumn];
+        if (v === null || v === undefined || String(v).trim() === '') continue;
+        const norm = String(v).trim().toLowerCase();
+        const count = (seen.get(norm) || 0) + 1;
+        seen.set(norm, count);
+        if (count > 1 && !dupKey) {
+          dupKey = String(v).trim();
+          dupCount = count;
+        }
+      }
+      if (dupKey) {
+        return {
+          valid: false,
+          error: `Cannot establish One-to-One (1:1) relationship: Source column "${sourceColumn}" in dataset "${sourceDataset.name}" contains duplicate keys (e.g. "${dupKey}" occurs ${dupCount} times). One-to-One relationships require unique keys in both datasets.`
+        };
+      }
+    }
+
+    if (tgtRecords.length > 0) {
+      const seen = new Map();
+      let dupKey = null;
+      let dupCount = 0;
+      for (const r of tgtRecords) {
+        const v = r[targetColumn];
+        if (v === null || v === undefined || String(v).trim() === '') continue;
+        const norm = String(v).trim().toLowerCase();
+        const count = (seen.get(norm) || 0) + 1;
+        seen.set(norm, count);
+        if (count > 1 && !dupKey) {
+          dupKey = String(v).trim();
+          dupCount = count;
+        }
+      }
+      if (dupKey) {
+        return {
+          valid: false,
+          error: `Cannot establish One-to-One (1:1) relationship: Target column "${targetColumn}" in dataset "${targetDataset.name}" contains duplicate keys (e.g. "${dupKey}" occurs ${dupCount} times). One-to-One relationships require unique keys in both datasets.`
+        };
+      }
+    }
+  }
+
+  // Many-to-Many (N:N): Allows duplicates on both sides.
   return { valid: true };
 }
 
@@ -1929,6 +2156,8 @@ module.exports = {
   getPaginatedDatasetRows,
   getDatasetFilterOptions,
   validateRelationshipDefinition,
+  validateRelationshipWithData,
+  detectPhysicalType,
   executeRelationalQuery,
   queryDatasetSummary,
   queryDatasetKpis,

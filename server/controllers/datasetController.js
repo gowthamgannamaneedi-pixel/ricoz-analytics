@@ -198,7 +198,10 @@ const deleteDataset = async (req, res, next) => {
     await db.query('DELETE FROM forecasts WHERE dataset_id = $1', [id]).catch(() => null);
     await db.query('DELETE FROM dataset_quality_snapshots WHERE dataset_id = $1', [id]).catch(() => null);
     await db.query('DELETE FROM dataset_quality_rules WHERE dataset_id = $1', [id]).catch(() => null);
-    await db.query('DELETE FROM dataset_relationships WHERE dataset_id_1 = $1 OR dataset_id_2 = $1', [id]).catch(() => null);
+    await db.query(
+      'DELETE FROM dataset_relationships WHERE CAST(source_dataset_id AS TEXT) = $1::text OR CAST(target_dataset_id AS TEXT) = $1::text',
+      [String(id)]
+    ).catch(() => null);
 
     // Cleanup physical file on storage
     if (dataset.file_path) {

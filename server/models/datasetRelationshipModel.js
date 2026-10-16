@@ -57,7 +57,7 @@ const DatasetRelationshipModel = {
     const result = await db.query(sql, [
       id,
       organizationId,
-      createdBy ? (isNaN(Number(createdBy)) ? createdBy : Number(createdBy)) : null,
+      createdBy && !isNaN(Number(createdBy)) ? Number(createdBy) : null,
       formatDatasetId(sourceDatasetId),
       sourceColumn.trim(),
       formatDatasetId(targetDatasetId),

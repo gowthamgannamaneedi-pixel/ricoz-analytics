@@ -63,7 +63,7 @@ class PaymentService {
           line_items: [
             {
               price_data: {
-                currency: 'usd',
+                currency: plan.currency || 'inr',
                 product_data: {
                   name: `RicozAnalytics ${plan.name} Plan`,
                   description: `${plan.name} Tier SaaS Analytics Platform Subscription (${billingCycle})`
@@ -101,7 +101,7 @@ class PaymentService {
       mode: 'sandbox_test',
       plan: plan.id,
       amount: priceAmount,
-      currency: 'usd',
+      currency: plan.currency || 'inr',
       billingCycle
     };
   }
@@ -197,8 +197,14 @@ class PaymentService {
           const organizationId = session.client_reference_id || session.metadata?.organization_id || session.metadata?.organizationId;
           const planId = session.metadata?.plan_id || session.metadata?.planId || 'starter';
           const customerId = session.customer || session.customer_details?.email;
+          const billingCycle = session.metadata?.billing_cycle || session.metadata?.billingCycle || 'monthly';
+          const isAnnual = billingCycle === 'yearly' || billingCycle === 'annual';
+          const defaultAmount = isAnnual
+            ? (PLANS[String(planId).toUpperCase()]?.priceYearly || 6999)
+            : (PLANS[String(planId).toUpperCase()]?.priceMonthly || 699);
+          const amountTotal = session.amount_total ? session.amount_total / 100 : defaultAmount;
           const subscriptionId = session.subscription || `sub_${crypto.randomBytes(12).toString('hex')}`;
-          const amountTotal = session.amount_total ? session.amount_total / 100 : 49;
+          const periodDays = isAnnual ? 365 : 30;
 
           if (organizationId) {
             resolvedOrgId = organizationId;
@@ -209,7 +215,7 @@ class PaymentService {
               plan: planId,
               stripe_customer_id: String(customerId),
               stripe_subscription_id: String(subscriptionId),
-              current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+              current_period_end: new Date(Date.now() + periodDays * 24 * 60 * 60 * 1000)
             });
 
             // Record invoice
@@ -222,12 +228,12 @@ class PaymentService {
               organizationId,
               session.invoice || `in_${crypto.randomBytes(12).toString('hex')}`,
               amountTotal,
-              session.currency || 'usd',
+              session.currency || 'inr',
               planId,
               'paid'
             ]).catch(err => console.warn('Invoice recording warning:', err.message));
 
-            console.log(`[PaymentService] ✅ Organization ${organizationId} upgraded to ACTIVE on ${planId} plan.`);
+            console.log(`[PaymentService] ✅ Organization ${organizationId} upgraded to ACTIVE on ${planId} plan (${billingCycle}).`);
           }
           break;
         }
@@ -263,7 +269,7 @@ class PaymentService {
               org.id,
               invoice.id || `in_${crypto.randomBytes(12).toString('hex')}`,
               amount,
-              invoice.currency || 'usd',
+              invoice.currency || 'inr',
               org.plan || 'starter',
               'paid'
             ]).catch(() => null);
