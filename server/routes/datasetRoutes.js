@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/authMiddleware');
 const { requirePermission } = require('../middleware/roleMiddleware');
+const { requireUsageLimit } = require('../middleware/subscriptionMiddleware');
 const { handleUpload } = require('../middleware/uploadMiddleware');
 const {
   getDatasets,
@@ -18,7 +19,7 @@ router.use(authenticateToken);
 
 // Dataset endpoints protected with RBAC
 router.get('/', requirePermission('datasets.view'), getDatasets);
-router.post('/dev-create', devCreateDataset);
+router.post('/dev-create', requireUsageLimit('datasets'), devCreateDataset);
 router.get('/:id', requirePermission('datasets.view'), getDatasetById);
 router.get('/:id/preview', requirePermission('datasets.view'), getDatasetPreview);
 router.post('/:id/refresh', requirePermission('datasets.create'), refreshDataset);

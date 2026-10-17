@@ -1785,6 +1785,198 @@ class EmailService {
       };
     }
   }
+
+  /**
+   * Send 10-Day Subscription Expiry or Renewal Reminder Email
+   * @param {{
+   *   email: string,
+   *   recipientName?: string,
+   *   orgName: string,
+   *   planName: string,
+   *   expiryDate: string,
+   *   daysRemaining?: number,
+   *   isTrial?: boolean,
+   *   billingUrl?: string,
+   *   renewalInstructions?: string
+   * }} options
+   */
+  async sendSubscriptionExpiryReminder({
+    email,
+    recipientName = 'Billing Administrator',
+    orgName,
+    planName,
+    expiryDate,
+    daysRemaining = 10,
+    isTrial = false,
+    billingUrl = 'http://localhost:5173/billing',
+    renewalInstructions
+  }) {
+    const fromEmail = process.env.SMTP_FROM || 'care@ricoz.in';
+    const effectiveInstructions = renewalInstructions || (
+      isTrial
+        ? 'Choose a subscription plan to keep your datasets, models, and dashboards fully active without interruption.'
+        : 'Review your billing information or renew your plan to ensure uninterrupted workspace access and data ingestion.'
+    );
+
+    const subject = isTrial
+      ? `[Urgent] Your RicozAnalytics Free Trial expires in ${daysRemaining} days — Action Required`
+      : `[Notice] Your RicozAnalytics ${planName} Plan renews/expires in ${daysRemaining} days (${orgName})`;
+
+    const htmlContent = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b;">
+        <div style="margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-weight: 800; font-size: 22px; color: #0f172a; letter-spacing: -0.5px;">ricoz<span style="color: #e11d48;">Analytics</span></span>
+          <span style="font-size: 11px; font-weight: 700; background: #fff1f2; color: #e11d48; padding: 4px 10px; border-radius: 9999px; border: 1px solid #fecdd3; text-transform: uppercase;">
+            ${daysRemaining}-Day Reminder
+          </span>
+        </div>
+
+        <div style="background: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+          <h2 style="color: #9f1239; font-size: 18px; font-weight: 700; margin: 0 0 6px 0;">
+            ${isTrial ? 'Trial Expiration Notice' : 'Subscription Renewal & Expiration Notice'}
+          </h2>
+          <p style="color: #be123c; font-size: 13px; line-height: 1.5; margin: 0;">
+            Your workspace for <strong>${orgName}</strong> has <strong>${daysRemaining} days</strong> remaining on the <strong>${planName}</strong> plan.
+          </p>
+        </div>
+
+        <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+          Hi ${recipientName},
+        </p>
+        <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
+          ${effectiveInstructions}
+        </p>
+
+        <!-- Subscription Milestone Table -->
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 13px;">
+          <tr>
+            <td style="padding: 10px 14px; color: #64748b; border-bottom: 1px solid #e2e8f0;">Organization</td>
+            <td style="padding: 10px 14px; font-weight: 600; color: #0f172a; border-bottom: 1px solid #e2e8f0;">${orgName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 14px; color: #64748b; border-bottom: 1px solid #e2e8f0;">Current Plan</td>
+            <td style="padding: 10px 14px; font-weight: 600; color: #0f172a; border-bottom: 1px solid #e2e8f0;">${planName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 14px; color: #64748b; border-bottom: 1px solid #e2e8f0;">Expiration / Renewal Date</td>
+            <td style="padding: 10px 14px; font-weight: 600; color: #e11d48; border-bottom: 1px solid #e2e8f0;">${expiryDate}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 14px; color: #64748b;">Data Preservation Policy</td>
+            <td style="padding: 10px 14px; font-weight: 600; color: #059669;">100% Preserved (Zero Data Deletion)</td>
+          </tr>
+        </table>
+
+        <!-- Renewal CTA -->
+        <div style="text-align: center; margin: 28px 0;">
+          <a href="${billingUrl}" style="display: inline-block; background: #e11d48; color: #ffffff; font-weight: 700; font-size: 14px; padding: 12px 32px; border-radius: 8px; text-decoration: none; box-shadow: 0 2px 4px rgba(225,29,72,0.25);">
+            Manage Billing & Renew Now →
+          </a>
+        </div>
+
+        <p style="color: #64748b; font-size: 12px; margin-top: 24px; line-height: 1.5;">
+          Direct billing link: <a href="${billingUrl}" style="color: #e11d48; word-break: break-all;">${billingUrl}</a><br>
+          If you have questions about your subscription, contact our support team at <a href="mailto:care@ricoz.in" style="color: #e11d48;">care@ricoz.in</a>.
+        </p>
+
+        <div style="border-top: 1px solid #f1f5f9; margin-top: 28px; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
+          © ${new Date().getFullYear()} RicozAnalytics. All customer data remains strictly isolated and preserved.
+        </div>
+      </div>
+    `;
+
+    console.log(`[EmailService] ✉️ 10-day subscription expiry reminder prepared for: ${email} (Org: ${orgName}, Plan: ${planName}, Expiry: ${expiryDate})`);
+
+    const cleanRecipient = (email || '').trim().toLowerCase();
+    if (
+      process.env.MOCK_EMAIL_SEND === 'true' ||
+      cleanRecipient.endsWith('.test') ||
+      cleanRecipient.endsWith('.example') ||
+      cleanRecipient.includes('@example.') ||
+      cleanRecipient.includes('@test.') ||
+      cleanRecipient.includes('example.com') ||
+      cleanRecipient.includes('test.com') ||
+      cleanRecipient.includes('ricoz.test') ||
+      cleanRecipient.includes('nexussystems.com') ||
+      cleanRecipient.includes('apexdynamics.com') ||
+      cleanRecipient.includes('starter.com') ||
+      cleanRecipient.includes('growth.com') ||
+      cleanRecipient.includes('enterprise.com') ||
+      cleanRecipient.includes('acme-corp.com') ||
+      cleanRecipient.includes('cobalt.com') ||
+      cleanRecipient.includes('delta.com') ||
+      cleanRecipient.includes('ricozanalytics.com')
+    ) {
+      console.log(`[EmailService] 🧪 Safe Mock: Skipping expiry reminder delivery for test address "${cleanRecipient}"`);
+      return {
+        attempted: true,
+        success: true,
+        recipient: cleanRecipient,
+        messageId: `<mock-reminder-${Date.now()}@ricozanalytics.test>`,
+        mocked: true
+      };
+    }
+
+    if (!this.isConfigured()) {
+      return {
+        attempted: false,
+        success: true,
+        recipient: email,
+        provider: 'Mock/Disabled'
+      };
+    }
+
+    if (this.isBrevo()) {
+      try {
+        const brevoResult = await this._sendBrevoEmail({
+          to: [{ email, name: recipientName }],
+          subject,
+          htmlContent,
+          senderName: 'RicozAnalytics Billing',
+          senderEmail: fromEmail
+        });
+        return {
+          attempted: true,
+          success: true,
+          recipient: email,
+          provider: 'Brevo',
+          messageId: brevoResult.messageId
+        };
+      } catch (err) {
+        console.warn(`[EmailService] Expiry reminder Brevo warning: ${err.message}`);
+        return {
+          attempted: true,
+          success: false,
+          provider: 'Brevo',
+          recipient: email,
+          error: err.message
+        };
+      }
+    }
+
+    try {
+      const info = await this.transporter.sendMail({
+        from: `"RicozAnalytics Billing" <${fromEmail}>`,
+        to: email,
+        subject,
+        html: htmlContent
+      });
+      return {
+        attempted: true,
+        success: true,
+        recipient: email,
+        messageId: info.messageId
+      };
+    } catch (err) {
+      console.warn(`[EmailService] Expiry reminder SMTP warning: ${err.message}`);
+      return {
+        attempted: true,
+        success: false,
+        recipient: email,
+        error: err.message
+      };
+    }
+  }
 }
 
 module.exports = new EmailService();

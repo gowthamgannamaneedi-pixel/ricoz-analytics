@@ -1,5 +1,7 @@
 const paymentService = require('../services/paymentService');
 const subscriptionService = require('../services/subscriptionService');
+const { PLANS, comparePlans, getPlan } = require('../config/plans');
+const SubscriptionHistoryModel = require('../models/subscriptionHistoryModel');
 const db = require('../config/database');
 const { logAuditEvent, AUDIT_ACTIONS } = require('../services/auditService');
 
@@ -29,7 +31,7 @@ const billingController = {
 
   /**
    * GET /api/billing/subscription
-   * Get current organization subscription & 14-day trial status
+   * Get current organization subscription, entitlements, usage telemetry & invoice history
    */
   async getSubscription(req, res) {
     try {
@@ -42,17 +44,42 @@ const billingController = {
         });
       }
 
-      const invoices = await paymentService.getInvoices(orgId);
+      const [invoices, history] = await Promise.all([
+        paymentService.getInvoices(orgId).catch(() => []),
+        SubscriptionHistoryModel.findByOrganizationId(orgId, 10).catch(() => [])
+      ]);
 
       return res.status(200).json({
         success: true,
         subscription,
-        invoices
+        invoices,
+        history
       });
     } catch (err) {
       return res.status(500).json({
         success: false,
         message: 'Failed to retrieve subscription status',
+        error: err.message
+      });
+    }
+  },
+
+  /**
+   * GET /api/billing/history
+   * Retrieve full subscription event audit history
+   */
+  async getSubscriptionHistory(req, res) {
+    try {
+      const orgId = req.user.organization_id;
+      const history = await SubscriptionHistoryModel.findByOrganizationId(orgId, 50);
+      return res.status(200).json({
+        success: true,
+        history
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to retrieve subscription history',
         error: err.message
       });
     }
@@ -110,6 +137,68 @@ const billingController = {
   },
 
   /**
+   * POST /api/billing/schedule-downgrade
+   * Schedule plan downgrade at current period end
+   */
+  async scheduleDowngrade(req, res) {
+    try {
+      const orgId = req.user.organization_id;
+      const { planId } = req.body;
+
+      if (!planId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Target planId is required (starter, growth, or enterprise).'
+        });
+      }
+
+      const currentSub = await subscriptionService.getOrganizationSubscription(orgId);
+      if (!currentSub) {
+        return res.status(404).json({ success: false, message: 'Organization not found' });
+      }
+
+      const comparison = PLANS[planId.toLowerCase()]
+        ? comparePlans(planId, currentSub.plan)
+        : -1;
+
+      if (comparison >= 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot schedule downgrade to "${planId}". Target plan must be a lower tier than current "${currentSub.plan}" plan. Use checkout to upgrade.`
+        });
+      }
+
+      const result = await subscriptionService.scheduleDowngrade(orgId, planId);
+
+      await logAuditEvent({
+        organizationId: orgId,
+        userId: req.user.id,
+        action: AUDIT_ACTIONS.SETTINGS_UPDATED,
+        resourceType: 'billing',
+        resourceId: orgId,
+        description: `Downgrade to ${planId} scheduled for ${result.effectiveDate}`,
+        metadata: { targetPlan: planId, effectiveDate: result.effectiveDate },
+        req
+      }).catch(() => null);
+
+      const freshSub = await subscriptionService.getOrganizationSubscription(orgId);
+
+      return res.status(200).json({
+        success: true,
+        message: `Downgrade to ${result.targetPlan} successfully scheduled. Your current plan features remain active until ${new Date(result.effectiveDate).toLocaleDateString()}.`,
+        subscription: freshSub,
+        ...result
+      });
+    } catch (err) {
+      console.error('[BillingController.scheduleDowngrade] Error:', err.message);
+      return res.status(500).json({
+        success: false,
+        message: err.message || 'Failed to schedule plan downgrade.'
+      });
+    }
+  },
+
+  /**
    * POST /api/billing/webhook
    * Process incoming Stripe webhooks with cryptographic signature verification
    */
@@ -139,7 +228,8 @@ const billingController = {
   async cancelSubscription(req, res) {
     try {
       const orgId = req.user.organization_id;
-      await paymentService.cancelSubscription(orgId);
+      const { immediate = false } = req.body || {};
+      const updated = await paymentService.cancelSubscription(orgId, { immediate });
 
       await logAuditEvent({
         organizationId: orgId,
@@ -147,19 +237,43 @@ const billingController = {
         action: AUDIT_ACTIONS.SETTINGS_UPDATED,
         resourceType: 'billing',
         resourceId: orgId,
-        description: `Subscription cancelled by ${req.user.email}`,
-        metadata: { cancelledBy: req.user.id },
+        description: `Subscription cancelled by ${req.user.email} (immediate: ${immediate})`,
+        metadata: { cancelledBy: req.user.id, immediate },
         req
       }).catch(() => null);
 
       return res.status(200).json({
         success: true,
-        message: 'Subscription has been cancelled. Workspace will remain accessible until the end of current period.'
+        message: immediate
+          ? 'Subscription has been cancelled immediately.'
+          : 'Subscription has been cancelled. Workspace will remain accessible until the end of current period.',
+        subscription: updated
       });
     } catch (err) {
       return res.status(500).json({
         success: false,
         message: 'Failed to cancel subscription',
+        error: err.message
+      });
+    }
+  },
+
+  /**
+   * POST /api/billing/check-reminders
+   * Trigger subscription expiry reminders check on-demand
+   */
+  async triggerReminderCheck(req, res) {
+    try {
+      const summary = await subscriptionService.checkAndSendExpiryReminders();
+      return res.status(200).json({
+        success: true,
+        message: 'Expiry reminders evaluated successfully',
+        summary
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to run expiry reminder evaluation',
         error: err.message
       });
     }
@@ -180,6 +294,29 @@ const billingController = {
         [pastDate, orgId]
       );
       return res.status(200).json({ success: true, message: 'Trial simulated as expired' });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  },
+
+  /**
+   * DEV ONLY: Simulate subscription dates for testing 10-day reminders & transitions
+   */
+  devSimulateDates: async (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({ success: false, message: 'Simulation disabled in production' });
+    }
+    try {
+      const orgId = req.user.organization_id;
+      const { trialEndsAt, currentPeriodEnd, subscriptionStatus, plan } = req.body;
+      const updates = {};
+      if (trialEndsAt !== undefined) updates.trial_ends_at = trialEndsAt;
+      if (currentPeriodEnd !== undefined) updates.current_period_end = currentPeriodEnd;
+      if (subscriptionStatus !== undefined) updates.subscription_status = subscriptionStatus;
+      if (plan !== undefined) updates.plan = plan;
+
+      const updated = await subscriptionService.updateSubscription(orgId, updates);
+      return res.status(200).json({ success: true, message: 'Dates updated for testing', organization: updated });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });
     }

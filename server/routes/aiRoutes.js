@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/authMiddleware');
+const { requirePlanFeature } = require('../middleware/subscriptionMiddleware');
 const AIController = require('../controllers/aiController');
 
-// All AI assistant routes require valid JWT authentication
+// All AI assistant routes require valid JWT authentication and Custom AI Query Planner entitlement (Enterprise)
 router.use(authenticateToken);
+router.use(requirePlanFeature('aiQueryPlanner'));
 
 // ----------------- AI ANALYTICAL QUERIES & EXPLANATIONS -----------------
 router.post('/query', AIController.query);

@@ -2,10 +2,12 @@ const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/authMiddleware');
 const { requirePermission } = require('../middleware/roleMiddleware');
+const { requirePlanFeature } = require('../middleware/subscriptionMiddleware');
 const insightController = require('../controllers/insightController');
 
-// All insight endpoints require JWT authentication
+// All insight endpoints require JWT authentication and Executive AI Insights entitlement
 router.use(authenticateToken);
+router.use(requirePlanFeature('insights'));
 
 // Executive insights generation & listing
 router.post(

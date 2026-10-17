@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/authMiddleware');
 const { requireRole } = require('../middleware/roleMiddleware');
+const { requirePlanFeature } = require('../middleware/subscriptionMiddleware');
 const {
   getAlerts,
   getSummary,
@@ -16,8 +17,9 @@ const {
   resolveIncident
 } = require('../controllers/alertController');
 
-// All alert endpoints require a valid authentication token
+// All alert endpoints require a valid authentication token and Real-time Anomaly Alerts entitlement
 router.use(authenticateToken);
+router.use(requirePlanFeature('alerts'));
 
 // ----------------- INCIDENT RESOLUTION CENTER -----------------
 // Read-only for all roles (Admin, Manager, Analyst, Viewer)

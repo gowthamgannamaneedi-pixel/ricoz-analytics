@@ -192,6 +192,8 @@ const UserModel = {
           verification_otp,
           verification_token_expires_at
         ]);
+        // Keep postgres sequence in sync with max id
+        await db.query("SELECT setval('users_id_seq', (SELECT MAX(id) FROM users))").catch(() => null);
         return result.rows[0];
       }
       throw err;

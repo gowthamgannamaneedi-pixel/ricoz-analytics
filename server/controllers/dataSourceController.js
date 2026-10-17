@@ -10,6 +10,7 @@ const db = require('../config/database');
 const { parseDatasetFile, parseDatasetFileStream } = require('../services/fileParserService');
 const { testPostgresConnection, sanitizePostgresConfig } = require('../services/postgresSourceService');
 const { ingestDatasetFileStream } = require('../services/datasetIngestionService');
+const subscriptionService = require('../services/subscriptionService');
 
 /**
  * Data Source Controller
@@ -159,6 +160,23 @@ const createDataSource = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: 'Data source name is required.'
+      });
+    }
+
+    // Check subscription dataset limit
+    const limitCheck = await subscriptionService.checkUsageLimit(organizationId, 'datasets');
+    if (!limitCheck.allowed) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: limitCheck.code,
+          message: limitCheck.message
+        },
+        message: limitCheck.message,
+        requiresUpgrade: true,
+        limit: limitCheck.limit,
+        currentCount: limitCheck.currentCount,
+        upgradeGuidance: limitCheck.upgradeGuidance
       });
     }
 
@@ -545,6 +563,26 @@ const uploadDataSource = async (req, res, next) => {
           message: 'User does not belong to a valid organization. Organization membership is required to upload datasets.'
         },
         message: 'User does not belong to a valid organization. Organization membership is required to upload datasets.'
+      });
+    }
+
+    // Check subscription dataset limit
+    const limitCheck = await subscriptionService.checkUsageLimit(organizationId, 'datasets');
+    if (!limitCheck.allowed) {
+      if (file.path && fs.existsSync(file.path)) {
+        fs.unlink(file.path, () => {});
+      }
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: limitCheck.code,
+          message: limitCheck.message
+        },
+        message: limitCheck.message,
+        requiresUpgrade: true,
+        limit: limitCheck.limit,
+        currentCount: limitCheck.currentCount,
+        upgradeGuidance: limitCheck.upgradeGuidance
       });
     }
 

@@ -3,7 +3,7 @@ const Stripe = require('stripe');
 const db = require('../config/database');
 const subscriptionService = require('./subscriptionService');
 const StripeWebhookEventModel = require('../models/stripeWebhookEventModel');
-const { PLANS, SUBSCRIPTION_STATUSES } = subscriptionService;
+const { PLANS, SUBSCRIPTION_STATUSES, getPlan } = subscriptionService;
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder_ricoz_analytics';
 const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_test_placeholder_ricoz_2026';
@@ -34,8 +34,7 @@ class PaymentService {
    * @param {{ organizationId: string, planId: string, billingCycle: 'monthly'|'yearly', successUrl: string, cancelUrl: string, userEmail: string }} params
    */
   async createCheckoutSession({ organizationId, planId, billingCycle = 'monthly', successUrl, cancelUrl, userEmail }) {
-    const planKey = String(planId || 'starter').toUpperCase();
-    const plan = PLANS[planKey];
+    const plan = getPlan(planId);
     if (!plan) {
       throw new Error(`Invalid plan specified: ${planId}. Allowed: starter, growth, enterprise`);
     }
@@ -208,14 +207,17 @@ class PaymentService {
 
           if (organizationId) {
             resolvedOrgId = organizationId;
-            // Update organization subscription to ACTIVE
-            await subscriptionService.updateSubscription(organizationId, {
-              subscription_status: SUBSCRIPTION_STATUSES.ACTIVE,
-              payment_status: 'paid',
-              plan: planId,
-              stripe_customer_id: String(customerId),
-              stripe_subscription_id: String(subscriptionId),
-              current_period_end: new Date(Date.now() + periodDays * 24 * 60 * 60 * 1000)
+            const periodEnd = new Date(Date.now() + periodDays * 24 * 60 * 60 * 1000);
+
+            // Apply verified upgrade and record audit history
+            await subscriptionService.applyUpgrade(organizationId, {
+              planId,
+              billingInterval: isAnnual ? 'yearly' : 'monthly',
+              amount: amountTotal,
+              currency: session.currency || 'inr',
+              stripeCustomerId: String(customerId),
+              stripeSubscriptionId: String(subscriptionId),
+              currentPeriodEnd: periodEnd
             });
 
             // Record invoice
@@ -255,10 +257,14 @@ class PaymentService {
 
           if (org) {
             resolvedOrgId = org.id;
-            await subscriptionService.updateSubscription(org.id, {
-              subscription_status: SUBSCRIPTION_STATUSES.ACTIVE,
-              payment_status: 'paid',
-              current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+            await subscriptionService.applyUpgrade(org.id, {
+              planId: org.plan || 'starter',
+              billingInterval: 'monthly',
+              amount,
+              currency: invoice.currency || 'inr',
+              stripeCustomerId: String(customerId),
+              stripeSubscriptionId: String(subscriptionId),
+              currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
             });
 
             const invoiceSql = `
@@ -314,10 +320,7 @@ class PaymentService {
 
           if (org) {
             resolvedOrgId = org.id;
-            await subscriptionService.updateSubscription(org.id, {
-              subscription_status: SUBSCRIPTION_STATUSES.CANCELLED,
-              payment_status: 'unpaid'
-            });
+            await subscriptionService.cancelSubscription(org.id, { immediate: true });
           }
           break;
         }
@@ -381,22 +384,25 @@ class PaymentService {
   /**
    * Cancel subscription for organization
    * @param {string} organizationId 
+   * @param {{ immediate?: boolean }} options
    */
-  async cancelSubscription(organizationId) {
+  async cancelSubscription(organizationId, { immediate = false } = {}) {
     const orgSub = await subscriptionService.getOrganizationSubscription(organizationId);
     if (!orgSub) throw new Error('Organization not found');
 
     if (isRealStripeKey && orgSub.stripeSubscriptionId) {
       try {
-        await stripe.subscriptions.cancel(orgSub.stripeSubscriptionId);
+        if (immediate) {
+          await stripe.subscriptions.cancel(orgSub.stripeSubscriptionId);
+        } else {
+          await stripe.subscriptions.update(orgSub.stripeSubscriptionId, { cancel_at_period_end: true });
+        }
       } catch (err) {
         console.warn('Stripe subscription cancel warning:', err.message);
       }
     }
 
-    return subscriptionService.updateSubscription(organizationId, {
-      subscription_status: SUBSCRIPTION_STATUSES.CANCELLED
-    });
+    return subscriptionService.cancelSubscription(organizationId, { immediate });
   }
 
   /**

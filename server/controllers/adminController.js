@@ -3,6 +3,7 @@ const UserModel = require('../models/userModel');
 const AuditLogModel = require('../models/auditLogModel');
 const InvitationModel = require('../models/invitationModel');
 const emailService = require('../services/emailService');
+const subscriptionService = require('../services/subscriptionService');
 const { logAuditEvent, AUDIT_ACTIONS } = require('../services/auditService');
 const { getFullPermissionMatrix, getPermissionsForRole } = require('../utils/permissions');
 
@@ -477,6 +478,23 @@ const adminController = {
         return res.status(400).json({
           success: false,
           message: 'User is already a member of this organization.'
+        });
+      }
+
+      // Check subscription team member limit
+      const limitCheck = await subscriptionService.checkUsageLimit(orgId, 'users');
+      if (!limitCheck.allowed) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: limitCheck.code,
+            message: limitCheck.message
+          },
+          message: limitCheck.message,
+          requiresUpgrade: true,
+          limit: limitCheck.limit,
+          currentCount: limitCheck.currentCount,
+          upgradeGuidance: limitCheck.upgradeGuidance
         });
       }
 

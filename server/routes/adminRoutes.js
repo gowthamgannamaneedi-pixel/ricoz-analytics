@@ -3,6 +3,7 @@ const router = express.Router();
 const adminController = require('../controllers/adminController');
 const authenticateToken = require('../middleware/authMiddleware');
 const { requireRole, requirePermission } = require('../middleware/roleMiddleware');
+const { requireUsageLimit } = require('../middleware/subscriptionMiddleware');
 
 // All admin endpoints require active authentication
 router.use(authenticateToken);
@@ -20,7 +21,7 @@ router.put('/users/:id/status', requireRole('admin'), adminController.updateUser
 
 // Team Invitations
 router.get('/invitations', requireRole('admin', 'manager'), adminController.getInvitations);
-router.post('/invitations', requireRole('admin'), adminController.createInvitation);
+router.post('/invitations', requireRole('admin'), requireUsageLimit('users'), adminController.createInvitation);
 router.delete('/invitations/:id', requireRole('admin'), adminController.deleteInvitation);
 
 // Enterprise Audit Logs

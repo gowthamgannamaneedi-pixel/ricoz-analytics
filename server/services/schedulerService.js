@@ -92,7 +92,27 @@ class SchedulerService {
       await this.evaluateScheduledInsights();
     });
 
-    console.log(' SchedulerService: Background cron daemon running (1-minute polling, hourly insights).');
+    // Automated 10-day subscription & trial expiry reminders run daily at 8:00 AM (and every 6 hours)
+    this.subscriptionTask = cron.schedule('0 */6 * * *', async () => {
+      await this.evaluateSubscriptionReminders();
+    });
+
+    console.log(' SchedulerService: Background cron daemon running (1-minute polling, hourly insights, subscription reminders).');
+  }
+
+  /**
+   * Evaluate and dispatch automated 10-day subscription expiry reminders
+   */
+  async evaluateSubscriptionReminders() {
+    try {
+      const subscriptionService = require('./subscriptionService');
+      const res = await subscriptionService.checkAndSendExpiryReminders();
+      if (res.sent > 0 || res.errors > 0) {
+        console.log(`[SchedulerService] 🔔 Subscription reminders: ${res.sent} sent, ${res.skipped} skipped, ${res.errors} errors.`);
+      }
+    } catch (err) {
+      console.error('[SchedulerService] Subscription reminder evaluation error:', err.message);
+    }
   }
 
   /**
@@ -132,6 +152,9 @@ class SchedulerService {
     }
     if (this.insightsTask) {
       this.insightsTask.stop();
+    }
+    if (this.subscriptionTask) {
+      this.subscriptionTask.stop();
     }
     this.activeTasks.forEach((task) => task.stop());
     this.activeTasks.clear();

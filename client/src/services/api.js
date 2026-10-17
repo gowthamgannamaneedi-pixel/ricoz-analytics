@@ -1185,10 +1185,29 @@ export async function createBillingCheckoutSession(payload) {
 /**
  * Cancel active subscription
  */
-export async function cancelBillingSubscription() {
+export async function cancelBillingSubscription(options = {}) {
   return apiRequest('/billing/cancel-subscription', {
-    method: 'POST'
+    method: 'POST',
+    body: JSON.stringify(options)
   });
+}
+
+/**
+ * Schedule plan downgrade at period end
+ * @param {{ planId: string }} payload
+ */
+export async function scheduleBillingDowngrade(payload) {
+  return apiRequest('/billing/schedule-downgrade', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+/**
+ * Retrieve subscription audit history
+ */
+export async function getBillingHistory() {
+  return apiRequest('/billing/history');
 }
 
 // ==========================================

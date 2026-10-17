@@ -109,89 +109,13 @@ const register = async (req, res, next) => {
     // 2. Check for duplicate email in database
     const existingUser = await UserModel.findByEmail(cleanEmail);
     if (existingUser) {
-      if (existingUser.status === 'active') {
-        return res.status(409).json({
-          success: false,
-          code: 'EMAIL_ALREADY_VERIFIED',
-          isVerified: true,
-          message: 'An account with this email address already exists and is active. Please log in or reset your password.'
-        });
-      }
-
-      // Existing user is UNVERIFIED (status === 'pending_verification')
-      // Safely resend fresh verification code without creating duplicate organizations or modifying password
-      const lastSent = resendRateLimits.get(cleanEmail);
-      const now = Date.now();
-      if (lastSent && now - lastSent < 60000) {
-        const waitSeconds = Math.ceil((60000 - (now - lastSent)) / 1000);
-        return res.status(200).json({
-          success: true,
-          requiresVerification: true,
-          isExistingUnverified: true,
-          inCooldown: true,
-          retryAfter: waitSeconds,
-          message: `An account with this email address already exists and is pending verification. A verification code was recently sent. Please enter your 6-digit code or wait ${waitSeconds}s to request another.`,
-          email: existingUser.email,
-          organization_id: existingUser.organization_id,
-          user: {
-            id: existingUser.id,
-            name: existingUser.name,
-            email: existingUser.email,
-            role: existingUser.role,
-            status: 'pending_verification',
-            organization_id: existingUser.organization_id,
-            created_at: existingUser.created_at
-          },
-          email_delivery: {
-            attempted: false,
-            inCooldown: true,
-            success: true,
-            recipient: cleanEmail
-          }
-        });
-      }
-
-      const verificationToken = crypto.randomBytes(32).toString('hex');
-      const verificationOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      const tokenExpiresAt = new Date(now + 24 * 60 * 60 * 1000); // 24 hours
-
-      await UserModel.setVerificationDetails(cleanEmail, verificationToken, verificationOtp, tokenExpiresAt);
-      resendRateLimits.set(cleanEmail, now);
-
-      const frontendBase = resolveFrontendUrl(req);
-      const verifyUrl = `${frontendBase}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`;
-
-      console.log(`[AuthController] Resending fresh verification email for existing unverified user "${cleanEmail}" (Frontend: ${frontendBase})`);
-      const emailResult = await emailService.sendVerificationEmail({
-        email: cleanEmail,
-        name: existingUser.name,
-        token: verificationToken,
-        otp: verificationOtp,
-        verifyUrl
-      });
-
-      return res.status(200).json({
-        success: true,
-        requiresVerification: true,
-        isExistingUnverified: true,
-        message: 'An unverified account with this email address already exists. A fresh 6-digit verification code has been sent to your email.',
-        email: existingUser.email,
-        organization_id: existingUser.organization_id,
-        user: {
-          id: existingUser.id,
-          name: existingUser.name,
-          email: existingUser.email,
-          role: existingUser.role,
-          status: 'pending_verification',
-          organization_id: existingUser.organization_id,
-          created_at: existingUser.created_at
-        },
-        email_delivery: {
-          attempted: emailResult.attempted,
-          success: emailResult.success,
-          provider: emailResult.provider || 'SMTP',
-          recipient: cleanEmail
-        }
+      return res.status(409).json({
+        success: false,
+        code: existingUser.status === 'active' ? 'EMAIL_ALREADY_VERIFIED' : 'EMAIL_ALREADY_EXISTS',
+        isVerified: existingUser.status === 'active',
+        message: existingUser.status === 'active'
+          ? 'An account with this email address already exists and is active. Please log in or reset your password.'
+          : 'An account with this email address already exists. Please check your email for the verification code or log in.'
       });
     }
 
@@ -300,6 +224,10 @@ const register = async (req, res, next) => {
       email: newUser.email,
       organization_id: organizationId,
       organization_name: orgName,
+      ...(process.env.NODE_ENV !== 'production' ? {
+        _devVerificationOtp: verificationOtp,
+        _devVerificationToken: verificationToken
+      } : {}),
       user: {
         id: newUser.id,
         name: newUser.name,
@@ -489,7 +417,24 @@ const resendOtp = async (req, res, next) => {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // Check rate limit: 60s cooldown
+    const user = await UserModel.findByEmail(cleanEmail);
+    if (!user) {
+      // Prevent account enumeration: return 200 with generic confirmation
+      return res.status(200).json({
+        success: true,
+        message: 'If an unverified account exists with this email address, a 6-digit verification code has been sent.'
+      });
+    }
+
+    if (user.status === 'active' || user.email_verified_at) {
+      return res.status(200).json({
+        success: true,
+        alreadyVerified: true,
+        message: 'This email address is already verified. You can log in directly.'
+      });
+    }
+
+    // Check rate limit: 60s cooldown for unverified resends
     const lastSent = resendRateLimits.get(cleanEmail);
     const now = Date.now();
     if (lastSent && now - lastSent < 60000) {
@@ -502,23 +447,6 @@ const resendOtp = async (req, res, next) => {
         },
         message: `Please wait ${waitSeconds} seconds before requesting another verification email.`,
         retryAfter: waitSeconds
-      });
-    }
-
-    const user = await UserModel.findByEmail(cleanEmail);
-    if (!user) {
-      // Prevent account enumeration: return 200 with generic confirmation
-      return res.status(200).json({
-        success: true,
-        message: 'If an unverified account exists with this email address, a 6-digit verification code has been sent.'
-      });
-    }
-
-    if (user.status === 'active') {
-      return res.status(200).json({
-        success: true,
-        alreadyVerified: true,
-        message: 'This email address is already verified. You can log in directly.'
       });
     }
 
@@ -829,6 +757,23 @@ const acceptInvite = async (req, res, next) => {
 
     if (new Date() > new Date(invitation.expires_at)) {
       return res.status(400).json({ success: false, message: 'This invitation has expired.' });
+    }
+
+    // Check subscription team member limit
+    const limitCheck = await subscriptionService.checkUsageLimit(invitation.organization_id, 'users');
+    if (!limitCheck.allowed) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: limitCheck.code,
+          message: limitCheck.message
+        },
+        message: limitCheck.message,
+        requiresUpgrade: true,
+        limit: limitCheck.limit,
+        currentCount: limitCheck.currentCount,
+        upgradeGuidance: limitCheck.upgradeGuidance
+      });
     }
 
     const cleanEmail = invitation.email.toLowerCase();

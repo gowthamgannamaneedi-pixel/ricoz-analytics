@@ -65,6 +65,12 @@ let nextInvoiceId = 1;
 const fallbackWebhookEvents = [];
 let nextWebhookEventId = 1;
 
+const fallbackSubscriptionHistory = [];
+let nextSubHistoryId = 1;
+
+const fallbackSubscriptionReminders = [];
+let nextSubReminderId = 1;
+
 const fallbackUsers = [
   {
     id: 1,
@@ -579,6 +585,15 @@ function handleFallbackQuery(text, params = []) {
           else if (col === 'stripe_customer_id') org.stripe_customer_id = val;
           else if (col === 'stripe_subscription_id') org.stripe_subscription_id = val;
           else if (col === 'current_period_end') org.current_period_end = val;
+          else if (col === 'billing_interval') org.billing_interval = val;
+          else if (col === 'subscription_start_date') org.subscription_start_date = val ? new Date(val) : org.subscription_start_date;
+          else if (col === 'current_period_start') org.current_period_start = val ? new Date(val) : org.current_period_start;
+          else if (col === 'next_billing_date') org.next_billing_date = val ? new Date(val) : org.next_billing_date;
+          else if (col === 'cancel_at_period_end') org.cancel_at_period_end = val === true || val === 'true';
+          else if (col === 'cancelled_at') org.cancelled_at = val ? new Date(val) : org.cancelled_at;
+          else if (col === 'cancellation_effective_date') org.cancellation_effective_date = val ? new Date(val) : org.cancellation_effective_date;
+          else if (col === 'scheduled_downgrade_plan') org.scheduled_downgrade_plan = val;
+          else if (col === 'scheduled_downgrade_effective_date') org.scheduled_downgrade_effective_date = val ? new Date(val) : org.scheduled_downgrade_effective_date;
           else if (col === 'settings') org.settings = typeof val === 'string' ? JSON.parse(val) : val;
         });
       }
@@ -770,6 +785,70 @@ function handleFallbackQuery(text, params = []) {
 
   if (normalizedSql.includes('from stripe_webhook_events')) {
     return Promise.resolve({ rows: fallbackWebhookEvents.slice(0, 50), rowCount: fallbackWebhookEvents.length });
+  }
+
+  // ----------------- SUBSCRIPTION HISTORY -----------------
+  if (normalizedSql.startsWith('insert into subscription_history')) {
+    const [organization_id, event_type, from_plan, to_plan, billing_interval, amount, currency, status, effective_date, metadata] = params;
+    const newHistory = {
+      id: `00000000-0000-0000-0000-00000000000${nextSubHistoryId++}`,
+      organization_id: String(organization_id),
+      event_type,
+      from_plan,
+      to_plan,
+      billing_interval,
+      amount: amount != null ? Number(amount) : null,
+      currency: currency || 'inr',
+      status,
+      effective_date: effective_date ? new Date(effective_date) : new Date(),
+      metadata: typeof metadata === 'string' ? JSON.parse(metadata) : (metadata || {}),
+      created_at: new Date()
+    };
+    fallbackSubscriptionHistory.push(newHistory);
+    return Promise.resolve({ rows: [{ ...newHistory }], rowCount: 1 });
+  }
+
+  if (normalizedSql.includes('from subscription_history') && normalizedSql.includes('organization_id = $1')) {
+    const orgId = String(params[0]);
+    const list = fallbackSubscriptionHistory.filter(h => String(h.organization_id) === orgId);
+    return Promise.resolve({ rows: list, rowCount: list.length });
+  }
+
+  // ----------------- SUBSCRIPTION REMINDERS -----------------
+  if (normalizedSql.startsWith('insert into subscription_reminders')) {
+    const [organization_id, reminder_type, target_date, recipient_email, status = 'sent', attempt_count = 1, error_message, metadata] = params;
+    const formattedDate = target_date instanceof Date ? target_date.toISOString().split('T')[0] : String(target_date).slice(0, 10);
+    const existing = fallbackSubscriptionReminders.find(r => 
+      String(r.organization_id) === String(organization_id) && 
+      r.reminder_type === reminder_type && 
+      r.target_date === formattedDate
+    );
+    if (existing) {
+      return Promise.resolve({ rows: [], rowCount: 0 }); // duplicate prevented
+    }
+    const newReminder = {
+      id: `00000000-0000-0000-0000-00000000000${nextSubReminderId++}`,
+      organization_id: String(organization_id),
+      reminder_type,
+      target_date: formattedDate,
+      recipient_email,
+      status: status || 'sent',
+      attempt_count: Number(attempt_count || 1),
+      sent_at: new Date(),
+      error_message: error_message || null,
+      metadata: typeof metadata === 'string' ? JSON.parse(metadata) : (metadata || {})
+    };
+    fallbackSubscriptionReminders.push(newReminder);
+    return Promise.resolve({ rows: [{ ...newReminder }], rowCount: 1 });
+  }
+
+  if (normalizedSql.includes('from subscription_reminders')) {
+    let list = [...fallbackSubscriptionReminders];
+    if (normalizedSql.includes('organization_id = $1')) {
+      const orgId = String(params[0]);
+      list = list.filter(r => String(r.organization_id) === orgId);
+    }
+    return Promise.resolve({ rows: list, rowCount: list.length });
   }
 
   if (normalizedSql.includes('from users where organization_id = $1') && normalizedSql.includes('as members_count')) {
@@ -5314,6 +5393,8 @@ module.exports = {
   fallbackInvitations,
   fallbackInvoices,
   fallbackWebhookEvents,
+  fallbackSubscriptionHistory,
+  fallbackSubscriptionReminders,
   closeDb: async () => {
     if (pool) {
       try {
@@ -5326,6 +5407,8 @@ module.exports = {
   },
   _resetFallbackStore: () => {
     fallbackUsers.length = 0;
+    fallbackSubscriptionHistory.length = 0;
+    fallbackSubscriptionReminders.length = 0;
     fallbackDataSources.length = 0;
     fallbackDatasets.length = 0;
     fallbackDatasets.push({
