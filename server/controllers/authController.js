@@ -204,6 +204,16 @@ const register = async (req, res, next) => {
       resendRateLimits.set(cleanEmail, Date.now());
     }
 
+    // Safe diagnostic metadata log (Never logs OTPs, tokens, passwords, or API keys)
+    console.log(`[AuthController] [SafeDiagnostic]`, JSON.stringify({
+      timestamp: new Date().toISOString(),
+      flow: 'Registration OTP',
+      provider: emailResult.provider || 'Brevo',
+      httpStatus: emailResult.success ? 201 : 502,
+      brevoMessageId: emailResult.messageId || null,
+      error: emailResult.error || null
+    }));
+
     // 10. Audit Log
     await logAuditEvent({
       organizationId,
@@ -524,6 +534,16 @@ const resendOtp = async (req, res, next) => {
       // ONLY enforce cooldown when the email provider actually accepts the dispatch!
       resendRateLimits.set(cleanEmail, Date.now());
       console.log(`[AuthController] ✅ Resend verification email delivered for "${cleanEmail}" (Message ID: ${emailResult.messageId || 'unknown'})`);
+
+      // Safe diagnostic metadata log (Never logs OTPs, tokens, passwords, or API keys)
+      console.log(`[AuthController] [SafeDiagnostic]`, JSON.stringify({
+        timestamp: new Date().toISOString(),
+        flow: 'Resend OTP',
+        provider: emailResult.provider || 'Brevo',
+        httpStatus: emailResult.success ? 200 : 502,
+        brevoMessageId: emailResult.messageId || null,
+        error: emailResult.error || null
+      }));
 
       return res.status(200).json({
         success: true,

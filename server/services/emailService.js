@@ -243,7 +243,8 @@ class EmailService {
     replyTo,
     senderName = 'Ricoz Analytics',
     senderEmail,
-    attachments = []
+    attachments = [],
+    tags = []
   }) {
     const rawSender = senderEmail || process.env.SMTP_FROM || process.env.DEMO_REQUEST_EMAIL || 'ricozanalytics@gmail.com';
     const verifiedSender = this._extractEmail(rawSender);
@@ -278,6 +279,10 @@ class EmailService {
       subject: subject || 'RicozAnalytics Notification',
       htmlContent: htmlContent || '<p>No content</p>'
     };
+
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      payload.tags = tags;
+    }
 
     if (textContent) {
       payload.textContent = textContent;
@@ -314,6 +319,17 @@ class EmailService {
     });
 
     const msgId = res.data?.messageId || `<brevo-${Date.now()}@smtp-relay.brevo.com>`;
+    
+    // Log safe diagnostic metadata (never logs OTPs, tokens, passwords, or API keys)
+    console.log(`[EmailService] [SafeDiagnostic]`, JSON.stringify({
+      timestamp: new Date().toISOString(),
+      provider: 'Brevo',
+      httpStatus: res.status,
+      messageId: msgId,
+      recipientCount: recipients.length,
+      tags: payload.tags || []
+    }));
+
     return {
       success: true,
       provider: 'Brevo',
@@ -1583,7 +1599,8 @@ class EmailService {
           textContent,
           replyTo: { email: fromEmail, name: 'RicozAnalytics Security' },
           senderName: 'RicozAnalytics Security',
-          senderEmail: fromEmail
+          senderEmail: fromEmail,
+          tags: ['registration_otp', 'email_verification']
         });
 
         console.log(`[EmailService] ✅ Verification email dispatched via Brevo successfully to: ${deliveryRecipient}${isTestRedirect ? ` (intended: ${email})` : ''}`);
