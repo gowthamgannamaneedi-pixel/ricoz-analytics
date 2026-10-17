@@ -193,13 +193,19 @@ export default function VerifyEmailPage() {
     setInfoMessage('');
 
     try {
-      await resendVerification({ email: email.trim() });
-      setCountdown(60);
-      setInfoMessage('A new 6-digit verification code has been dispatched to your email.');
-      setOtpDigits(['', '', '', '', '', '']);
-      inputRefs.current[0]?.focus();
+      const res = await resendVerification({ email: email.trim() });
+      if (res?.email_delivery && !res.email_delivery.success) {
+        setError(res?.message || 'Failed to dispatch verification email. Please click Resend Code to try again.');
+        setCountdown(0);
+      } else {
+        setCountdown(60);
+        setInfoMessage(res?.message || 'A new 6-digit verification code has been dispatched to your email.');
+        setOtpDigits(['', '', '', '', '', '']);
+        inputRefs.current[0]?.focus();
+      }
     } catch (err) {
       setError(err.message || 'Failed to resend verification code. Please try again.');
+      setCountdown(0);
     } finally {
       setIsResending(false);
     }

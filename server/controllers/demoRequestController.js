@@ -359,6 +359,35 @@ class DemoRequestController {
       });
     }
   }
+
+  /**
+   * Safe Diagnostic Brevo Transactional Logs Endpoint
+   * GET /api/demo-request/brevo-logs
+   * Inspect Brevo transactional email logs, events (accepted, delivered, bounced, blocked, deferred)
+   */
+  async getBrevoLogs(req, res) {
+    try {
+      const email = req.query.email || '';
+      const messageId = req.query.messageId || '';
+      const limit = parseInt(req.query.limit, 10) || 20;
+      const event = req.query.event || '';
+
+      const logs = await emailService.getBrevoTransactionalLogs({ email, messageId, limit, event });
+      return res.status(200).json({
+        success: true,
+        data: logs
+      });
+    } catch (error) {
+      console.error('[DemoRequestController] ❌ Error querying Brevo transactional logs:', error);
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'BREVO_LOGS_ERROR',
+          message: error.message
+        }
+      });
+    }
+  }
 }
 
 module.exports = new DemoRequestController();

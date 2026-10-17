@@ -117,12 +117,25 @@ export default function RegisterPage() {
 
       // Clear any previous OTP inputs and reset countdown
       setOtpDigits(['', '', '', '', '', '']);
-      setResendCountdown(60);
       setStep('verify');
-      setInfoMessage(result?.message || 'A 6-digit verification code has been sent to your email.');
+      if (result?.email_delivery && !result.email_delivery.success) {
+        setError(result?.message || 'Your account was created, but we could not deliver the verification email. Please click Resend Code to try again.');
+        setResendCountdown(0);
+      } else {
+        setResendCountdown(60);
+        setInfoMessage(result?.message || 'A 6-digit verification code has been sent to your email.');
+      }
     } catch (err) {
-      setError(err.message || 'Failed to create account.');
-      setErrorData(err.data || null);
+      if (err.data?.code === 'EMAIL_ALREADY_EXISTS' && err.data?.isVerified === false) {
+        // Switch to verification step so the user can enter their code or request resend
+        setOtpDigits(['', '', '', '', '', '']);
+        setStep('verify');
+        setError('An unverified account already exists for this email. Enter your code or click Resend Code below.');
+        setResendCountdown(0);
+      } else {
+        setError(err.message || 'Failed to create account.');
+        setErrorData(err.data || null);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -241,13 +254,19 @@ export default function RegisterPage() {
     setInfoMessage('');
 
     try {
-      await resendOtp({ email: formData.email.trim() });
-      setResendCountdown(60);
-      setInfoMessage('A new 6-digit verification code has been sent to your email.');
-      setOtpDigits(['', '', '', '', '', '']);
-      inputRefs.current[0]?.focus();
+      const res = await resendOtp({ email: formData.email.trim() });
+      if (res?.email_delivery && !res.email_delivery.success) {
+        setError(res?.message || 'Failed to dispatch verification email. Please click Resend Code to try again.');
+        setResendCountdown(0);
+      } else {
+        setResendCountdown(60);
+        setInfoMessage(res?.message || 'A new 6-digit verification code has been sent to your email.');
+        setOtpDigits(['', '', '', '', '', '']);
+        inputRefs.current[0]?.focus();
+      }
     } catch (err) {
-      setError(err.message || 'Failed to resend verification code. Please try again.');
+      setError(err.message || 'Failed to resend verification code. Please click Resend Code to try again.');
+      setResendCountdown(0);
     } finally {
       setIsResending(false);
     }

@@ -5,6 +5,9 @@ const demoRequestController = require('../controllers/demoRequestController');
 // GET /api/demo-request/smtp-status (Diagnostics)
 router.get('/smtp-status', (req, res) => demoRequestController.getSmtpStatus(req, res));
 
+// GET /api/demo-request/brevo-logs (Brevo Transactional Email Event Diagnostics)
+router.get('/brevo-logs', (req, res) => demoRequestController.getBrevoLogs(req, res));
+
 // GET /api/demo-request/queue-status (Background Email Queue Diagnostics)
 router.get('/queue-status', (req, res) => demoRequestController.getQueueStatus(req, res));
 

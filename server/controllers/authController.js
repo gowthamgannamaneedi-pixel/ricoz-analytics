@@ -13,6 +13,9 @@ const tokenBlacklist = require('../utils/tokenBlacklist');
 
 // In-memory rate limiting map for verification resends: email -> lastSentTimestamp
 const resendRateLimits = new Map();
+// In-flight concurrency set to eliminate double-send race conditions
+const inFlightResends = new Set();
+const RESEND_COOLDOWN_MS = 60 * 1000; // 60s cooldown
 
 /**
  * Helper to generate signed JWT token containing multi-tenant user claims
@@ -196,11 +199,10 @@ const register = async (req, res, next) => {
     if (!emailResult.success) {
       console.error(`[AuthController] ❌ Verification email dispatch failed for "${cleanEmail}":`, emailResult.error);
     } else {
-      console.log(`[AuthController] ✅ Verification email dispatched for "${cleanEmail}" (Message ID: ${emailResult.messageId})`);
+      console.log(`[AuthController] ✅ Verification email dispatched for "${cleanEmail}" (Message ID: ${emailResult.messageId || 'unknown'})`);
+      // Initialize 60s resend cooldown timer upon registration ONLY if dispatch succeeded
+      resendRateLimits.set(cleanEmail, Date.now());
     }
-
-    // Initialize 60s resend cooldown timer upon registration
-    resendRateLimits.set(cleanEmail, Date.now());
 
     // 10. Audit Log
     await logAuditEvent({
@@ -218,7 +220,10 @@ const register = async (req, res, next) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Account registered successfully. A 6-digit verification code has been sent to your email.',
+      message: emailResult.success
+        ? 'Account registered successfully. A 6-digit verification code has been sent to your email.'
+        : 'Account registered successfully. However, we could not deliver the verification email. Please click Resend Code to try again.',
+      emailSent: Boolean(emailResult.success),
       requiresVerification: true,
       token,
       email: newUser.email,
@@ -240,17 +245,21 @@ const register = async (req, res, next) => {
       email_delivery: {
         attempted: emailResult.attempted,
         success: emailResult.success,
-        provider: emailResult.provider || 'SMTP',
+        provider: emailResult.provider || 'Brevo',
         recipient: cleanEmail,
         deliveredTo: emailResult.deliveredTo || cleanEmail,
+        messageId: emailResult.messageId || null,
+        error: emailResult.error || null,
         isTestRedirect: Boolean(emailResult.isTestRedirect),
         mocked: Boolean(emailResult.mocked)
       }
     });
   } catch (err) {
+    console.error(`[AuthController] ❌ Registration error for "${req.body?.email}":`, err.message, err.code, err.constraint || '');
     if (err.code === '23505') {
       return res.status(409).json({
         success: false,
+        code: 'EMAIL_ALREADY_EXISTS',
         message: 'An account with this email address already exists.'
       });
     }
@@ -434,11 +443,23 @@ const resendOtp = async (req, res, next) => {
       });
     }
 
-    // Check rate limit: 60s cooldown for unverified resends
+    // 1. Guard against concurrent duplicate requests
+    if (inFlightResends.has(cleanEmail)) {
+      return res.status(429).json({
+        success: false,
+        error: {
+          code: 'RESEND_IN_PROGRESS',
+          message: 'A verification email is currently being dispatched. Please wait a moment.'
+        },
+        message: 'A verification email is currently being dispatched. Please wait a moment.'
+      });
+    }
+
+    // 2. Check rate limit: 60s cooldown for unverified resends
     const lastSent = resendRateLimits.get(cleanEmail);
     const now = Date.now();
-    if (lastSent && now - lastSent < 60000) {
-      const waitSeconds = Math.ceil((60000 - (now - lastSent)) / 1000);
+    if (lastSent && now - lastSent < RESEND_COOLDOWN_MS) {
+      const waitSeconds = Math.ceil((RESEND_COOLDOWN_MS - (now - lastSent)) / 1000);
       return res.status(429).json({
         success: false,
         error: {
@@ -450,51 +471,77 @@ const resendOtp = async (req, res, next) => {
       });
     }
 
-    // Generate fresh verification details
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificationOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    inFlightResends.add(cleanEmail);
 
-    await UserModel.setVerificationDetails(cleanEmail, verificationToken, verificationOtp, tokenExpiresAt);
-    resendRateLimits.set(cleanEmail, now);
+    try {
+      // 3. Generate fresh verification details and invalidate old OTP
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const verificationOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    // Supabase trigger if configured
-    if (isConfigured && supabase) {
-      await supabase.auth.resend({ type: 'signup', email: cleanEmail }).catch(() => null);
-    }
+      await UserModel.setVerificationDetails(cleanEmail, verificationToken, verificationOtp, tokenExpiresAt);
 
-    // Dispatch verification email with dynamic frontend domain resolution
-    const frontendBase = resolveFrontendUrl(req);
-    const verifyUrl = `${frontendBase}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`;
-
-    console.log(`[AuthController] Resending verification email to "${cleanEmail}" (Frontend: ${frontendBase})`);
-    const emailResult = await emailService.sendVerificationEmail({
-      email: cleanEmail,
-      name: user.name,
-      token: verificationToken,
-      otp: verificationOtp,
-      verifyUrl
-    });
-
-    if (!emailResult.success) {
-      console.error(`[AuthController] ❌ Resend verification email failed for "${cleanEmail}":`, emailResult.error);
-    } else {
-      console.log(`[AuthController] ✅ Resend verification email delivered for "${cleanEmail}" (Message ID: ${emailResult.messageId})`);
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: 'A new 6-digit verification code has been sent to your email.',
-      email_delivery: {
-        attempted: emailResult.attempted,
-        success: emailResult.success,
-        provider: emailResult.provider || 'SMTP',
-        recipient: cleanEmail,
-        deliveredTo: emailResult.deliveredTo || cleanEmail,
-        isTestRedirect: Boolean(emailResult.isTestRedirect),
-        mocked: Boolean(emailResult.mocked)
+      // Supabase trigger if configured
+      if (isConfigured && supabase) {
+        await supabase.auth.resend({ type: 'signup', email: cleanEmail }).catch(() => null);
       }
-    });
+
+      // 4. Dispatch verification email with dynamic frontend domain resolution
+      const frontendBase = resolveFrontendUrl(req);
+      const verifyUrl = `${frontendBase}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`;
+
+      console.log(`[AuthController] Resending verification email to "${cleanEmail}" (Frontend: ${frontendBase})`);
+      const emailResult = await emailService.sendVerificationEmail({
+        email: cleanEmail,
+        name: user.name,
+        token: verificationToken,
+        otp: verificationOtp,
+        verifyUrl
+      });
+
+      if (!emailResult.success) {
+        console.error(`[AuthController] ❌ Resend verification email failed for "${cleanEmail}":`, emailResult.error);
+        // Do NOT lock the user out with 60s cooldown if the email failed to send!
+        return res.status(502).json({
+          success: false,
+          error: {
+            code: 'EMAIL_DISPATCH_FAILED',
+            message: 'Failed to deliver the verification code to your email. Please click Resend Code to try again.',
+            provider: emailResult.provider || 'Brevo',
+            detail: emailResult.error
+          },
+          message: 'Failed to deliver the verification code to your email. Please click Resend Code to try again.',
+          email_delivery: {
+            attempted: emailResult.attempted,
+            success: false,
+            provider: emailResult.provider || 'Brevo',
+            recipient: cleanEmail,
+            error: emailResult.error
+          }
+        });
+      }
+
+      // ONLY enforce cooldown when the email provider actually accepts the dispatch!
+      resendRateLimits.set(cleanEmail, Date.now());
+      console.log(`[AuthController] ✅ Resend verification email delivered for "${cleanEmail}" (Message ID: ${emailResult.messageId || 'unknown'})`);
+
+      return res.status(200).json({
+        success: true,
+        message: 'A new 6-digit verification code has been sent to your email.',
+        email_delivery: {
+          attempted: emailResult.attempted,
+          success: true,
+          provider: emailResult.provider || 'Brevo',
+          recipient: cleanEmail,
+          deliveredTo: emailResult.deliveredTo || cleanEmail,
+          messageId: emailResult.messageId || null,
+          isTestRedirect: Boolean(emailResult.isTestRedirect),
+          mocked: Boolean(emailResult.mocked)
+        }
+      });
+    } finally {
+      inFlightResends.delete(cleanEmail);
+    }
   } catch (err) {
     next(err);
   }

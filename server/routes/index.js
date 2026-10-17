@@ -31,6 +31,7 @@ router.use('/demo-request', demoRequestRoutes);
 router.use('/demo-requests', demoRequestRoutes);
 router.post('/test-email', (req, res) => require('../controllers/demoRequestController').sendTestEmail(req, res));
 router.get('/test-email', (req, res) => require('../controllers/demoRequestController').getSmtpStatus(req, res));
+router.get('/test-email/brevo-logs', (req, res) => require('../controllers/demoRequestController').getBrevoLogs(req, res));
 
 // Protected Workspace routes with 14-day trial & active subscription gating
 const protectedWorkspace = [authenticateToken, requireActiveSubscription];

@@ -382,6 +382,75 @@ class EmailService {
   }
 
   /**
+   * Fetch Brevo transactional email status and events (accepted, delivered, bounced, blocked, deferred)
+   * @param {{ email?: string, messageId?: string, limit?: number, event?: string }} options
+   * @returns {Promise<any>}
+   */
+  async getBrevoTransactionalLogs({ email, messageId, limit = 20, event } = {}) {
+    if (!this.isBrevo()) {
+      return {
+        configured: false,
+        provider: this.getProvider(),
+        message: 'Brevo is not configured as the active email provider.'
+      };
+    }
+
+    const report = {
+      provider: 'Brevo',
+      query: { email: email ? this._extractEmail(email) : null, messageId: messageId || null, limit, event: event || null },
+      events: [],
+      emails: [],
+      blockedContacts: [],
+      errors: {}
+    };
+
+    // 1. Transactional events (accepted, delivered, hardBounce, softBounce, blocked, spam, deferred)
+    try {
+      const params = [];
+      if (email) params.push(`email=${encodeURIComponent(this._extractEmail(email))}`);
+      if (messageId) params.push(`messageId=${encodeURIComponent(messageId)}`);
+      if (event) params.push(`event=${encodeURIComponent(event)}`);
+      params.push(`limit=${Math.min(100, Math.max(1, limit))}`);
+
+      const endpoint = `/smtp/statistics/events${params.length > 0 ? '?' + params.join('&') : ''}`;
+      const res = await this._callBrevoApi(endpoint, { method: 'GET' });
+      report.events = res.data?.events || [];
+    } catch (err) {
+      report.errors.events = { message: err.message, status: err.statusCode, code: err.code };
+    }
+
+    // 2. Sent transactional emails list
+    try {
+      const params = [];
+      if (email) params.push(`email=${encodeURIComponent(this._extractEmail(email))}`);
+      if (messageId) params.push(`messageId=${encodeURIComponent(messageId)}`);
+      params.push(`limit=${Math.min(100, Math.max(1, limit))}`);
+
+      const endpoint = `/smtp/emails${params.length > 0 ? '?' + params.join('&') : ''}`;
+      const res = await this._callBrevoApi(endpoint, { method: 'GET' });
+      report.emails = res.data?.transactionalEmails || (Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      report.errors.emails = { message: err.message, status: err.statusCode, code: err.code };
+    }
+
+    // 3. Blocked contacts
+    try {
+      const res = await this._callBrevoApi('/smtp/blockedContacts', { method: 'GET' });
+      const contacts = res.data?.contacts || [];
+      if (email) {
+        const clean = this._extractEmail(email);
+        report.blockedContacts = contacts.filter(c => c.email && c.email.toLowerCase() === clean);
+      } else {
+        report.blockedContacts = contacts;
+      }
+    } catch (err) {
+      report.errors.blockedContacts = { message: err.message, status: err.statusCode, code: err.code };
+    }
+
+    return report;
+  }
+
+  /**
    * Check if email delivery is configured in environment
    * @returns {boolean}
    */
@@ -1531,7 +1600,39 @@ class EmailService {
           response: brevoResult.response
         };
       } catch (err) {
-        console.error(`[EmailService] ❌ Verification email Brevo dispatch failed to ${deliveryRecipient}:`, err.message);
+        console.error(`[EmailService] ❌ Verification email Brevo dispatch failed to ${deliveryRecipient}: ${err.message}`);
+        
+        // Automated fallback to SMTP if configured
+        if (this.transporter && process.env.SMTP_HOST && process.env.SMTP_USER) {
+          console.log(`[EmailService] 🔄 Attempting fallback dispatch via SMTP to ${deliveryRecipient}...`);
+          try {
+            const fallbackOptions = {
+              from: `"RicozAnalytics Security" <${fromEmail}>`,
+              to: deliveryRecipient,
+              replyTo: fromEmail,
+              subject,
+              html: htmlContent,
+              text: textContent
+            };
+            const fallbackInfo = await this.transporter.sendMail(fallbackOptions);
+            console.log(`[EmailService] ✅ Verification email dispatched via fallback SMTP to: ${deliveryRecipient}`);
+            console.log(`  -> Message ID: ${fallbackInfo.messageId}`);
+            return {
+              attempted: true,
+              success: true,
+              recipient: email,
+              deliveredTo: deliveryRecipient,
+              isTestRedirect,
+              provider: 'SMTP (Fallback)',
+              messageId: fallbackInfo.messageId,
+              response: fallbackInfo.response || '250 OK',
+              primaryError: err.message
+            };
+          } catch (smtpErr) {
+            console.error(`[EmailService] ❌ Fallback SMTP also failed for ${deliveryRecipient}: ${smtpErr.message}`);
+          }
+        }
+
         return {
           attempted: true,
           success: false,
