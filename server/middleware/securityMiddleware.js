@@ -66,11 +66,14 @@ function createCorsHandler() {
     const origin = req.headers.origin;
     const isDevOrTest = process.env.NODE_ENV !== 'production';
 
+    const isVercelDomain = origin && /^https:\/\/[a-zA-Z0-9_.-]+\.vercel\.app$/.test(origin);
+    const isRicozDomain = origin && /^https:\/\/(?:[a-zA-Z0-9_.-]+\.)?ricoz\.(?:in|com)$/.test(origin);
+
     let isAllowed = false;
     if (!origin) {
       // Same-origin or server-to-server request
       isAllowed = true;
-    } else if (allowedOrigins.includes(origin)) {
+    } else if (allowedOrigins.includes(origin) || isVercelDomain || isRicozDomain) {
       isAllowed = true;
     } else if (isDevOrTest && (defaultDevOrigins.includes(origin) || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
       isAllowed = true;
@@ -80,8 +83,12 @@ function createCorsHandler() {
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Access-Control-Allow-Credentials', 'true');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Request-ID, X-Bypass-Rate-Limit, Range');
+      const requestedHeaders = req.headers['access-control-request-headers'];
+      const defaultAllowedHeaders = 'Content-Type, Authorization, X-Request-ID, X-Idempotency-Key, Idempotency-Key, X-Bypass-Rate-Limit, X-Requested-With, Accept, Origin, Range, Cache-Control, Pragma';
+      res.setHeader('Access-Control-Allow-Headers', requestedHeaders || defaultAllowedHeaders);
       res.setHeader('Access-Control-Expose-Headers', 'Content-Range, X-Request-ID, Content-Disposition, Retry-After');
+      res.setHeader('Access-Control-Max-Age', '86400');
+      res.setHeader('Vary', 'Origin, Access-Control-Request-Headers');
     }
 
     if (req.method === 'OPTIONS') {

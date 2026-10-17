@@ -181,27 +181,61 @@ export default function DemoModal({ isOpen, onClose }) {
       abortController.abort();
     }, 25000); // 25s client timeout
 
+    const primaryUrl = `${API_BASE_URL}/demo-request`;
+    const fallbackUrl = primaryUrl.startsWith('http')
+      ? '/api/demo-request'
+      : 'https://ricoz-analytics.onrender.com/api/demo-request';
+
+    const payload = JSON.stringify({
+      fullName: trimmedName,
+      workEmail: trimmedEmail,
+      company: trimmedCompany,
+      teamSize: formData.teamSize,
+      primaryDataSource: formData.primaryDataSource,
+      phone: formData.phone.trim() || undefined,
+      notes: formData.notes.trim() || undefined,
+      idempotencyKey: idempotencyKeyRef.current
+    });
+
     try {
-      const response = await fetch(`${API_BASE_URL}/demo-request`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Idempotency-Key': idempotencyKeyRef.current
-        },
-        body: JSON.stringify({
-          fullName: trimmedName,
-          workEmail: trimmedEmail,
-          company: trimmedCompany,
-          teamSize: formData.teamSize,
-          primaryDataSource: formData.primaryDataSource,
-          phone: formData.phone.trim() || undefined,
-          notes: formData.notes.trim() || undefined,
-          idempotencyKey: idempotencyKeyRef.current
-        }),
-        signal: abortController.signal
-      });
+      let response;
+      let lastError;
+
+      try {
+        response = await fetch(primaryUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: payload,
+          signal: abortController.signal
+        });
+      } catch (networkErr) {
+        lastError = networkErr;
+        // Attempt fallback URL if primary fails and was different
+        if (fallbackUrl && fallbackUrl !== primaryUrl && !abortController.signal.aborted) {
+          console.warn(`[DemoModal] Primary URL (${primaryUrl}) failed (${networkErr.message}). Retrying via fallback: ${fallbackUrl}`);
+          try {
+            response = await fetch(fallbackUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: payload,
+              signal: abortController.signal
+            });
+          } catch (fallbackErr) {
+            lastError = fallbackErr;
+          }
+        }
+      }
 
       clearTimeout(timeoutId);
+
+      if (!response) {
+        throw lastError || new Error('Connection failed');
+      }
+
       const data = await response.json().catch(() => null);
 
       if (response.ok && data?.success) {
@@ -221,7 +255,9 @@ export default function DemoModal({ isOpen, onClose }) {
       if (err.name === 'AbortError') {
         setErrorMessage('Request timed out while connecting to the server. If the backend is waking up from a cold start, please try again in a few seconds.');
       } else {
-        setErrorMessage('Unable to reach the server. Please check your network connection and try again.');
+        setErrorMessage(err.message && err.message !== 'Failed to fetch' && !err.message.includes('network')
+          ? `Connection error: ${err.message}. Please check your connection or try again.`
+          : 'Unable to reach the server. Please check your network connection and try again.');
       }
     } finally {
       isSubmittingRef.current = false;

@@ -1,5 +1,16 @@
 // Centralized API utility with authentication token management
-export const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+export const API_BASE_URL = (() => {
+  const envUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '');
+  const isBrowser = typeof window !== 'undefined';
+  const isRemoteHost = isBrowser && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+
+  // In remote/production environments, prevent accidental localhost fallback
+  if (isRemoteHost && (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
+    return 'https://ricoz-analytics.onrender.com/api';
+  }
+
+  return envUrl || '/api';
+})();
 export const MAX_UPLOAD_SIZE_MB = (() => {
   const envVal = parseInt(import.meta.env.VITE_MAX_UPLOAD_SIZE_MB, 10);
   return !isNaN(envVal) && envVal > 0 ? envVal : 250;
