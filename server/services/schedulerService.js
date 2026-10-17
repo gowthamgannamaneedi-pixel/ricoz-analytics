@@ -77,10 +77,14 @@ class SchedulerService {
     this.isStarted = true;
     console.log(' SchedulerService: Initializing enterprise report scheduler...');
 
-    // Master polling loop runs every minute to sync and trigger scheduled reports and active alerts
+    // Master polling loop runs every minute to sync and trigger scheduled reports, active alerts, and email queue
     this.masterTask = cron.schedule('* * * * *', async () => {
       await this.evaluateDueReports();
       await this.evaluateAlerts();
+      try {
+        const demoEmailQueueService = require('./demoEmailQueueService');
+        await demoEmailQueueService.processQueue();
+      } catch (_) {}
     });
 
     // Proactive enterprise AI insights generation runs hourly instead of every minute

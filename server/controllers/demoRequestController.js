@@ -215,6 +215,22 @@ class DemoRequestController {
   }
 
   /**
+   * Retry failed queue jobs
+   * POST /api/demo-request/retry-jobs
+   */
+  async retryQueue(req, res) {
+    try {
+      const result = await demoEmailQueueService.retryFailedJobs();
+      return res.status(result.success ? 200 : 500).json(result);
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
    * Test SMTP Connection Verification (Handshake only)
    * POST /api/demo-request/verify-smtp
    */

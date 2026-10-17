@@ -1,10 +1,16 @@
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+const dns = require('dns');
+if (dns && dns.setDefaultResultOrder) {
+  try {
+    dns.setDefaultResultOrder('ipv4first');
+  } catch (_) {}
+}
 const nodemailer = require('nodemailer');
 
 /**
  * Enterprise Email Dispatch Service for Scheduled Reports, Alerts & Inbound Demo Inquiries
- * Configured with dynamic SMTP integration (Gmail, Zoho Mail, or custom SMTP).
+ * Configured with dynamic SMTP integration (Gmail, Zoho Mail, or custom SMTP) and HTTPS API support.
  */
 class EmailService {
   constructor() {
@@ -36,6 +42,7 @@ class EmailService {
           host,
           port,
           secure,
+          family: 4, // Explicitly enforce IPv4 to prevent ENETUNREACH / ETIMEDOUT on cloud providers
           auth: {
             user,
             pass
@@ -49,7 +56,7 @@ class EmailService {
         });
         const maskedUser = user.length > 4 ? `${user.slice(0, 2)}***${user.slice(-2)}` : '***';
         const isPlaceholder = pass.includes('your_') || pass.includes('placeholder') || pass === 'your_zoho_app_password_here';
-        console.log(`[EmailService] ✅ ${provider} SMTP Transporter initialized (Host: ${host}:${port}, Secure: ${secure}, Sender: ${maskedUser}, Password: ${isPlaceholder ? 'Placeholder' : 'Configured'})`);
+        console.log(`[EmailService] ✅ ${provider} SMTP Transporter initialized (Host: ${host}:${port}, Secure: ${secure}, IPv4-First: true, Sender: ${maskedUser}, Password: ${isPlaceholder ? 'Placeholder' : 'Configured'})`);
       } catch (err) {
         console.error(`[EmailService] ❌ ${provider} SMTP transport initialization exception:`, err.message);
         this.transporter = null;
@@ -498,7 +505,58 @@ class EmailService {
    * }} options
    * @returns {Promise<{ attempted: boolean, success: boolean, messageId?: string, response?: string, error?: string, recipient: string, prospectConfirmation?: { attempted: boolean, success: boolean, messageId?: string, error?: string }, missingVars?: Array<string> }>}
    */
-  async sendDemoRequestEmail({
+  /**
+   * Helper to categorize email transport exceptions safely
+   */
+  _classifyError(err, provider = 'SMTP') {
+    const msg = err.message || '';
+    const code = err.code || 'UNKNOWN';
+
+    if (msg.includes('550-5.4.5') || msg.includes('Daily user sending limit exceeded') || err.responseCode === 550) {
+      return {
+        code: 'DAILY_LIMIT_EXCEEDED',
+        isQuotaError: true,
+        isTransient: false,
+        message: `${provider} Daily Sending Limit Exceeded (550 5.4.5). Google has capped outbound emails for this account until the 24-hour quota resets.`
+      };
+    }
+    if (code === 'ETIMEDOUT' || msg.includes('timeout')) {
+      return {
+        code: 'ETIMEDOUT',
+        isQuotaError: false,
+        isTransient: true,
+        message: `${provider} connection timed out. Outbound network traffic may be blocked by cloud host firewall (Render Free tier blocks outbound ports 25, 465, 587) or network latency.`
+      };
+    }
+    if (code === 'ENETUNREACH' || msg.includes('ENETUNREACH')) {
+      return {
+        code: 'ENETUNREACH',
+        isQuotaError: false,
+        isTransient: true,
+        message: `${provider} network unreachable. Host lacks IPv6 route or network interface unreachable.`
+      };
+    }
+    if (code === 'EAUTH' || msg.includes('535') || msg.includes('Authentication Failed')) {
+      return {
+        code: 'EAUTH',
+        isQuotaError: false,
+        isTransient: false,
+        message: `${provider} Authentication Failed (535). Verify SMTP credentials and App Password in SMTP_PASSWORD.`
+      };
+    }
+
+    return {
+      code: code || 'SEND_FAILED',
+      isQuotaError: false,
+      isTransient: true,
+      message: msg
+    };
+  }
+
+  /**
+   * Send internal notification to the Ricoz team about an inbound demo request
+   */
+  async sendInternalDemoNotification({
     fullName,
     workEmail,
     company,
@@ -510,98 +568,50 @@ class EmailService {
   }) {
     const host = process.env.SMTP_HOST || 'smtp.gmail.com';
     const provider = this._getProviderName(host);
-    const recipient = process.env.DEMO_REQUEST_EMAIL || process.env.SMTP_USER || 'care@ricoz.in';
-    const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'care@ricoz.in';
+    const recipient = process.env.DEMO_REQUEST_EMAIL || process.env.SMTP_USER || 'ricozanalytics@gmail.com';
+    const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'ricozanalytics@gmail.com';
     const formattedDate = new Date(requestedAt).toLocaleString('en-US', {
       timeZone: 'Asia/Kolkata',
       dateStyle: 'full',
       timeStyle: 'long'
     }) + ` (${new Date(requestedAt).toUTCString()})`;
 
+    if (!this.isConfigured()) {
+      const status = this.getSmtpStatus();
+      return {
+        attempted: false,
+        success: false,
+        recipient,
+        error: `${provider} SMTP transport not configured. Missing: ${status.missingVars.join(', ')}`,
+        code: 'NOT_CONFIGURED'
+      };
+    }
+
     const htmlContent = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 24px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b;">
-        <!-- Header -->
         <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 24px; border-radius: 8px; color: #ffffff; text-align: left; border-bottom: 3px solid #dc2626;">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <div>
-              <h1 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">
-                <span style="color: #ef4444;">RICOZ</span> ANALYTICS
-              </h1>
-              <p style="margin: 4px 0 0 0; font-size: 13px; color: #94a3b8; font-weight: 500;">
-                Enterprise Architecture Inbound Lead
-              </p>
-            </div>
-            <span style="background-color: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase;">
-              New Inbound Demo
-            </span>
-          </div>
-        </div>
-
-        <!-- Headline -->
-        <div style="padding: 24px 0 12px 0;">
-          <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">
-            New RicozAnalytics Demo Request
-          </h2>
-          <p style="font-size: 14px; color: #64748b; margin: 0; line-height: 1.5;">
-            A prospective enterprise lead has requested a guided architecture walkthrough and live cockpit consultation.
+          <h1 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">
+            <span style="color: #ef4444;">RICOZ</span> ANALYTICS
+          </h1>
+          <p style="margin: 4px 0 0 0; font-size: 13px; color: #94a3b8; font-weight: 500;">
+            Enterprise Architecture Inbound Lead
           </p>
         </div>
-
-        <!-- Details Card -->
+        <div style="padding: 24px 0 12px 0;">
+          <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">New Demo Request</h2>
+          <p style="font-size: 14px; color: #64748b; margin: 0;">An enterprise lead has requested an architecture walkthrough.</p>
+        </div>
         <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin: 16px 0;">
           <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-            <tr>
-              <td style="padding: 10px 0; color: #64748b; font-weight: 600; width: 40%; border-bottom: 1px solid #f1f5f9;">Full Name</td>
-              <td style="padding: 10px 0; color: #0f172a; font-weight: 700; border-bottom: 1px solid #f1f5f9;">${fullName}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; color: #64748b; font-weight: 600; border-bottom: 1px solid #f1f5f9;">Work Email</td>
-              <td style="padding: 10px 0; color: #dc2626; font-weight: 700; font-family: monospace; font-size: 14px; border-bottom: 1px solid #f1f5f9;">
-                <a href="mailto:${workEmail}" style="color: #dc2626; text-decoration: none;">${workEmail}</a>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; color: #64748b; font-weight: 600; border-bottom: 1px solid #f1f5f9;">Company / Organization</td>
-              <td style="padding: 10px 0; color: #0f172a; font-weight: 600; border-bottom: 1px solid #f1f5f9;">${company}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; color: #64748b; font-weight: 600; border-bottom: 1px solid #f1f5f9;">Team / Branch Size</td>
-              <td style="padding: 10px 0; color: #0f172a; font-weight: 600; border-bottom: 1px solid #f1f5f9;">${teamSize}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; color: #64748b; font-weight: 600; border-bottom: 1px solid #f1f5f9;">Primary Data Source</td>
-              <td style="padding: 10px 0; color: #0f172a; font-weight: 600; border-bottom: 1px solid #f1f5f9;">${primaryDataSource}</td>
-            </tr>
-            ${phone ? `
-            <tr>
-              <td style="padding: 10px 0; color: #64748b; font-weight: 600; border-bottom: 1px solid #f1f5f9;">Phone Number</td>
-              <td style="padding: 10px 0; color: #0f172a; font-weight: 600; border-bottom: 1px solid #f1f5f9;">${phone}</td>
-            </tr>
-            ` : ''}
-            ${notes ? `
-            <tr>
-              <td style="padding: 10px 0; color: #64748b; font-weight: 600; border-bottom: 1px solid #f1f5f9;">Inquiry Notes</td>
-              <td style="padding: 10px 0; color: #334155; border-bottom: 1px solid #f1f5f9;">${notes}</td>
-            </tr>
-            ` : ''}
-            <tr>
-              <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Request Date / Time</td>
-              <td style="padding: 10px 0; color: #64748b; font-size: 13px;">${formattedDate}</td>
-            </tr>
+            <tr><td style="padding: 8px 0; color: #64748b; font-weight: 600; width: 40%;">Full Name</td><td style="padding: 8px 0; color: #0f172a; font-weight: 700;">${fullName}</td></tr>
+            <tr><td style="padding: 8px 0; color: #64748b; font-weight: 600;">Work Email</td><td style="padding: 8px 0; color: #dc2626; font-weight: 700;"><a href="mailto:${workEmail}" style="color: #dc2626;">${workEmail}</a></td></tr>
+            <tr><td style="padding: 8px 0; color: #64748b; font-weight: 600;">Company</td><td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${company}</td></tr>
+            <tr><td style="padding: 8px 0; color: #64748b; font-weight: 600;">Team Size</td><td style="padding: 8px 0; color: #0f172a;">${teamSize}</td></tr>
+            <tr><td style="padding: 8px 0; color: #64748b; font-weight: 600;">Data Source</td><td style="padding: 8px 0; color: #0f172a;">${primaryDataSource}</td></tr>
+            ${phone ? `<tr><td style="padding: 8px 0; color: #64748b; font-weight: 600;">Phone</td><td style="padding: 8px 0; color: #0f172a;">${phone}</td></tr>` : ''}
+            ${notes ? `<tr><td style="padding: 8px 0; color: #64748b; font-weight: 600;">Notes</td><td style="padding: 8px 0; color: #334155;">${notes}</td></tr>` : ''}
+            <tr><td style="padding: 8px 0; color: #64748b; font-weight: 600;">Requested At</td><td style="padding: 8px 0; color: #64748b; font-size: 13px;">${formattedDate}</td></tr>
           </table>
-        </div>
-
-        <!-- Direct Reply Box -->
-        <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 14px 16px; border-radius: 4px; margin-bottom: 20px;">
-          <p style="margin: 0; font-size: 13px; color: #991b1b; line-height: 1.4;">
-            <strong>Pro-tip:</strong> You can click <strong>Reply</strong> in your email client to respond directly to <strong>${fullName}</strong> at <span style="font-family: monospace;">${workEmail}</span>.
-          </p>
-        </div>
-
-        <!-- Footer -->
-        <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; font-size: 12px; color: #94a3b8; text-align: center;">
-          <p style="margin: 0;">Sent automatically by RicozAnalytics Inbound Notification Engine via ${provider} Mail</p>
-          <p style="margin: 4px 0 0 0;">Recipient: ${recipient}</p>
         </div>
       </div>
     `;
@@ -614,130 +624,144 @@ class EmailService {
       html: htmlContent
     };
 
-    console.log('[EmailService] 📨 Attempting demo notification dispatch:');
-    console.log(`  -> Recipient: ${recipient}`);
-    console.log(`  -> Reply-To: "${fullName}" <${workEmail}>`);
-    console.log(`  -> Company: ${company} | Source: ${primaryDataSource} | Team: ${teamSize}`);
-    console.log(`  -> SMTP Configured: ${this.isConfigured() ? 'YES' : 'NO'}`);
-
-    if (!this.isConfigured()) {
-      const status = this.getSmtpStatus();
-      console.warn(`[EmailService] ⚠️ ${provider} SMTP transport is NOT configured. Missing: ${status.missingVars.join(', ')}.`);
-      return {
-        attempted: false,
-        success: false,
-        recipient,
-        missingVars: status.missingVars,
-        error: `${provider} SMTP transport not configured. Missing environment variables: ${status.missingVars.join(', ')}`
-      };
-    }
-
     try {
-      // Build prospect confirmation email HTML
-      const prospectHtml = `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b;">
-          <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 20px 24px; border-radius: 8px; color: #ffffff;">
-            <h1 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">
-              <span style="color: #ef4444;">RICOZ</span> ANALYTICS
-            </h1>
-            <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Demo Request Confirmation</p>
-          </div>
-          <div style="padding: 24px 0;">
-            <h2 style="font-size: 18px; color: #0f172a; margin: 0 0 12px 0;">Hello ${fullName},</h2>
-            <p style="font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 16px 0;">
-              Thank you for your interest in RicozAnalytics. We have received your request for an enterprise architecture walkthrough for <strong>${company}</strong>.
-            </p>
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 16px 0; font-size: 13px;">
-              <p style="margin: 0 0 8px 0; color: #64748b;"><strong>What happens next:</strong></p>
-              <ul style="margin: 0; padding-left: 20px; color: #334155; line-height: 1.6;">
-                <li>An enterprise solutions architect will review your data requirements (${primaryDataSource}).</li>
-                <li>We will reach out to schedule your personalized live cockpit demo.</li>
-              </ul>
-            </div>
-            <p style="font-size: 14px; color: #475569; line-height: 1.6;">
-              If you have urgent questions, reply directly to this email or contact us at <a href="mailto:${fromEmail}" style="color: #ef4444;">${fromEmail}</a>.
-            </p>
-          </div>
-          <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
-            © ${new Date().getFullYear()} RicozAnalytics Inc.
-          </div>
-        </div>
-      `;
-
-      // Dispatch internal notification and prospect confirmation concurrently in parallel
-      const dispatchInternal = this.transporter.sendMail(mailOptions);
-      const shouldSendProspect = Boolean(workEmail && workEmail.includes('@') && !this.isTestOrPlaceholderRecipient(workEmail));
-      const dispatchProspect = shouldSendProspect
-        ? this.transporter.sendMail({
-            from: `"RicozAnalytics Team" <${fromEmail}>`,
-            to: workEmail,
-            subject: `We've received your RicozAnalytics demo request, ${fullName}`,
-            html: prospectHtml
-          })
-        : Promise.resolve(null);
-
-      const [internalSettled, prospectSettled] = await Promise.allSettled([dispatchInternal, dispatchProspect]);
-
-      if (internalSettled.status === 'rejected') {
-        throw internalSettled.reason;
-      }
-
-      const info = internalSettled.value;
-      console.log(`[EmailService] ✅ ${provider} SMTP Internal Dispatch SUCCESS:`);
-      console.log(`  -> Recipient: ${recipient}`);
-      console.log(`  -> Message ID: ${info.messageId}`);
-      console.log(`  -> SMTP Response: ${info.response || '250 OK'}`);
-
-      let prospectConfirmation = { attempted: shouldSendProspect, success: false };
-      if (shouldSendProspect) {
-        if (prospectSettled.status === 'fulfilled' && prospectSettled.value) {
-          prospectConfirmation = {
-            attempted: true,
-            success: true,
-            recipient: workEmail,
-            messageId: prospectSettled.value.messageId
-          };
-          console.log(`[EmailService] ✅ Confirmation email sent to prospect: ${workEmail} (${prospectSettled.value.messageId})`);
-        } else if (prospectSettled.status === 'rejected') {
-          console.warn(`[EmailService] ⚠️ Prospect confirmation email warning: ${prospectSettled.reason?.message}`);
-          prospectConfirmation = {
-            attempted: true,
-            success: false,
-            recipient: workEmail,
-            error: prospectSettled.reason?.message
-          };
-        }
-      }
-
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log(`[EmailService] ✅ Internal demo notification delivered to ${recipient} (${info.messageId})`);
       return {
         attempted: true,
         success: true,
         recipient,
         messageId: info.messageId,
-        response: info.response || '250 OK',
-        accepted: info.accepted || [recipient],
-        rejected: info.rejected || [],
-        prospectConfirmation
+        response: info.response || '250 OK'
       };
     } catch (err) {
-      console.error(`[EmailService] ❌ ${provider} SMTP Dispatch FAILED:`);
-      console.error(`  -> Recipient: ${recipient}`);
-      console.error(`  -> Error Code: ${err.code || 'UNKNOWN'}`);
-      console.error(`  -> Error Message: ${err.message}`);
-
-      let helpfulAdvice = '';
-      if (err.code === 'EAUTH' || err.message.includes('535') || err.message.includes('Authentication Failed')) {
-        helpfulAdvice = `${provider} SMTP Authentication Failed (535 5.7.8). Check your credentials / App Password in SMTP_PASSWORD.`;
-      }
-
+      const classification = this._classifyError(err, provider);
+      console.error(`[EmailService] ❌ Internal demo notification failed to ${recipient}: [${classification.code}] ${classification.message}`);
       return {
         attempted: true,
         success: false,
         recipient,
-        error: helpfulAdvice ? `${err.message} — ${helpfulAdvice}` : err.message,
-        code: err.code || 'SMTP_SEND_FAILED'
+        error: classification.message,
+        code: classification.code,
+        isQuotaError: classification.isQuotaError,
+        isTransient: classification.isTransient
       };
     }
+  }
+
+  /**
+   * Send prospect confirmation email acknowledging their demo request
+   */
+  async sendProspectDemoConfirmation({
+    fullName,
+    workEmail,
+    company,
+    primaryDataSource,
+    requestedAt = new Date()
+  }) {
+    if (!workEmail || !workEmail.includes('@') || this.isTestOrPlaceholderRecipient(workEmail)) {
+      return {
+        attempted: false,
+        skipped: true,
+        success: true,
+        recipient: workEmail || '',
+        message: 'Prospect confirmation skipped (placeholder or non-standard recipient domain)'
+      };
+    }
+
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const provider = this._getProviderName(host);
+    const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'ricozanalytics@gmail.com';
+
+    if (!this.isConfigured()) {
+      return {
+        attempted: false,
+        success: false,
+        recipient: workEmail,
+        error: 'SMTP transport not configured',
+        code: 'NOT_CONFIGURED'
+      };
+    }
+
+    const prospectHtml = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b;">
+        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 20px 24px; border-radius: 8px; color: #ffffff;">
+          <h1 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">
+            <span style="color: #ef4444;">RICOZ</span> ANALYTICS
+          </h1>
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Demo Request Confirmation</p>
+        </div>
+        <div style="padding: 24px 0;">
+          <h2 style="font-size: 18px; color: #0f172a; margin: 0 0 12px 0;">Hello ${fullName},</h2>
+          <p style="font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 16px 0;">
+            Thank you for your interest in RicozAnalytics. We have received your request for an enterprise architecture walkthrough for <strong>${company}</strong>.
+          </p>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 16px 0; font-size: 13px;">
+            <p style="margin: 0 0 8px 0; color: #64748b;"><strong>What happens next:</strong></p>
+            <ul style="margin: 0; padding-left: 20px; color: #334155; line-height: 1.6;">
+              <li>An enterprise solutions architect will review your data requirements (${primaryDataSource}).</li>
+              <li>We will reach out to schedule your personalized live cockpit demo.</li>
+            </ul>
+          </div>
+          <p style="font-size: 14px; color: #475569; line-height: 1.6;">
+            If you have urgent questions, reply directly to this email or contact us at <a href="mailto:${fromEmail}" style="color: #ef4444;">${fromEmail}</a>.
+          </p>
+        </div>
+        <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
+          © ${new Date().getFullYear()} RicozAnalytics Inc.
+        </div>
+      </div>
+    `;
+
+    try {
+      const info = await this.transporter.sendMail({
+        from: `"RicozAnalytics Team" <${fromEmail}>`,
+        to: workEmail,
+        subject: `We've received your RicozAnalytics demo request, ${fullName}`,
+        html: prospectHtml
+      });
+      console.log(`[EmailService] ✅ Prospect confirmation delivered to ${workEmail} (${info.messageId})`);
+      return {
+        attempted: true,
+        success: true,
+        recipient: workEmail,
+        messageId: info.messageId,
+        response: info.response || '250 OK'
+      };
+    } catch (err) {
+      const classification = this._classifyError(err, provider);
+      console.warn(`[EmailService] ⚠️ Prospect confirmation failed to ${workEmail}: [${classification.code}] ${classification.message}`);
+      return {
+        attempted: true,
+        success: false,
+        recipient: workEmail,
+        error: classification.message,
+        code: classification.code,
+        isQuotaError: classification.isQuotaError,
+        isTransient: classification.isTransient
+      };
+    }
+  }
+
+  /**
+   * Send Enterprise Demo Request Notification Email to the Ricoz Team and Confirmation to the Prospect
+   * Orchestrates separate delivery outcomes for internal notification and prospect confirmation.
+   */
+  async sendDemoRequestEmail(payload) {
+    const internalRes = await this.sendInternalDemoNotification(payload);
+    const prospectRes = await this.sendProspectDemoConfirmation(payload);
+
+    return {
+      attempted: internalRes.attempted || prospectRes.attempted,
+      success: internalRes.success && (prospectRes.success || prospectRes.skipped),
+      recipient: internalRes.recipient,
+      messageId: internalRes.messageId,
+      response: internalRes.response,
+      error: internalRes.error || (prospectRes.success ? null : prospectRes.error),
+      code: internalRes.code || prospectRes.code,
+      internalNotification: internalRes,
+      prospectConfirmation: prospectRes
+    };
   }
 
   /**

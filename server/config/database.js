@@ -439,6 +439,9 @@ let nextNotificationId = 1;
 const fallbackDemoRequests = [];
 let nextDemoRequestId = 1;
 
+const fallbackDemoEmailJobs = [];
+let nextDemoEmailJobId = 1;
+
 const fallbackDatasetStorageFiles = new Map();
 
 
@@ -4224,6 +4227,74 @@ function handleFallbackQuery(text, params = []) {
     });
   }
 
+  // ----------------- DEMO EMAIL JOBS -----------------
+  if (normalizedSql.startsWith('insert into demo_email_jobs')) {
+    const [demo_request_id, recipient, prospect_email, payload, status = 'pending', attempts = 0, max_attempts = 5] = params;
+    const newJob = {
+      id: nextDemoEmailJobId++,
+      demo_request_id: String(demo_request_id || ''),
+      recipient: recipient || 'ricozanalytics@gmail.com',
+      prospect_email: prospect_email || '',
+      payload: typeof payload === 'string' ? JSON.parse(payload) : (payload || {}),
+      status: status || 'pending',
+      attempts: Number(attempts) || 0,
+      max_attempts: Number(max_attempts) || 5,
+      last_error: null,
+      internal_status: 'pending',
+      prospect_status: 'pending',
+      internal_error: null,
+      prospect_error: null,
+      internal_message_id: null,
+      prospect_message_id: null,
+      delivery_provider: null,
+      locked_at: null,
+      locked_by: null,
+      next_attempt_at: new Date(),
+      completed_at: null,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+    fallbackDemoEmailJobs.push(newJob);
+    return Promise.resolve({
+      rows: [{ ...newJob }],
+      rowCount: 1
+    });
+  }
+
+  if (normalizedSql.includes('from demo_email_jobs') && normalizedSql.includes('group by status')) {
+    const counts = { pending: 0, processing: 0, completed: 0, failed: 0 };
+    fallbackDemoEmailJobs.forEach(j => {
+      if (counts[j.status] !== undefined) counts[j.status]++;
+    });
+    const rows = Object.entries(counts).map(([status, count]) => ({ status, count }));
+    return Promise.resolve({ rows, rowCount: rows.length });
+  }
+
+  if (normalizedSql.startsWith('select') && normalizedSql.includes('from demo_email_jobs')) {
+    let results = [...fallbackDemoEmailJobs];
+    if (normalizedSql.includes('prospect_email = $1')) {
+      const email = String(params[0] || '').toLowerCase();
+      results = results.filter(j => j.prospect_email.toLowerCase() === email);
+    } else if (normalizedSql.includes('id = $1')) {
+      const jId = Number(params[0]);
+      results = results.filter(j => j.id === jId);
+    }
+    return Promise.resolve({
+      rows: results.map(j => ({ ...j })),
+      rowCount: results.length
+    });
+  }
+
+  if (normalizedSql.startsWith('update demo_email_jobs')) {
+    const idParam = params[params.length - 1];
+    const job = fallbackDemoEmailJobs.find(j => String(j.id) === String(idParam));
+    if (job) {
+      job.updated_at = new Date();
+      return Promise.resolve({ rows: [{ ...job }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
   // Schema creation or other generic commands
   return Promise.resolve({ rows: [], rowCount: 0 });
 }
@@ -4752,16 +4823,73 @@ async function initDb() {
       id SERIAL PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
       email VARCHAR(255) NOT NULL,
+      full_name VARCHAR(255),
+      work_email VARCHAR(255),
       company VARCHAR(255) NOT NULL,
       team_size VARCHAR(50) NOT NULL,
       role VARCHAR(100) NOT NULL,
+      primary_data_source VARCHAR(100),
+      phone VARCHAR(100),
       notes TEXT,
+      metadata JSONB DEFAULT '{}'::jsonb,
       status VARCHAR(50) NOT NULL DEFAULT 'pending',
+      email_status VARCHAR(50) DEFAULT 'queued',
+      email_delivery_meta JSONB DEFAULT '{}'::jsonb,
+      idempotency_key VARCHAR(100),
       ip_address VARCHAR(100),
       user_agent TEXT,
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
+
+    ALTER TABLE demo_requests ADD COLUMN IF NOT EXISTS full_name VARCHAR(255);
+    ALTER TABLE demo_requests ADD COLUMN IF NOT EXISTS work_email VARCHAR(255);
+    ALTER TABLE demo_requests ADD COLUMN IF NOT EXISTS primary_data_source VARCHAR(100);
+    ALTER TABLE demo_requests ADD COLUMN IF NOT EXISTS phone VARCHAR(100);
+    ALTER TABLE demo_requests ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb;
+    ALTER TABLE demo_requests ADD COLUMN IF NOT EXISTS email_status VARCHAR(50) DEFAULT 'queued';
+    ALTER TABLE demo_requests ADD COLUMN IF NOT EXISTS email_delivery_meta JSONB DEFAULT '{}'::jsonb;
+    ALTER TABLE demo_requests ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(100);
+    CREATE INDEX IF NOT EXISTS idx_demo_requests_work_email ON demo_requests(work_email);
+    CREATE INDEX IF NOT EXISTS idx_demo_requests_created_at_desc ON demo_requests(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_demo_requests_status ON demo_requests(status);
+    CREATE INDEX IF NOT EXISTS idx_demo_requests_idempotency ON demo_requests(idempotency_key);
+
+    CREATE TABLE IF NOT EXISTS demo_email_jobs (
+      id SERIAL PRIMARY KEY,
+      demo_request_id VARCHAR(100),
+      recipient VARCHAR(255) NOT NULL,
+      prospect_email VARCHAR(255),
+      payload JSONB NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'pending',
+      attempts INTEGER NOT NULL DEFAULT 0,
+      max_attempts INTEGER NOT NULL DEFAULT 5,
+      last_error TEXT,
+      internal_status VARCHAR(50) NOT NULL DEFAULT 'pending',
+      prospect_status VARCHAR(50) NOT NULL DEFAULT 'pending',
+      internal_error TEXT,
+      prospect_error TEXT,
+      internal_message_id VARCHAR(255),
+      prospect_message_id VARCHAR(255),
+      delivery_provider VARCHAR(50),
+      locked_at TIMESTAMPTZ,
+      locked_by VARCHAR(100),
+      next_attempt_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      completed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    ALTER TABLE demo_email_jobs ADD COLUMN IF NOT EXISTS internal_status VARCHAR(50) DEFAULT 'pending';
+    ALTER TABLE demo_email_jobs ADD COLUMN IF NOT EXISTS prospect_status VARCHAR(50) DEFAULT 'pending';
+    ALTER TABLE demo_email_jobs ADD COLUMN IF NOT EXISTS internal_error TEXT;
+    ALTER TABLE demo_email_jobs ADD COLUMN IF NOT EXISTS prospect_error TEXT;
+    ALTER TABLE demo_email_jobs ADD COLUMN IF NOT EXISTS delivery_provider VARCHAR(50);
+    ALTER TABLE demo_email_jobs ADD COLUMN IF NOT EXISTS locked_at TIMESTAMPTZ;
+    ALTER TABLE demo_email_jobs ADD COLUMN IF NOT EXISTS locked_by VARCHAR(100);
+    CREATE INDEX IF NOT EXISTS idx_demo_email_jobs_status_next ON demo_email_jobs(status, next_attempt_at);
+    CREATE INDEX IF NOT EXISTS idx_demo_email_jobs_request ON demo_email_jobs(demo_request_id);
+    CREATE INDEX IF NOT EXISTS idx_demo_email_jobs_delivery_status ON demo_email_jobs(internal_status, prospect_status);
 
     CREATE TABLE IF NOT EXISTS invitations (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

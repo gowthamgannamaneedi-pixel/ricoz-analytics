@@ -106,6 +106,7 @@ function ModalSelect({ label, value, options, onChange }) {
 
 export default function DemoModal({ isOpen, onClose }) {
   const [submitted, setSubmitted] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStage, setSubmissionStage] = useState('Securing your walkthrough slot...');
   const [errorMessage, setErrorMessage] = useState('');
@@ -204,6 +205,11 @@ export default function DemoModal({ isOpen, onClose }) {
       const data = await response.json().catch(() => null);
 
       if (response.ok && data?.success) {
+        setSubmissionResult({
+          ...(data.data || {}),
+          isDuplicate: data.isDuplicate || false,
+          serverMessage: data.message
+        });
         setSubmitted(true);
         idempotencyKeyRef.current = null;
       } else {
@@ -225,6 +231,7 @@ export default function DemoModal({ isOpen, onClose }) {
 
   const resetAndClose = () => {
     setSubmitted(false);
+    setSubmissionResult(null);
     setErrorMessage('');
     setIsSubmitting(false);
     setFormData({
@@ -238,6 +245,11 @@ export default function DemoModal({ isOpen, onClose }) {
     });
     onClose();
   };
+
+  const emailDeliveryStatus = submissionResult?.email_delivery?.status || 'queued';
+  const isDuplicate = submissionResult?.isDuplicate;
+  const isDelivered = emailDeliveryStatus === 'delivered';
+  const isDelayed = emailDeliveryStatus === 'retry_pending' || emailDeliveryStatus === 'delayed' || emailDeliveryStatus === 'failed';
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
@@ -253,17 +265,66 @@ export default function DemoModal({ isOpen, onClose }) {
         </button>
 
         {submitted ? (
-          <div className="text-center py-8 space-y-4">
-            <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center shadow-inner">
-              <CheckCircle2 size={36} />
+          <div className="text-center py-6 space-y-4">
+            <div className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center shadow-inner ${
+              isDelivered
+                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
+                : isDelayed
+                ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400'
+                : 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
+            }`}>
+              {isDelayed ? <AlertCircle size={36} /> : <CheckCircle2 size={36} />}
             </div>
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white">Request Received!</h3>
-            <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-sm font-medium max-w-md mx-auto leading-relaxed">
-              Thanks! Your demo request has been received. The Ricoz team will contact you shortly.
+
+            <div className="space-y-1">
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white">
+                {isDuplicate
+                  ? 'Request on File'
+                  : isDelivered
+                  ? 'Request Confirmed & Email Sent!'
+                  : isDelayed
+                  ? 'Request Received (Notification Delayed)'
+                  : 'Request Received!'}
+              </h3>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                {isDelivered
+                  ? 'Database Confirmed • SMTP Delivery Accepted'
+                  : isDelayed
+                  ? 'Database Confirmed • Email Retry in Progress'
+                  : 'Database Confirmed • Notification Queued'}
+              </p>
             </div>
+
+            <div className={`p-4 rounded-2xl border text-sm font-medium max-w-md mx-auto leading-relaxed text-left space-y-2 ${
+              isDelivered
+                ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
+                : isDelayed
+                ? 'bg-amber-50/70 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200'
+                : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200'
+            }`}>
+              <p className="font-semibold text-xs">
+                {isDuplicate
+                  ? 'Your demo request is already securely registered.'
+                  : 'Your walkthrough inquiry has been saved successfully in our database.'}
+              </p>
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                {isDelivered
+                  ? `Confirmation emails have been dispatched to ${formData.email} and the solutions team.`
+                  : isDelayed
+                  ? 'Your request is recorded. Email notification delivery is currently undergoing automated background retries.'
+                  : `Your inquiry has been placed in our durable processing queue. A solutions architect will reach out to ${formData.email}.`}
+              </p>
+              {submissionResult?.id && (
+                <div className="pt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400 border-t border-slate-200/60 dark:border-slate-700/60">
+                  Reference: <span className="font-semibold text-slate-700 dark:text-slate-300">{String(submissionResult.id).slice(0, 8)}</span>
+                </div>
+              )}
+            </div>
+
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-              A dedicated RicozAnalytics solutions architect will reach out to <span className="font-mono font-semibold text-slate-700 dark:text-slate-200">{formData.email}</span>.
+              A dedicated solutions architect will review your data requirements ({formData.primaryDataSource}) and contact <span className="font-mono font-semibold text-slate-700 dark:text-slate-200">{formData.email}</span>.
             </p>
+
             <button
               type="button"
               onClick={resetAndClose}

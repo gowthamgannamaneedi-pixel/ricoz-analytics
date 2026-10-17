@@ -8,6 +8,9 @@ router.get('/smtp-status', (req, res) => demoRequestController.getSmtpStatus(req
 // GET /api/demo-request/queue-status (Background Email Queue Diagnostics)
 router.get('/queue-status', (req, res) => demoRequestController.getQueueStatus(req, res));
 
+// POST /api/demo-request/retry-jobs (Manually retry failed jobs)
+router.post('/retry-jobs', (req, res) => demoRequestController.retryQueue(req, res));
+
 // POST /api/demo-request/verify-smtp (Handshake Check)
 router.post('/verify-smtp', (req, res) => demoRequestController.verifySmtp(req, res));
 

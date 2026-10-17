@@ -2,32 +2,38 @@ const db = require('../config/database');
 const emailService = require('./emailService');
 
 /**
- * Durable, Retryable Background Email Queue Service for Demo Requests
+ * Enterprise Production Queue Worker Service for Demo Requests
  * 
- * Guarantees:
- * 1. Zero lost email notifications — persisted in PostgreSQL before processing.
- * 2. Non-blocking HTTP responses — HTTP handler returns immediately (< 30ms).
- * 3. Crash recovery — pending jobs resume across server restarts/redeployments.
- * 4. Exponential backoff retries — handles transient SMTP issues gracefully.
- * 5. Concurrent safety — uses FOR UPDATE SKIP LOCKED to prevent duplicate sends across workers.
+ * Reliability & Production Guarantees:
+ * 1. Durable PostgreSQL persistence before acknowledging clients.
+ * 2. Atomic job claiming via FOR UPDATE SKIP LOCKED preventing race conditions & duplicates across workers.
+ * 3. Separate delivery tracking for internal notification & prospect confirmation.
+ * 4. Idempotent retries: successfully delivered recipients are NEVER emailed twice upon retry.
+ * 5. Automatic stale job recovery: recovers crashed/abandoned 'processing' jobs (> 5 minutes).
+ * 6. Quota & daily limit intelligence: backs off intelligently on SMTP daily rate limits (550 5.4.5) without burning max attempts.
+ * 7. Active worker timers: does not unref worker intervals, ensuring persistent background execution.
+ * 8. Comprehensive diagnostics: exposes job-level statuses and safe error details without credentials.
  */
 class DemoEmailQueueService {
   constructor() {
+    this.workerId = `worker_${process.pid}_${Math.random().toString(36).substring(2, 7)}`;
     this.isProcessing = false;
+    this.pendingRun = false;
     this.intervalId = null;
     this.inMemoryFallbackQueue = [];
     this.initPromise = null;
+    this.lastProcessedAt = null;
   }
 
   /**
-   * Initialize queue schema and recover any stalled jobs
+   * Initialize queue tables, columns, indexes, and start durable worker loop
    */
   async init() {
     if (this.initPromise) return this.initPromise;
 
     this.initPromise = (async () => {
       try {
-        // Ensure table exists
+        // 1. Ensure table and modern schema columns exist
         await db.query(`
           CREATE TABLE IF NOT EXISTS demo_email_jobs (
             id SERIAL PRIMARY KEY,
@@ -39,40 +45,79 @@ class DemoEmailQueueService {
             attempts INTEGER NOT NULL DEFAULT 0,
             max_attempts INTEGER NOT NULL DEFAULT 5,
             last_error TEXT,
+            internal_status VARCHAR(50) NOT NULL DEFAULT 'pending',
+            prospect_status VARCHAR(50) NOT NULL DEFAULT 'pending',
+            internal_error TEXT,
+            prospect_error TEXT,
             internal_message_id VARCHAR(255),
             prospect_message_id VARCHAR(255),
+            delivery_provider VARCHAR(50),
+            locked_at TIMESTAMP WITH TIME ZONE,
+            locked_by VARCHAR(100),
             next_attempt_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
             completed_at TIMESTAMP WITH TIME ZONE,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
           );
+
+          ALTER TABLE demo_email_jobs ADD COLUMN IF NOT EXISTS internal_status VARCHAR(50) DEFAULT 'pending';
+          ALTER TABLE demo_email_jobs ADD COLUMN IF NOT EXISTS prospect_status VARCHAR(50) DEFAULT 'pending';
+          ALTER TABLE demo_email_jobs ADD COLUMN IF NOT EXISTS internal_error TEXT;
+          ALTER TABLE demo_email_jobs ADD COLUMN IF NOT EXISTS prospect_error TEXT;
+          ALTER TABLE demo_email_jobs ADD COLUMN IF NOT EXISTS delivery_provider VARCHAR(50);
+          ALTER TABLE demo_email_jobs ADD COLUMN IF NOT EXISTS locked_at TIMESTAMP WITH TIME ZONE;
+          ALTER TABLE demo_email_jobs ADD COLUMN IF NOT EXISTS locked_by VARCHAR(100);
+
           CREATE INDEX IF NOT EXISTS idx_demo_email_jobs_status_next ON demo_email_jobs(status, next_attempt_at);
           CREATE INDEX IF NOT EXISTS idx_demo_email_jobs_request ON demo_email_jobs(demo_request_id);
+          CREATE INDEX IF NOT EXISTS idx_demo_email_jobs_delivery_status ON demo_email_jobs(internal_status, prospect_status);
+
+          ALTER TABLE demo_requests ADD COLUMN IF NOT EXISTS full_name VARCHAR(255);
+          ALTER TABLE demo_requests ADD COLUMN IF NOT EXISTS work_email VARCHAR(255);
+          ALTER TABLE demo_requests ADD COLUMN IF NOT EXISTS primary_data_source VARCHAR(100);
+          ALTER TABLE demo_requests ADD COLUMN IF NOT EXISTS phone VARCHAR(100);
+          ALTER TABLE demo_requests ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb;
+          ALTER TABLE demo_requests ADD COLUMN IF NOT EXISTS email_status VARCHAR(50) DEFAULT 'queued';
+          ALTER TABLE demo_requests ADD COLUMN IF NOT EXISTS email_delivery_meta JSONB DEFAULT '{}'::jsonb;
+          ALTER TABLE demo_requests ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(100);
+
+          CREATE INDEX IF NOT EXISTS idx_demo_requests_work_email ON demo_requests(work_email);
+          CREATE INDEX IF NOT EXISTS idx_demo_requests_created_at_desc ON demo_requests(created_at DESC);
+          CREATE INDEX IF NOT EXISTS idx_demo_requests_status ON demo_requests(status);
+          CREATE INDEX IF NOT EXISTS idx_demo_requests_idempotency ON demo_requests(idempotency_key);
         `);
 
-        // Recover jobs that were marked 'processing' when a previous process crashed or restarted
-        await db.query(`
+        // 2. Recover jobs that were left in 'processing' when a previous worker crashed or restarted
+        const recovered = await db.query(`
           UPDATE demo_email_jobs
-          SET status = 'pending', updated_at = NOW()
-          WHERE status = 'processing' AND updated_at < NOW() - INTERVAL '5 minutes';
+          SET status = 'pending',
+              locked_at = NULL,
+              locked_by = NULL,
+              updated_at = NOW()
+          WHERE status = 'processing' AND updated_at < NOW() - INTERVAL '5 minutes'
+          RETURNING id;
         `);
 
-        console.log('[DemoEmailQueueService] ✅ Durable queue initialized.');
+        const recoveredCount = recovered?.rows?.length || 0;
+        if (recoveredCount > 0) {
+          console.log(`[DemoEmailQueueService] 🔄 Recovered ${recoveredCount} abandoned processing jobs on startup.`);
+        }
+
+        console.log(`[DemoEmailQueueService] ✅ Durable email queue initialized (Worker: ${this.workerId}).`);
       } catch (err) {
-        console.warn('[DemoEmailQueueService] ⚠️ Queue table init note (using in-memory fallback if needed):', err.message);
+        console.warn('[DemoEmailQueueService] ⚠️ Queue init notice:', err.message);
       }
 
-      // Start background poll timer (every 20 seconds for pending/retryable jobs)
+      // 3. Start durable background poll timer (every 15s). Do NOT call unref() to ensure it stays active.
       if (!this.intervalId) {
         this.intervalId = setInterval(() => {
           this.processQueue().catch((err) => {
             console.error('[DemoEmailQueueService] Error in background queue poll:', err.message);
           });
-        }, 20000);
-        if (this.intervalId.unref) this.intervalId.unref();
+        }, 15000);
       }
 
-      // Initial queue check
+      // Trigger immediate initial queue check
       this.triggerImmediateProcessing();
     })();
 
@@ -87,15 +132,36 @@ class DemoEmailQueueService {
    *   prospectEmail: string,
    *   payload: object
    * }} jobData
-   * @returns {Promise<{ jobId: string|number, status: string }>}
+   * @returns {Promise<{ jobId: string|number, status: string, queued_at: string }>}
    */
   async enqueueJob({ demoRequestId, recipient, prospectEmail, payload }) {
     await this.init();
 
     const tStart = performance.now();
     let jobId = null;
+    const cleanRecipient = recipient || 'ricozanalytics@gmail.com';
+    const cleanProspect = (prospectEmail || payload?.workEmail || '').trim();
 
     try {
+      // Check if job already queued for this demo request
+      if (demoRequestId) {
+        const existingCheck = await db.query(
+          'SELECT id, status FROM demo_email_jobs WHERE demo_request_id = $1 AND status IN (\'pending\', \'processing\', \'completed\') ORDER BY id DESC LIMIT 1',
+          [String(demoRequestId)]
+        );
+        if (existingCheck?.rows?.length > 0) {
+          const existingJob = existingCheck.rows[0];
+          console.log(`[DemoEmailQueueService] ℹ️ Existing job #${existingJob.id} already active (${existingJob.status}) for inquiry [${demoRequestId}]. Reusing.`);
+          this.triggerImmediateProcessing();
+          return {
+            jobId: existingJob.id,
+            status: existingJob.status,
+            reused: true,
+            queued_at: new Date().toISOString()
+          };
+        }
+      }
+
       const sql = `
         INSERT INTO demo_email_jobs (
           demo_request_id,
@@ -103,17 +169,19 @@ class DemoEmailQueueService {
           prospect_email,
           payload,
           status,
+          internal_status,
+          prospect_status,
           attempts,
           max_attempts,
           next_attempt_at
-        ) VALUES ($1, $2, $3, $4, 'pending', 0, 5, NOW())
+        ) VALUES ($1, $2, $3, $4, 'pending', 'pending', 'pending', 0, 5, NOW())
         RETURNING id;
       `;
 
       const result = await db.query(sql, [
         String(demoRequestId || ''),
-        recipient || 'ricozanalytics@gmail.com',
-        prospectEmail || '',
+        cleanRecipient,
+        cleanProspect,
         JSON.stringify(payload || {})
       ]);
 
@@ -126,10 +194,12 @@ class DemoEmailQueueService {
       this.inMemoryFallbackQueue.push({
         id: jobId,
         demo_request_id: demoRequestId,
-        recipient,
-        prospect_email: prospectEmail,
+        recipient: cleanRecipient,
+        prospect_email: cleanProspect,
         payload,
         status: 'pending',
+        internal_status: 'pending',
+        prospect_status: 'pending',
         attempts: 0,
         max_attempts: 5,
         next_attempt_at: new Date()
@@ -139,7 +209,7 @@ class DemoEmailQueueService {
     const duration = Math.round(performance.now() - tStart);
     console.log(`[DemoEmailQueueService] 📥 Job #${jobId} enqueued in ${duration}ms for inquiry [${demoRequestId}]. Triggering async dispatch.`);
 
-    // Fire processing asynchronously on the next event loop tick — does NOT block the HTTP response!
+    // Fire processing asynchronously on next event loop tick
     this.triggerImmediateProcessing();
 
     return {
@@ -161,29 +231,59 @@ class DemoEmailQueueService {
   }
 
   /**
-   * Process pending jobs from PostgreSQL or in-memory fallback
+   * Process pending jobs from PostgreSQL using atomic row locks and in-memory fallback
    */
   async processQueue() {
-    if (this.isProcessing) return;
+    if (this.isProcessing) {
+      this.pendingRun = true;
+      return;
+    }
     this.isProcessing = true;
+    this.lastProcessedAt = new Date();
 
     try {
-      // 1. Process Database Jobs
-      let jobs = [];
+      // 1. Process Database Jobs using atomic claiming with FOR UPDATE SKIP LOCKED
+      let claimedJobs = [];
       try {
-        const selectSql = `
-          SELECT * FROM demo_email_jobs
-          WHERE status = 'pending' AND next_attempt_at <= NOW() AND attempts < max_attempts
-          ORDER BY id ASC
-          LIMIT 5;
+        const claimSql = `
+          WITH claimable AS (
+            SELECT id FROM demo_email_jobs
+            WHERE (
+              (status = 'pending' AND next_attempt_at <= NOW())
+              OR
+              (status = 'processing' AND updated_at < NOW() - INTERVAL '5 minutes')
+            )
+            AND attempts < max_attempts
+            ORDER BY id ASC
+            LIMIT 5
+            FOR UPDATE SKIP LOCKED
+          )
+          UPDATE demo_email_jobs
+          SET status = 'processing',
+              attempts = attempts + 1,
+              updated_at = NOW(),
+              locked_at = NOW(),
+              locked_by = $1
+          WHERE id IN (SELECT id FROM claimable)
+          RETURNING *;
         `;
-        const res = await db.query(selectSql);
-        jobs = res?.rows || [];
+        const res = await db.query(claimSql, [this.workerId]);
+        claimedJobs = res?.rows || [];
       } catch (err) {
-        // DB not available, rely on in-memory fallback
+        // Fallback to simple select if WITH/FOR UPDATE syntax not supported by mock/engine
+        try {
+          const fallbackSelect = `
+            SELECT * FROM demo_email_jobs
+            WHERE status = 'pending' AND next_attempt_at <= NOW() AND attempts < max_attempts
+            ORDER BY id ASC
+            LIMIT 5;
+          `;
+          const res = await db.query(fallbackSelect);
+          claimedJobs = res?.rows || [];
+        } catch (_) {}
       }
 
-      for (const job of jobs) {
+      for (const job of claimedJobs) {
         await this._executeJob(job);
       }
 
@@ -198,120 +298,211 @@ class DemoEmailQueueService {
       }
     } finally {
       this.isProcessing = false;
+      if (this.pendingRun) {
+        this.pendingRun = false;
+        this.triggerImmediateProcessing();
+      }
     }
   }
 
   /**
-   * Execute an individual database job with retries and status updates
+   * Execute an individual database job with separate delivery outcomes and idempotency
    * @param {object} job
    */
   async _executeJob(job) {
     const jobId = job.id;
-    const attempt = (job.attempts || 0) + 1;
+    const attempt = job.attempts || 1;
     const payload = typeof job.payload === 'string' ? JSON.parse(job.payload) : (job.payload || {});
+    const prospectEmail = (job.prospect_email || payload.workEmail || '').trim();
 
-    // Mark as processing
-    try {
-      await db.query(
-        'UPDATE demo_email_jobs SET status = $1, attempts = $2, updated_at = NOW() WHERE id = $3',
-        ['processing', attempt, jobId]
-      );
-    } catch (_) {}
+    console.log(`[DemoEmailQueueService] ⚙️ Executing Job #${jobId} (Attempt ${attempt}/${job.max_attempts}) for: ${prospectEmail || 'N/A'}`);
 
-    console.log(`[DemoEmailQueueService] ⚙️ Processing Job #${jobId} (Attempt ${attempt}/${job.max_attempts}) for: ${payload.workEmail || job.prospect_email}`);
+    let internalOk = job.internal_status === 'sent';
+    let prospectOk = job.prospect_status === 'sent' || job.prospect_status === 'skipped';
 
-    try {
-      // Dispatch email via emailService
-      const emailResult = await emailService.sendDemoRequestEmail(payload);
+    let internalMessageId = job.internal_message_id || null;
+    let prospectMessageId = job.prospect_message_id || null;
 
-      if (emailResult.success) {
-        // Success
-        await db.query(
-          `UPDATE demo_email_jobs 
-           SET status = 'completed', 
-               completed_at = NOW(), 
-               updated_at = NOW(),
-               internal_message_id = $1,
-               prospect_message_id = $2
-           WHERE id = $3`,
-          [
-            emailResult.messageId || null,
-            emailResult.prospectConfirmation?.messageId || null,
-            jobId
-          ]
-        );
+    let internalError = job.internal_error || null;
+    let prospectError = job.prospect_error || null;
 
-        // Update parent demo_requests table if applicable
+    let isQuotaError = false;
+
+    // STEP A: Send Internal Notification to Ricoz Team (if not already sent)
+    if (!internalOk) {
+      try {
+        const intResult = await emailService.sendInternalDemoNotification(payload);
+        if (intResult.success) {
+          internalOk = true;
+          internalMessageId = intResult.messageId;
+          internalError = null;
+        } else {
+          internalOk = false;
+          internalError = intResult.error;
+          if (intResult.isQuotaError) isQuotaError = true;
+        }
+      } catch (err) {
+        internalOk = false;
+        internalError = err.message;
+        if (err.message.includes('550-5.4.5') || err.message.includes('Daily user sending limit')) {
+          isQuotaError = true;
+        }
+      }
+    }
+
+    // STEP B: Send Prospect Confirmation to Lead (if applicable and not already sent)
+    const needsProspect = Boolean(
+      prospectEmail &&
+      prospectEmail.includes('@') &&
+      !emailService.isTestOrPlaceholderRecipient(prospectEmail)
+    );
+
+    if (!needsProspect) {
+      prospectOk = true;
+      job.prospect_status = 'skipped';
+    } else if (!prospectOk) {
+      try {
+        const prosResult = await emailService.sendProspectDemoConfirmation(payload);
+        if (prosResult.success) {
+          prospectOk = true;
+          prospectMessageId = prosResult.messageId;
+          prospectError = null;
+        } else {
+          prospectOk = false;
+          prospectError = prosResult.error;
+          if (prosResult.isQuotaError) isQuotaError = true;
+        }
+      } catch (err) {
+        prospectOk = false;
+        prospectError = err.message;
+        if (err.message.includes('550-5.4.5') || err.message.includes('Daily user sending limit')) {
+          isQuotaError = true;
+        }
+      }
+    }
+
+    // STEP C: Evaluate Complete Delivery
+    const allSuccessful = internalOk && prospectOk;
+
+    if (allSuccessful) {
+      // Completed successfully!
+      try {
+        await db.query(`
+          UPDATE demo_email_jobs
+          SET status = 'completed',
+              completed_at = NOW(),
+              updated_at = NOW(),
+              locked_at = NULL,
+              locked_by = NULL,
+              internal_status = 'sent',
+              prospect_status = $1,
+              internal_message_id = $2,
+              prospect_message_id = $3,
+              internal_error = NULL,
+              prospect_error = NULL,
+              last_error = NULL
+          WHERE id = $4
+        `, [
+          needsProspect ? 'sent' : 'skipped',
+          internalMessageId,
+          prospectMessageId,
+          jobId
+        ]);
+
         if (job.demo_request_id) {
-          try {
-            await db.query(
-              `UPDATE demo_requests 
-               SET email_status = 'delivered', 
-                   email_delivery_meta = $1::jsonb,
-                   updated_at = NOW()
-               WHERE id::text = $2 OR (work_email = $3 AND created_at >= NOW() - INTERVAL '1 hour')`,
-              [
-                JSON.stringify({
-                  delivered_at: new Date().toISOString(),
-                  internal_message_id: emailResult.messageId || null,
-                  prospect_message_id: emailResult.prospectConfirmation?.messageId || null,
-                  attempts: attempt
-                }),
-                String(job.demo_request_id),
-                payload.workEmail || job.prospect_email
-              ]
-            );
-          } catch (_) {}
+          await db.query(`
+            UPDATE demo_requests
+            SET email_status = 'delivered',
+                email_delivery_meta = $1::jsonb,
+                updated_at = NOW()
+            WHERE id::text = $2 OR (work_email = $3 AND created_at >= NOW() - INTERVAL '2 hours')
+          `, [
+            JSON.stringify({
+              delivered_at: new Date().toISOString(),
+              internal_message_id: internalMessageId,
+              prospect_message_id: prospectMessageId,
+              attempts: attempt
+            }),
+            String(job.demo_request_id),
+            prospectEmail
+          ]);
         }
 
-        console.log(`[DemoEmailQueueService] ✅ Job #${jobId} COMPLETED successfully. (Internal: ${emailResult.messageId})`);
-      } else {
-        throw new Error(emailResult.error || 'SMTP delivery returned success: false');
+        console.log(`[DemoEmailQueueService] ✅ Job #${jobId} COMPLETED successfully. (Internal: ${internalMessageId}, Prospect: ${prospectMessageId || 'N/A'})`);
+      } catch (dbErr) {
+        console.error(`[DemoEmailQueueService] Error finalizing completed job #${jobId}:`, dbErr.message);
       }
-    } catch (err) {
-      const isFinal = attempt >= (job.max_attempts || 5);
-      // Exponential backoff: 10s, 30s, 90s, 270s...
-      const backoffSeconds = Math.min(600, Math.pow(3, attempt) * 10);
+    } else {
+      // Delivery failed or partial delivery
+      const combinedError = [
+        internalError ? `[Internal Error]: ${internalError}` : null,
+        prospectError ? `[Prospect Error]: ${prospectError}` : null
+      ].filter(Boolean).join(' | ');
+
+      // If daily limit exceeded on Gmail (550 5.4.5), delay retry by 1 hour (do not burn all attempts)
+      const isFinal = !isQuotaError && attempt >= (job.max_attempts || 5);
+      const backoffSeconds = isQuotaError ? 3600 : Math.min(600, Math.pow(3, attempt) * 15);
       const nextAttempt = new Date(Date.now() + backoffSeconds * 1000);
 
-      console.warn(`[DemoEmailQueueService] ⚠️ Job #${jobId} failed on attempt ${attempt}: ${err.message}. ${isFinal ? 'Max attempts reached.' : `Retrying in ${backoffSeconds}s.`}`);
+      console.warn(`[DemoEmailQueueService] ⚠️ Job #${jobId} delivery incomplete on attempt ${attempt}: ${combinedError}. ${isFinal ? 'Max attempts reached -> marked failed.' : `Retrying in ${backoffSeconds}s.`}`);
 
       try {
-        await db.query(
-          `UPDATE demo_email_jobs 
-           SET status = $1, 
-               last_error = $2, 
-               next_attempt_at = $3, 
-               updated_at = NOW() 
-           WHERE id = $4`,
-          [
-            isFinal ? 'failed' : 'pending',
-            err.message.substring(0, 500),
-            nextAttempt,
-            jobId
-          ]
-        );
+        await db.query(`
+          UPDATE demo_email_jobs
+          SET status = $1,
+              internal_status = $2,
+              prospect_status = $3,
+              internal_error = $4,
+              prospect_error = $5,
+              internal_message_id = COALESCE($6, internal_message_id),
+              prospect_message_id = COALESCE($7, prospect_message_id),
+              last_error = $8,
+              next_attempt_at = $9,
+              locked_at = NULL,
+              locked_by = NULL,
+              updated_at = NOW()
+          WHERE id = $10
+        `, [
+          isFinal ? 'failed' : 'pending',
+          internalOk ? 'sent' : 'failed',
+          prospectOk ? (needsProspect ? 'sent' : 'skipped') : 'failed',
+          internalError,
+          prospectError,
+          internalMessageId,
+          prospectMessageId,
+          combinedError.substring(0, 1000),
+          nextAttempt,
+          jobId
+        ]);
 
         if (job.demo_request_id) {
-          await db.query(
-            `UPDATE demo_requests 
-             SET email_status = $1,
-                 updated_at = NOW()
-             WHERE id::text = $2 OR (work_email = $3 AND created_at >= NOW() - INTERVAL '1 hour')`,
-            [
-              isFinal ? 'failed' : 'retry_pending',
-              String(job.demo_request_id),
-              payload.workEmail || job.prospect_email
-            ]
-          );
+          await db.query(`
+            UPDATE demo_requests
+            SET email_status = $1,
+                email_delivery_meta = $2::jsonb,
+                updated_at = NOW()
+            WHERE id::text = $3 OR (work_email = $4 AND created_at >= NOW() - INTERVAL '2 hours')
+          `, [
+            isFinal ? 'failed' : 'retry_pending',
+            JSON.stringify({
+              last_attempt_at: new Date().toISOString(),
+              attempts: attempt,
+              internal_status: internalOk ? 'sent' : 'failed',
+              prospect_status: prospectOk ? 'sent' : 'failed',
+              last_error: combinedError
+            }),
+            String(job.demo_request_id),
+            prospectEmail
+          ]);
         }
-      } catch (_) {}
+      } catch (dbErr) {
+        console.error(`[DemoEmailQueueService] Error updating failed job #${jobId}:`, dbErr.message);
+      }
     }
   }
 
   /**
-   * Execute an individual in-memory job
-   * @param {object} memJob
+   * Execute in-memory fallback job
    */
   async _executeMemoryJob(memJob) {
     memJob.attempts += 1;
@@ -322,6 +513,9 @@ class DemoEmailQueueService {
       if (emailResult.success) {
         memJob.status = 'completed';
         memJob.completed_at = new Date();
+        memJob.internal_status = 'sent';
+        memJob.prospect_status = 'sent';
+        memJob.internal_message_id = emailResult.messageId;
         console.log(`[DemoEmailQueueService] ✅ Memory Job #${memJob.id} COMPLETED.`);
       } else {
         throw new Error(emailResult.error || 'Delivery failed');
@@ -337,7 +531,7 @@ class DemoEmailQueueService {
   }
 
   /**
-   * Get queue statistics for diagnostics
+   * Get queue statistics and diagnostic job listing
    */
   async getQueueStats() {
     await this.init();
@@ -350,12 +544,47 @@ class DemoEmailQueueService {
         GROUP BY status;
       `);
       const counts = { pending: 0, processing: 0, completed: 0, failed: 0 };
-      for (const row of res.rows) {
+      for (const row of res?.rows || []) {
         if (counts[row.status] !== undefined) counts[row.status] = row.count;
       }
+
+      // Fetch recent 10 jobs for diagnostics (without exposing private payload)
+      let recentJobs = [];
+      try {
+        const recentRes = await db.query(`
+          SELECT 
+            id,
+            demo_request_id,
+            prospect_email,
+            status,
+            internal_status,
+            prospect_status,
+            attempts,
+            max_attempts,
+            last_error,
+            internal_message_id,
+            prospect_message_id,
+            next_attempt_at,
+            completed_at,
+            created_at,
+            updated_at
+          FROM demo_email_jobs
+          ORDER BY id DESC
+          LIMIT 10;
+        `);
+        recentJobs = recentRes?.rows || [];
+      } catch (_) {}
+
       return {
         ...counts,
-        inMemoryFallbackCount: this.inMemoryFallbackQueue.length
+        inMemoryFallbackCount: this.inMemoryFallbackQueue.length,
+        worker: {
+          workerId: this.workerId,
+          isProcessing: this.isProcessing,
+          lastProcessedAt: this.lastProcessedAt,
+          activeInterval: Boolean(this.intervalId)
+        },
+        recentJobs
       };
     } catch (err) {
       return {
@@ -363,8 +592,38 @@ class DemoEmailQueueService {
         processing: this.inMemoryFallbackQueue.filter((j) => j.status === 'processing').length,
         completed: this.inMemoryFallbackQueue.filter((j) => j.status === 'completed').length,
         failed: this.inMemoryFallbackQueue.filter((j) => j.status === 'failed').length,
-        inMemoryFallbackCount: this.inMemoryFallbackQueue.length
+        inMemoryFallbackCount: this.inMemoryFallbackQueue.length,
+        worker: {
+          workerId: this.workerId,
+          isProcessing: this.isProcessing,
+          lastProcessedAt: this.lastProcessedAt,
+          activeInterval: Boolean(this.intervalId)
+        },
+        recentJobs: []
       };
+    }
+  }
+
+  /**
+   * Reset failed jobs back to pending to trigger retry
+   */
+  async retryFailedJobs() {
+    await this.init();
+    try {
+      const res = await db.query(`
+        UPDATE demo_email_jobs
+        SET status = 'pending',
+            attempts = 0,
+            next_attempt_at = NOW(),
+            updated_at = NOW()
+        WHERE status = 'failed'
+        RETURNING id;
+      `);
+      const count = res?.rows?.length || 0;
+      this.triggerImmediateProcessing();
+      return { success: true, retriedCount: count, jobIds: (res?.rows || []).map(r => r.id) };
+    } catch (err) {
+      return { success: false, error: err.message };
     }
   }
 }
