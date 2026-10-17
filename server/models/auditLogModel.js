@@ -54,7 +54,7 @@ const AuditLogModel = {
     const result = await db.query(sql, [
       id,
       organizationId,
-      userId ? Number(userId) : null,
+      userId || null,
       action.trim().toUpperCase(),
       resourceType.trim().toLowerCase(),
       resourceId !== null && resourceId !== undefined ? String(resourceId) : null,
@@ -93,7 +93,7 @@ const AuditLogModel = {
 
     if (filters.userId) {
       conditions.push(`a.user_id = $${paramIndex++}`);
-      params.push(Number(filters.userId));
+      params.push(filters.userId);
     }
 
     if (filters.action && filters.action !== 'all') {

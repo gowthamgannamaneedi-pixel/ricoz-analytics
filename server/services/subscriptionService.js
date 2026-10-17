@@ -27,6 +27,10 @@ const SUBSCRIPTION_STATUSES = {
   SUSPENDED: 'suspended'
 };
 
+// In-memory cache for organization subscription details (60s TTL)
+const orgSubscriptionCache = new Map();
+const ORG_CACHE_TTL_MS = 60 * 1000;
+
 /**
  * Enterprise Production Subscription & Plan Enforcement Service — RicozAnalytics
  */
@@ -37,13 +41,51 @@ class SubscriptionService {
   }
 
   /**
+   * Clear in-memory subscription cache for an organization (or all)
+   * @param {string} [organizationId] 
+   */
+  clearOrganizationCache(organizationId) {
+    if (organizationId) {
+      orgSubscriptionCache.delete(String(organizationId));
+    } else {
+      orgSubscriptionCache.clear();
+    }
+  }
+
+  /**
+   * Pre-populate or update in-memory subscription cache
+   * @param {string} organizationId 
+   * @param {object} subscription 
+   */
+  primeOrganizationCache(organizationId, subscription) {
+    if (organizationId && subscription) {
+      orgSubscriptionCache.set(String(organizationId), {
+        data: subscription,
+        cachedAt: Date.now()
+      });
+    }
+  }
+
+  /**
    * Get subscription, entitlements, and live usage for an organization
    * @param {string} organizationId 
+   * @param {{ includeUsage?: boolean, forceFresh?: boolean }} [options]
    * @returns {Promise<any>}
    */
-  async getOrganizationSubscription(organizationId) {
+  async getOrganizationSubscription(organizationId, options = {}) {
     if (!organizationId) {
       return null;
+    }
+
+    const includeUsage = options.includeUsage !== false;
+    const forceFresh = Boolean(options.forceFresh);
+
+    // 1. Fast cache check
+    const cached = orgSubscriptionCache.get(String(organizationId));
+    if (!forceFresh && cached && (Date.now() - cached.cachedAt < ORG_CACHE_TTL_MS)) {
+      if (!includeUsage || (cached.data && cached.data.usage)) {
+        return cached.data;
+      }
     }
 
     let org = null;
@@ -62,10 +104,14 @@ class SubscriptionService {
     if (org.scheduled_downgrade_plan && org.scheduled_downgrade_effective_date) {
       const effectiveDate = new Date(org.scheduled_downgrade_effective_date);
       if (now >= effectiveDate) {
-        await this._applyScheduledDowngrade(org);
+        const updated = await this._applyScheduledDowngrade(org);
         org.plan = org.scheduled_downgrade_plan;
         org.scheduled_downgrade_plan = null;
         org.scheduled_downgrade_effective_date = null;
+        if (updated) {
+          org.current_period_start = updated.current_period_start;
+          org.current_period_end = updated.current_period_end;
+        }
       }
     }
 
@@ -140,10 +186,13 @@ class SubscriptionService {
       SUBSCRIPTION_STATUSES.TRIAL_EXPIRING
     ].includes(effectiveStatus);
 
-    // 4. Fetch actual server-side usage telemetry
-    const usage = await this.getOrganizationUsage(org.id, planConfig);
+    // 4. Fetch actual server-side usage telemetry ONLY when needed (e.g. billing page or quota checks)
+    let usage = null;
+    if (includeUsage) {
+      usage = await this.getOrganizationUsage(org.id, planConfig);
+    }
 
-    return {
+    const result = {
       organizationId: org.id,
       organizationName: org.name,
       slug: org.slug,
@@ -180,50 +229,50 @@ class SubscriptionService {
       entitlements: planConfig.entitlements,
       usage
     };
+
+    // Cache computed subscription
+    orgSubscriptionCache.set(String(org.id), {
+      data: result,
+      cachedAt: Date.now()
+    });
+
+    return result;
   }
 
   /**
    * Get accurate usage metrics (datasets, users) for an organization
+   * Queries counts concurrently with Promise.all for high performance
    * @param {string} organizationId 
    * @param {object} planConfig 
    */
   async getOrganizationUsage(organizationId, planConfig) {
     const plan = planConfig || getPlan('starter');
 
-    // Count datasets
     let datasetsCount = 0;
-    try {
-      const dsRes = await db.query(
-        `SELECT COUNT(*)::int as count FROM data_sources WHERE organization_id = $1`,
-        [organizationId]
-      );
-      datasetsCount = Number(dsRes.rows[0]?.count || 0);
-    } catch (_) {
-      datasetsCount = 0;
-    }
-
-    // Count active team members (excluding deactivated)
     let membersCount = 0;
-    try {
-      const uRes = await db.query(
-        `SELECT COUNT(*)::int as count FROM users WHERE organization_id = $1 AND COALESCE(status, 'active') != 'deactivated'`,
-        [organizationId]
-      );
-      membersCount = Number(uRes.rows[0]?.count || 0);
-    } catch (_) {
-      membersCount = 0;
-    }
-
-    // Count pending unexpired invitations (reserved seats)
     let pendingInvitationsCount = 0;
+
     try {
-      const invRes = await db.query(
-        `SELECT COUNT(*)::int as count FROM invitations WHERE organization_id = $1 AND status = 'pending' AND expires_at > NOW()`,
-        [organizationId]
-      );
+      const [dsRes, uRes, invRes] = await Promise.all([
+        db.query(
+          `SELECT COUNT(*)::int as count FROM data_sources WHERE organization_id = $1`,
+          [organizationId]
+        ).catch(() => ({ rows: [] })),
+        db.query(
+          `SELECT COUNT(*)::int as count FROM users WHERE organization_id = $1 AND COALESCE(status, 'active') != 'deactivated'`,
+          [organizationId]
+        ).catch(() => ({ rows: [] })),
+        db.query(
+          `SELECT COUNT(*)::int as count FROM invitations WHERE organization_id = $1 AND status = 'pending' AND expires_at > NOW()`,
+          [organizationId]
+        ).catch(() => ({ rows: [] }))
+      ]);
+
+      datasetsCount = Number(dsRes.rows[0]?.count || 0);
+      membersCount = Number(uRes.rows[0]?.count || 0);
       pendingInvitationsCount = Number(invRes.rows[0]?.count || 0);
     } catch (_) {
-      pendingInvitationsCount = 0;
+      // Fallback resilience
     }
 
     const totalSeatsUsed = membersCount + pendingInvitationsCount;
@@ -252,11 +301,42 @@ class SubscriptionService {
 
   /**
    * Check if organization has active access rights (Trial or Paid)
+   * Highly optimized: checks in-memory cache first, skips 3 count queries
    * @param {string} organizationId 
    * @returns {Promise<{ allowed: boolean, code?: string, message?: string, subscription?: any }>}
    */
   async checkWorkspaceAccess(organizationId) {
-    const sub = await this.getOrganizationSubscription(organizationId);
+    if (!organizationId) {
+      return {
+        allowed: false,
+        code: 'ORG_NOT_FOUND',
+        message: 'Organization not found.'
+      };
+    }
+
+    // 1. In-memory cache hit check
+    const cached = orgSubscriptionCache.get(String(organizationId));
+    if (cached && (Date.now() - cached.cachedAt < ORG_CACHE_TTL_MS)) {
+      const sub = cached.data;
+      if (!sub.canAccessApp) {
+        const isTrialExp = sub.status === SUBSCRIPTION_STATUSES.TRIAL_EXPIRED;
+        return {
+          allowed: false,
+          code: isTrialExp ? 'TRIAL_EXPIRED' : 'SUBSCRIPTION_REQUIRED',
+          message: isTrialExp
+            ? 'Your 14-day free trial has expired. Select a plan to continue accessing your workspace.'
+            : 'An active paid subscription is required to access workspace data.',
+          subscription: sub
+        };
+      }
+      return {
+        allowed: true,
+        subscription: sub
+      };
+    }
+
+    // 2. Fetch subscription status without running 3 usage count queries
+    const sub = await this.getOrganizationSubscription(organizationId, { includeUsage: false });
     if (!sub) {
       return {
         allowed: false,
@@ -322,13 +402,28 @@ class SubscriptionService {
    * @returns {Promise<{ allowed: boolean, code?: string, message?: string, currentCount?: number, limit?: number, upgradeGuidance?: object, subscription?: any }>}
    */
   async checkUsageLimit(organizationId, resourceType) {
-    const access = await this.checkWorkspaceAccess(organizationId);
-    if (!access.allowed) {
-      return access;
+    const sub = await this.getOrganizationSubscription(organizationId, { includeUsage: true });
+    if (!sub) {
+      return {
+        allowed: false,
+        code: 'ORG_NOT_FOUND',
+        message: 'Organization not found.'
+      };
     }
 
-    const sub = access.subscription;
-    const usageData = sub.usage[resourceType];
+    if (!sub.canAccessApp) {
+      const isTrialExp = sub.status === SUBSCRIPTION_STATUSES.TRIAL_EXPIRED;
+      return {
+        allowed: false,
+        code: isTrialExp ? 'TRIAL_EXPIRED' : 'SUBSCRIPTION_REQUIRED',
+        message: isTrialExp
+          ? 'Your 14-day free trial has expired. Select a plan to continue accessing your workspace.'
+          : 'An active paid subscription is required to access workspace data.',
+        subscription: sub
+      };
+    }
+
+    const usageData = sub.usage ? sub.usage[resourceType] : null;
     if (!usageData) {
       return { allowed: true, subscription: sub };
     }
@@ -490,7 +585,7 @@ class SubscriptionService {
     const isAnnual = (org.billing_interval || 'monthly') === 'yearly';
     const nextEnd = new Date(now.getTime() + (isAnnual ? 365 : 30) * 86400000);
 
-    await this.updateSubscription(org.id, {
+    const updated = await this.updateSubscription(org.id, {
       plan: newPlan.id,
       scheduled_downgrade_plan: null,
       scheduled_downgrade_effective_date: null,
@@ -511,6 +606,8 @@ class SubscriptionService {
         note: 'Downgrade applied at billing period boundary. Customer data strictly preserved.'
       }
     }).catch(() => null);
+
+    return updated;
   }
 
   /**
@@ -728,6 +825,7 @@ class SubscriptionService {
       RETURNING *;
     `;
     const res = await db.query(sql, values);
+    this.clearOrganizationCache(organizationId);
     return res.rows[0] || null;
   }
 }

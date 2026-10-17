@@ -457,10 +457,13 @@ const fallbackDatasetStorageFiles = new Map();
 if (config.databaseUrl) {
   pool = new Pool({
     connectionString: config.databaseUrl,
+    min: process.env.NODE_ENV === 'production' ? 2 : 0,
     max: Number(process.env.DB_POOL_MAX) || 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000,
+    idleTimeoutMillis: 300000, // 5 minutes to prevent connection tear-down on short idle
+    connectionTimeoutMillis: 10000,
     statement_timeout: Number(process.env.DB_STATEMENT_TIMEOUT_MS) || 15000,
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 10000,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
   });
 
@@ -473,14 +476,28 @@ if (config.databaseUrl) {
 }
 
 /**
- * Execute SQL Query
+ * Execute SQL Query with safe duration logging
  * @param {string} text 
  * @param {any[]} [params] 
  * @returns {Promise<{ rows: any[], rowCount: number }>}
  */
 async function query(text, params = []) {
+  const start = Date.now();
   if (!useFallbackStore && pool) {
-    return await pool.query(text, params);
+    try {
+      const res = await pool.query(text, params);
+      const durationMs = Date.now() - start;
+      if (durationMs > 250 && process.env.NODE_ENV !== 'test') {
+        const sanitized = text.replace(/\s+/g, ' ').trim().slice(0, 100);
+        console.log(`[DB Telemetry] ⏱️ Query took ${durationMs}ms: ${sanitized}...`);
+      }
+      return res;
+    } catch (err) {
+      const durationMs = Date.now() - start;
+      const sanitized = text.replace(/\s+/g, ' ').trim().slice(0, 100);
+      console.warn(`[DB Telemetry] ⚠️ Query error after ${durationMs}ms: ${err.message} (SQL: ${sanitized})`);
+      throw err;
+    }
   }
 
   // Handle fallback in-memory store queries
@@ -5437,6 +5454,57 @@ async function initDb() {
       console.log(` Enterprise notifications table verified (user_id/actor_id: ${userIdType}).`);
     } catch (notifErr) {
       console.warn('[initDb notifications sync notice]:', notifErr.message);
+    }
+
+    // 4.5 Performance Indexes & Lowercase Email Acceleration
+    try {
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_users_lower_email ON public.users(LOWER(email));
+        CREATE INDEX IF NOT EXISTS idx_users_status ON public.users(status);
+        CREATE INDEX IF NOT EXISTS idx_organizations_id ON public.organizations(id);
+      `);
+    } catch (_) {}
+
+    // 4.6 Ensure collaboration tables match userIdType (${userIdType})
+    try {
+      if (userIdType === 'UUID') {
+        const collabTables = [
+          { table: 'favorites', col: 'user_id', onDelete: 'CASCADE' },
+          { table: 'comments', col: 'user_id', onDelete: 'CASCADE' },
+          { table: 'recently_viewed', col: 'user_id', onDelete: 'CASCADE' },
+          { table: 'team_members', col: 'user_id', onDelete: 'CASCADE' },
+          { table: 'teams', col: 'created_by', onDelete: 'CASCADE' },
+          { table: 'dashboard_shares', col: 'user_id', onDelete: 'CASCADE' },
+          { table: 'dashboard_shares', col: 'shared_by', onDelete: 'CASCADE' },
+          { table: 'report_shares', col: 'user_id', onDelete: 'CASCADE' },
+          { table: 'report_shares', col: 'shared_by', onDelete: 'CASCADE' },
+          { table: 'insight_shares', col: 'user_id', onDelete: 'CASCADE' },
+          { table: 'insight_shares', col: 'shared_by', onDelete: 'CASCADE' },
+          { table: 'audit_logs', col: 'user_id', onDelete: 'SET NULL' },
+          { table: 'dataset_relationships', col: 'created_by', onDelete: 'CASCADE' }
+        ];
+
+        for (const ct of collabTables) {
+          try {
+            const colCheck = await pool.query(`
+              SELECT data_type FROM information_schema.columns 
+              WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2 LIMIT 1;
+            `, [ct.table, ct.col]);
+            if (colCheck.rows[0] && colCheck.rows[0].data_type !== 'uuid') {
+              console.log(`[initDb] Aligning ${ct.table}.${ct.col} to UUID...`);
+              await pool.query(`
+                ALTER TABLE public.${ct.table} DROP CONSTRAINT IF EXISTS ${ct.table}_${ct.col}_fkey;
+                ALTER TABLE public.${ct.table} ALTER COLUMN ${ct.col} TYPE UUID USING (CASE WHEN ${ct.col} IS NOT NULL AND ${ct.col}::text ~ '^[0-9a-fA-F-]{36}$' THEN ${ct.col}::text::uuid ELSE NULL END);
+                ALTER TABLE public.${ct.table} ADD CONSTRAINT ${ct.table}_${ct.col}_fkey FOREIGN KEY (${ct.col}) REFERENCES public.users(id) ON DELETE ${ct.onDelete || 'CASCADE'};
+              `);
+            }
+          } catch (e) {
+            console.warn(`[initDb ${ct.table}.${ct.col} sync notice]:`, e.message);
+          }
+        }
+      }
+    } catch (collabErr) {
+      console.warn('[initDb collaboration tables sync notice]:', collabErr.message);
     }
   } catch (qualityTablesSyncErr) {
     console.warn('[initDb quality tables sync notice]:', qualityTablesSyncErr.message);

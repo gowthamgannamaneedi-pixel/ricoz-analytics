@@ -695,6 +695,7 @@ const resendOtp = async (req, res, next) => {
  * Authenticate user with credentials, verify email status, and check 14-day trial
  */
 const login = async (req, res, next) => {
+  const loginStart = Date.now();
   try {
     const { email, password } = req.body;
 
@@ -779,30 +780,44 @@ const login = async (req, res, next) => {
     // 5. Check organization subscription & 14-day trial status
     const orgId = user.organization_id;
     let subscription = null;
-    let org = null;
 
     if (orgId) {
       subscription = await subscriptionService.getOrganizationSubscription(orgId);
-      org = await OrganizationModel.findById(orgId);
+    }
+    const orgName = subscription?.organizationName || 'Workspace';
+
+    // Prime subscription cache and ensure user auth cache is clean
+    const authMiddleware = require('../middleware/authMiddleware');
+    if (authMiddleware.clearUserAuthCache) {
+      authMiddleware.clearUserAuthCache(user.email);
+      if (user.id) authMiddleware.clearUserAuthCache(user.id);
+    }
+    if (subscriptionService.primeOrganizationCache && orgId && subscription) {
+      subscriptionService.primeOrganizationCache(orgId, subscription);
     }
 
-    // Update last login timestamp
-    await UserModel.updateLastLogin(user.id).catch(() => null);
-
-    // Audit Log
-    await logAuditEvent({
-      organizationId: orgId,
-      userId: user.id,
-      action: AUDIT_ACTIONS.USER_LOGIN,
-      resourceType: 'auth',
-      resourceId: user.id,
-      description: `User ${user.email} logged into enterprise workspace`,
-      metadata: { role: user.role, email: user.email },
-      req
-    }).catch(() => null);
+    // Update last login timestamp and audit event asynchronously (non-blocking for HTTP response)
+    setImmediate(() => {
+      UserModel.updateLastLogin(user.id).catch(() => null);
+      logAuditEvent({
+        organizationId: orgId,
+        userId: user.id,
+        action: AUDIT_ACTIONS.USER_LOGIN,
+        resourceType: 'auth',
+        resourceId: user.id,
+        description: `User ${user.email} logged into enterprise workspace`,
+        metadata: { role: user.role, email: user.email },
+        req
+      }).catch(() => null);
+    });
 
     // 6. Generate signed session token with strictly verified claims
     const token = generateToken(user);
+    const loginDur = Date.now() - loginStart;
+
+    try {
+      res.setHeader('Server-Timing', `login;dur=${loginDur}`);
+    } catch (_) {}
 
     return res.status(200).json({
       success: true,
@@ -815,7 +830,7 @@ const login = async (req, res, next) => {
         role: user.role,
         status: user.status || 'active',
         organization_id: orgId,
-        organization_name: org?.name || 'Workspace',
+        organization_name: orgName,
         created_at: user.created_at
       },
       subscription: subscription || {
@@ -833,37 +848,43 @@ const login = async (req, res, next) => {
 /**
  * GET /api/auth/me
  * Return current user profile, organization, and trial subscription status
+ * Highly optimized: reuses authenticated request session and subscription cache
  */
 const getMe = async (req, res, next) => {
+  const meStart = Date.now();
   try {
-    const user = await UserModel.findById(req.user.id) || await UserModel.findByEmail(req.user.email);
-    if (!user && !req.user) {
+    // Authenticate middleware already completely verified and attached req.user
+    const resolvedUser = req.user || (await UserModel.findById(req.user?.id || req.userId).catch(() => null));
+    if (!resolvedUser) {
       return res.status(404).json({
         success: false,
         message: 'User account not found.'
       });
     }
 
-    const orgId = user?.organization_id || req.user.organization_id;
-    let organization = null;
+    const orgId = resolvedUser.organization_id;
     let subscription = null;
 
     if (orgId) {
-      organization = await OrganizationModel.findById(orgId).catch(() => null);
-      subscription = await subscriptionService.getOrganizationSubscription(orgId).catch(() => null);
+      subscription = await subscriptionService.getOrganizationSubscription(orgId, { includeUsage: false }).catch(() => null);
     }
+
+    const meDur = Date.now() - meStart;
+    try {
+      res.setHeader('Server-Timing', `me;dur=${meDur}`);
+    } catch (_) {}
 
     return res.status(200).json({
       success: true,
       user: {
-        id: user?.id || req.user.id,
-        name: user?.name || req.user.name,
-        email: user?.email || req.user.email,
-        role: user?.role || req.user.role || 'viewer',
+        id: resolvedUser.id,
+        name: resolvedUser.name,
+        email: resolvedUser.email,
+        role: resolvedUser.role || 'viewer',
         organization_id: orgId,
-        organization_name: organization?.name || 'Workspace',
-        avatar_url: user?.avatar_url || null,
-        created_at: user?.created_at || new Date()
+        organization_name: subscription?.organizationName || 'Workspace',
+        avatar_url: resolvedUser.avatar_url || null,
+        created_at: resolvedUser.created_at || new Date()
       },
       subscription: subscription || {
         subscriptionStatus: 'trial',

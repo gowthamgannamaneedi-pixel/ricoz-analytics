@@ -340,7 +340,7 @@ export default function DashboardPage() {
     } else {
       setIsFavorite(false);
     }
-  }, [activeDashboardId, dashboards]);
+  }, [activeDashboardId, effectiveDashboardId]);
 
   const handleToggleFavorite = async () => {
     if (!effectiveDashboardId) return;
@@ -610,7 +610,6 @@ export default function DashboardPage() {
 
       if (datasetChanged || filtersChanged || isFirstLoadRef.current) {
         isFirstLoadRef.current = false;
-        fetchDatasetSummary(selectedDatasetId);
         fetchAnalytics(selectedDatasetId, false);
       } else {
         fetchTableRows(selectedDatasetId);

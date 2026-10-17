@@ -4,6 +4,27 @@ const { supabase, isConfigured } = require('../config/supabase');
 const UserModel = require('../models/userModel');
 const tokenBlacklist = require('../utils/tokenBlacklist');
 
+// In-flight single-flight request coalescing and short micro-cache (10s TTL)
+const inflightUserLookups = new Map();
+const userAuthCache = new Map();
+const USER_CACHE_TTL_MS = 10 * 1000;
+
+function clearUserAuthCache(key) {
+  if (key) {
+    userAuthCache.delete(String(key).toLowerCase());
+  } else {
+    userAuthCache.clear();
+  }
+}
+
+function primeUserAuthCache(user) {
+  if (user) {
+    const entry = { user, cachedAt: Date.now() };
+    if (user.id) userAuthCache.set(String(user.id).toLowerCase(), entry);
+    if (user.email) userAuthCache.set(user.email.toLowerCase(), entry);
+  }
+}
+
 /**
  * Enterprise Authentication Middleware
  * Validates Bearer tokens against Supabase Auth (when connected) or Signed JWTs (for internal/local services).
@@ -65,6 +86,7 @@ const authenticateToken = async (req, res, next) => {
   }
 
   req.token = token;
+  const authStart = Date.now();
 
   // 1. Try local/internal JWT verification first (standard server-signed session)
   try {
@@ -77,10 +99,36 @@ const authenticateToken = async (req, res, next) => {
       let userId = decoded.id;
       let userEmail = decoded.email;
 
-      // Query database for real, unforgeable user record (lookup by email first for identity fidelity, fallback to ID)
-      let dbUser = decoded.email ? (await UserModel.findByEmail(decoded.email).catch(() => null)) : null;
-      if (!dbUser && decoded.id) {
-        dbUser = await UserModel.findById(decoded.id).catch(() => null);
+      // Query database for real, unforgeable user record with single-flight coalescing & micro-caching
+      const cacheKey = (decoded.email || decoded.id || '').toLowerCase();
+      const cached = userAuthCache.get(cacheKey);
+      let dbUser = null;
+
+      if (cached && (Date.now() - cached.cachedAt < USER_CACHE_TTL_MS)) {
+        dbUser = cached.user;
+      } else if (inflightUserLookups.has(cacheKey)) {
+        dbUser = await inflightUserLookups.get(cacheKey);
+      } else {
+        const lookupPromise = (async () => {
+          let u = decoded.email ? await UserModel.findByEmail(decoded.email).catch(() => null) : null;
+          if (!u && decoded.id) {
+            u = await UserModel.findById(decoded.id).catch(() => null);
+          }
+          if (u) {
+            const entry = { user: u, cachedAt: Date.now() };
+            userAuthCache.set(cacheKey, entry);
+            if (u.id) userAuthCache.set(String(u.id).toLowerCase(), entry);
+            if (u.email) userAuthCache.set(u.email.toLowerCase(), entry);
+          }
+          return u;
+        })();
+
+        inflightUserLookups.set(cacheKey, lookupPromise);
+        try {
+          dbUser = await lookupPromise;
+        } finally {
+          inflightUserLookups.delete(cacheKey);
+        }
       }
 
       if (dbUser) {
@@ -126,6 +174,12 @@ const authenticateToken = async (req, res, next) => {
         role: userRole,
         organization_id: userOrgId
       };
+
+      const authDur = Date.now() - authStart;
+      try {
+        res.setHeader('Server-Timing', `auth;dur=${authDur}`);
+      } catch (_) {}
+
       return next();
     }
   } catch (jwtErr) {
@@ -200,5 +254,8 @@ const authenticateToken = async (req, res, next) => {
     });
   }
 };
+
+authenticateToken.clearUserAuthCache = clearUserAuthCache;
+authenticateToken.primeUserAuthCache = primeUserAuthCache;
 
 module.exports = authenticateToken;
