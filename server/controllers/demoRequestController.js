@@ -514,25 +514,31 @@ class DemoRequestController {
    */
   async cleanupAccounts(req, res) {
     try {
+      const crypto = require('crypto');
       const bcrypt = require('bcryptjs');
       const defaultPasswordHash = bcrypt.hashSync('admin123', 10);
-      const defaultOrgId = '00000000-0000-0000-0000-000000000001';
 
-      // 1. Ensure admin@ricoz.test exists and is active
-      const check1 = await db.query("SELECT id FROM users WHERE LOWER(email) = 'admin@ricoz.test' LIMIT 1");
+      // 1. Ensure admin@ricoz.test exists and is active, and fetch its organization_id
+      const check1 = await db.query("SELECT id, organization_id FROM users WHERE LOWER(email) = 'admin@ricoz.test' LIMIT 1");
+      let orgId = '00000000-0000-0000-0000-000000000001';
+
       if (check1.rows.length === 0) {
         try {
           await db.query(`
             INSERT INTO users (name, email, password_hash, role, organization_id, status)
             VALUES ('Gowtham (Admin)', 'admin@ricoz.test', $1, 'admin', $2, 'active')
-          `, [defaultPasswordHash, defaultOrgId]);
+          `, [defaultPasswordHash, orgId]);
         } catch (e1) {
+          const newAdminId = crypto.randomUUID ? crypto.randomUUID() : '1';
           await db.query(`
             INSERT INTO users (id, name, email, password_hash, role, organization_id, status)
-            VALUES ('1', 'Gowtham (Admin)', 'admin@ricoz.test', $1, 'admin', $2, 'active')
-          `, [defaultPasswordHash, defaultOrgId]);
+            VALUES ($1, 'Gowtham (Admin)', 'admin@ricoz.test', $2, 'admin', $3, 'active')
+          `, [newAdminId, defaultPasswordHash, orgId]);
         }
       } else {
+        if (check1.rows[0].organization_id) {
+          orgId = check1.rows[0].organization_id;
+        }
         await db.query("UPDATE users SET status = 'active', password_hash = $1 WHERE LOWER(email) = 'admin@ricoz.test'", [defaultPasswordHash]);
       }
 
@@ -543,14 +549,13 @@ class DemoRequestController {
           await db.query(`
             INSERT INTO users (name, email, password_hash, role, organization_id, status)
             VALUES ('Ricoz Administrator', 'ricoz@admin.test', $1, 'admin', $2, 'active')
-          `, [defaultPasswordHash, defaultOrgId]);
+          `, [defaultPasswordHash, orgId]);
         } catch (err) {
-          const maxIdRes = await db.query("SELECT COALESCE(MAX(CASE WHEN id ~ '^[0-9]+$' THEN id::int ELSE 0 END), 0) + 1 AS next_id FROM users");
-          const nextId = String(maxIdRes.rows[0]?.next_id || 2);
+          const newRicozId = crypto.randomUUID ? crypto.randomUUID() : '2';
           await db.query(`
             INSERT INTO users (id, name, email, password_hash, role, organization_id, status)
             VALUES ($1, 'Ricoz Administrator', 'ricoz@admin.test', $2, 'admin', $3, 'active')
-          `, [nextId, defaultPasswordHash, defaultOrgId]);
+          `, [newRicozId, defaultPasswordHash, orgId]);
         }
       } else {
         await db.query("UPDATE users SET status = 'active', password_hash = $1 WHERE LOWER(email) = 'ricoz@admin.test'", [defaultPasswordHash]);
