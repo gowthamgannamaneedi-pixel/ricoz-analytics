@@ -202,18 +202,31 @@ class SubscriptionService {
       datasetsCount = 0;
     }
 
-    // Count team members (excluding deactivated)
-    let usersCount = 0;
+    // Count active team members (excluding deactivated)
+    let membersCount = 0;
     try {
       const uRes = await db.query(
         `SELECT COUNT(*)::int as count FROM users WHERE organization_id = $1 AND COALESCE(status, 'active') != 'deactivated'`,
         [organizationId]
       );
-      usersCount = Number(uRes.rows[0]?.count || 0);
+      membersCount = Number(uRes.rows[0]?.count || 0);
     } catch (_) {
-      usersCount = 0;
+      membersCount = 0;
     }
 
+    // Count pending unexpired invitations (reserved seats)
+    let pendingInvitationsCount = 0;
+    try {
+      const invRes = await db.query(
+        `SELECT COUNT(*)::int as count FROM invitations WHERE organization_id = $1 AND status = 'pending' AND expires_at > NOW()`,
+        [organizationId]
+      );
+      pendingInvitationsCount = Number(invRes.rows[0]?.count || 0);
+    } catch (_) {
+      pendingInvitationsCount = 0;
+    }
+
+    const totalSeatsUsed = membersCount + pendingInvitationsCount;
     const maxDatasets = plan.maxDatasets;
     const maxUsers = plan.maxUsers;
 
@@ -226,11 +239,13 @@ class SubscriptionService {
         remaining: maxDatasets === -1 ? 'Unlimited' : Math.max(0, maxDatasets - datasetsCount)
       },
       users: {
-        count: usersCount,
+        count: totalSeatsUsed,
+        membersCount,
+        pendingInvitationsCount,
         limit: maxUsers,
-        isWithinLimit: maxUsers === -1 || usersCount < maxUsers,
-        isAtLimit: maxUsers !== -1 && usersCount >= maxUsers,
-        remaining: maxUsers === -1 ? 'Unlimited' : Math.max(0, maxUsers - usersCount)
+        isWithinLimit: maxUsers === -1 || totalSeatsUsed < maxUsers,
+        isAtLimit: maxUsers !== -1 && totalSeatsUsed >= maxUsers,
+        remaining: maxUsers === -1 ? 'Unlimited' : Math.max(0, maxUsers - totalSeatsUsed)
       }
     };
   }

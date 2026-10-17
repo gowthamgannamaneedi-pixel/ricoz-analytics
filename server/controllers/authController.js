@@ -7,6 +7,7 @@ const UserModel = require('../models/userModel');
 const OrganizationModel = require('../models/organizationModel');
 const InvitationModel = require('../models/invitationModel');
 const subscriptionService = require('../services/subscriptionService');
+const plansConfig = require('../config/plans');
 const emailService = require('../services/emailService');
 const { logAuditEvent, AUDIT_ACTIONS } = require('../services/auditService');
 const tokenBlacklist = require('../utils/tokenBlacklist');
@@ -908,6 +909,8 @@ const getInvitationDetails = async (req, res, next) => {
       });
     }
 
+    const existingUser = await UserModel.findByEmail(invitation.email.toLowerCase());
+
     return res.status(200).json({
       success: true,
       invitation: {
@@ -915,7 +918,8 @@ const getInvitationDetails = async (req, res, next) => {
         role: invitation.role,
         organizationName: invitation.organization_name,
         inviterName: invitation.inviter_name,
-        expiresAt: invitation.expires_at
+        expiresAt: invitation.expires_at,
+        isExistingUser: Boolean(existingUser)
       }
     });
   } catch (err) {
@@ -926,6 +930,8 @@ const getInvitationDetails = async (req, res, next) => {
 /**
  * POST /api/auth/accept-invite
  * Accept team member invitation and join the inviting organization
+ * Supports both new users (name & password) and existing users (password verification or authenticated session)
+ * Assigns authorized server-side role without trusting any role supplied by the invitee.
  */
 const acceptInvite = async (req, res, next) => {
   try {
@@ -945,24 +951,7 @@ const acceptInvite = async (req, res, next) => {
     }
 
     if (new Date() > new Date(invitation.expires_at)) {
-      return res.status(400).json({ success: false, message: 'This invitation has expired.' });
-    }
-
-    // Check subscription team member limit
-    const limitCheck = await subscriptionService.checkUsageLimit(invitation.organization_id, 'users');
-    if (!limitCheck.allowed) {
-      return res.status(403).json({
-        success: false,
-        error: {
-          code: limitCheck.code,
-          message: limitCheck.message
-        },
-        message: limitCheck.message,
-        requiresUpgrade: true,
-        limit: limitCheck.limit,
-        currentCount: limitCheck.currentCount,
-        upgradeGuidance: limitCheck.upgradeGuidance
-      });
+      return res.status(400).json({ success: false, message: 'This invitation has expired. Please ask your administrator to send a new invite.' });
     }
 
     const cleanEmail = invitation.email.toLowerCase();
@@ -971,12 +960,74 @@ const acceptInvite = async (req, res, next) => {
     let user = await UserModel.findByEmail(cleanEmail);
 
     if (user) {
-      // If user exists, update their organization and role to the invited org
-      await UserModel.updateRole(user.id, invitation.role, invitation.organization_id);
+      // Existing user: verify email ownership via credentials or active authenticated session
+      let isVerified = false;
+      if (req.user && String(req.user.email).toLowerCase() === cleanEmail) {
+        isVerified = true;
+      } else if (password) {
+        const matches = await bcrypt.compare(password, user.password_hash || '');
+        const matchesAlt = user.password_hash_alt ? await bcrypt.compare(password, user.password_hash_alt) : false;
+        if (matches || matchesAlt) {
+          isVerified = true;
+        }
+      }
+
+      if (!isVerified) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'INVALID_CREDENTIALS',
+            message: 'An account already exists with this email address. Please provide your existing password to verify account ownership.'
+          },
+          message: 'An account already exists with this email address. Please provide your existing password to verify account ownership.'
+        });
+      }
+
+      // Check seat limit if migrating from a different organization
+      if (String(user.organization_id) !== String(invitation.organization_id)) {
+        const usage = await subscriptionService.getOrganizationUsage(invitation.organization_id);
+        const userLimit = usage.users.limit;
+        if (userLimit !== -1 && usage.users.membersCount >= userLimit) {
+          return res.status(403).json({
+            success: false,
+            error: {
+              code: 'RESOURCE_LIMIT_EXCEEDED',
+              message: `Your organization has reached the maximum of ${userLimit} active team members for the current plan. Please upgrade to add more members.`
+            },
+            message: `Your organization has reached the maximum of ${userLimit} active team members for the current plan. Please upgrade to add more members.`,
+            requiresUpgrade: true,
+            limit: userLimit,
+            currentCount: usage.users.membersCount
+          });
+        }
+      }
+
+      // Update organization and assign authorized server-side role (never trust client role)
+      const updated = await UserModel.updateOrganizationAndRole(user.id, invitation.organization_id, invitation.role);
       await UserModel.markEmailVerified(cleanEmail);
+      user = updated || user;
+      user.organization_id = invitation.organization_id;
+      user.role = invitation.role;
     } else {
       if (!password || password.length < 6) {
         return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+      }
+
+      // Check that active members have not exceeded the plan limit
+      const usage = await subscriptionService.getOrganizationUsage(invitation.organization_id);
+      const userLimit = usage.users.limit;
+      if (userLimit !== -1 && usage.users.membersCount >= userLimit) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'RESOURCE_LIMIT_EXCEEDED',
+            message: `Your organization has reached the maximum of ${userLimit} active team members for the current plan. Please upgrade to add more members.`
+          },
+          message: `Your organization has reached the maximum of ${userLimit} active team members for the current plan. Please upgrade to add more members.`,
+          requiresUpgrade: true,
+          limit: userLimit,
+          currentCount: usage.users.membersCount
+        });
       }
 
       const passwordHash = await bcrypt.hash(password, 10);
@@ -984,9 +1035,9 @@ const acceptInvite = async (req, res, next) => {
         name: (name || cleanEmail.split('@')[0]).trim(),
         email: cleanEmail,
         password_hash: passwordHash,
-        role: invitation.role,
+        role: invitation.role, // Server-enforced from invitation
         organization_id: invitation.organization_id,
-        status: 'active' // Email is verified via invitation link
+        status: 'active'
       });
       await UserModel.markEmailVerified(cleanEmail);
     }

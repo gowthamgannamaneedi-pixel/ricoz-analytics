@@ -263,6 +263,24 @@ const UserModel = {
   },
 
   /**
+   * Update a user's organization and role (for invitation acceptance)
+   * @param {number|string} id 
+   * @param {string} organizationId 
+   * @param {string} role 
+   * @returns {Promise<any>}
+   */
+  async updateOrganizationAndRole(id, organizationId, role) {
+    const sql = `
+      UPDATE users
+      SET organization_id = $1, role = $2, status = 'active', updated_at = CURRENT_TIMESTAMP
+      WHERE id = $3
+      RETURNING id, name, email, role, organization_id, COALESCE(status, 'active') as status, updated_at;
+    `;
+    const result = await db.query(sql, [organizationId, role, id]);
+    return result.rows[0] || null;
+  },
+
+  /**
    * Update a user's status (active, inactive, deactivated)
    * @param {number|string} id 
    * @param {string} status 

@@ -151,7 +151,7 @@ async function runTests() {
 
       const testToken = crypto.randomBytes(32).toString('hex');
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
-      await UserModel.setResetPasswordToken('ricoz@admin.test', testToken, expiresAt);
+      await UserModel.setResetPasswordToken('admin@ricoz.test', testToken, expiresAt);
 
       // Verify token
       const checkRes = await fetch(`http://localhost:5000/api/auth/reset-password/${testToken}`);
@@ -178,7 +178,7 @@ async function runTests() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: 'ricoz@admin.test',
+          email: 'admin@ricoz.test',
           password: 'new_temp_password_123'
         })
       });
@@ -188,14 +188,14 @@ async function runTests() {
 
       // Reset password back to standard admin123
       const defaultHash = bcrypt.hashSync('admin123', 10);
-      await UserModel.updatePassword('ricoz@admin.test', defaultHash);
+      await UserModel.updatePassword('admin@ricoz.test', defaultHash);
 
       // Verify restored admin123 login
       const restoreRes = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: 'ricoz@admin.test',
+          email: 'admin@ricoz.test',
           password: 'admin123'
         })
       });

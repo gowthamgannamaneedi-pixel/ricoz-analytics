@@ -52,6 +52,8 @@ import {
   createAdminInvitation,
   getAdminInvitations,
   deleteAdminInvitation,
+  resendAdminInvitation,
+  removeAdminUser,
   API_BASE_URL
 } from '../services/api';
 import { Button } from '../components/ui/Button';
@@ -380,10 +382,47 @@ export default function SettingsPage() {
   const handleRevokeInvitation = async (id) => {
     try {
       await deleteAdminInvitation(id);
-      setSuccessMessage('Invitation revoked successfully.');
+      setSuccessMessage('Invitation revoked successfully and seat reservation freed.');
       loadInvitations();
+      loadSettingsData(true);
     } catch (err) {
       setError(err.message || 'Failed to revoke invitation.');
+    }
+  };
+
+  const handleResendInvitation = async (id) => {
+    try {
+      setError(null);
+      await resendAdminInvitation(id);
+      setSuccessMessage('Invitation resent successfully with renewed 7-day expiration.');
+      loadInvitations();
+    } catch (err) {
+      setError(err.message || 'Failed to resend invitation.');
+    }
+  };
+
+  const handleUpdateUserRole = async (userId, newRole) => {
+    try {
+      setError(null);
+      await updateAdminUserRole(userId, newRole);
+      setSuccessMessage(`Team member role updated to ${newRole.toUpperCase()}.`);
+      loadSettingsData(true);
+    } catch (err) {
+      setError(err.message || 'Failed to update member role.');
+    }
+  };
+
+  const handleRemoveMember = async (userId, memberEmail) => {
+    if (!window.confirm(`Are you sure you want to remove ${memberEmail} from this organization?`)) {
+      return;
+    }
+    try {
+      setError(null);
+      await removeAdminUser(userId);
+      setSuccessMessage(`Team member ${memberEmail} removed and seat freed.`);
+      loadSettingsData(true);
+    } catch (err) {
+      setError(err.message || 'Failed to remove team member.');
     }
   };
 
@@ -1137,191 +1176,330 @@ export default function SettingsPage() {
       {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* 5. TAB 3: USERS & ACCESS ROSTER                                    */}
       {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      {activeTab === 'users' && (
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <h2 className="text-base font-bold text-slate-900">Workspace Members & Team Access</h2>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                {usersList.length} total team members provisioned in this organization.
-              </p>
+      {activeTab === 'users' && (() => {
+        const userUsage = organization?.usage?.users || null;
+        const planId = organization?.plan || 'starter';
+        const planDisplayName = planId === 'enterprise' ? 'Enterprise' : planId === 'growth' ? 'Growth' : 'Starter';
+        const seatLimit = userUsage?.limit !== undefined ? userUsage.limit : (planId === 'growth' ? 25 : planId === 'enterprise' ? -1 : 5);
+        const activeMembersCount = usersList.filter(u => u.status !== 'deactivated').length;
+        const pendingCount = pendingInvitations.length;
+        const currentSeatsUsed = userUsage?.count ?? (activeMembersCount + pendingCount);
+        const isAtSeatLimit = userUsage?.isAtLimit ?? (seatLimit !== -1 && currentSeatsUsed >= seatLimit);
+        const remainingSeatsText = seatLimit === -1 ? 'Unlimited' : Math.max(0, seatLimit - currentSeatsUsed);
+        const seatPercentage = seatLimit === -1 ? 15 : Math.min(100, Math.round((currentSeatsUsed / seatLimit) * 100));
+
+        return (
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-6">
+            {/* Top Bar: Title & Action */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <span>Workspace Team & Access Management</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                    planId === 'enterprise' ? 'bg-purple-100 text-purple-700 border border-purple-200' :
+                    planId === 'growth' ? 'bg-indigo-100 text-indigo-700 border border-indigo-200' :
+                    'bg-slate-100 text-slate-700 border border-slate-200'
+                  }`}>
+                    {planDisplayName} Plan
+                  </span>
+                </h2>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  Manage active team members, seat capacity, role permissions, and pending invitations.
+                </p>
+              </div>
+              {isAdmin && (
+                <div className="flex items-center gap-2.5">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setIsInviteModalOpen(true)}
+                    className="gap-1.5"
+                    disabled={isAtSeatLimit}
+                    title={isAtSeatLimit ? 'Plan seat limit reached. Upgrade to invite more.' : 'Invite a new team member'}
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    <span>Invite Member</span>
+                  </Button>
+                  {isAtSeatLimit && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => navigate('/billing')}
+                      className="border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-semibold"
+                    >
+                      <span>Upgrade Plan</span>
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
-            {isAdmin && (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => setIsInviteModalOpen(true)}
-                className="gap-1.5"
-              >
-                <UserPlus className="h-3.5 w-3.5" />
-                <span>Invite New Member</span>
-              </Button>
+
+            {/* Plan & Seat Usage Telemetry Card */}
+            <div className="p-4 rounded-xl border border-slate-200/90 bg-slate-50/70 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-rose-600" />
+                  <span className="text-xs font-bold text-slate-800">Plan Seat Allocation:</span>
+                  <span className="text-xs font-extrabold text-slate-900 font-mono">
+                    {currentSeatsUsed} / {seatLimit === -1 ? 'Unlimited' : `${seatLimit} seats used`}
+                  </span>
+                </div>
+                <div className="text-[11px] font-semibold text-slate-500">
+                  {activeMembersCount} active member{activeMembersCount !== 1 ? 's' : ''} • {pendingCount} pending invite{pendingCount !== 1 ? 's' : ''} • {remainingSeatsText} seat{remainingSeatsText !== 1 ? 's' : ''} remaining
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="w-full bg-slate-200/80 rounded-full h-2.5 overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-300 rounded-full ${
+                    seatPercentage >= 100
+                      ? 'bg-rose-600'
+                      : seatPercentage >= 80
+                      ? 'bg-amber-500'
+                      : 'bg-emerald-500'
+                  }`}
+                  style={{ width: `${seatPercentage}%` }}
+                />
+              </div>
+
+              {/* Upgrade Alert Banner when limit is reached */}
+              {isAtSeatLimit && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 mt-2 border-t border-rose-200 text-rose-800">
+                  <div className="flex items-center gap-2 text-xs font-medium">
+                    <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0" />
+                    <span>
+                      <strong>Plan limit reached:</strong> Your {planDisplayName} plan allows up to {seatLimit} seats. Upgrade your subscription to Growth or Enterprise to invite more colleagues.
+                    </span>
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="xs"
+                    onClick={() => navigate('/billing')}
+                    className="shrink-0 bg-rose-600 hover:bg-rose-700 text-white font-bold"
+                  >
+                    <span>Upgrade to {planId === 'starter' ? 'Growth' : 'Enterprise'}</span>
+                    <ArrowRight className="h-3 w-3 ml-1" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Search & Filter Bar */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[220px]">
+                <Search className="h-4 w-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  placeholder="Search member by name or email..."
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  className="w-full h-10 pl-9 pr-3.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-rose-500"
+                />
+              </div>
+
+              <div className="w-36 sm:w-40">
+                <Select
+                  value={userRoleFilter}
+                  onChange={(e) => setUserRoleFilter(e.target.value)}
+                  size="sm"
+                >
+                  <option value="all">All Roles</option>
+                  <option value="admin">Administrators</option>
+                  <option value="manager">Managers</option>
+                  <option value="analyst">Analysts</option>
+                  <option value="viewer">Viewers</option>
+                </Select>
+              </div>
+            </div>
+
+            {/* Active Members Table */}
+            <div className="overflow-x-auto border border-slate-200 rounded-xl">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+                    <th className="py-3 px-4">Member</th>
+                    <th className="py-3 px-4">Role & Access</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4">Last Login</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="py-8 text-center text-slate-400">
+                        No members match the selected criteria.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredUsers.map((m) => {
+                      const isSelf = m.id === user?.id || m.email === user?.email;
+                      const isOwner = m.role === 'owner';
+                      const canManage = isAdmin && !isSelf && !isOwner;
+
+                      return (
+                        <tr key={m.id} className="hover:bg-slate-50/60 transition">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="h-8 w-8 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                                {m.name ? m.name.charAt(0) : 'U'}
+                              </div>
+                              <div>
+                                <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                                  <span>{m.name}</span>
+                                  {isSelf && (
+                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">
+                                      You
+                                    </span>
+                                  )}
+                                  {isOwner && (
+                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                      Owner
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="text-[11px] text-slate-500 font-mono">{m.email}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            {canManage ? (
+                              <select
+                                value={m.role}
+                                onChange={(e) => handleUpdateUserRole(m.id, e.target.value)}
+                                className="text-xs font-semibold rounded-lg border border-slate-300 py-1 px-2.5 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-rose-500 cursor-pointer"
+                              >
+                                <option value="admin">Admin</option>
+                                <option value="manager">Manager</option>
+                                <option value="analyst">Analyst</option>
+                                <option value="viewer">Viewer</option>
+                              </select>
+                            ) : (
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                                m.role === 'owner'
+                                  ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                  : m.role === 'admin'
+                                  ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                                  : m.role === 'manager'
+                                  ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                  : m.role === 'analyst'
+                                  ? 'bg-teal-50 text-teal-700 border border-teal-200'
+                                  : 'bg-slate-100 text-slate-700 border border-slate-200'
+                              }`}>
+                                {m.role}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold ${
+                              m.status === 'deactivated' ? 'text-slate-400' : 'text-emerald-600'
+                            }`}>
+                              <span className={`h-1.5 w-1.5 rounded-full ${
+                                m.status === 'deactivated' ? 'bg-slate-400' : 'bg-emerald-500'
+                              }`} />
+                              {m.status ? m.status.charAt(0).toUpperCase() + m.status.slice(1) : 'Active'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-500 font-medium">
+                            {formatRelativeTime(m.last_login_at)}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            {canManage ? (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveMember(m.id, m.email)}
+                                className="text-xs font-semibold text-rose-600 hover:text-rose-800 transition cursor-pointer hover:underline"
+                              >
+                                Remove Member
+                              </button>
+                            ) : (
+                              <span className="text-[11px] text-slate-400 italic">
+                                {isSelf ? 'Current session' : isOwner ? 'Organization owner' : 'Protected'}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pending Invitations Table */}
+            {pendingInvitations.length > 0 && (
+              <div className="pt-4 border-t border-slate-100 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <Clock className="h-3.5 w-3.5 text-amber-600" />
+                    <span>Pending Invitations ({pendingInvitations.length})</span>
+                    <span className="text-[10px] lowercase font-normal text-slate-400">(Reserved seats)</span>
+                  </h3>
+                </div>
+                <div className="overflow-x-auto border border-amber-200/80 rounded-xl bg-amber-50/20">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-amber-50/60 border-b border-amber-200/60 text-amber-900 font-bold uppercase tracking-wider text-[10px]">
+                        <th className="py-2.5 px-4">Invited Email</th>
+                        <th className="py-2.5 px-4">Assigned Role</th>
+                        <th className="py-2.5 px-4">Invitation Status</th>
+                        <th className="py-2.5 px-4">Expiration</th>
+                        <th className="py-2.5 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-amber-100 text-slate-700">
+                      {pendingInvitations.map((inv) => {
+                        const isExpired = new Date(inv.expires_at) < new Date();
+                        return (
+                          <tr key={inv.id} className="hover:bg-amber-50/40">
+                            <td className="py-2.5 px-4 font-mono font-medium text-slate-900">{inv.email}</td>
+                            <td className="py-2.5 px-4">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-rose-50 text-rose-700 border border-rose-200">
+                                {inv.role}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-4">
+                              <span className={`text-[11px] font-semibold ${
+                                isExpired ? 'text-rose-600' : 'text-amber-700'
+                              }`}>
+                                {isExpired ? 'Expired' : 'Pending Verification'}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-4 text-slate-500 text-[11px]">
+                              {new Date(inv.expires_at).toLocaleDateString()}
+                            </td>
+                            <td className="py-2.5 px-4 text-right space-x-3">
+                              {isAdmin && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleResendInvitation(inv.id)}
+                                    className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer"
+                                  >
+                                    Resend
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRevokeInvitation(inv.id)}
+                                    className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 cursor-pointer"
+                                  >
+                                    Revoke
+                                  </button>
+                                </>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             )}
           </div>
-
-          {/* Search & Filter Bar */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative flex-1 min-w-[220px]">
-              <Search className="h-4 w-4 text-slate-400 absolute left-3 top-3" />
-              <input
-                type="text"
-                placeholder="Search member by name or email..."
-                value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
-                className="w-full h-10 pl-9 pr-3.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-rose-500"
-              />
-            </div>
-
-            <div className="w-36 sm:w-40">
-              <Select
-                value={userRoleFilter}
-                onChange={(e) => setUserRoleFilter(e.target.value)}
-                size="sm"
-              >
-                <option value="all">All Roles</option>
-                <option value="admin">Administrators</option>
-                <option value="manager">Managers</option>
-                <option value="analyst">Analysts</option>
-                <option value="viewer">Viewers</option>
-              </Select>
-            </div>
-          </div>
-
-          {/* Users Table */}
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
-                  <th className="py-3 px-4">Member</th>
-                  <th className="py-3 px-4">Role</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Last Login</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="py-8 text-center text-slate-400">
-                      No members match the selected criteria.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredUsers.map((m) => {
-                    const isSelf = m.id === user?.id || m.email === user?.email;
-                    return (
-                      <tr key={m.id} className="hover:bg-slate-50/60 transition">
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-xs uppercase">
-                              {m.name ? m.name.charAt(0) : 'U'}
-                            </div>
-                            <div>
-                              <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                                <span>{m.name}</span>
-                                {isSelf && (
-                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">
-                                    You
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-[11px] text-slate-500 font-mono">{m.email}</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                            m.role === 'admin'
-                              ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                              : m.role === 'manager'
-                              ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                              : m.role === 'analyst'
-                              ? 'bg-teal-50 text-teal-700 border border-teal-200'
-                              : 'bg-slate-100 text-slate-700 border border-slate-200'
-                          }`}>
-                            {m.role}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                            {m.status || 'Active'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-slate-500 font-medium">
-                          {formatRelativeTime(m.last_login_at)}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <button
-                            type="button"
-                            onClick={() => navigate('/governance?tab=users')}
-                            className="text-xs font-semibold text-rose-600 hover:text-rose-800 transition cursor-pointer"
-                          >
-                            Manage Permissions â†’
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pending Invitations Table */}
-          {pendingInvitations.length > 0 && (
-            <div className="pt-4 border-t border-slate-100 space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  Pending Invitations ({pendingInvitations.length})
-                </h3>
-              </div>
-              <div className="overflow-x-auto border border-amber-200/80 rounded-xl bg-amber-50/20">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="bg-amber-50/60 border-b border-amber-200/60 text-amber-900 font-bold uppercase tracking-wider text-[10px]">
-                      <th className="py-2.5 px-4">Invited Email</th>
-                      <th className="py-2.5 px-4">Assigned Role</th>
-                      <th className="py-2.5 px-4">Status</th>
-                      <th className="py-2.5 px-4">Expires</th>
-                      <th className="py-2.5 px-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-amber-100 text-slate-700">
-                    {pendingInvitations.map((inv) => (
-                      <tr key={inv.id} className="hover:bg-amber-50/40">
-                        <td className="py-2.5 px-4 font-mono font-medium text-slate-900">{inv.email}</td>
-                        <td className="py-2.5 px-4">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-rose-50 text-rose-700 border border-rose-200">
-                            {inv.role}
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-4">
-                          <span className="text-[11px] font-semibold text-amber-700">
-                            Pending Verification
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-4 text-slate-500 text-[11px]">
-                          {new Date(inv.expires_at).toLocaleDateString()}
-                        </td>
-                        <td className="py-2.5 px-4 text-right">
-                          <button
-                            type="button"
-                            onClick={() => handleRevokeInvitation(inv.id)}
-                            className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 cursor-pointer"
-                          >
-                            Revoke
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+        );
+      })()}
 
       {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* 6. TAB 4: INTEGRATIONS                                             */}
@@ -1773,90 +1951,143 @@ export default function SettingsPage() {
       )}
 
       {/* Invite Member Modal */}
-      {isInviteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <UserPlus className="h-5 w-5 text-rose-600" />
-                <h3 className="text-sm font-bold text-slate-900">Invite Team Member</h3>
+      {/* Invite Member Modal */}
+      {isInviteModalOpen && (() => {
+        const userUsage = organization?.usage?.users || null;
+        const planId = organization?.plan || 'starter';
+        const planDisplayName = planId === 'enterprise' ? 'Enterprise' : planId === 'growth' ? 'Growth' : 'Starter';
+        const seatLimit = userUsage?.limit !== undefined ? userUsage.limit : (planId === 'growth' ? 25 : planId === 'enterprise' ? -1 : 5);
+        const currentSeatsUsed = userUsage?.count ?? (usersList.filter(u => u.status !== 'deactivated').length + pendingInvitations.length);
+        const isAtSeatLimit = userUsage?.isAtLimit ?? (seatLimit !== -1 && currentSeatsUsed >= seatLimit);
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <UserPlus className="h-5 w-5 text-rose-600" />
+                  <h3 className="text-sm font-bold text-slate-900">Invite Team Member</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsInviteModalOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsInviteModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
-              >
-                <X className="h-4 w-4" />
-              </button>
+
+              {/* Seat Capacity Badge */}
+              <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-600">{planDisplayName} Plan Capacity:</span>
+                <span className="font-bold text-slate-900 font-mono">
+                  {currentSeatsUsed} / {seatLimit === -1 ? 'Unlimited' : `${seatLimit} seats`}
+                </span>
+              </div>
+
+              {isAtSeatLimit ? (
+                <div className="p-4 rounded-xl border border-rose-200 bg-rose-50/80 text-rose-800 space-y-3">
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-bold text-rose-900">Plan Seat Limit Reached</h4>
+                      <p className="text-xs text-rose-700 mt-1">
+                        Your {planDisplayName} plan allows up to {seatLimit} seats. All {seatLimit} seats are currently allocated across active members and pending invitations.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="pt-2 flex items-center justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setIsInviteModalOpen(false)}
+                    >
+                      Close
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        setIsInviteModalOpen(false);
+                        navigate('/billing');
+                      }}
+                      className="bg-rose-600 hover:bg-rose-700 text-white font-bold"
+                    >
+                      <span>Upgrade Subscription</span>
+                      <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              ) : inviteSuccess ? (
+                <div className="py-6 text-center space-y-2">
+                  <CheckCircle className="h-10 w-10 text-emerald-600 mx-auto" />
+                  <h4 className="text-sm font-bold text-slate-900">Invitation Dispatched!</h4>
+                  <p className="text-xs text-slate-500">
+                    An email invite with workspace activation instructions has been sent to {inviteEmail}.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleSendInvite} className="space-y-4 text-xs">
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-slate-700">Email Address *</label>
+                    <input
+                      type="email"
+                      placeholder="colleague@company.com"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      required
+                      className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-slate-700">Full Name (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="Priya Sharma"
+                      value={inviteName}
+                      onChange={(e) => setInviteName(e.target.value)}
+                      className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-slate-700">Role & Access Level</label>
+                    <Select
+                      value={inviteRole}
+                      onChange={(e) => setInviteRole(e.target.value)}
+                    >
+                      <option value="viewer">Viewer (Read-only dashboards and reports)</option>
+                      <option value="analyst">Analyst (Create reports, charts, forecasts)</option>
+                      <option value="manager">Manager (Manage datasets, alerts, teams)</option>
+                      <option value="admin">Administrator (Full workspace & team governance)</option>
+                    </Select>
+                  </div>
+
+                  <div className="pt-3 flex items-center justify-end gap-2.5">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setIsInviteModalOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      loading={isSendingInvite}
+                    >
+                      Send Invitation
+                    </Button>
+                  </div>
+                </form>
+              )}
             </div>
-
-            {inviteSuccess ? (
-              <div className="py-6 text-center space-y-2">
-                <CheckCircle className="h-10 w-10 text-emerald-600 mx-auto" />
-                <h4 className="text-sm font-bold text-slate-900">Invitation Dispatched!</h4>
-                <p className="text-xs text-slate-500">
-                  An email invite with workspace activation instructions has been sent to {inviteEmail}.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleSendInvite} className="space-y-4 text-xs">
-                <div className="space-y-1.5">
-                  <label className="font-bold text-slate-700">Email Address *</label>
-                  <input
-                    type="email"
-                    placeholder="colleague@company.com"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    required
-                    className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="font-bold text-slate-700">Full Name</label>
-                  <input
-                    type="text"
-                    placeholder="Priya Sharma"
-                    value={inviteName}
-                    onChange={(e) => setInviteName(e.target.value)}
-                    className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="font-bold text-slate-700">Role & Access Level</label>
-                  <Select
-                    value={inviteRole}
-                    onChange={(e) => setInviteRole(e.target.value)}
-                  >
-                    <option value="viewer">Viewer (Read-only analytics access)</option>
-                    <option value="analyst">Analyst (Create reports, charts, forecasts)</option>
-                    <option value="manager">Manager (Manage datasets, alerts, teams)</option>
-                    <option value="admin">Administrator (Full workspace governance)</option>
-                  </Select>
-                </div>
-
-                <div className="pt-3 flex items-center justify-end gap-2.5">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => setIsInviteModalOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    loading={isSendingInvite}
-                  >
-                    Send Invitation
-                  </Button>
-                </div>
-              </form>
-            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Documentation Modal */}
       {isDocsModalOpen && (

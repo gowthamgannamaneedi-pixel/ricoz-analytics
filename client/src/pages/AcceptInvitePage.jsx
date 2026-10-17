@@ -68,19 +68,24 @@ export default function AcceptInvitePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim()) {
-      setError('Please enter your full name.');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long.');
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match.');
-      return;
+    if (!inviteDetails?.isExistingUser) {
+      if (!formData.name.trim()) {
+        setError('Please enter your full name.');
+        return;
+      }
+      if (formData.password.length < 6) {
+        setError('Password must be at least 6 characters long.');
+        return;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        setError('Passwords do not match.');
+        return;
+      }
+    } else {
+      if (!formData.password) {
+        setError('Please enter your account password to verify email ownership.');
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -94,7 +99,7 @@ export default function AcceptInvitePage() {
       });
 
       setSuccess(true);
-      // Automatically authenticate with new credentials
+      // Automatically authenticate with credentials
       try {
         await login({
           email: inviteDetails.email,
@@ -182,28 +187,35 @@ export default function AcceptInvitePage() {
                   <Mail className="w-3.5 h-3.5 text-slate-400" />
                   <span>{inviteDetails?.email}</span>
                 </div>
+                {inviteDetails?.isExistingUser && (
+                  <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium bg-amber-50 dark:bg-amber-950/40 p-2 rounded-lg border border-amber-200 dark:border-amber-800 mt-2">
+                    An existing account was found for this email. Enter your account password to verify ownership and join this team.
+                  </p>
+                )}
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" htmlFor="name">
-                    Your Full Name
-                  </label>
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    required
-                    placeholder="Jane Doe"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
-                  />
-                </div>
+                {!inviteDetails?.isExistingUser && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" htmlFor="name">
+                      Your Full Name
+                    </label>
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      required
+                      placeholder="Jane Doe"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" htmlFor="password">
-                    Set Workspace Password (min. 6 chars)
+                    {inviteDetails?.isExistingUser ? 'Your Existing Account Password' : 'Set Workspace Password (min. 6 chars)'}
                   </label>
                   <input
                     id="password"
@@ -217,21 +229,23 @@ export default function AcceptInvitePage() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" htmlFor="confirmPassword">
-                    Confirm Password
-                  </label>
-                  <input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
-                  />
-                </div>
+                {!inviteDetails?.isExistingUser && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" htmlFor="confirmPassword">
+                      Confirm Password
+                    </label>
+                    <input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
+                    />
+                  </div>
+                )}
 
                 <button
                   type="submit"
@@ -245,7 +259,7 @@ export default function AcceptInvitePage() {
                     </>
                   ) : (
                     <>
-                      <span>Accept Invitation & Join Team</span>
+                      <span>{inviteDetails?.isExistingUser ? 'Verify & Join Team' : 'Accept Invitation & Join Team'}</span>
                       <ArrowRight className="h-4 w-4" />
                     </>
                   )}

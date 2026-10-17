@@ -608,7 +608,8 @@ function handleFallbackQuery(text, params = []) {
 
   // ----------------- INVITATIONS -----------------
   if (normalizedSql.startsWith('insert into invitations')) {
-    const [organization_id, invited_by, email, role = 'viewer', token, expires_at] = params;
+    const [organization_id, invited_by, email, role = 'viewer', token, expires_at, token_hash] = params;
+    const computedHash = token_hash || crypto.createHash('sha256').update(String(token)).digest('hex');
     const newInvite = {
       id: `00000000-0000-0000-0000-00000000000${nextInvitationId++}`,
       organization_id: String(organization_id),
@@ -616,6 +617,7 @@ function handleFallbackQuery(text, params = []) {
       email: String(email).toLowerCase(),
       role: String(role).toLowerCase(),
       token: String(token),
+      token_hash: computedHash,
       status: 'pending',
       expires_at: new Date(expires_at),
       created_at: new Date(),
@@ -628,9 +630,26 @@ function handleFallbackQuery(text, params = []) {
     });
   }
 
-  if (normalizedSql.includes('from invitations i') && normalizedSql.includes('i.token = $1')) {
+  if (normalizedSql.includes('count(*)') && normalizedSql.includes('from invitations')) {
+    const orgId = String(params[0]);
+    const now = new Date();
+    const count = fallbackInvitations.filter(i => 
+      String(i.organization_id) === orgId && 
+      i.status === 'pending' && 
+      new Date(i.expires_at) > now
+    ).length;
+    return Promise.resolve({ rows: [{ count }], rowCount: 1 });
+  }
+
+  if (normalizedSql.includes('from invitations') && (normalizedSql.includes('token') || normalizedSql.includes('token_hash'))) {
     const token = String(params[0]);
-    const inv = fallbackInvitations.find(i => i.token === token);
+    const tokenHash = params[1] ? String(params[1]) : crypto.createHash('sha256').update(token).digest('hex');
+    const inv = fallbackInvitations.find(i => 
+      i.token === token || 
+      i.token_hash === token || 
+      i.token_hash === tokenHash || 
+      i.token === tokenHash
+    );
     if (inv) {
       const org = fallbackOrganizations.find(o => String(o.id) === String(inv.organization_id));
       const inviter = fallbackUsers.find(u => Number(u.id) === Number(inv.invited_by));
@@ -662,11 +681,28 @@ function handleFallbackQuery(text, params = []) {
     return Promise.resolve({ rows: list, rowCount: list.length });
   }
 
-  if (normalizedSql.startsWith('update invitations set status = $1') || normalizedSql.startsWith('update invitations set status = \'accepted\'')) {
+  if (normalizedSql.startsWith('update invitations')) {
+    // Check if updating token / resending
+    if (normalizedSql.includes('token =') || normalizedSql.includes('token_hash =')) {
+      const id = String(params[params.length - 1]);
+      const inv = fallbackInvitations.find(i => String(i.id) === id);
+      if (inv) {
+        inv.token = String(params[0]);
+        if (params[1]) inv.token_hash = String(params[1]);
+        inv.expires_at = new Date(Date.now() + 7 * 86400000);
+        inv.status = 'pending';
+        inv.updated_at = new Date();
+        return Promise.resolve({ rows: [{ ...inv }], rowCount: 1 });
+      }
+    }
     const id = String(params[params.length - 1]);
     const inv = fallbackInvitations.find(i => String(i.id) === id);
     if (inv) {
-      inv.status = 'accepted';
+      if (normalizedSql.includes('accepted')) {
+        inv.status = 'accepted';
+      } else if (normalizedSql.includes('revoked')) {
+        inv.status = 'revoked';
+      }
       inv.updated_at = new Date();
       return Promise.resolve({ rows: [{ ...inv }], rowCount: 1 });
     }
@@ -4983,6 +5019,11 @@ async function initDb() {
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
+
+    ALTER TABLE invitations ADD COLUMN IF NOT EXISTS token_hash VARCHAR(255);
+    CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON invitations(token_hash);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_invitations_org_pending_email ON invitations(organization_id, LOWER(email)) WHERE status = 'pending';
+    CREATE INDEX IF NOT EXISTS idx_invitations_seat_calc ON invitations(organization_id, status, expires_at);
 
     CREATE TABLE IF NOT EXISTS invoices (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

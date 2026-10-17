@@ -1153,6 +1153,26 @@ export async function deleteAdminInvitation(id) {
   });
 }
 
+/**
+ * Resend a pending invitation
+ * @param {string} id 
+ */
+export async function resendAdminInvitation(id) {
+  return apiRequest(`/admin/invitations/${id}/resend`, {
+    method: 'POST'
+  });
+}
+
+/**
+ * Remove/deactivate a team member from the organization
+ * @param {string|number} id 
+ */
+export async function removeAdminUser(id) {
+  return apiRequest(`/admin/users/${id}`, {
+    method: 'DELETE'
+  });
+}
+
 // ==========================================
 // SAAS BILLING & SUBSCRIPTION APIS
 // ==========================================

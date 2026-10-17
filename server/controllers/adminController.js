@@ -31,12 +31,15 @@ const adminController = {
       }
 
       const stats = await OrganizationModel.getOrganizationStats(orgId);
+      const subscription = await subscriptionService.getOrganizationSubscription(orgId);
 
       return res.status(200).json({
         success: true,
         organization: {
           ...org,
-          stats
+          stats,
+          subscription: subscription || null,
+          usage: subscription?.usage || null
         }
       });
     } catch (error) {
@@ -122,10 +125,15 @@ const adminController = {
     try {
       const orgId = req.user.organization_id;
       const stats = await OrganizationModel.getOrganizationStats(orgId);
+      const subscription = await subscriptionService.getOrganizationSubscription(orgId);
 
       return res.status(200).json({
         success: true,
-        stats
+        stats: {
+          ...stats,
+          subscription: subscription || null,
+          usage: subscription?.usage || null
+        }
       });
     } catch (error) {
       console.error('[AdminController.getStats] Error:', error);
@@ -233,6 +241,14 @@ const adminController = {
         return res.status(404).json({
           success: false,
           message: 'User not found in this organization.'
+        });
+      }
+
+      // Keep owner transfer separate: ordinary admins cannot modify owner account
+      if (targetUser.role === 'owner' && req.user.role !== 'owner') {
+        return res.status(403).json({
+          success: false,
+          message: 'Only the organization owner can modify owner account permissions.'
         });
       }
 
@@ -450,7 +466,7 @@ const adminController = {
 
   /**
    * POST /api/admin/invitations
-   * Invite a new team member to the organization
+   * Invite a new team member to the organization with atomic plan seat reservation
    */
   async createInvitation(req, res) {
     try {
@@ -474,42 +490,61 @@ const adminController = {
       }
 
       // Check if user already in organization
-      const existingUser = await UserModel.findByEmail(email);
-      if (existingUser && String(existingUser.organization_id) === String(orgId)) {
+      const cleanEmail = email.trim().toLowerCase();
+      const existingUser = await UserModel.findByEmail(cleanEmail);
+      if (existingUser && String(existingUser.organization_id) === String(orgId) && existingUser.status !== 'deactivated') {
         return res.status(400).json({
           success: false,
-          message: 'User is already a member of this organization.'
+          message: 'User is already an active member of this organization.'
         });
       }
 
-      // Check subscription team member limit
-      const limitCheck = await subscriptionService.checkUsageLimit(orgId, 'users');
-      if (!limitCheck.allowed) {
-        return res.status(403).json({
-          success: false,
-          error: {
-            code: limitCheck.code,
-            message: limitCheck.message
-          },
-          message: limitCheck.message,
-          requiresUpgrade: true,
-          limit: limitCheck.limit,
-          currentCount: limitCheck.currentCount,
-          upgradeGuidance: limitCheck.upgradeGuidance
+      // Atomically reserve seat and create invitation
+      let reservation;
+      try {
+        reservation = await InvitationModel.createWithAtomicSeatReservation({
+          organizationId: orgId,
+          invitedBy: req.user.id,
+          email: cleanEmail,
+          role: cleanRole
         });
+      } catch (reserveErr) {
+        if (reserveErr.code === 'RESOURCE_LIMIT_EXCEEDED') {
+          return res.status(403).json({
+            success: false,
+            error: {
+              code: reserveErr.code,
+              message: reserveErr.message
+            },
+            message: reserveErr.message,
+            requiresUpgrade: true,
+            limit: reserveErr.limit,
+            currentCount: reserveErr.currentCount,
+            upgradeGuidance: reserveErr.upgradeGuidance
+          });
+        }
+        if (reserveErr.code === 'INVITATION_ALREADY_PENDING') {
+          return res.status(409).json({
+            success: false,
+            error: {
+              code: reserveErr.code,
+              message: reserveErr.message
+            },
+            message: reserveErr.message,
+            existingInvitationId: reserveErr.existingInvitationId
+          });
+        }
+        throw reserveErr;
       }
 
+      const invitation = reservation.invitation;
+      const rawToken = reservation.rawToken;
       const org = await OrganizationModel.findById(orgId);
-      const invitation = await InvitationModel.create({
-        organizationId: orgId,
-        invitedBy: req.user.id,
-        email: email.trim().toLowerCase(),
-        role: cleanRole
-      });
 
-      // Dispatch invitation email
+      // Dispatch invitation email using production frontend URL
       const frontendBase = config.clientUrl || (process.env.NODE_ENV === 'production' ? 'https://ricoz-analytics.vercel.app' : 'http://localhost:5173');
-      const inviteUrl = `${frontendBase}/auth/accept-invite?token=${invitation.token}`;
+      const inviteUrl = `${frontendBase}/auth/accept-invite?token=${rawToken}`;
+
       await emailService.sendInvitationEmail({
         email: invitation.email,
         inviterName: req.user.name || req.user.email,
@@ -537,16 +572,76 @@ const adminController = {
           email: invitation.email,
           role: invitation.role,
           status: invitation.status,
-          token: invitation.token,
+          expiresAt: invitation.expires_at,
+          inviteUrl
+        },
+        seatUsage: {
+          totalReserved: reservation.totalReserved,
+          maxUsers: reservation.maxUsers
+        }
+      });
+    } catch (error) {
+      console.error('[AdminController.createInvitation] Error:', error);
+      return res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message || 'Failed to create team invitation.',
+        error: error.message
+      });
+    }
+  },
+
+  /**
+   * POST /api/admin/invitations/:id/resend
+   * Resend an existing pending invitation with a fresh single-use token and renewed expiry
+   */
+  async resendInvitation(req, res) {
+    try {
+      const orgId = req.user.organization_id;
+      const { id } = req.params;
+
+      const result = await InvitationModel.resend(id, orgId);
+      const invitation = result.invitation;
+      const rawToken = result.rawToken;
+
+      const frontendBase = config.clientUrl || (process.env.NODE_ENV === 'production' ? 'https://ricoz-analytics.vercel.app' : 'http://localhost:5173');
+      const inviteUrl = `${frontendBase}/auth/accept-invite?token=${rawToken}`;
+
+      await emailService.sendInvitationEmail({
+        email: invitation.email,
+        inviterName: req.user.name || req.user.email,
+        orgName: result.organizationName || 'Your Team',
+        role: invitation.role,
+        inviteUrl
+      });
+
+      await logAuditEvent({
+        organizationId: orgId,
+        userId: req.user.id,
+        action: AUDIT_ACTIONS.SETTINGS_UPDATED,
+        resourceType: 'invitation',
+        resourceId: invitation.id,
+        description: `Team invitation resent to ${invitation.email}`,
+        metadata: { email: invitation.email, role: invitation.role },
+        req
+      }).catch(() => null);
+
+      return res.status(200).json({
+        success: true,
+        message: `Invitation resent successfully to ${invitation.email}.`,
+        invitation: {
+          id: invitation.id,
+          email: invitation.email,
+          role: invitation.role,
+          status: invitation.status,
           expiresAt: invitation.expires_at,
           inviteUrl
         }
       });
     } catch (error) {
-      console.error('[AdminController.createInvitation] Error:', error);
-      return res.status(500).json({
+      console.error('[AdminController.resendInvitation] Error:', error);
+      return res.status(error.statusCode || 500).json({
         success: false,
-        message: 'Failed to create team invitation.',
+        message: error.message || 'Failed to resend invitation.',
         error: error.message
       });
     }
@@ -554,7 +649,7 @@ const adminController = {
 
   /**
    * GET /api/admin/invitations
-   * List all pending invitations for the organization
+   * List all pending or past invitations for the organization
    */
   async getInvitations(req, res) {
     try {
@@ -575,30 +670,114 @@ const adminController = {
   },
 
   /**
-   * DELETE /api/admin/invitations/:id
-   * Revoke an invitation
+   * POST /api/admin/invitations/:id/revoke
+   * Or DELETE /api/admin/invitations/:id
+   * Revoke an invitation and immediately free its reserved seat
    */
   async deleteInvitation(req, res) {
     try {
       const orgId = req.user.organization_id;
       const { id } = req.params;
 
-      const deleted = await InvitationModel.delete(id, orgId);
-      if (!deleted) {
+      const revoked = await InvitationModel.revoke(id, orgId);
+      if (!revoked) {
         return res.status(404).json({
           success: false,
-          message: 'Invitation not found or already deleted.'
+          message: 'Invitation not found or already revoked.'
         });
       }
 
+      await logAuditEvent({
+        organizationId: orgId,
+        userId: req.user.id,
+        action: AUDIT_ACTIONS.SETTINGS_UPDATED,
+        resourceType: 'invitation',
+        resourceId: id,
+        description: `Team invitation revoked for ${revoked.email}`,
+        metadata: { email: revoked.email },
+        req
+      }).catch(() => null);
+
       return res.status(200).json({
         success: true,
-        message: 'Invitation revoked successfully.'
+        message: 'Invitation revoked successfully and seat reservation freed.'
       });
     } catch (error) {
       return res.status(500).json({
         success: false,
         message: 'Failed to revoke invitation.',
+        error: error.message
+      });
+    }
+  },
+
+  /**
+   * DELETE /api/admin/users/:id
+   * Remove / deactivate a team member from the organization, immediately freeing their seat
+   */
+  async removeUser(req, res) {
+    try {
+      const orgId = req.user.organization_id;
+      const targetUserId = req.params.id;
+
+      if (String(req.user.id) === String(targetUserId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'You cannot remove your own administrative account from the organization.'
+        });
+      }
+
+      const targetUser = await UserModel.findByIdAndOrgId(targetUserId, orgId);
+      if (!targetUser) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found in this organization.'
+        });
+      }
+
+      if (targetUser.role === 'owner') {
+        return res.status(403).json({
+          success: false,
+          message: 'The organization owner cannot be removed. Transfer ownership first.'
+        });
+      }
+
+      if (targetUser.role === 'admin') {
+        const remainingAdminsRes = await db.query(
+          `SELECT COUNT(*)::int as count FROM users WHERE organization_id = $1 AND role IN ('admin', 'owner') AND COALESCE(status, 'active') = 'active' AND id != $2`,
+          [orgId, targetUserId]
+        );
+        const remainingAdminsCount = Number(remainingAdminsRes.rows[0]?.count || 0);
+        if (remainingAdminsCount < 1) {
+          return res.status(400).json({
+            success: false,
+            message: 'Cannot remove the last remaining active administrator of the organization.'
+          });
+        }
+      }
+
+      await UserModel.updateStatus(targetUserId, 'deactivated', orgId);
+
+      await logAuditEvent({
+        organizationId: orgId,
+        userId: req.user.id,
+        action: AUDIT_ACTIONS.USER_STATUS_CHANGED,
+        resourceType: 'user',
+        resourceId: targetUserId,
+        description: `Removed team member ${targetUser.email} from organization`,
+        metadata: { targetUserId, targetEmail: targetUser.email, previousStatus: targetUser.status },
+        req
+      }).catch(() => null);
+
+      return res.status(200).json({
+        success: true,
+        message: `Team member ${targetUser.email} has been removed from the organization.`
+      });
+    } catch (error) {
+      console.error('[AdminController.removeUser] Error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to remove team member.',
         error: error.message
       });
     }
