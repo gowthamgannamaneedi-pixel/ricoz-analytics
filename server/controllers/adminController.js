@@ -6,6 +6,7 @@ const emailService = require('../services/emailService');
 const subscriptionService = require('../services/subscriptionService');
 const { logAuditEvent, AUDIT_ACTIONS } = require('../services/auditService');
 const { getFullPermissionMatrix, getPermissionsForRole } = require('../utils/permissions');
+const config = require('../config');
 
 /**
  * Enterprise Admin & Workspace Governance Controller
@@ -507,7 +508,8 @@ const adminController = {
       });
 
       // Dispatch invitation email
-      const inviteUrl = `http://localhost:5173/auth/accept-invite?token=${invitation.token}`;
+      const frontendBase = config.clientUrl || (process.env.NODE_ENV === 'production' ? 'https://ricoz-analytics.vercel.app' : 'http://localhost:5173');
+      const inviteUrl = `${frontendBase}/auth/accept-invite?token=${invitation.token}`;
       await emailService.sendInvitationEmail({
         email: invitation.email,
         inviterName: req.user.name || req.user.email,

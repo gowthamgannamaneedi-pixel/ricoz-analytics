@@ -40,9 +40,16 @@ function validateEnvironment() {
     warnings.push('Supabase credentials (SUPABASE_URL, SUPABASE_ANON_KEY) are not fully configured.');
   }
 
-  // Check CORS in Production
-  if (isProd && !process.env.CORS_ORIGIN && !process.env.CLIENT_URL) {
-    warnings.push('CORS_ORIGIN or CLIENT_URL is not explicitly specified in production.');
+  // Check CLIENT_URL & CORS in Production
+  if (isProd) {
+    if (!process.env.CLIENT_URL) {
+      warnings.push('CLIENT_URL is not explicitly set in production; defaulting safely to https://ricoz-analytics.vercel.app.');
+    } else if (process.env.CLIENT_URL.includes('localhost') || process.env.CLIENT_URL.includes('127.0.0.1')) {
+      errors.push('CLIENT_URL cannot point to localhost in production.');
+    }
+    if (!process.env.CORS_ORIGIN && !process.env.CLIENT_URL) {
+      warnings.push('CORS_ORIGIN or CLIENT_URL is not explicitly specified in production.');
+    }
   }
 
   // Check Stripe Configuration in Production

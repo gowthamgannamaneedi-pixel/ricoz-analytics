@@ -1,12 +1,24 @@
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+
+// In production, default CLIENT_URL to canonical production deployment and never localhost
+const defaultClientUrl = isProduction ? 'https://ricoz-analytics.vercel.app' : 'http://localhost:5173';
+let resolvedClientUrl = process.env.CLIENT_URL || defaultClientUrl;
+
+// If in production but CLIENT_URL points to localhost, fail safely by overriding with production URL
+if (isProduction && (resolvedClientUrl.includes('localhost') || resolvedClientUrl.includes('127.0.0.1'))) {
+  console.warn('[Config] ⚠️ In production, CLIENT_URL cannot point to localhost. Overriding with https://ricoz-analytics.vercel.app');
+  resolvedClientUrl = 'https://ricoz-analytics.vercel.app';
+}
+
 // Centralized configuration management for server
 const config = {
   port: process.env.PORT || 5000,
   nodeEnv: process.env.NODE_ENV || 'development',
-  clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
-  corsOrigin: process.env.CORS_ORIGIN || process.env.CLIENT_URL || 'http://localhost:5173',
+  clientUrl: resolvedClientUrl,
+  corsOrigin: process.env.CORS_ORIGIN || resolvedClientUrl,
   databaseUrl: process.env.DATABASE_URL || '',
   jwtSecret: process.env.JWT_SECRET || 'default_dev_secret_key_change_in_production',
   jwtExpiration: process.env.JWT_EXPIRATION || '7d',

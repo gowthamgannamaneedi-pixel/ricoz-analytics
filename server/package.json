@@ -16,7 +16,8 @@
     "test:kpi": "node test-kpis-verification-suite.js",
     "test:realworld": "node test-realworld-qa-e2e.js",
     "test:audit": "node test-production-audit.js",
-    "test:stripe": "node test-stripe-idempotency.js"
+    "test:stripe": "node test-stripe-idempotency.js",
+    "test:password-reset-url": "node test-password-reset-url.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.0",

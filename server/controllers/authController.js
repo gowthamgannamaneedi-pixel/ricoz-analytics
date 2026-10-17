@@ -37,25 +37,48 @@ function generateToken(user) {
 
 /**
  * Resolve client frontend base URL dynamically from environment or request headers
+ * In production, strictly ensures HTTPS domain and NEVER falls back to localhost.
  */
 function resolveFrontendUrl(req) {
+  const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
   const envUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || process.env.APP_URL;
+
   if (envUrl && typeof envUrl === 'string' && envUrl.startsWith('http')) {
-    return envUrl.replace(/\/+$/, '');
+    const cleanUrl = envUrl.replace(/\/+$/, '');
+    if (isProd && (cleanUrl.includes('localhost') || cleanUrl.includes('127.0.0.1'))) {
+      console.warn('[AuthController] ⚠️ CLIENT_URL contains localhost in production environment. Falling back to production domain.');
+      return 'https://ricoz-analytics.vercel.app';
+    }
+    return cleanUrl;
   }
+
   const origin = req?.headers?.origin;
-  if (origin && typeof origin === 'string' && origin.startsWith('http') && !origin.includes('localhost:5000')) {
-    return origin.replace(/\/+$/, '');
+  if (origin && typeof origin === 'string' && origin.startsWith('http')) {
+    const cleanOrigin = origin.replace(/\/+$/, '');
+    if (!cleanOrigin.includes('localhost:5000')) {
+      if (!isProd || (!cleanOrigin.includes('localhost') && !cleanOrigin.includes('127.0.0.1'))) {
+        return cleanOrigin;
+      }
+    }
   }
+
   const referer = req?.headers?.referer;
   if (referer && typeof referer === 'string' && referer.startsWith('http')) {
     try {
       const u = new URL(referer);
-      if (!u.host.includes('localhost:5000')) {
-        return `${u.protocol}//${u.host}`;
+      const hostUrl = `${u.protocol}//${u.host}`;
+      if (!hostUrl.includes('localhost:5000')) {
+        if (!isProd || (!hostUrl.includes('localhost') && !hostUrl.includes('127.0.0.1'))) {
+          return hostUrl;
+        }
       }
     } catch (_) {}
   }
+
+  if (isProd) {
+    return 'https://ricoz-analytics.vercel.app';
+  }
+
   return config.clientUrl || 'http://localhost:5173';
 }
 
@@ -1066,11 +1089,23 @@ const forgotPassword = async (req, res, next) => {
       await UserModel.setResetPasswordToken(cleanEmail, resetToken, expiresAt);
       devResetToken = resetToken;
 
+      const clientBaseUrl = resolveFrontendUrl(req);
+      const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+
+      if (isProd && (clientBaseUrl.includes('localhost') || clientBaseUrl.includes('127.0.0.1'))) {
+        console.error('[AuthController] ❌ FATAL: Production password reset link cannot contain localhost!');
+        throw new Error('Server configuration error: Invalid production client URL');
+      }
+
+      const resetUrl = `${clientBaseUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(cleanEmail)}`;
+
+      console.log(`[AuthController] ✉️ Dispatching password reset email for "${cleanEmail}" (Frontend: ${clientBaseUrl})`);
+
       await emailService.sendPasswordResetEmail({
         email: cleanEmail,
         name: user.name,
         token: resetToken,
-        resetUrl: `http://localhost:5173/reset-password?token=${resetToken}&email=${encodeURIComponent(cleanEmail)}`
+        resetUrl
       });
 
       await logAuditEvent({

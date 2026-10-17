@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: ricoz-analytics
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: CLIENT_URL
+        value: https://ricoz-analytics.vercel.app
+      - key: CORS_ORIGIN
+        value: https://ricoz-analytics.vercel.app
+      - key: NODE_ENV
+        value: production

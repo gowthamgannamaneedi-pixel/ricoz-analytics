@@ -92,11 +92,52 @@ class EmailService {
       if (!host) missing.push('SMTP_HOST');
       if (!user) missing.push('SMTP_USER');
       if (!pass) missing.push('SMTP_PASSWORD');
-      if (!this.isBrevo()) {
-        console.warn(`[EmailService] ⚠️ SMTP transport not configured. Missing environment variables: ${missing.join(', ')}.`);
-      }
       this.transporter = null;
     }
+  }
+
+  /**
+   * Resolve client frontend base URL from environment or production defaults
+   * Guarantees HTTPS deployed domain in production and NEVER falls back to localhost.
+   */
+  getClientBaseUrl() {
+    const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+    const envUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || process.env.APP_URL;
+
+    if (envUrl && typeof envUrl === 'string' && envUrl.startsWith('http')) {
+      const cleanUrl = envUrl.replace(/\/+$/, '');
+      if (isProd && (cleanUrl.includes('localhost') || cleanUrl.includes('127.0.0.1'))) {
+        console.error('[EmailService] ❌ CRITICAL: CLIENT_URL contains localhost in production environment! Using production domain.');
+        return 'https://ricoz-analytics.vercel.app';
+      }
+      return cleanUrl;
+    }
+
+    if (isProd) {
+      return 'https://ricoz-analytics.vercel.app';
+    }
+
+    return 'http://localhost:5173';
+  }
+
+  /**
+   * Sanitize link for production environment to guarantee no localhost URLs are dispatched
+   */
+  sanitizeUrlForProduction(url, defaultFallbackPath = '') {
+    const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+    const baseUrl = this.getClientBaseUrl();
+
+    if (!url) {
+      return defaultFallbackPath ? `${baseUrl}${defaultFallbackPath}` : baseUrl;
+    }
+
+    if (isProd && (url.includes('localhost') || url.includes('127.0.0.1'))) {
+      console.warn(`[EmailService] ⚠️ Provided URL contained localhost in production. Sanitizing to production domain: "${baseUrl}".`);
+      return url.replace(/^https?:\/\/localhost(:\d+)?/, baseUrl)
+                .replace(/^https?:\/\/127\.0\.0\.1(:\d+)?/, baseUrl);
+    }
+
+    return url;
   }
 
   /**
@@ -1454,7 +1495,8 @@ class EmailService {
 
     const provider = this.getProvider();
     const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'ricozanalytics@gmail.com';
-    const link = verifyUrl || `http://localhost:5173/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
+    const defaultVerifyPath = `/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
+    const link = this.sanitizeUrlForProduction(verifyUrl, defaultVerifyPath);
 
     console.log(`[EmailService] ✉️ Verification email dispatch initiated for: ${email} via ${provider}`);
 
@@ -1710,7 +1752,8 @@ class EmailService {
    */
   async sendInvitationEmail({ email, inviterName, orgName, role, inviteUrl }) {
     const fromEmail = process.env.SMTP_FROM || 'care@ricoz.in';
-    const link = inviteUrl || `http://localhost:5173/auth/accept-invite?email=${encodeURIComponent(email)}`;
+    const defaultInvitePath = `/auth/accept-invite?email=${encodeURIComponent(email)}`;
+    const link = this.sanitizeUrlForProduction(inviteUrl, defaultInvitePath);
 
     const htmlContent = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;">
@@ -1809,7 +1852,8 @@ class EmailService {
    */
   async sendPasswordResetEmail({ email, name, token, resetUrl }) {
     const fromEmail = process.env.SMTP_FROM || 'care@ricoz.in';
-    const link = resetUrl || `http://localhost:5173/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
+    const defaultResetPath = `/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
+    const link = this.sanitizeUrlForProduction(resetUrl, defaultResetPath);
 
     const htmlContent = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;">
@@ -1926,10 +1970,11 @@ class EmailService {
     expiryDate,
     daysRemaining = 10,
     isTrial = false,
-    billingUrl = 'http://localhost:5173/billing',
+    billingUrl,
     renewalInstructions
   }) {
     const fromEmail = process.env.SMTP_FROM || 'care@ricoz.in';
+    const link = this.sanitizeUrlForProduction(billingUrl, '/billing');
     const effectiveInstructions = renewalInstructions || (
       isTrial
         ? 'Choose a subscription plan to keep your datasets, models, and dashboards fully active without interruption.'
