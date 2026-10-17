@@ -616,7 +616,44 @@ class DemoRequestController {
       return res.status(500).json({ success: false, error: err.message });
     }
   }
+
+  /**
+   * Diagnostic verification of password reset URL generation in current environment
+   * GET /api/demo-request/verify-reset-url?email=...
+   */
+  async verifyResetUrl(req, res) {
+    try {
+      const email = (req.query.email || 'admin@ricoz.test').trim().toLowerCase();
+      const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+      const clientBaseUrl = emailService.getClientBaseUrl();
+      const mockToken = 'diagnostic_token_preview';
+      const sampleUrl = emailService.sanitizeUrlForProduction(null, `/reset-password?token=${mockToken}&email=${encodeURIComponent(email)}`);
+      const containsLocalhost = sampleUrl.includes('localhost') || sampleUrl.includes('127.0.0.1');
+
+      return res.status(200).json({
+        success: true,
+        environment: {
+          nodeEnv: process.env.NODE_ENV || 'development',
+          isProduction: isProd,
+          clientUrlEnv: process.env.CLIENT_URL || null,
+          resolvedBaseUrl: clientBaseUrl
+        },
+        urlVerification: {
+          sampleUrl,
+          domain: new URL(sampleUrl).origin,
+          containsLocalhost,
+          isHttps: sampleUrl.startsWith('https://'),
+          preservesToken: sampleUrl.includes(`token=${mockToken}`),
+          preservesEmail: sampleUrl.includes(`email=${encodeURIComponent(email)}`)
+        }
+      });
+    } catch (err) {
+      console.error('[DemoRequestController] ❌ Error in verifyResetUrl:', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
 }
 
 module.exports = new DemoRequestController();
+
 

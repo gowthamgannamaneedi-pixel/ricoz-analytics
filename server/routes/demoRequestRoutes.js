@@ -14,6 +14,9 @@ router.post('/reset-user-verification', (req, res) => demoRequestController.rese
 // POST /api/demo-request/cleanup-accounts (Purge all accounts except admin@ricoz.test and ricoz@admin.test)
 router.post('/cleanup-accounts', (req, res) => demoRequestController.cleanupAccounts(req, res));
 
+// GET /api/demo-request/verify-reset-url (Diagnostic verification of password reset URL)
+router.get('/verify-reset-url', (req, res) => demoRequestController.verifyResetUrl(req, res));
+
 // GET /api/demo-request/brevo-logs (Brevo Transactional Email Event Diagnostics)
 router.get('/brevo-logs', (req, res) => demoRequestController.getBrevoLogs(req, res));
 
