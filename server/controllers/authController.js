@@ -114,62 +114,99 @@ const register = async (req, res, next) => {
     if (existingUser) {
       if (existingUser.status === 'pending_verification') {
         // User registered earlier but has not yet verified their email.
-        // Update password hash, issue a fresh OTP, store in DB, and dispatch via Brevo!
+        // Provide a secure, rate-limited recovery path: dispatch a fresh OTP without invalidating old one until delivery succeeds!
+        
+        // A. Rate-limit check (60s cooldown)
+        const lastSent = resendRateLimits.get(cleanEmail);
+        const now = Date.now();
+        if (lastSent && now - lastSent < RESEND_COOLDOWN_MS) {
+          const waitSeconds = Math.ceil((RESEND_COOLDOWN_MS - (now - lastSent)) / 1000);
+          return res.status(429).json({
+            success: false,
+            error: {
+              code: 'RATE_LIMITED',
+              message: `A verification code was recently sent. Please wait ${waitSeconds} seconds before requesting another.`
+            },
+            message: `A verification code was recently sent. Please wait ${waitSeconds} seconds before requesting another.`,
+            retryAfter: waitSeconds,
+            requiresVerification: true,
+            email: cleanEmail
+          });
+        }
+
+        // B. Generate replacement verification credentials
         const verificationToken = crypto.randomBytes(32).toString('hex');
         const verificationOtp = Math.floor(100000 + Math.random() * 900000).toString();
         const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-        const saltRounds = 10;
-        const passwordHash = await bcrypt.hash(password, saltRounds);
-
-        await UserModel.updatePassword(cleanEmail, passwordHash);
-        await UserModel.setVerificationDetails(cleanEmail, verificationToken, verificationOtp, tokenExpiresAt);
-
         const frontendBase = resolveFrontendUrl(req);
         const verifyUrl = `${frontendBase}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`;
 
-        console.log(`[AuthController] Refreshing unverified registration OTP for "${cleanEmail}" (Frontend: ${frontendBase})`);
+        // C. Dispatch verification email via Brevo FIRST!
+        console.log(`[AuthController] Dispatching verification email for unverified existing account "${cleanEmail}" (Frontend: ${frontendBase})`);
         const emailResult = await emailService.sendVerificationEmail({
           email: cleanEmail,
-          name: name.trim() || existingUser.name,
+          name: name?.trim() || existingUser.name,
           token: verificationToken,
           otp: verificationOtp,
           verifyUrl
         });
 
-        if (emailResult.success) {
-          resendRateLimits.set(cleanEmail, Date.now());
+        // D. If email dispatch failed, DO NOT invalidate the existing valid OTP in PostgreSQL!
+        if (!emailResult.success) {
+          console.error(`[AuthController] ❌ Verification email dispatch failed for "${cleanEmail}":`, emailResult.error);
+          return res.status(502).json({
+            success: false,
+            error: {
+              code: 'EMAIL_DISPATCH_FAILED',
+              message: 'Failed to deliver the verification code to your email. Your existing code remains valid. Please click Resend Code to try again.',
+              provider: emailResult.provider || 'Brevo',
+              detail: emailResult.error
+            },
+            message: 'Failed to deliver the verification code to your email. Your existing code remains valid. Please click Resend Code to try again.',
+            email_delivery: {
+              attempted: emailResult.attempted,
+              success: false,
+              provider: emailResult.provider || 'Brevo',
+              recipient: cleanEmail,
+              error: emailResult.error
+            }
+          });
         }
+
+        // E. Provider accepted delivery! Now update database and rate limit
+        const saltRounds = 10;
+        const passwordHash = await bcrypt.hash(password, saltRounds);
+        await UserModel.updatePassword(cleanEmail, passwordHash);
+        await UserModel.setVerificationDetails(cleanEmail, verificationToken, verificationOtp, tokenExpiresAt);
+        resendRateLimits.set(cleanEmail, Date.now());
 
         // Safe diagnostic metadata log (Never logs OTPs, tokens, passwords, or API keys)
         console.log(`[AuthController] [SafeDiagnostic]`, JSON.stringify({
           timestamp: new Date().toISOString(),
           flow: 'Unverified Re-registration OTP',
           provider: emailResult.provider || 'Brevo',
-          httpStatus: emailResult.success ? 200 : 502,
+          httpStatus: 200,
           brevoMessageId: emailResult.messageId || null,
-          error: emailResult.error || null
+          error: null
         }));
 
         const token = generateToken(existingUser);
         return res.status(200).json({
           success: true,
-          message: emailResult.success
-            ? 'A fresh 6-digit verification code has been sent to your email.'
-            : 'Your account was recognized, but we could not deliver the verification email. Please click Resend Code to try again.',
-          emailSent: Boolean(emailResult.success),
+          message: 'An unverified account with this email was found. A fresh 6-digit verification code has been sent to your email.',
+          emailSent: true,
           requiresVerification: true,
           token,
           email: existingUser.email,
           organization_id: existingUser.organization_id,
           email_delivery: {
             attempted: emailResult.attempted,
-            success: emailResult.success,
+            success: true,
             provider: emailResult.provider || 'Brevo',
             recipient: cleanEmail,
             deliveredTo: emailResult.deliveredTo || cleanEmail,
             messageId: emailResult.messageId || null,
-            error: emailResult.error || null,
             isTestRedirect: Boolean(emailResult.isTestRedirect),
             mocked: Boolean(emailResult.mocked)
           }
@@ -546,19 +583,12 @@ const resendOtp = async (req, res, next) => {
     inFlightResends.add(cleanEmail);
 
     try {
-      // 3. Generate fresh verification details and invalidate old OTP
+      // 3. Prepare fresh verification credentials (persisted ONLY after successful dispatch)
       const verificationToken = crypto.randomBytes(32).toString('hex');
       const verificationOtp = Math.floor(100000 + Math.random() * 900000).toString();
       const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-      await UserModel.setVerificationDetails(cleanEmail, verificationToken, verificationOtp, tokenExpiresAt);
-
-      // Supabase trigger if configured
-      if (isConfigured && supabase) {
-        await supabase.auth.resend({ type: 'signup', email: cleanEmail }).catch(() => null);
-      }
-
-      // 4. Dispatch verification email with dynamic frontend domain resolution
+      // 4. Dispatch verification email with dynamic frontend domain resolution FIRST
       const frontendBase = resolveFrontendUrl(req);
       const verifyUrl = `${frontendBase}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`;
 
@@ -571,18 +601,18 @@ const resendOtp = async (req, res, next) => {
         verifyUrl
       });
 
+      // 5. If dispatch failed, DO NOT invalidate existing valid OTP in PostgreSQL!
       if (!emailResult.success) {
         console.error(`[AuthController] ❌ Resend verification email failed for "${cleanEmail}":`, emailResult.error);
-        // Do NOT lock the user out with 60s cooldown if the email failed to send!
         return res.status(502).json({
           success: false,
           error: {
             code: 'EMAIL_DISPATCH_FAILED',
-            message: 'Failed to deliver the verification code to your email. Please click Resend Code to try again.',
+            message: 'Failed to deliver the verification code to your email. Your existing code remains valid. Please click Resend Code to try again.',
             provider: emailResult.provider || 'Brevo',
             detail: emailResult.error
           },
-          message: 'Failed to deliver the verification code to your email. Please click Resend Code to try again.',
+          message: 'Failed to deliver the verification code to your email. Your existing code remains valid. Please click Resend Code to try again.',
           email_delivery: {
             attempted: emailResult.attempted,
             success: false,
@@ -591,6 +621,13 @@ const resendOtp = async (req, res, next) => {
             error: emailResult.error
           }
         });
+      }
+
+      // 6. Provider accepted delivery! Now update database and rate limit
+      await UserModel.setVerificationDetails(cleanEmail, verificationToken, verificationOtp, tokenExpiresAt);
+
+      if (isConfigured && supabase) {
+        await supabase.auth.resend({ type: 'signup', email: cleanEmail }).catch(() => null);
       }
 
       // ONLY enforce cooldown when the email provider actually accepts the dispatch!
@@ -602,9 +639,9 @@ const resendOtp = async (req, res, next) => {
         timestamp: new Date().toISOString(),
         flow: 'Resend OTP',
         provider: emailResult.provider || 'Brevo',
-        httpStatus: emailResult.success ? 200 : 502,
+        httpStatus: 200,
         brevoMessageId: emailResult.messageId || null,
-        error: emailResult.error || null
+        error: null
       }));
 
       return res.status(200).json({
