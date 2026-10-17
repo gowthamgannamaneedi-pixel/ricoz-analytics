@@ -46,36 +46,14 @@ class SubscriptionService {
       return null;
     }
 
-    const sql = `
-      SELECT 
-        id, 
-        name, 
-        slug, 
-        plan, 
-        trial_started_at, 
-        trial_ends_at, 
-        subscription_status, 
-        payment_status, 
-        stripe_customer_id, 
-        stripe_subscription_id, 
-        stripe_price_id, 
-        billing_interval,
-        subscription_start_date,
-        current_period_start,
-        current_period_end,
-        next_billing_date,
-        cancel_at_period_end,
-        cancelled_at,
-        cancellation_effective_date,
-        scheduled_downgrade_plan,
-        scheduled_downgrade_effective_date,
-        created_at
-      FROM organizations
-      WHERE id = $1
-      LIMIT 1;
-    `;
-    const res = await db.query(sql, [organizationId]);
-    const org = res.rows[0];
+    let org = null;
+    try {
+      const res = await db.query('SELECT * FROM organizations WHERE id = $1 LIMIT 1;', [organizationId]);
+      org = res.rows[0];
+    } catch (err) {
+      console.warn('[SubscriptionService] Error fetching organization subscription details:', err.message);
+      return null;
+    }
     if (!org) return null;
 
     const now = new Date();

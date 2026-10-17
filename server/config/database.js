@@ -5092,6 +5092,26 @@ async function initDb() {
     console.warn('[initDb org notice]', orgErr.message);
   }
 
+  // 1b. Ensure organizations subscription and billing interval columns exist
+  try {
+    await pool.query(`
+      ALTER TABLE organizations 
+        ADD COLUMN IF NOT EXISTS billing_interval VARCHAR(20) DEFAULT 'monthly',
+        ADD COLUMN IF NOT EXISTS stripe_price_id VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS subscription_start_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS current_period_start TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS current_period_end TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS next_billing_date TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS cancel_at_period_end BOOLEAN DEFAULT false,
+        ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS cancellation_effective_date TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS scheduled_downgrade_plan VARCHAR(50),
+        ADD COLUMN IF NOT EXISTS scheduled_downgrade_effective_date TIMESTAMPTZ;
+    `);
+  } catch (colErr) {
+    console.warn('[initDb org columns notice]', colErr.message);
+  }
+
   // 2. Ensure users_status_check constraint permits pending_verification & suspended
   try {
     await pool.query('ALTER TABLE users DROP CONSTRAINT IF EXISTS users_status_check;');
