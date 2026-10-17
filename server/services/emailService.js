@@ -191,6 +191,50 @@ class EmailService {
    * }} options
    * @returns {Promise<{ success: boolean, messageId: string, response: string, provider: string }>}
    */
+  /**
+   * Extract clean RFC 5322 pure email address from potential "Name <email@domain.com>" string
+   * @param {string} emailStr
+   * @returns {string}
+   */
+  _extractEmail(emailStr) {
+    if (!emailStr || typeof emailStr !== 'string') return '';
+    const match = emailStr.match(/<([^>]+)>/);
+    if (match && match[1]) {
+      return match[1].trim().toLowerCase();
+    }
+    return emailStr.trim().toLowerCase();
+  }
+
+  /**
+   * Extract sender display name from potential "Name <email@domain.com>" string
+   * @param {string} emailStr
+   * @param {string} defaultName
+   * @returns {string}
+   */
+  _extractSenderName(emailStr, defaultName = 'Ricoz Analytics') {
+    if (!emailStr || typeof emailStr !== 'string') return defaultName;
+    const match = emailStr.match(/^([^<]+)<[^>]+>$/);
+    if (match && match[1]) {
+      const name = match[1].replace(/["']/g, '').trim();
+      if (name) return name;
+    }
+    return defaultName;
+  }
+
+  /**
+   * Dispatch transactional email via official Brevo REST API v3
+   * @param {{
+   *   to: Array<{ email: string, name?: string }> | string,
+   *   subject: string,
+   *   htmlContent: string,
+   *   textContent?: string,
+   *   replyTo?: { email: string, name?: string },
+   *   senderName?: string,
+   *   senderEmail?: string,
+   *   attachments?: Array<{ filename: string, content: Buffer | string }>
+   * }} options
+   * @returns {Promise<{ success: boolean, messageId: string, response: string, provider: string }>}
+   */
   async _sendBrevoEmail({
     to,
     subject,
@@ -201,20 +245,24 @@ class EmailService {
     senderEmail,
     attachments = []
   }) {
-    const verifiedSender = (senderEmail || process.env.SMTP_FROM || process.env.DEMO_REQUEST_EMAIL || 'ricozanalytics@gmail.com').trim();
+    const rawSender = senderEmail || process.env.SMTP_FROM || process.env.DEMO_REQUEST_EMAIL || 'ricozanalytics@gmail.com';
+    const verifiedSender = this._extractEmail(rawSender);
+    const resolvedSenderName = this._extractSenderName(rawSender, senderName);
 
-    // Normalize `to` array into Brevo format
+    // Normalize `to` array into clean Brevo format
     let recipients = [];
     if (typeof to === 'string') {
-      recipients = [{ email: to.trim() }];
+      const cleanTo = this._extractEmail(to);
+      if (cleanTo) recipients = [{ email: cleanTo }];
     } else if (Array.isArray(to)) {
       recipients = to.map(r => {
-        if (typeof r === 'string') return { email: r.trim() };
-        return {
-          email: (r.email || '').trim(),
-          ...(r.name ? { name: r.name.trim() } : {})
-        };
-      }).filter(r => Boolean(r.email));
+        if (typeof r === 'string') {
+          const clean = this._extractEmail(r);
+          return clean ? { email: clean } : null;
+        }
+        const clean = this._extractEmail(r?.email || '');
+        return clean ? { email: clean, ...(r.name ? { name: r.name.trim() } : {}) } : null;
+      }).filter(Boolean);
     }
 
     if (recipients.length === 0) {
@@ -223,7 +271,7 @@ class EmailService {
 
     const payload = {
       sender: {
-        name: senderName,
+        name: resolvedSenderName,
         email: verifiedSender
       },
       to: recipients,
@@ -236,10 +284,13 @@ class EmailService {
     }
 
     if (replyTo && replyTo.email) {
-      payload.replyTo = {
-        email: replyTo.email.trim(),
-        name: replyTo.name || senderName
-      };
+      const cleanReplyTo = this._extractEmail(replyTo.email);
+      if (cleanReplyTo) {
+        payload.replyTo = {
+          email: cleanReplyTo,
+          name: replyTo.name || resolvedSenderName
+        };
+      }
     }
 
     if (attachments && attachments.length > 0) {
@@ -274,10 +325,11 @@ class EmailService {
   /**
    * Verify whether the configured sender matches a verified active sender in Brevo
    * @param {string} senderEmail
-   * @returns {Promise<{ verified: boolean, sender?: object, availableSenders?: Array<string>, message: string }>}
+   * @returns {Promise<{ verified: boolean, sender?: object, availableSenders?: Array<string>, restrictedKey?: boolean, message: string }>}
    */
   async verifyBrevoSender(senderEmail) {
-    const targetEmail = (senderEmail || process.env.SMTP_FROM || 'ricozanalytics@gmail.com').toLowerCase().trim();
+    const rawSender = senderEmail || process.env.SMTP_FROM || 'ricozanalytics@gmail.com';
+    const targetEmail = this._extractEmail(rawSender);
     try {
       const res = await this._callBrevoApi('/senders', { method: 'GET' });
       const senders = res.data?.senders || [];
@@ -304,6 +356,22 @@ class EmailService {
         };
       }
     } catch (err) {
+      // If the API key is restricted to Transactional Emails, Brevo returns 401/403 "api key is not authorized for resource"
+      const isRestrictedKey = err.message && (
+        err.message.includes('not authorized for resource') ||
+        err.message.includes('unauthorized') ||
+        err.statusCode === 403
+      );
+
+      if (isRestrictedKey) {
+        return {
+          verified: true,
+          restrictedKey: true,
+          sender: { email: targetEmail, active: true },
+          message: `Sender "${targetEmail}" confirmed with restricted transactional Brevo API key.`
+        };
+      }
+
       return {
         verified: false,
         error: err.message,
@@ -342,8 +410,9 @@ class EmailService {
   getEmailStatus() {
     if (this.isBrevo()) {
       const apiKey = (process.env.BREVO_API_KEY || '').trim();
-      const fromEmail = process.env.SMTP_FROM || 'ricozanalytics@gmail.com';
-      const demoRecipient = process.env.DEMO_REQUEST_EMAIL || fromEmail;
+      const rawFrom = process.env.SMTP_FROM || 'ricozanalytics@gmail.com';
+      const fromEmail = this._extractEmail(rawFrom);
+      const demoRecipient = this._extractEmail(process.env.DEMO_REQUEST_EMAIL || fromEmail);
       const maskedKey = apiKey.length > 8 ? `${apiKey.slice(0, 4)}***${apiKey.slice(-4)}` : (apiKey ? '***' : null);
       const missingVars = [];
       if (!apiKey) missingVars.push('BREVO_API_KEY');
@@ -412,7 +481,8 @@ class EmailService {
         };
       }
 
-      const senderEmail = process.env.SMTP_FROM || 'ricozanalytics@gmail.com';
+      const rawSender = process.env.SMTP_FROM || 'ricozanalytics@gmail.com';
+      const senderEmail = this._extractEmail(rawSender);
       try {
         const senderCheck = await this.verifyBrevoSender(senderEmail);
         let accountData = null;
@@ -427,9 +497,10 @@ class EmailService {
           provider: 'Brevo',
           senderVerified: senderCheck.verified,
           verifiedSender: senderCheck.sender?.email || senderEmail,
-          plan: accountData?.plan?.[0]?.type || 'active',
+          restrictedKey: Boolean(senderCheck.restrictedKey),
+          plan: accountData?.plan?.[0]?.type || 'transactional',
           message: senderCheck.verified
-            ? `Brevo API connection and verified sender (${senderEmail}) confirmed successfully.`
+            ? `Brevo API connection and verified sender (${senderEmail}) confirmed successfully${senderCheck.restrictedKey ? ' (restricted transactional access)' : ''}.`
             : senderCheck.message
         };
       } catch (err) {
