@@ -518,64 +518,93 @@ class DemoRequestController {
       const bcrypt = require('bcryptjs');
       const defaultPasswordHash = bcrypt.hashSync('admin123', 10);
 
-      // 1. Ensure admin@ricoz.test exists and is active, and fetch its organization_id
+      // 1. Ensure admin@ricoz.test exists and is updated to completely fresh state
       const check1 = await db.query("SELECT id, organization_id FROM users WHERE LOWER(email) = 'admin@ricoz.test' LIMIT 1");
       let orgId = '00000000-0000-0000-0000-000000000001';
 
       if (check1.rows.length === 0) {
         try {
           await db.query(`
-            INSERT INTO users (name, email, password_hash, role, organization_id, status)
-            VALUES ('Gowtham (Admin)', 'admin@ricoz.test', $1, 'admin', $2, 'active')
+            INSERT INTO users (
+              name, email, password_hash, role, organization_id, status,
+              verification_token, verification_otp, verification_token_expires_at,
+              reset_password_token, reset_password_expires_at, email_verified_at,
+              last_login_at, created_at, updated_at
+            )
+            VALUES (
+              'Gowtham (Admin)', 'admin@ricoz.test', $1, 'admin', $2, 'active',
+              NULL, NULL, NULL,
+              NULL, NULL, NOW(),
+              NULL, NOW(), NOW()
+            )
           `, [defaultPasswordHash, orgId]);
         } catch (e1) {
           const newAdminId = crypto.randomUUID ? crypto.randomUUID() : '1';
           await db.query(`
-            INSERT INTO users (id, name, email, password_hash, role, organization_id, status)
-            VALUES ($1, 'Gowtham (Admin)', 'admin@ricoz.test', $2, 'admin', $3, 'active')
+            INSERT INTO users (
+              id, name, email, password_hash, role, organization_id, status,
+              verification_token, verification_otp, verification_token_expires_at,
+              reset_password_token, reset_password_expires_at, email_verified_at,
+              last_login_at, created_at, updated_at
+            )
+            VALUES (
+              $1, 'Gowtham (Admin)', 'admin@ricoz.test', $2, 'admin', $3, 'active',
+              NULL, NULL, NULL,
+              NULL, NULL, NOW(),
+              NULL, NOW(), NOW()
+            )
           `, [newAdminId, defaultPasswordHash, orgId]);
         }
       } else {
         if (check1.rows[0].organization_id) {
           orgId = check1.rows[0].organization_id;
         }
-        await db.query("UPDATE users SET status = 'active', password_hash = $1 WHERE LOWER(email) = 'admin@ricoz.test'", [defaultPasswordHash]);
+        await db.query(`
+          UPDATE users 
+          SET 
+            name = 'Gowtham (Admin)',
+            role = 'admin',
+            status = 'active',
+            password_hash = $1,
+            organization_id = $2,
+            verification_token = NULL,
+            verification_otp = NULL,
+            verification_token_expires_at = NULL,
+            reset_password_token = NULL,
+            reset_password_expires_at = NULL,
+            email_verified_at = NOW(),
+            last_login_at = NULL,
+            updated_at = NOW()
+          WHERE LOWER(email) = 'admin@ricoz.test'
+        `, [defaultPasswordHash, orgId]);
       }
 
-      // 2. Ensure ricoz@admin.test exists and is active (as requested by user)
-      const check2 = await db.query("SELECT id FROM users WHERE LOWER(email) = 'ricoz@admin.test' LIMIT 1");
-      if (check2.rows.length === 0) {
-        try {
-          await db.query(`
-            INSERT INTO users (name, email, password_hash, role, organization_id, status)
-            VALUES ('Ricoz Administrator', 'ricoz@admin.test', $1, 'admin', $2, 'active')
-          `, [defaultPasswordHash, orgId]);
-        } catch (err) {
-          const newRicozId = crypto.randomUUID ? crypto.randomUUID() : '2';
-          await db.query(`
-            INSERT INTO users (id, name, email, password_hash, role, organization_id, status)
-            VALUES ($1, 'Ricoz Administrator', 'ricoz@admin.test', $2, 'admin', $3, 'active')
-          `, [newRicozId, defaultPasswordHash, orgId]);
-        }
-      } else {
-        await db.query("UPDATE users SET status = 'active', password_hash = $1 WHERE LOWER(email) = 'ricoz@admin.test'", [defaultPasswordHash]);
+      // 2. Ensure Primary Organization is active and enterprise
+      try {
+        await db.query(`
+          UPDATE organizations 
+          SET plan = 'enterprise', subscription_status = 'active', payment_status = 'paid', updated_at = NOW()
+          WHERE id = $1
+        `, [orgId]);
+      } catch (eOrg) {
+        console.warn('[DemoRequestController] Notice updating organization:', eOrg.message);
       }
 
-      // 3. Find non-admin users to delete
+      // 3. Find all user accounts to delete (EVERYTHING except admin@ricoz.test)
       const usersToDelete = await db.query(
-        "SELECT id, email FROM users WHERE LOWER(email) NOT IN ('admin@ricoz.test', 'ricoz@admin.test')"
+        "SELECT id, email FROM users WHERE LOWER(email) != 'admin@ricoz.test'"
       );
 
       let deletedCount = 0;
       if (usersToDelete.rows.length > 0) {
-        // Delete dataset_rows for non-admin datasets
+        // Delete child dataset_rows for non-admin datasets
         try {
           await db.query(`
             DELETE FROM dataset_rows 
             WHERE dataset_id IN (
               SELECT id FROM datasets 
               WHERE user_id IN (
-                SELECT id FROM users WHERE LOWER(email) NOT IN ('admin@ricoz.test', 'ricoz@admin.test')
+                SELECT id FROM users WHERE LOWER(email) != 'admin@ricoz.test'
               )
             )
           `);
@@ -588,26 +617,40 @@ class DemoRequestController {
           await db.query(`
             DELETE FROM datasets 
             WHERE user_id IN (
-              SELECT id FROM users WHERE LOWER(email) NOT IN ('admin@ricoz.test', 'ricoz@admin.test')
+              SELECT id FROM users WHERE LOWER(email) != 'admin@ricoz.test'
             )
           `);
         } catch (e) {
           console.warn('[DemoRequestController] Warning cleaning up datasets:', e.message);
         }
 
-        // Delete non-admin users
+        // Delete all non-admin registrations
         const delRes = await db.query(
-          "DELETE FROM users WHERE LOWER(email) NOT IN ('admin@ricoz.test', 'ricoz@admin.test')"
+          "DELETE FROM users WHERE LOWER(email) != 'admin@ricoz.test'"
         );
         deletedCount = delRes.rowCount;
       }
 
-      // 4. Retrieve remaining users
-      const remaining = await db.query("SELECT id, name, email, role, status FROM users ORDER BY id ASC");
+      // 4. Purge invitations and test organizations
+      try {
+        await db.query("DELETE FROM invitations");
+      } catch (_) {}
+
+      try {
+        await db.query(`
+          DELETE FROM organizations 
+          WHERE id != $1 AND id NOT IN (
+            SELECT organization_id FROM users WHERE organization_id IS NOT NULL
+          )
+        `, [orgId]);
+      } catch (_) {}
+
+      // 5. Retrieve remaining users (Strictly ONLY admin@ricoz.test)
+      const remaining = await db.query("SELECT id, name, email, role, status, email_verified_at, updated_at FROM users ORDER BY id ASC");
 
       return res.status(200).json({
         success: true,
-        message: `Account cleanup completed. Deleted ${deletedCount} non-admin accounts.`,
+        message: `Fresh registration purge complete. Deleted ${deletedCount} user registrations. Only admin@ricoz.test remains in fresh active state.`,
         deletedCount,
         remainingUsers: remaining.rows
       });
