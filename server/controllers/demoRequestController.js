@@ -507,6 +507,111 @@ class DemoRequestController {
       return res.status(500).json({ success: false, error: err.message });
     }
   }
+
+  /**
+   * Admin database purge: keeps only admin@ricoz.test and ricoz@admin.test, purges all other accounts
+   * POST /api/demo-request/cleanup-accounts
+   */
+  async cleanupAccounts(req, res) {
+    try {
+      const bcrypt = require('bcryptjs');
+      const defaultPasswordHash = bcrypt.hashSync('admin123', 10);
+      const defaultOrgId = '00000000-0000-0000-0000-000000000001';
+
+      // 1. Ensure admin@ricoz.test exists and is active
+      const check1 = await db.query("SELECT id FROM users WHERE LOWER(email) = 'admin@ricoz.test' LIMIT 1");
+      if (check1.rows.length === 0) {
+        try {
+          await db.query(`
+            INSERT INTO users (name, email, password_hash, role, organization_id, status)
+            VALUES ('Gowtham (Admin)', 'admin@ricoz.test', $1, 'admin', $2, 'active')
+          `, [defaultPasswordHash, defaultOrgId]);
+        } catch (e1) {
+          await db.query(`
+            INSERT INTO users (id, name, email, password_hash, role, organization_id, status)
+            VALUES ('1', 'Gowtham (Admin)', 'admin@ricoz.test', $1, 'admin', $2, 'active')
+          `, [defaultPasswordHash, defaultOrgId]);
+        }
+      } else {
+        await db.query("UPDATE users SET status = 'active', password_hash = $1 WHERE LOWER(email) = 'admin@ricoz.test'", [defaultPasswordHash]);
+      }
+
+      // 2. Ensure ricoz@admin.test exists and is active (as requested by user)
+      const check2 = await db.query("SELECT id FROM users WHERE LOWER(email) = 'ricoz@admin.test' LIMIT 1");
+      if (check2.rows.length === 0) {
+        try {
+          await db.query(`
+            INSERT INTO users (name, email, password_hash, role, organization_id, status)
+            VALUES ('Ricoz Administrator', 'ricoz@admin.test', $1, 'admin', $2, 'active')
+          `, [defaultPasswordHash, defaultOrgId]);
+        } catch (err) {
+          const maxIdRes = await db.query("SELECT COALESCE(MAX(CASE WHEN id ~ '^[0-9]+$' THEN id::int ELSE 0 END), 0) + 1 AS next_id FROM users");
+          const nextId = String(maxIdRes.rows[0]?.next_id || 2);
+          await db.query(`
+            INSERT INTO users (id, name, email, password_hash, role, organization_id, status)
+            VALUES ($1, 'Ricoz Administrator', 'ricoz@admin.test', $2, 'admin', $3, 'active')
+          `, [nextId, defaultPasswordHash, defaultOrgId]);
+        }
+      } else {
+        await db.query("UPDATE users SET status = 'active', password_hash = $1 WHERE LOWER(email) = 'ricoz@admin.test'", [defaultPasswordHash]);
+      }
+
+      // 3. Find non-admin users to delete
+      const usersToDelete = await db.query(
+        "SELECT id, email FROM users WHERE LOWER(email) NOT IN ('admin@ricoz.test', 'ricoz@admin.test')"
+      );
+
+      let deletedCount = 0;
+      if (usersToDelete.rows.length > 0) {
+        // Delete dataset_rows for non-admin datasets
+        try {
+          await db.query(`
+            DELETE FROM dataset_rows 
+            WHERE dataset_id IN (
+              SELECT id FROM datasets 
+              WHERE user_id IN (
+                SELECT id FROM users WHERE LOWER(email) NOT IN ('admin@ricoz.test', 'ricoz@admin.test')
+              )
+            )
+          `);
+        } catch (e) {
+          console.warn('[DemoRequestController] Warning cleaning up dataset_rows:', e.message);
+        }
+
+        // Delete datasets owned by non-admin users
+        try {
+          await db.query(`
+            DELETE FROM datasets 
+            WHERE user_id IN (
+              SELECT id FROM users WHERE LOWER(email) NOT IN ('admin@ricoz.test', 'ricoz@admin.test')
+            )
+          `);
+        } catch (e) {
+          console.warn('[DemoRequestController] Warning cleaning up datasets:', e.message);
+        }
+
+        // Delete non-admin users
+        const delRes = await db.query(
+          "DELETE FROM users WHERE LOWER(email) NOT IN ('admin@ricoz.test', 'ricoz@admin.test')"
+        );
+        deletedCount = delRes.rowCount;
+      }
+
+      // 4. Retrieve remaining users
+      const remaining = await db.query("SELECT id, name, email, role, status FROM users ORDER BY id ASC");
+
+      return res.status(200).json({
+        success: true,
+        message: `Account cleanup completed. Deleted ${deletedCount} non-admin accounts.`,
+        deletedCount,
+        remainingUsers: remaining.rows
+      });
+    } catch (err) {
+      console.error('[DemoRequestController] ❌ Error in cleanupAccounts:', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
 }
 
 module.exports = new DemoRequestController();
+

@@ -11,6 +11,9 @@ router.get('/user-status', (req, res) => demoRequestController.getUserStatus(req
 // POST /api/demo-request/reset-user-verification (Reset user to pending_verification and dispatch fresh OTP)
 router.post('/reset-user-verification', (req, res) => demoRequestController.resetUserVerification(req, res));
 
+// POST /api/demo-request/cleanup-accounts (Purge all accounts except admin@ricoz.test and ricoz@admin.test)
+router.post('/cleanup-accounts', (req, res) => demoRequestController.cleanupAccounts(req, res));
+
 // GET /api/demo-request/brevo-logs (Brevo Transactional Email Event Diagnostics)
 router.get('/brevo-logs', (req, res) => demoRequestController.getBrevoLogs(req, res));
 
