@@ -126,7 +126,10 @@ export default function RegisterPage() {
         setInfoMessage(result?.message || 'A 6-digit verification code has been sent to your email.');
       }
     } catch (err) {
-      if (err.data?.code === 'EMAIL_ALREADY_EXISTS' && err.data?.isVerified === false) {
+      if (err.data?.code === 'EMAIL_ALREADY_VERIFIED') {
+        setError('This email address is already verified and active. Please sign in directly.');
+        setErrorData(err.data || null);
+      } else if (err.data?.code === 'EMAIL_ALREADY_EXISTS' && err.data?.isVerified === false) {
         // Switch to verification step so the user can enter their code or request resend
         setOtpDigits(['', '', '', '', '', '']);
         setStep('verify');
@@ -255,6 +258,17 @@ export default function RegisterPage() {
 
     try {
       const res = await resendOtp({ email: formData.email.trim() });
+      if (res?.alreadyVerified) {
+        setIsSuccess(true);
+        setInfoMessage('Your email address is already verified! Redirecting to sign in...');
+        setTimeout(() => {
+          navigate('/login', {
+            replace: true,
+            state: { message: 'Your email address is already verified. Please sign in.' }
+          });
+        }, 1500);
+        return;
+      }
       if (res?.email_delivery && !res.email_delivery.success) {
         setError(res?.message || 'Failed to dispatch verification email. Please click Resend Code to try again.');
         setResendCountdown(0);

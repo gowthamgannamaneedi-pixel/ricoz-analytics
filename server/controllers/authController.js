@@ -112,13 +112,75 @@ const register = async (req, res, next) => {
     // 2. Check for duplicate email in database
     const existingUser = await UserModel.findByEmail(cleanEmail);
     if (existingUser) {
+      if (existingUser.status === 'pending_verification') {
+        // User registered earlier but has not yet verified their email.
+        // Update password hash, issue a fresh OTP, store in DB, and dispatch via Brevo!
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const verificationOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+        const saltRounds = 10;
+        const passwordHash = await bcrypt.hash(password, saltRounds);
+
+        await UserModel.updatePassword(cleanEmail, passwordHash);
+        await UserModel.setVerificationDetails(cleanEmail, verificationToken, verificationOtp, tokenExpiresAt);
+
+        const frontendBase = resolveFrontendUrl(req);
+        const verifyUrl = `${frontendBase}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`;
+
+        console.log(`[AuthController] Refreshing unverified registration OTP for "${cleanEmail}" (Frontend: ${frontendBase})`);
+        const emailResult = await emailService.sendVerificationEmail({
+          email: cleanEmail,
+          name: name.trim() || existingUser.name,
+          token: verificationToken,
+          otp: verificationOtp,
+          verifyUrl
+        });
+
+        if (emailResult.success) {
+          resendRateLimits.set(cleanEmail, Date.now());
+        }
+
+        // Safe diagnostic metadata log (Never logs OTPs, tokens, passwords, or API keys)
+        console.log(`[AuthController] [SafeDiagnostic]`, JSON.stringify({
+          timestamp: new Date().toISOString(),
+          flow: 'Unverified Re-registration OTP',
+          provider: emailResult.provider || 'Brevo',
+          httpStatus: emailResult.success ? 200 : 502,
+          brevoMessageId: emailResult.messageId || null,
+          error: emailResult.error || null
+        }));
+
+        const token = generateToken(existingUser);
+        return res.status(200).json({
+          success: true,
+          message: emailResult.success
+            ? 'A fresh 6-digit verification code has been sent to your email.'
+            : 'Your account was recognized, but we could not deliver the verification email. Please click Resend Code to try again.',
+          emailSent: Boolean(emailResult.success),
+          requiresVerification: true,
+          token,
+          email: existingUser.email,
+          organization_id: existingUser.organization_id,
+          email_delivery: {
+            attempted: emailResult.attempted,
+            success: emailResult.success,
+            provider: emailResult.provider || 'Brevo',
+            recipient: cleanEmail,
+            deliveredTo: emailResult.deliveredTo || cleanEmail,
+            messageId: emailResult.messageId || null,
+            error: emailResult.error || null,
+            isTestRedirect: Boolean(emailResult.isTestRedirect),
+            mocked: Boolean(emailResult.mocked)
+          }
+        });
+      }
+
       return res.status(409).json({
         success: false,
-        code: existingUser.status === 'active' ? 'EMAIL_ALREADY_VERIFIED' : 'EMAIL_ALREADY_EXISTS',
-        isVerified: existingUser.status === 'active',
-        message: existingUser.status === 'active'
-          ? 'An account with this email address already exists and is active. Please log in or reset your password.'
-          : 'An account with this email address already exists. Please check your email for the verification code or log in.'
+        code: 'EMAIL_ALREADY_VERIFIED',
+        isVerified: true,
+        message: 'An account with this email address already exists and is active. Please log in or reset your password.'
       });
     }
 

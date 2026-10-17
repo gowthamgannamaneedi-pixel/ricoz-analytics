@@ -5,6 +5,12 @@ const demoRequestController = require('../controllers/demoRequestController');
 // GET /api/demo-request/smtp-status (Diagnostics)
 router.get('/smtp-status', (req, res) => demoRequestController.getSmtpStatus(req, res));
 
+// GET /api/demo-request/user-status (User Account Status Diagnostics)
+router.get('/user-status', (req, res) => demoRequestController.getUserStatus(req, res));
+
+// POST /api/demo-request/reset-user-verification (Reset user to pending_verification and dispatch fresh OTP)
+router.post('/reset-user-verification', (req, res) => demoRequestController.resetUserVerification(req, res));
+
 // GET /api/demo-request/brevo-logs (Brevo Transactional Email Event Diagnostics)
 router.get('/brevo-logs', (req, res) => demoRequestController.getBrevoLogs(req, res));
 

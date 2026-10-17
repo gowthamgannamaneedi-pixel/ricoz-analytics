@@ -194,6 +194,17 @@ export default function VerifyEmailPage() {
 
     try {
       const res = await resendVerification({ email: email.trim() });
+      if (res?.alreadyVerified) {
+        setIsSuccess(true);
+        setSuccessMsg('Your email address is already verified! Redirecting to login...');
+        setTimeout(() => {
+          navigate('/login', {
+            replace: true,
+            state: { message: 'Your email address is already verified. Please sign in.' }
+          });
+        }, 1500);
+        return;
+      }
       if (res?.email_delivery && !res.email_delivery.success) {
         setError(res?.message || 'Failed to dispatch verification email. Please click Resend Code to try again.');
         setCountdown(0);
@@ -317,7 +328,7 @@ export default function VerifyEmailPage() {
                       maxLength={1}
                       value={digit}
                       onChange={(e) => handleDigitChange(idx, e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(idx, e.target.value, e)}
+                      onKeyDown={(e) => handleKeyDown(idx, e)}
                       className="w-10 h-12 text-center text-lg font-mono font-bold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-2xs focus:border-rose-600 focus:ring-2 focus:ring-rose-100 focus:outline-none transition"
                     />
                   ))}

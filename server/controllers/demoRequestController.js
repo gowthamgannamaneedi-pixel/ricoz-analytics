@@ -1,4 +1,7 @@
+const crypto = require('crypto');
 const demoRequestModel = require('../models/demoRequestModel');
+const UserModel = require('../models/userModel');
+const db = require('../config/database');
 const emailService = require('../services/emailService');
 const demoEmailQueueService = require('../services/demoEmailQueueService');
 
@@ -386,6 +389,122 @@ class DemoRequestController {
           message: error.message
         }
       });
+    }
+  }
+
+  /**
+   * Diagnostic user account status check (never logs OTP or password)
+   * GET /api/demo-request/user-status?email=...
+   */
+  async getUserStatus(req, res) {
+    try {
+      const email = req.query.email ? req.query.email.trim().toLowerCase() : null;
+      if (!email) {
+        return res.status(400).json({ success: false, message: 'Email query parameter is required' });
+      }
+      const user = await UserModel.findByEmail(email);
+      if (!user) {
+        return res.status(200).json({
+          success: true,
+          userExists: false,
+          email
+        });
+      }
+      return res.status(200).json({
+        success: true,
+        userExists: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          status: user.status,
+          hasOtp: Boolean(user.verification_otp),
+          hasToken: Boolean(user.verification_token),
+          expiresAt: user.verification_token_expires_at,
+          isExpired: user.verification_token_expires_at ? (new Date() > new Date(user.verification_token_expires_at)) : null,
+          emailVerifiedAt: user.email_verified_at,
+          createdAt: user.created_at,
+          updatedAt: user.updated_at
+        }
+      });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
+  /**
+   * Reset user to pending_verification and dispatch fresh OTP via Brevo
+   * POST /api/demo-request/reset-user-verification
+   */
+  async resetUserVerification(req, res) {
+    try {
+      const email = req.body.email ? req.body.email.trim().toLowerCase() : null;
+      if (!email) {
+        return res.status(400).json({ success: false, message: 'Email is required in request body' });
+      }
+      const user = await UserModel.findByEmail(email);
+      if (!user) {
+        return res.status(404).json({ success: false, message: `User "${email}" not found` });
+      }
+
+      // 1. Reset user status in PostgreSQL to pending_verification
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const verificationOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      await db.query(
+        `UPDATE users 
+         SET status = 'pending_verification', 
+             email_verified_at = NULL, 
+             verification_token = $1, 
+             verification_otp = $2, 
+             verification_token_expires_at = $3, 
+             updated_at = NOW() 
+         WHERE LOWER(email) = LOWER($4)`,
+        [verificationToken, verificationOtp, tokenExpiresAt, email]
+      );
+
+      // 2. Dispatch verification email via Brevo
+      const verifyUrl = `https://ricoz-analytics.vercel.app/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(email)}`;
+      const emailResult = await emailService.sendVerificationEmail({
+        email,
+        name: user.name,
+        token: verificationToken,
+        otp: verificationOtp,
+        verifyUrl
+      });
+
+      console.log(`[DemoRequestController] [SafeDiagnostic]`, JSON.stringify({
+        timestamp: new Date().toISOString(),
+        flow: 'Reset User Verification',
+        provider: emailResult.provider || 'Brevo',
+        httpStatus: emailResult.success ? 200 : 502,
+        brevoMessageId: emailResult.messageId || null,
+        error: emailResult.error || null
+      }));
+
+      return res.status(200).json({
+        success: true,
+        message: emailResult.success
+          ? `User "${email}" reset to pending_verification and fresh OTP dispatched via Brevo.`
+          : `User "${email}" reset to pending_verification, but email dispatch failed.`,
+        user: {
+          id: user.id,
+          email: user.email,
+          status: 'pending_verification',
+          expiresAt: tokenExpiresAt
+        },
+        email_delivery: {
+          attempted: emailResult.attempted,
+          success: emailResult.success,
+          provider: emailResult.provider || 'Brevo',
+          recipient: email,
+          messageId: emailResult.messageId || null,
+          error: emailResult.error || null
+        }
+      });
+    } catch (err) {
+      console.error('[DemoRequestController] ❌ Error in resetUserVerification:', err);
+      return res.status(500).json({ success: false, error: err.message });
     }
   }
 }
