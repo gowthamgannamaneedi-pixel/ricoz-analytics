@@ -22,7 +22,8 @@ const config = {
     url: process.env.SUPABASE_URL || '',
     anonKey: process.env.SUPABASE_ANON_KEY || '',
     serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-  }
+  },
+  emailProvider: (process.env.EMAIL_PROVIDER || 'smtp').toLowerCase()
 };
 
 module.exports = config;

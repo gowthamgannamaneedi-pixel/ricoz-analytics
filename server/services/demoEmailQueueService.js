@@ -385,8 +385,8 @@ class DemoEmailQueueService {
     const allSuccessful = internalOk && prospectOk;
 
     if (allSuccessful) {
-      // Completed successfully!
       try {
+        const activeProvider = emailService.getProvider();
         await db.query(`
           UPDATE demo_email_jobs
           SET status = 'completed',
@@ -398,14 +398,16 @@ class DemoEmailQueueService {
               prospect_status = $1,
               internal_message_id = $2,
               prospect_message_id = $3,
+              delivery_provider = $4,
               internal_error = NULL,
               prospect_error = NULL,
               last_error = NULL
-          WHERE id = $4
+          WHERE id = $5
         `, [
           needsProspect ? 'sent' : 'skipped',
           internalMessageId,
           prospectMessageId,
+          activeProvider,
           jobId
         ]);
 
@@ -419,6 +421,7 @@ class DemoEmailQueueService {
           `, [
             JSON.stringify({
               delivered_at: new Date().toISOString(),
+              provider: activeProvider,
               internal_message_id: internalMessageId,
               prospect_message_id: prospectMessageId,
               attempts: attempt
@@ -428,7 +431,7 @@ class DemoEmailQueueService {
           ]);
         }
 
-        console.log(`[DemoEmailQueueService] ✅ Job #${jobId} COMPLETED successfully. (Internal: ${internalMessageId}, Prospect: ${prospectMessageId || 'N/A'})`);
+        console.log(`[DemoEmailQueueService] ✅ Job #${jobId} COMPLETED successfully via ${activeProvider}. (Internal: ${internalMessageId}, Prospect: ${prospectMessageId || 'N/A'})`);
       } catch (dbErr) {
         console.error(`[DemoEmailQueueService] Error finalizing completed job #${jobId}:`, dbErr.message);
       }
@@ -605,7 +608,7 @@ class DemoEmailQueueService {
   }
 
   /**
-   * Reset failed jobs back to pending to trigger retry
+   * Reset failed, stalled processing, or delayed pending jobs back to pending to trigger immediate retry
    */
   async retryFailedJobs() {
     await this.init();
@@ -613,17 +616,30 @@ class DemoEmailQueueService {
       const res = await db.query(`
         UPDATE demo_email_jobs
         SET status = 'pending',
-            attempts = 0,
+            attempts = CASE WHEN internal_status = 'sent' OR prospect_status = 'sent' THEN attempts ELSE 0 END,
             next_attempt_at = NOW(),
+            locked_at = NULL,
+            locked_by = NULL,
             updated_at = NOW()
-        WHERE status = 'failed'
-        RETURNING id;
+        WHERE status IN ('failed', 'processing')
+           OR (status = 'pending' AND next_attempt_at > NOW())
+        RETURNING id, internal_status, prospect_status;
       `);
       const count = res?.rows?.length || 0;
       this.triggerImmediateProcessing();
       return { success: true, retriedCount: count, jobIds: (res?.rows || []).map(r => r.id) };
     } catch (err) {
       return { success: false, error: err.message };
+    }
+  }
+
+  /**
+   * Stop the background worker interval
+   */
+  stop() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
     }
   }
 }

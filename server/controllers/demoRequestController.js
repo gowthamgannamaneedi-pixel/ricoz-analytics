@@ -159,6 +159,7 @@ class DemoRequestController {
           email_delivery: {
             status: 'queued',
             jobId: queueResult.jobId,
+            provider: emailService.getProvider(),
             recipient: recipientEmail,
             prospect_recipient: resolvedEmail
           },

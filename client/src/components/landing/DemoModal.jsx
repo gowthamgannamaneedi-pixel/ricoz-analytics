@@ -247,9 +247,11 @@ export default function DemoModal({ isOpen, onClose }) {
   };
 
   const emailDeliveryStatus = submissionResult?.email_delivery?.status || 'queued';
+  const providerName = submissionResult?.email_delivery?.provider || 'Brevo';
   const isDuplicate = submissionResult?.isDuplicate;
   const isDelivered = emailDeliveryStatus === 'delivered';
-  const isDelayed = emailDeliveryStatus === 'retry_pending' || emailDeliveryStatus === 'delayed' || emailDeliveryStatus === 'failed';
+  const isFailed = emailDeliveryStatus === 'failed';
+  const isDelayed = emailDeliveryStatus === 'retry_pending' || emailDeliveryStatus === 'delayed';
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
@@ -269,11 +271,11 @@ export default function DemoModal({ isOpen, onClose }) {
             <div className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center shadow-inner ${
               isDelivered
                 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
-                : isDelayed
+                : (isDelayed || isFailed)
                 ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400'
                 : 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
             }`}>
-              {isDelayed ? <AlertCircle size={36} /> : <CheckCircle2 size={36} />}
+              {isDelayed || isFailed ? <AlertCircle size={36} /> : <CheckCircle2 size={36} />}
             </div>
 
             <div className="space-y-1">
@@ -281,16 +283,20 @@ export default function DemoModal({ isOpen, onClose }) {
                 {isDuplicate
                   ? 'Request on File'
                   : isDelivered
-                  ? 'Request Confirmed & Email Sent!'
+                  ? `Request Confirmed & Email Dispatched!`
                   : isDelayed
-                  ? 'Request Received (Notification Delayed)'
+                  ? 'Request Received (Notification Retrying)'
+                  : isFailed
+                  ? 'Request Saved (Delivery Pending)'
                   : 'Request Received!'}
               </h3>
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 {isDelivered
-                  ? 'Database Confirmed • SMTP Delivery Accepted'
+                  ? `Database Confirmed • Delivery Accepted by ${providerName}`
                   : isDelayed
-                  ? 'Database Confirmed • Email Retry in Progress'
+                  ? 'Database Confirmed • Background Retry in Progress'
+                  : isFailed
+                  ? 'Database Confirmed • Notification Awaiting Retry'
                   : 'Database Confirmed • Notification Queued'}
               </p>
             </div>
@@ -298,20 +304,34 @@ export default function DemoModal({ isOpen, onClose }) {
             <div className={`p-4 rounded-2xl border text-sm font-medium max-w-md mx-auto leading-relaxed text-left space-y-2 ${
               isDelivered
                 ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
-                : isDelayed
+                : (isDelayed || isFailed)
                 ? 'bg-amber-50/70 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200'
                 : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200'
             }`}>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
+                  <CheckCircle2 size={10} /> Database Saved
+                </span>
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                  isDelivered
+                    ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300'
+                    : (isDelayed || isFailed)
+                    ? 'bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300'
+                    : 'bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300'
+                }`}>
+                  {isDelivered ? 'Email Accepted' : (isDelayed ? 'Retrying' : 'Queued')}
+                </span>
+              </div>
               <p className="font-semibold text-xs">
                 {isDuplicate
                   ? 'Your demo request is already securely registered.'
-                  : 'Your walkthrough inquiry has been saved successfully in our database.'}
+                  : 'Your walkthrough inquiry has been saved successfully in our PostgreSQL database.'}
               </p>
               <p className="text-xs text-slate-600 dark:text-slate-300">
                 {isDelivered
-                  ? `Confirmation emails have been dispatched to ${formData.email} and the solutions team.`
-                  : isDelayed
-                  ? 'Your request is recorded. Email notification delivery is currently undergoing automated background retries.'
+                  ? `Confirmation emails have been dispatched to ${formData.email} and the solutions team via ${providerName}.`
+                  : isDelayed || isFailed
+                  ? `Your request is permanently saved. Email notification delivery is undergoing automated background retries via ${providerName}.`
                   : `Your inquiry has been placed in our durable processing queue. A solutions architect will reach out to ${formData.email}.`}
               </p>
               {submissionResult?.id && (

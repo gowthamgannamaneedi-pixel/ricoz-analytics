@@ -1,5 +1,6 @@
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+const https = require('https');
 const dns = require('dns');
 if (dns && dns.setDefaultResultOrder) {
   try {
@@ -10,12 +11,37 @@ const nodemailer = require('nodemailer');
 
 /**
  * Enterprise Email Dispatch Service for Scheduled Reports, Alerts & Inbound Demo Inquiries
- * Configured with dynamic SMTP integration (Gmail, Zoho Mail, or custom SMTP) and HTTPS API support.
+ * Configured with official Brevo Transactional Email REST API (Port 443 HTTPS) and
+ * dynamic SMTP fallback (Gmail, Zoho Mail, or custom SMTP).
  */
 class EmailService {
   constructor() {
     this.transporter = null;
     this._initTransporter();
+    if (this.isBrevo()) {
+      const sender = process.env.SMTP_FROM || 'ricozanalytics@gmail.com';
+      console.log(`[EmailService] 🚀 Primary Email Provider: Brevo Transactional API (HTTPS:443, Sender: ${sender})`);
+    }
+  }
+
+  /**
+   * Determine whether Brevo is configured as the active transactional email provider
+   * @returns {boolean}
+   */
+  isBrevo() {
+    const provider = (process.env.EMAIL_PROVIDER || '').trim().toLowerCase();
+    return provider === 'brevo' || (Boolean(process.env.BREVO_API_KEY) && !process.env.SMTP_HOST && provider !== 'smtp');
+  }
+
+  /**
+   * Get human-readable active provider name
+   * @returns {string}
+   */
+  getProvider() {
+    if (this.isBrevo()) {
+      return 'Brevo';
+    }
+    return this._getProviderName(process.env.SMTP_HOST || 'smtp.gmail.com');
   }
 
   _getProviderName(host = '') {
@@ -66,8 +92,224 @@ class EmailService {
       if (!host) missing.push('SMTP_HOST');
       if (!user) missing.push('SMTP_USER');
       if (!pass) missing.push('SMTP_PASSWORD');
-      console.warn(`[EmailService] ⚠️ SMTP transport not configured. Missing environment variables: ${missing.join(', ')}.`);
+      if (!this.isBrevo()) {
+        console.warn(`[EmailService] ⚠️ SMTP transport not configured. Missing environment variables: ${missing.join(', ')}.`);
+      }
       this.transporter = null;
+    }
+  }
+
+  /**
+   * Internal HTTP client for Brevo REST API v3 over HTTPS Port 443
+   * @param {string} endpoint - e.g. '/smtp/email', '/senders', '/account'
+   * @param {object} options - { method, body }
+   * @returns {Promise<{ status: number, data: object }>}
+   */
+  async _callBrevoApi(endpoint, { method = 'GET', body = null } = {}) {
+    const apiKey = (process.env.BREVO_API_KEY || '').trim();
+    if (!apiKey) {
+      const err = new Error('BREVO_API_KEY is not configured in environment variables');
+      err.code = 'BREVO_API_KEY_MISSING';
+      err.statusCode = 401;
+      throw err;
+    }
+
+    return new Promise((resolve, reject) => {
+      const payloadStr = body ? JSON.stringify(body) : null;
+      const reqPath = `/v3${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
+      const reqOptions = {
+        hostname: 'api.brevo.com',
+        port: 443,
+        path: reqPath,
+        method: method.toUpperCase(),
+        headers: {
+          'api-key': apiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...(payloadStr ? { 'Content-Length': Buffer.byteLength(payloadStr) } : {})
+        },
+        timeout: 15000 // 15 second request timeout
+      };
+
+      const req = https.request(reqOptions, (res) => {
+        let rawData = '';
+        res.on('data', (chunk) => { rawData += chunk; });
+        res.on('end', () => {
+          let parsed = {};
+          try {
+            parsed = rawData ? JSON.parse(rawData) : {};
+          } catch (_) {
+            parsed = { raw: rawData };
+          }
+
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            resolve({
+              status: res.statusCode,
+              data: parsed
+            });
+          } else {
+            const errMsg = parsed.message || parsed.error || `Brevo API returned HTTP ${res.statusCode}`;
+            const err = new Error(errMsg);
+            err.statusCode = res.statusCode;
+            err.code = parsed.code || `HTTP_${res.statusCode}`;
+            err.data = parsed;
+            reject(err);
+          }
+        });
+      });
+
+      req.on('timeout', () => {
+        req.destroy();
+        const err = new Error('Brevo API request timed out after 15 seconds');
+        err.code = 'ETIMEDOUT';
+        err.statusCode = 504;
+        reject(err);
+      });
+
+      req.on('error', (err) => {
+        reject(err);
+      });
+
+      if (payloadStr) {
+        req.write(payloadStr);
+      }
+      req.end();
+    });
+  }
+
+  /**
+   * Dispatch transactional email via official Brevo REST API v3
+   * @param {{
+   *   to: Array<{ email: string, name?: string }> | string,
+   *   subject: string,
+   *   htmlContent: string,
+   *   textContent?: string,
+   *   replyTo?: { email: string, name?: string },
+   *   senderName?: string,
+   *   senderEmail?: string,
+   *   attachments?: Array<{ filename: string, content: Buffer | string }>
+   * }} options
+   * @returns {Promise<{ success: boolean, messageId: string, response: string, provider: string }>}
+   */
+  async _sendBrevoEmail({
+    to,
+    subject,
+    htmlContent,
+    textContent,
+    replyTo,
+    senderName = 'Ricoz Analytics',
+    senderEmail,
+    attachments = []
+  }) {
+    const verifiedSender = (senderEmail || process.env.SMTP_FROM || process.env.DEMO_REQUEST_EMAIL || 'ricozanalytics@gmail.com').trim();
+
+    // Normalize `to` array into Brevo format
+    let recipients = [];
+    if (typeof to === 'string') {
+      recipients = [{ email: to.trim() }];
+    } else if (Array.isArray(to)) {
+      recipients = to.map(r => {
+        if (typeof r === 'string') return { email: r.trim() };
+        return {
+          email: (r.email || '').trim(),
+          ...(r.name ? { name: r.name.trim() } : {})
+        };
+      }).filter(r => Boolean(r.email));
+    }
+
+    if (recipients.length === 0) {
+      throw new Error('No valid recipients provided for Brevo email dispatch');
+    }
+
+    const payload = {
+      sender: {
+        name: senderName,
+        email: verifiedSender
+      },
+      to: recipients,
+      subject: subject || 'RicozAnalytics Notification',
+      htmlContent: htmlContent || '<p>No content</p>'
+    };
+
+    if (textContent) {
+      payload.textContent = textContent;
+    }
+
+    if (replyTo && replyTo.email) {
+      payload.replyTo = {
+        email: replyTo.email.trim(),
+        name: replyTo.name || senderName
+      };
+    }
+
+    if (attachments && attachments.length > 0) {
+      payload.attachment = attachments.map(att => {
+        let base64Content = '';
+        if (Buffer.isBuffer(att.content)) {
+          base64Content = att.content.toString('base64');
+        } else if (typeof att.content === 'string') {
+          base64Content = att.content.startsWith('data:') ? att.content.split(',')[1] : Buffer.from(att.content).toString('base64');
+        }
+        return {
+          name: att.filename || att.name || 'attachment',
+          content: base64Content
+        };
+      });
+    }
+
+    const res = await this._callBrevoApi('/smtp/email', {
+      method: 'POST',
+      body: payload
+    });
+
+    const msgId = res.data?.messageId || `<brevo-${Date.now()}@smtp-relay.brevo.com>`;
+    return {
+      success: true,
+      provider: 'Brevo',
+      messageId: msgId,
+      response: `201 Accepted by Brevo API (messageId: ${msgId})`
+    };
+  }
+
+  /**
+   * Verify whether the configured sender matches a verified active sender in Brevo
+   * @param {string} senderEmail
+   * @returns {Promise<{ verified: boolean, sender?: object, availableSenders?: Array<string>, message: string }>}
+   */
+  async verifyBrevoSender(senderEmail) {
+    const targetEmail = (senderEmail || process.env.SMTP_FROM || 'ricozanalytics@gmail.com').toLowerCase().trim();
+    try {
+      const res = await this._callBrevoApi('/senders', { method: 'GET' });
+      const senders = res.data?.senders || [];
+      const matched = senders.find(s => s.email && s.email.toLowerCase() === targetEmail);
+
+      if (matched && matched.active) {
+        return {
+          verified: true,
+          sender: matched,
+          message: `Sender "${targetEmail}" is verified and active in Brevo.`
+        };
+      } else if (matched && !matched.active) {
+        return {
+          verified: false,
+          sender: matched,
+          message: `Sender "${targetEmail}" exists in Brevo but is not yet active/validated.`
+        };
+      } else {
+        const available = senders.map(s => s.email);
+        return {
+          verified: false,
+          availableSenders: available,
+          message: `Configured sender "${targetEmail}" not found in Brevo verified senders list. Active: ${available.join(', ') || 'None'}`
+        };
+      }
+    } catch (err) {
+      return {
+        verified: false,
+        error: err.message,
+        code: err.code || 'BREVO_API_ERROR',
+        message: `Failed to query Brevo senders list: ${err.message}`
+      };
     }
   }
 
@@ -76,6 +318,9 @@ class EmailService {
    * @returns {boolean}
    */
   isConfigured() {
+    if (this.isBrevo()) {
+      return Boolean((process.env.BREVO_API_KEY || '').trim());
+    }
     if (!this.transporter && process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
       this._initTransporter();
     }
@@ -84,9 +329,40 @@ class EmailService {
 
   /**
    * Safe Diagnostic Status Inspector
-   * @returns {{ configured: boolean, provider: string, host?: string, port?: number, secure?: boolean, senderUser?: string, fromEmail: string, demoRecipient: string, isPlaceholderPassword: boolean, missingVars: Array<string> }}
+   * @returns {object}
    */
   getSmtpStatus() {
+    return this.getEmailStatus();
+  }
+
+  /**
+   * Complete safe email provider diagnostic inspection
+   * @returns {object}
+   */
+  getEmailStatus() {
+    if (this.isBrevo()) {
+      const apiKey = (process.env.BREVO_API_KEY || '').trim();
+      const fromEmail = process.env.SMTP_FROM || 'ricozanalytics@gmail.com';
+      const demoRecipient = process.env.DEMO_REQUEST_EMAIL || fromEmail;
+      const maskedKey = apiKey.length > 8 ? `${apiKey.slice(0, 4)}***${apiKey.slice(-4)}` : (apiKey ? '***' : null);
+      const missingVars = [];
+      if (!apiKey) missingVars.push('BREVO_API_KEY');
+
+      return {
+        configured: missingVars.length === 0,
+        provider: 'Brevo',
+        transportType: 'https_rest_api',
+        endpoint: 'https://api.brevo.com/v3/smtp/email',
+        port: 443,
+        fromEmail,
+        demoRecipient,
+        apiKeyConfigured: Boolean(apiKey),
+        maskedKey,
+        missingVars,
+        fallbackAvailable: Boolean(this.transporter)
+      };
+    }
+
     const host = process.env.SMTP_HOST || 'smtp.gmail.com';
     const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 465;
     const user = process.env.SMTP_USER;
@@ -107,6 +383,7 @@ class EmailService {
     return {
       configured: missingVars.length === 0,
       provider,
+      transportType: 'smtp',
       host: host || null,
       port: host ? port : null,
       secure: host ? secure : null,
@@ -114,15 +391,58 @@ class EmailService {
       fromEmail,
       demoRecipient,
       isPlaceholderPassword,
-      missingVars
+      missingVars,
+      fallbackAvailable: false
     };
   }
 
   /**
-   * Test live SMTP handshake connection
+   * Test live provider connection and sender verification
    * @returns {Promise<{ configured: boolean, success: boolean, provider: string, message: string, errorCode?: string }>}
    */
   async verifyConnection() {
+    if (this.isBrevo()) {
+      const apiKey = (process.env.BREVO_API_KEY || '').trim();
+      if (!apiKey) {
+        return {
+          configured: false,
+          success: false,
+          provider: 'Brevo',
+          message: 'Brevo selected (EMAIL_PROVIDER=brevo) but BREVO_API_KEY is missing in environment variables.'
+        };
+      }
+
+      const senderEmail = process.env.SMTP_FROM || 'ricozanalytics@gmail.com';
+      try {
+        const senderCheck = await this.verifyBrevoSender(senderEmail);
+        let accountData = null;
+        try {
+          const accRes = await this._callBrevoApi('/account', { method: 'GET' });
+          accountData = accRes.data;
+        } catch (_) {}
+
+        return {
+          configured: true,
+          success: senderCheck.verified,
+          provider: 'Brevo',
+          senderVerified: senderCheck.verified,
+          verifiedSender: senderCheck.sender?.email || senderEmail,
+          plan: accountData?.plan?.[0]?.type || 'active',
+          message: senderCheck.verified
+            ? `Brevo API connection and verified sender (${senderEmail}) confirmed successfully.`
+            : senderCheck.message
+        };
+      } catch (err) {
+        return {
+          configured: true,
+          success: false,
+          provider: 'Brevo',
+          message: `Brevo connection failed: ${err.message}`,
+          errorCode: err.code || 'BREVO_ERROR'
+        };
+      }
+    }
+
     if (!this.isConfigured()) {
       const status = this.getSmtpStatus();
       return {
@@ -216,6 +536,37 @@ class EmailService {
       </div>
     `;
 
+    if (this.isBrevo()) {
+      try {
+        const brevoRes = await this._sendBrevoEmail({
+          to: recipients,
+          subject: `[Report] ${reportTitle} — ${organizationName}`,
+          htmlContent,
+          senderName: 'RicozAnalytics Reports',
+          senderEmail: fromEmail,
+          attachments: attachmentBuffer ? [{
+            filename: attachmentFileName,
+            content: attachmentBuffer
+          }] : []
+        });
+        console.log(`[EmailService] Report email sent via Brevo successfully (${brevoRes.messageId}) to: ${recipients.join(', ')}`);
+        return {
+          attempted: true,
+          success: true,
+          provider: 'Brevo',
+          messageId: brevoRes.messageId
+        };
+      } catch (err) {
+        console.error(`[EmailService] Failed to dispatch report email via Brevo to ${recipients.join(', ')}:`, err.message);
+        return {
+          attempted: true,
+          success: false,
+          provider: 'Brevo',
+          error: err.message
+        };
+      }
+    }
+
     const mailOptions = {
       from: `"RicozAnalytics Reports" <${fromEmail}>`,
       to: recipients.join(', '),
@@ -280,11 +631,11 @@ class EmailService {
     const fromEmail = process.env.SMTP_FROM || process.env.ALERT_FROM_EMAIL || process.env.REPORT_FROM_EMAIL || 'care@ricoz.in';
 
     if (!this.isConfigured()) {
-      console.log(`[Email Notice] SMTP not configured. Skipped dispatching alert "${alertTitle}" (${severity.toUpperCase()}) to: ${recipients.join(', ')}`);
+      console.log(`[Email Notice] Email service not configured. Skipped dispatching alert "${alertTitle}" (${severity.toUpperCase()}) to: ${recipients.join(', ')}`);
       return {
         attempted: false,
         success: false,
-        error: 'SMTP transport not configured in environment variables (SMTP_HOST, SMTP_USER, SMTP_PASSWORD).'
+        error: 'Email transport not configured in environment variables.'
       };
     }
 
@@ -337,6 +688,33 @@ class EmailService {
       </div>
     `;
 
+    if (this.isBrevo()) {
+      try {
+        const brevoRes = await this._sendBrevoEmail({
+          to: recipients,
+          subject: `[${severity.toUpperCase()} ALERT] ${alertTitle} — ${organizationName}`,
+          htmlContent,
+          senderName: 'RicozAnalytics Alerts',
+          senderEmail: fromEmail
+        });
+        console.log(`[EmailService] Alert email sent via Brevo successfully (${brevoRes.messageId}) to: ${recipients.join(', ')}`);
+        return {
+          attempted: true,
+          success: true,
+          provider: 'Brevo',
+          messageId: brevoRes.messageId
+        };
+      } catch (err) {
+        console.error(`[EmailService] Failed to dispatch alert email via Brevo to ${recipients.join(', ')}:`, err.message);
+        return {
+          attempted: true,
+          success: false,
+          provider: 'Brevo',
+          error: err.message
+        };
+      }
+    }
+
     const mailOptions = {
       from: `"RicozAnalytics Alerts" <${fromEmail}>`,
       to: recipients.join(', '),
@@ -368,13 +746,12 @@ class EmailService {
    * @param {{ recipient: string, subject?: string }} options
    * @returns {Promise<{ attempted: boolean, success: boolean, recipient: string, messageId?: string, response?: string, error?: string, provider?: string }>}
    */
-  async sendTestEmail({ recipient, subject = 'RicozAnalytics SMTP Test Verification' }) {
+  async sendTestEmail({ recipient, subject = 'RicozAnalytics Test Verification' }) {
     if (!recipient) {
       return { attempted: false, success: false, recipient: '', error: 'Recipient email address is required' };
     }
 
-    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-    const provider = this._getProviderName(host);
+    const provider = this.getProvider();
     const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'ricozanalytics@gmail.com';
 
     if (!this.isConfigured()) {
@@ -384,7 +761,7 @@ class EmailService {
         success: false,
         recipient,
         provider,
-        error: `${provider} SMTP transport not configured. Missing: ${status.missingVars.join(', ')}`
+        error: `${provider} not configured. Missing: ${status.missingVars.join(', ')}`
       };
     }
 
@@ -402,7 +779,7 @@ class EmailService {
             <span style="color: #10b981;">RICOZ</span> ANALYTICS
           </h1>
           <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8; font-weight: 500;">
-            SMTP Delivery Verification Dispatcher
+            ${provider} Delivery Verification Dispatcher
           </p>
         </div>
 
@@ -411,7 +788,7 @@ class EmailService {
             Email Delivery Confirmed ✅
           </h2>
           <p style="font-size: 14px; color: #64748b; margin: 0; line-height: 1.5;">
-            This test email confirms that the <strong>${provider} SMTP</strong> transport configured on RicozAnalytics is active, authenticated, and successfully routing outbound messages to your mailbox.
+            This test email confirms that the <strong>${provider}</strong> delivery transport configured on RicozAnalytics is active, authenticated, and successfully routing outbound messages to your mailbox.
           </p>
         </div>
 
@@ -419,11 +796,7 @@ class EmailService {
           <table style="width: 100%; border-collapse: collapse;">
             <tr>
               <td style="padding: 6px 0; color: #64748b; font-weight: 600; width: 35%;">Provider:</td>
-              <td style="padding: 6px 0; color: #0f172a; font-weight: 700;">${provider} SMTP</td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Host:</td>
-              <td style="padding: 6px 0; color: #0f172a; font-family: monospace;">${host}</td>
+              <td style="padding: 6px 0; color: #0f172a; font-weight: 700;">${provider}</td>
             </tr>
             <tr>
               <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Sender:</td>
@@ -442,7 +815,7 @@ class EmailService {
 
         <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 12px 16px; border-radius: 4px; margin-bottom: 20px;">
           <p style="margin: 0; font-size: 13px; color: #065f46; line-height: 1.4;">
-            <strong>Diagnostics Succeeded:</strong> Transport verification passed and Google SMTP accepted delivery.
+            <strong>Diagnostics Succeeded:</strong> Transport verification passed and ${provider} accepted delivery.
           </p>
         </div>
 
@@ -452,6 +825,44 @@ class EmailService {
       </div>
     `;
 
+    console.log(`[EmailService] 📨 Attempting test email dispatch to: ${recipient} via ${provider}`);
+
+    if (this.isBrevo()) {
+      try {
+        const brevoRes = await this._sendBrevoEmail({
+          to: recipient,
+          subject: `[RicozAnalytics] ${subject}`,
+          htmlContent,
+          textContent: `RicozAnalytics Test Delivery: Brevo API connection and delivery verified successfully.\nProvider: Brevo\nSender: ${fromEmail}\nRecipient: ${recipient}\nTimestamp: ${timestamp}`,
+          senderName: 'RicozAnalytics',
+          senderEmail: fromEmail
+        });
+        console.log(`[EmailService] ✅ Test email dispatched via Brevo successfully to: ${recipient}`);
+        console.log(`  -> Message ID: ${brevoRes.messageId}`);
+        return {
+          attempted: true,
+          success: true,
+          provider: 'Brevo',
+          recipient,
+          messageId: brevoRes.messageId,
+          response: brevoRes.response,
+          accepted: [recipient],
+          rejected: []
+        };
+      } catch (err) {
+        console.error(`[EmailService] ❌ Test email dispatch via Brevo failed to ${recipient}:`, err.message);
+        return {
+          attempted: true,
+          success: false,
+          provider: 'Brevo',
+          recipient,
+          error: err.message,
+          code: err.code || 'BREVO_SEND_FAILED'
+        };
+      }
+    }
+
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
     const mailOptions = {
       from: `"RicozAnalytics" <${fromEmail}>`,
       to: recipient,
@@ -459,8 +870,6 @@ class EmailService {
       html: htmlContent,
       text: `RicozAnalytics Test Delivery: SMTP connection and delivery verified successfully.\nProvider: ${provider}\nSender: ${fromEmail}\nRecipient: ${recipient}\nTimestamp: ${timestamp}`
     };
-
-    console.log(`[EmailService] 📨 Attempting test email dispatch to: ${recipient} via ${provider}`);
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
@@ -476,7 +885,7 @@ class EmailService {
         messageId: info.messageId,
         response: info.response || '250 OK',
         accepted: info.accepted || [recipient],
-        rejected: info.rejected || []
+        rejected: []
       };
     } catch (err) {
       console.error(`[EmailService] ❌ Test email dispatch failed to ${recipient}:`, err.message);
@@ -566,8 +975,7 @@ class EmailService {
     notes = null,
     requestedAt = new Date()
   }) {
-    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-    const provider = this._getProviderName(host);
+    const provider = this.getProvider();
     const recipient = process.env.DEMO_REQUEST_EMAIL || process.env.SMTP_USER || 'ricozanalytics@gmail.com';
     const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'ricozanalytics@gmail.com';
     const formattedDate = new Date(requestedAt).toLocaleString('en-US', {
@@ -582,8 +990,9 @@ class EmailService {
         attempted: false,
         success: false,
         recipient,
-        error: `${provider} SMTP transport not configured. Missing: ${status.missingVars.join(', ')}`,
-        code: 'NOT_CONFIGURED'
+        error: `${provider} transport not configured. Missing: ${status.missingVars.join(', ')}`,
+        code: 'NOT_CONFIGURED',
+        provider
       };
     }
 
@@ -616,6 +1025,41 @@ class EmailService {
       </div>
     `;
 
+    if (this.isBrevo()) {
+      try {
+        const brevoResult = await this._sendBrevoEmail({
+          to: recipient,
+          subject: `New RicozAnalytics Demo Request: ${fullName} (${company})`,
+          htmlContent,
+          replyTo: { email: workEmail, name: fullName },
+          senderName: 'RicozAnalytics Demo Portal',
+          senderEmail: fromEmail
+        });
+
+        console.log(`[EmailService] ✅ Internal demo notification delivered via Brevo to ${recipient} (${brevoResult.messageId})`);
+        return {
+          attempted: true,
+          success: true,
+          recipient,
+          provider: 'Brevo',
+          messageId: brevoResult.messageId,
+          response: brevoResult.response
+        };
+      } catch (err) {
+        console.error(`[EmailService] ❌ Internal demo notification failed via Brevo to ${recipient}:`, err.message);
+        return {
+          attempted: true,
+          success: false,
+          recipient,
+          provider: 'Brevo',
+          error: err.message,
+          code: err.code || 'BREVO_DISPATCH_FAILED',
+          isTransient: err.code === 'ETIMEDOUT' || (err.statusCode && err.statusCode >= 500)
+        };
+      }
+    }
+
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
     const mailOptions = {
       from: `"RicozAnalytics Demo Portal" <${fromEmail}>`,
       to: recipient,
@@ -631,6 +1075,7 @@ class EmailService {
         attempted: true,
         success: true,
         recipient,
+        provider,
         messageId: info.messageId,
         response: info.response || '250 OK'
       };
@@ -641,6 +1086,7 @@ class EmailService {
         attempted: true,
         success: false,
         recipient,
+        provider,
         error: classification.message,
         code: classification.code,
         isQuotaError: classification.isQuotaError,
@@ -669,8 +1115,7 @@ class EmailService {
       };
     }
 
-    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-    const provider = this._getProviderName(host);
+    const provider = this.getProvider();
     const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'ricozanalytics@gmail.com';
 
     if (!this.isConfigured()) {
@@ -678,8 +1123,9 @@ class EmailService {
         attempted: false,
         success: false,
         recipient: workEmail,
-        error: 'SMTP transport not configured',
-        code: 'NOT_CONFIGURED'
+        error: `${provider} transport not configured`,
+        code: 'NOT_CONFIGURED',
+        provider
       };
     }
 
@@ -713,6 +1159,41 @@ class EmailService {
       </div>
     `;
 
+    if (this.isBrevo()) {
+      try {
+        const brevoResult = await this._sendBrevoEmail({
+          to: [{ email: workEmail, name: fullName }],
+          subject: `We've received your RicozAnalytics demo request, ${fullName}`,
+          htmlContent: prospectHtml,
+          replyTo: { email: fromEmail, name: 'RicozAnalytics Team' },
+          senderName: 'RicozAnalytics Team',
+          senderEmail: fromEmail
+        });
+
+        console.log(`[EmailService] ✅ Prospect confirmation delivered via Brevo to ${workEmail} (${brevoResult.messageId})`);
+        return {
+          attempted: true,
+          success: true,
+          recipient: workEmail,
+          provider: 'Brevo',
+          messageId: brevoResult.messageId,
+          response: brevoResult.response
+        };
+      } catch (err) {
+        console.warn(`[EmailService] ⚠️ Prospect confirmation failed via Brevo to ${workEmail}:`, err.message);
+        return {
+          attempted: true,
+          success: false,
+          recipient: workEmail,
+          provider: 'Brevo',
+          error: err.message,
+          code: err.code || 'BREVO_DISPATCH_FAILED',
+          isTransient: err.code === 'ETIMEDOUT' || (err.statusCode && err.statusCode >= 500)
+        };
+      }
+    }
+
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
     try {
       const info = await this.transporter.sendMail({
         from: `"RicozAnalytics Team" <${fromEmail}>`,
@@ -725,6 +1206,7 @@ class EmailService {
         attempted: true,
         success: true,
         recipient: workEmail,
+        provider,
         messageId: info.messageId,
         response: info.response || '250 OK'
       };
@@ -735,6 +1217,7 @@ class EmailService {
         attempted: true,
         success: false,
         recipient: workEmail,
+        provider,
         error: classification.message,
         code: classification.code,
         isQuotaError: classification.isQuotaError,
@@ -813,8 +1296,7 @@ class EmailService {
       return { attempted: false, success: false, recipient: '', error: 'Recipient email is required' };
     }
 
-    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-    const provider = this._getProviderName(host);
+    const provider = this.getProvider();
     const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'ricozanalytics@gmail.com';
     const link = verifyUrl || `http://localhost:5173/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
 
@@ -839,7 +1321,7 @@ class EmailService {
         console.log(`[EmailService] 🧪 [Explicit Test Routing Active] Placeholder "${email}" routed to test inbox: "${testInbox}"`);
       } else {
         // Safe mock for placeholder domains when test inbox routing is not explicitly enabled or mock mode is requested
-        console.log(`[EmailService] 🧪 Safe Mock: Skipping SMTP delivery for placeholder address "${email}" (Credentials & tokens safely generated in DB)`);
+        console.log(`[EmailService] 🧪 Safe Mock: Skipping delivery for placeholder address "${email}" (Credentials & tokens safely generated in DB)`);
         return {
           attempted: true,
           mocked: true,
@@ -854,13 +1336,13 @@ class EmailService {
 
     if (!this.isConfigured()) {
       const status = this.getSmtpStatus();
-      console.warn(`[EmailService] ⚠️ ${provider} SMTP transport not configured. Verification email skipped for: ${email}. Missing: ${status.missingVars.join(', ')}`);
+      console.warn(`[EmailService] ⚠️ ${provider} transport not configured. Verification email skipped for: ${email}. Missing: ${status.missingVars.join(', ')}`);
       return {
         attempted: false,
         success: false,
         recipient: email,
         provider,
-        error: `${provider} SMTP transport not configured. Missing: ${status.missingVars.join(', ')}`
+        error: `${provider} transport not configured. Missing: ${status.missingVars.join(', ')}`
       };
     }
 
@@ -952,6 +1434,47 @@ class EmailService {
     const subjectPrefix = isTestRedirect ? `[TEST for ${email}] ` : '';
     const subject = `${subjectPrefix}[RicozAnalytics] Verify your email address (${otp})`;
 
+    if (this.isBrevo()) {
+      try {
+        const brevoResult = await this._sendBrevoEmail({
+          to: [{ email: deliveryRecipient, name: recipientName }],
+          subject,
+          htmlContent,
+          textContent,
+          replyTo: { email: fromEmail, name: 'RicozAnalytics Security' },
+          senderName: 'RicozAnalytics Security',
+          senderEmail: fromEmail
+        });
+
+        console.log(`[EmailService] ✅ Verification email dispatched via Brevo successfully to: ${deliveryRecipient}${isTestRedirect ? ` (intended: ${email})` : ''}`);
+        console.log(`  -> Message ID: ${brevoResult.messageId}`);
+
+        return {
+          attempted: true,
+          success: true,
+          recipient: email,
+          deliveredTo: deliveryRecipient,
+          isTestRedirect,
+          provider: 'Brevo',
+          messageId: brevoResult.messageId,
+          response: brevoResult.response
+        };
+      } catch (err) {
+        console.error(`[EmailService] ❌ Verification email Brevo dispatch failed to ${deliveryRecipient}:`, err.message);
+        return {
+          attempted: true,
+          success: false,
+          recipient: email,
+          deliveredTo: deliveryRecipient,
+          isTestRedirect,
+          provider: 'Brevo',
+          error: err.message,
+          code: err.code || 'BREVO_DISPATCH_FAILED'
+        };
+      }
+    }
+
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
     const mailOptions = {
       from: `"RicozAnalytics Security" <${fromEmail}>`,
       to: deliveryRecipient,
@@ -1039,6 +1562,34 @@ class EmailService {
       };
     }
 
+    if (this.isBrevo()) {
+      try {
+        const brevoResult = await this._sendBrevoEmail({
+          to: [{ email, name: email.split('@')[0] }],
+          subject: `Invitation to join ${orgName} on RicozAnalytics`,
+          htmlContent,
+          senderName: 'RicozAnalytics Team',
+          senderEmail: fromEmail
+        });
+        return {
+          attempted: true,
+          success: true,
+          recipient: email,
+          provider: 'Brevo',
+          messageId: brevoResult.messageId
+        };
+      } catch (err) {
+        console.warn(`[EmailService] Invitation email Brevo warning: ${err.message}`);
+        return {
+          attempted: true,
+          success: false,
+          provider: 'Brevo',
+          recipient: email,
+          error: err.message
+        };
+      }
+    }
+
     try {
       const info = await this.transporter.sendMail({
         from: `"RicozAnalytics Team" <${fromEmail}>`,
@@ -1110,6 +1661,34 @@ class EmailService {
         token,
         resetUrl: link
       };
+    }
+
+    if (this.isBrevo()) {
+      try {
+        const brevoResult = await this._sendBrevoEmail({
+          to: [{ email, name: name || 'there' }],
+          subject: 'Reset your RicozAnalytics password',
+          htmlContent,
+          senderName: 'RicozAnalytics Security',
+          senderEmail: fromEmail
+        });
+        return {
+          attempted: true,
+          success: true,
+          recipient: email,
+          provider: 'Brevo',
+          messageId: brevoResult.messageId
+        };
+      } catch (err) {
+        console.warn(`[EmailService] Password reset email Brevo warning: ${err.message}`);
+        return {
+          attempted: true,
+          success: false,
+          provider: 'Brevo',
+          recipient: email,
+          error: err.message
+        };
+      }
     }
 
     try {
