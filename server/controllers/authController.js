@@ -722,9 +722,9 @@ const login = async (req, res, next) => {
         success: false,
         error: {
           code: 'ACCOUNT_NOT_FOUND',
-          message: 'No account found with this email. Please register to create your workspace, or verify your email if you recently registered.'
+          message: 'No account found with this email. Please register to create your workspace.'
         },
-        message: 'No account found with this email. Please register to create your workspace, or verify your email if you recently registered.',
+        message: 'No account found with this email. Please register to create your workspace.',
         requiresRegistration: true,
         suggestRegister: true,
         email: cleanEmail

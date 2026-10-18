@@ -62,19 +62,41 @@ export default function LoginPage() {
       navigate(from, { replace: true });
     } catch (err) {
       const errMsg = err.message || 'Invalid email or password.';
-      setError(errMsg);
+      const errCode = err.data?.error?.code || err.data?.code;
+
       if (err.statusCode === 402 || err.data?.requiresSubscription) {
         navigate('/billing', { state: { trialExpired: true, email: formData.email } });
         return;
       }
-      if (err.data?.requiresVerification || errMsg.toLowerCase().includes('verify your email')) {
-        setUnverifiedEmail(err.data?.email || formData.email);
+
+      // Check unregistered account first
+      const isUnregistered = 
+        errCode === 'ACCOUNT_NOT_FOUND' || 
+        err.data?.suggestRegister === true || 
+        err.data?.requiresRegistration === true || 
+        errMsg.toLowerCase().includes('no account found') ||
+        errMsg.toLowerCase().includes('please register');
+
+      if (isUnregistered) {
+        setUnregisteredEmail(err.data?.email || formData.email.trim());
+        setError('');
         return;
       }
-      if (err.data?.suggestRegister || err.data?.requiresRegistration || err.data?.error?.code === 'ACCOUNT_NOT_FOUND' || errMsg.toLowerCase().includes('no account found')) {
-        setUnregisteredEmail(err.data?.email || formData.email);
+
+      // Check unverified account only if account exists
+      const isUnverified = 
+        errCode === 'EMAIL_NOT_VERIFIED' || 
+        err.data?.requiresVerification === true || 
+        (errMsg.toLowerCase().includes('verify your email') && !errMsg.toLowerCase().includes('no account'));
+
+      if (isUnverified) {
+        setUnverifiedEmail(err.data?.email || formData.email.trim());
+        setError('');
         return;
       }
+
+      // Standard error (e.g. INVALID_CREDENTIALS / incorrect password)
+      setError(errMsg);
     } finally {
       setIsLoading(false);
     }
@@ -113,22 +135,23 @@ export default function LoginPage() {
         {/* Form Card */}
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-sm space-y-5">
           {unregisteredEmail ? (
-            <div className="rounded-lg border border-blue-200 dark:border-blue-800/60 bg-blue-50 dark:bg-blue-950/40 p-3.5 text-xs text-blue-900 dark:text-blue-200 space-y-2">
+            <div className="rounded-lg border border-blue-200 dark:border-blue-800/60 bg-blue-50 dark:bg-blue-950/40 p-4 text-xs text-blue-900 dark:text-blue-200 space-y-3">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
                 <span className="font-bold">No Account Found</span>
               </div>
-              <p className="text-[11px] text-blue-800 dark:text-blue-300">
-                No active enterprise account was found for <span className="font-mono font-semibold">{unregisteredEmail}</span>. Would you like to create a new workspace?
+              <p className="text-xs text-blue-800 dark:text-blue-300">
+                No account found. Please register to create your workspace.
               </p>
               <div>
-                <Link
-                  to="/register"
-                  state={{ email: unregisteredEmail }}
-                  className="inline-flex items-center font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 underline"
+                <button
+                  type="button"
+                  id="register-redirect-btn"
+                  onClick={() => navigate(`/register?email=${encodeURIComponent(unregisteredEmail)}`, { state: { email: unregisteredEmail } })}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-lg bg-rose-600 hover:bg-rose-700 text-white transition-colors duration-150 shadow-sm"
                 >
-                  Register New Enterprise Workspace &rarr;
-                </Link>
+                  Register to Create Workspace &rarr;
+                </button>
               </div>
             </div>
           ) : unverifiedEmail ? (

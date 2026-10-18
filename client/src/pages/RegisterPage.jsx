@@ -10,16 +10,31 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const queryEmail = new URLSearchParams(location.search).get('email') || '';
+
   // Mode: 'register' | 'verify'
   const [step, setStep] = useState(location.state?.verifyEmail ? 'verify' : 'register');
 
   const [formData, setFormData] = useState({
     name: location.state?.name || '',
-    email: location.state?.email || location.state?.verifyEmail || '',
+    email: (location.state?.email || location.state?.verifyEmail || queryEmail || '').trim(),
     organization_name: '',
     password: '',
     confirmPassword: ''
   });
+
+  // Sync pre-filled email if navigation state or query param changes
+  useEffect(() => {
+    const qEmail = new URLSearchParams(location.search).get('email') || '';
+    const stateEmail = location.state?.email || location.state?.verifyEmail || '';
+    const incomingEmail = (stateEmail || qEmail).trim();
+    if (incomingEmail && (!formData.email || formData.email !== incomingEmail)) {
+      setFormData((prev) => ({
+        ...prev,
+        email: incomingEmail
+      }));
+    }
+  }, [location.search, location.state]);
 
   // 6 separate digits for OTP
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
