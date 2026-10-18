@@ -926,27 +926,50 @@ const getInvitationDetails = async (req, res, next) => {
   try {
     const { token } = req.params;
     if (!token) {
-      return res.status(400).json({ success: false, message: 'Invitation token is required.' });
+      return res.status(400).json({ 
+        success: false, 
+        error: { code: 'INVALID_TOKEN', message: 'Invitation token is required.' },
+        message: 'Invitation token is required.' 
+      });
     }
 
     const invitation = await InvitationModel.findByToken(token);
     if (!invitation) {
       return res.status(404).json({
         success: false,
+        error: { code: 'INVITATION_NOT_FOUND', message: 'Invitation not found or invalid link.' },
         message: 'Invitation not found or invalid.'
+      });
+    }
+
+    if (invitation.status === 'revoked') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVITATION_REVOKED', message: 'This invitation has been revoked by an administrator.' },
+        message: 'This invitation has been revoked by an administrator.'
+      });
+    }
+
+    if (invitation.status === 'accepted') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVITATION_ALREADY_USED', message: 'This invitation has already been accepted.' },
+        message: 'This invitation has already been accepted.'
       });
     }
 
     if (invitation.status !== 'pending') {
       return res.status(400).json({
         success: false,
-        message: `This invitation has already been ${invitation.status}.`
+        error: { code: 'INVITATION_INVALID', message: `This invitation is no longer valid (status: ${invitation.status}).` },
+        message: `This invitation is no longer valid (status: ${invitation.status}).`
       });
     }
 
     if (new Date() > new Date(invitation.expires_at)) {
       return res.status(400).json({
         success: false,
+        error: { code: 'INVITATION_EXPIRED', message: 'This invitation has expired. Please ask your administrator to send a new invite.' },
         message: 'This invitation has expired. Please ask your administrator to send a new invite.'
       });
     }
@@ -956,9 +979,13 @@ const getInvitationDetails = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       invitation: {
+        id: invitation.id,
         email: invitation.email,
         role: invitation.role,
+        organizationId: invitation.organization_id,
+        organization_id: invitation.organization_id,
         organizationName: invitation.organization_name,
+        organization_name: invitation.organization_name,
         inviterName: invitation.inviter_name,
         expiresAt: invitation.expires_at,
         isExistingUser: Boolean(existingUser)
@@ -972,129 +999,56 @@ const getInvitationDetails = async (req, res, next) => {
 /**
  * POST /api/auth/accept-invite
  * Accept team member invitation and join the inviting organization
- * Supports both new users (name & password) and existing users (password verification or authenticated session)
- * Assigns authorized server-side role without trusting any role supplied by the invitee.
+ * Enforces organization-specific invitation acceptance inside an atomic transaction:
+ * - Authoritative destination organization and role resolved solely from database invitation record.
+ * - Single transaction guarantees invitation status update and user assignment are atomic.
+ * - Never trusts client-supplied organization ID or role.
+ * - Prevents cross-organization hijacking, token replay, and preserves organization owners.
  */
 const acceptInvite = async (req, res, next) => {
   try {
     const { token, name, password } = req.body;
 
     if (!token) {
-      return res.status(400).json({ success: false, message: 'Invitation token is required.' });
-    }
-
-    const invitation = await InvitationModel.findByToken(token);
-    if (!invitation) {
-      return res.status(404).json({ success: false, message: 'Invitation not found or invalid.' });
-    }
-
-    if (invitation.status !== 'pending') {
-      return res.status(400).json({ success: false, message: `This invitation has already been ${invitation.status}.` });
-    }
-
-    if (new Date() > new Date(invitation.expires_at)) {
-      return res.status(400).json({ success: false, message: 'This invitation has expired. Please ask your administrator to send a new invite.' });
-    }
-
-    const cleanEmail = invitation.email.toLowerCase();
-
-    // Check if user already exists
-    let user = await UserModel.findByEmail(cleanEmail);
-
-    if (user) {
-      // Existing user: verify email ownership via credentials or active authenticated session
-      let isVerified = false;
-      if (req.user && String(req.user.email).toLowerCase() === cleanEmail) {
-        isVerified = true;
-      } else if (password) {
-        const matches = await bcrypt.compare(password, user.password_hash || '');
-        const matchesAlt = user.password_hash_alt ? await bcrypt.compare(password, user.password_hash_alt) : false;
-        if (matches || matchesAlt) {
-          isVerified = true;
-        }
-      }
-
-      if (!isVerified) {
-        return res.status(401).json({
-          success: false,
-          error: {
-            code: 'INVALID_CREDENTIALS',
-            message: 'An account already exists with this email address. Please provide your existing password to verify account ownership.'
-          },
-          message: 'An account already exists with this email address. Please provide your existing password to verify account ownership.'
-        });
-      }
-
-      // Check seat limit if migrating from a different organization
-      if (String(user.organization_id) !== String(invitation.organization_id)) {
-        const usage = await subscriptionService.getOrganizationUsage(invitation.organization_id);
-        const userLimit = usage.users.limit;
-        if (userLimit !== -1 && usage.users.membersCount >= userLimit) {
-          return res.status(403).json({
-            success: false,
-            error: {
-              code: 'RESOURCE_LIMIT_EXCEEDED',
-              message: `Your organization has reached the maximum of ${userLimit} active team members for the current plan. Please upgrade to add more members.`
-            },
-            message: `Your organization has reached the maximum of ${userLimit} active team members for the current plan. Please upgrade to add more members.`,
-            requiresUpgrade: true,
-            limit: userLimit,
-            currentCount: usage.users.membersCount
-          });
-        }
-      }
-
-      // Update organization and assign authorized server-side role (never trust client role)
-      const updated = await UserModel.updateOrganizationAndRole(user.id, invitation.organization_id, invitation.role);
-      await UserModel.markEmailVerified(cleanEmail);
-      const authMiddleware = require('../middleware/authMiddleware');
-      if (authMiddleware.clearUserAuthCache) {
-        authMiddleware.clearUserAuthCache(cleanEmail);
-        if (user.id) authMiddleware.clearUserAuthCache(user.id);
-      }
-      user = updated || user;
-      user.organization_id = invitation.organization_id;
-      user.role = invitation.role;
-    } else {
-      if (!password || password.length < 6) {
-        return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
-      }
-
-      // Check that active members have not exceeded the plan limit
-      const usage = await subscriptionService.getOrganizationUsage(invitation.organization_id);
-      const userLimit = usage.users.limit;
-      if (userLimit !== -1 && usage.users.membersCount >= userLimit) {
-        return res.status(403).json({
-          success: false,
-          error: {
-            code: 'RESOURCE_LIMIT_EXCEEDED',
-            message: `Your organization has reached the maximum of ${userLimit} active team members for the current plan. Please upgrade to add more members.`
-          },
-          message: `Your organization has reached the maximum of ${userLimit} active team members for the current plan. Please upgrade to add more members.`,
-          requiresUpgrade: true,
-          limit: userLimit,
-          currentCount: usage.users.membersCount
-        });
-      }
-
-      const passwordHash = await bcrypt.hash(password, 10);
-      user = await UserModel.create({
-        name: (name || cleanEmail.split('@')[0]).trim(),
-        email: cleanEmail,
-        password_hash: passwordHash,
-        role: invitation.role, // Server-enforced from invitation
-        organization_id: invitation.organization_id,
-        status: 'active'
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_TOKEN', message: 'Invitation token is required.' },
+        message: 'Invitation token is required.'
       });
-      await UserModel.markEmailVerified(cleanEmail);
-      await UserModel.updateLastLogin(user.id).catch(() => null);
     }
 
-    // Invalidate subscription cache so accepted seat is accounted for
+    // Resolve optional authenticated user from session or Bearer header
+    let authenticatedUser = req.user || null;
+    if (!authenticatedUser && req.headers && req.headers['authorization']) {
+      try {
+        const authHeader = req.headers['authorization'];
+        if (authHeader.startsWith('Bearer ')) {
+          const jwtToken = authHeader.substring(7).trim();
+          const decoded = jwt.verify(jwtToken, config.jwtSecret);
+          if (decoded && decoded.email) {
+            authenticatedUser = decoded;
+          }
+        }
+      } catch (_) {}
+    }
+
+    // Execute atomic acceptance transaction
+    const { user, invitation } = await InvitationModel.acceptInTransaction({
+      token,
+      name,
+      password,
+      authenticatedUser
+    });
+
+    // Invalidate subscription cache so accepted seat is accounted for immediately
     subscriptionService.clearOrganizationCache(invitation.organization_id);
 
-    // Mark invitation accepted
-    await InvitationModel.markAccepted(invitation.id);
+    // Clear user auth cache
+    const authMiddleware = require('../middleware/authMiddleware');
+    if (authMiddleware.clearUserAuthCache) {
+      authMiddleware.clearUserAuthCache(user.email);
+      if (user.id) authMiddleware.clearUserAuthCache(user.id);
+    }
 
     // Audit log
     await logAuditEvent({
@@ -1103,7 +1057,7 @@ const acceptInvite = async (req, res, next) => {
       action: AUDIT_ACTIONS.USER_REGISTERED,
       resourceType: 'auth',
       resourceId: user.id,
-      description: `User ${user.email} accepted invitation and joined as ${invitation.role}`,
+      description: `User ${user.email} accepted invitation and joined ${invitation.organization_name} as ${invitation.role}`,
       metadata: { role: invitation.role, invitationId: invitation.id },
       req
     }).catch(() => null);
@@ -1124,6 +1078,16 @@ const acceptInvite = async (req, res, next) => {
       }
     });
   } catch (err) {
+    if (err.code && (err.code.startsWith('INVITATION_') || err.code === 'INVALID_CREDENTIALS' || err.code === 'RESOURCE_LIMIT_EXCEEDED' || err.code === 'INVALID_PASSWORD' || err.code === 'INVALID_TOKEN' || err.code === 'OWNER_CANNOT_TRANSFER')) {
+      return res.status(err.statusCode || 400).json({
+        success: false,
+        error: {
+          code: err.code,
+          message: err.message
+        },
+        message: err.message
+      });
+    }
     next(err);
   }
 };

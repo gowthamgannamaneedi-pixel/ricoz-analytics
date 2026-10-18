@@ -630,7 +630,7 @@ function handleFallbackQuery(text, params = []) {
     const newInvite = {
       id: `00000000-0000-0000-0000-00000000000${nextInvitationId++}`,
       organization_id: String(organization_id),
-      invited_by: Number(invited_by),
+      invited_by: String(invited_by),
       email: String(email).toLowerCase(),
       role: String(role).toLowerCase(),
       token: String(token),
@@ -669,7 +669,7 @@ function handleFallbackQuery(text, params = []) {
     );
     if (inv) {
       const org = fallbackOrganizations.find(o => String(o.id) === String(inv.organization_id));
-      const inviter = fallbackUsers.find(u => Number(u.id) === Number(inv.invited_by));
+      const inviter = fallbackUsers.find(u => String(u.id) === String(inv.invited_by));
       return Promise.resolve({
         rows: [{
           ...inv,
@@ -683,12 +683,12 @@ function handleFallbackQuery(text, params = []) {
     return Promise.resolve({ rows: [], rowCount: 0 });
   }
 
-  if (normalizedSql.includes('from invitations') && normalizedSql.includes('organization_id = $1')) {
+  if (normalizedSql.includes('from invitations') && (normalizedSql.includes('organization_id = $1') || normalizedSql.includes('organization_id::text = $1::text'))) {
     const orgId = String(params[0]);
     const list = fallbackInvitations
       .filter(i => String(i.organization_id) === orgId)
       .map(i => {
-        const inviter = fallbackUsers.find(u => Number(u.id) === Number(i.invited_by));
+        const inviter = fallbackUsers.find(u => String(u.id) === String(i.invited_by));
         return {
           ...i,
           inviter_name: inviter?.name || 'An administrator'

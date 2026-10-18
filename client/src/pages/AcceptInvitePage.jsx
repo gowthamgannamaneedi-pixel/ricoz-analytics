@@ -19,6 +19,7 @@ export default function AcceptInvitePage() {
   const [submitting, setSubmitting] = useState(false);
   const [inviteDetails, setInviteDetails] = useState(null);
   const [error, setError] = useState('');
+  const [errorCode, setErrorCode] = useState('');
   const [success, setSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -30,6 +31,7 @@ export default function AcceptInvitePage() {
   useEffect(() => {
     if (!token) {
       setError('Missing invitation token. Please check the link from your email.');
+      setErrorCode('INVALID_TOKEN');
       setLoading(false);
       return;
     }
@@ -39,6 +41,7 @@ export default function AcceptInvitePage() {
       try {
         setLoading(true);
         setError('');
+        setErrorCode('');
         const res = await getInvitationDetailsApi(token);
         if (isMounted) {
           setInviteDetails(res.invitation);
@@ -46,6 +49,7 @@ export default function AcceptInvitePage() {
       } catch (err) {
         if (isMounted) {
           setError(err.message || 'Invitation is invalid or has expired.');
+          setErrorCode(err.data?.error?.code || err.data?.code || '');
         }
       } finally {
         if (isMounted) {
@@ -118,7 +122,25 @@ export default function AcceptInvitePage() {
       }
     } catch (err) {
       setError(err.message || 'Failed to accept invitation. Please try again.');
+      setErrorCode(err.data?.error?.code || err.data?.code || '');
       setSubmitting(false);
+    }
+  };
+
+  const orgName = inviteDetails?.organization_name || inviteDetails?.organizationName || 'your team';
+
+  const getErrorTitle = () => {
+    switch (errorCode) {
+      case 'INVITATION_REVOKED':
+        return 'Invitation Revoked';
+      case 'INVITATION_ALREADY_USED':
+        return 'Invitation Already Accepted';
+      case 'INVITATION_EXPIRED':
+        return 'Invitation Expired';
+      case 'INVITATION_NOT_FOUND':
+        return 'Invitation Not Found';
+      default:
+        return 'Invitation Expired or Invalid';
     }
   };
 
@@ -150,7 +172,7 @@ export default function AcceptInvitePage() {
                 <AlertCircle className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Invitation Expired or Invalid</h3>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">{getErrorTitle()}</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{error}</p>
               </div>
               <div className="pt-3">
@@ -162,7 +184,7 @@ export default function AcceptInvitePage() {
           ) : success ? (
             <div className="text-center py-4 space-y-3">
               <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400 mx-auto animate-bounce" />
-              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Welcome to {inviteDetails?.organization_name}!</h3>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Welcome to {orgName}!</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Your account is active with role <span className="font-bold text-slate-800 dark:text-slate-200 uppercase">{inviteDetails?.role}</span>. Redirecting to workspace...
               </p>
@@ -175,7 +197,7 @@ export default function AcceptInvitePage() {
                   <Building2 className="w-6 h-6" />
                 </div>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-                  Join {inviteDetails?.organization_name}
+                  Join {orgName}
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   You've been invited to join as an enterprise{' '}

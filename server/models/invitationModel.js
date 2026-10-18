@@ -44,7 +44,7 @@ const InvitationModel = {
     return await withTransaction(async (client) => {
       // 1. Row-level lock on organization to serialize concurrent seat allocations
       const orgRes = await client.query(
-        'SELECT id, name, plan, subscription_status FROM organizations WHERE id = $1 FOR UPDATE',
+        'SELECT id, name, plan, subscription_status FROM organizations WHERE id::text = $1::text FOR UPDATE',
         [organizationId]
       );
       const org = orgRes.rows[0];
@@ -60,14 +60,14 @@ const InvitationModel = {
 
       // 3. Count active members (excluding deactivated)
       const memberRes = await client.query(
-        `SELECT COUNT(*)::int as count FROM users WHERE organization_id = $1 AND COALESCE(status, 'active') != 'deactivated'`,
+        `SELECT COUNT(*)::int as count FROM users WHERE organization_id::text = $1::text AND COALESCE(status, 'active') != 'deactivated'`,
         [organizationId]
       );
       const membersCount = Number(memberRes.rows[0]?.count || 0);
 
       // 4. Count pending unexpired invitations
       const pendingRes = await client.query(
-        `SELECT COUNT(*)::int as count FROM invitations WHERE organization_id = $1 AND status = 'pending' AND expires_at > NOW()`,
+        `SELECT COUNT(*)::int as count FROM invitations WHERE organization_id::text = $1::text AND status = 'pending' AND expires_at > NOW()`,
         [organizationId]
       );
       const pendingCount = Number(pendingRes.rows[0]?.count || 0);
@@ -75,7 +75,7 @@ const InvitationModel = {
 
       // 5. Check if email already has an active pending invitation
       const existingPendingRes = await client.query(
-        `SELECT id, token, expires_at FROM invitations WHERE organization_id = $1 AND LOWER(email) = $2 AND status = 'pending' AND expires_at > NOW() LIMIT 1`,
+        `SELECT id, token, expires_at FROM invitations WHERE organization_id::text = $1::text AND LOWER(email) = $2 AND status = 'pending' AND expires_at > NOW() LIMIT 1`,
         [organizationId, cleanEmail]
       );
 
@@ -140,7 +140,9 @@ const InvitationModel = {
 
   /**
    * Find invitation by secure token or its SHA-256 hash
-   * Supports both raw token and hashed token lookups
+   * Supports both raw token and hashed token lookups.
+   * Uses explicit text casting for u.id = i.invited_by and o.id = i.organization_id
+   * to guarantee compatibility between UUID and VARCHAR columns.
    */
   async findByToken(token) {
     if (!token) return null;
@@ -163,8 +165,8 @@ const InvitationModel = {
         o.plan AS organization_plan,
         u.name AS inviter_name
       FROM invitations i
-      JOIN organizations o ON o.id = i.organization_id
-      LEFT JOIN users u ON u.id = i.invited_by
+      JOIN organizations o ON o.id::text = i.organization_id::text
+      LEFT JOIN users u ON u.id::text = i.invited_by::text
       WHERE i.token_hash = $1 OR i.token = $2 OR i.token_hash = $2
       LIMIT 1;
     `;
@@ -192,9 +194,9 @@ const InvitationModel = {
         o.plan AS organization_plan,
         u.name AS inviter_name
       FROM invitations i
-      JOIN organizations o ON o.id = i.organization_id
-      LEFT JOIN users u ON u.id = i.invited_by
-      WHERE i.id = $1 AND i.organization_id = $2
+      JOIN organizations o ON o.id::text = i.organization_id::text
+      LEFT JOIN users u ON u.id::text = i.invited_by::text
+      WHERE i.id::text = $1::text AND i.organization_id::text = $2::text
       LIMIT 1;
     `;
     const res = await db.query(sql, [id, organizationId]);
@@ -217,8 +219,8 @@ const InvitationModel = {
         i.created_at,
         u.name AS inviter_name
       FROM invitations i
-      LEFT JOIN users u ON u.id = i.invited_by
-      WHERE i.organization_id = $1
+      LEFT JOIN users u ON u.id::text = i.invited_by::text
+      WHERE i.organization_id::text = $1::text
       ORDER BY i.created_at DESC;
     `;
     const res = await db.query(sql, [organizationId]);
@@ -251,7 +253,7 @@ const InvitationModel = {
     const sql = `
       UPDATE invitations
       SET token = $1, token_hash = $2, expires_at = $3, status = 'pending', updated_at = CURRENT_TIMESTAMP
-      WHERE id = $4 AND organization_id = $5
+      WHERE id::text = $4::text AND organization_id::text = $5::text
       RETURNING id, organization_id, invited_by, email, role, token, token_hash, status, expires_at, created_at, updated_at;
     `;
     const res = await db.query(sql, [newRawToken, newTokenHash, expiresAt, id, organizationId]);
@@ -270,7 +272,7 @@ const InvitationModel = {
     const sql = `
       UPDATE invitations
       SET status = 'accepted', accepted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1
+      WHERE id::text = $1::text
       RETURNING *;
     `;
     const res = await queryExecutor.query(sql, [id]);
@@ -278,13 +280,13 @@ const InvitationModel = {
   },
 
   /**
-   * Revoke invitation (marks as revoked or deletes, freeing the reserved seat)
+   * Revoke invitation (marks as revoked, freeing the reserved seat)
    */
   async revoke(id, organizationId) {
     const sql = `
       UPDATE invitations
       SET status = 'revoked', updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1 AND organization_id = $2
+      WHERE id::text = $1::text AND organization_id::text = $2::text
       RETURNING *;
     `;
     const res = await db.query(sql, [id, organizationId]);
@@ -297,12 +299,211 @@ const InvitationModel = {
   async delete(id, organizationId) {
     const sql = `
       DELETE FROM invitations
-      WHERE id = $1 AND organization_id = $2
+      WHERE id::text = $1::text AND organization_id::text = $2::text
       RETURNING *;
     `;
     const res = await db.query(sql, [id, organizationId]);
     return res.rows[0] || null;
+  },
+
+  /**
+   * Atomically accept an invitation inside a single database transaction.
+   * Guarantees that:
+   * 1. Destination organization and role are authoritative solely from the DB invitation record.
+   * 2. Checks token validity, pending status, and unexpired timestamp.
+   * 3. Prevents token replay and concurrent race conditions via row lock.
+   * 4. For existing users: verifies password or authenticated session, preventing owner abandonment of owned orgs.
+   * 5. For new users: creates account with verified email and authoritative role.
+   * 6. Marks the invitation accepted in the SAME transaction.
+   */
+  async acceptInTransaction({ token, name, password, authenticatedUser = null }) {
+    if (!token) {
+      const err = new Error('Invitation token is required.');
+      err.statusCode = 400;
+      err.code = 'INVALID_TOKEN';
+      throw err;
+    }
+
+    const cleanToken = String(token).trim();
+    const tokenHash = crypto.createHash('sha256').update(cleanToken).digest('hex');
+
+    return await withTransaction(async (client) => {
+      // 1. Lock the invitation row for update
+      const inviteRes = await client.query(
+        `SELECT 
+           i.id,
+           i.organization_id,
+           i.invited_by,
+           i.email,
+           i.role,
+           i.token,
+           i.token_hash,
+           i.status,
+           i.expires_at,
+           i.created_at,
+           o.name AS organization_name,
+           o.plan AS organization_plan
+         FROM invitations i
+         JOIN organizations o ON o.id::text = i.organization_id::text
+         LEFT JOIN users u ON u.id::text = i.invited_by::text
+         WHERE (i.token_hash = $1 OR i.token = $2 OR i.token_hash = $2)
+         FOR UPDATE OF i`,
+        [tokenHash, cleanToken]
+      );
+
+      const invitation = inviteRes.rows[0];
+      if (!invitation) {
+        const err = new Error('Invitation not found or invalid link.');
+        err.statusCode = 404;
+        err.code = 'INVITATION_NOT_FOUND';
+        throw err;
+      }
+
+      if (invitation.status === 'revoked') {
+        const err = new Error('This invitation has been revoked by an administrator.');
+        err.statusCode = 400;
+        err.code = 'INVITATION_REVOKED';
+        throw err;
+      }
+
+      if (invitation.status === 'accepted') {
+        const err = new Error('This invitation has already been accepted.');
+        err.statusCode = 400;
+        err.code = 'INVITATION_ALREADY_USED';
+        throw err;
+      }
+
+      if (invitation.status !== 'pending') {
+        const err = new Error(`This invitation is no longer valid (status: ${invitation.status}).`);
+        err.statusCode = 400;
+        err.code = 'INVITATION_INVALID';
+        throw err;
+      }
+
+      if (new Date() > new Date(invitation.expires_at)) {
+        const err = new Error('This invitation has expired. Please ask your administrator to send a new invite.');
+        err.statusCode = 400;
+        err.code = 'INVITATION_EXPIRED';
+        throw err;
+      }
+
+      const cleanEmail = String(invitation.email).trim().toLowerCase();
+
+      // 2. Query user by email
+      const userRes = await client.query(
+        `SELECT id, name, email, role, organization_id, password_hash, password_hash_alt, status
+         FROM users
+         WHERE LOWER(email) = $1
+         LIMIT 1`,
+        [cleanEmail]
+      );
+
+      let user = userRes.rows[0] || null;
+
+      if (user) {
+        // Existing user: verify email ownership
+        let isVerified = false;
+        if (authenticatedUser && String(authenticatedUser.email).toLowerCase() === cleanEmail) {
+          isVerified = true;
+        } else if (password) {
+          const bcrypt = require('bcryptjs');
+          const matches = await bcrypt.compare(password, user.password_hash || '');
+          const matchesAlt = user.password_hash_alt ? await bcrypt.compare(password, user.password_hash_alt) : false;
+          if (matches || matchesAlt) {
+            isVerified = true;
+          }
+        }
+
+        if (!isVerified) {
+          const err = new Error('An account already exists with this email address. Please provide your existing password to verify account ownership.');
+          err.statusCode = 401;
+          err.code = 'INVALID_CREDENTIALS';
+          throw err;
+        }
+
+        // Prevent cross-organization hijacking of active organization owners
+        if (user.role === 'owner' && String(user.organization_id) !== String(invitation.organization_id)) {
+          const err = new Error('You are currently the owner of an existing organization. To join another organization, please transfer organization ownership or use a separate email address.');
+          err.statusCode = 403;
+          err.code = 'OWNER_CANNOT_TRANSFER';
+          throw err;
+        }
+
+        // Prevent duplicate membership or downgrade of existing owner within same org
+        if (String(user.organization_id) === String(invitation.organization_id)) {
+          const finalRole = user.role === 'owner' ? 'owner' : invitation.role;
+          await client.query(
+            `UPDATE users
+             SET role = $1, status = 'active', email_verified_at = COALESCE(email_verified_at, CURRENT_TIMESTAMP), updated_at = CURRENT_TIMESTAMP
+             WHERE id::text = $2::text`,
+            [finalRole, user.id]
+          );
+          user.role = finalRole;
+          user.status = 'active';
+        } else {
+          // Assign to destination organization and role authoritatively from invitation record
+          await client.query(
+            `UPDATE users
+             SET organization_id = $1, role = $2, status = 'active', email_verified_at = COALESCE(email_verified_at, CURRENT_TIMESTAMP), updated_at = CURRENT_TIMESTAMP
+             WHERE id::text = $3::text`,
+            [invitation.organization_id, invitation.role, user.id]
+          );
+          user.organization_id = invitation.organization_id;
+          user.role = invitation.role;
+          user.status = 'active';
+        }
+      } else {
+        // New user: validate name and password
+        if (!password || password.length < 6) {
+          const err = new Error('Password must be at least 6 characters.');
+          err.statusCode = 400;
+          err.code = 'INVALID_PASSWORD';
+          throw err;
+        }
+
+        const bcrypt = require('bcryptjs');
+        const passwordHash = await bcrypt.hash(password, 10);
+        const displayName = (name || cleanEmail.split('@')[0]).trim();
+
+        try {
+          const insertRes = await client.query(
+            `INSERT INTO users (name, email, password_hash, role, organization_id, status, email_verified_at, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+             RETURNING id, name, email, role, organization_id, status, created_at, updated_at;`,
+            [displayName, cleanEmail, passwordHash, invitation.role, invitation.organization_id]
+          );
+          user = insertRes.rows[0];
+        } catch (insertErr) {
+          if (insertErr.message?.includes('violates not-null constraint') && insertErr.message?.includes('id')) {
+            const fallbackId = crypto.randomUUID();
+            const insertFallback = await client.query(
+              `INSERT INTO users (id, name, email, password_hash, role, organization_id, status, email_verified_at, created_at, updated_at)
+               VALUES ($1, $2, $3, $4, $5, $6, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+               RETURNING id, name, email, role, organization_id, status, created_at, updated_at;`,
+              [fallbackId, displayName, cleanEmail, passwordHash, invitation.role, invitation.organization_id]
+            );
+            user = insertFallback.rows[0];
+          } else {
+            throw insertErr;
+          }
+        }
+      }
+
+      // 3. Authoritatively mark invitation accepted in the SAME transaction
+      await client.query(
+        `UPDATE invitations
+         SET status = 'accepted', accepted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+         WHERE id::text = $1::text`,
+        [invitation.id]
+      );
+
+      return {
+        user,
+        invitation
+      };
+    });
   }
 };
 
 module.exports = InvitationModel;
+

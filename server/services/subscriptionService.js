@@ -256,15 +256,15 @@ class SubscriptionService {
     try {
       const [dsRes, uRes, invRes] = await Promise.all([
         db.query(
-          `SELECT COUNT(*)::int as count FROM data_sources WHERE organization_id = $1`,
+          `SELECT COUNT(*)::int as count FROM data_sources WHERE organization_id::text = $1::text`,
           [organizationId]
         ).catch(() => ({ rows: [] })),
         db.query(
-          `SELECT COUNT(*)::int as count FROM users WHERE organization_id = $1 AND COALESCE(status, 'active') != 'deactivated'`,
+          `SELECT COUNT(*)::int as count FROM users WHERE organization_id::text = $1::text AND COALESCE(status, 'active') != 'deactivated'`,
           [organizationId]
         ).catch(() => ({ rows: [] })),
         db.query(
-          `SELECT COUNT(*)::int as count FROM invitations WHERE organization_id = $1 AND status = 'pending' AND expires_at > NOW()`,
+          `SELECT COUNT(*)::int as count FROM invitations WHERE organization_id::text = $1::text AND status = 'pending' AND expires_at > NOW()`,
           [organizationId]
         ).catch(() => ({ rows: [] }))
       ]);

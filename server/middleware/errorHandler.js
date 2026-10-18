@@ -39,10 +39,25 @@ const errorHandler = (err, req, res, next) => {
     metricsCollector.recordSubsystem('database', false);
   }
 
-  // Safe message formatting (avoid leaking raw DB credentials / internal paths in production)
+  // Safe message formatting (avoid leaking raw DB credentials / internal paths / raw SQL errors in production)
   let safeMessage = err.message || 'An unexpected error occurred.';
-  if (isProd && statusCode === 500) {
-    if (safeMessage.includes('password') || safeMessage.includes('SELECT') || safeMessage.includes('INSERT') || safeMessage.includes('ECONNREFUSED')) {
+  if (isProd && statusCode >= 500) {
+    const isDbError = 
+      safeMessage.includes('password') || 
+      safeMessage.includes('SELECT') || 
+      safeMessage.includes('INSERT') || 
+      safeMessage.includes('UPDATE') ||
+      safeMessage.includes('DELETE') ||
+      safeMessage.includes('ECONNREFUSED') ||
+      safeMessage.includes('operator does not exist') ||
+      safeMessage.includes('syntax error') ||
+      safeMessage.includes('column') ||
+      safeMessage.includes('relation') ||
+      safeMessage.includes('character varying') ||
+      safeMessage.includes('pg_') ||
+      (err.code && /^[0-9A-Za-z]{5}$/.test(err.code) && err.code !== '429');
+
+    if (isDbError) {
       safeMessage = 'A database or internal service error occurred. Please contact administrator.';
     }
   }
