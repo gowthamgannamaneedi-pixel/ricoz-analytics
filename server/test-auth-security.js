@@ -339,6 +339,28 @@ async function runAuthSecurityTests() {
     // -------------------------------------------------------------
     // Test 15: Cross-Tenant Isolation
     // -------------------------------------------------------------
+    const orgBId = '00000000-0000-0000-0000-000000000002';
+    const bcrypt = require('bcryptjs');
+    const db = require('./config/database');
+    await db.query(`
+      INSERT INTO organizations (id, name, slug, plan, subscription_status, payment_status, created_at, updated_at)
+      VALUES ($1, 'Beta Global Enterprises', 'beta-global', 'starter', 'active', 'paid', NOW(), NOW())
+      ON CONFLICT (id) DO NOTHING;
+    `, [orgBId]).catch(() => null);
+
+    const existingTenantB = await UserModel.findByEmail('admin_b@other.test');
+    if (!existingTenantB) {
+      const bHash = await bcrypt.hash('admin123', 10);
+      await UserModel.create({
+        name: 'Beta Global Admin',
+        email: 'admin_b@other.test',
+        password_hash: bHash,
+        role: 'admin',
+        organization_id: orgBId,
+        status: 'active'
+      }).catch(() => null);
+    }
+
     const tenantBLoginRes = await request('POST', '/api/auth/login', {
       email: 'admin_b@other.test',
       password: 'admin123'

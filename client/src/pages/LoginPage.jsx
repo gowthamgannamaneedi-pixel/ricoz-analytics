@@ -21,6 +21,7 @@ export default function LoginPage() {
   );
   const [successMessage, setSuccessMessage] = useState(location.state?.message || '');
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
+  const [unregisteredEmail, setUnregisteredEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   // Development-only authentication helper (strictly disabled in production)
@@ -37,6 +38,7 @@ export default function LoginPage() {
     }));
     if (error) setError('');
     if (unverifiedEmail) setUnverifiedEmail('');
+    if (unregisteredEmail) setUnregisteredEmail('');
   };
 
   const handleSubmit = async (e) => {
@@ -50,6 +52,7 @@ export default function LoginPage() {
     setError('');
     setSuccessMessage('');
     setUnverifiedEmail('');
+    setUnregisteredEmail('');
 
     try {
       await login({
@@ -66,6 +69,11 @@ export default function LoginPage() {
       }
       if (err.data?.requiresVerification || errMsg.toLowerCase().includes('verify your email')) {
         setUnverifiedEmail(err.data?.email || formData.email);
+        return;
+      }
+      if (err.data?.suggestRegister || err.data?.requiresRegistration || err.data?.error?.code === 'ACCOUNT_NOT_FOUND' || errMsg.toLowerCase().includes('no account found')) {
+        setUnregisteredEmail(err.data?.email || formData.email);
+        return;
       }
     } finally {
       setIsLoading(false);
@@ -104,14 +112,26 @@ export default function LoginPage() {
 
         {/* Form Card */}
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-sm space-y-5">
-          {error && (
-            <div className="flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
-              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600" />
-              <span className="font-medium">{error}</span>
+          {unregisteredEmail ? (
+            <div className="rounded-lg border border-blue-200 dark:border-blue-800/60 bg-blue-50 dark:bg-blue-950/40 p-3.5 text-xs text-blue-900 dark:text-blue-200 space-y-2">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                <span className="font-bold">No Account Found</span>
+              </div>
+              <p className="text-[11px] text-blue-800 dark:text-blue-300">
+                No active enterprise account was found for <span className="font-mono font-semibold">{unregisteredEmail}</span>. Would you like to create a new workspace?
+              </p>
+              <div>
+                <Link
+                  to="/register"
+                  state={{ email: unregisteredEmail }}
+                  className="inline-flex items-center font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 underline"
+                >
+                  Register New Enterprise Workspace &rarr;
+                </Link>
+              </div>
             </div>
-          )}
-
-          {unverifiedEmail && (
+          ) : unverifiedEmail ? (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900 space-y-2">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
@@ -130,7 +150,12 @@ export default function LoginPage() {
                 </Link>
               </div>
             </div>
-          )}
+          ) : error ? (
+            <div className="flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600" />
+              <span className="font-medium">{error}</span>
+            </div>
+          ) : null}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

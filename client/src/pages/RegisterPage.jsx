@@ -15,7 +15,7 @@ export default function RegisterPage() {
 
   const [formData, setFormData] = useState({
     name: location.state?.name || '',
-    email: location.state?.verifyEmail || '',
+    email: location.state?.email || location.state?.verifyEmail || '',
     organization_name: '',
     password: '',
     confirmPassword: ''

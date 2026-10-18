@@ -502,6 +502,13 @@ const verifyOtp = async (req, res, next) => {
     // Mark verified in database
     await UserModel.markEmailVerified(user.email);
 
+    // Evict cached user auth status
+    const authMiddleware = require('../middleware/authMiddleware');
+    if (authMiddleware.clearUserAuthCache) {
+      authMiddleware.clearUserAuthCache(user.email);
+      if (user.id) authMiddleware.clearUserAuthCache(user.id);
+    }
+
     // Generate authenticated session JWT token
     const authToken = generateToken({
       id: user.id,
@@ -713,7 +720,14 @@ const login = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password.'
+        error: {
+          code: 'ACCOUNT_NOT_FOUND',
+          message: 'No account found with this email. Please register to create your workspace, or verify your email if you recently registered.'
+        },
+        message: 'No account found with this email. Please register to create your workspace, or verify your email if you recently registered.',
+        requiresRegistration: true,
+        suggestRegister: true,
+        email: cleanEmail
       });
     }
 
@@ -735,6 +749,10 @@ const login = async (req, res, next) => {
     if (user.status === 'deactivated' || user.status === 'inactive') {
       return res.status(403).json({
         success: false,
+        error: {
+          code: 'ACCOUNT_DEACTIVATED',
+          message: 'This account has been deactivated. Please contact your organization administrator.'
+        },
         message: 'This account has been deactivated. Please contact your organization administrator.'
       });
     }
@@ -770,10 +788,10 @@ const login = async (req, res, next) => {
       return res.status(401).json({
         success: false,
         error: {
-          code: 'UNAUTHORIZED',
-          message: 'Invalid email or password.'
+          code: 'INVALID_CREDENTIALS',
+          message: 'Invalid email or password. Please verify your credentials and try again.'
         },
-        message: 'Invalid email or password.'
+        message: 'Invalid email or password. Please verify your credentials and try again.'
       });
     }
 
@@ -1026,6 +1044,11 @@ const acceptInvite = async (req, res, next) => {
       // Update organization and assign authorized server-side role (never trust client role)
       const updated = await UserModel.updateOrganizationAndRole(user.id, invitation.organization_id, invitation.role);
       await UserModel.markEmailVerified(cleanEmail);
+      const authMiddleware = require('../middleware/authMiddleware');
+      if (authMiddleware.clearUserAuthCache) {
+        authMiddleware.clearUserAuthCache(cleanEmail);
+        if (user.id) authMiddleware.clearUserAuthCache(user.id);
+      }
       user = updated || user;
       user.organization_id = invitation.organization_id;
       user.role = invitation.role;
