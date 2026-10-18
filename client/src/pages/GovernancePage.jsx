@@ -1859,8 +1859,9 @@ export default function GovernancePage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setIsInviteModalOpen(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                  onClick={() => !isSendingInvite && setIsInviteModalOpen(false)}
+                  disabled={isSendingInvite}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>

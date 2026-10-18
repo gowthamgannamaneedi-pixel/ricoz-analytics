@@ -2044,8 +2044,9 @@ export default function SettingsPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setIsInviteModalOpen(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                  onClick={() => !isSendingInvite && setIsInviteModalOpen(false)}
+                  disabled={isSendingInvite}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
                 >
                   <X className="h-4 w-4" />
                 </button>

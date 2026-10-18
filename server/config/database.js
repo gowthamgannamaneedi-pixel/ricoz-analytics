@@ -4487,12 +4487,33 @@ async function initDb() {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';
     ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMPTZ;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token VARCHAR(255);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_otp VARCHAR(10);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token_expires_at TIMESTAMPTZ;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_password_token VARCHAR(255);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_password_expires_at TIMESTAMPTZ;
+    CREATE INDEX IF NOT EXISTS idx_users_last_active ON users(last_active_at);
+
+    CREATE TABLE IF NOT EXISTS invitations (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      invited_by VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      role VARCHAR(50) NOT NULL DEFAULT 'viewer',
+      token VARCHAR(255) UNIQUE NOT NULL,
+      token_hash VARCHAR(255),
+      expires_at TIMESTAMPTZ NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'pending',
+      accepted_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+    ALTER TABLE invitations ADD COLUMN IF NOT EXISTS token_hash VARCHAR(255);
+    CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON invitations(token_hash);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_invitations_org_pending_email ON invitations(organization_id, LOWER(email)) WHERE status = 'pending';
+    CREATE INDEX IF NOT EXISTS idx_invitations_seat_calc ON invitations(organization_id, status, expires_at);
 
     CREATE SEQUENCE IF NOT EXISTS users_id_seq;
     ALTER TABLE users ALTER COLUMN id SET DEFAULT nextval('users_id_seq');
@@ -5126,6 +5147,39 @@ async function initDb() {
     await pool.query('ALTER TABLE users DROP CONSTRAINT IF EXISTS users_id_fkey;');
   } catch (fkErr) {
     console.warn('[users_id_fkey drop notice]', fkErr.message);
+  }
+
+  // 0b. Guarantee last_active_at and invitations table exist
+  try {
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMPTZ;');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_users_last_active ON users(last_active_at);');
+  } catch (presenceErr) {
+    console.warn('[initDb last_active_at notice]', presenceErr.message);
+  }
+
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS invitations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+        invited_by VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        role VARCHAR(50) NOT NULL DEFAULT 'viewer',
+        token VARCHAR(255) UNIQUE NOT NULL,
+        token_hash VARCHAR(255),
+        expires_at TIMESTAMPTZ NOT NULL,
+        status VARCHAR(50) NOT NULL DEFAULT 'pending',
+        accepted_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+      ALTER TABLE invitations ADD COLUMN IF NOT EXISTS token_hash VARCHAR(255);
+      CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON invitations(token_hash);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_invitations_org_pending_email ON invitations(organization_id, LOWER(email)) WHERE status = 'pending';
+      CREATE INDEX IF NOT EXISTS idx_invitations_seat_calc ON invitations(organization_id, status, expires_at);
+    `);
+  } catch (invErr) {
+    console.warn('[initDb invitations notice]', invErr.message);
   }
 
   // 1. Resolve and ensure primary organization exists for FK validity

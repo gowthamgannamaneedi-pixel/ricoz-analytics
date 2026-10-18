@@ -1171,7 +1171,8 @@ export async function getAdminPermissions() {
 export async function createAdminInvitation(payload) {
   return apiRequest('/admin/invitations', {
     method: 'POST',
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
+    timeout: 45000
   });
 }
 
@@ -1198,7 +1199,8 @@ export async function deleteAdminInvitation(id) {
  */
 export async function resendAdminInvitation(id) {
   return apiRequest(`/admin/invitations/${id}/resend`, {
-    method: 'POST'
+    method: 'POST',
+    timeout: 45000
   });
 }
 

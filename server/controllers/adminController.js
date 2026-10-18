@@ -613,7 +613,11 @@ const adminController = {
       const org = await OrganizationModel.findById(orgId);
 
       // Dispatch invitation email using production frontend URL
-      const frontendBase = config.clientUrl || (process.env.NODE_ENV === 'production' ? 'https://ricoz-analytics.vercel.app' : 'http://localhost:5173');
+      const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+      let frontendBase = config.clientUrl || (isProd ? 'https://ricoz-analytics.vercel.app' : 'http://localhost:5173');
+      if (isProd && (frontendBase.includes('localhost') || frontendBase.includes('127.0.0.1'))) {
+        frontendBase = 'https://ricoz-analytics.vercel.app';
+      }
       const inviteUrl = `${frontendBase}/auth/accept-invite?token=${rawToken}`;
 
       let emailResult;
@@ -704,7 +708,11 @@ const adminController = {
       const invitation = result.invitation;
       const rawToken = result.rawToken;
 
-      const frontendBase = config.clientUrl || (process.env.NODE_ENV === 'production' ? 'https://ricoz-analytics.vercel.app' : 'http://localhost:5173');
+      const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+      let frontendBase = config.clientUrl || (isProd ? 'https://ricoz-analytics.vercel.app' : 'http://localhost:5173');
+      if (isProd && (frontendBase.includes('localhost') || frontendBase.includes('127.0.0.1'))) {
+        frontendBase = 'https://ricoz-analytics.vercel.app';
+      }
       const inviteUrl = `${frontendBase}/auth/accept-invite?token=${rawToken}`;
 
       let emailResult;

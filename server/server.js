@@ -25,7 +25,43 @@ if (!envReport.isValid) {
 let server;
 
 if (require.main === module) {
-  db.initDb().finally(() => {
+  (async () => {
+    try {
+      await db.initDb();
+    } catch (e) {
+      console.warn(' initDb warning:', e.message);
+    }
+
+    // Explicitly guarantee last_active_at and invitations migrations are executed on startup
+    try {
+      await db.query(`
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMPTZ;
+        CREATE INDEX IF NOT EXISTS idx_users_last_active ON users(last_active_at);
+        CREATE TABLE IF NOT EXISTS invitations (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+          invited_by VARCHAR(255) NOT NULL,
+          email VARCHAR(255) NOT NULL,
+          role VARCHAR(50) NOT NULL DEFAULT 'viewer',
+          token VARCHAR(255) UNIQUE NOT NULL,
+          token_hash VARCHAR(255),
+          expires_at TIMESTAMPTZ NOT NULL,
+          status VARCHAR(50) NOT NULL DEFAULT 'pending',
+          accepted_at TIMESTAMPTZ,
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        );
+        ALTER TABLE invitations ADD COLUMN IF NOT EXISTS token_hash VARCHAR(255);
+        CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON invitations(token_hash);
+      `);
+      await db.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_invitations_org_pending_email ON invitations(organization_id, LOWER(email)) WHERE status = 'pending';
+        CREATE INDEX IF NOT EXISTS idx_invitations_seat_calc ON invitations(organization_id, status, expires_at);
+      `);
+    } catch (migErr) {
+      console.warn(' Startup migration check notice:', migErr.message);
+    }
+  })().finally(() => {
     server = app.listen(PORT, () => {
       console.log(`===========================================`);
       console.log(` RicozAnalytics Server running on port ${PORT}`);

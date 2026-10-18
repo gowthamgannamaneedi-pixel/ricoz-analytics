@@ -11,6 +11,8 @@ const UserModel = {
    * @returns {Promise<any | null>}
    */
   async findByEmail(email) {
+    if (!email) return null;
+    const cleanEmail = email.trim();
     const sql = `
       SELECT id, name, email, password_hash, password_hash_alt, role, organization_id, avatar_url, status, 
              verification_token, verification_otp, verification_token_expires_at, email_verified_at,
@@ -20,8 +22,26 @@ const UserModel = {
       WHERE LOWER(email) = LOWER($1)
       LIMIT 1;
     `;
-    const result = await db.query(sql, [email.trim()]);
-    return result.rows[0] || null;
+    try {
+      const result = await db.query(sql, [cleanEmail]);
+      return result.rows[0] || null;
+    } catch (err) {
+      if (err.code === '42703' || err.message?.includes('last_active_at')) {
+        const fallbackSql = `
+          SELECT id, name, email, password_hash, password_hash_alt, role, organization_id, avatar_url, status, 
+                 verification_token, verification_otp, verification_token_expires_at, email_verified_at,
+                 reset_password_token, reset_password_expires_at,
+                 last_login_at, created_at, updated_at
+          FROM users
+          WHERE LOWER(email) = LOWER($1)
+          LIMIT 1;
+        `;
+        const res = await db.query(fallbackSql, [cleanEmail]);
+        if (res.rows[0]) res.rows[0].last_active_at = null;
+        return res.rows[0] || null;
+      }
+      throw err;
+    }
   },
 
   /**
@@ -39,8 +59,26 @@ const UserModel = {
       WHERE id = $1
       LIMIT 1;
     `;
-    const result = await db.query(sql, [id]);
-    return result.rows[0] || null;
+    try {
+      const result = await db.query(sql, [id]);
+      return result.rows[0] || null;
+    } catch (err) {
+      if (err.code === '42703' || err.message?.includes('last_active_at')) {
+        const fallbackSql = `
+          SELECT id, name, email, role, organization_id, avatar_url, status, 
+                 verification_token, verification_otp, verification_token_expires_at, email_verified_at,
+                 reset_password_token, reset_password_expires_at,
+                 last_login_at, created_at, updated_at
+          FROM users
+          WHERE id = $1
+          LIMIT 1;
+        `;
+        const res = await db.query(fallbackSql, [id]);
+        if (res.rows[0]) res.rows[0].last_active_at = null;
+        return res.rows[0] || null;
+      }
+      throw err;
+    }
   },
 
   /**
@@ -56,8 +94,23 @@ const UserModel = {
       WHERE id = $1 AND organization_id = $2
       LIMIT 1;
     `;
-    const result = await db.query(sql, [id, organizationId]);
-    return result.rows[0] || null;
+    try {
+      const result = await db.query(sql, [id, organizationId]);
+      return result.rows[0] || null;
+    } catch (err) {
+      if (err.code === '42703' || err.message?.includes('last_active_at')) {
+        const fallbackSql = `
+          SELECT id, name, email, role, organization_id, avatar_url, status, last_login_at, created_at, updated_at
+          FROM users
+          WHERE id = $1 AND organization_id = $2
+          LIMIT 1;
+        `;
+        const res = await db.query(fallbackSql, [id, organizationId]);
+        if (res.rows[0]) res.rows[0].last_active_at = null;
+        return res.rows[0] || null;
+      }
+      throw err;
+    }
   },
 
   /**
@@ -115,15 +168,36 @@ const UserModel = {
       LIMIT $${paramIndex++} OFFSET $${paramIndex++};
     `;
     const dataParams = [...params, limit, offset];
-    const dataRes = await db.query(dataSql, dataParams);
-
-    return {
-      users: dataRes.rows || [],
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit) || 1
-    };
+    try {
+      const dataRes = await db.query(dataSql, dataParams);
+      return {
+        users: dataRes.rows || [],
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit) || 1
+      };
+    } catch (err) {
+      if (err.code === '42703' || err.message?.includes('last_active_at')) {
+        const fallbackSql = `
+          SELECT id, name, email, role, organization_id, avatar_url, COALESCE(status, 'active') as status, last_login_at, created_at, updated_at
+          FROM users
+          WHERE ${whereClause}
+          ORDER BY created_at ASC
+          LIMIT $${paramIndex - 2} OFFSET $${paramIndex - 1};
+        `;
+        const fallbackRes = await db.query(fallbackSql, dataParams);
+        const rows = (fallbackRes.rows || []).map(r => ({ ...r, last_active_at: null }));
+        return {
+          users: rows,
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit) || 1
+        };
+      }
+      throw err;
+    }
   },
 
   /**
@@ -333,7 +407,15 @@ const UserModel = {
       SET last_login_at = CURRENT_TIMESTAMP, last_active_at = CURRENT_TIMESTAMP
       WHERE id = $1;
     `;
-    await db.query(sql, [id]);
+    try {
+      await db.query(sql, [id]);
+    } catch (err) {
+      if (err.code === '42703' || err.message?.includes('last_active_at')) {
+        await db.query(`UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = $1;`, [id]);
+        return;
+      }
+      throw err;
+    }
   },
 
   /**
@@ -348,8 +430,15 @@ const UserModel = {
       WHERE id = $1 AND COALESCE(status, 'active') != 'deactivated'
       RETURNING id, last_active_at;
     `;
-    const res = await db.query(sql, [id]);
-    return res.rows[0] || null;
+    try {
+      const res = await db.query(sql, [id]);
+      return res.rows[0] || null;
+    } catch (err) {
+      if (err.code === '42703' || err.message?.includes('last_active_at')) {
+        return null;
+      }
+      throw err;
+    }
   },
 
   /**
@@ -363,7 +452,14 @@ const UserModel = {
       SET last_active_at = NULL
       WHERE id = $1;
     `;
-    await db.query(sql, [id]);
+    try {
+      await db.query(sql, [id]);
+    } catch (err) {
+      if (err.code === '42703' || err.message?.includes('last_active_at')) {
+        return;
+      }
+      throw err;
+    }
   },
 
   /**
