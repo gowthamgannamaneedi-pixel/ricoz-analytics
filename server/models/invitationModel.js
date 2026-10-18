@@ -465,28 +465,41 @@ const InvitationModel = {
         const passwordHash = await bcrypt.hash(password, 10);
         const displayName = (name || cleanEmail.split('@')[0]).trim();
 
+        let insertRes;
         try {
-          const insertRes = await client.query(
-            `INSERT INTO users (name, email, password_hash, role, organization_id, status, email_verified_at, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, $5, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-             RETURNING id, name, email, role, organization_id, status, created_at, updated_at;`,
-            [displayName, cleanEmail, passwordHash, invitation.role, invitation.organization_id]
+          const colRes = await client.query(
+            "SELECT data_type FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'id'"
           );
-          user = insertRes.rows[0];
-        } catch (insertErr) {
-          if (insertErr.message?.includes('violates not-null constraint') && insertErr.message?.includes('id')) {
-            const fallbackId = crypto.randomUUID();
-            const insertFallback = await client.query(
+          const dt = colRes.rows[0]?.data_type;
+          const isUuid = dt === 'uuid' || dt === 'character varying' || dt === 'text';
+
+          if (isUuid) {
+            const newUserId = crypto.randomUUID();
+            insertRes = await client.query(
               `INSERT INTO users (id, name, email, password_hash, role, organization_id, status, email_verified_at, created_at, updated_at)
                VALUES ($1, $2, $3, $4, $5, $6, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                RETURNING id, name, email, role, organization_id, status, created_at, updated_at;`,
-              [fallbackId, displayName, cleanEmail, passwordHash, invitation.role, invitation.organization_id]
+              [newUserId, displayName, cleanEmail, passwordHash, invitation.role, invitation.organization_id]
             );
-            user = insertFallback.rows[0];
           } else {
-            throw insertErr;
+            insertRes = await client.query(
+              `INSERT INTO users (name, email, password_hash, role, organization_id, status, email_verified_at, created_at, updated_at)
+               VALUES ($1, $2, $3, $4, $5, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+               RETURNING id, name, email, role, organization_id, status, created_at, updated_at;`,
+              [displayName, cleanEmail, passwordHash, invitation.role, invitation.organization_id]
+            );
           }
+        } catch (_) {
+          // Fallback if information_schema is restricted
+          const newUserId = crypto.randomUUID();
+          insertRes = await client.query(
+            `INSERT INTO users (id, name, email, password_hash, role, organization_id, status, email_verified_at, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+             RETURNING id, name, email, role, organization_id, status, created_at, updated_at;`,
+            [newUserId, displayName, cleanEmail, passwordHash, invitation.role, invitation.organization_id]
+          );
         }
+        user = insertRes.rows[0];
       }
 
       // 3. Authoritatively mark invitation accepted in the SAME transaction
