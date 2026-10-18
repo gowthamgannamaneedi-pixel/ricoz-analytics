@@ -3,6 +3,7 @@ const plansConfig = require('../config/plans');
 const SubscriptionHistoryModel = require('../models/subscriptionHistoryModel');
 const SubscriptionReminderModel = require('../models/subscriptionReminderModel');
 const emailService = require('./emailService');
+const { calculateNextBillingDate, calculateTrialEndDate, calculateTimeRemaining } = require('../utils/billingDateUtils');
 
 const {
   PLANS,
@@ -118,7 +119,7 @@ class SubscriptionService {
     const trialStartedAt = org.trial_started_at ? new Date(org.trial_started_at) : new Date(org.created_at || now);
     const trialEndsAt = org.trial_ends_at
       ? new Date(org.trial_ends_at)
-      : new Date(trialStartedAt.getTime() + 14 * 24 * 60 * 60 * 1000);
+      : calculateTrialEndDate(trialStartedAt, 14);
 
     const currentPeriodStart = org.current_period_start ? new Date(org.current_period_start) : null;
     const currentPeriodEnd = org.current_period_end ? new Date(org.current_period_end) : null;
@@ -485,8 +486,7 @@ class SubscriptionService {
     const plan = getPlan(planId);
     const now = new Date();
     const isAnnual = billingInterval === 'yearly' || billingInterval === 'annual';
-    const periodDays = isAnnual ? 365 : 30;
-    const effectivePeriodEnd = currentPeriodEnd || new Date(now.getTime() + periodDays * 86400000);
+    const effectivePeriodEnd = currentPeriodEnd || calculateNextBillingDate(now, isAnnual ? 'yearly' : 'monthly');
 
     const oldSub = await this.getOrganizationSubscription(organizationId);
     const fromPlan = oldSub ? oldSub.plan : 'starter';
@@ -543,7 +543,7 @@ class SubscriptionService {
     if (!sub) throw new Error('Organization not found');
 
     const targetPlan = getPlan(newPlanId);
-    const effectiveDate = sub.currentPeriodEnd || new Date(Date.now() + 30 * 86400000);
+    const effectiveDate = sub.currentPeriodEnd || calculateNextBillingDate(new Date(), sub.billingInterval || 'monthly');
 
     // Schedule downgrade at current_period_end
     await this.updateSubscription(organizationId, {
@@ -582,8 +582,8 @@ class SubscriptionService {
     console.log(`[SubscriptionService] ⬇️ Applying scheduled downgrade for Org ${org.id}: ${org.plan} -> ${newPlan.name}`);
 
     const now = new Date();
-    const isAnnual = (org.billing_interval || 'monthly') === 'yearly';
-    const nextEnd = new Date(now.getTime() + (isAnnual ? 365 : 30) * 86400000);
+    const isAnnual = (org.billing_interval || 'monthly') === 'yearly' || (org.billing_interval || 'monthly') === 'annual';
+    const nextEnd = calculateNextBillingDate(now, isAnnual ? 'yearly' : 'monthly');
 
     const updated = await this.updateSubscription(org.id, {
       plan: newPlan.id,

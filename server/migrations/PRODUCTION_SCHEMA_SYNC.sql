@@ -844,5 +844,78 @@ CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_org ON public.dataset_rows(d
 CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset_row_idx ON public.dataset_rows(dataset_id, row_index);
 CREATE INDEX IF NOT EXISTS idx_dataset_rows_data_gin ON public.dataset_rows USING gin (data);
 
+-- ==============================================================================
+-- PHASE 20: SAAS BILLING, 14-DAY TRIAL TIMING, TEAM INVITATIONS & AUDIT
+-- ==============================================================================
+
+-- 1. Ensure organizations columns for trial timing and calendar billing
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS trial_started_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ;
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(50) DEFAULT 'trial';
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50) DEFAULT 'unpaid';
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS current_period_start TIMESTAMPTZ;
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS current_period_end TIMESTAMPTZ;
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS billing_interval VARCHAR(20) DEFAULT 'monthly';
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255);
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255);
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS cancel_at_period_end BOOLEAN DEFAULT false;
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS scheduled_downgrade_plan VARCHAR(50);
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS scheduled_downgrade_effective_date TIMESTAMPTZ;
+
+-- 2. Team invitations table with SHA-256 token hashing and partial unique pending index
+CREATE TABLE IF NOT EXISTS public.invitations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    invited_by INTEGER NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    email VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'viewer',
+    token VARCHAR(255) UNIQUE NOT NULL,
+    token_hash VARCHAR(255),
+    expires_at TIMESTAMPTZ NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    accepted_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE public.invitations ADD COLUMN IF NOT EXISTS token_hash VARCHAR(255);
+CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON public.invitations(token_hash);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_invitations_org_pending_email ON public.invitations(organization_id, LOWER(email)) WHERE status = 'pending';
+CREATE INDEX IF NOT EXISTS idx_invitations_seat_calc ON public.invitations(organization_id, status, expires_at);
+
+-- 3. Stripe webhook idempotency table
+CREATE TABLE IF NOT EXISTS public.stripe_webhook_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id VARCHAR(255) UNIQUE NOT NULL,
+    event_type VARCHAR(100) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'processing',
+    payload JSONB,
+    processed_at TIMESTAMPTZ,
+    error_message TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_stripe_webhook_events_event_id ON public.stripe_webhook_events(event_id);
+
+-- 4. Subscription billing invoices table
+CREATE TABLE IF NOT EXISTS public.invoices (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    invoice_number VARCHAR(100) UNIQUE,
+    stripe_invoice_id VARCHAR(255),
+    amount NUMERIC(10, 2) DEFAULT 0,
+    amount_cents INTEGER,
+    currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+    status VARCHAR(50) NOT NULL DEFAULT 'paid',
+    plan VARCHAR(50) NOT NULL,
+    invoice_url TEXT,
+    pdf_url TEXT,
+    period_start TIMESTAMPTZ,
+    period_end TIMESTAMPTZ,
+    payment_method JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_invoices_organization_id ON public.invoices(organization_id);
+
 COMMIT;
 

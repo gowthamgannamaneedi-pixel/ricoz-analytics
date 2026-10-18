@@ -545,13 +545,25 @@ const adminController = {
       const frontendBase = config.clientUrl || (process.env.NODE_ENV === 'production' ? 'https://ricoz-analytics.vercel.app' : 'http://localhost:5173');
       const inviteUrl = `${frontendBase}/auth/accept-invite?token=${rawToken}`;
 
-      await emailService.sendInvitationEmail({
+      const emailResult = await emailService.sendInvitationEmail({
         email: invitation.email,
         inviterName: req.user.name || req.user.email,
         orgName: org?.name || 'Your Team',
         role: cleanRole,
         inviteUrl
       });
+
+      if (emailResult && !emailResult.success) {
+        // Rollback / revoke invitation so ghost seat is not reserved
+        await InvitationModel.revoke(invitation.id, orgId).catch(() => null);
+        console.error(`[AdminController.createInvitation] Email delivery failed for ${invitation.email}:`, emailResult.error);
+        return res.status(502).json({
+          success: false,
+          code: 'EMAIL_DELIVERY_FAILED',
+          message: `Failed to deliver invitation email to ${invitation.email}: ${emailResult.error || 'Provider rejected email dispatch'}. Seat reservation released.`,
+          error: emailResult.error
+        });
+      }
 
       await logAuditEvent({
         organizationId: orgId,
@@ -606,13 +618,23 @@ const adminController = {
       const frontendBase = config.clientUrl || (process.env.NODE_ENV === 'production' ? 'https://ricoz-analytics.vercel.app' : 'http://localhost:5173');
       const inviteUrl = `${frontendBase}/auth/accept-invite?token=${rawToken}`;
 
-      await emailService.sendInvitationEmail({
+      const emailResult = await emailService.sendInvitationEmail({
         email: invitation.email,
         inviterName: req.user.name || req.user.email,
         orgName: result.organizationName || 'Your Team',
         role: invitation.role,
         inviteUrl
       });
+
+      if (emailResult && !emailResult.success) {
+        console.error(`[AdminController.resendInvitation] Email delivery failed for ${invitation.email}:`, emailResult.error);
+        return res.status(502).json({
+          success: false,
+          code: 'EMAIL_DELIVERY_FAILED',
+          message: `Failed to deliver invitation email to ${invitation.email}: ${emailResult.error || 'Provider rejected email dispatch'}.`,
+          error: emailResult.error
+        });
+      }
 
       await logAuditEvent({
         organizationId: orgId,

@@ -3,6 +3,7 @@ const Stripe = require('stripe');
 const db = require('../config/database');
 const subscriptionService = require('./subscriptionService');
 const StripeWebhookEventModel = require('../models/stripeWebhookEventModel');
+const { calculateNextBillingDate } = require('../utils/billingDateUtils');
 const { PLANS, SUBSCRIPTION_STATUSES, getPlan } = subscriptionService;
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder_ricoz_analytics';
@@ -203,11 +204,10 @@ class PaymentService {
             : (PLANS[String(planId).toUpperCase()]?.priceMonthly || 699);
           const amountTotal = session.amount_total ? session.amount_total / 100 : defaultAmount;
           const subscriptionId = session.subscription || `sub_${crypto.randomBytes(12).toString('hex')}`;
-          const periodDays = isAnnual ? 365 : 30;
 
           if (organizationId) {
             resolvedOrgId = organizationId;
-            const periodEnd = new Date(Date.now() + periodDays * 24 * 60 * 60 * 1000);
+            const periodEnd = calculateNextBillingDate(new Date(), isAnnual ? 'yearly' : 'monthly');
 
             // Apply verified upgrade and record audit history
             await subscriptionService.applyUpgrade(organizationId, {
@@ -248,7 +248,7 @@ class PaymentService {
 
           // Find organization by customer or subscription
           const findSql = `
-            SELECT id, plan FROM organizations 
+            SELECT id, plan, billing_interval FROM organizations 
             WHERE stripe_customer_id = $1 OR stripe_subscription_id = $2
             LIMIT 1;
           `;
@@ -257,14 +257,15 @@ class PaymentService {
 
           if (org) {
             resolvedOrgId = org.id;
+            const periodEnd = calculateNextBillingDate(new Date(), org.billing_interval || 'monthly');
             await subscriptionService.applyUpgrade(org.id, {
               planId: org.plan || 'starter',
-              billingInterval: 'monthly',
+              billingInterval: org.billing_interval || 'monthly',
               amount,
               currency: invoice.currency || 'inr',
               stripeCustomerId: String(customerId),
               stripeSubscriptionId: String(subscriptionId),
-              currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+              currentPeriodEnd: periodEnd
             });
 
             const invoiceSql = `

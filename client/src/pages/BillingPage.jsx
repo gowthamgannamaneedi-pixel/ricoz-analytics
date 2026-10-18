@@ -234,315 +234,321 @@ export default function BillingPage() {
   const isActivePaid = currentSub?.status === 'active';
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-16">
+    <div className="space-y-6 pb-16 font-sans">
       {/* Top Banner if Trial Expired */}
       {isExpired && (
-        <div className="bg-rose-900 text-white px-4 py-3 sm:px-6 shadow-md border-b border-rose-800">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-rose-800/80 border border-rose-700 shrink-0">
-                <AlertTriangle className="h-5 w-5 text-rose-300" />
-              </div>
-              <div>
-                <p className="font-bold text-sm">Your 14-day free trial has ended</p>
-                <p className="text-xs text-rose-200 mt-0.5">
-                  Your datasets, dashboards, and automated reports are safely preserved. Select a launch plan below to continue.
-                </p>
-              </div>
+        <div className="rounded-2xl bg-rose-900 text-white p-4 sm:p-5 shadow-sm border border-rose-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 rounded-xl bg-rose-800/80 border border-rose-700 shrink-0">
+              <AlertTriangle className="h-5 w-5 text-rose-300" />
             </div>
-            <div className="shrink-0 flex items-center gap-2">
-              <span className="text-xs font-mono bg-rose-950/70 px-2.5 py-1 rounded border border-rose-800 text-rose-200">
-                Workspace Preserved
-              </span>
+            <div>
+              <p className="font-bold text-sm">Your 14-day free trial has ended</p>
+              <p className="text-xs text-rose-200 mt-0.5">
+                Your datasets, dashboards, and automated reports are safely preserved. Select a launch plan below to continue.
+              </p>
             </div>
+          </div>
+          <div className="shrink-0 flex items-center gap-2">
+            <span className="text-xs font-mono bg-rose-950/70 px-3 py-1.5 rounded-lg border border-rose-800 text-rose-200 font-semibold">
+              Workspace Preserved
+            </span>
           </div>
         </div>
       )}
 
       {/* 10-Day Expiry / Renewal Warning Banner */}
       {!isExpired && daysRemaining <= 10 && daysRemaining > 0 && (
-        <div className="bg-amber-500 text-slate-950 px-4 py-3 sm:px-6 shadow-md border-b border-amber-600">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-600 text-amber-50 shrink-0">
-                <Clock className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="font-bold text-sm">
-                  {isActivePaid ? 'Subscription Renewal Approaching' : 'Free Trial Ending Soon'} — {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining
-                </p>
-                <p className="text-xs text-amber-950/90 mt-0.5">
-                  Your {currentSub?.planDetails?.name || currentSub?.plan || 'Starter'} plan {isActivePaid ? 'renews or expires' : 'trial ends'} on{' '}
-                  <span className="font-bold underline">
-                    {currentSub?.relevantEndDate || currentSub?.currentPeriodEnd || currentSub?.trialEndsAt
-                      ? new Date(currentSub.relevantEndDate || currentSub.currentPeriodEnd || currentSub.trialEndsAt).toLocaleDateString()
-                      : 'soon'}
-                  </span>. Your workspace datasets and models remain 100% preserved.
-                </p>
-              </div>
+        <div className="rounded-2xl bg-amber-500 text-slate-950 p-4 sm:p-5 shadow-sm border border-amber-600 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 rounded-xl bg-amber-600 text-amber-50 shrink-0 shadow-xs">
+              <Clock className="h-5 w-5" />
             </div>
-            <div className="shrink-0 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  const el = document.getElementById('plans-selection-grid');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="text-xs font-bold bg-slate-950 text-white px-3.5 py-1.5 rounded-lg shadow-sm hover:bg-slate-800 transition cursor-pointer"
-              >
-                {isActivePaid ? 'Manage & Renew Plan' : 'Select Launch Plan'}
-              </button>
+            <div>
+              <p className="font-bold text-sm">
+                {isActivePaid ? 'Subscription Renewal Approaching' : 'Free Trial Ending Soon'} — {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining
+              </p>
+              <p className="text-xs text-amber-950/90 mt-0.5">
+                Your {currentSub?.planDetails?.name || currentSub?.plan || 'Starter'} plan {isActivePaid ? 'renews or expires' : 'trial ends'} on{' '}
+                <span className="font-bold underline">
+                  {currentSub?.relevantEndDate || currentSub?.currentPeriodEnd || currentSub?.trialEndsAt
+                    ? new Date(currentSub.relevantEndDate || currentSub.currentPeriodEnd || currentSub.trialEndsAt).toLocaleDateString()
+                    : 'soon'}
+                </span>. Your workspace datasets and models remain 100% preserved.
+              </p>
             </div>
+          </div>
+          <div className="shrink-0 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('plans-selection-grid');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="text-xs font-bold bg-slate-950 text-white px-4 py-2 rounded-xl shadow-xs hover:bg-slate-800 transition cursor-pointer"
+            >
+              {isActivePaid ? 'Manage & Renew Plan' : 'Select Launch Plan'}
+            </button>
           </div>
         </div>
       )}
 
-      {/* Main Container */}
-      <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 pt-6">
-        {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
-          <div>
-            {/* Breadcrumb Navigation */}
-            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400 mb-2">
-              <button
-                type="button"
-                onClick={() => navigate('/dashboard')}
-                className="hover:text-slate-600 transition-colors focus:outline-hidden cursor-pointer"
-              >
-                Workspace
-              </button>
-              <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-              <button
-                type="button"
-                onClick={() => navigate('/dashboard')}
-                className="hover:text-slate-600 transition-colors focus:outline-hidden cursor-pointer"
-              >
-                Settings
-              </button>
-              <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-              <span className="text-slate-900 font-bold">Plans & Billing</span>
-            </nav>
+      {/* Page Header */}
+      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 border-b border-slate-200 pb-6">
+        <div className="space-y-3 flex-1 min-w-0">
+          {/* Breadcrumb Navigation */}
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard')}
+              className="hover:text-slate-600 transition-colors focus:outline-hidden cursor-pointer"
+            >
+              Workspace
+            </button>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+            <button
+              type="button"
+              onClick={() => navigate('/settings')}
+              className="hover:text-slate-600 transition-colors focus:outline-hidden cursor-pointer"
+            >
+              Settings
+            </button>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+            <span className="text-slate-900 font-bold">Plans & Billing</span>
+          </nav>
 
-            <div className="flex items-center gap-2 mb-1.5">
-              <CreditCard className="h-5 w-5 text-rose-600" />
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">
-                Subscription & Licensing
-              </span>
+          {/* Section Tag */}
+          <div className="flex items-center gap-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
+              <CreditCard className="h-3.5 w-3.5" />
             </div>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">
+              Subscription & Licensing
+            </span>
+          </div>
+
+          {/* Title & Description */}
+          <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
               Plans & Billing
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl font-normal">
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl font-normal leading-relaxed">
               Scale your business intelligence workspace with enterprise security, relational modeling, and AI copilot compute.
             </p>
           </div>
-
-          {/* Current Subscription Status Card */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs min-w-[320px] sm:min-w-[360px] shrink-0 space-y-3 sm:space-y-3.5">
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-xs sm:text-sm text-slate-500 font-medium">Workspace Status</span>
-              {currentSub?.scheduledDowngradePlan ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200 whitespace-nowrap shadow-2xs">
-                  <ArrowDownRight className="w-3.5 h-3.5 text-sky-600" />
-                  Downgrade Scheduled
-                </span>
-              ) : currentSub?.cancelAtPeriodEnd ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shadow-2xs">
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-                  Cancellation Pending
-                </span>
-              ) : isActivePaid ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/90 whitespace-nowrap shadow-2xs">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  Active Paid
-                </span>
-              ) : isExpired ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200/90 whitespace-nowrap shadow-2xs">
-                  <Clock className="w-3.5 h-3.5 text-rose-600" />
-                  Free Trial Expired
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200/90 whitespace-nowrap shadow-2xs">
-                  <Clock className="w-3.5 h-3.5 text-rose-600" />
-                  {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining
-                </span>
-              )}
-            </div>
-
-            <div className="text-base sm:text-lg font-bold text-slate-900 capitalize leading-snug">
-              {currentSub?.planDetails?.name || currentSub?.plan || 'Enterprise'} Plan {isActivePaid ? `(${currentSub?.billingInterval || 'Monthly'})` : '(Trial Period)'}
-            </div>
-
-            {/* Server-Side Reliable Dates */}
-            <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-              <div>
-                <span className="text-slate-400 block font-medium">Started</span>
-                <span className="text-slate-700 font-semibold">
-                  {currentSub?.subscriptionStartDate || currentSub?.trialStartedAt
-                    ? new Date(currentSub.subscriptionStartDate || currentSub.trialStartedAt).toLocaleDateString()
-                    : 'Active'}
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-400 block font-medium">
-                  {isActivePaid ? (currentSub?.cancelAtPeriodEnd ? 'Ends On' : 'Renews On') : 'Trial Ends'}
-                </span>
-                <span className={`font-semibold ${daysRemaining <= 10 ? 'text-rose-600 font-bold' : 'text-slate-700'}`}>
-                  {currentSub?.relevantEndDate || currentSub?.currentPeriodEnd || currentSub?.trialEndsAt
-                    ? new Date(currentSub.relevantEndDate || currentSub.currentPeriodEnd || currentSub.trialEndsAt).toLocaleDateString()
-                    : 'N/A'}
-                </span>
-              </div>
-            </div>
-
-            {/* Scheduled Downgrade Notice */}
-            {currentSub?.scheduledDowngradePlan && (
-              <div className="text-xs bg-sky-50 border border-sky-200 p-2 rounded-lg text-sky-800">
-                <span className="font-bold">Scheduled Downgrade:</span> Switching to <strong>{currentSub.scheduledDowngradePlan.toUpperCase()}</strong> on{' '}
-                {currentSub.scheduledDowngradeEffectiveDate ? new Date(currentSub.scheduledDowngradeEffectiveDate).toLocaleDateString() : 'period end'}. Higher-tier features remain fully active until then.
-              </div>
-            )}
-
-            {/* Live Usage Telemetry Meters */}
-            <div className="space-y-1.5 pt-1 border-t border-slate-100">
-              <div className="flex items-center justify-between text-xs text-slate-600">
-                <span className="flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Datasets</span>
-                </span>
-                <span className="font-semibold text-slate-800">
-                  {currentSub?.usage?.datasets?.count || 0} / {currentSub?.usage?.datasets?.limit === -1 ? 'Unlimited' : (currentSub?.usage?.datasets?.limit || 10)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-xs text-slate-600">
-                <span className="flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Team Members</span>
-                </span>
-                <span className="font-semibold text-slate-800">
-                  {currentSub?.usage?.users?.count || 0} / {currentSub?.usage?.users?.limit === -1 ? 'Unlimited' : (currentSub?.usage?.users?.limit || 5)}
-                </span>
-              </div>
-            </div>
-
-            <p className="text-[11px] text-slate-400 pt-1">
-              Organization: <span className="font-semibold text-slate-600">{user?.organization_name || 'Ricoz Primary Organization'}</span>
-            </p>
-          </div>
         </div>
 
-        {/* Notifications */}
-        {error && (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-800 flex items-start gap-3">
-            <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
-            <div className="flex-1 font-medium">{error}</div>
-          </div>
-        )}
-
-        {successMessage && (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-800 flex items-start gap-3">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-            <div className="flex-1 font-medium">{successMessage}</div>
-          </div>
-        )}
-
-        {/* Limited-Time Launch Offer Banner */}
-        <div className="flex flex-col items-center justify-center pt-2">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-linear-to-r from-rose-50 via-amber-50 to-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold shadow-2xs">
-            <Sparkles className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-            <span>Limited-Time Launch Offer: Save up to 44% with special early-adopter pricing</span>
-            <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-rose-400"></span>
-            <span className="hidden sm:inline-block text-[11px] text-rose-600 font-bold uppercase tracking-wider">Launch Pricing</span>
-          </div>
-        </div>
-
-        {/* Billing Interval Toggle (Monthly / Annual) */}
-        <div className="flex flex-col items-center justify-center gap-2 pt-1 pb-2">
-          <div className="inline-flex p-1 rounded-xl bg-slate-200/80 border border-slate-300/80 shadow-2xs">
-            <button
-              type="button"
-              id="billing-monthly-toggle"
-              onClick={() => setBillingInterval('monthly')}
-              className={`px-5 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
-                billingInterval === 'monthly'
-                  ? 'bg-white text-slate-900 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Monthly Billing
-            </button>
-            <button
-              type="button"
-              id="billing-annual-toggle"
-              onClick={() => setBillingInterval('yearly')}
-              className={`px-5 py-2 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
-                billingInterval === 'yearly'
-                  ? 'bg-white text-slate-900 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <span>Annual Billing</span>
-              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
-                Save up to 44%
+        {/* Current Subscription Status Card */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs w-full lg:w-[380px] shrink-0 space-y-3 sm:space-y-3.5">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-xs sm:text-sm text-slate-500 font-medium">Workspace Status</span>
+            {currentSub?.scheduledDowngradePlan ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200 whitespace-nowrap shadow-2xs">
+                <ArrowDownRight className="w-3.5 h-3.5 text-sky-600" />
+                Downgrade Scheduled
               </span>
-            </button>
+            ) : currentSub?.cancelAtPeriodEnd ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shadow-2xs">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                Cancellation Pending
+              </span>
+            ) : isActivePaid ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/90 whitespace-nowrap shadow-2xs">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                Active Paid
+              </span>
+            ) : isExpired ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200/90 whitespace-nowrap shadow-2xs">
+                <Clock className="w-3.5 h-3.5 text-rose-600" />
+                Free Trial Expired
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200/90 whitespace-nowrap shadow-2xs">
+                <Clock className="w-3.5 h-3.5 text-rose-600" />
+                {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining
+              </span>
+            )}
           </div>
-          <span className="text-[11px] text-slate-500 font-medium">
-            {billingInterval === 'yearly'
-              ? '✨ Billed annually — includes discounted monthly equivalent & maximum launch savings'
-              : '⚡ Billed monthly with flexible month-to-month cancellation'}
-          </span>
+
+          <div className="text-base sm:text-lg font-bold text-slate-900 capitalize leading-snug">
+            {currentSub?.planDetails?.name || currentSub?.plan || 'Enterprise'} Plan {isActivePaid ? `(${currentSub?.billingInterval || 'Monthly'})` : '(Trial Period)'}
+          </div>
+
+          {/* Server-Side Reliable Dates */}
+          <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+            <div>
+              <span className="text-slate-400 block font-medium">Started</span>
+              <span className="text-slate-700 font-semibold">
+                {currentSub?.subscriptionStartDate || currentSub?.trialStartedAt
+                  ? new Date(currentSub.subscriptionStartDate || currentSub.trialStartedAt).toLocaleDateString()
+                  : 'Active'}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-400 block font-medium">
+                {isActivePaid ? (currentSub?.cancelAtPeriodEnd ? 'Ends On' : 'Renews On') : 'Trial Ends'}
+              </span>
+              <span className={`font-semibold ${daysRemaining <= 10 ? 'text-rose-600 font-bold' : 'text-slate-700'}`}>
+                {currentSub?.relevantEndDate || currentSub?.currentPeriodEnd || currentSub?.trialEndsAt
+                  ? new Date(currentSub.relevantEndDate || currentSub.currentPeriodEnd || currentSub.trialEndsAt).toLocaleDateString()
+                  : 'N/A'}
+              </span>
+            </div>
+          </div>
+
+          {/* Scheduled Downgrade Notice */}
+          {currentSub?.scheduledDowngradePlan && (
+            <div className="text-xs bg-sky-50 border border-sky-200 p-2.5 rounded-xl text-sky-800">
+              <span className="font-bold">Scheduled Downgrade:</span> Switching to <strong>{currentSub.scheduledDowngradePlan.toUpperCase()}</strong> on{' '}
+              {currentSub.scheduledDowngradeEffectiveDate ? new Date(currentSub.scheduledDowngradeEffectiveDate).toLocaleDateString() : 'period end'}. Higher-tier features remain fully active until then.
+            </div>
+          )}
+
+          {/* Live Usage Telemetry Meters */}
+          <div className="space-y-1.5 pt-1 border-t border-slate-100">
+            <div className="flex items-center justify-between text-xs text-slate-600">
+              <span className="flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-slate-400" />
+                <span>Datasets</span>
+              </span>
+              <span className="font-semibold text-slate-800">
+                {currentSub?.usage?.datasets?.count || 0} / {currentSub?.usage?.datasets?.limit === -1 ? 'Unlimited' : (currentSub?.usage?.datasets?.limit || 10)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-xs text-slate-600">
+              <span className="flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-slate-400" />
+                <span>Team Members</span>
+              </span>
+              <span className="font-semibold text-slate-800">
+                {currentSub?.usage?.users?.count || 0} / {currentSub?.usage?.users?.limit === -1 ? 'Unlimited' : (currentSub?.usage?.users?.limit || 5)}
+              </span>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-slate-400 pt-1">
+            Organization: <span className="font-semibold text-slate-600">{user?.organization_name || 'Ricoz Primary Organization'}</span>
+          </p>
         </div>
+      </div>
 
-        {/* Pricing Cards Grid — Consistent Heights & Aligned Elements */}
-        <div id="plans-selection-grid" className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2 items-stretch">
-          {plans.map((p) => {
-            const isPopular = Boolean(p.popular);
-            const isCurrentPlan = currentSub?.plan === p.id && isActivePaid;
-            const currencySym = p.currencySymbol || '₹';
+      {/* Notifications */}
+      {error && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-800 flex items-start gap-3">
+          <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+          <div className="flex-1 font-medium">{error}</div>
+        </div>
+      )}
 
-            // Prices
-            const isYearly = billingInterval === 'yearly';
-            const launchPrice = isYearly ? (p.priceAnnual || p.priceYearly) : p.priceMonthly;
-            const regularPrice = isYearly ? (p.regularPriceYearly || (p.regularPriceMonthly * 12)) : p.regularPriceMonthly;
-            const discountPct = isYearly ? (p.discountPercentYearly || 42) : p.discountPercentMonthly;
-            const priceSuffix = p.priceSuffix || '';
+      {successMessage && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-800 flex items-start gap-3">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+          <div className="flex-1 font-medium">{successMessage}</div>
+        </div>
+      )}
 
-            // Monthly equivalent & annual savings
-            const monthlyEquivalent = isYearly ? Math.round(launchPrice / 12) : launchPrice;
-            const annualSavings = isYearly ? Math.max(0, regularPrice - launchPrice) : 0;
+      {/* Limited-Time Launch Offer Banner */}
+      <div className="flex flex-col items-center justify-center pt-2">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-linear-to-r from-rose-50 via-amber-50 to-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold shadow-2xs">
+          <Sparkles className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+          <span>Limited-Time Launch Offer: Save up to 44% with special early-adopter pricing</span>
+          <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+          <span className="hidden sm:inline-block text-[11px] text-rose-600 font-bold uppercase tracking-wider">Launch Pricing</span>
+        </div>
+      </div>
 
-            const currentPlanId = currentSub?.plan || 'starter';
-            const planComparison = comparePlanIds(p.id, currentPlanId);
-            const isDowngradeScheduledForThis = currentSub?.scheduledDowngradePlan === p.id;
-            const isDowngradeCandidate = isActivePaid && planComparison < 0;
+      {/* Billing Interval Toggle (Monthly / Annual) */}
+      <div className="flex flex-col items-center justify-center gap-2 pt-1 pb-2">
+        <div className="inline-flex p-1 rounded-xl bg-slate-200/80 border border-slate-300/80 shadow-2xs">
+          <button
+            type="button"
+            id="billing-monthly-toggle"
+            onClick={() => setBillingInterval('monthly')}
+            className={`px-5 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+              billingInterval === 'monthly'
+                ? 'bg-white text-slate-900 shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Monthly Billing
+          </button>
+          <button
+            type="button"
+            id="billing-annual-toggle"
+            onClick={() => setBillingInterval('yearly')}
+            className={`px-5 py-2 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
+              billingInterval === 'yearly'
+                ? 'bg-white text-slate-900 shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <span>Annual Billing</span>
+            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
+              Save up to 44%
+            </span>
+          </button>
+        </div>
+        <span className="text-[11px] text-slate-500 font-medium">
+          {billingInterval === 'yearly'
+            ? '✨ Billed annually — includes discounted monthly equivalent & maximum launch savings'
+            : '⚡ Billed monthly with flexible month-to-month cancellation'}
+        </span>
+      </div>
 
-            return (
-              <div
-                key={p.id}
-                className={`relative flex flex-col justify-between rounded-2xl border bg-white p-6 sm:p-7 shadow-xs transition hover:shadow-md ${
-                  isPopular
-                    ? 'border-rose-500 ring-2 ring-rose-500/20 shadow-md shadow-rose-100'
-                    : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                {/* Most Popular Badge */}
-                {isPopular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-rose-600 px-3.5 py-0.5 text-[10.5px] font-extrabold uppercase tracking-wider text-white shadow-xs">
-                    Most Popular
-                  </div>
-                )}
+      {/* Pricing Cards Grid — Consistent Heights & Aligned Elements */}
+      <div id="plans-selection-grid" className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8 pt-2 items-stretch">
+        {plans.map((p) => {
+          const isPopular = Boolean(p.popular);
+          const isCurrentPlan = currentSub?.plan === p.id && isActivePaid;
+          const currencySym = p.currencySymbol || '₹';
 
-                <div>
-                  {/* Card Header & Icon */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xl font-bold text-slate-950 font-sans tracking-tight">{p.name}</h3>
-                      <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-rose-700 bg-rose-50/80 px-2 py-0.5 rounded-md mt-1 border border-rose-100">
-                        <Users className="h-3 w-3 text-rose-500 shrink-0" />
-                        <span>{p.audience}</span>
-                      </div>
+          // Prices
+          const isYearly = billingInterval === 'yearly';
+          const launchPrice = isYearly ? (p.priceAnnual || p.priceYearly) : p.priceMonthly;
+          const regularPrice = isYearly ? (p.regularPriceYearly || (p.regularPriceMonthly * 12)) : p.regularPriceMonthly;
+          const discountPct = isYearly ? (p.discountPercentYearly || 42) : p.discountPercentMonthly;
+          const priceSuffix = p.priceSuffix || '';
+
+          // Monthly equivalent & annual savings
+          const monthlyEquivalent = isYearly ? Math.round(launchPrice / 12) : launchPrice;
+          const annualSavings = isYearly ? Math.max(0, regularPrice - launchPrice) : 0;
+
+          const currentPlanId = currentSub?.plan || 'starter';
+          const planComparison = comparePlanIds(p.id, currentPlanId);
+          const isDowngradeScheduledForThis = currentSub?.scheduledDowngradePlan === p.id;
+          const isDowngradeCandidate = isActivePaid && planComparison < 0;
+
+          return (
+            <div
+              key={p.id}
+              className={`relative flex flex-col justify-between rounded-2xl border bg-white p-6 sm:p-7 shadow-xs transition hover:shadow-md h-full ${
+                isPopular
+                  ? 'border-rose-500 ring-2 ring-rose-500/20 shadow-md shadow-rose-100'
+                  : 'border-slate-200 hover:border-slate-300'
+              }`}
+            >
+              {/* Most Popular Badge */}
+              {isPopular && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-rose-600 px-3.5 py-0.5 text-[10.5px] font-extrabold uppercase tracking-wider text-white shadow-xs z-10">
+                  Most Popular
+                </div>
+              )}
+
+              <div className="flex-1 flex flex-col">
+                {/* Card Header & Icon */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-xl font-bold text-slate-950 font-sans tracking-tight">
+                      {p.name}
+                    </h3>
+                    <div className="mt-2 min-h-[38px] sm:min-h-[42px] flex items-start">
+                      <span className="inline-flex items-start gap-1.5 text-[11px] font-semibold text-rose-700 bg-rose-50/90 px-2.5 py-1 rounded-md border border-rose-100 leading-snug">
+                        <Users className="h-3.5 w-3.5 text-rose-500 shrink-0 mt-0.5" />
+                        <span className="break-words leading-tight">{p.audience}</span>
+                      </span>
                     </div>
+                  </div>
+                  <div className="shrink-0 mt-0.5">
                     {p.id === 'growth' ? (
                       <div className="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 border border-rose-100">
                         <Zap className="h-5 w-5" />
@@ -557,151 +563,164 @@ export default function BillingPage() {
                       </div>
                     )}
                   </div>
-
-                  <p className="text-xs text-slate-500 mt-2.5 min-h-[36px] leading-relaxed">
-                    {p.description}
-                  </p>
-
-                  {/* Pricing Block with Regular Price Crossed Out & Discount Badge */}
-                  <div className="mt-4 pt-4 border-t border-slate-100 min-h-[96px] flex flex-col justify-center">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs text-slate-400 line-through font-semibold">
-                        {currencySym}{regularPrice.toLocaleString('en-IN')}{isYearly ? '/year' : '/month'}
-                      </span>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200">
-                        {discountPct}% OFF
-                      </span>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-                        Launch Offer
-                      </span>
-                    </div>
-
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight font-sans">
-                        {currencySym}{launchPrice.toLocaleString('en-IN')}
-                      </span>
-                      <span className="text-xs text-slate-600 font-medium">
-                        {isYearly ? '/year' : '/month'}
-                        {priceSuffix}
-                      </span>
-                    </div>
-
-                    {isYearly ? (
-                      <div className="mt-1 flex items-center justify-between text-[11px]">
-                        <span className="text-slate-600 font-medium">
-                          ≈ {currencySym}{monthlyEquivalent.toLocaleString('en-IN')}/mo equivalent
-                        </span>
-                        <span className="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
-                          Save {currencySym}{annualSavings.toLocaleString('en-IN')}/yr
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="mt-1 text-[11px] text-slate-500">
-                        Billed monthly • Cancel anytime
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Features List */}
-                  <div className="mt-5 space-y-2.5">
-                    <p className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
-                      What is included
-                    </p>
-                    <ul className="space-y-2 text-xs text-slate-700">
-                      {p.features.map((feat, idx) => (
-                        <li key={idx} className="flex items-start gap-2.5">
-                          <CheckCircle2 className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
-                          <span className="leading-tight">{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
                 </div>
 
-                {/* Call to Action Button & Contact Sales */}
-                <div className="mt-7 pt-4 border-t border-slate-100 space-y-2">
-                  {isCurrentPlan ? (
-                    <button
-                      type="button"
-                      disabled
-                      className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200 flex items-center justify-center gap-2"
-                    >
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>Current Active Plan</span>
-                    </button>
-                  ) : isDowngradeScheduledForThis ? (
-                    <button
-                      type="button"
-                      disabled
-                      className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200 cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      <Clock className="w-4 h-4 text-sky-600" />
-                      <span>Downgrade Scheduled</span>
-                    </button>
-                  ) : isDowngradeCandidate ? (
-                    <button
-                      type="button"
-                      disabled={upgradingPlanId === p.id}
-                      onClick={() => handleDowngrade(p.id)}
-                      className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
-                    >
-                      {upgradingPlanId === p.id ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin text-slate-600" />
-                          <span>Scheduling Downgrade...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Schedule Downgrade to {p.name}</span>
-                          <ArrowDownRight className="w-4 h-4 text-slate-500" />
-                        </>
-                      )}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled={upgradingPlanId === p.id}
-                      onClick={() => handleUpgrade(p.id)}
-                      className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs ${
-                        isPopular
-                          ? 'bg-rose-600 text-white hover:bg-rose-700 focus:ring-2 focus:ring-rose-500 focus:ring-offset-2'
-                          : 'bg-slate-900 text-white hover:bg-slate-800 focus:ring-2 focus:ring-slate-700 focus:ring-offset-2'
-                      }`}
-                    >
-                      {upgradingPlanId === p.id ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Connecting to Gateway...</span>
-                        </>
-                      ) : isExpired ? (
-                        <>
-                          <span>Choose {p.name} & Unlock Access</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </>
-                      ) : (
-                        <>
-                          <span>Upgrade to {p.name}</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </>
-                      )}
-                    </button>
-                  )}
+                <p className="text-xs text-slate-500 mt-2.5 min-h-[42px] leading-relaxed break-words">
+                  {p.description}
+                </p>
 
-                  {/* Contact Sales / Custom Pricing for Enterprise */}
-                  {p.hasContactSales && (
+                {/* Pricing Block with Regular Price Crossed Out & Discount Badge */}
+                <div className="mt-4 pt-4 border-t border-slate-100 min-h-[104px] flex flex-col justify-center">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs text-slate-400 line-through font-semibold">
+                      {currencySym}{regularPrice.toLocaleString('en-IN')}{isYearly ? '/year' : '/month'}
+                    </span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200">
+                      {discountPct}% OFF
+                    </span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                      Launch Offer
+                    </span>
+                  </div>
+
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight font-sans">
+                      {currencySym}{launchPrice.toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-xs text-slate-600 font-medium">
+                      {isYearly ? '/year' : '/month'}
+                      {priceSuffix}
+                    </span>
+                  </div>
+
+                  {isYearly ? (
+                    <div className="mt-1 flex items-center justify-between text-[11px]">
+                      <span className="text-slate-600 font-medium">
+                        ≈ {currencySym}{monthlyEquivalent.toLocaleString('en-IN')}/mo equivalent
+                      </span>
+                      <span className="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 text-[10px]">
+                        Save {currencySym}{annualSavings.toLocaleString('en-IN')}/yr
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="mt-1 text-[11px] text-slate-500">
+                      Billed monthly • Cancel anytime
+                    </div>
+                  )}
+                </div>
+
+                {/* Features List */}
+                <div className="mt-5 space-y-2.5 flex-1 flex flex-col">
+                  <p className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
+                    What is included
+                  </p>
+                  <ul className="space-y-2.5 text-xs text-slate-700 flex-1">
+                    {p.features.map((feat, idx) => (
+                      <li key={idx} className="flex items-start gap-2.5">
+                        <CheckCircle2 className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                        <span className="leading-tight">{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Call to Action Button & Contact Sales Footer */}
+              <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col gap-2.5">
+                {isCurrentPlan ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200 flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Current Active Plan</span>
+                  </button>
+                ) : isDowngradeScheduledForThis ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200 cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <Clock className="w-4 h-4 text-sky-600" />
+                    <span>Downgrade Scheduled</span>
+                  </button>
+                ) : isDowngradeCandidate ? (
+                  <button
+                    type="button"
+                    disabled={upgradingPlanId === p.id}
+                    onClick={() => handleDowngrade(p.id)}
+                    className="w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+                  >
+                    {upgradingPlanId === p.id ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-slate-600" />
+                        <span>Scheduling Downgrade...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Schedule Downgrade to {p.name}</span>
+                        <ArrowDownRight className="w-4 h-4 text-slate-500" />
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={upgradingPlanId === p.id}
+                    onClick={() => handleUpgrade(p.id)}
+                    className={`w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs ${
+                      isPopular
+                        ? 'bg-rose-600 text-white hover:bg-rose-700 focus:ring-2 focus:ring-rose-500 focus:ring-offset-2'
+                        : 'bg-slate-900 text-white hover:bg-slate-800 focus:ring-2 focus:ring-slate-700 focus:ring-offset-2'
+                    }`}
+                  >
+                    {upgradingPlanId === p.id ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Connecting to Gateway...</span>
+                      </>
+                    ) : isExpired ? (
+                      <>
+                        <span>Choose {p.name} & Unlock Access</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    ) : (
+                      <>
+                        <span>Upgrade to {p.name}</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {/* Secondary Action / Reassurance Slot (Identical h-9 height across all cards) */}
+                <div className="h-9 flex items-center justify-center">
+                  {p.hasContactSales ? (
                     <a
                       href="mailto:sales@ricoz.in?subject=Enterprise%20Plan%20Custom%20Pricing%20Inquiry%20-%20RicozAnalytics"
-                      className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 transition text-center flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="w-full h-full py-1.5 px-3 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 transition text-center flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
                     >
                       <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
                       <span>Contact Enterprise Sales</span>
                     </a>
+                  ) : p.id === 'growth' ? (
+                    <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-rose-500" />
+                      Priority SLA & AI Copilot included
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                      14-day money-back guarantee
+                    </span>
                   )}
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
+      </div>
 
         {/* GST Information Note */}
         <div className="text-center py-2">
@@ -912,7 +931,6 @@ export default function BillingPage() {
               </tbody>
             </table>
           </div>
-        </div>
       </div>
     </div>
   );

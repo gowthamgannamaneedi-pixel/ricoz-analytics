@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const { calculateTrialEndDate } = require('../utils/billingDateUtils');
 
 /**
  * Organization Data Access Model for Multi-Tenancy & Workspace Governance
@@ -44,7 +45,7 @@ const OrganizationModel = {
   async create({ name, slug, plan = 'starter', settings = {}, trial_started_at, trial_ends_at, subscription_status = 'trial', payment_status = 'unpaid' }) {
     const generatedSlug = slug || (name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString(36).slice(-4));
     const trialStart = trial_started_at || new Date();
-    const trialEnd = trial_ends_at || new Date(trialStart.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const trialEnd = trial_ends_at || calculateTrialEndDate(trialStart, 14);
 
     const sql = `
       INSERT INTO organizations (name, slug, plan, settings, trial_started_at, trial_ends_at, subscription_status, payment_status)

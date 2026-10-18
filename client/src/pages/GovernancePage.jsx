@@ -29,7 +29,12 @@ import {
   BarChart3,
   TrendingUp,
   User,
-  GitBranch
+  GitBranch,
+  UserPlus,
+  Mail,
+  Send,
+  ArrowRight,
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -40,7 +45,11 @@ import {
   updateAdminUserRole,
   updateAdminUserStatus,
   getAdminAuditLogs,
-  getAdminPermissions
+  getAdminPermissions,
+  createAdminInvitation,
+  getAdminInvitations,
+  deleteAdminInvitation,
+  resendAdminInvitation
 } from '../services/api';
 import { RefreshButton } from '../components/ui/RefreshButton';
 import { ResetButton } from '../components/ui/ResetButton';
@@ -53,7 +62,7 @@ import { Select } from '../components/ui/Select';
 export default function GovernancePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'owner';
 
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
@@ -73,6 +82,19 @@ export default function GovernancePage() {
   const [userRoleFilter, setUserRoleFilter] = useState('all');
   const [userStatusFilter, setUserStatusFilter] = useState('all');
   const [userLoading, setUserLoading] = useState(false);
+
+  // Team Invitations Data & Modal
+  const [pendingInvitations, setPendingInvitations] = useState([]);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
+  const [inviteRole, setInviteRole] = useState('viewer');
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
+  const [inviteSuccess, setInviteSuccess] = useState(false);
+  const [inviteError, setInviteError] = useState(null);
+  const [invitationsLoading, setInvitationsLoading] = useState(false);
+  const [resendingInviteId, setResendingInviteId] = useState(null);
+  const [revokingInviteId, setRevokingInviteId] = useState(null);
 
   // User Action Modals
   const [selectedUserForRole, setSelectedUserForRole] = useState(null);
@@ -177,6 +199,82 @@ export default function GovernancePage() {
     }
   }, [userPage, userLimit, userSearch, userRoleFilter, userStatusFilter]);
 
+  // Load Pending Invitations
+  const loadInvitations = useCallback(async () => {
+    try {
+      setInvitationsLoading(true);
+      const res = await getAdminInvitations();
+      if (res && res.invitations) {
+        setPendingInvitations(res.invitations);
+      }
+    } catch (err) {
+      console.warn('Failed to load pending invitations:', err.message);
+    } finally {
+      setInvitationsLoading(false);
+    }
+  }, []);
+
+  // Dispatch single-use email invitation with atomic seat reservation
+  const handleSendInvite = async (e) => {
+    e.preventDefault();
+    if (!inviteEmail.trim()) return;
+    try {
+      setIsSendingInvite(true);
+      setInviteError(null);
+      await createAdminInvitation({
+        email: inviteEmail.trim(),
+        role: inviteRole
+      });
+      setInviteSuccess(true);
+      setTimeout(() => {
+        setIsInviteModalOpen(false);
+        setInviteSuccess(false);
+        setInviteEmail('');
+        setInviteName('');
+        setSuccessMessage(`Workspace invitation successfully dispatched to ${inviteEmail.trim()}.`);
+      }, 1000);
+      loadInvitations();
+      loadUsers();
+      loadOverview();
+    } catch (err) {
+      setInviteError(err.message || 'Failed to dispatch workspace invitation.');
+    } finally {
+      setIsSendingInvite(false);
+    }
+  };
+
+  // Revoke invitation and immediately free reserved seat
+  const handleRevokeInvitation = async (id, memberEmail) => {
+    try {
+      setRevokingInviteId(id);
+      setError(null);
+      await deleteAdminInvitation(id);
+      setSuccessMessage(`Invitation for ${memberEmail || 'member'} revoked and seat reservation freed.`);
+      loadInvitations();
+      loadUsers();
+      loadOverview();
+    } catch (err) {
+      setError(err.message || 'Failed to revoke invitation.');
+    } finally {
+      setRevokingInviteId(null);
+    }
+  };
+
+  // Resend invitation with a fresh single-use token and renewed 7-day expiry
+  const handleResendInvitation = async (id, memberEmail) => {
+    try {
+      setResendingInviteId(id);
+      setError(null);
+      await resendAdminInvitation(id);
+      setSuccessMessage(`Invitation resent to ${memberEmail || 'member'} with renewed 7-day expiration.`);
+      loadInvitations();
+    } catch (err) {
+      setError(err.message || 'Failed to resend invitation.');
+    } finally {
+      setResendingInviteId(null);
+    }
+  };
+
   // Load Audit Logs
   const loadAuditLogs = useCallback(async () => {
     try {
@@ -225,10 +323,11 @@ export default function GovernancePage() {
   useEffect(() => {
     if (activeTab === 'users') {
       loadUsers();
+      loadInvitations();
     } else if (activeTab === 'audit') {
       loadAuditLogs();
     }
-  }, [activeTab, loadUsers, loadAuditLogs]);
+  }, [activeTab, loadUsers, loadAuditLogs, loadInvitations]);
 
   // Handle Role Update
   const handleRoleUpdate = async () => {
@@ -833,178 +932,399 @@ export default function GovernancePage() {
       {/* ========================================================================= */}
       {/* TAB 2: TEAM & USER MANAGEMENT                                             */}
       {/* ========================================================================= */}
-      {activeTab === 'users' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden space-y-4 p-6">
-          {/* Controls */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="relative w-full sm:w-80">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={userSearch}
-                onChange={(e) => { setUserSearch(e.target.value); setUserPage(1); }}
-                placeholder="Search member by name or email..."
-                className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
-              />
-            </div>
+      {/* ========================================================================= */}
+      {/* TAB 2: TEAM & USER MANAGEMENT                                             */}
+      {/* ========================================================================= */}
+      {activeTab === 'users' && (() => {
+        const userUsage = orgData?.usage?.users || null;
+        const planId = (orgData?.plan || 'starter').toLowerCase();
+        const planDisplayName = planId === 'enterprise' ? 'Enterprise' : planId === 'growth' ? 'Growth' : 'Starter';
+        const seatLimit = userUsage?.limit !== undefined ? userUsage.limit : (planId === 'growth' ? 25 : planId === 'enterprise' ? -1 : 5);
+        const activeMembersCount = userUsage?.membersCount ?? usersTotal ?? users.filter(u => u.status !== 'deactivated').length;
+        const pendingCount = userUsage?.pendingInvitationsCount ?? pendingInvitations.filter(i => i.status === 'pending').length;
+        const currentSeatsUsed = userUsage?.count ?? (activeMembersCount + pendingCount);
+        const isAtSeatLimit = userUsage?.isAtLimit ?? (seatLimit !== -1 && currentSeatsUsed >= seatLimit);
+        const percentAllocated = seatLimit === -1 ? 0 : Math.min(100, Math.round((currentSeatsUsed / seatLimit) * 100));
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <div className="w-36 sm:w-40">
-                <Select
-                  value={userRoleFilter}
-                  onChange={(e) => { setUserRoleFilter(e.target.value); setUserPage(1); }}
-                  size="sm"
-                >
-                  <option value="all">All Roles</option>
-                  <option value="admin">Admin</option>
-                  <option value="manager">Manager</option>
-                  <option value="analyst">Analyst</option>
-                  <option value="viewer">Viewer</option>
-                </Select>
+        return (
+          <div className="space-y-6">
+            {/* Top Workspace Seat Telemetry & Invite CTA Card */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-rose-600" />
+                    <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                      Team Members & Seat Management
+                    </h2>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wider">
+                      {planDisplayName} Plan
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Manage active members, assigned RBAC roles, and pending email invitation reservations.
+                  </p>
+                </div>
+
+                {/* Primary Invite Member Button */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {isAdmin ? (
+                    <button
+                      id="invite-member-btn"
+                      type="button"
+                      onClick={() => {
+                        setInviteError(null);
+                        setIsInviteModalOpen(true);
+                      }}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-xs hover:shadow-md cursor-pointer"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      <span>Invite Member</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      title="Only workspace administrators and owners can invite members"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 text-slate-400 text-xs font-semibold cursor-not-allowed"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      <span>Invite Member</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <div className="w-36 sm:w-40">
-                <Select
-                  value={userStatusFilter}
-                  onChange={(e) => { setUserStatusFilter(e.target.value); setUserPage(1); }}
-                  size="sm"
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="deactivated">Deactivated</option>
-                </Select>
-              </div>
+              {/* Seat Capacity Bar & Badges */}
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold text-slate-700">Seat Allocation:</span>
+                    <span className="font-bold text-slate-900 font-mono">
+                      {currentSeatsUsed} / {seatLimit === -1 ? 'Unlimited' : `${seatLimit} Seats`}
+                    </span>
+                    <span className="text-slate-300">|</span>
+                    <span className="text-slate-600">
+                      <strong className="text-slate-900 font-semibold">{activeMembersCount}</strong> Active
+                    </span>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-slate-600">
+                      <strong className="text-slate-900 font-semibold">{pendingCount}</strong> Pending
+                    </span>
+                  </div>
+                  <div className="text-[11px] font-semibold text-slate-500 font-mono">
+                    {seatLimit === -1 ? '100% Available' : `${Math.max(0, seatLimit - currentSeatsUsed)} Seats Remaining`}
+                  </div>
+                </div>
 
-              <button
-                onClick={loadUsers}
-                className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors"
-                title="Refresh user list"
-              >
-                <RefreshCw className={`w-4 h-4 ${userLoading ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
-          </div>
-
-          {/* Members Table */}
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
-                <tr>
-                  <th className="px-4 py-3">Member</th>
-                  <th className="px-4 py-3">Role</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Last Active</th>
-                  <th className="px-4 py-3">Joined Date</th>
-                  {isAdmin && <th className="px-4 py-3 text-right">Actions</th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {users.length === 0 ? (
-                  <tr>
-                    <td colSpan={isAdmin ? 6 : 5} className="px-4 py-8 text-center text-slate-400">
-                      No members matched your search filter.
-                    </td>
-                  </tr>
-                ) : (
-                  users.map((u) => {
-                    const isSelf = Number(u.id) === Number(user?.id);
-                    return (
-                      <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="px-4 py-3.5">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs shrink-0">
-                              {u.name ? u.name.slice(0, 2).toUpperCase() : 'U'}
-                            </div>
-                            <div className="min-w-0">
-                              <div className="font-semibold text-slate-900 flex items-center gap-1.5 truncate">
-                                {u.name}
-                                {isSelf && (
-                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">You</span>
-                                )}
-                              </div>
-                              <div className="text-xs text-slate-400 truncate">{u.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3.5">{getRoleBadge(u.role)}</td>
-                        <td className="px-4 py-3.5">{getStatusBadge(u.status)}</td>
-                        <td className="px-4 py-3.5 text-xs text-slate-500 whitespace-nowrap">
-                          {u.last_login_at ? new Date(u.last_login_at).toLocaleString() : 'Never logged in'}
-                        </td>
-                        <td className="px-4 py-3.5 text-xs text-slate-400 whitespace-nowrap">
-                          {u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}
-                        </td>
-                        {isAdmin && (
-                          <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={() => {
-                                  setSelectedUserForRole(u);
-                                  setNewRole(u.role || 'viewer');
-                                  setRoleModalOpen(true);
-                                }}
-                                disabled={isSelf}
-                                className="px-2.5 py-1 text-xs font-medium rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
-                                title={isSelf ? 'Cannot modify own role' : 'Change User Role'}
-                              >
-                                <Edit3 className="w-3 h-3" />
-                                Role
-                              </button>
-
-                              <button
-                                onClick={() => {
-                                  setSelectedUserForStatus(u);
-                                  setNewStatus(u.status === 'active' ? 'deactivated' : 'active');
-                                  setStatusModalOpen(true);
-                                }}
-                                disabled={isSelf}
-                                className={`px-2.5 py-1 text-xs font-medium rounded-lg border flex items-center gap-1 transition-colors ${
-                                  u.status === 'active'
-                                    ? 'border-rose-200 text-rose-700 hover:bg-rose-50'
-                                    : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
-                                } disabled:opacity-40 disabled:cursor-not-allowed`}
-                                title={isSelf ? 'Cannot deactivate own account' : u.status === 'active' ? 'Deactivate user' : 'Activate user'}
-                              >
-                                {u.status === 'active' ? <UserX className="w-3 h-3" /> : <UserCheck className="w-3 h-3" />}
-                                {u.status === 'active' ? 'Deactivate' : 'Activate'}
-                              </button>
-                            </div>
-                          </td>
-                        )}
-                      </tr>
-                    );
-                  })
+                {seatLimit !== -1 && (
+                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-300 rounded-full ${
+                        percentAllocated >= 100
+                          ? 'bg-rose-600'
+                          : percentAllocated >= 80
+                          ? 'bg-amber-500'
+                          : 'bg-emerald-500'
+                      }`}
+                      style={{ width: `${percentAllocated}%` }}
+                    />
+                  </div>
                 )}
-              </tbody>
-            </table>
-          </div>
 
-          {/* Pagination */}
-          <div className="flex items-center justify-between text-xs text-slate-500 pt-2">
-            <div>
-              Showing {users.length} of {usersTotal} members
+                {isAtSeatLimit && (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 text-xs text-rose-800 bg-rose-100/60 p-3 rounded-lg border border-rose-200">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                      <span>
+                        Your organization has reached the maximum of <strong>{seatLimit} seats</strong> on the {planDisplayName} tier.
+                        Upgrade your plan to unlock more team member seats.
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/billing')}
+                      className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs whitespace-nowrap transition cursor-pointer shrink-0"
+                    >
+                      Upgrade Plan
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setUserPage((p) => Math.max(1, p - 1))}
-                disabled={userPage <= 1}
-                className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="px-2 font-medium">Page {userPage}</span>
-              <button
-                onClick={() => setUserPage((p) => p + 1)}
-                disabled={userPage * userLimit >= usersTotal}
-                className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+
+            {/* Members Table Card */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden space-y-4 p-6">
+              {/* Controls */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="relative w-full sm:w-80">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={userSearch}
+                    onChange={(e) => { setUserSearch(e.target.value); setUserPage(1); }}
+                    placeholder="Search member by name or email..."
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="w-36 sm:w-40">
+                    <Select
+                      value={userRoleFilter}
+                      onChange={(e) => { setUserRoleFilter(e.target.value); setUserPage(1); }}
+                      size="sm"
+                    >
+                      <option value="all">All Roles</option>
+                      <option value="admin">Admin</option>
+                      <option value="manager">Manager</option>
+                      <option value="analyst">Analyst</option>
+                      <option value="viewer">Viewer</option>
+                    </Select>
+                  </div>
+
+                  <div className="w-36 sm:w-40">
+                    <Select
+                      value={userStatusFilter}
+                      onChange={(e) => { setUserStatusFilter(e.target.value); setUserPage(1); }}
+                      size="sm"
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="deactivated">Deactivated</option>
+                    </Select>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={loadUsers}
+                    className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+                    title="Refresh user list"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${userLoading ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Members Table */}
+              <div className="overflow-x-auto rounded-xl border border-slate-200">
+                <table className="w-full text-left text-sm text-slate-600">
+                  <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+                    <tr>
+                      <th className="px-4 py-3">Member</th>
+                      <th className="px-4 py-3">Role</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Last Active</th>
+                      <th className="px-4 py-3">Joined Date</th>
+                      {isAdmin && <th className="px-4 py-3 text-right">Actions</th>}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {users.length === 0 ? (
+                      <tr>
+                        <td colSpan={isAdmin ? 6 : 5} className="px-4 py-8 text-center text-slate-400">
+                          No members matched your search filter.
+                        </td>
+                      </tr>
+                    ) : (
+                      users.map((u) => {
+                        const isSelf = Number(u.id) === Number(user?.id);
+                        return (
+                          <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
+                            <td className="px-4 py-3.5">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs shrink-0">
+                                  {u.name ? u.name.slice(0, 2).toUpperCase() : 'U'}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="font-semibold text-slate-900 flex items-center gap-1.5 truncate">
+                                    {u.name}
+                                    {isSelf && (
+                                      <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">You</span>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-slate-400 truncate">{u.email}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5">{getRoleBadge(u.role)}</td>
+                            <td className="px-4 py-3.5">{getStatusBadge(u.status)}</td>
+                            <td className="px-4 py-3.5 text-xs text-slate-500 whitespace-nowrap">
+                              {u.last_login_at ? new Date(u.last_login_at).toLocaleString() : 'Never logged in'}
+                            </td>
+                            <td className="px-4 py-3.5 text-xs text-slate-400 whitespace-nowrap">
+                              {u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}
+                            </td>
+                            {isAdmin && (
+                              <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                                <div className="flex items-center justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedUserForRole(u);
+                                      setNewRole(u.role || 'viewer');
+                                      setRoleModalOpen(true);
+                                    }}
+                                    disabled={isSelf}
+                                    className="px-2.5 py-1 text-xs font-medium rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 transition-colors cursor-pointer"
+                                    title={isSelf ? 'Cannot modify own role' : 'Change User Role'}
+                                  >
+                                    <Edit3 className="w-3 h-3" />
+                                    Role
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedUserForStatus(u);
+                                      setNewStatus(u.status === 'active' ? 'deactivated' : 'active');
+                                      setStatusModalOpen(true);
+                                    }}
+                                    disabled={isSelf}
+                                    className={`px-2.5 py-1 text-xs font-medium rounded-lg border flex items-center gap-1 transition-colors cursor-pointer ${
+                                      u.status === 'active'
+                                        ? 'border-rose-200 text-rose-700 hover:bg-rose-50'
+                                        : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
+                                    } disabled:opacity-40 disabled:cursor-not-allowed`}
+                                    title={isSelf ? 'Cannot deactivate own account' : u.status === 'active' ? 'Deactivate user' : 'Activate user'}
+                                  >
+                                    {u.status === 'active' ? <UserX className="w-3 h-3" /> : <UserCheck className="w-3 h-3" />}
+                                    {u.status === 'active' ? 'Deactivate' : 'Activate'}
+                                  </button>
+                                </div>
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              <div className="flex items-center justify-between text-xs text-slate-500 pt-2">
+                <div>
+                  Showing {users.length} of {usersTotal} members
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setUserPage((p) => Math.max(1, p - 1))}
+                    disabled={userPage <= 1}
+                    className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="px-2 font-medium">Page {userPage}</span>
+                  <button
+                    type="button"
+                    onClick={() => setUserPage((p) => p + 1)}
+                    disabled={userPage * userLimit >= usersTotal}
+                    className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Pending Workspace Invitations Card */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden space-y-4 p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-rose-600" />
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Pending Workspace Invitations
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                    {pendingInvitations.length} Reserved
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={loadInvitations}
+                  className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-500 transition-colors cursor-pointer"
+                  title="Refresh invitations"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${invitationsLoading ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+
+              <p className="text-xs text-slate-500">
+                Pending invitations reserve an organization seat atomically. Unaccepted invitations can be resent or revoked to immediately release reserved seats.
+              </p>
+
+              {pendingInvitations.length === 0 ? (
+                <div className="py-6 text-center text-xs text-slate-400 bg-slate-50/50 rounded-xl border border-slate-100">
+                  No pending invitations. All team member seats are actively occupied or released.
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border border-slate-200">
+                  <table className="w-full text-left text-sm text-slate-600">
+                    <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+                      <tr>
+                        <th className="px-4 py-3">Invitee Email</th>
+                        <th className="px-4 py-3">Assigned Role</th>
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3">Expires At</th>
+                        {isAdmin && <th className="px-4 py-3 text-right">Actions</th>}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-xs">
+                      {pendingInvitations.map((inv) => (
+                        <tr key={inv.id} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="px-4 py-3 font-semibold text-slate-900">
+                            {inv.email}
+                          </td>
+                          <td className="px-4 py-3">
+                            {getRoleBadge(inv.role)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 capitalize">
+                              {inv.status || 'pending'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
+                            {inv.expires_at ? new Date(inv.expires_at).toLocaleString() : '7 days from send'}
+                          </td>
+                          {isAdmin && (
+                            <td className="px-4 py-3 text-right whitespace-nowrap">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleResendInvitation(inv.id, inv.email)}
+                                  disabled={resendingInviteId === inv.id}
+                                  className="px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center gap-1 font-medium transition cursor-pointer disabled:opacity-40"
+                                  title="Resend single-use email invitation"
+                                >
+                                  <RefreshCw className={`w-3 h-3 ${resendingInviteId === inv.id ? 'animate-spin' : ''}`} />
+                                  <span>Resend</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRevokeInvitation(inv.id, inv.email)}
+                                  disabled={revokingInviteId === inv.id}
+                                  className="px-2.5 py-1 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 flex items-center gap-1 font-medium transition cursor-pointer disabled:opacity-40"
+                                  title="Revoke invitation and release seat"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                  <span>Revoke</span>
+                                </button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ========================================================================= */}
       {/* TAB 3: AUDIT TRAILS                                                       */}
@@ -1515,6 +1835,162 @@ export default function GovernancePage() {
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: INVITE WORKSPACE MEMBER                                            */}
+      {/* ========================================================================= */}
+      {isInviteModalOpen && (() => {
+        const userUsage = orgData?.usage?.users || null;
+        const planId = (orgData?.plan || 'starter').toLowerCase();
+        const planDisplayName = planId === 'enterprise' ? 'Enterprise' : planId === 'growth' ? 'Growth' : 'Starter';
+        const seatLimit = userUsage?.limit !== undefined ? userUsage.limit : (planId === 'growth' ? 25 : planId === 'enterprise' ? -1 : 5);
+        const activeMembersCount = userUsage?.membersCount ?? usersTotal ?? users.filter(u => u.status !== 'deactivated').length;
+        const pendingCount = userUsage?.pendingInvitationsCount ?? pendingInvitations.filter(i => i.status === 'pending').length;
+        const currentSeatsUsed = userUsage?.count ?? (activeMembersCount + pendingCount);
+        const isAtSeatLimit = userUsage?.isAtLimit ?? (seatLimit !== -1 && currentSeatsUsed >= seatLimit);
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-rose-600" />
+                  <h3 className="text-sm font-bold text-slate-900">Invite Team Member</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsInviteModalOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Plan Capacity Badge */}
+              <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-600">{planDisplayName} Plan Seat Capacity:</span>
+                <span className="font-bold text-slate-900 font-mono">
+                  {currentSeatsUsed} / {seatLimit === -1 ? 'Unlimited' : `${seatLimit} seats`}
+                </span>
+              </div>
+
+              {isAtSeatLimit ? (
+                <div className="p-4 rounded-xl border border-rose-200 bg-rose-50/80 text-rose-800 space-y-3">
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-bold text-rose-900">Plan Seat Limit Reached</h4>
+                      <p className="text-xs text-rose-700 mt-1">
+                        Your {planDisplayName} plan allows up to {seatLimit} seats. All {seatLimit} seats are currently allocated across active members and pending invitations. Upgrade to unlock more seats.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="pt-2 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsInviteModalOpen(false)}
+                      className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 font-medium text-xs hover:bg-slate-50 transition cursor-pointer"
+                    >
+                      Close
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsInviteModalOpen(false);
+                        navigate('/billing');
+                      }}
+                      className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1 transition cursor-pointer"
+                    >
+                      <span>Upgrade Subscription</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ) : inviteSuccess ? (
+                <div className="py-6 text-center space-y-2">
+                  <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
+                  <h4 className="text-sm font-bold text-slate-900">Invitation Dispatched!</h4>
+                  <p className="text-xs text-slate-500">
+                    A single-use invitation link with account verification instructions has been sent to {inviteEmail}.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleSendInvite} className="space-y-4 text-xs">
+                  {inviteError && (
+                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                      <span>{inviteError}</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-slate-700">Email Address *</label>
+                    <input
+                      type="email"
+                      placeholder="colleague@company.com"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      required
+                      className="w-full h-10 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-slate-700">Full Name (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Alex Johnson"
+                      value={inviteName}
+                      onChange={(e) => setInviteName(e.target.value)}
+                      className="w-full h-10 px-3.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-slate-700">Assigned Role</label>
+                    <Select
+                      value={inviteRole}
+                      onChange={(e) => setInviteRole(e.target.value)}
+                    >
+                      <option value="viewer">Viewer (Read-only dashboards and reports)</option>
+                      <option value="analyst">Analyst (Create reports, charts, forecasts)</option>
+                      <option value="manager">Manager (Manage datasets, alerts, teams)</option>
+                      <option value="admin">Administrator (Full workspace & team governance)</option>
+                    </Select>
+                  </div>
+
+                  <div className="pt-3 flex items-center justify-end gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setIsInviteModalOpen(false)}
+                      className="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 transition cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSendingInvite}
+                      className="px-4 py-2 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50 flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                    >
+                      {isSendingInvite ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>Dispatching...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-3.5 h-3.5" />
+                          <span>Send Invitation</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

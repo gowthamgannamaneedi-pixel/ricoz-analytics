@@ -1,6 +1,22 @@
 -- Migration: 20261031_invitation_hardening.sql
 -- Enforce strict seat counting, hashed invitation tokens, and prevent duplicate pending invitations
 
+-- 0. Ensure invitations table exists
+CREATE TABLE IF NOT EXISTS invitations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  invited_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  email VARCHAR(255) NOT NULL,
+  role VARCHAR(50) NOT NULL DEFAULT 'viewer',
+  token VARCHAR(255) UNIQUE NOT NULL,
+  token_hash VARCHAR(255),
+  expires_at TIMESTAMPTZ NOT NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'pending',
+  accepted_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
 -- 1. Add token_hash column for cryptographically hashed tokens
 ALTER TABLE invitations ADD COLUMN IF NOT EXISTS token_hash VARCHAR(255);
 
