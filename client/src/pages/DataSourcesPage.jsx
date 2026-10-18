@@ -306,6 +306,7 @@ export default function DataSourcesPage() {
   const csvCount = sources.filter(s => s.type === 'csv').length;
   const jsonCount = sources.filter(s => s.type === 'json').length;
   const pgCount = sources.filter(s => s.type === 'postgresql').length;
+  const mongoCount = sources.filter(s => s.type === 'mongodb').length;
   const apiCount = sources.filter(s => s.type === 'rest_api' || s.type === 'api').length;
 
   const getPercentage = (count) => {
@@ -346,6 +347,7 @@ export default function DataSourcesPage() {
         (s.status && s.status.toLowerCase().includes(q)) ||
         (s.config?.host && s.config.host.toLowerCase().includes(q)) ||
         (s.config?.database && s.config.database.toLowerCase().includes(q)) ||
+        (s.config?.collection && s.config.collection.toLowerCase().includes(q)) ||
         (s.config?.url && s.config.url.toLowerCase().includes(q)) ||
         (s.config?.originalFilename && s.config.originalFilename.toLowerCase().includes(q)) ||
         (s.config?.filename && s.config.filename.toLowerCase().includes(q))
@@ -417,6 +419,8 @@ export default function DataSourcesPage() {
         return <FileCode className="h-5 w-5 text-amber-600" />;
       case 'postgresql':
         return <Database className="h-5 w-5 text-blue-600" />;
+      case 'mongodb':
+        return <Database className="h-5 w-5 text-emerald-600" />;
       case 'rest_api':
       case 'api':
         return <Share2 className="h-5 w-5 text-purple-600" />;
@@ -433,6 +437,8 @@ export default function DataSourcesPage() {
         return 'bg-amber-50 text-amber-600 border border-amber-100';
       case 'postgresql':
         return 'bg-blue-50 text-blue-600 border border-blue-100';
+      case 'mongodb':
+        return 'bg-emerald-50 text-emerald-600 border border-emerald-100';
       case 'rest_api':
       case 'api':
         return 'bg-purple-50 text-purple-600 border border-purple-100';
@@ -459,6 +465,12 @@ export default function DataSourcesPage() {
         return (
           <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200/90 font-mono whitespace-nowrap shrink-0">
             PostgreSQL
+          </span>
+        );
+      case 'mongodb':
+        return (
+          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/90 font-mono whitespace-nowrap shrink-0">
+            MongoDB
           </span>
         );
       case 'rest_api':
@@ -509,6 +521,12 @@ export default function DataSourcesPage() {
       const host = source.config?.host || 'Cloud Host';
       const database = source.config?.database ? ` · Database: ${source.config.database}` : '';
       return `Host: ${host}${database}`;
+    }
+    if (source.type === 'mongodb') {
+      const db = source.config?.database ? ` · DB: ${source.config.database}` : '';
+      const coll = source.config?.collection ? ` · Coll: ${source.config.collection}` : '';
+      const target = source.config?.host || source.config?.uri || 'MongoDB Cluster';
+      return `Target: ${target}${db}${coll}`;
     }
     if (source.type === 'rest_api' || source.type === 'api') {
       const url = source.config?.url || source.config?.endpoint_url || 'https://api.endpoint';
@@ -811,6 +829,23 @@ export default function DataSourcesPage() {
             <span>PostgreSQL</span>
             <span className="px-1.5 py-0.2 rounded-md bg-white border border-slate-200 text-[10px] font-mono font-bold text-slate-600">
               {pgCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            id="tab-mongodb"
+            onClick={() => { setActiveTab('mongodb'); setCurrentPage(1); }}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+              activeTab === 'mongodb'
+                ? 'bg-emerald-50 text-emerald-700 shadow-2xs border border-emerald-200/80 font-bold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Database className="h-3.5 w-3.5 text-emerald-600" />
+            <span>MongoDB</span>
+            <span className="px-1.5 py-0.2 rounded-md bg-white border border-slate-200 text-[10px] font-mono font-bold text-slate-600">
+              {mongoCount}
             </span>
           </button>
 

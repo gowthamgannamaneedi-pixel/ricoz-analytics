@@ -393,6 +393,26 @@ export async function testApiDataSource(config) {
 }
 
 /**
+ * Test MongoDB data source connection and list collections
+ */
+export async function testMongoDataSource(config) {
+  return apiRequest('/data-sources/test-mongodb', {
+    method: 'POST',
+    body: JSON.stringify({ config })
+  });
+}
+
+/**
+ * Preview MongoDB collection documents & inferred schema
+ */
+export async function previewMongoCollection(config, collection, limit = 10) {
+  return apiRequest('/data-sources/preview-mongodb', {
+    method: 'POST',
+    body: JSON.stringify({ config, collection, limit })
+  });
+}
+
+/**
  * Trigger sync/refresh of a data source
  */
 export async function syncDataSource(id) {

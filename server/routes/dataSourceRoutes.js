@@ -9,6 +9,8 @@ const {
   getDataSourceById,
   createDataSource,
   testConnection,
+  testMongoConnectionHandler,
+  previewMongoCollectionHandler,
   testApiConnection,
   syncDataSource,
   uploadDataSource,
@@ -23,6 +25,8 @@ router.use(authenticateToken);
 router.get('/', getDataSources);
 router.post('/', requireUsageLimit('datasets'), createDataSource);
 router.post('/test-connection', testConnection);
+router.post('/test-mongodb', requireRole('admin', 'manager', 'analyst'), testMongoConnectionHandler);
+router.post('/preview-mongodb', requireRole('admin', 'manager', 'analyst'), previewMongoCollectionHandler);
 router.post('/test-api', requireRole('admin', 'manager', 'analyst'), testApiConnection);
 router.post('/upload', requireUsageLimit('datasets'), handleUpload('file'), uploadDataSource);
 router.get('/:id', getDataSourceById);

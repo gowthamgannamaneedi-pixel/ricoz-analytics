@@ -1,23 +1,17 @@
 import React, { useState } from 'react';
-import { X, FileSpreadsheet, FileCode, Database, CheckCircle2, AlertCircle, Loader2, ArrowRight, Server } from 'lucide-react';
+import { X, FileSpreadsheet, FileCode, Database, CheckCircle2, AlertCircle, Loader2, ArrowRight, Server, Key, ShieldCheck, RefreshCw } from 'lucide-react';
 import FileUpload from './FileUpload';
 import UploadProgress from './UploadProgress';
-import { API_BASE_URL, testApiDataSource, createDataSource, uploadDataSourceFile, MAX_UPLOAD_SIZE_MB } from '../services/api';
+import { API_BASE_URL, testApiDataSource, testMongoDataSource, createDataSource, uploadDataSourceFile, MAX_UPLOAD_SIZE_MB } from '../services/api';
 import { Select } from './ui/Select';
 
 /**
  * Enterprise Add Data Source Modal
- * Supports CSV/JSON file ingestion, PostgreSQL databases, and REST API connectors
- * @param {{
- *   isOpen: boolean,
- *   onClose: () => void,
- *   onSuccess: (data: any) => void,
- *   token: string
- * }} props
+ * Supports CSV/JSON file ingestion, PostgreSQL databases, MongoDB, and REST API connectors
  */
 export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }) {
-  const [activeTab, setActiveTab] = useState('csv'); // 'csv' | 'json' | 'postgresql' | 'rest_api'
-  
+  const [activeTab, setActiveTab] = useState('csv'); // 'csv' | 'json' | 'postgresql' | 'mongodb' | 'rest_api'
+
   // File Upload State
   const [selectedFile, setSelectedFile] = useState(null);
   const [sourceName, setSourceName] = useState('');
@@ -42,11 +36,35 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
   const [isTestingPg, setIsTestingPg] = useState(false);
   const [pgTestResult, setPgTestResult] = useState(null);
 
-  // REST API Connector State (Phase 14)
+  // MongoDB Connection State
+  const [mongoForm, setMongoForm] = useState({
+    name: '',
+    mode: 'uri', // 'uri' | 'fields'
+    uri: '',
+    host: '',
+    port: '27017',
+    database: '',
+    user: '',
+    password: '',
+    authSource: 'admin',
+    ssl: true,
+    collection: ''
+  });
+  const [isTestingMongo, setIsTestingMongo] = useState(false);
+  const [mongoTestResult, setMongoTestResult] = useState(null);
+  const [mongoCollections, setMongoCollections] = useState([]);
+
+  // REST API Connector State
   const [apiForm, setApiForm] = useState({
     name: '',
     url: '',
     method: 'GET',
+    authType: 'none', // 'none' | 'bearer' | 'api_key' | 'basic'
+    token: '',
+    apiKey: '',
+    apiKeyHeader: 'X-API-Key',
+    username: '',
+    password: '',
     dataKey: '',
     headers: ''
   });
@@ -73,6 +91,23 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
       [name]: type === 'checkbox' ? checked : value
     }));
     setPgTestResult(null);
+    setError('');
+  };
+
+  const handleMongoChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setMongoForm(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    setMongoTestResult(null);
+    setError('');
+  };
+
+  const handleApiChange = (e) => {
+    const { name, value } = e.target;
+    setApiForm(prev => ({ ...prev, [name]: value }));
+    setApiTestResult(null);
     setError('');
   };
 
@@ -111,6 +146,98 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
     }
   };
 
+  // Test MongoDB Connection
+  const handleTestMongo = async () => {
+    const config = mongoForm.mode === 'uri'
+      ? { uri: mongoForm.uri.trim() }
+      : {
+          host: mongoForm.host.trim(),
+          port: mongoForm.port,
+          database: mongoForm.database.trim(),
+          user: mongoForm.user.trim(),
+          password: mongoForm.password,
+          authSource: mongoForm.authSource.trim(),
+          ssl: mongoForm.ssl
+        };
+
+    if (mongoForm.mode === 'uri' && !mongoForm.uri.trim()) {
+      setError('Please provide a MongoDB connection URI to test.');
+      return;
+    }
+    if (mongoForm.mode === 'fields' && (!mongoForm.host.trim() || !mongoForm.database.trim())) {
+      setError('Host and Database name are required to test MongoDB connection.');
+      return;
+    }
+
+    setIsTestingMongo(true);
+    setMongoTestResult(null);
+    setError('');
+
+    try {
+      const res = await testMongoDataSource(config);
+      if (res && res.success) {
+        setMongoTestResult(res);
+        setMongoCollections(res.collections || []);
+        if (res.collections && res.collections.length > 0 && !mongoForm.collection) {
+          setMongoForm(prev => ({ ...prev, collection: res.collections[0] }));
+        }
+      } else {
+        setError(res?.message || 'MongoDB connection test failed.');
+      }
+    } catch (err) {
+      setError(err.message || 'MongoDB connection test failed.');
+    } finally {
+      setIsTestingMongo(false);
+    }
+  };
+
+  // Test REST API Endpoint
+  const handleTestApi = async () => {
+    if (!apiForm.url || (!apiForm.url.startsWith('http://') && !apiForm.url.startsWith('https://'))) {
+      setError('Please provide a valid HTTP/HTTPS endpoint URL to test.');
+      return;
+    }
+    setIsTestingApi(true);
+    setApiTestResult(null);
+    setError('');
+
+    try {
+      let parsedHeaders = {};
+      if (apiForm.headers.trim()) {
+        try {
+          parsedHeaders = JSON.parse(apiForm.headers);
+        } catch (_) {
+          setError('Custom headers must be in valid JSON format (e.g. {"Accept": "application/json"})');
+          setIsTestingApi(false);
+          return;
+        }
+      }
+
+      const res = await testApiDataSource({
+        url: apiForm.url.trim(),
+        method: apiForm.method,
+        authType: apiForm.authType,
+        token: apiForm.token.trim() || undefined,
+        apiKey: apiForm.apiKey.trim() || undefined,
+        apiKeyHeader: apiForm.apiKeyHeader.trim() || undefined,
+        username: apiForm.username.trim() || undefined,
+        password: apiForm.password || undefined,
+        headers: parsedHeaders,
+        dataKey: apiForm.dataKey.trim() || undefined
+      });
+
+      if (res && res.success) {
+        setApiTestResult(res);
+      } else {
+        setError(res?.message || 'Failed to connect to API endpoint.');
+      }
+    } catch (err) {
+      setError(err.message || 'API connection test failed.');
+    } finally {
+      setIsTestingApi(false);
+    }
+  };
+
   // Submit PostgreSQL Source
   const handlePostgresSubmit = async (e) => {
     e.preventDefault();
@@ -127,29 +254,18 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
     setError('');
 
     try {
-      const res = await fetch(`${API_BASE_URL}/data-sources`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: pgForm.name.trim(),
-          type: 'postgresql',
-          config: pgForm
-        })
+      const res = await createDataSource({
+        name: pgForm.name.trim(),
+        type: 'postgresql',
+        config: pgForm
       });
 
-      const contentType = res.headers.get('content-type') || '';
-      if (res.ok && contentType.includes('application/json')) {
-        const data = await res.json();
-        onSuccess(data);
+      if (res && res.success) {
+        onSuccess(res.data);
         handleClose();
-        return;
+      } else {
+        setError(res?.message || 'Failed to create PostgreSQL data source.');
       }
-
-      const errData = await res.json().catch(() => ({}));
-      setError(errData.message || `Failed to create PostgreSQL data source (HTTP ${res.status}).`);
     } catch (err) {
       setError(err.message || 'Failed to create PostgreSQL data source.');
     } finally {
@@ -157,51 +273,59 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
     }
   };
 
-  // REST API Handlers (Phase 14)
-  const handleApiChange = (e) => {
-    const { name, value } = e.target;
-    setApiForm(prev => ({ ...prev, [name]: value }));
-    setApiTestResult(null);
-    setError('');
-  };
-
-  const handleTestApi = async () => {
-    if (!apiForm.url || (!apiForm.url.startsWith('http://') && !apiForm.url.startsWith('https://'))) {
-      setError('Please provide a valid HTTP/HTTPS endpoint URL to test.');
+  // Submit MongoDB Source
+  const handleMongoSubmit = async (e) => {
+    e.preventDefault();
+    if (!mongoForm.name.trim()) {
+      setError('Please provide a Data Source Name.');
       return;
     }
-    setIsTestingApi(true);
-    setApiTestResult(null);
+    if (mongoForm.mode === 'uri' && !mongoForm.uri.trim()) {
+      setError('Connection URI is required.');
+      return;
+    }
+    if (mongoForm.mode === 'fields' && (!mongoForm.host.trim() || !mongoForm.database.trim())) {
+      setError('Host and Database name are required.');
+      return;
+    }
+
+    setIsProcessing(true);
     setError('');
+
     try {
-      let parsedHeaders = {};
-      if (apiForm.headers.trim()) {
-        try {
-          parsedHeaders = JSON.parse(apiForm.headers);
-        } catch (_) {
-          setError('Headers must be valid JSON format (e.g. {"Authorization": "Bearer ..."})');
-          setIsTestingApi(false);
-          return;
-        }
-      }
-      const res = await testApiDataSource({
-        url: apiForm.url.trim(),
-        method: apiForm.method,
-        headers: parsedHeaders,
-        dataKey: apiForm.dataKey.trim() || undefined
+      const config = mongoForm.mode === 'uri'
+        ? { uri: mongoForm.uri.trim(), collection: mongoForm.collection.trim() || undefined }
+        : {
+            host: mongoForm.host.trim(),
+            port: mongoForm.port,
+            database: mongoForm.database.trim(),
+            user: mongoForm.user.trim(),
+            password: mongoForm.password,
+            authSource: mongoForm.authSource.trim(),
+            ssl: mongoForm.ssl,
+            collection: mongoForm.collection.trim() || undefined
+          };
+
+      const res = await createDataSource({
+        name: mongoForm.name.trim(),
+        type: 'mongodb',
+        config
       });
+
       if (res && res.success) {
-        setApiTestResult(res);
+        onSuccess(res.data);
+        handleClose();
       } else {
-        setError(res?.message || 'Failed to connect to API endpoint.');
+        setError(res?.message || 'Failed to create MongoDB data source.');
       }
     } catch (err) {
-      setError(err.message || 'API connection test failed.');
+      setError(err.message || 'Failed to create MongoDB data source.');
     } finally {
-      setIsTestingApi(false);
+      setIsProcessing(false);
     }
   };
 
+  // Submit REST API Source
   const handleApiSubmit = async (e) => {
     e.preventDefault();
     if (!apiForm.name.trim() || !apiForm.url.trim()) {
@@ -227,6 +351,12 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
         config: {
           url: apiForm.url.trim(),
           method: apiForm.method,
+          authType: apiForm.authType,
+          token: apiForm.token.trim() || undefined,
+          apiKey: apiForm.apiKey.trim() || undefined,
+          apiKeyHeader: apiForm.apiKeyHeader.trim() || undefined,
+          username: apiForm.username.trim() || undefined,
+          password: apiForm.password || undefined,
           headers: parsedHeaders,
           dataKey: apiForm.dataKey.trim() || undefined
         }
@@ -247,8 +377,6 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
   // Submit File Upload (CSV/JSON)
   const handleFileUploadSubmit = async (e) => {
     e.preventDefault();
-    
-    // Strict field-level validation
     const errs = {};
     if (!selectedFile) {
       errs.file = `Please select a ${activeTab.toUpperCase()} file to upload.`;
@@ -258,98 +386,65 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
     }
     if (Object.keys(errs).length > 0) {
       setFieldErrors(errs);
-      setError('Please provide all required fields before uploading.');
       return;
     }
 
-    setFieldErrors({ name: '', file: '' });
-
-    const formatFileSize = (bytes) => {
-      if (!bytes) return '0 B';
-      const k = 1024;
-      const sizes = ['B', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
-    };
-
     setIsProcessing(true);
     setError('');
-    setUploadProgress(5);
+    setUploadProgress(0);
     setUploadStage('uploading');
-    setStageMessage(`Preparing upload payload (${formatFileSize(selectedFile.size)})...`);
-
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('name', sourceName.trim() || selectedFile.name);
-    formData.append('description', description.trim());
+    setStageMessage('Uploading data file to enterprise storage...');
 
     try {
-      let serverProcessingTimer = null;
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('name', sourceName.trim());
+      if (description.trim()) {
+        formData.append('description', description.trim());
+      }
 
-      const responseData = await uploadDataSourceFile(formData, (progressInfo) => {
-        if (progressInfo.stage === 'uploading') {
-          setUploadStage('uploading');
-          setUploadProgress(progressInfo.percentage);
-          setStageMessage(progressInfo.message);
-
-          if (progressInfo.loaded >= progressInfo.total && !serverProcessingTimer) {
-            setUploadStage('parsing');
-            setUploadProgress(85);
-            setStageMessage('Binary transfer complete. Parsing dataset records & validating delimiters...');
-
-            serverProcessingTimer = setTimeout(() => {
-              setUploadStage('schema');
-              setUploadProgress(92);
-              setStageMessage('Inferring column data types and generating statistics...');
-            }, 600);
-          }
-        }
+      const res = await uploadDataSourceFile(formData, (progressEvent) => {
+        setUploadProgress(progressEvent.percentage);
+        setUploadStage(progressEvent.stage);
+        setStageMessage(progressEvent.message);
       });
 
-      if (serverProcessingTimer) clearTimeout(serverProcessingTimer);
-
-      setUploadProgress(100);
-      setUploadStage('complete');
-      setStageMessage('Ingestion complete! Generating preview...');
-
-      if (responseData && responseData.success) {
-        setTimeout(() => {
-          onSuccess(responseData);
-          handleClose();
-        }, 300);
+      if (res && res.success) {
+        onSuccess(res.data);
+        handleClose();
       } else {
-        setError(responseData?.message || 'Failed to upload and ingest file.');
-        setIsProcessing(false);
+        setError(res?.message || 'Failed to upload and ingest file.');
       }
     } catch (err) {
       setError(err.message || 'File upload failed.');
+    } finally {
       setIsProcessing(false);
     }
   };
 
   const handleClose = () => {
+    if (isProcessing) return;
     setSelectedFile(null);
     setSourceName('');
     setDescription('');
-    setUploadProgress(0);
-    setIsProcessing(false);
     setError('');
+    setFieldErrors({ name: '', file: '' });
     setPgTestResult(null);
+    setMongoTestResult(null);
     setApiTestResult(null);
-    setIsTestingApi(false);
-    setApiForm({
-      name: '',
-      url: '',
-      method: 'GET',
-      dataKey: '',
-      headers: ''
-    });
     onClose();
   };
 
+  const isPgValid = Boolean(pgForm.name.trim() && pgForm.host.trim() && pgForm.database.trim() && pgForm.user.trim());
+  const isMongoValid = Boolean(
+    mongoForm.name.trim() &&
+    (mongoForm.mode === 'uri' ? mongoForm.uri.trim() : (mongoForm.host.trim() && mongoForm.database.trim()))
+  );
+  const isApiValid = Boolean(apiForm.name.trim() && apiForm.url.trim());
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs font-sans">
-      <div className="w-full max-w-xl rounded-2xl border border-slate-200/90 bg-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs font-sans">
+      <div className="w-full max-w-2xl rounded-2xl border border-slate-200/90 bg-white shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white shrink-0">
           <div>
@@ -357,7 +452,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
               Connect Data Source
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Upload business data files or establish a live database pipeline
+              Upload files or connect PostgreSQL, MongoDB, and REST API pipelines
             </p>
           </div>
           <button
@@ -370,61 +465,78 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-200/80 bg-slate-50/60 px-6 shrink-0 gap-1">
+        <div className="flex overflow-x-auto border-b border-slate-200/80 bg-slate-50/60 px-6 shrink-0 gap-1 scrollbar-none">
           <button
             type="button"
             onClick={() => { setActiveTab('csv'); setError(''); }}
             disabled={isProcessing}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition ${
+            className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
               activeTab === 'csv'
-                ? 'border-rose-600 text-rose-700 bg-white'
+                ? 'border-rose-600 text-rose-700 bg-white font-bold'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
             <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-            <span>Upload CSV</span>
+            <span>CSV</span>
           </button>
 
           <button
             type="button"
             onClick={() => { setActiveTab('json'); setError(''); }}
             disabled={isProcessing}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition ${
+            className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
               activeTab === 'json'
-                ? 'border-rose-600 text-rose-700 bg-white'
+                ? 'border-rose-600 text-rose-700 bg-white font-bold'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
             <FileCode className="h-4 w-4 text-amber-600" />
-            <span>Upload JSON</span>
+            <span>JSON</span>
           </button>
 
           <button
             type="button"
+            id="modal-tab-postgresql"
             onClick={() => { setActiveTab('postgresql'); setError(''); }}
             disabled={isProcessing}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition ${
+            className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
               activeTab === 'postgresql'
-                ? 'border-rose-600 text-rose-700 bg-white'
+                ? 'border-rose-600 text-rose-700 bg-white font-bold'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
             <Database className="h-4 w-4 text-blue-600" />
-            <span>PostgreSQL Database</span>
+            <span>PostgreSQL</span>
           </button>
 
           <button
             type="button"
+            id="modal-tab-mongodb"
+            onClick={() => { setActiveTab('mongodb'); setError(''); }}
+            disabled={isProcessing}
+            className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'mongodb'
+                ? 'border-rose-600 text-rose-700 bg-white font-bold'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Database className="h-4 w-4 text-emerald-600" />
+            <span>MongoDB</span>
+          </button>
+
+          <button
+            type="button"
+            id="modal-tab-rest-api"
             onClick={() => { setActiveTab('rest_api'); setError(''); }}
             disabled={isProcessing}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition ${
+            className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
               activeTab === 'rest_api'
-                ? 'border-rose-600 text-rose-700 bg-white'
+                ? 'border-rose-600 text-rose-700 bg-white font-bold'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
             <Server className="h-4 w-4 text-purple-600" />
-            <span>REST API Endpoint</span>
+            <span>REST API</span>
           </button>
         </div>
 
@@ -437,7 +549,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
             </div>
           )}
 
-          {/* CSV or JSON Upload Mode */}
+          {/* 1. CSV or JSON File Upload */}
           {(activeTab === 'csv' || activeTab === 'json') && (
             <form onSubmit={handleFileUploadSubmit} noValidate className="space-y-4">
               <div>
@@ -448,54 +560,43 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   onFileSelect={handleFileSelect}
                   error={fieldErrors.file}
                 />
-                {fieldErrors.file && (
-                  <p className="text-xs text-rose-600 font-medium flex items-center gap-1.5 mt-1.5">
-                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                    <span>{fieldErrors.file}</span>
-                  </p>
-                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="sourceName">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="source-name">
                     Data Source Name *
                   </label>
                   <input
-                    id="sourceName"
+                    id="source-name"
+                    name="name"
                     type="text"
                     required
-                    placeholder="e.g. Q4 Regional Sales"
+                    placeholder="e.g. Sales Metrics Q3"
                     value={sourceName}
                     onChange={(e) => {
                       setSourceName(e.target.value);
-                      if (e.target.value.trim()) {
-                        setFieldErrors(prev => ({ ...prev, name: '' }));
-                      }
+                      if (fieldErrors.name) setFieldErrors(prev => ({ ...prev, name: '' }));
                     }}
                     disabled={isProcessing}
                     className={`w-full rounded-lg border bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none transition ${
-                      fieldErrors.name
-                        ? 'border-rose-400 ring-1 ring-rose-200 focus:border-rose-600'
-                        : 'border-slate-200 focus:border-rose-600'
+                      fieldErrors.name ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 focus:border-rose-600'
                     }`}
                   />
                   {fieldErrors.name && (
-                    <p className="text-xs text-rose-600 font-medium flex items-center gap-1.5 mt-1">
-                      <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                      <span>{fieldErrors.name}</span>
-                    </p>
+                    <p className="mt-1 text-[11px] text-rose-600">{fieldErrors.name}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="description">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="source-desc">
                     Description (Optional)
                   </label>
                   <input
-                    id="description"
+                    id="source-desc"
+                    name="description"
                     type="text"
-                    placeholder="e.g. Ingested from sales ledger"
+                    placeholder="Short summary of this dataset"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     disabled={isProcessing}
@@ -523,9 +624,8 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                 </button>
                 <button
                   type="submit"
-                  disabled={isProcessing}
+                  disabled={isProcessing || !selectedFile || !sourceName.trim()}
                   id="submit-file-source-btn"
-                  title={!selectedFile ? 'Select a file to upload & process' : 'Upload and ingest data file'}
                   className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs cursor-pointer"
                 >
                   {isProcessing ? (
@@ -544,7 +644,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
             </form>
           )}
 
-          {/* PostgreSQL Direct Connection Mode */}
+          {/* 2. PostgreSQL Direct Connection */}
           {activeTab === 'postgresql' && (
             <form onSubmit={handlePostgresSubmit} className="space-y-4">
               <div>
@@ -574,7 +674,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                     name="host"
                     type="text"
                     required
-                    placeholder="localhost or db.company.internal"
+                    placeholder="db.yourcompany.com"
                     value={pgForm.host}
                     onChange={handlePgChange}
                     disabled={isProcessing}
@@ -667,10 +767,9 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
               </div>
 
               <p className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-lg border border-slate-200/60">
-                🔒 <strong>Security Note:</strong> Passwords are encrypted in transit. We recommend using a read-only database user for analytics queries.
+                🔒 <strong>AES-256 Encrypted:</strong> Passwords are encrypted at rest with server-side keys. We recommend a read-only role.
               </p>
 
-              {/* Connection Test Result Banner */}
               {pgTestResult && (
                 <div className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 ${
                   pgTestResult.success
@@ -698,7 +797,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   type="button"
                   onClick={handleTestPostgres}
                   disabled={isTestingPg || isProcessing}
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-40 cursor-pointer"
                 >
                   {isTestingPg ? (
                     <>
@@ -724,14 +823,14 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   </button>
                   <button
                     type="submit"
-                    disabled={isProcessing}
+                    disabled={isProcessing || !isPgValid}
                     id="submit-pg-source-btn"
-                    className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs"
+                    className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs cursor-pointer"
                   >
                     {isProcessing ? (
                       <>
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        <span>Saving...</span>
+                        <span>Connecting...</span>
                       </>
                     ) : (
                       <>
@@ -745,7 +844,302 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
             </form>
           )}
 
-          {/* REST API Connector Mode (Phase 14) */}
+          {/* 3. MongoDB Database Connector */}
+          {activeTab === 'mongodb' && (
+            <form onSubmit={handleMongoSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="mongo-name">
+                  Data Source Name *
+                </label>
+                <input
+                  id="mongo-name"
+                  name="name"
+                  type="text"
+                  required
+                  placeholder="e.g. Production MongoDB Atlas Cluster"
+                  value={mongoForm.name}
+                  onChange={handleMongoChange}
+                  disabled={isProcessing}
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
+                />
+              </div>
+
+              {/* Mode Selector */}
+              <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1">
+                <button
+                  type="button"
+                  onClick={() => setMongoForm(prev => ({ ...prev, mode: 'uri' }))}
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition ${
+                    mongoForm.mode === 'uri' ? 'bg-white shadow-2xs text-rose-700 font-bold' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Connection URI (Recommended)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMongoForm(prev => ({ ...prev, mode: 'fields' }))}
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition ${
+                    mongoForm.mode === 'fields' ? 'bg-white shadow-2xs text-rose-700 font-bold' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Host & Credentials
+                </button>
+              </div>
+
+              {mongoForm.mode === 'uri' ? (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="mongo-uri">
+                    MongoDB Connection URI * (mongodb:// or mongodb+srv://)
+                  </label>
+                  <input
+                    id="mongo-uri"
+                    name="uri"
+                    type="password"
+                    required
+                    placeholder="mongodb+srv://user:password@cluster.mongodb.net/analytics?retryWrites=true"
+                    value={mongoForm.uri}
+                    onChange={handleMongoChange}
+                    disabled={isProcessing}
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs font-mono text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
+                  />
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Works seamlessly with MongoDB Atlas, Replica Sets, and self-hosted instances.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2">
+                      <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="mongo-host">
+                        Host Address *
+                      </label>
+                      <input
+                        id="mongo-host"
+                        name="host"
+                        type="text"
+                        required
+                        placeholder="cluster0.mongodb.net"
+                        value={mongoForm.host}
+                        onChange={handleMongoChange}
+                        disabled={isProcessing}
+                        className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="mongo-port">
+                        Port
+                      </label>
+                      <input
+                        id="mongo-port"
+                        name="port"
+                        type="number"
+                        placeholder="27017"
+                        value={mongoForm.port}
+                        onChange={handleMongoChange}
+                        disabled={isProcessing}
+                        className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs font-mono text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="mongo-database">
+                        Database Name *
+                      </label>
+                      <input
+                        id="mongo-database"
+                        name="database"
+                        type="text"
+                        required
+                        placeholder="production_telemetry"
+                        value={mongoForm.database}
+                        onChange={handleMongoChange}
+                        disabled={isProcessing}
+                        className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="mongo-user">
+                        Username
+                      </label>
+                      <input
+                        id="mongo-user"
+                        name="user"
+                        type="text"
+                        placeholder="analytics_reader"
+                        value={mongoForm.user}
+                        onChange={handleMongoChange}
+                        disabled={isProcessing}
+                        className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="mongo-password">
+                        Password
+                      </label>
+                      <input
+                        id="mongo-password"
+                        name="password"
+                        type="password"
+                        placeholder="••••••••••••"
+                        value={mongoForm.password}
+                        onChange={handleMongoChange}
+                        disabled={isProcessing}
+                        className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="mongo-authSource">
+                        Auth Database
+                      </label>
+                      <input
+                        id="mongo-authSource"
+                        name="authSource"
+                        type="text"
+                        placeholder="admin"
+                        value={mongoForm.authSource}
+                        onChange={handleMongoChange}
+                        disabled={isProcessing}
+                        className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      id="mongo-ssl"
+                      name="ssl"
+                      type="checkbox"
+                      checked={mongoForm.ssl}
+                      onChange={handleMongoChange}
+                      disabled={isProcessing}
+                      className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                    />
+                    <label htmlFor="mongo-ssl" className="text-xs text-slate-700 font-medium cursor-pointer">
+                      Enable TLS / SSL Connection (Required for MongoDB Atlas)
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Target Collection */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="mongo-collection">
+                  Target Collection (Optional · Ingests data immediately into analytics)
+                </label>
+                {mongoCollections.length > 0 ? (
+                  <Select
+                    id="mongo-collection"
+                    name="collection"
+                    value={mongoForm.collection}
+                    onChange={handleMongoChange}
+                    disabled={isProcessing}
+                    className="w-full"
+                  >
+                    <option value="">-- Choose Discovered Collection --</option>
+                    {mongoCollections.map(col => (
+                      <option key={col} value={col}>{col}</option>
+                    ))}
+                  </Select>
+                ) : (
+                  <input
+                    id="mongo-collection"
+                    name="collection"
+                    type="text"
+                    placeholder="e.g. orders, users, metrics"
+                    value={mongoForm.collection}
+                    onChange={handleMongoChange}
+                    disabled={isProcessing}
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
+                  />
+                )}
+              </div>
+
+              <p className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-lg border border-slate-200/60">
+                🔒 <strong>Read-Only & Encrypted:</strong> Queries are strictly read-only. Credentials and URIs are encrypted at rest with AES-256-GCM.
+              </p>
+
+              {/* MongoDB Test Result Banner */}
+              {mongoTestResult && (
+                <div className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 ${
+                  mongoTestResult.success
+                    ? 'bg-emerald-50 border-emerald-200/90 text-emerald-800'
+                    : 'bg-rose-50 border-rose-200/90 text-rose-800'
+                }`}>
+                  {mongoTestResult.success ? (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <p className="font-semibold">{mongoTestResult.message}</p>
+                    {mongoTestResult.collections && mongoTestResult.collections.length > 0 && (
+                      <p className="text-[11px] text-emerald-700 mt-1">
+                        Discovered {mongoTestResult.collections.length} collection(s): <span className="font-mono font-medium">{mongoTestResult.collections.slice(0, 5).join(', ')}{mongoTestResult.collections.length > 5 ? '...' : ''}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <button
+                  type="button"
+                  id="test-mongo-btn"
+                  onClick={handleTestMongo}
+                  disabled={isTestingMongo || isProcessing}
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-40 cursor-pointer"
+                >
+                  {isTestingMongo ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-rose-600" />
+                      <span>Testing MongoDB...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Server className="h-3.5 w-3.5 text-slate-500" />
+                      <span>Test Connection</span>
+                    </>
+                  )}
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    disabled={isProcessing}
+                    className="rounded-lg border border-slate-200/90 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isProcessing || !isMongoValid}
+                    id="submit-mongo-source-btn"
+                    className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs cursor-pointer"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>Connecting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Connect Source</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
+          {/* 4. REST API Endpoint Connector */}
           {activeTab === 'rest_api' && (
             <form onSubmit={handleApiSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -801,9 +1195,102 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                 />
               </div>
 
+              {/* Authentication Type */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="api-authType">
+                    Authentication Scheme
+                  </label>
+                  <Select
+                    id="api-authType"
+                    name="authType"
+                    value={apiForm.authType}
+                    onChange={handleApiChange}
+                    disabled={isProcessing}
+                    className="w-full"
+                  >
+                    <option value="none">No Authentication (Public)</option>
+                    <option value="bearer">Bearer Token</option>
+                    <option value="api_key">API Key (Header)</option>
+                    <option value="basic">Basic Auth (User/Password)</option>
+                  </Select>
+                </div>
+
+                {apiForm.authType === 'bearer' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="api-token">
+                      Bearer Token *
+                    </label>
+                    <input
+                      id="api-token"
+                      name="token"
+                      type="password"
+                      placeholder="eyJhbGciOi..."
+                      value={apiForm.token}
+                      onChange={handleApiChange}
+                      disabled={isProcessing}
+                      className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
+                    />
+                  </div>
+                )}
+
+                {apiForm.authType === 'api_key' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="api-apiKey">
+                      API Key Secret *
+                    </label>
+                    <input
+                      id="api-apiKey"
+                      name="apiKey"
+                      type="password"
+                      placeholder="key_live_..."
+                      value={apiForm.apiKey}
+                      onChange={handleApiChange}
+                      disabled={isProcessing}
+                      className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-rose-600 focus:outline-none transition"
+                    />
+                  </div>
+                )}
+
+                {apiForm.authType === 'basic' && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="api-username">
+                        Username
+                      </label>
+                      <input
+                        id="api-username"
+                        name="username"
+                        type="text"
+                        placeholder="api_user"
+                        value={apiForm.username}
+                        onChange={handleApiChange}
+                        disabled={isProcessing}
+                        className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 focus:border-rose-600 focus:outline-none transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="api-password">
+                        Password
+                      </label>
+                      <input
+                        id="api-password"
+                        name="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={apiForm.password}
+                        onChange={handleApiChange}
+                        disabled={isProcessing}
+                        className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 focus:border-rose-600 focus:outline-none transition"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="api-dataKey">
-                  JSON Array Key (Optional)
+                  JSON Records Key (Optional)
                 </label>
                 <input
                   id="api-dataKey"
@@ -819,13 +1306,13 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1" htmlFor="api-headers">
-                  Request Headers (Optional JSON format)
+                  Custom Request Headers (Optional JSON format)
                 </label>
                 <textarea
                   id="api-headers"
                   name="headers"
                   rows={2}
-                  placeholder='{"Authorization": "Bearer your_token_here"}'
+                  placeholder='{"Accept": "application/json", "X-Custom-Env": "production"}'
                   value={apiForm.headers}
                   onChange={handleApiChange}
                   disabled={isProcessing}
@@ -834,7 +1321,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
               </div>
 
               <p className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-lg border border-slate-200/60">
-                🌐 <strong>Automated Ingestion:</strong> RicozAnalytics will connect to the remote endpoint, parse structured JSON records, infer column data types, and make the telemetry immediately available for dashboards & ML forecasts.
+                🌐 <strong>SSRF-Protected:</strong> Protected with DNS rebinding defenses, private CIDR filtering, and redirect validation.
               </p>
 
               {/* Connection Test Result Banner */}
@@ -863,9 +1350,10 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
                 <button
                   type="button"
+                  id="test-api-btn"
                   onClick={handleTestApi}
                   disabled={isTestingApi || isProcessing}
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-40 cursor-pointer"
                 >
                   {isTestingApi ? (
                     <>
@@ -891,9 +1379,9 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   </button>
                   <button
                     type="submit"
-                    disabled={isProcessing}
+                    disabled={isProcessing || !isApiValid}
                     id="submit-api-source-btn"
-                    className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs"
+                    className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs cursor-pointer"
                   >
                     {isProcessing ? (
                       <>

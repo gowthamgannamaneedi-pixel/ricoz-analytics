@@ -18,7 +18,8 @@
     "test:audit": "node test-production-audit.js",
     "test:stripe": "node test-stripe-idempotency.js",
     "test:password-reset-url": "node test-password-reset-url.js",
-    "test:auth-diagnostics": "node test-auth-login-diagnostics.js"
+    "test:auth-diagnostics": "node test-auth-login-diagnostics.js",
+    "test:connectors": "node test-datasource-connectors.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.0",
@@ -28,6 +29,7 @@
     "exceljs": "^4.4.0",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
+    "mongodb": "^7.7.0",
     "morgan": "^1.10.0",
     "multer": "^2.4.0",
     "node-cron": "^4.6.0",

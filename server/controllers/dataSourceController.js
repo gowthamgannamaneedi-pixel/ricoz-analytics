@@ -8,21 +8,21 @@ const OrganizationModel = require('../models/organizationModel');
 const storage = require('../storage');
 const db = require('../config/database');
 const { parseDatasetFile, parseDatasetFileStream } = require('../services/fileParserService');
-const { testPostgresConnection, sanitizePostgresConfig } = require('../services/postgresSourceService');
+const { testPostgresConnection } = require('../services/postgresSourceService');
+const { testMongoConnection, previewMongoCollection, ingestMongoCollection } = require('../services/mongoSourceService');
+const { testRestApiConnection, ingestRestApiData } = require('../services/restSourceService');
+const { encryptConfig, decryptConfig, sanitizeDataSourceConfig } = require('../services/encryptionService');
 const { ingestDatasetFileStream } = require('../services/datasetIngestionService');
 const subscriptionService = require('../services/subscriptionService');
 
 /**
  * Data Source Controller
  * Handles CRUD and file ingestion for user-isolated data pipelines
+ * Supports CSV, JSON, PostgreSQL, MongoDB, and REST API connectors.
  */
 
 /**
  * Resolves and validates the organization ID for an authenticated user.
- * 1. Checks user.organization_id.
- * 2. If missing, queries users table for organization_id.
- * 3. Verifies that the organization actually exists in organizations table.
- * Returns the verified organization_id UUID, or null if cannot be verified.
  */
 async function resolveTrustedOrganizationId(user) {
   if (!user || !user.id) return null;
@@ -45,6 +45,53 @@ async function resolveTrustedOrganizationId(user) {
   } catch (_) {}
 
   return null;
+}
+
+/**
+ * Populate dataset rows into PostgreSQL dataset_rows table for relational analytics
+ * @param {string|number} datasetId
+ * @param {string} organizationId
+ * @param {Array<object>} records
+ */
+async function populateDatasetRows(datasetId, organizationId, records) {
+  const pool = db.getPool();
+  if (db.isUsingFallback() || !pool || !Array.isArray(records) || records.length === 0) {
+    return;
+  }
+  try {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('DELETE FROM dataset_rows WHERE dataset_id = $1', [datasetId]);
+
+      const batchSize = 1000;
+      for (let i = 0; i < records.length; i += batchSize) {
+        const chunk = records.slice(i, i + batchSize);
+        const valuesSql = [];
+        const params = [];
+        let paramIdx = 1;
+
+        for (let j = 0; j < chunk.length; j++) {
+          valuesSql.push(`($${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++})`);
+          params.push(datasetId, organizationId, i + j + 1, JSON.stringify(chunk[j]));
+        }
+
+        const insertSql = `
+          INSERT INTO dataset_rows (dataset_id, organization_id, row_index, data)
+          VALUES ${valuesSql.join(', ')}
+        `;
+        await client.query(insertSql, params);
+      }
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.warn('[DataSourceController] Error populating dataset_rows:', err.message);
+    } finally {
+      client.release();
+    }
+  } catch (connErr) {
+    console.warn('[DataSourceController] DB pool connection error for dataset_rows:', connErr.message);
+  }
 }
 
 /**
@@ -82,10 +129,10 @@ const getDataSources = async (req, res, next) => {
       ? await DataSource.findByOrganizationId(organizationId)
       : await DataSource.findByUserId(userId);
 
-    // Sanitize config in all returned sources
+    // Sanitize config in all returned sources (mask URIs, strip passwords and secret tokens)
     const sanitized = sources.map(src => ({
       ...src,
-      config: sanitizePostgresConfig(typeof src.config === 'string' ? JSON.parse(src.config) : src.config)
+      config: sanitizeDataSourceConfig(typeof src.config === 'string' ? JSON.parse(src.config) : src.config)
     }));
 
     return res.status(200).json({
@@ -125,7 +172,7 @@ const getDataSourceById = async (req, res, next) => {
       success: true,
       data: {
         ...source,
-        config: sanitizePostgresConfig(typeof source.config === 'string' ? JSON.parse(source.config) : source.config),
+        config: sanitizeDataSourceConfig(typeof source.config === 'string' ? JSON.parse(source.config) : source.config),
         datasets
       }
     });
@@ -136,7 +183,7 @@ const getDataSourceById = async (req, res, next) => {
 
 /**
  * POST /api/data-sources
- * Create a new data source (e.g., PostgreSQL connection)
+ * Create a new data source (PostgreSQL, MongoDB, REST API, etc.)
  */
 const createDataSource = async (req, res, next) => {
   try {
@@ -192,7 +239,8 @@ const createDataSource = async (req, res, next) => {
     let effectiveType = normalizedType === 'api' ? 'rest_api' : normalizedType;
     let status = 'active';
     let initialRecords = null;
-    let parsedMetadata = null;
+    let initialSchema = [];
+    let initialCollection = config.collection || config.collectionName || null;
 
     // 1. PostgreSQL Connector
     if (effectiveType === 'postgresql') {
@@ -204,71 +252,86 @@ const createDataSource = async (req, res, next) => {
         });
       }
 
-      // Test connection
       try {
         const testResult = await testPostgresConnection({ host, port, database, user, password, ssl });
         status = testResult.success ? 'connected' : 'error';
-      } catch (err) {
-        if (err.message && err.message.includes('Disallowed PostgreSQL host')) {
+        if (!testResult.success) {
           return res.status(400).json({
             success: false,
-            message: err.message
+            message: `PostgreSQL connection failed: ${testResult.message}`
           });
         }
-        status = 'error';
-      }
-    }
-
-    // 2. REST API Connector
-    if (effectiveType === 'rest_api') {
-      const url = config.url || config.endpoint_url || config.endpointUrl;
-      const method = config.method || 'GET';
-      const headers = config.headers || {};
-      const dataKey = config.dataKey || config.data_key;
-
-      if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) {
+      } catch (err) {
         return res.status(400).json({
           success: false,
-          message: 'REST API data source requires a valid HTTP or HTTPS endpoint URL.'
+          message: err.message || 'PostgreSQL connection failed.'
         });
-      }
-
-      // SSRF protection: validate URL safety
-      try {
-        await validateUrl(url);
-      } catch (e) {
-        return res.status(400).json({ success: false, message: e.message });
-      }
-      config.url = url;
-      config.endpoint_url = url;
-
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000);
-        const apiRes = await fetch(url, {
-          method: (method || 'GET').toUpperCase(),
-          headers: {
-            'Accept': 'application/json',
-            ...headers
-          },
-          signal: controller.signal
-        });
-        clearTimeout(timeout);
-
-        if (apiRes.ok) {
-          const json = await apiRes.json().catch(() => null);
-          let records = Array.isArray(json) ? json : (dataKey && Array.isArray(json[dataKey]) ? json[dataKey] : (json?.data && Array.isArray(json.data) ? json.data : null));
-          if (records && Array.isArray(records) && records.length > 0) {
-            initialRecords = records;
-            status = 'active';
-          }
-        } else {
-          status = 'error';
-        }
-      } catch (err) {
-        status = 'error';
       }
     }
+
+    // 2. MongoDB Connector
+    if (effectiveType === 'mongodb') {
+      try {
+        const testResult = await testMongoConnection(config);
+        if (!testResult.success) {
+          return res.status(400).json({
+            success: false,
+            message: testResult.message
+          });
+        }
+        status = 'connected';
+
+        // If collection specified, or if only 1 collection found, ingest initial documents
+        const targetCollection = initialCollection || (testResult.collections && testResult.collections.length === 1 ? testResult.collections[0] : null);
+        if (targetCollection) {
+          initialCollection = targetCollection;
+          config.collection = targetCollection;
+          try {
+            const ingestRes = await ingestMongoCollection(config, targetCollection, { limit: 10000 });
+            initialRecords = ingestRes.records;
+            initialSchema = ingestRes.schema;
+          } catch (ingestErr) {
+            console.warn('[DataSourceController] MongoDB collection initial ingestion notice:', ingestErr.message);
+          }
+        }
+      } catch (err) {
+        return res.status(400).json({
+          success: false,
+          message: err.message || 'MongoDB connection failed.'
+        });
+      }
+    }
+
+    // 3. REST API Connector
+    if (effectiveType === 'rest_api') {
+      try {
+        const testResult = await testRestApiConnection(config);
+        if (!testResult.success) {
+          return res.status(400).json({
+            success: false,
+            message: testResult.message
+          });
+        }
+        status = 'active';
+
+        // Fetch initial records for dataset
+        try {
+          const ingestRes = await ingestRestApiData(config, { maxRecords: 10000 });
+          initialRecords = ingestRes.records;
+          initialSchema = ingestRes.schema;
+        } catch (ingestErr) {
+          console.warn('[DataSourceController] REST API initial ingestion notice:', ingestErr.message);
+        }
+      } catch (err) {
+        return res.status(400).json({
+          success: false,
+          message: err.message || 'REST API connection failed.'
+        });
+      }
+    }
+
+    // Encrypt sensitive credentials at rest before writing to database
+    const secureConfig = encryptConfig(config);
 
     const newSource = await DataSource.create({
       userId,
@@ -276,29 +339,47 @@ const createDataSource = async (req, res, next) => {
       name: name.trim(),
       type: effectiveType,
       status,
-      config
+      config: secureConfig
     });
 
-    // If records were ingested from REST API, persist dataset file and create Dataset record
+    // If initial records were extracted from REST API or MongoDB, persist Dataset & dataset_rows
     let createdDataset = null;
-    if (initialRecords && initialRecords.length > 0) {
+    if (initialRecords && Array.isArray(initialRecords) && initialRecords.length > 0) {
       try {
-        const filename = `${name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_')}_api.json`;
+        const safeSuffix = effectiveType === 'mongodb' ? `_mongo_${initialCollection || 'data'}.json` : '_api.json';
+        const filename = `${name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_')}${safeSuffix}`;
         const buffer = Buffer.from(JSON.stringify(initialRecords, null, 2));
         const saved = await storage.saveFile(userId, filename, buffer);
-        parsedMetadata = await parseDatasetFile(buffer, '.json', 50);
+
+        let parsedMetadata;
+        try {
+          parsedMetadata = await parseDatasetFile(buffer, '.json', 50);
+        } catch (_) {
+          parsedMetadata = {
+            rowCount: initialRecords.length,
+            columnCount: initialSchema.length || Object.keys(initialRecords[0] || {}).length,
+            schema: initialSchema
+          };
+        }
+
+        const dsDesc = effectiveType === 'mongodb'
+          ? `Auto-ingested from MongoDB collection '${initialCollection}'`
+          : `Auto-ingested from REST API (${config.url || ''})`;
 
         createdDataset = await Dataset.create({
           userId,
           organizationId,
           dataSourceId: newSource.id,
           name: name.trim(),
-          description: `Auto-ingested from REST API (${config.url})`,
+          description: dsDesc,
           filePath: saved.filePath,
-          rowCount: parsedMetadata.rowCount,
-          columnCount: parsedMetadata.columnCount,
-          schema: parsedMetadata.schema
+          rowCount: parsedMetadata.rowCount || initialRecords.length,
+          columnCount: parsedMetadata.columnCount || initialSchema.length,
+          schema: parsedMetadata.schema || initialSchema
         });
+
+        // Populate dataset_rows in PostgreSQL
+        await populateDatasetRows(createdDataset.id, organizationId, initialRecords);
       } catch (dsErr) {
         console.warn('[DataSourceController] Auto dataset creation warning:', dsErr.message);
       }
@@ -309,7 +390,7 @@ const createDataSource = async (req, res, next) => {
       message: 'Data source created successfully.',
       data: {
         ...newSource,
-        config: sanitizePostgresConfig(newSource.config),
+        config: sanitizeDataSourceConfig(config),
         dataset: createdDataset
       }
     });
@@ -320,17 +401,74 @@ const createDataSource = async (req, res, next) => {
 
 /**
  * POST /api/data-sources/test-connection
- * Test connection parameters for PostgreSQL without saving
+ * Unified connection tester routing to PostgreSQL, MongoDB, or REST API based on type
  */
 const testConnection = async (req, res, next) => {
   try {
-    const { host, port, database, user, password, ssl } = req.body;
+    const type = (req.body.type || req.body.sourceType || 'postgresql').toLowerCase();
+    const config = req.body.config || req.body;
+
+    if (type === 'mongodb') {
+      const result = await testMongoConnection(config);
+      return res.status(result.success ? 200 : 400).json(result);
+    }
+
+    if (type === 'rest_api' || type === 'api') {
+      const result = await testRestApiConnection(config);
+      return res.status(result.success ? 200 : 400).json(result);
+    }
+
+    const { host, port, database, user, password, ssl } = config;
     const result = await testPostgresConnection({ host, port, database, user, password, ssl });
     return res.status(result.success ? 200 : 400).json(result);
   } catch (err) {
     return res.status(400).json({
       success: false,
-      message: err.message || 'PostgreSQL connection failed.'
+      message: err.message || 'Connection test failed.'
+    });
+  }
+};
+
+/**
+ * POST /api/data-sources/test-mongodb
+ * Dedicated test endpoint for MongoDB credentials, collections & TLS validation
+ */
+const testMongoConnectionHandler = async (req, res, next) => {
+  try {
+    const config = req.body.config || req.body;
+    const result = await testMongoConnection(config);
+    return res.status(result.success ? 200 : 400).json(result);
+  } catch (err) {
+    return res.status(400).json({
+      success: false,
+      message: err.message || 'MongoDB connection test failed.'
+    });
+  }
+};
+
+/**
+ * POST /api/data-sources/preview-mongodb
+ * Preview sample documents and inferred schema for a specific MongoDB collection
+ */
+const previewMongoCollectionHandler = async (req, res, next) => {
+  try {
+    const config = req.body.config || req.body;
+    const collection = req.body.collection || req.body.collectionName;
+    const limit = Number(req.body.limit) || 10;
+
+    if (!collection) {
+      return res.status(400).json({
+        success: false,
+        message: 'Collection name is required for preview.'
+      });
+    }
+
+    const result = await previewMongoCollection(config, collection, limit);
+    return res.status(200).json(result);
+  } catch (err) {
+    return res.status(400).json({
+      success: false,
+      message: err.message || 'MongoDB collection preview failed.'
     });
   }
 };
@@ -341,66 +479,13 @@ const testConnection = async (req, res, next) => {
  */
 const testApiConnection = async (req, res, next) => {
   try {
-    const url = req.body.url || req.body.endpoint_url || req.body.endpointUrl;
-    const method = req.body.method || 'GET';
-    const headers = req.body.headers || {};
-    const dataKey = req.body.dataKey || req.body.data_key;
-
-    if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) {
-      return res.status(400).json({
-        success: false,
-        message: 'A valid HTTP or HTTPS URL is required.'
-      });
-    }
-    // SSRF protection: validate URL safety
-    try {
-      await validateUrl(url);
-    } catch (e) {
-      return res.status(400).json({ success: false, message: e.message });
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
-
-    const response = await fetch(url, {
-      method: (method || 'GET').toUpperCase(),
-      headers: {
-        'Accept': 'application/json',
-        ...headers
-      },
-      signal: controller.signal
-    });
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      return res.status(400).json({
-        success: false,
-        status: response.status,
-        message: `Remote API returned HTTP ${response.status}: ${response.statusText}`
-      });
-    }
-
-    const json = await response.json();
-    let records = Array.isArray(json) ? json : (dataKey && Array.isArray(json[dataKey]) ? json[dataKey] : (json?.data && Array.isArray(json.data) ? json.data : null));
-
-    if (!records || !Array.isArray(records)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Endpoint returned JSON, but no records array was found. Please specify the data key (e.g. data, items).'
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: `Successfully connected. Retrieved ${records.length} records.`,
-      status: response.status,
-      recordCount: records.length,
-      preview: records.slice(0, 5)
-    });
+    const config = req.body.config || req.body;
+    const result = await testRestApiConnection(config);
+    return res.status(result.success ? 200 : 400).json(result);
   } catch (err) {
     return res.status(400).json({
       success: false,
-      message: `Failed to connect to API: ${err.message}`
+      message: err.message || 'Failed to connect to API.'
     });
   }
 };
@@ -412,9 +497,13 @@ const testApiConnection = async (req, res, next) => {
 const syncDataSource = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const organizationId = await resolveTrustedOrganizationId(req.user);
     const { id } = req.params;
 
-    const source = await DataSource.findByIdAndUserId(id, userId);
+    const source = organizationId
+      ? await DataSource.findByIdAndOrgId(id, organizationId)
+      : await DataSource.findByIdAndUserId(id, userId);
+
     if (!source) {
       return res.status(404).json({
         success: false,
@@ -422,78 +511,47 @@ const syncDataSource = async (req, res, next) => {
       });
     }
 
-    let config = source.config;
-    if (typeof config === 'string') {
-      try { config = JSON.parse(config); } catch (_) { config = {}; }
+    let storedConfig = source.config;
+    if (typeof storedConfig === 'string') {
+      try { storedConfig = JSON.parse(storedConfig); } catch (_) { storedConfig = {}; }
     }
 
+    // Decrypt credentials for internal execution
+    const config = decryptConfig(storedConfig);
+
+    // 1. REST API Refresh
     if (source.type === 'rest_api' || source.type === 'api') {
-      const url = config?.url || config?.endpoint_url || config?.endpointUrl;
-      const method = config?.method || 'GET';
-      const headers = config?.headers || {};
-      const dataKey = config?.dataKey || config?.data_key;
-
-      if (!url) {
-        return res.status(400).json({
-          success: false,
-          message: 'Data source has no URL configured.'
-        });
-      }
-
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 12000);
-
-      const response = await fetch(url, {
-        method: (method || 'GET').toUpperCase(),
-        headers: { 'Accept': 'application/json', ...headers },
-        signal: controller.signal
-      });
-      clearTimeout(timeout);
-
-      if (!response.ok) {
-        await DataSource.updateStatus(id, 'error');
-        return res.status(502).json({
-          success: false,
-          message: `Sync failed: remote endpoint returned HTTP ${response.status}`
-        });
-      }
-
-      const json = await response.json();
-      let records = Array.isArray(json) ? json : (dataKey && Array.isArray(json[dataKey]) ? json[dataKey] : (json?.data && Array.isArray(json.data) ? json.data : null));
-
-      if (!records || !Array.isArray(records)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid data format returned by remote API.'
-        });
-      }
+      const ingestRes = await ingestRestApiData(config, { maxRecords: 20000 });
+      const records = ingestRes.records;
 
       const filename = `${source.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_sync.json`;
       const fileBuffer = Buffer.from(JSON.stringify(records, null, 2));
       const saved = await storage.saveFile(userId, filename, fileBuffer);
-      const parsedMetadata = await parseDatasetFile(fileBuffer, '.json', 50);
 
-      const datasets = await Dataset.findByDataSourceId(id, userId);
+      const datasets = await Dataset.findByDataSourceId(id, userId, organizationId);
       if (datasets && datasets.length > 0) {
         for (const ds of datasets) {
           await Dataset.update(ds.id, {
             filePath: saved.filePath,
-            rowCount: parsedMetadata.rowCount,
-            columnCount: parsedMetadata.columnCount,
-            schema: parsedMetadata.schema
+            rowCount: ingestRes.rowCount,
+            columnCount: ingestRes.columnCount,
+            schema: ingestRes.schema
           });
+          await populateDatasetRows(ds.id, organizationId, records);
         }
       } else {
-        await Dataset.create({
+        const createdDs = await Dataset.create({
           userId,
+          organizationId,
           dataSourceId: id,
           name: source.name,
-          description: `Synced from ${url}`,
+          description: `Synced from REST API (${config.url})`,
           filePath: saved.filePath,
-          rowCount: parsedMetadata.rowCount,
-          columnCount: parsedMetadata.columnCount,
-          schema: parsedMetadata.schema
+          rowCount: ingestRes.rowCount,
+          columnCount: ingestRes.columnCount,
+          schema: ingestRes.schema
         });
+        await populateDatasetRows(createdDs.id, organizationId, records);
       }
 
       await DataSource.updateStatus(id, 'active');
@@ -505,7 +563,64 @@ const syncDataSource = async (req, res, next) => {
         status: 'active',
         syncedAt: new Date().toISOString()
       });
-    } else if (source.type === 'postgresql') {
+    }
+
+    // 2. MongoDB Refresh
+    if (source.type === 'mongodb') {
+      const collection = config.collection || config.collectionName;
+      if (!collection) {
+        return res.status(400).json({
+          success: false,
+          message: 'MongoDB data source has no target collection configured for synchronization.'
+        });
+      }
+
+      const ingestRes = await ingestMongoCollection(config, collection, { limit: 20000 });
+      const records = ingestRes.records;
+
+      const filename = `${source.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_mongo_${collection}_sync.json`;
+      const fileBuffer = Buffer.from(JSON.stringify(records, null, 2));
+      const saved = await storage.saveFile(userId, filename, fileBuffer);
+
+      const datasets = await Dataset.findByDataSourceId(id, userId, organizationId);
+      if (datasets && datasets.length > 0) {
+        for (const ds of datasets) {
+          await Dataset.update(ds.id, {
+            filePath: saved.filePath,
+            rowCount: ingestRes.rowCount,
+            columnCount: ingestRes.columnCount,
+            schema: ingestRes.schema
+          });
+          await populateDatasetRows(ds.id, organizationId, records);
+        }
+      } else {
+        const createdDs = await Dataset.create({
+          userId,
+          organizationId,
+          dataSourceId: id,
+          name: source.name,
+          description: `Synced from MongoDB collection '${collection}'`,
+          filePath: saved.filePath,
+          rowCount: ingestRes.rowCount,
+          columnCount: ingestRes.columnCount,
+          schema: ingestRes.schema
+        });
+        await populateDatasetRows(createdDs.id, organizationId, records);
+      }
+
+      await DataSource.updateStatus(id, 'connected');
+
+      return res.status(200).json({
+        success: true,
+        message: `MongoDB collection '${collection}' synchronized (${records.length} records ingested).`,
+        rowCount: records.length,
+        status: 'connected',
+        syncedAt: new Date().toISOString()
+      });
+    }
+
+    // 3. PostgreSQL Refresh
+    if (source.type === 'postgresql') {
       const testRes = await testPostgresConnection(config);
       await DataSource.updateStatus(id, testRes.success ? 'connected' : 'error');
       return res.status(200).json({
@@ -514,16 +629,16 @@ const syncDataSource = async (req, res, next) => {
         status: testRes.success ? 'connected' : 'error',
         syncedAt: new Date().toISOString()
       });
-    } else {
-      // CSV/JSON file data sources
-      await DataSource.updateStatus(id, 'active');
-      return res.status(200).json({
-        success: true,
-        message: 'Static file data source verified and synchronized.',
-        status: 'active',
-        syncedAt: new Date().toISOString()
-      });
     }
+
+    // 4. CSV/JSON File data sources
+    await DataSource.updateStatus(id, 'active');
+    return res.status(200).json({
+      success: true,
+      message: 'Static file data source verified and synchronized.',
+      status: 'active',
+      syncedAt: new Date().toISOString()
+    });
   } catch (err) {
     next(err);
   }
@@ -550,7 +665,6 @@ const uploadDataSource = async (req, res, next) => {
       });
     }
 
-    // 0. Establish trusted organization-resolution method from authenticated user
     organizationId = await resolveTrustedOrganizationId(req.user);
     if (!organizationId) {
       if (file.path && fs.existsSync(file.path)) {
@@ -566,7 +680,6 @@ const uploadDataSource = async (req, res, next) => {
       });
     }
 
-    // Check subscription dataset limit
     const limitCheck = await subscriptionService.checkUsageLimit(organizationId, 'datasets');
     if (!limitCheck.allowed) {
       if (file.path && fs.existsSync(file.path)) {
@@ -592,10 +705,8 @@ const uploadDataSource = async (req, res, next) => {
     const description = req.body.description?.trim() || `Imported from ${originalName}`;
     const fileType = ext === '.json' ? 'json' : 'csv';
 
-    // Support both streaming disk path (large files) and buffer (small files / memory)
     const fileInput = file.path || file.buffer;
 
-    // 1. Parse and extract metadata from streaming path or memory buffer
     let parsedMetadata;
     try {
       parsedMetadata = await parseDatasetFileStream(fileInput, ext, 50);
@@ -609,10 +720,8 @@ const uploadDataSource = async (req, res, next) => {
       });
     }
 
-    // 2. Persist file via StorageProvider
     savedFile = await storage.saveFile(userId, originalName, fileInput);
 
-    // 3. Create Data Source record with explicit, validated organizationId
     dataSource = await DataSource.create({
       userId,
       organizationId,
@@ -626,7 +735,6 @@ const uploadDataSource = async (req, res, next) => {
       }
     });
 
-    // 4. Create Dataset record with explicit, validated organizationId
     dataset = await Dataset.create({
       userId,
       organizationId,
@@ -639,84 +747,54 @@ const uploadDataSource = async (req, res, next) => {
       schema: parsedMetadata.schema
     });
 
-    // 5. Ingest rows into PostgreSQL dataset_rows if live DB pool is connected (with safe rollback)
     const pool = db.getPool();
     const isLargeDataset = Number(parsedMetadata.rowCount || 0) > 25000;
 
     if (!db.isUsingFallback() && pool) {
       if (isLargeDataset) {
-        // Asynchronous background streaming ingestion for large datasets (> 25k rows / multi-hundred MB)
-        // Prevents HTTP proxy timeouts (100s Render limit) while safely completing 100% of row persistence in background
-        console.log(`[Ingestion] Large dataset detected (${parsedMetadata.rowCount} rows). Starting background streaming ingestion for dataset #${dataset.id}...`);
-        ingestDatasetFileStream({
-          datasetId: dataset.id,
-          organizationId,
-          filePath: savedFile.filePath,
-          fileExtension: ext
-        }).then(res => {
-          console.log(`[Ingestion] Background streaming completed for dataset #${dataset.id}: ${res.rowsIngested} rows ingested in ${(res.durationMs / 1000).toFixed(1)}s.`);
-        }).catch(err => {
-          console.error(`[Ingestion] Background streaming error for dataset #${dataset.id}:`, err.message);
+        setImmediate(async () => {
+          try {
+            await ingestDatasetFileStream(savedFile.filePath, dataset.id, organizationId, {
+              batchSize: 5000,
+              useCopyStreams: true
+            });
+          } catch (bgErr) {
+            console.error(`[Ingestion] Async background ingestion failed:`, bgErr.message);
+          }
         });
       } else {
-        // Synchronous ingestion for small/standard datasets
         try {
-          await ingestDatasetFileStream({
-            datasetId: dataset.id,
-            organizationId,
-            filePath: savedFile.filePath,
-            fileExtension: ext
+          await ingestDatasetFileStream(savedFile.filePath, dataset.id, organizationId, {
+            batchSize: 2000,
+            useCopyStreams: true
           });
         } catch (ingestErr) {
-          console.error(`[Ingestion] Failed to ingest rows into dataset_rows for dataset #${dataset.id}:`, ingestErr.message);
-          await clientCleanup(dataset.id, dataSource.id, organizationId, savedFile?.filePath);
-          dataSource = null;
-          dataset = null;
-          savedFile = null;
-          return res.status(500).json({
-            success: false,
-            error: {
-              code: 'INGESTION_FAILED',
-              message: `Data ingestion failed: ${ingestErr.message}`
-            },
-            message: `Data ingestion failed: ${ingestErr.message}`
-          });
+          console.warn(`[UploadIngestion] Synchronous ingestion notice:`, ingestErr.message);
         }
       }
     }
 
-    // Clean up temporary multipart upload file on disk if created by multer
     if (file.path && fs.existsSync(file.path)) {
       fs.unlink(file.path, () => {});
     }
 
     return res.status(201).json({
       success: true,
-      message: 'File uploaded and dataset processed successfully.',
+      message: 'Data source and dataset created successfully.',
       data: {
-        dataSource: {
-          id: dataSource.id,
-          name: dataSource.name,
-          type: dataSource.type,
-          status: dataSource.status
-        },
+        dataSource,
         dataset: {
-          id: dataset.id,
-          name: dataset.name,
-          description: dataset.description,
-          rowCount: Number(dataset.row_count || 0),
-          columnCount: Number(dataset.column_count || 0),
-          schema: dataset.schema,
-          preview: parsedMetadata.preview,
-          createdAt: dataset.created_at
+          ...dataset,
+          rowCount: parsedMetadata.rowCount,
+          columnCount: parsedMetadata.columnCount,
+          schema: parsedMetadata.schema,
+          preview: parsedMetadata.preview
         }
       }
     });
   } catch (err) {
-    // Safe cleanup on unhandled failure
-    await clientCleanup(dataset?.id, dataSource?.id, organizationId, savedFile?.filePath);
-    if (req.file?.path && fs.existsSync(req.file.path)) {
-      fs.unlink(req.file.path, () => {});
+    if (dataset?.id || dataSource?.id) {
+      await clientCleanup(dataset?.id, dataSource?.id, organizationId, savedFile?.filePath);
     }
     next(err);
   }
@@ -724,7 +802,7 @@ const uploadDataSource = async (req, res, next) => {
 
 /**
  * DELETE /api/data-sources/:id
- * Delete data source, cascade datasets and cleanup physical files (Tenant enforced)
+ * Delete data source and its associated datasets
  */
 const deleteDataSource = async (req, res, next) => {
   try {
@@ -732,7 +810,6 @@ const deleteDataSource = async (req, res, next) => {
     const organizationId = await resolveTrustedOrganizationId(req.user);
     const { id } = req.params;
 
-    // Verify ownership and get datasets to clean up files
     const source = organizationId
       ? await DataSource.findByIdAndOrgId(id, organizationId)
       : await DataSource.findByIdAndUserId(id, userId);
@@ -745,9 +822,17 @@ const deleteDataSource = async (req, res, next) => {
     }
 
     const datasets = await Dataset.findByDataSourceId(id, userId, organizationId);
-    for (const ds of datasets) {
-      if (ds.file_path) {
-        await storage.deleteFile(ds.file_path).catch(() => null);
+    if (datasets && datasets.length > 0) {
+      for (const ds of datasets) {
+        await db.query('DELETE FROM dataset_rows WHERE dataset_id = $1', [ds.id]).catch(() => null);
+        if (organizationId) {
+          await Dataset.deleteByIdAndOrgId(ds.id, organizationId);
+        } else {
+          await Dataset.deleteByIdAndUserId(ds.id, userId);
+        }
+        if (ds.file_path) {
+          await storage.deleteFile(ds.file_path).catch(() => null);
+        }
       }
     }
 
@@ -768,15 +853,19 @@ const deleteDataSource = async (req, res, next) => {
 
 /**
  * PUT /api/data-sources/:id
- * Update data source name, status or configuration
+ * Update data source name, status or configuration with encryption
  */
 const updateDataSource = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const organizationId = await resolveTrustedOrganizationId(req.user);
     const { id } = req.params;
     const { name, config, status } = req.body;
 
-    const source = await DataSource.findByIdAndUserId(id, userId);
+    const source = organizationId
+      ? await DataSource.findByIdAndOrgId(id, organizationId)
+      : await DataSource.findByIdAndUserId(id, userId);
+
     if (!source) {
       return res.status(404).json({
         success: false,
@@ -784,11 +873,22 @@ const updateDataSource = async (req, res, next) => {
       });
     }
 
-    const updated = await DataSource.update(id, userId, { name, config, status });
+    // Encrypt sensitive fields if config updated
+    const secureConfig = config ? encryptConfig(config) : undefined;
+
+    const updated = await DataSource.update(id, userId, {
+      name,
+      config: secureConfig,
+      status
+    });
+
     return res.status(200).json({
       success: true,
       message: 'Data source updated successfully.',
-      data: updated
+      data: {
+        ...updated,
+        config: sanitizeDataSourceConfig(config || (typeof updated.config === 'string' ? JSON.parse(updated.config) : updated.config))
+      }
     });
   } catch (err) {
     next(err);
@@ -801,6 +901,8 @@ module.exports = {
   createDataSource,
   updateDataSource,
   testConnection,
+  testMongoConnectionHandler,
+  previewMongoCollectionHandler,
   testApiConnection,
   syncDataSource,
   uploadDataSource,
