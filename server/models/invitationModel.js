@@ -215,7 +215,6 @@ const InvitationModel = {
         i.status,
         i.expires_at,
         i.created_at,
-        i.token,
         u.name AS inviter_name
       FROM invitations i
       LEFT JOIN users u ON u.id = i.invited_by

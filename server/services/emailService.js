@@ -1751,7 +1751,9 @@ class EmailService {
    * @param {{ email: string, inviterName: string, orgName: string, role: string, inviteUrl: string }} options
    */
   async sendInvitationEmail({ email, inviterName, orgName, role, inviteUrl }) {
-    const fromEmail = process.env.SMTP_FROM || 'care@ricoz.in';
+    const rawSender = process.env.SMTP_FROM || process.env.DEMO_REQUEST_EMAIL || 'ricozanalytics@gmail.com';
+    const verifiedSender = this._extractEmail(rawSender) || 'ricozanalytics@gmail.com';
+    const resolvedSenderName = this._extractSenderName(rawSender, 'RicozAnalytics Team');
     const defaultInvitePath = `/auth/accept-invite?email=${encodeURIComponent(email)}`;
     const link = this.sanitizeUrlForProduction(inviteUrl, defaultInvitePath);
 
@@ -1800,8 +1802,8 @@ class EmailService {
           to: [{ email, name: email.split('@')[0] }],
           subject: `Invitation to join ${orgName} on RicozAnalytics`,
           htmlContent,
-          senderName: 'RicozAnalytics Team',
-          senderEmail: fromEmail
+          senderName: resolvedSenderName,
+          senderEmail: verifiedSender
         });
         return {
           attempted: true,
@@ -1824,7 +1826,7 @@ class EmailService {
 
     try {
       const info = await this.transporter.sendMail({
-        from: `"RicozAnalytics Team" <${fromEmail}>`,
+        from: `"${resolvedSenderName}" <${verifiedSender}>`,
         to: email,
         subject: `Invitation to join ${orgName} on RicozAnalytics`,
         html: htmlContent

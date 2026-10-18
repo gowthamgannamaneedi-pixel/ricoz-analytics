@@ -11,6 +11,7 @@ const {
   getInvitationDetails, 
   acceptInvite, 
   logout,
+  heartbeat,
   forgotPassword,
   verifyResetToken,
   resetPassword
@@ -61,6 +62,9 @@ router.post('/accept-invite', acceptInvite);
 
 // GET /api/auth/me - Get currently authenticated user (Protected)
 router.get('/me', authenticateToken, getMe);
+
+// POST /api/auth/heartbeat - Lightweight authenticated presence heartbeat (Protected)
+router.post('/heartbeat', authenticateToken, heartbeat);
 
 // POST /api/auth/logout - Terminate session
 router.post('/logout', logout);

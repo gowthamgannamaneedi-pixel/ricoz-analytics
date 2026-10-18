@@ -1,3 +1,4 @@
+const db = require('../config/database');
 const OrganizationModel = require('../models/organizationModel');
 const UserModel = require('../models/userModel');
 const AuditLogModel = require('../models/auditLogModel');
@@ -162,9 +163,31 @@ const adminController = {
         limit: Number(limit)
       });
 
+      // Presence Calculation: 5-minute inactivity threshold enforced on server
+      const INACTIVITY_THRESHOLD_MS = 5 * 60 * 1000;
+      const now = Date.now();
+      const enrichedUsers = (result.users || []).map(u => {
+        let presence = 'inactive';
+        if (u.status === 'deactivated') {
+          presence = 'deactivated';
+        } else if (u.last_active_at) {
+          const diff = now - new Date(u.last_active_at).getTime();
+          if (diff >= 0 && diff <= INACTIVITY_THRESHOLD_MS) {
+            presence = 'active';
+          }
+        }
+        return {
+          ...u,
+          presence
+        };
+      });
+
       return res.status(200).json({
         success: true,
-        data: result
+        data: {
+          ...result,
+          users: enrichedUsers
+        }
       });
     } catch (error) {
       console.error('[AdminController.getUsers] Error:', error);
@@ -194,6 +217,17 @@ const adminController = {
         });
       }
 
+      // Presence Calculation
+      let presence = 'inactive';
+      if (user.status === 'deactivated') {
+        presence = 'deactivated';
+      } else if (user.last_active_at) {
+        const diff = Date.now() - new Date(user.last_active_at).getTime();
+        if (diff >= 0 && diff <= 5 * 60 * 1000) {
+          presence = 'active';
+        }
+      }
+
       return res.status(200).json({
         success: true,
         user: {
@@ -204,6 +238,8 @@ const adminController = {
           organization_id: user.organization_id,
           status: user.status || 'active',
           last_login_at: user.last_login_at,
+          last_active_at: user.last_active_at,
+          presence,
           created_at: user.created_at,
           updated_at: user.updated_at
         }
@@ -295,6 +331,9 @@ const adminController = {
         req
       });
 
+      // Invalidate cached subscription/seats
+      subscriptionService.clearOrganizationCache(orgId);
+
       return res.status(200).json({
         success: true,
         message: `User role successfully updated to ${cleanRole}.`,
@@ -378,6 +417,19 @@ const adminController = {
         },
         req
       });
+
+      // Clear presence and evict auth cache if deactivated
+      if (cleanStatus === 'deactivated') {
+        await UserModel.clearLastActive(targetUserId).catch(() => null);
+        const authMiddleware = require('../middleware/authMiddleware');
+        if (authMiddleware.clearUserAuthCache) {
+          authMiddleware.clearUserAuthCache(targetUser.email);
+          authMiddleware.clearUserAuthCache(targetUserId);
+        }
+      }
+
+      // Invalidate cached subscription/seats so seat meter immediately agrees
+      subscriptionService.clearOrganizationCache(orgId);
 
       return res.status(200).json({
         success: true,
@@ -469,8 +521,18 @@ const adminController = {
    * Invite a new team member to the organization with atomic plan seat reservation
    */
   async createInvitation(req, res) {
+    let createdInvitationId = null;
+    const orgId = req.user.organization_id;
+
     try {
-      const orgId = req.user.organization_id;
+      const callerRole = (req.user.role || 'viewer').toLowerCase();
+      if (callerRole !== 'admin' && callerRole !== 'owner' && callerRole !== 'manager') {
+        return res.status(403).json({
+          success: false,
+          message: 'Forbidden: You do not have permission to invite team members.'
+        });
+      }
+
       const { email, role = 'viewer' } = req.body;
 
       if (!email || !email.includes('@')) {
@@ -486,6 +548,14 @@ const adminController = {
         return res.status(400).json({
           success: false,
           message: `Invalid role. Allowed: ${validRoles.join(', ')}`
+        });
+      }
+
+      // Restrict elevated role invitations: only admins/owners can invite admins or managers
+      if ((cleanRole === 'admin' || cleanRole === 'manager') && callerRole !== 'admin' && callerRole !== 'owner') {
+        return res.status(403).json({
+          success: false,
+          message: 'Forbidden: Only workspace administrators or owners can invite admin or manager roles.'
         });
       }
 
@@ -538,6 +608,7 @@ const adminController = {
       }
 
       const invitation = reservation.invitation;
+      createdInvitationId = invitation.id;
       const rawToken = reservation.rawToken;
       const org = await OrganizationModel.findById(orgId);
 
@@ -545,23 +616,29 @@ const adminController = {
       const frontendBase = config.clientUrl || (process.env.NODE_ENV === 'production' ? 'https://ricoz-analytics.vercel.app' : 'http://localhost:5173');
       const inviteUrl = `${frontendBase}/auth/accept-invite?token=${rawToken}`;
 
-      const emailResult = await emailService.sendInvitationEmail({
-        email: invitation.email,
-        inviterName: req.user.name || req.user.email,
-        orgName: org?.name || 'Your Team',
-        role: cleanRole,
-        inviteUrl
-      });
+      let emailResult;
+      try {
+        emailResult = await emailService.sendInvitationEmail({
+          email: invitation.email,
+          inviterName: req.user.name || req.user.email,
+          orgName: org?.name || 'Your Team',
+          role: cleanRole,
+          inviteUrl
+        });
+      } catch (sendErr) {
+        emailResult = { success: false, error: sendErr.message };
+      }
 
-      if (emailResult && !emailResult.success) {
-        // Rollback / revoke invitation so ghost seat is not reserved
-        await InvitationModel.revoke(invitation.id, orgId).catch(() => null);
-        console.error(`[AdminController.createInvitation] Email delivery failed for ${invitation.email}:`, emailResult.error);
+      if (!emailResult || !emailResult.success) {
+        // Rollback: delete unsent invitation and clear subscription cache so seat reservation is immediately freed
+        await InvitationModel.delete(invitation.id, orgId).catch(() => null);
+        createdInvitationId = null;
+        subscriptionService.clearOrganizationCache(orgId);
+        console.error(`[AdminController.createInvitation] Email delivery failed for ${invitation.email}:`, emailResult?.error);
         return res.status(502).json({
           success: false,
           code: 'EMAIL_DELIVERY_FAILED',
-          message: `Failed to deliver invitation email to ${invitation.email}: ${emailResult.error || 'Provider rejected email dispatch'}. Seat reservation released.`,
-          error: emailResult.error
+          message: `Failed to deliver invitation email to ${invitation.email}. Seat reservation released. Please verify the email address or email service status.`
         });
       }
 
@@ -576,28 +653,40 @@ const adminController = {
         req
       }).catch(() => null);
 
+      // Invalidate cached subscription/seats for instant UI update
+      subscriptionService.clearOrganizationCache(orgId);
+
+      const responseInvitation = {
+        id: invitation.id,
+        email: invitation.email,
+        role: invitation.role,
+        status: invitation.status,
+        expiresAt: invitation.expires_at
+      };
+
+      // Only expose inviteUrl to automated test runners in non-production environments
+      if (process.env.NODE_ENV !== 'production' && (process.env.NODE_ENV === 'test' || process.env.MOCK_EMAIL_SEND === 'true')) {
+        responseInvitation.inviteUrl = inviteUrl;
+      }
+
       return res.status(201).json({
         success: true,
         message: `Invitation successfully sent to ${invitation.email}.`,
-        invitation: {
-          id: invitation.id,
-          email: invitation.email,
-          role: invitation.role,
-          status: invitation.status,
-          expiresAt: invitation.expires_at,
-          inviteUrl
-        },
+        invitation: responseInvitation,
         seatUsage: {
           totalReserved: reservation.totalReserved,
           maxUsers: reservation.maxUsers
         }
       });
     } catch (error) {
+      if (createdInvitationId) {
+        await InvitationModel.delete(createdInvitationId, orgId).catch(() => null);
+        subscriptionService.clearOrganizationCache(orgId);
+      }
       console.error('[AdminController.createInvitation] Error:', error);
       return res.status(error.statusCode || 500).json({
         success: false,
-        message: error.message || 'Failed to create team invitation.',
-        error: error.message
+        message: error.message || 'Failed to create team invitation.'
       });
     }
   },
@@ -618,21 +707,25 @@ const adminController = {
       const frontendBase = config.clientUrl || (process.env.NODE_ENV === 'production' ? 'https://ricoz-analytics.vercel.app' : 'http://localhost:5173');
       const inviteUrl = `${frontendBase}/auth/accept-invite?token=${rawToken}`;
 
-      const emailResult = await emailService.sendInvitationEmail({
-        email: invitation.email,
-        inviterName: req.user.name || req.user.email,
-        orgName: result.organizationName || 'Your Team',
-        role: invitation.role,
-        inviteUrl
-      });
+      let emailResult;
+      try {
+        emailResult = await emailService.sendInvitationEmail({
+          email: invitation.email,
+          inviterName: req.user.name || req.user.email,
+          orgName: result.organizationName || 'Your Team',
+          role: invitation.role,
+          inviteUrl
+        });
+      } catch (sendErr) {
+        emailResult = { success: false, error: sendErr.message };
+      }
 
-      if (emailResult && !emailResult.success) {
-        console.error(`[AdminController.resendInvitation] Email delivery failed for ${invitation.email}:`, emailResult.error);
+      if (!emailResult || !emailResult.success) {
+        console.error(`[AdminController.resendInvitation] Email delivery failed for ${invitation.email}:`, emailResult?.error);
         return res.status(502).json({
           success: false,
           code: 'EMAIL_DELIVERY_FAILED',
-          message: `Failed to deliver invitation email to ${invitation.email}: ${emailResult.error || 'Provider rejected email dispatch'}.`,
-          error: emailResult.error
+          message: `Failed to deliver invitation email to ${invitation.email}. Please verify the email address or email service status.`
         });
       }
 
@@ -647,24 +740,28 @@ const adminController = {
         req
       }).catch(() => null);
 
+      const responseInvitation = {
+        id: invitation.id,
+        email: invitation.email,
+        role: invitation.role,
+        status: invitation.status,
+        expiresAt: invitation.expires_at
+      };
+
+      if (process.env.NODE_ENV !== 'production' && (process.env.NODE_ENV === 'test' || process.env.MOCK_EMAIL_SEND === 'true')) {
+        responseInvitation.inviteUrl = inviteUrl;
+      }
+
       return res.status(200).json({
         success: true,
         message: `Invitation resent successfully to ${invitation.email}.`,
-        invitation: {
-          id: invitation.id,
-          email: invitation.email,
-          role: invitation.role,
-          status: invitation.status,
-          expiresAt: invitation.expires_at,
-          inviteUrl
-        }
+        invitation: responseInvitation
       });
     } catch (error) {
       console.error('[AdminController.resendInvitation] Error:', error);
       return res.status(error.statusCode || 500).json({
         success: false,
-        message: error.message || 'Failed to resend invitation.',
-        error: error.message
+        message: error.message || 'Failed to resend invitation.'
       });
     }
   },
@@ -720,6 +817,9 @@ const adminController = {
         req
       }).catch(() => null);
 
+      // Invalidate subscription cache so freed seat is instantly visible
+      subscriptionService.clearOrganizationCache(orgId);
+
       return res.status(200).json({
         success: true,
         message: 'Invitation revoked successfully and seat reservation freed.'
@@ -742,6 +842,16 @@ const adminController = {
       const orgId = req.user.organization_id;
       const targetUserId = req.params.id;
 
+      // Backend role authorization check: only admin or owner can remove team members
+      const callerRole = (req.user.role || 'viewer').toLowerCase();
+      if (callerRole !== 'admin' && callerRole !== 'owner') {
+        return res.status(403).json({
+          success: false,
+          message: 'Forbidden: Only workspace administrators or owners can remove team members.'
+        });
+      }
+
+      // Self-removal protection
       if (String(req.user.id) === String(targetUserId)) {
         return res.status(400).json({
           success: false,
@@ -749,6 +859,7 @@ const adminController = {
         });
       }
 
+      // Multi-tenant isolation: target member must belong to the caller's organization
       const targetUser = await UserModel.findByIdAndOrgId(targetUserId, orgId);
       if (!targetUser) {
         return res.status(404).json({
@@ -757,6 +868,7 @@ const adminController = {
         });
       }
 
+      // Organization owner protection
       if (targetUser.role === 'owner') {
         return res.status(403).json({
           success: false,
@@ -764,6 +876,7 @@ const adminController = {
         });
       }
 
+      // Last active administrator protection
       if (targetUser.role === 'admin') {
         const remainingAdminsRes = await db.query(
           `SELECT COUNT(*)::int as count FROM users WHERE organization_id = $1 AND role IN ('admin', 'owner') AND COALESCE(status, 'active') = 'active' AND id != $2`,
@@ -778,22 +891,46 @@ const adminController = {
         }
       }
 
+      // Safe deactivation to preserve foreign key relationships, audit trail, and dataset ownership
       await UserModel.updateStatus(targetUserId, 'deactivated', orgId);
 
+      // Clear online presence immediately
+      await UserModel.clearLastActive(targetUserId).catch(() => null);
+
+      // Invalidate target user's auth cache
+      const authMiddleware = require('../middleware/authMiddleware');
+      if (authMiddleware.clearUserAuthCache) {
+        authMiddleware.clearUserAuthCache(targetUser.email);
+        authMiddleware.clearUserAuthCache(targetUserId);
+      }
+
+      // Evict organization subscription cache so seat count is recalculated from PostgreSQL
+      subscriptionService.clearOrganizationCache(orgId);
+
+      // Audit log
       await logAuditEvent({
         organizationId: orgId,
         userId: req.user.id,
         action: AUDIT_ACTIONS.USER_STATUS_CHANGED,
         resourceType: 'user',
         resourceId: targetUserId,
-        description: `Removed team member ${targetUser.email} from organization`,
+        description: `Removed team member ${targetUser.email} from organization and freed seat`,
         metadata: { targetUserId, targetEmail: targetUser.email, previousStatus: targetUser.status },
         req
       }).catch(() => null);
 
+      // Refresh authoritative stats and usage directly
+      const [stats, subscription] = await Promise.all([
+        OrganizationModel.getOrganizationStats(orgId),
+        subscriptionService.getOrganizationSubscription(orgId, { forceFresh: true })
+      ]);
+
       return res.status(200).json({
         success: true,
-        message: `Team member ${targetUser.email} has been removed from the organization.`
+        message: `Team member ${targetUser.email} has been removed from the organization.`,
+        removedUserId: targetUserId,
+        stats,
+        usage: subscription?.usage || null
       });
     } catch (error) {
       console.error('[AdminController.removeUser] Error:', error);

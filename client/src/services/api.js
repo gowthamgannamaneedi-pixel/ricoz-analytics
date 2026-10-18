@@ -71,11 +71,23 @@ export async function apiRequest(endpoint, options = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  // Setup default 25-second timeout to prevent requests from hanging indefinitely
+  const timeoutMs = options.timeout || 25000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, timeoutMs);
+
+  const fetchOptions = {
+    ...options,
+    headers,
+    signal: options.signal || controller.signal
+  };
+  delete fetchOptions.timeout;
+
   try {
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
+    const response = await fetch(url, fetchOptions);
+    clearTimeout(timeoutId);
 
     // Check if response is JSON
     const contentType = response.headers.get('content-type') || '';
@@ -145,6 +157,13 @@ export async function apiRequest(endpoint, options = {}) {
 
     return data;
   } catch (err) {
+    if (typeof timeoutId !== 'undefined') clearTimeout(timeoutId);
+    if (err.name === 'AbortError' || err.code === 'ABORT_ERR') {
+      const timeoutErr = new Error('The request timed out. Please check your network connection and try again.');
+      timeoutErr.statusCode = 408;
+      timeoutErr.code = 'REQUEST_TIMEOUT';
+      throw timeoutErr;
+    }
     // Gracefully annotate connection failures
     if (!err.statusCode) {
       err.isOffline = true;
@@ -1191,6 +1210,15 @@ export async function removeAdminUser(id) {
   return apiRequest(`/admin/users/${id}`, {
     method: 'DELETE'
   });
+}
+
+/**
+ * Lightweight authenticated heartbeat to keep user presence active
+ */
+export async function sendHeartbeat() {
+  return apiRequest('/auth/heartbeat', {
+    method: 'POST'
+  }).catch(() => null);
 }
 
 // ==========================================

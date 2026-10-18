@@ -11,7 +11,8 @@ import {
   resendVerificationApi,
   getBillingSubscription,
   getCurrentUser,
-  logoutUser
+  logoutUser,
+  sendHeartbeat
 } from '../services/api';
 
 const AuthContext = createContext(null);
@@ -111,6 +112,24 @@ export function AuthProvider({ children }) {
       window.removeEventListener('auth:trial_expired', handleTrialExpired);
     };
   }, []);
+
+  // Lightweight authenticated presence heartbeat (every 2 minutes)
+  useEffect(() => {
+    if (!token || !user?.id) return;
+
+    // Send immediate heartbeat on session start
+    sendHeartbeat().catch(() => null);
+
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        sendHeartbeat().catch(() => null);
+      }
+    }, 2 * 60 * 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [token, user?.id]);
 
   /**
    * Log in user with credentials — strictly verified against server

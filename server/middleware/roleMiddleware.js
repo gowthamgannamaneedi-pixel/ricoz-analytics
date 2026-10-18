@@ -19,10 +19,11 @@ const requireRole = (...allowedRoles) => {
       });
     }
 
-    const userRole = req.user.role || 'viewer';
+    const userRole = (req.user.role || 'viewer').toLowerCase();
+    const normalizedAllowed = allowedRoles.map(r => String(r).toLowerCase());
 
-    // Admins automatically inherit access to all protected operations
-    if (userRole === 'admin' || allowedRoles.includes(userRole)) {
+    // Admins and owners automatically inherit access to all protected operations
+    if (userRole === 'admin' || userRole === 'owner' || normalizedAllowed.includes(userRole)) {
       return next();
     }
 

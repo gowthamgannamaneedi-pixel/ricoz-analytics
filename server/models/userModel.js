@@ -15,7 +15,7 @@ const UserModel = {
       SELECT id, name, email, password_hash, password_hash_alt, role, organization_id, avatar_url, status, 
              verification_token, verification_otp, verification_token_expires_at, email_verified_at,
              reset_password_token, reset_password_expires_at,
-             last_login_at, created_at, updated_at
+             last_login_at, last_active_at, created_at, updated_at
       FROM users
       WHERE LOWER(email) = LOWER($1)
       LIMIT 1;
@@ -34,7 +34,7 @@ const UserModel = {
       SELECT id, name, email, role, organization_id, avatar_url, status, 
              verification_token, verification_otp, verification_token_expires_at, email_verified_at,
              reset_password_token, reset_password_expires_at,
-             last_login_at, created_at, updated_at
+             last_login_at, last_active_at, created_at, updated_at
       FROM users
       WHERE id = $1
       LIMIT 1;
@@ -51,7 +51,7 @@ const UserModel = {
    */
   async findByIdAndOrgId(id, organizationId) {
     const sql = `
-      SELECT id, name, email, role, organization_id, avatar_url, status, last_login_at, created_at, updated_at
+      SELECT id, name, email, role, organization_id, avatar_url, status, last_login_at, last_active_at, created_at, updated_at
       FROM users
       WHERE id = $1 AND organization_id = $2
       LIMIT 1;
@@ -83,6 +83,9 @@ const UserModel = {
     if (filters.status && filters.status !== 'all') {
       conditions.push(`LOWER(COALESCE(status, 'active')) = LOWER($${paramIndex++})`);
       params.push(filters.status);
+    } else if (!filters.status) {
+      // By default in team management roster, exclude deactivated accounts unless 'all' is explicitly requested
+      conditions.push(`LOWER(COALESCE(status, 'active')) != 'deactivated'`);
     }
 
     if (filters.search && typeof filters.search === 'string' && filters.search.trim()) {
@@ -105,7 +108,7 @@ const UserModel = {
 
     // 2. Data
     const dataSql = `
-      SELECT id, name, email, role, organization_id, avatar_url, COALESCE(status, 'active') as status, last_login_at, created_at, updated_at
+      SELECT id, name, email, role, organization_id, avatar_url, COALESCE(status, 'active') as status, last_login_at, last_active_at, created_at, updated_at
       FROM users
       WHERE ${whereClause}
       ORDER BY created_at ASC
@@ -150,17 +153,35 @@ const UserModel = {
     const orgId = organization_id || organizationId;
     const pwdHash = password_hash || password || 'mock_hash';
 
-    // Production PostgreSQL schema uses UUID for users.id
-    const uuidId = id || crypto.randomUUID();
-    const sql = `
-      INSERT INTO users (id, name, email, password_hash, role, organization_id, status, verification_token, verification_otp, verification_token_expires_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    if (id) {
+      const sqlWithId = `
+        INSERT INTO users (id, name, email, password_hash, role, organization_id, status, verification_token, verification_otp, verification_token_expires_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id, name, email, role, organization_id, COALESCE(status, 'active') as status, verification_token, verification_otp, created_at, updated_at;
+      `;
+      const result = await db.query(sqlWithId, [
+        id,
+        name.trim(),
+        email.trim().toLowerCase(),
+        pwdHash,
+        role,
+        orgId,
+        status,
+        verification_token,
+        verification_otp,
+        verification_token_expires_at
+      ]);
+      return result.rows[0];
+    }
+
+    const sqlAutoId = `
+      INSERT INTO users (name, email, password_hash, role, organization_id, status, verification_token, verification_otp, verification_token_expires_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING id, name, email, role, organization_id, COALESCE(status, 'active') as status, verification_token, verification_otp, created_at, updated_at;
     `;
 
     try {
-      const result = await db.query(sql, [
-        uuidId,
+      const result = await db.query(sqlAutoId, [
         name.trim(),
         email.trim().toLowerCase(),
         pwdHash,
@@ -173,28 +194,31 @@ const UserModel = {
       ]);
       return result.rows[0];
     } catch (err) {
-      // If table uses integer IDs (e.g. legacy/in-memory), retry with integer sequence ID
-      if (err.message?.includes('type integer') || err.code === '22P02') {
-        let intId = 1;
+      // If table requires an explicit ID (e.g. no default sequence)
+      if (err.message?.includes('violates not-null constraint') && err.message?.includes('id')) {
+        let fallbackId = crypto.randomUUID();
         try {
-          const maxRes = await db.query('SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM users;');
-          intId = Number(maxRes.rows[0]?.next_id) || 1;
-        } catch (_) {}
-        const result = await db.query(sql, [
-          intId,
-          name.trim(),
-          email.trim().toLowerCase(),
-          pwdHash,
-          role,
-          orgId,
-          status,
-          verification_token,
-          verification_otp,
-          verification_token_expires_at
-        ]);
-        // Keep postgres sequence in sync with max id
-        await db.query("SELECT setval('users_id_seq', (SELECT MAX(id) FROM users))").catch(() => null);
-        return result.rows[0];
+          const res = await db.query(
+            `INSERT INTO users (id, name, email, password_hash, role, organization_id, status, verification_token, verification_otp, verification_token_expires_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+             RETURNING id, name, email, role, organization_id, COALESCE(status, 'active') as status, verification_token, verification_otp, created_at, updated_at;`,
+            [fallbackId, name.trim(), email.trim().toLowerCase(), pwdHash, role, orgId, status, verification_token, verification_otp, verification_token_expires_at]
+          );
+          return res.rows[0];
+        } catch (uuidErr) {
+          if (uuidErr.code === '22P02' || uuidErr.message?.includes('type integer')) {
+            const maxRes = await db.query('SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM users;');
+            const intId = Number(maxRes.rows[0]?.next_id) || 1;
+            const resInt = await db.query(
+              `INSERT INTO users (id, name, email, password_hash, role, organization_id, status, verification_token, verification_otp, verification_token_expires_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+               RETURNING id, name, email, role, organization_id, COALESCE(status, 'active') as status, verification_token, verification_otp, created_at, updated_at;`,
+              [intId, name.trim(), email.trim().toLowerCase(), pwdHash, role, orgId, status, verification_token, verification_otp, verification_token_expires_at]
+            );
+            return resInt.rows[0];
+          }
+          throw uuidErr;
+        }
       }
       throw err;
     }
@@ -299,14 +323,44 @@ const UserModel = {
   },
 
   /**
-   * Record last login timestamp
+   * Record last login timestamp and set presence to active
    * @param {number|string} id 
    * @returns {Promise<void>}
    */
   async updateLastLogin(id) {
     const sql = `
       UPDATE users
-      SET last_login_at = CURRENT_TIMESTAMP
+      SET last_login_at = CURRENT_TIMESTAMP, last_active_at = CURRENT_TIMESTAMP
+      WHERE id = $1;
+    `;
+    await db.query(sql, [id]);
+  },
+
+  /**
+   * Lightweight presence heartbeat: update last_active_at timestamp for active users
+   * @param {number|string} id 
+   * @returns {Promise<any>}
+   */
+  async updateLastActive(id) {
+    const sql = `
+      UPDATE users
+      SET last_active_at = CURRENT_TIMESTAMP
+      WHERE id = $1 AND COALESCE(status, 'active') != 'deactivated'
+      RETURNING id, last_active_at;
+    `;
+    const res = await db.query(sql, [id]);
+    return res.rows[0] || null;
+  },
+
+  /**
+   * Clear user's presence timestamp (e.g., on logout or deactivation)
+   * @param {number|string} id 
+   * @returns {Promise<void>}
+   */
+  async clearLastActive(id) {
+    const sql = `
+      UPDATE users
+      SET last_active_at = NULL
       WHERE id = $1;
     `;
     await db.query(sql, [id]);

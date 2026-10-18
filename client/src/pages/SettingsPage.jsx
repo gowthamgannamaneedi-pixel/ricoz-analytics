@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
+  AlertCircle,
   Search,
   RefreshCw,
   Edit3,
@@ -134,7 +135,13 @@ export default function SettingsPage() {
   const [inviteRole, setInviteRole] = useState('viewer');
   const [inviteSuccess, setInviteSuccess] = useState(false);
   const [isSendingInvite, setIsSendingInvite] = useState(false);
+  const [inviteError, setInviteError] = useState(null);
   const [pendingInvitations, setPendingInvitations] = useState([]);
+
+  // Member Removal Confirmation Dialog State
+  const [memberToRemove, setMemberToRemove] = useState(null);
+  const [isRemovingMember, setIsRemovingMember] = useState(false);
+  const [removeMemberError, setRemoveMemberError] = useState(null);
 
   const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
@@ -354,10 +361,11 @@ export default function SettingsPage() {
   }, []);
 
   const handleSendInvite = async (e) => {
-    e.preventDefault();
-    if (!inviteEmail.trim()) return;
+    if (e && e.preventDefault) e.preventDefault();
+    if (!inviteEmail.trim() || isSendingInvite) return;
     try {
       setIsSendingInvite(true);
+      setInviteError(null);
       setError(null);
       await createAdminInvitation({
         email: inviteEmail.trim(),
@@ -369,11 +377,13 @@ export default function SettingsPage() {
         setInviteSuccess(false);
         setInviteEmail('');
         setInviteName('');
+        setInviteError(null);
         setSuccessMessage(`Workspace invitation dispatched to ${inviteEmail.trim()}.`);
-      }, 1000);
+      }, 1200);
       loadInvitations();
+      loadSettingsData(true);
     } catch (err) {
-      setError(err.message || 'Failed to dispatch workspace invitation.');
+      setInviteError(err.message || 'Failed to dispatch workspace invitation.');
     } finally {
       setIsSendingInvite(false);
     }
@@ -412,34 +422,74 @@ export default function SettingsPage() {
     }
   };
 
-  const handleRemoveMember = async (userId, memberEmail) => {
-    if (!window.confirm(`Are you sure you want to remove ${memberEmail} from this organization?`)) {
-      return;
-    }
+  const openRemoveMemberModal = (member) => {
+    setRemoveMemberError(null);
+    setMemberToRemove(member);
+  };
+
+  const closeRemoveMemberModal = () => {
+    if (isRemovingMember) return;
+    setMemberToRemove(null);
+    setRemoveMemberError(null);
+  };
+
+  const handleConfirmRemoveMember = async () => {
+    if (!memberToRemove || isRemovingMember) return;
     try {
+      setIsRemovingMember(true);
+      setRemoveMemberError(null);
       setError(null);
-      await removeAdminUser(userId);
-      setSuccessMessage(`Team member ${memberEmail} removed and seat freed.`);
+      await removeAdminUser(memberToRemove.id);
+
+      // Immediately remove from active state so row disappears without lag
+      setUsersList(prev => prev.filter(u => u.id !== memberToRemove.id));
+
+      const removedEmail = memberToRemove.email;
+      setMemberToRemove(null);
+      setSuccessMessage(`Team member ${removedEmail} removed and seat freed.`);
+
+      // Server-authoritative reload of settings, seat usage, and roster
       loadSettingsData(true);
+      loadInvitations();
     } catch (err) {
-      setError(err.message || 'Failed to remove team member.');
+      setRemoveMemberError(err.message || 'Failed to remove team member.');
+    } finally {
+      setIsRemovingMember(false);
     }
   };
 
+  const handleRemoveMember = async (userId, memberEmail) => {
+    const member = usersList.find(u => u.id === userId) || { id: userId, email: memberEmail };
+    openRemoveMemberModal(member);
+  };
+
   // --------------------------------------------------------------------------
-  // Helper: Format Relative Time
+  // Helper: Format Relative Time and Localized Full Date
   // --------------------------------------------------------------------------
   const formatRelativeTime = (timestamp) => {
-    if (!timestamp) return 'Recently';
+    if (!timestamp) return 'Never';
     const now = Date.now();
     const then = new Date(timestamp).getTime();
-    if (isNaN(then)) return 'Recently';
+    if (isNaN(then)) return 'Never';
     const diffSec = Math.floor((now - then) / 1000);
     if (diffSec < 60) return 'Just now';
     if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
     if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
     const days = Math.floor(diffSec / 86400);
     return `${days}d ago`;
+  };
+
+  const formatFullDateTime = (timestamp) => {
+    if (!timestamp) return null;
+    const d = new Date(timestamp);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   const formatActivityAction = (action) => {
@@ -450,8 +500,9 @@ export default function SettingsPage() {
       .replace(/\b\w/g, c => c.toUpperCase());
   };
 
-  // Filtered Users for Users & Access Tab
+  // Filtered Users for Users & Access Tab (strictly excludes deactivated accounts from active roster)
   const filteredUsers = usersList.filter(u => {
+    if (u.status === 'deactivated') return false;
     const q = userSearch.toLowerCase();
     const matchQuery = !q || u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q);
     const matchRole = userRoleFilter === 'all' || u.role === userRoleFilter;
@@ -1212,7 +1263,11 @@ export default function SettingsPage() {
                   <Button
                     variant="primary"
                     size="sm"
-                    onClick={() => setIsInviteModalOpen(true)}
+                    onClick={() => {
+                      setInviteError(null);
+                      setInviteSuccess(false);
+                      setIsInviteModalOpen(true);
+                    }}
                     className="gap-1.5"
                     disabled={isAtSeatLimit}
                     title={isAtSeatLimit ? 'Plan seat limit reached. Upgrade to invite more.' : 'Invite a new team member'}
@@ -1392,23 +1447,42 @@ export default function SettingsPage() {
                             )}
                           </td>
                           <td className="py-3 px-4">
-                            <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold ${
-                              m.status === 'deactivated' ? 'text-slate-400' : 'text-emerald-600'
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
+                              m.status === 'deactivated' || m.presence === 'deactivated'
+                                ? 'bg-slate-50 text-slate-500 border-slate-200'
+                                : m.presence === 'active'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : 'bg-slate-50 text-slate-600 border-slate-200'
                             }`}>
                               <span className={`h-1.5 w-1.5 rounded-full ${
-                                m.status === 'deactivated' ? 'bg-slate-400' : 'bg-emerald-500'
+                                m.status === 'deactivated' || m.presence === 'deactivated'
+                                  ? 'bg-slate-400'
+                                  : m.presence === 'active'
+                                  ? 'bg-emerald-500 animate-pulse'
+                                  : 'bg-slate-400'
                               }`} />
-                              {m.status ? m.status.charAt(0).toUpperCase() + m.status.slice(1) : 'Active'}
+                              {m.status === 'deactivated' || m.presence === 'deactivated'
+                                ? 'Deactivated'
+                                : m.presence === 'active'
+                                ? 'Active'
+                                : 'Inactive'}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-slate-500 font-medium">
-                            {formatRelativeTime(m.last_login_at)}
+                          <td className="py-3 px-4">
+                            {m.last_login_at ? (
+                              <div className="flex flex-col" title={formatFullDateTime(m.last_login_at)}>
+                                <span className="font-semibold text-slate-800 text-xs">{formatRelativeTime(m.last_login_at)}</span>
+                                <span className="text-[10px] text-slate-400 font-medium">{formatFullDateTime(m.last_login_at)}</span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 font-medium text-xs italic">Never</span>
+                            )}
                           </td>
                           <td className="py-3 px-4 text-right">
                             {canManage ? (
                               <button
                                 type="button"
-                                onClick={() => handleRemoveMember(m.id, m.email)}
+                                onClick={() => openRemoveMemberModal(m)}
                                 className="text-xs font-semibold text-rose-600 hover:text-rose-800 transition cursor-pointer hover:underline"
                               >
                                 Remove Member
@@ -2030,6 +2104,16 @@ export default function SettingsPage() {
                 </div>
               ) : (
                 <form onSubmit={handleSendInvite} className="space-y-4 text-xs">
+                  {inviteError && (
+                    <div className="p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-xs flex items-start gap-2 animate-in fade-in">
+                      <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <span className="font-semibold block">Invitation could not be sent</span>
+                        <span className="text-[11px] text-rose-700 leading-relaxed">{inviteError}</span>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-1.5">
                     <label className="font-bold text-slate-700">Email Address *</label>
                     <input
@@ -2071,6 +2155,7 @@ export default function SettingsPage() {
                       type="button"
                       variant="secondary"
                       onClick={() => setIsInviteModalOpen(false)}
+                      disabled={isSendingInvite}
                     >
                       Cancel
                     </Button>
@@ -2078,8 +2163,9 @@ export default function SettingsPage() {
                       type="submit"
                       variant="primary"
                       loading={isSendingInvite}
+                      disabled={isSendingInvite}
                     >
-                      Send Invitation
+                      {isSendingInvite ? 'Sending Invitation...' : 'Send Invitation'}
                     </Button>
                   </div>
                 </form>
@@ -2219,6 +2305,70 @@ export default function SettingsPage() {
             <div className="pt-2 flex justify-end">
               <Button variant="secondary" size="sm" onClick={() => setIsStatusModalOpen(false)}>
                 Dismiss
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Team Member Professional Confirmation Modal */}
+      {memberToRemove && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Remove Team Member</h3>
+                <p className="text-xs text-slate-500">Revoke access from this organization workspace</p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-900 text-xs">{memberToRemove.name || 'Team Member'}</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-200 text-slate-700">
+                  {memberToRemove.role}
+                </span>
+              </div>
+              <p className="font-mono text-xs text-slate-600">{memberToRemove.email}</p>
+            </div>
+
+            <div className="text-xs text-slate-600 space-y-2 leading-relaxed">
+              <p>
+                Are you sure you want to remove <strong>{memberToRemove.name || memberToRemove.email}</strong>?
+              </p>
+              <p className="text-slate-500">
+                This member will immediately lose access to the <strong>{organization?.name || 'workspace'}</strong> organization, datasets, dashboards, and scheduled reports. Their seat will be freed and returned to the organization pool. All audit records and historical activities will be safely preserved.
+              </p>
+            </div>
+
+            {removeMemberError && (
+              <div className="p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-xs flex items-start gap-2 animate-in fade-in">
+                <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                <span className="leading-relaxed">{removeMemberError}</span>
+              </div>
+            )}
+
+            <div className="pt-2 flex items-center justify-end gap-2.5">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={closeRemoveMemberModal}
+                disabled={isRemovingMember}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                onClick={handleConfirmRemoveMember}
+                loading={isRemovingMember}
+                disabled={isRemovingMember}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-semibold"
+              >
+                {isRemovingMember ? 'Removing...' : 'Confirm Removal'}
               </Button>
             </div>
           </div>

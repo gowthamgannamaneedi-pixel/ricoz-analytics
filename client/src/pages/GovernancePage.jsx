@@ -216,8 +216,8 @@ export default function GovernancePage() {
 
   // Dispatch single-use email invitation with atomic seat reservation
   const handleSendInvite = async (e) => {
-    e.preventDefault();
-    if (!inviteEmail.trim()) return;
+    if (e && e.preventDefault) e.preventDefault();
+    if (!inviteEmail.trim() || isSendingInvite) return;
     try {
       setIsSendingInvite(true);
       setInviteError(null);
@@ -232,7 +232,7 @@ export default function GovernancePage() {
         setInviteEmail('');
         setInviteName('');
         setSuccessMessage(`Workspace invitation successfully dispatched to ${inviteEmail.trim()}.`);
-      }, 1000);
+      }, 1200);
       loadInvitations();
       loadUsers();
       loadOverview();
@@ -1963,7 +1963,8 @@ export default function GovernancePage() {
                     <button
                       type="button"
                       onClick={() => setIsInviteModalOpen(false)}
-                      className="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 transition cursor-pointer"
+                      disabled={isSendingInvite}
+                      className="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 disabled:opacity-50 transition cursor-pointer"
                     >
                       Cancel
                     </button>

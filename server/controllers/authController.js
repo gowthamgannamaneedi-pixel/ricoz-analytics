@@ -499,8 +499,9 @@ const verifyOtp = async (req, res, next) => {
       });
     }
 
-    // Mark verified in database
+    // Mark verified in database and record initial login/presence
     await UserModel.markEmailVerified(user.email);
+    await UserModel.updateLastLogin(user.id).catch(() => null);
 
     // Evict cached user auth status
     const authMiddleware = require('../middleware/authMiddleware');
@@ -814,9 +815,11 @@ const login = async (req, res, next) => {
       subscriptionService.primeOrganizationCache(orgId, subscription);
     }
 
-    // Update last login timestamp and audit event asynchronously (non-blocking for HTTP response)
+    // Update last login timestamp and presence synchronously on successful authentication
+    await UserModel.updateLastLogin(user.id).catch(() => null);
+
+    // Log audit event asynchronously
     setImmediate(() => {
-      UserModel.updateLastLogin(user.id).catch(() => null);
       logAuditEvent({
         organizationId: orgId,
         userId: user.id,
@@ -1084,7 +1087,11 @@ const acceptInvite = async (req, res, next) => {
         status: 'active'
       });
       await UserModel.markEmailVerified(cleanEmail);
+      await UserModel.updateLastLogin(user.id).catch(() => null);
     }
+
+    // Invalidate subscription cache so accepted seat is accounted for
+    subscriptionService.clearOrganizationCache(invitation.organization_id);
 
     // Mark invitation accepted
     await InvitationModel.markAccepted(invitation.id);
@@ -1127,10 +1134,22 @@ const acceptInvite = async (req, res, next) => {
  */
 const logout = async (req, res, next) => {
   try {
+    let userId = req.user?.id || null;
     const authHeader = req.headers['authorization'];
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1].trim();
       tokenBlacklist.revoke(token);
+      if (!userId) {
+        try {
+          const decoded = jwt.decode(token);
+          if (decoded?.id) userId = decoded.id;
+        } catch (_) {}
+      }
+    }
+
+    // Stop online presence immediately upon logout
+    if (userId) {
+      await UserModel.clearLastActive(userId).catch(() => null);
     }
 
     if (req.user) {
@@ -1152,6 +1171,37 @@ const logout = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: 'Logged out successfully.'
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/auth/heartbeat
+ * Lightweight authenticated heartbeat to keep user presence active
+ */
+const heartbeat = async (req, res, next) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required for heartbeat.'
+      });
+    }
+
+    // Deactivated status overrides all presence signals
+    if (req.user.status === 'deactivated') {
+      return res.status(403).json({
+        success: false,
+        message: 'Account has been deactivated.'
+      });
+    }
+
+    const updated = await UserModel.updateLastActive(req.user.id);
+    return res.status(200).json({
+      success: true,
+      timestamp: updated?.last_active_at || new Date().toISOString()
     });
   } catch (err) {
     next(err);
@@ -1337,6 +1387,7 @@ module.exports = {
   getInvitationDetails,
   acceptInvite,
   logout,
+  heartbeat,
   forgotPassword,
   verifyResetToken,
   resetPassword
