@@ -205,7 +205,10 @@ export default function GovernancePage() {
       setInvitationsLoading(true);
       const res = await getAdminInvitations();
       if (res && res.invitations) {
-        setPendingInvitations(res.invitations);
+        const activeOnly = res.invitations.filter(
+          inv => inv.status === 'pending' && new Date(inv.expires_at) > new Date()
+        );
+        setPendingInvitations(activeOnly);
       }
     } catch (err) {
       console.warn('Failed to load pending invitations:', err.message);

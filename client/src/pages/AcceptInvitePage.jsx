@@ -13,7 +13,7 @@ export default function AcceptInvitePage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, setAuthSession } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -103,22 +103,35 @@ export default function AcceptInvitePage() {
       });
 
       setSuccess(true);
-      // Automatically authenticate with credentials
-      try {
-        await login({
-          email: inviteDetails.email,
-          password: formData.password
-        });
+      // Immediately establish authenticated session with returned token and authoritative user claims
+      if (res?.token && res?.user) {
+        if (setAuthSession) {
+          setAuthSession({
+            token: res.token,
+            user: res.user
+          });
+        }
         setTimeout(() => {
           navigate('/dashboard', { replace: true });
         }, 1500);
-      } catch (_) {
-        setTimeout(() => {
-          navigate('/login', {
-            replace: true,
-            state: { message: 'Invitation accepted successfully! Sign in to enter your workspace.' }
+      } else {
+        // Fallback login with credentials
+        try {
+          await login({
+            email: inviteDetails.email,
+            password: formData.password
           });
-        }, 1500);
+          setTimeout(() => {
+            navigate('/dashboard', { replace: true });
+          }, 1500);
+        } catch (_) {
+          setTimeout(() => {
+            navigate('/login', {
+              replace: true,
+              state: { message: 'Invitation accepted successfully! Sign in to enter your workspace.' }
+            });
+          }, 1500);
+        }
       }
     } catch (err) {
       setError(err.message || 'Failed to accept invitation. Please try again.');

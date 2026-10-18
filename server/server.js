@@ -52,11 +52,13 @@ if (require.main === module) {
           updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
         );
         ALTER TABLE invitations ADD COLUMN IF NOT EXISTS token_hash VARCHAR(255);
+        ALTER TABLE invitations ADD COLUMN IF NOT EXISTS accepted_by VARCHAR(255);
         CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON invitations(token_hash);
       `);
       await db.query(`
         CREATE UNIQUE INDEX IF NOT EXISTS idx_invitations_org_pending_email ON invitations(organization_id, LOWER(email)) WHERE status = 'pending';
         CREATE INDEX IF NOT EXISTS idx_invitations_seat_calc ON invitations(organization_id, status, expires_at);
+        CREATE INDEX IF NOT EXISTS idx_invitations_accepted_by ON invitations(accepted_by);
       `);
     } catch (migErr) {
       console.warn(' Startup migration check notice:', migErr.message);

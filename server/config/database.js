@@ -685,8 +685,21 @@ function handleFallbackQuery(text, params = []) {
 
   if (normalizedSql.includes('from invitations') && (normalizedSql.includes('organization_id = $1') || normalizedSql.includes('organization_id::text = $1::text'))) {
     const orgId = String(params[0]);
+    const now = new Date();
     const list = fallbackInvitations
-      .filter(i => String(i.organization_id) === orgId)
+      .filter(i => {
+        if (String(i.organization_id) !== orgId) return false;
+        if (normalizedSql.includes('i.status = $2') || normalizedSql.includes('status = $2')) {
+          const reqStatus = params[1];
+          if (reqStatus && reqStatus !== 'all' && i.status !== reqStatus) return false;
+        } else if (normalizedSql.includes("status = 'pending'") || normalizedSql.includes("i.status = 'pending'")) {
+          if (i.status !== 'pending') return false;
+        }
+        if (normalizedSql.includes('expires_at > now()') || normalizedSql.includes('expires_at > now')) {
+          if (new Date(i.expires_at) <= now) return false;
+        }
+        return true;
+      })
       .map(i => {
         const inviter = fallbackUsers.find(u => String(u.id) === String(i.invited_by));
         return {
@@ -717,6 +730,10 @@ function handleFallbackQuery(text, params = []) {
     if (inv) {
       if (normalizedSql.includes('accepted')) {
         inv.status = 'accepted';
+        inv.accepted_at = new Date();
+        if (normalizedSql.includes('accepted_by = $1') && params[0]) {
+          inv.accepted_by = String(params[0]);
+        }
       } else if (normalizedSql.includes('revoked')) {
         inv.status = 'revoked';
       }
@@ -4511,7 +4528,9 @@ async function initDb() {
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
     ALTER TABLE invitations ADD COLUMN IF NOT EXISTS token_hash VARCHAR(255);
+    ALTER TABLE invitations ADD COLUMN IF NOT EXISTS accepted_by VARCHAR(255);
     CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON invitations(token_hash);
+    CREATE INDEX IF NOT EXISTS idx_invitations_accepted_by ON invitations(accepted_by);
     CREATE UNIQUE INDEX IF NOT EXISTS idx_invitations_org_pending_email ON invitations(organization_id, LOWER(email)) WHERE status = 'pending';
     CREATE INDEX IF NOT EXISTS idx_invitations_seat_calc ON invitations(organization_id, status, expires_at);
 
@@ -5059,7 +5078,9 @@ async function initDb() {
     );
 
     ALTER TABLE invitations ADD COLUMN IF NOT EXISTS token_hash VARCHAR(255);
+    ALTER TABLE invitations ADD COLUMN IF NOT EXISTS accepted_by VARCHAR(255);
     CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON invitations(token_hash);
+    CREATE INDEX IF NOT EXISTS idx_invitations_accepted_by ON invitations(accepted_by);
     CREATE UNIQUE INDEX IF NOT EXISTS idx_invitations_org_pending_email ON invitations(organization_id, LOWER(email)) WHERE status = 'pending';
     CREATE INDEX IF NOT EXISTS idx_invitations_seat_calc ON invitations(organization_id, status, expires_at);
 
@@ -5174,7 +5195,9 @@ async function initDb() {
         updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );
       ALTER TABLE invitations ADD COLUMN IF NOT EXISTS token_hash VARCHAR(255);
+      ALTER TABLE invitations ADD COLUMN IF NOT EXISTS accepted_by VARCHAR(255);
       CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON invitations(token_hash);
+      CREATE INDEX IF NOT EXISTS idx_invitations_accepted_by ON invitations(accepted_by);
       CREATE UNIQUE INDEX IF NOT EXISTS idx_invitations_org_pending_email ON invitations(organization_id, LOWER(email)) WHERE status = 'pending';
       CREATE INDEX IF NOT EXISTS idx_invitations_seat_calc ON invitations(organization_id, status, expires_at);
     `);

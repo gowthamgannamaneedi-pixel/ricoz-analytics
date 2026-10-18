@@ -92,10 +92,10 @@ async function logAuditEvent({
 
     if (req) {
       if (!ip) {
-        ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || req.ip || null;
+        ip = req.headers?.['x-forwarded-for'] || req.socket?.remoteAddress || req.ip || null;
       }
       if (!ua) {
-        ua = req.headers['user-agent'] || null;
+        ua = req.headers?.['user-agent'] || null;
       }
       if (!actorId && req.user) {
         actorId = req.user.id;

@@ -776,12 +776,18 @@ const adminController = {
 
   /**
    * GET /api/admin/invitations
-   * List all pending or past invitations for the organization
+   * List pending, unexpired invitations for the organization
+   * Query params:
+   *  - status: optional status filter ('pending', 'all', 'accepted', 'revoked') - defaults to 'pending'
+   *  - includeExpired: boolean - defaults to false for pending
    */
   async getInvitations(req, res) {
     try {
       const orgId = req.user.organization_id;
-      const invitations = await InvitationModel.findByOrganizationId(orgId);
+      const status = req.query.status || 'pending';
+      const includeExpired = req.query.includeExpired === 'true';
+
+      const invitations = await InvitationModel.findByOrganizationId(orgId, { status, includeExpired });
 
       return res.status(200).json({
         success: true,

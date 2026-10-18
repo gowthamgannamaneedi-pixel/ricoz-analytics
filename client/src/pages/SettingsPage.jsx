@@ -208,7 +208,10 @@ export default function SettingsPage() {
       ]);
 
       if (invitesRes && invitesRes.invitations) {
-        setPendingInvitations(invitesRes.invitations);
+        const activeOnly = invitesRes.invitations.filter(
+          inv => inv.status === 'pending' && new Date(inv.expires_at) > new Date()
+        );
+        setPendingInvitations(activeOnly);
       }
 
       if (orgRes && orgRes.organization) {
@@ -355,7 +358,10 @@ export default function SettingsPage() {
     try {
       const res = await getAdminInvitations();
       if (res && res.invitations) {
-        setPendingInvitations(res.invitations);
+        const activeOnly = res.invitations.filter(
+          inv => inv.status === 'pending' && new Date(inv.expires_at) > new Date()
+        );
+        setPendingInvitations(activeOnly);
       }
     } catch (_) {}
   }, []);

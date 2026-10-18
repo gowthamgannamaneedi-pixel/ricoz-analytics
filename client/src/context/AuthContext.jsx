@@ -273,6 +273,22 @@ export function AuthProvider({ children }) {
   const subscriptionStatus = subscription?.status || 'trial';
   const plan = subscription?.plan || 'starter';
 
+  /**
+   * Directly set authenticated session (e.g. following invitation acceptance)
+   */
+  const setAuthSession = useCallback((sessionData) => {
+    if (sessionData?.token) {
+      setAuthToken(sessionData.token);
+      setToken(sessionData.token);
+    }
+    if (sessionData?.user) {
+      setUser(sessionData.user);
+    }
+    if (sessionData?.subscription) {
+      setSubscription(sessionData.subscription);
+    }
+  }, []);
+
   const value = {
     user,
     token,
@@ -287,6 +303,7 @@ export function AuthProvider({ children }) {
     resendOtp,
     logout,
     refreshSubscription,
+    setAuthSession,
     // Subscription & 14-Day Trial
     subscription,
     isTrialExpired,

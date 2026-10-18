@@ -204,10 +204,14 @@ const InvitationModel = {
   },
 
   /**
-   * List all pending or past invitations for an organization
+   * List pending, unexpired invitations for an organization.
+   * Can optionally filter by status or include expired invitations.
+   * By default, returns ONLY active pending invitations (status = 'pending' AND expires_at > NOW()).
    */
-  async findByOrganizationId(organizationId) {
-    const sql = `
+  async findByOrganizationId(organizationId, options = {}) {
+    const { status = 'pending', includeExpired = false } = options;
+
+    let sql = `
       SELECT 
         i.id,
         i.organization_id,
@@ -216,15 +220,51 @@ const InvitationModel = {
         i.role,
         i.status,
         i.expires_at,
+        i.accepted_at,
         i.created_at,
         u.name AS inviter_name
       FROM invitations i
       LEFT JOIN users u ON u.id::text = i.invited_by::text
       WHERE i.organization_id::text = $1::text
-      ORDER BY i.created_at DESC;
     `;
-    const res = await db.query(sql, [organizationId]);
+    const params = [organizationId];
+
+    if (status && status !== 'all') {
+      params.push(status);
+      sql += ` AND i.status = $${params.length}`;
+    }
+
+    if (!includeExpired && (status === 'pending' || !status)) {
+      sql += ` AND i.expires_at > NOW()`;
+    }
+
+    sql += ` ORDER BY i.created_at DESC;`;
+
+    const res = await db.query(sql, params);
     return res.rows || [];
+  },
+
+  /**
+   * List exclusively active pending invitations (unexpired, not revoked, not accepted)
+   */
+  async findPendingByOrganizationId(organizationId) {
+    return this.findByOrganizationId(organizationId, { status: 'pending', includeExpired: false });
+  },
+
+  /**
+   * Authoritative count of active pending invitations for an organization
+   */
+  async countPendingByOrganizationId(organizationId, client = null) {
+    const queryExecutor = client || db;
+    const res = await queryExecutor.query(
+      `SELECT COUNT(*)::int as count 
+       FROM invitations 
+       WHERE organization_id::text = $1::text 
+         AND status = 'pending' 
+         AND expires_at > NOW()`,
+      [organizationId]
+    );
+    return Number(res.rows[0]?.count || 0);
   },
 
   /**
@@ -266,16 +306,37 @@ const InvitationModel = {
 
   /**
    * Mark invitation accepted (optionally within an existing transaction client)
+   * Atomically records status = 'accepted', accepted_at = CURRENT_TIMESTAMP, and accepted_by if supported.
    */
-  async markAccepted(id, client = null) {
+  async markAccepted(id, client = null, acceptedBy = null) {
     const queryExecutor = client || db;
-    const sql = `
-      UPDATE invitations
-      SET status = 'accepted', accepted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-      WHERE id::text = $1::text
-      RETURNING *;
-    `;
-    const res = await queryExecutor.query(sql, [id]);
+
+    let hasAcceptedBy = false;
+    try {
+      const colCheck = await queryExecutor.query(
+        "SELECT 1 FROM information_schema.columns WHERE table_name = 'invitations' AND column_name = 'accepted_by'"
+      );
+      hasAcceptedBy = colCheck.rows && colCheck.rows.length > 0;
+    } catch (_) {}
+
+    let res;
+    if (hasAcceptedBy && acceptedBy) {
+      res = await queryExecutor.query(
+        `UPDATE invitations
+         SET status = 'accepted', accepted_at = CURRENT_TIMESTAMP, accepted_by = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE id::text = $2::text
+         RETURNING *;`,
+        [acceptedBy, id]
+      );
+    } else {
+      res = await queryExecutor.query(
+        `UPDATE invitations
+         SET status = 'accepted', accepted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+         WHERE id::text = $1::text
+         RETURNING *;`,
+        [id]
+      );
+    }
     return res.rows[0] || null;
   },
 
@@ -503,12 +564,12 @@ const InvitationModel = {
       }
 
       // 3. Authoritatively mark invitation accepted in the SAME transaction
-      await client.query(
-        `UPDATE invitations
-         SET status = 'accepted', accepted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-         WHERE id::text = $1::text`,
-        [invitation.id]
-      );
+      const acceptedInvite = await this.markAccepted(invitation.id, client, user.id);
+      if (acceptedInvite) {
+        invitation.status = 'accepted';
+        invitation.accepted_at = acceptedInvite.accepted_at;
+        invitation.accepted_by = acceptedInvite.accepted_by || user.id;
+      }
 
       return {
         user,
