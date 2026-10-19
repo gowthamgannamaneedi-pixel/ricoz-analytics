@@ -153,6 +153,13 @@ export default function BillingPage() {
     }
   }, [location.search]);
 
+  // Synchronize local billing state whenever AuthContext subscription updates
+  useEffect(() => {
+    if (subscription) {
+      setCurrentSub(subscription);
+    }
+  }, [subscription]);
+
   // Load plans & subscription telemetry
   useEffect(() => {
     let isMounted = true;
@@ -244,6 +251,10 @@ export default function BillingPage() {
         });
 
         setSuccessMessage(verifyRes.message || 'Payment confirmed! Your subscription is now active.');
+        setError('');
+        if (verifyRes?.subscription) {
+          setCurrentSub(verifyRes.subscription);
+        }
         if (typeof refreshSubscription === 'function') {
           await refreshSubscription();
         }
@@ -310,6 +321,12 @@ export default function BillingPage() {
 
             setVerificationStep('Activating plan entitlements and syncing workspace...');
             setSuccessMessage(verifyRes.message || `Payment verified successfully! Welcome to the ${orderData.planName || planId.toUpperCase()} tier.`);
+            setError('');
+
+            // Immediately apply verified authoritative subscription from server
+            if (verifyRes?.subscription) {
+              setCurrentSub(verifyRes.subscription);
+            }
 
             if (typeof refreshSubscription === 'function') {
               await refreshSubscription();

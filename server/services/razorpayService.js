@@ -381,39 +381,53 @@ class RazorpayService {
         ]
       );
 
-      // E. Record in subscription history
-      const subHistorySql = `
-        INSERT INTO subscription_history (
-          organization_id,
-          event_type,
-          from_plan,
-          to_plan,
-          billing_interval,
-          amount,
-          currency,
-          status,
-          effective_date,
-          metadata,
-          created_at
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9, CURRENT_TIMESTAMP);
-      `;
-      await queryRunner.query(subHistorySql, [
-        organizationId,
-        'upgrade',
-        orgSub.plan || 'starter',
-        order.plan_id,
-        order.billing_interval,
-        amountInRupees,
-        order.currency || 'INR',
-        now,
-        JSON.stringify({
-          razorpayPaymentId: paymentId,
-          razorpayOrderId: orderId,
-          paymentGateway: 'razorpay',
-          currentPeriodEnd
-        })
-      ]);
+      // E. Record in subscription history (with idempotency and safety guard)
+      try {
+        const existingHistory = await queryRunner.query(
+          `SELECT id FROM subscription_history 
+           WHERE organization_id = $1 
+             AND (metadata->>'razorpayPaymentId' = $2 OR metadata->>'razorpayOrderId' = $3)
+           LIMIT 1`,
+          [organizationId, paymentId, orderId]
+        ).catch(() => ({ rows: [] }));
+
+        if (!existingHistory.rows || existingHistory.rows.length === 0) {
+          const subHistorySql = `
+            INSERT INTO subscription_history (
+              organization_id,
+              event_type,
+              from_plan,
+              to_plan,
+              billing_interval,
+              amount,
+              currency,
+              status,
+              effective_date,
+              metadata,
+              created_at
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9, CURRENT_TIMESTAMP);
+          `;
+          await queryRunner.query(subHistorySql, [
+            organizationId,
+            'upgrade',
+            orgSub.plan || 'starter',
+            order.plan_id,
+            order.billing_interval,
+            amountInRupees,
+            order.currency || 'INR',
+            now,
+            JSON.stringify({
+              razorpayPaymentId: paymentId,
+              razorpayOrderId: orderId,
+              paymentGateway: 'razorpay',
+              currentPeriodEnd
+            })
+          ]);
+        }
+      } catch (histErr) {
+        console.warn('[RazorpayService] ⚠️ Subscription history record notice:', histErr.message);
+      }
 
       if (client) await client.query('COMMIT');
 

@@ -884,10 +884,16 @@ function handleFallbackQuery(text, params = []) {
     return Promise.resolve({ rows: [{ ...newHistory }], rowCount: 1 });
   }
 
-  if (normalizedSql.includes('from subscription_history') && normalizedSql.includes('organization_id = $1')) {
-    const orgId = String(params[0]);
-    const list = fallbackSubscriptionHistory.filter(h => String(h.organization_id) === orgId);
-    return Promise.resolve({ rows: list, rowCount: list.length });
+  if (normalizedSql.includes('from subscription_history')) {
+    let list = [...fallbackSubscriptionHistory];
+    if (params && params.length > 0 && params[0]) {
+      const orgId = String(params[0]);
+      list = list.filter(h => String(h.organization_id) === orgId);
+    }
+    list.sort((a, b) => new Date(b.created_at || b.effective_date) - new Date(a.created_at || a.effective_date));
+    const limit = (params && params.length > 1 && typeof params[1] === 'number') ? params[1] : 50;
+    const sliced = list.slice(0, limit);
+    return Promise.resolve({ rows: sliced, rowCount: sliced.length });
   }
 
   // ----------------- SUBSCRIPTION REMINDERS -----------------
@@ -5313,6 +5319,39 @@ async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_razorpay_webhook_events_payment_id ON razorpay_webhook_events(payment_id);
     CREATE INDEX IF NOT EXISTS idx_razorpay_webhook_events_created_at ON razorpay_webhook_events(created_at DESC);
 
+    CREATE TABLE IF NOT EXISTS subscription_history (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      event_type VARCHAR(50) NOT NULL,
+      from_plan VARCHAR(50),
+      to_plan VARCHAR(50),
+      billing_interval VARCHAR(20),
+      amount NUMERIC(10, 2),
+      currency VARCHAR(10) DEFAULT 'inr',
+      status VARCHAR(50) NOT NULL,
+      effective_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      metadata JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_subscription_history_org ON subscription_history(organization_id);
+    CREATE INDEX IF NOT EXISTS idx_subscription_history_created_at ON subscription_history(created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS subscription_reminders (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      reminder_type VARCHAR(50) NOT NULL,
+      target_date DATE NOT NULL,
+      recipient_email VARCHAR(255) NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'sent',
+      attempt_count INT NOT NULL DEFAULT 1,
+      sent_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      error_message TEXT,
+      metadata JSONB DEFAULT '{}'::jsonb,
+      CONSTRAINT uq_sub_reminder UNIQUE (organization_id, reminder_type, target_date)
+    );
+    CREATE INDEX IF NOT EXISTS idx_sub_reminders_org ON subscription_reminders(organization_id);
+    CREATE INDEX IF NOT EXISTS idx_sub_reminders_target_date ON subscription_reminders(target_date);
+
     INSERT INTO organizations (id, name, slug, plan)
     VALUES 
       ('00000000-0000-0000-0000-000000000001', 'Ricoz Primary Organization', 'ricoz-primary', 'enterprise'),
@@ -5533,6 +5572,69 @@ async function initDb() {
     `);
   } catch (rzpErr) {
     console.warn('[initDb razorpay notice]', rzpErr.message);
+  }
+
+  // 1d. Ensure subscription_history and subscription_reminders exist dynamically
+  try {
+    await pool.query(`
+      ALTER TABLE public.organizations
+        ADD COLUMN IF NOT EXISTS billing_interval VARCHAR(20) DEFAULT 'monthly',
+        ADD COLUMN IF NOT EXISTS subscription_start_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS current_period_start TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS current_period_end TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS next_billing_date TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS cancel_at_period_end BOOLEAN DEFAULT false,
+        ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS cancellation_effective_date TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS scheduled_downgrade_plan VARCHAR(50),
+        ADD COLUMN IF NOT EXISTS scheduled_downgrade_effective_date TIMESTAMPTZ;
+
+      CREATE TABLE IF NOT EXISTS public.subscription_history (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+          event_type VARCHAR(50) NOT NULL,
+          from_plan VARCHAR(50),
+          to_plan VARCHAR(50),
+          billing_interval VARCHAR(20),
+          amount NUMERIC(10, 2),
+          currency VARCHAR(10) DEFAULT 'inr',
+          status VARCHAR(50) NOT NULL,
+          effective_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          metadata JSONB DEFAULT '{}'::jsonb,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_subscription_history_org ON public.subscription_history(organization_id);
+      CREATE INDEX IF NOT EXISTS idx_subscription_history_created_at ON public.subscription_history(created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS public.subscription_reminders (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+          reminder_type VARCHAR(50) NOT NULL,
+          target_date DATE NOT NULL,
+          recipient_email VARCHAR(255) NOT NULL,
+          status VARCHAR(50) NOT NULL DEFAULT 'sent',
+          attempt_count INT NOT NULL DEFAULT 1,
+          sent_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          error_message TEXT,
+          metadata JSONB DEFAULT '{}'::jsonb
+      );
+
+      DO $$
+      BEGIN
+          IF NOT EXISTS (
+              SELECT 1 FROM pg_constraint WHERE conname = 'uq_sub_reminder'
+          ) THEN
+              ALTER TABLE public.subscription_reminders
+                  ADD CONSTRAINT uq_sub_reminder UNIQUE (organization_id, reminder_type, target_date);
+          END IF;
+      END $$;
+
+      CREATE INDEX IF NOT EXISTS idx_sub_reminders_org ON public.subscription_reminders(organization_id);
+      CREATE INDEX IF NOT EXISTS idx_sub_reminders_target_date ON public.subscription_reminders(target_date);
+    `);
+  } catch (subHistErr) {
+    console.warn('[initDb subscription_history notice]', subHistErr.message);
   }
 
   // 2. Ensure users_status_check constraint permits pending_verification & suspended
