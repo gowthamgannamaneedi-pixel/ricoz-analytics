@@ -150,32 +150,32 @@ export default function DataSourceTable({
   }, [sources, searchQuery, sortKey, sortOrder]);
 
   return (
-    <div className="rounded-xl border border-slate-200/90 bg-white overflow-hidden shadow-2xs font-sans">
+    <div className="rounded-xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] overflow-hidden shadow-2xs font-sans">
       {/* Table Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-slate-100 bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-slate-100 dark:border-[#334155] bg-white dark:bg-[#111827]">
         <div className="flex items-center gap-2.5">
-          <h2 className="text-xs font-bold text-slate-800 tracking-tight">
+          <h2 className="text-xs font-bold text-slate-800 dark:text-[#F8FAFC] tracking-tight">
             Connected Pipelines & Sources
           </h2>
-          <span className="font-mono text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200/60">
+          <span className="font-mono text-[11px] font-semibold text-slate-600 dark:text-[#CBD5E1] bg-slate-100 dark:bg-[#1E293B] px-2 py-0.5 rounded-full border border-slate-200/60 dark:border-[#334155]">
             {filteredSources.length} {filteredSources.length === 1 ? 'source' : 'sources'}
           </span>
         </div>
 
         {/* Search */}
         <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 dark:text-[#94A3B8]" />
           <input
             type="text"
             placeholder="Search sources, origins, or types..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50/70 py-1.5 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-rose-600 focus:outline-none transition-all"
+            className="w-full rounded-lg border border-slate-200 dark:border-[#334155] bg-slate-50/70 dark:bg-[#0F172A] py-1.5 pl-9 pr-8 text-xs text-slate-800 dark:text-[#CBD5E1] placeholder-slate-400 dark:placeholder-[#94A3B8] focus:bg-white dark:focus:bg-[#0F172A] focus:border-rose-600 dark:focus:border-[#E11D48] focus:outline-none transition-all"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-slate-400 hover:text-slate-600 transition"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-slate-400 hover:text-slate-600 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] transition"
               title="Clear search"
             >
               <X className="h-3 w-3" />
@@ -188,7 +188,7 @@ export default function DataSourceTable({
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs min-w-[820px]">
           <thead>
-            <tr className="border-b border-slate-200/80 bg-slate-50/60">
+            <tr className="border-b border-slate-200/80 dark:border-[#334155] bg-slate-50/60 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1]">
               <th
                 onClick={() => handleSort('name')}
                 className="py-3 px-4 text-xs font-semibold text-slate-600 cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
@@ -243,27 +243,27 @@ export default function DataSourceTable({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-slate-100 bg-white">
+          <tbody className="divide-y divide-slate-100 dark:divide-[#334155] bg-white dark:bg-[#111827]">
             {filteredSources.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-12 text-center text-xs text-slate-500">
+                <td colSpan={7} className="py-12 text-center text-xs text-slate-500 dark:text-[#94A3B8]">
                   {searchQuery ? (
                     <div className="space-y-2">
                       <p>No data sources matched your search "{searchQuery}".</p>
                       <button
                         onClick={() => setSearchQuery('')}
-                        className="text-xs font-medium text-rose-600 hover:text-rose-700 underline"
+                        className="text-xs font-medium text-rose-600 dark:text-[#FB7185] hover:text-rose-700 underline"
                       >
                         Clear search filter
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-3 max-w-sm mx-auto">
-                      <div className="mx-auto w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                      <div className="mx-auto w-10 h-10 rounded-full bg-slate-100 dark:bg-[#1E293B] flex items-center justify-center text-slate-400 dark:text-[#94A3B8]">
                         <Layers className="h-5 w-5" />
                       </div>
-                      <p className="font-semibold text-slate-800">No data sources connected yet</p>
-                      <p className="text-[11px] text-slate-500">
+                      <p className="font-semibold text-slate-800 dark:text-[#F8FAFC]">No data sources connected yet</p>
+                      <p className="text-[11px] text-slate-500 dark:text-[#94A3B8]">
                         Connect external database pipelines or upload CSV/JSON files to begin ingesting data.
                       </p>
                       {onOpenAddModal && !isViewer && (
@@ -280,18 +280,18 @@ export default function DataSourceTable({
               </tr>
             ) : (
               filteredSources.map((source) => (
-                <tr key={source.id} className="transition-colors hover:bg-slate-50/60 group">
+                <tr key={source.id} className="transition-colors hover:bg-slate-50/60 dark:hover:bg-[#1E293B]/70 group">
                   {/* Name + Origin */}
-                  <td className="py-3 px-4 font-semibold text-slate-900">
+                  <td className="py-3 px-4 font-semibold text-slate-900 dark:text-[#F8FAFC]">
                     <div className="flex items-center gap-2.5">
-                      <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 shrink-0">
+                      <div className="p-2 rounded-lg bg-slate-50 dark:bg-[#1E293B] border border-slate-100 dark:border-[#334155] shrink-0">
                         {getTypeIcon(source.type)}
                       </div>
                       <div className="min-w-0 max-w-xs">
-                        <span className="truncate block text-xs font-semibold text-slate-900">
+                        <span className="truncate block text-xs font-semibold text-slate-900 dark:text-[#F8FAFC]">
                           {source.name}
                         </span>
-                        <span className="text-[11px] text-slate-500 font-normal block truncate mt-0.5">
+                        <span className="text-[11px] text-slate-500 dark:text-[#94A3B8] font-normal block truncate mt-0.5">
                           {getOriginSummary(source)}
                         </span>
                       </div>

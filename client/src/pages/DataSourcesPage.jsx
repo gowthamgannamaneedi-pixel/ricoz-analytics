@@ -643,15 +643,15 @@ export default function DataSourcesPage() {
           onClick={() => setActiveTab('all')}
           className={`rounded-2xl border p-6 sm:p-7 min-h-[148px] transition-all text-left cursor-pointer shadow-2xs flex flex-col justify-between ${
             activeTab === 'all'
-              ? 'border-rose-500 bg-rose-50/20 ring-1 ring-rose-500/25 shadow-xs'
-              : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/40'
+              ? 'border-rose-500 bg-rose-50/20 dark:bg-[#2A1422] ring-1 ring-rose-500/25 shadow-xs'
+              : 'border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/40 dark:hover:bg-[#1E293B]'
           }`}
         >
           <div className="flex items-center justify-between">
-            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <p className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] uppercase tracking-wider">
               All Sources
             </p>
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-rose-900/60 shrink-0">
               <Database className="h-5 w-5" />
             </div>
           </div>
@@ -670,15 +670,15 @@ export default function DataSourcesPage() {
           onClick={() => setActiveTab('csv')}
           className={`rounded-2xl border p-6 sm:p-7 min-h-[148px] transition-all text-left cursor-pointer shadow-2xs flex flex-col justify-between ${
             activeTab === 'csv'
-              ? 'border-emerald-500 bg-emerald-50/20 ring-1 ring-emerald-500/25 shadow-xs'
-              : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/40'
+              ? 'border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/40 ring-1 ring-emerald-500/25 shadow-xs'
+              : 'border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/40 dark:hover:bg-[#1E293B]'
           }`}
         >
           <div className="flex items-center justify-between">
-            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <p className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] uppercase tracking-wider">
               CSV Uploads
             </p>
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 shrink-0">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/60 shrink-0">
               <FileSpreadsheet className="h-5 w-5" />
             </div>
           </div>
@@ -697,23 +697,23 @@ export default function DataSourcesPage() {
           onClick={() => setActiveTab('json')}
           className={`rounded-2xl border p-6 sm:p-7 min-h-[148px] transition-all text-left cursor-pointer shadow-2xs flex flex-col justify-between ${
             activeTab === 'json'
-              ? 'border-amber-500 bg-amber-50/20 ring-1 ring-amber-500/25 shadow-xs'
-              : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/40'
+              ? 'border-amber-500 bg-amber-50/20 dark:bg-amber-950/40 ring-1 ring-amber-500/25 shadow-xs'
+              : 'border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/40 dark:hover:bg-[#1E293B]'
           }`}
         >
           <div className="flex items-center justify-between">
-            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <p className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] uppercase tracking-wider">
               JSON Datasets
             </p>
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-100 shrink-0">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/60 shrink-0">
               <FileCode className="h-5 w-5" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="font-mono text-3xl font-extrabold tracking-tight text-slate-900">
+            <p className="font-mono text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC]">
               {jsonCount}
             </p>
-            <p className="mt-1.5 text-xs text-slate-400 truncate">
+            <p className="mt-1.5 text-xs text-slate-400 dark:text-[#94A3B8] truncate">
               Semi-structured payloads ({getPercentage(jsonCount)})
             </p>
           </div>
@@ -724,23 +724,23 @@ export default function DataSourcesPage() {
           onClick={() => setActiveTab('postgresql')}
           className={`rounded-2xl border p-6 sm:p-7 min-h-[148px] transition-all text-left cursor-pointer shadow-2xs flex flex-col justify-between ${
             activeTab === 'postgresql'
-              ? 'border-blue-500 bg-blue-50/20 ring-1 ring-blue-500/25 shadow-xs'
-              : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/40'
+              ? 'border-blue-500 bg-blue-50/20 dark:bg-blue-950/40 ring-1 ring-blue-500/25 shadow-xs'
+              : 'border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/40 dark:hover:bg-[#1E293B]'
           }`}
         >
           <div className="flex items-center justify-between">
-            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <p className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] uppercase tracking-wider">
               PostgreSQL
             </p>
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/60 shrink-0">
               <Database className="h-5 w-5" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="font-mono text-3xl font-extrabold tracking-tight text-slate-900">
+            <p className="font-mono text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC]">
               {pgCount}
             </p>
-            <p className="mt-1.5 text-xs text-slate-400 truncate">
+            <p className="mt-1.5 text-xs text-slate-400 dark:text-[#94A3B8] truncate">
               Direct database connections ({getPercentage(pgCount)})
             </p>
           </div>
@@ -761,7 +761,7 @@ export default function DataSourcesPage() {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200/80 pb-3">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-[#334155] pb-3">
         {/* Left Segmented Filter Tabs */}
         <div className="flex flex-wrap items-center gap-1 sm:gap-2">
           <button
@@ -770,13 +770,13 @@ export default function DataSourcesPage() {
             onClick={() => { setActiveTab('all'); setCurrentPage(1); }}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
               activeTab === 'all'
-                ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'bg-rose-50 text-rose-700 dark:bg-[#2A1422] dark:text-[#FB7185] shadow-2xs border border-rose-200/80 dark:border-[#FB7185]/40 font-bold'
+                : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1E293B]'
             }`}
           >
             <Database className="h-3.5 w-3.5" />
             <span>All Sources</span>
-            <span className="px-1.5 py-0.2 rounded-md bg-white border border-slate-200 text-[10px] font-mono font-bold text-slate-600">
+            <span className="px-1.5 py-0.2 rounded-md bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#334155] text-[10px] font-mono font-bold text-slate-600 dark:text-[#CBD5E1]">
               {totalCount}
             </span>
           </button>
@@ -787,13 +787,13 @@ export default function DataSourcesPage() {
             onClick={() => { setActiveTab('csv'); setCurrentPage(1); }}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
               activeTab === 'csv'
-                ? 'bg-emerald-50 text-emerald-700 shadow-2xs border border-emerald-200/80 font-bold'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 shadow-2xs border border-emerald-200/80 dark:border-emerald-800/60 font-bold'
+                : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1E293B]'
             }`}
           >
             <FileSpreadsheet className="h-3.5 w-3.5" />
             <span>CSV</span>
-            <span className="px-1.5 py-0.2 rounded-md bg-white border border-slate-200 text-[10px] font-mono font-bold text-slate-600">
+            <span className="px-1.5 py-0.2 rounded-md bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#334155] text-[10px] font-mono font-bold text-slate-600 dark:text-[#CBD5E1]">
               {csvCount}
             </span>
           </button>
@@ -804,13 +804,13 @@ export default function DataSourcesPage() {
             onClick={() => { setActiveTab('json'); setCurrentPage(1); }}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
               activeTab === 'json'
-                ? 'bg-amber-50 text-amber-700 shadow-2xs border border-amber-200/80 font-bold'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 shadow-2xs border border-amber-200/80 dark:border-amber-800/60 font-bold'
+                : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1E293B]'
             }`}
           >
             <FileCode className="h-3.5 w-3.5" />
             <span>JSON</span>
-            <span className="px-1.5 py-0.2 rounded-md bg-white border border-slate-200 text-[10px] font-mono font-bold text-slate-600">
+            <span className="px-1.5 py-0.2 rounded-md bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#334155] text-[10px] font-mono font-bold text-slate-600 dark:text-[#CBD5E1]">
               {jsonCount}
             </span>
           </button>
@@ -821,13 +821,13 @@ export default function DataSourcesPage() {
             onClick={() => { setActiveTab('postgresql'); setCurrentPage(1); }}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
               activeTab === 'postgresql'
-                ? 'bg-blue-50 text-blue-700 shadow-2xs border border-blue-200/80 font-bold'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 shadow-2xs border border-blue-200/80 dark:border-blue-800/60 font-bold'
+                : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1E293B]'
             }`}
           >
             <Database className="h-3.5 w-3.5" />
             <span>PostgreSQL</span>
-            <span className="px-1.5 py-0.2 rounded-md bg-white border border-slate-200 text-[10px] font-mono font-bold text-slate-600">
+            <span className="px-1.5 py-0.2 rounded-md bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#334155] text-[10px] font-mono font-bold text-slate-600 dark:text-[#CBD5E1]">
               {pgCount}
             </span>
           </button>
@@ -838,13 +838,13 @@ export default function DataSourcesPage() {
             onClick={() => { setActiveTab('mongodb'); setCurrentPage(1); }}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
               activeTab === 'mongodb'
-                ? 'bg-emerald-50 text-emerald-700 shadow-2xs border border-emerald-200/80 font-bold'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 shadow-2xs border border-emerald-200/80 dark:border-emerald-800/60 font-bold'
+                : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1E293B]'
             }`}
           >
-            <Database className="h-3.5 w-3.5 text-emerald-600" />
+            <Database className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>MongoDB</span>
-            <span className="px-1.5 py-0.2 rounded-md bg-white border border-slate-200 text-[10px] font-mono font-bold text-slate-600">
+            <span className="px-1.5 py-0.2 rounded-md bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#334155] text-[10px] font-mono font-bold text-slate-600 dark:text-[#CBD5E1]">
               {mongoCount}
             </span>
           </button>
@@ -855,13 +855,13 @@ export default function DataSourcesPage() {
             onClick={() => { setActiveTab('rest_api'); setCurrentPage(1); }}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
               activeTab === 'rest_api'
-                ? 'bg-purple-50 text-purple-700 shadow-2xs border border-purple-200/80 font-bold'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 shadow-2xs border border-purple-200/80 dark:border-purple-800/60 font-bold'
+                : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1E293B]'
             }`}
           >
             <Share2 className="h-3.5 w-3.5" />
             <span>REST API</span>
-            <span className="px-1.5 py-0.2 rounded-md bg-white border border-slate-200 text-[10px] font-mono font-bold text-slate-600">
+            <span className="px-1.5 py-0.2 rounded-md bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#334155] text-[10px] font-mono font-bold text-slate-600 dark:text-[#CBD5E1]">
               {apiCount}
             </span>
           </button>
@@ -871,7 +871,7 @@ export default function DataSourcesPage() {
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Search Input */}
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 dark:text-[#94A3B8]" />
             <input
               id="search-sources-input"
               type="text"
@@ -881,7 +881,7 @@ export default function DataSourcesPage() {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-rose-600 focus:outline-none transition-all shadow-2xs"
+              className="w-full rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#0F172A] py-2 pl-9 pr-8 text-xs text-slate-800 dark:text-[#CBD5E1] placeholder-slate-400 dark:placeholder-[#94A3B8] focus:bg-white dark:focus:bg-[#0F172A] focus:border-rose-600 dark:focus:border-[#E11D48] focus:outline-none transition-all shadow-2xs"
             />
             {searchQuery && (
               <button
@@ -904,11 +904,11 @@ export default function DataSourcesPage() {
               onClick={() => setIsFilterDropdownOpen(prev => !prev)}
               className={`flex items-center gap-2 h-9 px-3 rounded-xl border text-xs font-semibold transition cursor-pointer shadow-2xs ${
                 statusFilter !== 'all'
-                  ? 'border-rose-500 bg-rose-50/50 text-rose-700'
-                  : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                  ? 'border-rose-500 bg-rose-50/50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FB7185]'
+                  : 'border-slate-200 dark:border-[#334155] bg-white dark:bg-[#0F172A] hover:bg-slate-50 dark:hover:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1]'
               }`}
             >
-              <Filter className="h-3.5 w-3.5 text-slate-500" />
+              <Filter className="h-3.5 w-3.5 text-slate-500 dark:text-[#94A3B8]" />
               <span>Filter</span>
               {statusFilter !== 'all' && (
                 <span className="h-1.5 w-1.5 rounded-full bg-rose-600" />
@@ -916,15 +916,17 @@ export default function DataSourcesPage() {
             </button>
 
             {isFilterDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-52 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl z-50 text-xs animate-in fade-in duration-100">
-                <p className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="absolute right-0 mt-2 w-52 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-1.5 shadow-xl z-50 text-xs animate-in fade-in duration-100">
+                <p className="px-3 py-1.5 text-[10px] font-bold text-slate-400 dark:text-[#94A3B8] uppercase tracking-wider">
                   Filter by Status
                 </p>
                 <button
                   type="button"
                   onClick={() => { setStatusFilter('all'); setIsFilterDropdownOpen(false); }}
                   className={`w-full text-left px-3 py-2 rounded-lg flex items-center justify-between text-xs cursor-pointer transition ${
-                    statusFilter === 'all' ? 'bg-rose-50 font-bold text-rose-700' : 'text-slate-700 hover:bg-rose-50 hover:text-rose-700'
+                    statusFilter === 'all'
+                      ? 'bg-rose-50 dark:bg-[#2A1422] font-bold text-rose-700 dark:text-[#FB7185]'
+                      : 'text-slate-700 dark:text-[#CBD5E1] hover:bg-rose-50 dark:hover:bg-[#1E293B] hover:text-rose-700 dark:hover:text-[#F8FAFC]'
                   }`}
                 >
                   <span>All Statuses</span>
@@ -934,7 +936,9 @@ export default function DataSourcesPage() {
                   type="button"
                   onClick={() => { setStatusFilter('active_ready'); setIsFilterDropdownOpen(false); }}
                   className={`w-full text-left px-3 py-2 rounded-lg flex items-center justify-between text-xs cursor-pointer transition ${
-                    statusFilter === 'active_ready' ? 'bg-rose-50 font-bold text-rose-700' : 'text-slate-700 hover:bg-rose-50 hover:text-rose-700'
+                    statusFilter === 'active_ready'
+                      ? 'bg-rose-50 dark:bg-[#2A1422] font-bold text-rose-700 dark:text-[#FB7185]'
+                      : 'text-slate-700 dark:text-[#CBD5E1] hover:bg-rose-50 dark:hover:bg-[#1E293B] hover:text-rose-700 dark:hover:text-[#F8FAFC]'
                   }`}
                 >
                   <span className="flex items-center gap-2">

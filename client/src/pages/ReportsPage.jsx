@@ -838,7 +838,7 @@ export default function ReportsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search reports..."
-              className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 shadow-2xs"
+              className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#0F172A] text-xs sm:text-sm text-slate-800 dark:text-[#CBD5E1] placeholder-slate-400 dark:placeholder-[#94A3B8] focus:outline-hidden focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 shadow-2xs"
             />
             {searchQuery && (
               <button
@@ -1300,7 +1300,7 @@ export default function ReportsPage() {
                 ) : (
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      <tr className="border-b border-slate-100 dark:border-[#334155] text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#CBD5E1]">
                         <th className="pb-3 font-semibold">Report Name</th>
                         <th className="pb-3 font-semibold">Type</th>
                         <th className="pb-3 font-semibold">Status</th>
@@ -1309,10 +1309,10 @@ export default function ReportsPage() {
                         <th className="pb-3 font-semibold text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 font-sans">
+                    <tbody className="divide-y divide-slate-100 dark:divide-[#334155] font-sans">
                       {executions.slice(0, 5).map((exec) => (
-                        <tr key={exec.id} className="hover:bg-slate-50/70 transition">
-                          <td className="py-3 font-bold text-slate-900">
+                        <tr key={exec.id} className="hover:bg-slate-50/70 dark:hover:bg-[#1E293B]/70 transition">
+                          <td className="py-3 font-bold text-slate-900 dark:text-[#F8FAFC]">
                             {exec.report_title || 'Analytics Digest'}
                           </td>
                           <td className="py-3">
@@ -1594,7 +1594,7 @@ export default function ReportsPage() {
             ) : (
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  <tr className="border-b border-slate-200 dark:border-[#334155] bg-slate-50 dark:bg-[#1E293B] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#CBD5E1]">
                     <th className="px-4 py-3">Report Name</th>
                     <th className="px-4 py-3">Execution Status</th>
                     <th className="px-4 py-3">Format</th>
@@ -1604,10 +1604,10 @@ export default function ReportsPage() {
                     <th className="px-4 py-3 text-right">Artifact</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-sans">
+                <tbody className="divide-y divide-slate-100 dark:divide-[#334155] font-sans">
                   {executions.map((exec) => (
-                    <tr key={exec.id} className="hover:bg-slate-50/80 transition">
-                      <td className="px-4 py-3 font-bold text-slate-900">
+                    <tr key={exec.id} className="hover:bg-slate-50/80 dark:hover:bg-[#1E293B]/70 transition">
+                      <td className="px-4 py-3 font-bold text-slate-900 dark:text-[#F8FAFC]">
                         {exec.report_title || 'Analytics Digest'}
                       </td>
                       <td className="px-4 py-3">

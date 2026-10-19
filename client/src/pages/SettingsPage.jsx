@@ -1375,10 +1375,10 @@ export default function SettingsPage() {
             </div>
 
             {/* Active Members Table */}
-            <div className="overflow-x-auto border border-slate-200 rounded-xl">
+            <div className="overflow-x-auto border border-slate-200 dark:border-[#334155] rounded-xl bg-white dark:bg-[#111827]">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+                  <tr className="bg-slate-50 dark:bg-[#1E293B] border-b border-slate-200 dark:border-[#334155] text-slate-600 dark:text-[#CBD5E1] font-bold uppercase tracking-wider text-[11px]">
                     <th className="py-3 px-4">Member</th>
                     <th className="py-3 px-4">Role & Access</th>
                     <th className="py-3 px-4">Status</th>
@@ -1386,10 +1386,10 @@ export default function SettingsPage() {
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-[#334155]">
                   {filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="py-8 text-center text-slate-400">
+                      <td colSpan="5" className="py-8 text-center text-slate-400 dark:text-[#94A3B8]">
                         No members match the selected criteria.
                       </td>
                     </tr>
@@ -1400,27 +1400,27 @@ export default function SettingsPage() {
                       const canManage = isAdmin && !isSelf && !isOwner;
 
                       return (
-                        <tr key={m.id} className="hover:bg-slate-50/60 transition">
+                        <tr key={m.id} className="hover:bg-slate-50/60 dark:hover:bg-[#1E293B]/70 transition">
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                              <div className="h-8 w-8 rounded-full bg-rose-100 dark:bg-[#2A1422] text-rose-700 dark:text-[#FB7185] flex items-center justify-center font-bold text-xs uppercase shrink-0">
                                 {m.name ? m.name.charAt(0) : 'U'}
                               </div>
                               <div>
-                                <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                                <div className="font-bold text-slate-900 dark:text-[#F8FAFC] flex items-center gap-1.5">
                                   <span>{m.name}</span>
                                   {isSelf && (
-                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">
+                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-200 dark:border-rose-900/50">
                                       You
                                     </span>
                                   )}
                                   {isOwner && (
-                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
                                       Owner
                                     </span>
                                   )}
                                 </div>
-                                <span className="text-[11px] text-slate-500 font-mono">{m.email}</span>
+                                <span className="text-[11px] text-slate-500 dark:text-[#94A3B8] font-mono">{m.email}</span>
                               </div>
                             </div>
                           </td>
@@ -1429,7 +1429,7 @@ export default function SettingsPage() {
                               <select
                                 value={m.role}
                                 onChange={(e) => handleUpdateUserRole(m.id, e.target.value)}
-                                className="text-xs font-semibold rounded-lg border border-slate-300 py-1 px-2.5 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-rose-500 cursor-pointer"
+                                className="text-xs font-semibold rounded-lg border border-slate-300 dark:border-[#334155] py-1 px-2.5 bg-white dark:bg-[#0F172A] text-slate-800 dark:text-[#CBD5E1] focus:outline-none focus:ring-1 focus:ring-rose-500 cursor-pointer"
                               >
                                 <option value="admin">Admin</option>
                                 <option value="manager">Manager</option>
@@ -1517,10 +1517,10 @@ export default function SettingsPage() {
                     <span className="text-[10px] lowercase font-normal text-slate-400">(Reserved seats)</span>
                   </h3>
                 </div>
-                <div className="overflow-x-auto border border-amber-200/80 rounded-xl bg-amber-50/20">
+                <div className="overflow-x-auto border border-amber-200/80 dark:border-[#334155] rounded-xl bg-amber-50/20 dark:bg-[#111827]">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="bg-amber-50/60 border-b border-amber-200/60 text-amber-900 font-bold uppercase tracking-wider text-[10px]">
+                      <tr className="bg-amber-50/60 dark:bg-[#1E293B] border-b border-amber-200/60 dark:border-[#334155] text-amber-900 dark:text-[#CBD5E1] font-bold uppercase tracking-wider text-[10px]">
                         <th className="py-2.5 px-4">Invited Email</th>
                         <th className="py-2.5 px-4">Assigned Role</th>
                         <th className="py-2.5 px-4">Invitation Status</th>
@@ -1528,14 +1528,14 @@ export default function SettingsPage() {
                         <th className="py-2.5 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-amber-100 text-slate-700">
+                    <tbody className="divide-y divide-amber-100 dark:divide-[#334155] text-slate-700 dark:text-[#CBD5E1]">
                       {pendingInvitations.map((inv) => {
                         const isExpired = new Date(inv.expires_at) < new Date();
                         return (
-                          <tr key={inv.id} className="hover:bg-amber-50/40">
-                            <td className="py-2.5 px-4 font-mono font-medium text-slate-900">{inv.email}</td>
+                          <tr key={inv.id} className="hover:bg-amber-50/40 dark:hover:bg-[#1E293B]/70">
+                            <td className="py-2.5 px-4 font-mono font-medium text-slate-900 dark:text-[#F8FAFC]">{inv.email}</td>
                             <td className="py-2.5 px-4">
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-rose-50 text-rose-700 border border-rose-200">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FB7185] border border-rose-200 dark:border-rose-900/50">
                                 {inv.role}
                               </span>
                             </td>

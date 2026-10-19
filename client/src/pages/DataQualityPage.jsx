@@ -650,14 +650,14 @@ export default function DataQualityPage() {
             </Select>
 
             {/* Scan Mode Pill Toggle */}
-            <div className="flex items-center h-10 rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs shrink-0">
+            <div className="flex items-center h-10 rounded-xl bg-slate-100 dark:bg-[#0F172A] p-1 border border-slate-200 dark:border-[#334155] text-xs shrink-0">
               <button
                 type="button"
                 onClick={() => setScanMode('full')}
                 className={`h-8 px-3 rounded-lg font-semibold transition cursor-pointer ${
                   scanMode === 'full'
-                    ? 'bg-rose-600 text-white shadow-2xs font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-rose-600 dark:bg-[#E11D48] text-white shadow-2xs font-bold'
+                    : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC]'
                 }`}
               >
                 Full Scan
@@ -667,8 +667,8 @@ export default function DataQualityPage() {
                 onClick={() => setScanMode('sampled')}
                 className={`h-8 px-3 rounded-lg font-semibold transition cursor-pointer ${
                   scanMode === 'sampled'
-                    ? 'bg-rose-600 text-white shadow-2xs font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-rose-600 dark:bg-[#E11D48] text-white shadow-2xs font-bold'
+                    : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC]'
                 }`}
               >
                 Sampled (10k)
@@ -797,16 +797,16 @@ export default function DataQualityPage() {
 
       {/* ── Failed Job Error Banner with Retry ──────────────────────────── */}
       {jobError && (
-        <div className="bg-rose-50/80 border border-rose-200 rounded-2xl p-5 mb-6 shadow-xs animate-in fade-in duration-200">
+        <div className="bg-rose-50/80 dark:bg-[#2A1422] border border-rose-200 dark:border-rose-900/50 rounded-2xl p-5 mb-6 shadow-xs animate-in fade-in duration-200">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-xs font-bold text-rose-900">Quality Audit Notice</h4>
-                <p className="text-xs text-rose-700 mt-0.5 leading-relaxed">
+                <h4 className="text-xs font-bold text-rose-900 dark:text-[#FB7185]">Quality Audit Notice</h4>
+                <p className="text-xs text-rose-700 dark:text-[#CBD5E1] mt-0.5 leading-relaxed">
                   {jobError}
                 </p>
-                <p className="text-[11px] text-rose-600/80 mt-1 font-medium">
+                <p className="text-[11px] text-rose-600/80 dark:text-[#94A3B8] mt-1 font-medium">
                   Dataset is safe and has not been deleted. You can retry the audit safely.
                 </p>
               </div>
@@ -826,17 +826,17 @@ export default function DataQualityPage() {
       )}
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-28 space-y-3 bg-white border border-slate-200/90 rounded-2xl shadow-xs">
+        <div className="flex flex-col items-center justify-center py-28 space-y-3 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl shadow-xs">
           <RefreshCw className="h-8 w-8 text-rose-600 animate-spin" />
-          <p className="text-xs font-semibold text-slate-500">Loading dataset quality information...</p>
+          <p className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8]">Loading dataset quality information...</p>
         </div>
       ) : !qualityProfile && !evaluating ? (
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-4 shadow-xs max-w-lg mx-auto my-6">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 border border-rose-200">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-12 text-center space-y-4 shadow-xs max-w-lg mx-auto my-6">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-200 dark:border-rose-900/50">
             <ShieldCheck className="h-6 w-6" />
           </div>
-          <h3 className="text-base font-bold text-slate-900">No Quality Profile Found</h3>
-          <p className="text-xs text-slate-500 leading-relaxed">
+          <h3 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC]">No Quality Profile Found</h3>
+          <p className="text-xs text-slate-500 dark:text-[#94A3B8] leading-relaxed">
             Run an on-demand quality audit scan to profile completeness, type validity, uniqueness, and column metrics for this dataset.
           </p>
           <Button onClick={handleRunAudit} variant="primary" className="h-10 px-5 rounded-xl font-semibold">
@@ -1055,15 +1055,15 @@ export default function DataQualityPage() {
           {/* ───────────────────────────────────────────────────────────────── */}
           {/* 3. SEGMENTED TABS TOOLBAR                                         */}
           {/* ───────────────────────────────────────────────────────────────── */}
-          <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200 overflow-x-auto">
+          <div className="flex items-center gap-1 bg-slate-100/90 dark:bg-[#0F172A] p-1 rounded-xl border border-slate-200 dark:border-[#334155] overflow-x-auto">
             <button
               type="button"
               id="tab-matrix-btn"
               onClick={() => setActiveTab('matrix')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
                 activeTab === 'matrix'
-                  ? 'bg-rose-600 text-white shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  ? 'bg-rose-600 dark:bg-[#E11D48] text-white shadow-xs font-bold'
+                  : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-200/60 dark:hover:bg-[#1E293B]'
               }`}
             >
               <Layers className="h-4 w-4" />
@@ -1076,8 +1076,8 @@ export default function DataQualityPage() {
               onClick={() => setActiveTab('issues')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
                 activeTab === 'issues'
-                  ? 'bg-rose-600 text-white shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  ? 'bg-rose-600 dark:bg-[#E11D48] text-white shadow-xs font-bold'
+                  : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-200/60 dark:hover:bg-[#1E293B]'
               }`}
             >
               <AlertTriangle className="h-4 w-4" />
@@ -1085,7 +1085,7 @@ export default function DataQualityPage() {
               {issues.length > 0 && (
                 <span
                   className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold font-mono ${
-                    activeTab === 'issues' ? 'bg-white text-rose-600' : 'bg-rose-500 text-white'
+                    activeTab === 'issues' ? 'bg-white text-rose-600 dark:bg-[#1E293B] dark:text-[#FB7185]' : 'bg-rose-500 text-white'
                   }`}
                 >
                   {issues.length}
@@ -1099,8 +1099,8 @@ export default function DataQualityPage() {
               onClick={() => setActiveTab('rules')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
                 activeTab === 'rules'
-                  ? 'bg-rose-600 text-white shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  ? 'bg-rose-600 dark:bg-[#E11D48] text-white shadow-xs font-bold'
+                  : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-200/60 dark:hover:bg-[#1E293B]'
               }`}
             >
               <Sliders className="h-4 w-4" />
@@ -1108,7 +1108,7 @@ export default function DataQualityPage() {
               {rules.length > 0 && (
                 <span
                   className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold font-mono ${
-                    activeTab === 'rules' ? 'bg-white text-rose-700' : 'bg-slate-200 text-slate-700'
+                    activeTab === 'rules' ? 'bg-white text-rose-700 dark:bg-[#1E293B] dark:text-[#FB7185]' : 'bg-slate-200 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1]'
                   }`}
                 >
                   {rules.length}
@@ -1122,8 +1122,8 @@ export default function DataQualityPage() {
               onClick={() => setActiveTab('history')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
                 activeTab === 'history'
-                  ? 'bg-rose-600 text-white shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  ? 'bg-rose-600 dark:bg-[#E11D48] text-white shadow-xs font-bold'
+                  : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-200/60 dark:hover:bg-[#1E293B]'
               }`}
             >
               <Calendar className="h-4 w-4" />
@@ -1163,13 +1163,13 @@ export default function DataQualityPage() {
                       placeholder="Search columns..."
                       value={columnSearch}
                       onChange={(e) => setColumnSearch(e.target.value)}
-                      className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 hover:border-slate-300 focus:border-rose-600 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-100 transition shadow-2xs"
+                      className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#0F172A] text-xs sm:text-sm text-slate-800 dark:text-[#CBD5E1] placeholder-slate-400 dark:placeholder-[#94A3B8] hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 dark:focus:border-[#E11D48] focus:bg-white dark:focus:bg-[#0F172A] focus:outline-hidden focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-950/40 transition shadow-2xs"
                     />
                     {columnSearch && (
                       <button
                         type="button"
                         onClick={() => setColumnSearch('')}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] cursor-pointer"
                         title="Clear column search"
                       >
                         <X className="h-3.5 w-3.5" />
@@ -1215,10 +1215,10 @@ export default function DataQualityPage() {
               </div>
 
               {/* Table */}
-              <div className="border border-slate-200/90 rounded-xl overflow-hidden shadow-2xs bg-white">
+              <div className="border border-slate-200/90 dark:border-[#334155] rounded-xl overflow-hidden shadow-2xs bg-white dark:bg-[#111827]">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs min-w-[760px]">
-                    <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-bold uppercase tracking-wider text-[10px]">
+                    <thead className="bg-slate-50/80 dark:bg-[#1E293B] text-slate-500 dark:text-[#CBD5E1] border-b border-slate-200 dark:border-[#334155] font-bold uppercase tracking-wider text-[10px]">
                       <tr>
                         <th className="px-5 py-3.5">COLUMN NAME</th>
                         <th className="px-4 py-3.5">DATA TYPE</th>
@@ -1389,7 +1389,7 @@ export default function DataQualityPage() {
                 </div>
 
                 {/* Filter severity tabs */}
-                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#0F172A] p-1 rounded-xl border border-slate-200 dark:border-[#334155] text-xs font-semibold">
                   {['all', 'critical', 'warning', 'info'].map((f) => (
                     <button
                       key={f}
@@ -1397,8 +1397,8 @@ export default function DataQualityPage() {
                       onClick={() => setIssueFilter(f)}
                       className={`px-3 py-1 rounded-lg uppercase tracking-wider text-[11px] transition cursor-pointer ${
                         issueFilter === f
-                          ? 'bg-white text-slate-900 shadow-2xs font-bold'
-                          : 'text-slate-600 hover:text-slate-900'
+                          ? 'bg-white dark:bg-[#1E293B] text-slate-900 dark:text-[#F8FAFC] shadow-2xs font-bold'
+                          : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC]'
                       }`}
                     >
                       {f}
@@ -1613,10 +1613,10 @@ export default function DataQualityPage() {
                   </p>
                 </div>
               ) : (
-                <div className="border border-slate-200/90 rounded-xl overflow-hidden shadow-2xs bg-white">
+                <div className="border border-slate-200/90 dark:border-[#334155] rounded-xl overflow-hidden shadow-2xs bg-white dark:bg-[#111827]">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs min-w-[700px]">
-                      <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 font-bold uppercase tracking-wider text-[10px]">
+                      <thead className="bg-slate-50/80 dark:bg-[#1E293B] text-slate-500 dark:text-[#CBD5E1] border-b border-slate-200 dark:border-[#334155] font-bold uppercase tracking-wider text-[10px]">
                         <tr>
                           <th className="px-5 py-3.5">EVALUATED AT</th>
                           <th className="px-4 py-3.5">QUALITY SCORE</th>

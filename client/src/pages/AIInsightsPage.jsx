@@ -910,18 +910,18 @@ export default function AIInsightsPage() {
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full">
           {/* Search Input (wider) */}
           <div className="relative flex-1 sm:w-64 md:w-80 min-w-[200px]">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-4 h-4 text-slate-400 dark:text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               placeholder="Search insights by title, description, or tags..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs transition"
+              className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#0F172A] text-xs text-slate-800 dark:text-[#CBD5E1] placeholder-slate-400 dark:placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs transition"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] cursor-pointer"
                 title="Clear search"
               >
                 <X className="w-3.5 h-3.5" />
@@ -984,13 +984,13 @@ export default function AIInsightsPage() {
 
         {/* Row 2: View Mode Toggle aligned below filter row with deliberate spacing */}
         <div className="flex items-center">
-          <div className="flex items-center gap-1 border border-slate-200 rounded-xl p-1 bg-white shadow-2xs">
+          <div className="flex items-center gap-1 border border-slate-200 dark:border-[#334155] rounded-xl p-1 bg-white dark:bg-[#0F172A] shadow-2xs">
             <button
               onClick={() => setViewMode('card')}
               className={`h-8 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
                 viewMode === 'card'
-                  ? 'bg-rose-600 text-white shadow-2xs'
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-rose-600 text-white shadow-2xs dark:bg-[#E11D48]'
+                  : 'text-slate-600 hover:bg-slate-50 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] dark:hover:bg-[#1E293B]'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -1000,8 +1000,8 @@ export default function AIInsightsPage() {
               onClick={() => setViewMode('table')}
               className={`h-8 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-rose-600 text-white shadow-2xs'
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-rose-600 text-white shadow-2xs dark:bg-[#E11D48]'
+                  : 'text-slate-600 hover:bg-slate-50 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] dark:hover:bg-[#1E293B]'
               }`}
             >
               <TableIcon className="w-3.5 h-3.5" />
@@ -1264,11 +1264,11 @@ export default function AIInsightsPage() {
         </div>
       ) : (
         /* TABLE VIEW */
-        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
+        <div className="rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] overflow-hidden shadow-2xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 font-semibold uppercase tracking-wider text-[10px]">
+                <tr className="border-b border-slate-200 dark:border-[#334155] bg-slate-50/80 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1] font-semibold uppercase tracking-wider text-[10px]">
                   <th className="py-3 px-4">Insight Title &amp; Summary</th>
                   <th className="py-3 px-4">Type</th>
                   <th className="py-3 px-4">Impact</th>
@@ -1279,7 +1279,7 @@ export default function AIInsightsPage() {
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-[#334155]">
                 {filteredInsights.map(ins => {
                   const metricInfo = getKeyMetricInfo(ins);
                   const isFav = favorites.has(String(ins.id));
@@ -1287,20 +1287,20 @@ export default function AIInsightsPage() {
                   return (
                     <tr
                       key={ins.id}
-                      className="hover:bg-slate-50/70 transition cursor-pointer"
+                      className="hover:bg-slate-50/70 dark:hover:bg-[#1E293B]/70 transition cursor-pointer"
                       onClick={() => setSelectedInsightForDetails(ins)}
                     >
                       <td className="py-3 px-4 max-w-sm">
-                        <div className="font-bold text-slate-900 leading-snug truncate">
+                        <div className="font-bold text-slate-900 dark:text-[#F8FAFC] leading-snug truncate">
                           {ins.title}
                         </div>
-                        <div className="text-slate-500 text-[11px] truncate mt-0.5">
+                        <div className="text-slate-500 dark:text-[#94A3B8] text-[11px] truncate mt-0.5">
                           {ins.summary}
                         </div>
                       </td>
 
                       <td className="py-3 px-4 whitespace-nowrap">
-                        <span className="font-mono text-[11px] font-semibold text-slate-600 uppercase bg-slate-100 px-2 py-0.5 rounded">
+                        <span className="font-mono text-[11px] font-semibold text-slate-600 dark:text-[#CBD5E1] uppercase bg-slate-100 dark:bg-[#0F172A] border border-slate-200/60 dark:border-[#334155] px-2 py-0.5 rounded">
                           {ins.type || 'insight'}
                         </span>
                       </td>
@@ -1309,26 +1309,26 @@ export default function AIInsightsPage() {
                         {renderSeverityPill(ins.severity)}
                       </td>
 
-                      <td className="py-3 px-4 whitespace-nowrap text-slate-600 font-medium">
+                      <td className="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-[#CBD5E1] font-medium">
                         {ins.dataset_name || ins.source_metadata?.dataset_name || 'Primary'}
                       </td>
 
                       <td className="py-3 px-4 whitespace-nowrap">
-                        <span className="font-bold text-slate-900 font-mono">
+                        <span className="font-bold text-slate-900 dark:text-[#F8FAFC] font-mono">
                           {metricInfo.value}
                         </span>
-                        <span className="text-[10px] text-slate-400 block font-normal">
+                        <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] block font-normal">
                           {metricInfo.label}
                         </span>
                       </td>
 
                       <td className="py-3 px-4 whitespace-nowrap">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800">
                           {ins.status || 'Active'}
                         </span>
                       </td>
 
-                      <td className="py-3 px-4 whitespace-nowrap text-slate-500 font-medium">
+                      <td className="py-3 px-4 whitespace-nowrap text-slate-500 dark:text-[#94A3B8] font-medium">
                         {formatTimeAgo(ins.created_at)}
                       </td>
 
@@ -1336,13 +1336,13 @@ export default function AIInsightsPage() {
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => setSelectedInsightForDetails(ins)}
-                            className="px-2.5 py-1 text-xs font-semibold rounded-lg text-rose-600 hover:bg-rose-50 border border-rose-200 transition cursor-pointer"
+                            className="px-2.5 py-1 text-xs font-semibold rounded-lg text-rose-600 dark:text-[#FB7185] hover:bg-rose-50 dark:hover:bg-[#2A1422] border border-rose-200 dark:border-rose-900/50 transition cursor-pointer"
                           >
                             Details
                           </button>
                           <button
                             onClick={(e) => handleToggleFavorite(e, ins.id)}
-                            className="p-1 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-slate-100 transition"
+                            className="p-1 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-slate-100 dark:text-[#94A3B8] dark:hover:text-amber-400 dark:hover:bg-[#1E293B] transition"
                             title="Favorite"
                           >
                             <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-amber-400 text-amber-500' : ''}`} />

@@ -225,26 +225,52 @@ html.dark *:focus-visible {
 .rz-table-wrap table { min-width: 680px; width: 100%; }
 
 /* ─── Global Dark Mode Container & Surface Consistency Rules ─────────────── */
-html.dark .bg-white:not([class*="dark:bg-"]) {
-  background-color: #111827 !important;
+html.dark .bg-white:not([class*="dark:bg-"]):not([class*="text-white"]):not(button.bg-rose-600):not(button.bg-\[\#D91542\]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-amber-"]):not([class*="bg-blue-"]):not([class*="bg-purple-"]),
+html.dark [class*="bg-white/"]:not([class*="dark:bg-"]) {
+  background-color: #111827 !important; /* Panel/Card surface #111827 */
 }
 
 html.dark .bg-slate-50:not([class*="dark:bg-"]),
-html.dark .bg-gray-50:not([class*="dark:bg-"]) {
+html.dark [class*="bg-slate-50/"]:not([class*="dark:bg-"]),
+html.dark .bg-gray-50:not([class*="dark:bg-"]),
+html.dark [class*="bg-gray-50/"]:not([class*="dark:bg-"]) {
   background-color: #0F172A !important; /* Nested panel surface #0F172A */
 }
 
 html.dark .bg-slate-100:not([class*="dark:bg-"]),
-html.dark .bg-gray-100:not([class*="dark:bg-"]) {
+html.dark [class*="bg-slate-100/"]:not([class*="dark:bg-"]),
+html.dark .bg-gray-100:not([class*="dark:bg-"]),
+html.dark [class*="bg-gray-100/"]:not([class*="dark:bg-"]),
+html.dark .bg-slate-200:not([class*="dark:bg-"]),
+html.dark [class*="bg-slate-200/"]:not([class*="dark:bg-"]),
+html.dark .bg-gray-200:not([class*="dark:bg-"]),
+html.dark [class*="bg-gray-200/"]:not([class*="dark:bg-"]) {
   background-color: #1E293B !important; /* Raised surface #1E293B */
 }
 
-html.dark .border-slate-100:not([class*="dark:border-"]),
-html.dark .border-slate-200:not([class*="dark:border-"]),
-html.dark .border-slate-300:not([class*="dark:border-"]),
-html.dark .border-gray-200:not([class*="dark:border-"]),
-html.dark .border-gray-300:not([class*="dark:border-"]) {
+/* Hover surfaces */
+html.dark [class*="hover:bg-slate-50"]:not([class*="dark:hover:bg-"]):hover,
+html.dark [class*="hover:bg-slate-100"]:not([class*="dark:hover:bg-"]):hover,
+html.dark [class*="hover:bg-slate-200"]:not([class*="dark:hover:bg-"]):hover,
+html.dark [class*="hover:bg-gray-50"]:not([class*="dark:hover:bg-"]):hover,
+html.dark [class*="hover:bg-gray-100"]:not([class*="dark:hover:bg-"]):hover,
+html.dark [class*="hover:bg-gray-200"]:not([class*="dark:hover:bg-"]):hover {
+  background-color: #1E293B !important;
+}
+
+/* Borders */
+html.dark [class*="border-slate-100"]:not([class*="dark:border-"]),
+html.dark [class*="border-slate-200"]:not([class*="dark:border-"]),
+html.dark [class*="border-slate-300"]:not([class*="dark:border-"]),
+html.dark [class*="border-gray-200"]:not([class*="dark:border-"]),
+html.dark [class*="border-gray-300"]:not([class*="dark:border-"]) {
   border-color: #334155 !important; /* Border #334155 */
+}
+
+/* Dividers */
+html.dark [class*="divide-slate-"] > :not([hidden]) ~ :not([hidden]),
+html.dark [class*="divide-gray-"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #334155 !important;
 }
 
 html.dark .text-slate-900:not([class*="dark:text-"]),
@@ -268,12 +294,60 @@ html.dark .text-gray-400:not([class*="dark:text-"]) {
   color: #94A3B8 !important; /* Muted text #94A3B8 */
 }
 
-/* Global Table Header Dark Styling (PDF Page 3 & Issue 01, 04, 12, 21) */
-html.dark table thead th,
-html.dark table thead tr {
+/* Global Table Dark Styling */
+html.dark table thead,
+html.dark table thead tr,
+html.dark table thead th {
   background-color: #1E293B !important;
   color: #CBD5E1 !important;
   border-color: #334155 !important;
+}
+
+html.dark table thead th span,
+html.dark table thead th div {
+  color: #CBD5E1 !important;
+}
+
+html.dark table thead th:hover,
+html.dark table thead th:hover span {
+  color: #F8FAFC !important;
+}
+
+html.dark table tbody tr:hover,
+html.dark table tbody tr:hover td {
+  background-color: #1E293B !important;
+}
+
+html.dark table tbody tr[aria-selected="true"],
+html.dark table tbody tr.selected,
+html.dark table tbody tr[data-selected="true"] {
+  background-color: #1E293B !important;
+}
+
+html.dark table tbody td {
+  border-color: #334155 !important;
+}
+
+/* Global Input / Select Fallbacks for Dark Theme */
+html.dark input[type="text"]:not([class*="dark:bg-"]),
+html.dark input[type="search"]:not([class*="dark:bg-"]),
+html.dark input[type="email"]:not([class*="dark:bg-"]),
+html.dark input[type="password"]:not([class*="dark:bg-"]),
+html.dark textarea:not([class*="dark:bg-"]) {
+  background-color: #0F172A !important;
+  border-color: #334155 !important;
+  color: #F8FAFC !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #94A3B8 !important;
+}
+
+html.dark select:not([class*="dark:bg-"]) {
+  background-color: #0F172A !important;
+  border-color: #334155 !important;
+  color: #CBD5E1 !important;
 }
 
 /* ─── Global Dropdown Specifications (Handoff Page 1, 2) ─────────────────── */

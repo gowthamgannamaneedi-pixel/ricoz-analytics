@@ -569,14 +569,14 @@ export default function GovernancePage() {
       {/* ------------------------------------------------------------- */}
       {/* 2. NAVIGATION TABS: Clean Light Line with Active Indicator    */}
       {/* ------------------------------------------------------------- */}
-      <div className="border-b border-slate-200 w-full overflow-x-auto no-scrollbar">
+      <div className="border-b border-slate-200 dark:border-[#334155] w-full overflow-x-auto no-scrollbar">
         <div className="flex items-center gap-6 sm:gap-8 min-w-max pb-px">
           <button
             onClick={() => setActiveTab('overview')}
             className={`flex items-center gap-2 py-3 px-1 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'overview'
-                ? 'border-rose-600 text-rose-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+                ? 'border-rose-600 dark:border-[#E11D48] text-rose-600 dark:text-[#FB7185] font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:border-slate-600'
             }`}
           >
             <BarChart3 className="w-4 h-4" />
@@ -587,8 +587,8 @@ export default function GovernancePage() {
             onClick={() => setActiveTab('users')}
             className={`flex items-center gap-2 py-3 px-1 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'users'
-                ? 'border-rose-600 text-rose-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+                ? 'border-rose-600 dark:border-[#E11D48] text-rose-600 dark:text-[#FB7185] font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:border-slate-600'
             }`}
           >
             <Users className="w-4 h-4" />
@@ -599,8 +599,8 @@ export default function GovernancePage() {
             onClick={() => setActiveTab('audit')}
             className={`flex items-center gap-2 py-3 px-1 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'audit'
-                ? 'border-rose-600 text-rose-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+                ? 'border-rose-600 dark:border-[#E11D48] text-rose-600 dark:text-[#FB7185] font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:border-slate-600'
             }`}
           >
             <Clock className="w-4 h-4" />
@@ -612,8 +612,8 @@ export default function GovernancePage() {
             onClick={() => setActiveTab('permissions')}
             className={`flex items-center gap-2 py-3 px-1 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'permissions'
-                ? 'border-rose-600 text-rose-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+                ? 'border-rose-600 dark:border-[#E11D48] text-rose-600 dark:text-[#FB7185] font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:border-slate-600'
             }`}
           >
             <GitBranch className="w-4 h-4" />
@@ -624,8 +624,8 @@ export default function GovernancePage() {
             onClick={() => setActiveTab('settings')}
             className={`flex items-center gap-2 py-3 px-1 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'settings'
-                ? 'border-rose-600 text-rose-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+                ? 'border-rose-600 dark:border-[#E11D48] text-rose-600 dark:text-[#FB7185] font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:border-slate-600'
             }`}
           >
             <Sliders className="w-4 h-4" />
@@ -1111,9 +1111,9 @@ export default function GovernancePage() {
               </div>
 
               {/* Members Table */}
-              <div className="overflow-x-auto rounded-xl border border-slate-200">
-                <table className="w-full text-left text-sm text-slate-600">
-                  <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827]">
+                <table className="w-full text-left text-sm text-slate-600 dark:text-[#CBD5E1]">
+                  <thead className="bg-slate-50 dark:bg-[#1E293B] text-xs uppercase font-semibold text-slate-500 dark:text-[#CBD5E1] border-b border-slate-200 dark:border-[#334155]">
                     <tr>
                       <th className="px-4 py-3">Member</th>
                       <th className="px-4 py-3">Role</th>
@@ -1264,9 +1264,9 @@ export default function GovernancePage() {
                   No pending invitations. All team member seats are actively occupied or released.
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-xl border border-slate-200">
-                  <table className="w-full text-left text-sm text-slate-600">
-                    <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+                <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827]">
+                  <table className="w-full text-left text-sm text-slate-600 dark:text-[#CBD5E1]">
+                    <thead className="bg-slate-50 dark:bg-[#1E293B] text-xs uppercase font-semibold text-slate-500 dark:text-[#CBD5E1] border-b border-slate-200 dark:border-[#334155]">
                       <tr>
                         <th className="px-4 py-3">Invitee Email</th>
                         <th className="px-4 py-3">Assigned Role</th>
@@ -1398,9 +1398,9 @@ export default function GovernancePage() {
           </div>
 
           {/* Audit Table */}
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827]">
+            <table className="w-full text-left text-sm text-slate-600 dark:text-[#CBD5E1]">
+              <thead className="bg-slate-50 dark:bg-[#1E293B] text-xs uppercase font-semibold text-slate-500 dark:text-[#CBD5E1] border-b border-slate-200 dark:border-[#334155]">
                 <tr>
                   <th className="px-4 py-3">Timestamp</th>
                   <th className="px-4 py-3">Action</th>
@@ -1507,9 +1507,9 @@ export default function GovernancePage() {
                   <div className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">
                     {category} Capabilities
                   </div>
-                  <div className="overflow-x-auto rounded-xl border border-slate-200">
+                  <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827]">
                     <table className="w-full text-left text-sm">
-                      <thead className="bg-slate-50 text-xs font-semibold text-slate-500 border-b border-slate-200">
+                      <thead className="bg-slate-50 dark:bg-[#1E293B] text-xs font-semibold text-slate-500 dark:text-[#CBD5E1] border-b border-slate-200 dark:border-[#334155]">
                         <tr>
                           <th className="px-4 py-2.5">Capability / Permission</th>
                           <th className="px-4 py-2.5 text-center w-28">Admin</th>

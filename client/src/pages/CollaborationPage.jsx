@@ -648,21 +648,21 @@ export default function CollaborationPage() {
       {/* ------------------------------------------------------------------ */}
       {/* 3. TABS NAVIGATION & PRIMARY SHARE ACTION                          */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-[#334155] pb-1">
         {/* Navigation Tabs */}
         <div className="flex items-center space-x-2 sm:space-x-4 overflow-x-auto text-xs font-semibold">
           <button
             onClick={() => setActiveTab('favorites')}
             className={`pb-3 px-1 flex items-center gap-2 border-b-2 transition cursor-pointer shrink-0 ${
               activeTab === 'favorites'
-                ? 'border-rose-600 text-rose-600 font-bold'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'border-rose-600 text-rose-600 font-bold dark:border-[#E11D48] dark:text-[#FB7185]'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC]'
             }`}
           >
-            <Star className={`w-4 h-4 ${activeTab === 'favorites' ? 'fill-rose-600 text-rose-600' : 'text-slate-400'}`} />
+            <Star className={`w-4 h-4 ${activeTab === 'favorites' ? 'fill-rose-600 text-rose-600 dark:fill-[#FB7185] dark:text-[#FB7185]' : 'text-slate-400 dark:text-[#94A3B8]'}`} />
             <span>Favorites</span>
             <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
-              activeTab === 'favorites' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'
+              activeTab === 'favorites' ? 'bg-rose-100 text-rose-800 dark:bg-[#2A1422] dark:text-[#FB7185]' : 'bg-slate-100 text-slate-600 dark:bg-[#1E293B] dark:text-[#CBD5E1]'
             }`}>
               {favorites.length}
             </span>
@@ -672,14 +672,14 @@ export default function CollaborationPage() {
             onClick={() => setActiveTab('recent')}
             className={`pb-3 px-1 flex items-center gap-2 border-b-2 transition cursor-pointer shrink-0 ${
               activeTab === 'recent'
-                ? 'border-rose-600 text-rose-600 font-bold'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'border-rose-600 text-rose-600 font-bold dark:border-[#E11D48] dark:text-[#FB7185]'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC]'
             }`}
           >
             <Clock className="w-4 h-4" />
             <span>Recently Viewed</span>
             <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
-              activeTab === 'recent' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'
+              activeTab === 'recent' ? 'bg-rose-100 text-rose-800 dark:bg-[#2A1422] dark:text-[#FB7185]' : 'bg-slate-100 text-slate-600 dark:bg-[#1E293B] dark:text-[#CBD5E1]'
             }`}>
               {recentlyViewed.length}
             </span>
@@ -689,14 +689,14 @@ export default function CollaborationPage() {
             onClick={() => setActiveTab('shared')}
             className={`pb-3 px-1 flex items-center gap-2 border-b-2 transition cursor-pointer shrink-0 ${
               activeTab === 'shared'
-                ? 'border-rose-600 text-rose-600 font-bold'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'border-rose-600 text-rose-600 font-bold dark:border-[#E11D48] dark:text-[#FB7185]'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC]'
             }`}
           >
             <Share2 className="w-4 h-4" />
             <span>Shared with Me</span>
             <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
-              activeTab === 'shared' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'
+              activeTab === 'shared' ? 'bg-rose-100 text-rose-800 dark:bg-[#2A1422] dark:text-[#FB7185]' : 'bg-slate-100 text-slate-600 dark:bg-[#1E293B] dark:text-[#CBD5E1]'
             }`}>
               {sharedWithMeTotal}
             </span>
@@ -706,14 +706,14 @@ export default function CollaborationPage() {
             onClick={() => setActiveTab('teams')}
             className={`pb-3 px-1 flex items-center gap-2 border-b-2 transition cursor-pointer shrink-0 ${
               activeTab === 'teams'
-                ? 'border-rose-600 text-rose-600 font-bold'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'border-rose-600 text-rose-600 font-bold dark:border-[#E11D48] dark:text-[#FB7185]'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC]'
             }`}
           >
             <Users2 className="w-4 h-4" />
             <span>Teams &amp; Groups</span>
             <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
-              activeTab === 'teams' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'
+              activeTab === 'teams' ? 'bg-rose-100 text-rose-800 dark:bg-[#2A1422] dark:text-[#FB7185]' : 'bg-slate-100 text-slate-600 dark:bg-[#1E293B] dark:text-[#CBD5E1]'
             }`}>
               {teams.length}
             </span>
@@ -740,23 +740,23 @@ export default function CollaborationPage() {
       {/* 4. FILTER / SEARCH TOOLBAR (FOR RESOURCE TABS)                     */}
       {/* ------------------------------------------------------------------ */}
       {activeTab !== 'teams' && (
-        <div className="space-y-3.5 bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+        <div className="space-y-3.5 bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200 dark:border-[#334155] shadow-2xs">
           {/* Row 1: Search -> All Types -> All Access Levels (Horizontal desktop row) */}
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full">
             {/* Search Input (wider) */}
             <div className="relative flex-1 sm:w-64 md:w-80 min-w-[200px]">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-4 h-4 text-slate-400 dark:text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search dashboards, reports, or insights..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 bg-slate-50/60 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition"
+                className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/60 dark:bg-[#0F172A] text-xs text-slate-800 dark:text-[#CBD5E1] placeholder-slate-400 dark:placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] cursor-pointer"
                   title="Clear search"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -1175,11 +1175,11 @@ export default function CollaborationPage() {
         </div>
       ) : (
         /* TABLE VIEW */
-        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
+        <div className="rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] overflow-hidden shadow-2xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 font-semibold uppercase tracking-wider text-[10px]">
+                <tr className="border-b border-slate-200 dark:border-[#334155] bg-slate-50/80 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1] font-semibold uppercase tracking-wider text-[10px]">
                   <th className="py-3 px-4">Resource</th>
                   <th className="py-3 px-4">Type</th>
                   <th className="py-3 px-4">Owner</th>
@@ -1188,21 +1188,21 @@ export default function CollaborationPage() {
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-[#334155]">
                 {currentTabItems.map(item => (
                   <tr
                     key={item.id}
-                    className="hover:bg-slate-50/70 transition cursor-pointer"
+                    className="hover:bg-slate-50/70 dark:hover:bg-[#1E293B]/70 transition cursor-pointer"
                     onClick={() => handleNavigateResource(item.resource_type, item.resource_id)}
                   >
                     <td className="py-3 px-4 max-w-sm">
                       <div className="flex items-center gap-2.5">
-                        <div className="p-1.5 rounded-lg bg-slate-100 border border-slate-200/80">
+                        <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#0F172A] border border-slate-200/80 dark:border-[#334155]">
                           {getResourceIcon(item.resource_type)}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-slate-900 truncate">{item.title}</p>
-                          <p className="text-[11px] text-slate-400 truncate">{item.description || 'Enterprise resource'}</p>
+                          <p className="font-bold text-slate-900 dark:text-[#F8FAFC] truncate">{item.title}</p>
+                          <p className="text-[11px] text-slate-400 dark:text-[#94A3B8] truncate">{item.description || 'Enterprise resource'}</p>
                         </div>
                       </div>
                     </td>
@@ -1211,17 +1211,17 @@ export default function CollaborationPage() {
                       {getResourceTypeBadge(item.resource_type)}
                     </td>
 
-                    <td className="py-3 px-4 whitespace-nowrap text-slate-700 font-medium">
+                    <td className="py-3 px-4 whitespace-nowrap text-slate-700 dark:text-[#CBD5E1] font-medium">
                       {item.owner_name}
                     </td>
 
                     <td className="py-3 px-4 whitespace-nowrap">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800">
                         {item.permission || 'Shared'}
                       </span>
                     </td>
 
-                    <td className="py-3 px-4 whitespace-nowrap text-slate-400">
+                    <td className="py-3 px-4 whitespace-nowrap text-slate-400 dark:text-[#94A3B8]">
                       {item.created_at ? new Date(item.created_at).toLocaleDateString() : 'Recent'}
                     </td>
 
@@ -1229,13 +1229,13 @@ export default function CollaborationPage() {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => handleNavigateResource(item.resource_type, item.resource_id)}
-                          className="px-2.5 py-1 text-xs font-semibold rounded-lg text-rose-600 hover:bg-rose-50 border border-rose-200 transition cursor-pointer"
+                          className="px-2.5 py-1 text-xs font-semibold rounded-lg text-rose-600 dark:text-[#FB7185] hover:bg-rose-50 dark:hover:bg-[#2A1422] border border-rose-200 dark:border-rose-900/50 transition cursor-pointer"
                         >
                           Open
                         </button>
                         <button
                           onClick={() => handleOpenShare(item.resource_type, item.resource_id, item.title)}
-                          className="p-1 text-slate-400 hover:text-rose-600 transition"
+                          className="p-1 text-slate-400 hover:text-rose-600 dark:text-[#94A3B8] dark:hover:text-[#FB7185] transition"
                           title="Share"
                         >
                           <Share2 className="w-3.5 h-3.5" />

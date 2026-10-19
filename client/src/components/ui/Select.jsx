@@ -287,13 +287,13 @@ export function Select({
         className={[
           'group relative w-full text-left font-medium select-none',
           'flex items-center justify-between',
-          'bg-white dark:bg-slate-900',
-          'border border-slate-200 dark:border-slate-700',
-          'text-slate-800 dark:text-slate-100',
+          'bg-white dark:bg-[#0F172A]',
+          'border border-slate-200 dark:border-[#334155]',
+          'text-slate-800 dark:text-[#CBD5E1]',
           'hover:border-rose-300 dark:hover:border-rose-800',
-          'hover:bg-rose-50/40 dark:hover:bg-rose-950/20',
+          'hover:bg-rose-50/40 dark:hover:bg-[#2A1422]',
           'focus:outline-hidden focus:border-[#D91542] focus:ring-2 focus:ring-[#D91542]/20',
-          'disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-850',
+          'disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-[#111827]',
           'transition-all duration-150 shadow-2xs cursor-pointer',
           sizeClasses[size] || sizeClasses.md,
           LeftIcon ? 'pl-9 sm:pl-10' : '',
@@ -307,17 +307,17 @@ export function Select({
         )}
 
         {/* Selected Label Display */}
-        <span className="truncate pr-1 block font-semibold text-slate-800 dark:text-slate-100">
+        <span className="truncate pr-1 block font-semibold text-slate-800 dark:text-[#CBD5E1]">
           {selectedOption ? selectedOption.label : (
-            <span className="text-slate-400 dark:text-slate-500 font-normal">{placeholder}</span>
+            <span className="text-slate-400 dark:text-[#94A3B8] font-normal">{placeholder}</span>
           )}
         </span>
 
         {/* Dropdown Chevron */}
         <ChevronDown
           className={[
-            'pointer-events-none absolute top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 shrink-0 transition-transform duration-150',
-            isOpen ? 'rotate-180 text-rose-600 dark:text-rose-400' : 'group-hover:text-slate-600 dark:group-hover:text-slate-300',
+            'pointer-events-none absolute top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#94A3B8] shrink-0 transition-transform duration-150',
+            isOpen ? 'rotate-180 text-rose-600 dark:text-[#FB7185]' : 'group-hover:text-slate-600 dark:group-hover:text-[#CBD5E1]',
             chevronSizeClasses[size] || chevronSizeClasses.md
           ].join(' ')}
           strokeWidth={2}
@@ -339,15 +339,15 @@ export function Select({
             zIndex: 99999
           }}
           className={[
-            'rounded-xl border border-slate-200 dark:border-slate-700',
-            'bg-white dark:bg-slate-900',
+            'rounded-xl border border-slate-200 dark:border-[#334155]',
+            'bg-white dark:bg-[#111827]',
             'p-1.5 shadow-xl text-xs sm:text-sm',
             'max-h-64 overflow-y-auto animate-in fade-in duration-100',
             menuClassName
           ].filter(Boolean).join(' ')}
         >
           {parsedOptions.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-slate-400 dark:text-slate-500 text-center">
+            <div className="px-3 py-2 text-xs text-slate-400 dark:text-[#94A3B8] text-center">
               No options available
             </div>
           ) : (
@@ -367,12 +367,12 @@ export function Select({
                   className={[
                     'w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition select-none cursor-pointer',
                     opt.disabled
-                      ? 'opacity-40 cursor-not-allowed text-slate-400'
+                      ? 'opacity-40 cursor-not-allowed text-slate-400 dark:text-[#64748B]'
                       : isSelected
-                      ? 'bg-rose-50 dark:bg-rose-950/60 text-[#D91542] dark:text-rose-300 font-semibold'
+                      ? 'bg-rose-50 dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] font-semibold'
                       : isHighlighted
-                      ? 'bg-rose-50/80 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-medium'
-                      : 'text-slate-700 dark:text-slate-200 font-medium hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300'
+                      ? 'bg-rose-50/80 dark:bg-[#1E293B] text-rose-700 dark:text-[#F8FAFC] font-medium'
+                      : 'text-slate-700 dark:text-[#CBD5E1] font-medium hover:bg-rose-50 dark:hover:bg-[#1E293B] hover:text-rose-700 dark:hover:text-[#F8FAFC]'
                   ].join(' ')}
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
