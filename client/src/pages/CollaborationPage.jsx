@@ -855,27 +855,27 @@ export default function CollaborationPage() {
         /* TEAMS & GROUPS TAB */
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Teams List (Left Column) */}
-          <div className="rounded-2xl bg-white border border-slate-200 p-5 shadow-2xs space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500">
+          <div className="rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#334155] p-5 shadow-2xs space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#334155]">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-[#94A3B8]">
                 Workspace Teams ({teams.length})
               </h3>
               {(user?.role === 'admin' || user?.role === 'manager') && (
                 <button
                   onClick={() => setShowCreateTeamModal(true)}
-                  className="px-2.5 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 font-semibold rounded-lg text-xs flex items-center gap-1 transition cursor-pointer"
+                  className="px-2.5 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:bg-[#1E293B] dark:border dark:border-[#334155] dark:text-[#CBD5E1] dark:hover:bg-[#334155] dark:hover:text-[#F8FAFC] font-semibold rounded-lg text-xs flex items-center gap-1 transition cursor-pointer"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-3.5 h-3.5 text-rose-600 dark:text-[#FB7185]" />
                   <span>New Team</span>
                 </button>
               )}
             </div>
 
             {teams.length === 0 ? (
-              <div className="py-12 text-center text-xs text-slate-400 space-y-2">
-                <Users2 className="w-8 h-8 text-slate-300 mx-auto" />
-                <p className="font-semibold text-slate-600">No teams created yet.</p>
-                <p className="text-[11px] text-slate-400">Create a team to organize shared access by department.</p>
+              <div className="py-12 text-center text-xs text-slate-400 dark:text-[#94A3B8] space-y-2">
+                <Users2 className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" />
+                <p className="font-semibold text-slate-600 dark:text-[#CBD5E1]">No teams created yet.</p>
+                <p className="text-[11px] text-slate-400 dark:text-[#94A3B8]">Create a team to organize shared access by department.</p>
               </div>
             ) : (
               teams.map(t => (
@@ -884,33 +884,33 @@ export default function CollaborationPage() {
                   onClick={() => loadTeamDetails(t.id)}
                   className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition ${
                     selectedTeam?.id === t.id
-                      ? 'bg-rose-50/80 border-rose-200 text-rose-900 shadow-2xs'
-                      : 'bg-white border-slate-200/80 hover:bg-slate-50 text-slate-800'
+                      ? 'bg-rose-50/80 dark:bg-[#2A1422] border-rose-200 dark:border-rose-900/60 text-rose-900 dark:text-[#FDA4AF] shadow-2xs'
+                      : 'bg-white dark:bg-[#0F172A] border-slate-200/80 dark:border-[#334155] hover:bg-slate-50 dark:hover:bg-[#1E293B] text-slate-800 dark:text-[#CBD5E1]'
                   }`}
                 >
                   <div className="min-w-0">
-                    <p className="font-bold text-xs truncate">{t.name}</p>
-                    <p className="text-[11px] text-slate-400 truncate mt-0.5">{t.member_count || 1} members</p>
+                    <p className="font-bold text-xs truncate text-slate-900 dark:text-[#F8FAFC]">{t.name}</p>
+                    <p className="text-[11px] text-slate-400 dark:text-[#94A3B8] truncate mt-0.5">{t.member_count || 1} members</p>
                   </div>
-                  <Shield className="h-4 w-4 text-slate-300" />
+                  <Shield className="h-4 w-4 text-slate-300 dark:text-slate-600" />
                 </div>
               ))
             )}
           </div>
 
           {/* Selected Team Members (Right Column) */}
-          <div className="lg:col-span-2 rounded-2xl bg-white border border-slate-200 p-6 shadow-2xs">
+          <div className="lg:col-span-2 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#334155] p-6 shadow-2xs">
             {selectedTeam ? (
               <div className="space-y-5">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-[#334155]">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-bold text-slate-900">{selectedTeam.name}</h2>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase font-mono">
+                      <h2 className="text-lg font-bold text-slate-900 dark:text-[#F8FAFC]">{selectedTeam.name}</h2>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 uppercase font-mono">
                         Active Group
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
                       {selectedTeam.description || 'Core product engineering & analytics team'}
                     </p>
                   </div>
@@ -927,20 +927,20 @@ export default function CollaborationPage() {
                 </div>
 
                 <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8] mb-3">
                     Team Roster ({selectedTeam.members?.length || 0})
                   </h4>
 
-                  <div className="divide-y divide-slate-100 border border-slate-200/80 rounded-2xl overflow-hidden">
+                  <div className="divide-y divide-slate-100 dark:divide-[#334155] border border-slate-200/80 dark:border-[#334155] rounded-2xl overflow-hidden">
                     {selectedTeam.members?.map(m => (
-                      <div key={m.id} className="flex items-center justify-between p-3.5 bg-white text-xs hover:bg-slate-50/60 transition">
+                      <div key={m.id} className="flex items-center justify-between p-3.5 bg-white dark:bg-[#0F172A] text-xs hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 text-rose-700 font-bold text-xs">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] font-bold text-xs">
                             {m.user_name ? m.user_name.slice(0, 2).toUpperCase() : 'U'}
                           </div>
                           <div>
-                            <p className="font-bold text-slate-900">{m.user_name}</p>
-                            <p className="text-[11px] text-slate-400">{m.user_email}</p>
+                            <p className="font-bold text-slate-900 dark:text-[#F8FAFC]">{m.user_name}</p>
+                            <p className="text-[11px] text-slate-400 dark:text-[#94A3B8]">{m.user_email}</p>
                           </div>
                         </div>
 

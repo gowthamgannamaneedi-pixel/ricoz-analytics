@@ -85,17 +85,17 @@ export default function Sidebar({ isOpen, onClose }) {
 
       {/* Sidebar Shell */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 transition-transform duration-200 ease-in-out lg:translate-x-0 select-none shadow-xs ${
+        className={`fixed top-0 bottom-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200/80 dark:border-[#334155] bg-white dark:bg-[#111827] transition-transform duration-200 ease-in-out lg:translate-x-0 select-none shadow-xs ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Top Brand Header */}
-        <div className="flex h-16 shrink-0 items-center justify-between px-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div className="flex h-16 shrink-0 items-center justify-between px-4 border-b border-slate-100 dark:border-[#334155] bg-white dark:bg-[#111827]">
           <Logo size="lg" linkTo="/dashboard" onClick={onClose} />
 
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition cursor-pointer"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-slate-700 dark:hover:text-[#CBD5E1] transition cursor-pointer"
             aria-label="Collapse navigation"
             title="Collapse Sidebar"
           >
@@ -108,7 +108,7 @@ export default function Sidebar({ isOpen, onClose }) {
         <nav className="flex-1 overflow-y-auto px-3.5 py-4 space-y-4" aria-label="Primary navigation">
           {navigation.map((section) => (
             <div key={section.label}>
-              <p className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+              <p className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-[#94A3B8]">
                 {section.label}
               </p>
               <div className="space-y-0.5">
@@ -122,8 +122,8 @@ export default function Sidebar({ isOpen, onClose }) {
                       className={({ isActive }) =>
                         `group relative flex items-center justify-between rounded-xl px-3 py-2 text-xs sm:text-[13px] font-medium transition-all ${
                           isActive
-                            ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 font-bold shadow-2xs'
-                            : 'text-slate-600 dark:text-slate-300 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400'
+                            ? 'bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] font-bold shadow-2xs border border-transparent dark:border-rose-900/40'
+                            : 'text-slate-600 dark:text-[#CBD5E1] hover:bg-rose-50/70 dark:hover:bg-[#1E293B] hover:text-rose-600 dark:hover:text-[#F8FAFC]'
                         }`
                       }
                     >
@@ -132,7 +132,7 @@ export default function Sidebar({ isOpen, onClose }) {
                           <div className="flex items-center gap-2.5 min-w-0">
                             <Icon
                               className={`h-4.5 w-4.5 shrink-0 transition-colors ${
-                                isActive ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400 dark:text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200'
+                                isActive ? 'text-rose-600 dark:text-[#FB7185]' : 'text-slate-400 dark:text-[#94A3B8] group-hover:text-slate-600 dark:group-hover:text-[#CBD5E1]'
                               }`}
                               strokeWidth={isActive ? 2.2 : 1.8}
                             />
@@ -143,8 +143,8 @@ export default function Sidebar({ isOpen, onClose }) {
                             <span
                               className={`text-[10px] font-bold px-2 py-0.5 rounded-full font-mono ${
                                 isActive
-                                  ? 'bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300'
-                                  : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-100/60 dark:border-rose-900/40'
+                                  ? 'bg-rose-100 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border border-transparent dark:border-rose-900/60'
+                                  : 'bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] border border-rose-100/60 dark:border-[#334155]'
                               }`}
                             >
                               {item.badge}
@@ -161,14 +161,14 @@ export default function Sidebar({ isOpen, onClose }) {
         </nav>
 
         {/* 14-Day Free Trial / License Upgrade Status Widget */}
-        <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div className="p-3 border-t border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827]">
           {isTrialExpired ? (
-            <div className="p-3 rounded-xl border border-rose-200 dark:border-rose-900/80 bg-rose-50/80 dark:bg-rose-950/40 shadow-2xs space-y-2">
+            <div className="p-3 rounded-xl border border-rose-200 dark:border-rose-900/80 bg-rose-50/80 dark:bg-[#2A1422] shadow-2xs space-y-2">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0" />
-                <span className="text-xs font-bold text-rose-900 dark:text-rose-200">Trial Expired</span>
+                <AlertTriangle className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
+                <span className="text-xs font-bold text-rose-900 dark:text-[#FDA4AF]">Trial Expired</span>
               </div>
-              <p className="text-[11px] text-rose-700 dark:text-rose-300 leading-snug">
+              <p className="text-[11px] text-rose-700 dark:text-[#FDA4AF] leading-snug">
                 Data safely preserved. Choose a plan to restore workspace analytics.
               </p>
               <button
@@ -177,7 +177,7 @@ export default function Sidebar({ isOpen, onClose }) {
                   onClose?.();
                   navigate('/billing');
                 }}
-                className="w-full py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-2xs cursor-pointer text-center"
+                className="w-full py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 dark:bg-[#E11D48] dark:hover:bg-rose-600 text-white text-xs font-bold transition shadow-2xs cursor-pointer text-center"
               >
                 Choose Plan &rarr;
               </button>
@@ -200,19 +200,19 @@ export default function Sidebar({ isOpen, onClose }) {
               </button>
             </div>
           ) : (
-            <div className="p-3 rounded-xl border border-rose-100 dark:border-slate-750 bg-gradient-to-br from-rose-50/80 to-pink-50/60 dark:from-slate-800/90 dark:to-slate-850/90 shadow-2xs space-y-2">
+            <div className="p-3 rounded-xl border border-rose-100 dark:border-[#334155] bg-gradient-to-br from-rose-50/80 to-pink-50/60 dark:from-[#0F172A] dark:to-[#0F172A] shadow-2xs space-y-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-rose-950 dark:text-slate-100">
-                  <Clock className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
+                <div className="flex items-center gap-1.5 text-xs font-bold text-rose-950 dark:text-[#F8FAFC]">
+                  <Clock className="h-3.5 w-3.5 text-rose-600 dark:text-[#FB7185]" />
                   <span>14-Day Free Trial</span>
                 </div>
-                <span className="text-[10px] font-mono font-bold text-rose-700 dark:text-rose-300 px-1.5 py-0.5 rounded bg-rose-100/70 dark:bg-rose-950/80 border border-rose-200 dark:border-rose-800">
+                <span className="text-[10px] font-mono font-bold text-rose-700 dark:text-[#FDA4AF] px-1.5 py-0.5 rounded bg-rose-100/70 dark:bg-[#2A1422] border border-rose-200 dark:border-rose-900/60">
                   {trialDaysRemaining}d left
                 </span>
               </div>
-              <div className="w-full bg-rose-200/60 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+              <div className="w-full bg-rose-200/60 dark:bg-[#1E293B] h-1.5 rounded-full overflow-hidden">
                 <div
-                  className="bg-rose-600 dark:bg-rose-500 h-full rounded-full transition-all"
+                  className="bg-rose-600 dark:bg-[#E11D48] h-full rounded-full transition-all"
                   style={{ width: `${Math.max(5, Math.min(100, ((14 - trialDaysRemaining) / 14) * 100))}%` }}
                 />
               </div>
@@ -222,7 +222,7 @@ export default function Sidebar({ isOpen, onClose }) {
                   onClose?.();
                   navigate('/billing');
                 }}
-                className="w-full py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-2xs cursor-pointer text-center"
+                className="w-full py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 dark:bg-[#E11D48] dark:hover:bg-rose-600 text-white text-xs font-bold transition shadow-2xs cursor-pointer text-center"
               >
                 Upgrade to Pro &rarr;
               </button>
@@ -231,7 +231,7 @@ export default function Sidebar({ isOpen, onClose }) {
         </div>
 
         {/* User Account / Workspace Footer Area */}
-        <div className="border-t border-slate-200 dark:border-slate-800 p-3 bg-slate-50/70 dark:bg-slate-850/80">
+        <div className="border-t border-slate-200 dark:border-[#334155] p-3 bg-slate-50/70 dark:bg-[#111827]">
           <div className="flex items-center justify-between gap-2.5">
             {/* Clickable user profile identity strip */}
             <button
@@ -240,19 +240,19 @@ export default function Sidebar({ isOpen, onClose }) {
                 onClose?.();
                 navigate('/settings');
               }}
-              className="flex items-center gap-2.5 min-w-0 flex-1 text-left p-1 rounded-xl hover:bg-slate-200/50 dark:hover:bg-slate-800 transition cursor-pointer select-none"
+              className="flex items-center gap-2.5 min-w-0 flex-1 text-left p-1 rounded-xl hover:bg-slate-200/50 dark:hover:bg-[#1E293B] transition cursor-pointer select-none"
               title="View account & workspace settings"
             >
               {/* Universal Shared Avatar Component */}
               <UserAvatar user={user} size="md" showStatus={true} status="online" />
 
               <div className="min-w-0 flex-1 leading-tight">
-                <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
+                <p className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] truncate">
                   {displayName}
                 </p>
                 <div className="flex items-center gap-1.5 mt-1">
                   <RoleBadge role={user?.role} size="xs" />
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[85px]" title={orgName}>
+                  <span className="text-[11px] text-slate-500 dark:text-[#94A3B8] truncate max-w-[85px]" title={orgName}>
                     {orgName}
                   </span>
                 </div>
@@ -264,7 +264,7 @@ export default function Sidebar({ isOpen, onClose }) {
               type="button"
               onClick={handleLogout}
               title="Sign Out"
-              className="p-2 rounded-xl text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer shrink-0"
+              className="p-2 rounded-xl text-slate-400 hover:text-rose-600 dark:hover:text-[#FB7185] hover:bg-rose-50 dark:hover:bg-[#2A1422] transition cursor-pointer shrink-0"
               aria-label="Sign Out"
             >
               <LogOut className="h-4 w-4" />

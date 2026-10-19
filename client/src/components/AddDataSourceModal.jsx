@@ -443,40 +443,40 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
   const isApiValid = Boolean(apiForm.name.trim() && apiForm.url.trim());
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs font-sans">
-      <div className="w-full max-w-2xl rounded-2xl border border-slate-200/90 bg-white shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-xs font-sans">
+      <div className="w-full max-w-2xl rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-[#334155] bg-white dark:bg-[#111827] shrink-0">
           <div>
-            <h2 className="text-sm sm:text-base font-bold text-slate-900">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-[#F8FAFC]">
               Connect Data Source
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
               Upload files or connect PostgreSQL, MongoDB, and REST API pipelines
             </p>
           </div>
           <button
             onClick={handleClose}
             disabled={isProcessing}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition disabled:opacity-40"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-slate-700 dark:hover:text-[#F8FAFC] transition disabled:opacity-40 cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex overflow-x-auto border-b border-slate-200/80 bg-slate-50/60 px-6 shrink-0 gap-1 scrollbar-none">
+        <div className="flex overflow-x-auto border-b border-slate-200/80 dark:border-[#334155] bg-slate-50/60 dark:bg-[#0F172A] px-6 shrink-0 gap-6 scrollbar-none">
           <button
             type="button"
             onClick={() => { setActiveTab('csv'); setError(''); }}
             disabled={isProcessing}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 py-3 px-1 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
               activeTab === 'csv'
-                ? 'border-rose-600 text-rose-700 bg-white font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+                ? 'border-[#E11D48] text-[#FB7185] dark:border-[#E11D48] dark:text-[#FB7185] bg-transparent font-bold'
+                : 'border-transparent text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#CBD5E1] bg-transparent'
             }`}
           >
-            <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+            <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             <span>CSV</span>
           </button>
 
@@ -484,13 +484,13 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
             type="button"
             onClick={() => { setActiveTab('json'); setError(''); }}
             disabled={isProcessing}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 py-3 px-1 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
               activeTab === 'json'
-                ? 'border-rose-600 text-rose-700 bg-white font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+                ? 'border-[#E11D48] text-[#FB7185] dark:border-[#E11D48] dark:text-[#FB7185] bg-transparent font-bold'
+                : 'border-transparent text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#CBD5E1] bg-transparent'
             }`}
           >
-            <FileCode className="h-4 w-4 text-amber-600" />
+            <FileCode className="h-4 w-4 text-amber-600 dark:text-amber-400" />
             <span>JSON</span>
           </button>
 
@@ -499,13 +499,13 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
             id="modal-tab-postgresql"
             onClick={() => { setActiveTab('postgresql'); setError(''); }}
             disabled={isProcessing}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 py-3 px-1 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
               activeTab === 'postgresql'
-                ? 'border-rose-600 text-rose-700 bg-white font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+                ? 'border-[#E11D48] text-[#FB7185] dark:border-[#E11D48] dark:text-[#FB7185] bg-transparent font-bold'
+                : 'border-transparent text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#CBD5E1] bg-transparent'
             }`}
           >
-            <Database className="h-4 w-4 text-blue-600" />
+            <Database className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             <span>PostgreSQL</span>
           </button>
 
@@ -514,13 +514,13 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
             id="modal-tab-mongodb"
             onClick={() => { setActiveTab('mongodb'); setError(''); }}
             disabled={isProcessing}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 py-3 px-1 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
               activeTab === 'mongodb'
-                ? 'border-rose-600 text-rose-700 bg-white font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+                ? 'border-[#E11D48] text-[#FB7185] dark:border-[#E11D48] dark:text-[#FB7185] bg-transparent font-bold'
+                : 'border-transparent text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#CBD5E1] bg-transparent'
             }`}
           >
-            <Database className="h-4 w-4 text-emerald-600" />
+            <Database className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             <span>MongoDB</span>
           </button>
 
@@ -529,13 +529,13 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
             id="modal-tab-rest-api"
             onClick={() => { setActiveTab('rest_api'); setError(''); }}
             disabled={isProcessing}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 py-3 px-1 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
               activeTab === 'rest_api'
-                ? 'border-rose-600 text-rose-700 bg-white font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+                ? 'border-[#E11D48] text-[#FB7185] dark:border-[#E11D48] dark:text-[#FB7185] bg-transparent font-bold'
+                : 'border-transparent text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#CBD5E1] bg-transparent'
             }`}
           >
-            <Server className="h-4 w-4 text-purple-600" />
+            <Server className="h-4 w-4 text-purple-600 dark:text-purple-400" />
             <span>REST API</span>
           </button>
         </div>

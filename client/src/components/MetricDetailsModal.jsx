@@ -72,22 +72,22 @@ export default function MetricDetailsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/30 backdrop-blur-xs font-sans">
-      <div className="flex flex-col w-full max-w-2xl max-h-[90vh] rounded-2xl border border-slate-200/90 bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 dark:bg-black/80 backdrop-blur-xs font-sans">
+      <div className="flex flex-col w-full max-w-2xl max-h-[90vh] rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-[#334155] bg-white dark:bg-[#111827] shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 shrink-0">
+            <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900/60 text-rose-600 dark:text-[#FB7185] shrink-0">
               <Gauge className="h-5 w-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-slate-900">
+                <h2 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC]">
                   {metric.name}
                 </h2>
                 {renderStatusBadge(metric.status)}
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
                 {metric.description || 'Key performance indicator definition'}
               </p>
             </div>
@@ -95,7 +95,7 @@ export default function MetricDetailsModal({
 
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+            className="rounded-lg p-1.5 text-slate-400 dark:text-[#94A3B8] hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-slate-700 dark:hover:text-[#F8FAFC] transition cursor-pointer"
             title="Close"
           >
             <X className="h-5 w-5" />
@@ -103,19 +103,19 @@ export default function MetricDetailsModal({
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/40">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/40 dark:bg-[#0B0F19]">
           {/* Main KPI Performance Card */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
+          <div className="bg-white dark:bg-[#111827] p-5 rounded-xl border border-slate-200/90 dark:border-[#334155] shadow-2xs space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
               <div>
-                <span className="text-xs font-semibold text-slate-500 block">Current Evaluated Value</span>
-                <span className="text-3xl font-bold font-mono text-slate-900 mt-1 block">
+                <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8] block">Current Evaluated Value</span>
+                <span className="text-3xl font-bold font-mono text-slate-900 dark:text-[#F8FAFC] mt-1 block">
                   {formatValue(metric.current_value)}
                 </span>
               </div>
               <div className="sm:text-right">
-                <span className="text-xs font-semibold text-slate-500 block">Target Goal</span>
-                <span className="text-xl font-bold font-mono text-slate-700 mt-1 block">
+                <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8] block">Target Goal</span>
+                <span className="text-xl font-bold font-mono text-slate-700 dark:text-[#CBD5E1] mt-1 block">
                   {target > 0 ? formatValue(metric.target_value) : 'No target'}
                 </span>
               </div>
@@ -125,10 +125,10 @@ export default function MetricDetailsModal({
             {target > 0 && (
               <div>
                 <div className="flex justify-between text-xs mb-1.5 font-medium">
-                  <span className="text-slate-600">Goal Progress</span>
-                  <span className="font-mono font-bold text-slate-900">{progress}%</span>
+                  <span className="text-slate-600 dark:text-[#CBD5E1]">Goal Progress</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-[#F8FAFC]">{progress}%</span>
                 </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-2 w-full bg-slate-100 dark:bg-[#1E293B] rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${
                       metric.status === 'on_track'
@@ -146,52 +146,52 @@ export default function MetricDetailsModal({
 
           {/* Configuration Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-              <span className="text-[11px] font-semibold text-slate-500 block">Metric Type</span>
-              <span className="text-xs font-bold text-slate-800 capitalize mt-1 block">
+            <div className="bg-white dark:bg-[#111827] p-3.5 rounded-xl border border-slate-200/80 dark:border-[#334155] shadow-2xs">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-[#94A3B8] block">Metric Type</span>
+              <span className="text-xs font-bold text-slate-800 dark:text-[#CBD5E1] capitalize mt-1 block">
                 {metric.type || 'Currency'}
               </span>
-              <span className="text-[10px] text-slate-400">Unit: {metric.unit || 'Standard'}</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">Unit: {metric.unit || 'Standard'}</span>
             </div>
 
-            <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-              <span className="text-[11px] font-semibold text-slate-500 block">Calculation Formula</span>
-              <span className="text-xs font-mono font-bold text-rose-600 mt-1 block truncate" title={metric.formula}>
+            <div className="bg-white dark:bg-[#111827] p-3.5 rounded-xl border border-slate-200/80 dark:border-[#334155] shadow-2xs">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-[#94A3B8] block">Calculation Formula</span>
+              <span className="text-xs font-mono font-bold text-rose-600 dark:text-[#FB7185] mt-1 block truncate" title={metric.formula}>
                 {metric.formula || 'SUM'}
               </span>
-              <span className="text-[10px] text-slate-400">Agg: {formatting.aggregation_type || 'SUM'}</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">Agg: {formatting.aggregation_type || 'SUM'}</span>
             </div>
 
-            <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-              <span className="text-[11px] font-semibold text-slate-500 block">Linked Dataset</span>
-              <span className="text-xs font-semibold text-slate-800 mt-1 block truncate" title={metric.dataset_name || 'Dataset'}>
+            <div className="bg-white dark:bg-[#111827] p-3.5 rounded-xl border border-slate-200/80 dark:border-[#334155] shadow-2xs">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-[#94A3B8] block">Linked Dataset</span>
+              <span className="text-xs font-semibold text-slate-800 dark:text-[#CBD5E1] mt-1 block truncate" title={metric.dataset_name || 'Dataset'}>
                 {metric.dataset_name || (metric.dataset_id ? `Dataset #${metric.dataset_id}` : 'None')}
               </span>
-              <span className="text-[10px] text-slate-400">{metric.record_count ? `${metric.record_count} evaluated rows` : 'Linked'}</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">{metric.record_count ? `${metric.record_count} evaluated rows` : 'Linked'}</span>
             </div>
 
-            <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-              <span className="text-[11px] font-semibold text-slate-500 block">Warning Threshold</span>
-              <span className="text-xs font-bold font-mono text-amber-700 mt-1 block">
+            <div className="bg-white dark:bg-[#111827] p-3.5 rounded-xl border border-slate-200/80 dark:border-[#334155] shadow-2xs">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-[#94A3B8] block">Warning Threshold</span>
+              <span className="text-xs font-bold font-mono text-amber-700 dark:text-amber-400 mt-1 block">
                 {formatting.warning_threshold ? formatValue(formatting.warning_threshold) : 'None'}
               </span>
-              <span className="text-[10px] text-slate-400">Triggers At Risk</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">Triggers At Risk</span>
             </div>
 
-            <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-              <span className="text-[11px] font-semibold text-slate-500 block">Critical Threshold</span>
-              <span className="text-xs font-bold font-mono text-rose-700 mt-1 block">
+            <div className="bg-white dark:bg-[#111827] p-3.5 rounded-xl border border-slate-200/80 dark:border-[#334155] shadow-2xs">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-[#94A3B8] block">Critical Threshold</span>
+              <span className="text-xs font-bold font-mono text-rose-700 dark:text-rose-400 mt-1 block">
                 {formatting.critical_threshold ? formatValue(formatting.critical_threshold) : 'None'}
               </span>
-              <span className="text-[10px] text-slate-400">Triggers Behind Target</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">Triggers Behind Target</span>
             </div>
 
-            <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-              <span className="text-[11px] font-semibold text-slate-500 block">Defined By</span>
-              <span className="text-xs font-semibold text-slate-800 mt-1 block truncate">
+            <div className="bg-white dark:bg-[#111827] p-3.5 rounded-xl border border-slate-200/80 dark:border-[#334155] shadow-2xs">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-[#94A3B8] block">Defined By</span>
+              <span className="text-xs font-semibold text-slate-800 dark:text-[#CBD5E1] mt-1 block truncate">
                 {metric.creator_name || 'Analyst'}
               </span>
-              <span className="text-[10px] text-slate-400">
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">
                 {metric.created_at ? new Date(metric.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
               </span>
             </div>
@@ -199,7 +199,7 @@ export default function MetricDetailsModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between px-6 py-3.5 border-t border-slate-100 bg-white shrink-0">
+        <div className="flex items-center justify-between px-6 py-3.5 border-t border-slate-100 dark:border-[#334155] bg-white dark:bg-[#0F172A] shrink-0">
           {!isViewer && (
             <div className="flex items-center gap-2">
               {onEdit && (
@@ -208,9 +208,9 @@ export default function MetricDetailsModal({
                     onClose();
                     onEdit(metric);
                   }}
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-50 dark:hover:bg-[#334155] transition shadow-2xs cursor-pointer"
                 >
-                  <Edit3 className="h-3.5 w-3.5 text-slate-500" />
+                  <Edit3 className="h-3.5 w-3.5 text-slate-500 dark:text-[#94A3B8]" />
                   <span>Edit Metric</span>
                 </button>
               )}
@@ -221,9 +221,9 @@ export default function MetricDetailsModal({
                     onClose();
                     onDelete(metric);
                   }}
-                  className="flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition shadow-2xs"
+                  className="flex items-center gap-1.5 rounded-lg border border-rose-200 dark:border-rose-900/80 bg-rose-50 dark:bg-[#2A1422] px-3 py-1.5 text-xs font-semibold text-rose-700 dark:text-[#FDA4AF] hover:bg-rose-100 dark:hover:bg-rose-950/60 transition shadow-2xs cursor-pointer"
                 >
-                  <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+                  <Trash2 className="h-3.5 w-3.5 text-rose-600 dark:text-[#FB7185]" />
                   <span>Delete Metric</span>
                 </button>
               )}
@@ -232,7 +232,7 @@ export default function MetricDetailsModal({
 
           <button
             onClick={onClose}
-            className="rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition shadow-2xs ml-auto"
+            className="rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] px-4 py-1.5 text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-100 dark:hover:bg-[#334155] transition shadow-2xs ml-auto cursor-pointer"
           >
             Close
           </button>

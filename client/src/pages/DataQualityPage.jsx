@@ -682,25 +682,25 @@ export default function DataQualityPage() {
                 id="export-menu-button"
                 onClick={() => setExportMenuOpen((prev) => !prev)}
                 disabled={!selectedDatasetId}
-                className="flex items-center gap-2 h-10 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-xs sm:text-sm font-semibold text-slate-700 transition shadow-2xs cursor-pointer disabled:opacity-50 select-none"
+                className="flex items-center gap-2 h-10 px-3.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-slate-50 dark:hover:bg-[#1E293B]/80 hover:border-slate-300 dark:hover:border-slate-600 text-xs sm:text-sm font-semibold text-slate-700 dark:text-[#CBD5E1] transition shadow-2xs cursor-pointer disabled:opacity-50 select-none"
               >
-                <FileDown className="h-4 w-4 text-slate-500" />
+                <FileDown className="h-4 w-4 text-slate-500 dark:text-[#94A3B8]" />
                 <span>Export Report</span>
-                <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                <ChevronDown className="h-3.5 w-3.5 text-slate-400 dark:text-[#94A3B8]" />
               </button>
 
               {exportMenuOpen && (
-                <div className="absolute right-0 mt-2 w-52 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl z-50 text-xs animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="absolute right-0 mt-2 w-52 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-1.5 shadow-xl z-50 text-xs animate-in fade-in slide-in-from-top-2 duration-150">
                   <button
                     type="button"
                     onClick={() => handleExport('pdf')}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition text-xs font-medium cursor-pointer"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 dark:text-[#CBD5E1] hover:bg-rose-50 dark:hover:bg-[#2A1422] hover:text-rose-700 dark:hover:text-[#FB7185] transition text-xs font-medium cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-rose-500" />
+                      <FileText className="h-4 w-4 text-rose-500 dark:text-[#FB7185]" />
                       <span>PDF</span>
                     </div>
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-[#94A3B8]">
                       PDF
                     </span>
                   </button>
@@ -708,13 +708,13 @@ export default function DataQualityPage() {
                   <button
                     type="button"
                     onClick={() => handleExport('excel')}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition text-xs font-medium cursor-pointer"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 dark:text-[#CBD5E1] hover:bg-rose-50 dark:hover:bg-[#2A1422] hover:text-rose-700 dark:hover:text-[#FB7185] transition text-xs font-medium cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
                       <FileSpreadsheet className="h-4 w-4 text-emerald-500" />
                       <span>Excel Sheet</span>
                     </div>
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-[#94A3B8]">
                       XLSX
                     </span>
                   </button>
@@ -722,13 +722,13 @@ export default function DataQualityPage() {
                   <button
                     type="button"
                     onClick={() => handleExport('json')}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition text-xs font-medium cursor-pointer"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 dark:text-[#CBD5E1] hover:bg-rose-50 dark:hover:bg-[#2A1422] hover:text-rose-700 dark:hover:text-[#FB7185] transition text-xs font-medium cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
                       <Database className="h-4 w-4 text-purple-500" />
                       <span>JSON</span>
                     </div>
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-[#94A3B8]">
                       JSON
                     </span>
                   </button>
@@ -749,21 +749,21 @@ export default function DataQualityPage() {
 
       {/* ── Active Background Job Progress Indicator ────────────────────── */}
       {evaluating && (
-        <div className="bg-white border border-rose-200 rounded-2xl p-6 shadow-sm mb-6 space-y-4 animate-in fade-in duration-200">
+        <div className="bg-white dark:bg-[#111827] border border-rose-200 dark:border-[#FB7185]/30 rounded-2xl p-6 shadow-sm mb-6 space-y-4 animate-in fade-in duration-200">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-200">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
                 <RefreshCw className="h-5 w-5 animate-spin" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC] flex items-center gap-2">
                   <span>Quality Scan in Progress</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 uppercase font-semibold">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/40 uppercase font-semibold">
                     {activeJob?.status || 'RUNNING'}
                   </span>
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Processing {(activeJob?.rows_processed || 0).toLocaleString()} / {(activeJob?.total_rows || 0).toLocaleString()} rows &bull; Stage: <span className="font-mono text-slate-700 font-semibold">{activeJob?.stage || 'INITIALIZING'}</span>
+                <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
+                  Processing {(activeJob?.rows_processed || 0).toLocaleString()} / {(activeJob?.total_rows || 0).toLocaleString()} rows &bull; Stage: <span className="font-mono text-slate-700 dark:text-[#CBD5E1] font-semibold">{activeJob?.stage || 'INITIALIZING'}</span>
                 </p>
               </div>
             </div>
@@ -771,7 +771,7 @@ export default function DataQualityPage() {
               <Button
                 variant="outline"
                 onClick={handleCancelAudit}
-                className="h-9 px-3 rounded-lg text-xs font-semibold text-rose-700 hover:bg-rose-50 border-rose-200"
+                className="h-9 px-3 rounded-lg text-xs font-semibold text-rose-700 dark:text-[#FB7185] hover:bg-rose-50 dark:hover:bg-[#2A1422] border-rose-200 dark:border-[#FB7185]/40"
               >
                 <X className="h-3.5 w-3.5 mr-1" />
                 <span>Cancel Scan</span>
@@ -851,15 +851,15 @@ export default function DataQualityPage() {
           {/* ───────────────────────────────────────────────────────────────── */}
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
             {/* Left Card: Overall Dataset Health */}
-            <div className="lg:col-span-5 bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between relative overflow-hidden">
+            <div className="lg:col-span-5 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between relative overflow-hidden">
               <div>
                 {/* Header */}
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#334155]">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
                       <ShieldCheck className="h-4 w-4" />
                     </div>
-                    <span className="text-sm font-bold text-slate-900">Overall Dataset Health</span>
+                    <span className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Overall Dataset Health</span>
                   </div>
                   <div>{getStatusBadge(qualityProfile?.status)}</div>
                 </div>
@@ -871,14 +871,14 @@ export default function DataQualityPage() {
               </div>
 
               {/* Bottom Wireframe Summary: Scan Execution & Evaluated Rows */}
-              <div className="mt-4 pt-3.5 border-t border-slate-100 space-y-1.5 text-xs text-slate-500">
+              <div className="mt-4 pt-3.5 border-t border-slate-100 dark:border-[#334155] space-y-1.5 text-xs text-slate-500 dark:text-[#94A3B8]">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-slate-500">Scan Execution:</span>
-                  <span className="font-bold text-slate-800 capitalize">{scanMode === 'full' ? 'Full Scan' : 'Sampled (1,000)'}</span>
+                  <span className="font-medium text-slate-500 dark:text-[#94A3B8]">Scan Execution:</span>
+                  <span className="font-bold text-slate-800 dark:text-[#F8FAFC] capitalize">{scanMode === 'full' ? 'Full Scan' : 'Sampled (1,000)'}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-slate-500">Evaluated Rows:</span>
-                  <span className="font-bold text-slate-800 font-mono">
+                  <span className="font-medium text-slate-500 dark:text-[#94A3B8]">Evaluated Rows:</span>
+                  <span className="font-bold text-slate-800 dark:text-[#F8FAFC] font-mono">
                     {evaluating
                       ? `${Number(activeJob?.rows_processed || 0).toLocaleString()} / ${Number(activeJob?.total_rows || selectedDataset?.row_count || 0).toLocaleString()} rows`
                       : selectedDataset?.row_count !== undefined
@@ -892,105 +892,105 @@ export default function DataQualityPage() {
             {/* Right: 6 Quality Dimensions (7 cols in 3x2 Grid) */}
             <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
               {/* Card 1: Completeness */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-400 dark:hover:border-rose-500 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
                       <Droplet className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">25% Wgt</span>
+                    <span className="text-[10px] font-bold font-mono text-slate-400 dark:text-[#94A3B8] uppercase">25% Wgt</span>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-700 mt-3">Completeness</h4>
-                  <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
+                  <h4 className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] mt-3">Completeness</h4>
+                  <div className="text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] font-sans mt-1">
                     {evaluating && !dimensions.completeness ? '—' : (dimensions.completeness?.score != null ? `${dimensions.completeness.score}%` : '0%')}
                   </div>
                   {/* Progress Bar */}
-                  <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2.5 overflow-hidden">
+                  <div className="w-full bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 mt-2.5 overflow-hidden">
                     <div
-                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.completeness ? 'bg-slate-300 animate-pulse' : 'bg-blue-600'}`}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.completeness ? 'bg-slate-300 dark:bg-slate-600 animate-pulse' : 'bg-blue-600'}`}
                       style={{ width: evaluating && !dimensions.completeness ? '0%' : `${dimensions.completeness?.score ?? 0}%` }}
                     />
                   </div>
                 </div>
-                <div className="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-50">
+                <div className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-3 pt-2 border-t border-slate-50 dark:border-[#334155]/60">
                   {evaluating && !dimensions.completeness ? 'Evaluating missing values...' : `${dimensions.completeness?.null_count || dimensions.completeness?.missing_cells || 0}% missing values`}
                 </div>
               </div>
 
               {/* Card 2: Validity / Types */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-400 dark:hover:border-rose-500 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
                       <Check className="h-5 w-5 stroke-[2.5]" />
                     </div>
-                    <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">25% Wgt</span>
+                    <span className="text-[10px] font-bold font-mono text-slate-400 dark:text-[#94A3B8] uppercase">25% Wgt</span>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-700 mt-3">Validity / Types</h4>
-                  <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
+                  <h4 className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] mt-3">Validity / Types</h4>
+                  <div className="text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] font-sans mt-1">
                     {evaluating && !dimensions.validity ? '—' : (dimensions.validity?.score != null ? `${dimensions.validity.score}%` : '0%')}
                   </div>
                   {/* Progress Bar */}
-                  <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2.5 overflow-hidden">
+                  <div className="w-full bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 mt-2.5 overflow-hidden">
                     <div
-                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.validity ? 'bg-slate-300 animate-pulse' : 'bg-emerald-500'}`}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.validity ? 'bg-slate-300 dark:bg-slate-600 animate-pulse' : 'bg-emerald-500'}`}
                       style={{ width: evaluating && !dimensions.validity ? '0%' : `${dimensions.validity?.score ?? 0}%` }}
                     />
                   </div>
                 </div>
-                <div className="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-50">
+                <div className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-3 pt-2 border-t border-slate-50 dark:border-[#334155]/60">
                   {evaluating && !dimensions.validity ? 'Evaluating type validity...' : `${dimensions.validity?.invalid_count || 0} type violations`}
                 </div>
               </div>
 
               {/* Card 3: Uniqueness */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-400 dark:hover:border-rose-500 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
                       <Layers className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">20% Wgt</span>
+                    <span className="text-[10px] font-bold font-mono text-slate-400 dark:text-[#94A3B8] uppercase">20% Wgt</span>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-700 mt-3">Uniqueness</h4>
-                  <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
+                  <h4 className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] mt-3">Uniqueness</h4>
+                  <div className="text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] font-sans mt-1">
                     {evaluating && !dimensions.uniqueness ? '—' : (dimensions.uniqueness?.score != null ? `${dimensions.uniqueness.score}%` : '0%')}
                   </div>
                   {/* Progress Bar */}
-                  <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2.5 overflow-hidden">
+                  <div className="w-full bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 mt-2.5 overflow-hidden">
                     <div
-                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.uniqueness ? 'bg-slate-300 animate-pulse' : 'bg-purple-600'}`}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.uniqueness ? 'bg-slate-300 dark:bg-slate-600 animate-pulse' : 'bg-purple-600'}`}
                       style={{ width: evaluating && !dimensions.uniqueness ? '0%' : `${dimensions.uniqueness?.score ?? 0}%` }}
                     />
                   </div>
                 </div>
-                <div className="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-50">
+                <div className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-3 pt-2 border-t border-slate-50 dark:border-[#334155]/60">
                   {evaluating && !dimensions.uniqueness ? 'Evaluating duplicates...' : `${dimensions.uniqueness?.duplicate_percentage ?? dimensions.uniqueness?.duplicate_rows ?? 0}% duplicate rows`}
                 </div>
               </div>
 
               {/* Card 4: Consistency & Joins */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-400 dark:hover:border-rose-500 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
                       <Link2 className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">20% Wgt</span>
+                    <span className="text-[10px] font-bold font-mono text-slate-400 dark:text-[#94A3B8] uppercase">20% Wgt</span>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-700 mt-3">Consistency & Joins</h4>
-                  <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
+                  <h4 className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] mt-3">Consistency & Joins</h4>
+                  <div className="text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] font-sans mt-1">
                     {evaluating && !dimensions.consistency ? '—' : (dimensions.consistency?.score != null ? `${dimensions.consistency.score}%` : '0%')}
                   </div>
                   {/* Progress Bar */}
-                  <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2.5 overflow-hidden">
+                  <div className="w-full bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 mt-2.5 overflow-hidden">
                     <div
-                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.consistency ? 'bg-slate-300 animate-pulse' : 'bg-teal-500'}`}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.consistency ? 'bg-slate-300 dark:bg-slate-600 animate-pulse' : 'bg-teal-500'}`}
                       style={{ width: evaluating && !dimensions.consistency ? '0%' : `${dimensions.consistency?.score ?? 0}%` }}
                     />
                   </div>
                 </div>
-                <div className="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-50">
+                <div className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-3 pt-2 border-t border-slate-50 dark:border-[#334155]/60">
                   {evaluating && !dimensions.consistency
                     ? 'Evaluating consistency...'
                     : (dimensions.consistency?.relationship_match_rate !== undefined
@@ -1000,50 +1000,50 @@ export default function DataQualityPage() {
               </div>
 
               {/* Card 5: Freshness */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-400 dark:hover:border-rose-500 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
                       <Clock className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">10% Wgt</span>
+                    <span className="text-[10px] font-bold font-mono text-slate-400 dark:text-[#94A3B8] uppercase">10% Wgt</span>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-700 mt-3">Freshness</h4>
-                  <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
+                  <h4 className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] mt-3">Freshness</h4>
+                  <div className="text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] font-sans mt-1">
                     {evaluating && !dimensions.freshness ? '—' : (dimensions.freshness?.score != null ? `${dimensions.freshness.score}%` : '0%')}
                   </div>
                   {/* Progress Bar */}
-                  <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2.5 overflow-hidden">
+                  <div className="w-full bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 mt-2.5 overflow-hidden">
                     <div
-                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.freshness ? 'bg-slate-300 animate-pulse' : 'bg-amber-500'}`}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.freshness ? 'bg-slate-300 dark:bg-slate-600 animate-pulse' : 'bg-amber-500'}`}
                       style={{ width: evaluating && !dimensions.freshness ? '0%' : `${dimensions.freshness?.score ?? 0}%` }}
                     />
                   </div>
                 </div>
-                <div className="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-50">
+                <div className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-3 pt-2 border-t border-slate-50 dark:border-[#334155]/60">
                   {evaluating && !dimensions.freshness ? 'Evaluating freshness...' : (dimensions.freshness?.status ? `Status: ${dimensions.freshness.status}` : 'Data is up to date')}
                 </div>
               </div>
 
               {/* Card 6: Schema & Volume */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-300 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-400 dark:hover:border-rose-500 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
                       <GitBranch className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-bold font-mono text-slate-400 uppercase">Volume</span>
+                    <span className="text-[10px] font-bold font-mono text-slate-400 dark:text-[#94A3B8] uppercase">Volume</span>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-700 mt-3">Schema & Volume</h4>
-                  <div className="text-2xl font-extrabold text-slate-900 font-sans mt-1">
+                  <h4 className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] mt-3">Schema & Volume</h4>
+                  <div className="text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] font-sans mt-1">
                     {evaluating && !qualityProfile ? '—' : (qualityProfile?.column_count ?? columnMetrics?.length ?? 0)}
                   </div>
                   {/* Progress Bar */}
-                  <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2.5 overflow-hidden">
+                  <div className="w-full bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 mt-2.5 overflow-hidden">
                     <div className="bg-indigo-600 h-1.5 rounded-full" style={{ width: '100%' }} />
                   </div>
                 </div>
-                <div className="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-50">
+                <div className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-3 pt-2 border-t border-slate-50 dark:border-[#334155]/60">
                   {qualityProfile.column_count || columnMetrics.length || 0} dimensions tracked
                 </div>
               </div>
@@ -1671,29 +1671,29 @@ export default function DataQualityPage() {
       {/* 8. CREATE RULE MODAL                                              */}
       {/* ───────────────────────────────────────────────────────────────── */}
       {isRuleModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-xs p-4">
-          <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 p-6 animate-in fade-in zoom-in-95 duration-150 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-md rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200 dark:border-[#334155] p-6 animate-in fade-in zoom-in-95 duration-150 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#334155] pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
                   <Sliders className="h-4.5 w-4.5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Create Quality Rule</h3>
-                  <p className="text-[11px] text-slate-500">Define automated validation constraint</p>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Create Quality Rule</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-[#94A3B8]">Define automated validation constraint</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsRuleModalOpen(false)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-slate-700 dark:hover:text-[#F8FAFC] cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             {ruleError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+              <div className="p-3 rounded-xl bg-rose-50 dark:bg-[#2A1422] border border-rose-200 dark:border-[#FB7185]/40 text-rose-700 dark:text-[#FB7185] text-xs flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{ruleError}</span>
               </div>
@@ -1701,7 +1701,7 @@ export default function DataQualityPage() {
 
             <form onSubmit={handleCreateRule} className="space-y-4 text-xs">
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Target Column</label>
+                <label className="block text-slate-700 dark:text-[#CBD5E1] font-semibold mb-1">Target Column</label>
                 <Select
                   value={ruleForm.columnName}
                   onChange={(e) => setRuleForm({ ...ruleForm, columnName: e.target.value })}
@@ -1718,7 +1718,7 @@ export default function DataQualityPage() {
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Rule Type</label>
+                <label className="block text-slate-700 dark:text-[#CBD5E1] font-semibold mb-1">Rule Type</label>
                 <Select
                   value={ruleForm.ruleType}
                   onChange={(e) => setRuleForm({ ...ruleForm, ruleType: e.target.value })}
@@ -1735,7 +1735,7 @@ export default function DataQualityPage() {
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Severity Level</label>
+                <label className="block text-slate-700 dark:text-[#CBD5E1] font-semibold mb-1">Severity Level</label>
                 <Select
                   value={ruleForm.severity}
                   onChange={(e) => setRuleForm({ ...ruleForm, severity: e.target.value })}
@@ -1747,11 +1747,11 @@ export default function DataQualityPage() {
                 </Select>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-[#334155]">
                 <button
                   type="button"
                   onClick={() => setIsRuleModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-[#334155] text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-50 dark:hover:bg-[#1E293B] transition cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1759,7 +1759,7 @@ export default function DataQualityPage() {
                   type="submit"
                   disabled={creatingRule}
                   variant="primary"
-                  className="h-9 px-4 rounded-xl text-xs font-semibold"
+                  className="h-9 px-4 rounded-xl text-xs font-semibold bg-[#D91542] hover:bg-[#B91238]"
                 >
                   {creatingRule ? 'Creating...' : 'Save Rule'}
                 </Button>
@@ -1773,28 +1773,28 @@ export default function DataQualityPage() {
       {/* 9. DELETE RULE CONFIRMATION MODAL                                 */}
       {/* ───────────────────────────────────────────────────────────────── */}
       {ruleToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-xs p-4">
-          <div className="relative w-full max-w-sm rounded-2xl bg-white shadow-2xl border border-slate-200 p-6 animate-in fade-in zoom-in-95 duration-150 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-sm rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200 dark:border-[#334155] p-6 animate-in fade-in zoom-in-95 duration-150 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 shrink-0">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30 shrink-0">
                 <Trash2 className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Delete Quality Rule</h3>
-                <p className="text-[11px] text-slate-500">Remove validation constraint</p>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Delete Quality Rule</h3>
+                <p className="text-[11px] text-slate-500 dark:text-[#94A3B8]">Remove validation constraint</p>
               </div>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Are you sure you want to remove the <strong className="text-slate-900 font-semibold">{ruleToDelete.rule_type}</strong> constraint on column <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-800 font-mono text-[11px] font-semibold">{ruleToDelete.column_name}</code>?
+            <p className="text-xs text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
+              Are you sure you want to remove the <strong className="text-slate-900 dark:text-[#F8FAFC] font-semibold">{ruleToDelete.rule_type}</strong> constraint on column <code className="bg-slate-100 dark:bg-[#1E293B] px-1.5 py-0.5 rounded text-slate-800 dark:text-[#F8FAFC] font-mono text-[11px] font-semibold">{ruleToDelete.column_name}</code>?
             </p>
 
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-[#334155]">
               <button
                 type="button"
                 id="cancel-delete-rule-btn"
                 onClick={() => setRuleToDelete(null)}
-                className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-slate-300 dark:border-[#334155] text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-50 dark:hover:bg-[#1E293B] transition cursor-pointer"
               >
                 Cancel
               </button>
@@ -1804,7 +1804,7 @@ export default function DataQualityPage() {
                 onClick={handleConfirmDeleteRule}
                 disabled={deletingRule}
                 variant="danger"
-                className="h-9 px-4 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-xs"
+                className="h-9 px-4 rounded-xl text-xs font-semibold bg-[#D91542] hover:bg-[#B91238] dark:bg-[#D91542] dark:hover:bg-[#B91238] text-white shadow-xs"
               >
                 {deletingRule ? 'Deleting...' : 'Delete Rule'}
               </Button>

@@ -878,16 +878,16 @@ export default function AIInsightsPage() {
       {/* ------------------------------------------------------------------ */}
       {/* 3. SIMPLE EXPLANATION PANEL ("What are AI Insights?")               */}
       {/* ------------------------------------------------------------------ */}
-      <div className="rounded-2xl border border-rose-100 bg-gradient-to-r from-rose-50/70 via-indigo-50/40 to-white p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="rounded-2xl border border-rose-100 dark:border-[#334155] bg-gradient-to-r from-rose-50/70 via-indigo-50/40 to-white dark:bg-none dark:bg-[#111827] p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-start gap-3.5">
-          <div className="h-11 w-11 rounded-2xl bg-rose-100/90 text-rose-700 flex items-center justify-center shrink-0">
+          <div className="h-11 w-11 rounded-2xl bg-rose-100/90 dark:bg-[#2A1422] text-rose-700 dark:text-[#FB7185] flex items-center justify-center shrink-0">
             <Bot className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-900">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">
               What are AI Insights?
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600 mt-0.5 leading-relaxed max-w-3xl">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-[#CBD5E1] mt-0.5 leading-relaxed max-w-3xl">
               AI analyzes your business data to identify important trends, risks, opportunities, and unusual changes. Each insight includes the reason it was detected and recommended actions.
             </p>
           </div>
@@ -895,7 +895,7 @@ export default function AIInsightsPage() {
 
         <button
           onClick={() => setIsLearnMoreOpen(true)}
-          className="h-9 px-4 rounded-xl border border-rose-200 bg-white text-xs font-semibold text-rose-700 hover:bg-rose-50 shadow-2xs flex items-center gap-1.5 transition cursor-pointer shrink-0"
+          className="h-9 px-4 rounded-xl border border-rose-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-xs font-semibold text-rose-700 dark:text-[#FB7185] hover:bg-rose-50 dark:hover:bg-[#334155] shadow-2xs flex items-center gap-1.5 transition cursor-pointer shrink-0"
         >
           <span>Learn More</span>
           <ExternalLink className="w-3.5 h-3.5" />
@@ -1554,42 +1554,42 @@ export default function AIInsightsPage() {
       {/* ------------------------------------------------------------------ */}
       {isLearnMoreOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+          <div className="bg-white dark:bg-[#111827] rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-[#334155] space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="h-10 w-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-xl bg-rose-100 dark:bg-[#2A1422] text-rose-700 dark:text-[#FB7185] flex items-center justify-center">
                   <Bot className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Understanding AI Insights</h3>
-                  <p className="text-xs text-slate-500">Enterprise Data Intelligence Platform</p>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC]">Understanding AI Insights</h3>
+                  <p className="text-xs text-slate-500 dark:text-[#94A3B8]">Enterprise Data Intelligence Platform</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsLearnMoreOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-[#F8FAFC] transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
-              <div className="rounded-xl border border-slate-200 p-3 bg-slate-50/50">
-                <div className="font-bold text-slate-800 mb-0.5">1. Continuous Telemetry Analysis</div>
+            <div className="space-y-3 text-xs text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
+              <div className="rounded-xl border border-slate-200 dark:border-[#334155] p-3 bg-slate-50/50 dark:bg-[#0F172A]">
+                <div className="font-bold text-slate-800 dark:text-[#F8FAFC] mb-0.5">1. Continuous Telemetry Analysis</div>
                 <p>
                   RicozAnalytics evaluates metrics, time-series velocities, monotonic growths, and operational alerts against your actual database records.
                 </p>
               </div>
 
-              <div className="rounded-xl border border-slate-200 p-3 bg-slate-50/50">
-                <div className="font-bold text-slate-800 mb-0.5">2. Ground-Truth Zero Hallucination</div>
+              <div className="rounded-xl border border-slate-200 dark:border-[#334155] p-3 bg-slate-50/50 dark:bg-[#0F172A]">
+                <div className="font-bold text-slate-800 dark:text-[#F8FAFC] mb-0.5">2. Ground-Truth Zero Hallucination</div>
                 <p>
                   Every metric, change percentage, and threshold trigger is mathematically verified from uploaded CSV or SQL datasets before presentation.
                 </p>
               </div>
 
-              <div className="rounded-xl border border-slate-200 p-3 bg-slate-50/50">
-                <div className="font-bold text-slate-800 mb-0.5">3. Impact Scoring &amp; Prioritization</div>
+              <div className="rounded-xl border border-slate-200 dark:border-[#334155] p-3 bg-slate-50/50 dark:bg-[#0F172A]">
+                <div className="font-bold text-slate-800 dark:text-[#F8FAFC] mb-0.5">3. Impact Scoring &amp; Prioritization</div>
                 <p>
                   Insights are weighted by business severity (Critical, Positive, Warning, Informational) so your team can address risks first.
                 </p>

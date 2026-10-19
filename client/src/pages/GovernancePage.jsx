@@ -750,19 +750,19 @@ export default function GovernancePage() {
           {/* Lower Two-Column Section: Role Distribution (8 cols) & Security & Isolation (4 cols) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Column: Role Distribution & Team Access */}
-            <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-xs">
+            <div className="lg:col-span-8 bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-[#334155] p-6 sm:p-7 shadow-xs">
               <div className="flex items-center gap-2.5">
-                <Users className="w-5 h-5 text-rose-600" />
-                <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                <Users className="w-5 h-5 text-rose-600 dark:text-[#FB7185]" />
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC]">
                   Role Distribution & Team Access
                 </h2>
               </div>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1">
                 Visual breakdown of privileges assigned across members in this workspace
               </p>
 
               {/* Multi-segment Progress Bar */}
-              <div className="h-3.5 w-full bg-slate-100 rounded-full overflow-hidden flex mt-6 gap-0.5">
+              <div className="h-3.5 w-full bg-slate-100 dark:bg-[#1E293B] rounded-full overflow-hidden flex mt-6 gap-0.5">
                 <div
                   style={{ width: `${Math.max(adminPct, roleDistribution.admin ? 4 : 0)}%` }}
                   className="bg-[#8b5cf6] transition-all duration-300"
@@ -780,7 +780,7 @@ export default function GovernancePage() {
                 />
                 <div
                   style={{ width: `${Math.max(viewerPct, roleDistribution.viewer ? 4 : 0)}%` }}
-                  className="bg-[#cbd5e1] transition-all duration-300"
+                  className="bg-[#cbd5e1] dark:bg-[#475569] transition-all duration-300"
                   title={`Viewers: ${roleDistribution.viewer || 0} (${viewerPct}%)`}
                 />
               </div>
@@ -788,57 +788,57 @@ export default function GovernancePage() {
               {/* 4 Role Sub-Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 sm:gap-6 mt-6">
                 {/* Administrators */}
-                <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 transition">
-                  <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700">
-                    <Crown className="w-4.5 h-4.5 text-rose-600 shrink-0" />
+                <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 dark:hover:border-rose-500 transition">
+                  <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700 dark:text-[#FB7185]">
+                    <Crown className="w-4.5 h-4.5 text-rose-600 dark:text-[#FB7185] shrink-0" />
                     <span className="truncate uppercase tracking-wider">Administrators</span>
                   </div>
-                  <div className="text-3xl font-extrabold text-slate-900 tracking-tight my-2">
+                  <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight my-2">
                     {roleDistribution.admin || 0}
                   </div>
-                  <div className="text-xs text-slate-400 font-medium">
+                  <div className="text-xs text-slate-400 dark:text-[#94A3B8] font-medium">
                     {adminPct}% of team
                   </div>
                 </div>
 
                 {/* Managers */}
-                <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 transition">
-                  <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700">
-                    <Users className="w-4.5 h-4.5 text-rose-600 shrink-0" />
+                <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 dark:hover:border-rose-500 transition">
+                  <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700 dark:text-[#FB7185]">
+                    <Users className="w-4.5 h-4.5 text-rose-600 dark:text-[#FB7185] shrink-0" />
                     <span className="truncate uppercase tracking-wider">Managers</span>
                   </div>
-                  <div className="text-3xl font-extrabold text-slate-900 tracking-tight my-2">
+                  <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight my-2">
                     {roleDistribution.manager || 0}
                   </div>
-                  <div className="text-xs text-slate-400 font-medium">
+                  <div className="text-xs text-slate-400 dark:text-[#94A3B8] font-medium">
                     {managerPct}% of team
                   </div>
                 </div>
 
                 {/* Analysts */}
-                <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 transition">
-                  <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700">
-                    <TrendingUp className="w-4.5 h-4.5 text-rose-600 shrink-0" />
+                <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 dark:hover:border-rose-500 transition">
+                  <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700 dark:text-[#FB7185]">
+                    <TrendingUp className="w-4.5 h-4.5 text-rose-600 dark:text-[#FB7185] shrink-0" />
                     <span className="truncate uppercase tracking-wider">Analysts</span>
                   </div>
-                  <div className="text-3xl font-extrabold text-slate-900 tracking-tight my-2">
+                  <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight my-2">
                     {roleDistribution.analyst || 0}
                   </div>
-                  <div className="text-xs text-slate-400 font-medium">
+                  <div className="text-xs text-slate-400 dark:text-[#94A3B8] font-medium">
                     {analystPct}% of team
                   </div>
                 </div>
 
                 {/* Viewers */}
-                <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 transition">
-                  <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700">
-                    <Eye className="w-4.5 h-4.5 text-slate-500 shrink-0" />
+                <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 dark:hover:border-rose-500 transition">
+                  <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-[#94A3B8]">
+                    <Eye className="w-4.5 h-4.5 text-slate-500 dark:text-[#94A3B8] shrink-0" />
                     <span className="truncate uppercase tracking-wider">Viewers</span>
                   </div>
-                  <div className="text-3xl font-extrabold text-slate-900 tracking-tight my-2">
+                  <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight my-2">
                     {roleDistribution.viewer || 0}
                   </div>
-                  <div className="text-xs text-slate-400 font-medium">
+                  <div className="text-xs text-slate-400 dark:text-[#94A3B8] font-medium">
                     {viewerPct}% of team
                   </div>
                 </div>
@@ -846,83 +846,83 @@ export default function GovernancePage() {
             </div>
 
             {/* Right Column: Security & Isolation */}
-            <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-xs flex flex-col justify-between">
+            <div className="lg:col-span-4 bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-[#334155] p-6 sm:p-7 shadow-xs flex flex-col justify-between">
               <div>
                 <div className="flex items-center gap-2.5">
-                  <Shield className="w-5 h-5 text-rose-600" />
-                  <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                  <Shield className="w-5 h-5 text-rose-600 dark:text-[#FB7185]" />
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC]">
                     Security & Isolation
                   </h2>
                 </div>
 
                 <div className="space-y-3 mt-6">
                   {/* Row 1: Tenant Isolation (RLS) */}
-                  <div className="bg-slate-50/70 hover:bg-slate-100/60 border border-slate-100 rounded-xl px-4 py-3.5 flex items-center justify-between transition-colors">
+                  <div className="bg-slate-50/70 hover:bg-slate-100/60 dark:bg-[#0F172A] dark:hover:bg-[#1E293B] border border-slate-100 dark:border-[#334155] rounded-xl px-4 py-3.5 flex items-center justify-between transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
-                      <Lock className="w-4 h-4 text-rose-600 shrink-0" />
-                      <span className="text-xs font-medium text-slate-800 truncate">
+                      <Lock className="w-4 h-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
+                      <span className="text-xs font-medium text-slate-800 dark:text-[#CBD5E1] truncate">
                         Tenant Isolation (RLS)
                       </span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
                         Enforced
                       </span>
-                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                      <ChevronRight className="w-4 h-4 text-slate-400 dark:text-[#64748B]" />
                     </div>
                   </div>
 
                   {/* Row 2: Immutable Audit Logs */}
                   <div
                     onClick={() => setActiveTab('audit')}
-                    className="bg-slate-50/70 hover:bg-slate-100/60 border border-slate-100 rounded-xl px-4 py-3.5 flex items-center justify-between transition-colors cursor-pointer"
+                    className="bg-slate-50/70 hover:bg-slate-100/60 dark:bg-[#0F172A] dark:hover:bg-[#1E293B] border border-slate-100 dark:border-[#334155] rounded-xl px-4 py-3.5 flex items-center justify-between transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <FileText className="w-4 h-4 text-rose-600 shrink-0" />
-                      <span className="text-xs font-medium text-slate-800 truncate">
+                      <FileText className="w-4 h-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
+                      <span className="text-xs font-medium text-slate-800 dark:text-[#CBD5E1] truncate">
                         Immutable Audit Logs
                       </span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
                         Active
                       </span>
-                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                      <ChevronRight className="w-4 h-4 text-slate-400 dark:text-[#64748B]" />
                     </div>
                   </div>
 
                   {/* Row 3: Credential Scrubbing */}
-                  <div className="bg-slate-50/70 hover:bg-slate-100/60 border border-slate-100 rounded-xl px-4 py-3.5 flex items-center justify-between transition-colors">
+                  <div className="bg-slate-50/70 hover:bg-slate-100/60 dark:bg-[#0F172A] dark:hover:bg-[#1E293B] border border-slate-100 dark:border-[#334155] rounded-xl px-4 py-3.5 flex items-center justify-between transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
-                      <Database className="w-4 h-4 text-rose-600 shrink-0" />
-                      <span className="text-xs font-medium text-slate-800 truncate">
+                      <Database className="w-4 h-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
+                      <span className="text-xs font-medium text-slate-800 dark:text-[#CBD5E1] truncate">
                         Credential Scrubbing
                       </span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/60">
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border border-rose-200/60 dark:border-rose-900/60">
                         Strict
                       </span>
-                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                      <ChevronRight className="w-4 h-4 text-slate-400 dark:text-[#64748B]" />
                     </div>
                   </div>
 
                   {/* Row 4: Current Session Role */}
                   <div
                     onClick={() => setActiveTab('permissions')}
-                    className="bg-slate-50/70 hover:bg-slate-100/60 border border-slate-100 rounded-xl px-4 py-3.5 flex items-center justify-between transition-colors cursor-pointer"
+                    className="bg-slate-50/70 hover:bg-slate-100/60 dark:bg-[#0F172A] dark:hover:bg-[#1E293B] border border-slate-100 dark:border-[#334155] rounded-xl px-4 py-3.5 flex items-center justify-between transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <User className="w-4 h-4 text-rose-600 shrink-0" />
-                      <span className="text-xs font-medium text-slate-800 truncate">
+                      <User className="w-4 h-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
+                      <span className="text-xs font-medium text-slate-800 dark:text-[#CBD5E1] truncate">
                         Current Session Role
                       </span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200/60 capitalize">
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 dark:bg-[#1E293B] text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-[#334155] capitalize">
                         {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Admin'}
                       </span>
-                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                      <ChevronRight className="w-4 h-4 text-slate-400 dark:text-[#64748B]" />
                     </div>
                   </div>
                 </div>

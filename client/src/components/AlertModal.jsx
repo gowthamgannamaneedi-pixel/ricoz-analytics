@@ -28,10 +28,10 @@ const CONDITIONS = [
 ];
 
 const SEVERITIES = [
-  { value: 'low', label: 'Low', color: 'border-blue-200 bg-blue-50 text-blue-700', dot: 'bg-blue-500' },
-  { value: 'medium', label: 'Medium', color: 'border-amber-200 bg-amber-50 text-amber-700', dot: 'bg-amber-500' },
-  { value: 'high', label: 'High', color: 'border-orange-200 bg-orange-50 text-orange-700', dot: 'bg-orange-500' },
-  { value: 'critical', label: 'Critical', color: 'border-rose-200 bg-rose-50 text-rose-700', dot: 'bg-rose-500' }
+  { value: 'low', label: 'Low', color: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300', dot: 'bg-blue-500' },
+  { value: 'medium', label: 'Medium', color: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300', dot: 'bg-amber-500' },
+  { value: 'high', label: 'High', color: 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900/60 dark:bg-orange-950/40 dark:text-orange-300', dot: 'bg-orange-500' },
+  { value: 'critical', label: 'Critical', color: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300', dot: 'bg-rose-500' }
 ];
 
 export default function AlertModal({
@@ -241,26 +241,26 @@ export default function AlertModal({
     >
       <div
         ref={modalRef}
-        className="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all max-h-[92vh] flex flex-col overflow-hidden my-auto"
+        className="relative w-full max-w-2xl rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] shadow-2xl transition-all max-h-[92vh] flex flex-col overflow-hidden my-auto"
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5 shrink-0">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#334155] px-5 py-3.5 shrink-0 bg-white dark:bg-[#111827]">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FFF1F3] border border-rose-200/80 text-[#D91542] shrink-0">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] border border-rose-200/80 dark:border-rose-900/60 text-[#D91542] dark:text-[#FB7185] shrink-0">
               <Bell className="h-4.5 w-4.5" />
             </div>
             <div>
-              <h2 id="alert-modal-title" className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
+              <h2 id="alert-modal-title" className="text-sm sm:text-base font-bold text-slate-900 dark:text-[#F8FAFC] leading-tight">
                 {alert ? 'Edit Alert Rule' : 'Create Real-Time Alert Rule'}
               </h2>
-              <p className="text-[11px] text-slate-500 mt-0.5">
+              <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-0.5">
                 Set operational condition thresholds and dispatch rules
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-slate-700 dark:hover:text-[#F8FAFC] transition cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
@@ -269,7 +269,7 @@ export default function AlertModal({
         {/* Modal Body */}
         <form onSubmit={handleSubmit} className="px-5 py-4 space-y-3.5 overflow-visible">
           {error && (
-            <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50/90 px-3 py-2 text-xs text-rose-700">
+            <div className="flex items-center gap-2 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/90 dark:bg-[#2A1422] px-3 py-2 text-xs text-rose-700 dark:text-[#FDA4AF]">
               <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
               <span>{error}</span>
             </div>
@@ -277,7 +277,7 @@ export default function AlertModal({
 
           {/* Row 1: Rule Name */}
           <div>
-            <label className="block text-xs font-semibold text-slate-800 mb-1">
+            <label className="block text-xs font-semibold text-slate-800 dark:text-[#CBD5E1] mb-1">
               Alert Rule Name <span className="text-rose-500">*</span>
             </label>
             <input
@@ -286,7 +286,7 @@ export default function AlertModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-xs text-slate-900 font-medium placeholder-slate-400 transition focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs"
+              className="w-full h-10 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#0F172A] px-3.5 text-xs text-slate-900 dark:text-[#F8FAFC] font-medium placeholder-slate-400 dark:placeholder-slate-500 transition focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs"
             />
           </div>
 
@@ -294,7 +294,7 @@ export default function AlertModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Metric Selection */}
             <div>
-              <label className="block text-xs font-semibold text-slate-800 mb-1">
+              <label className="block text-xs font-semibold text-slate-800 dark:text-[#CBD5E1] mb-1">
                 Target Metric / KPI
               </label>
               <Select
@@ -313,7 +313,7 @@ export default function AlertModal({
 
             {/* Condition Expression */}
             <div>
-              <label className="block text-xs font-semibold text-slate-800 mb-1">
+              <label className="block text-xs font-semibold text-slate-800 dark:text-[#CBD5E1] mb-1">
                 Condition Trigger <span className="text-rose-500">*</span>
               </label>
               <Select
@@ -333,7 +333,7 @@ export default function AlertModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Threshold Value */}
             <div>
-              <label className="block text-xs font-semibold text-slate-800 mb-1">
+              <label className="block text-xs font-semibold text-slate-800 dark:text-[#CBD5E1] mb-1">
                 Threshold Boundary <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
@@ -344,9 +344,9 @@ export default function AlertModal({
                   value={threshold}
                   onChange={(e) => setThreshold(e.target.value)}
                   required
-                  className="w-full h-10 rounded-xl border border-slate-200 bg-white pl-3.5 pr-12 text-xs font-medium text-slate-900 placeholder-slate-400 transition focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs"
+                  className="w-full h-10 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#0F172A] pl-3.5 pr-12 text-xs font-medium text-slate-900 dark:text-[#F8FAFC] placeholder-slate-400 dark:placeholder-slate-500 transition focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 font-mono pointer-events-none">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 dark:text-[#94A3B8] font-mono pointer-events-none">
                   value
                 </span>
               </div>
@@ -354,7 +354,7 @@ export default function AlertModal({
 
             {/* Cooldown Period */}
             <div>
-              <label className="block text-xs font-semibold text-slate-800 mb-1">
+              <label className="block text-xs font-semibold text-slate-800 dark:text-[#CBD5E1] mb-1">
                 Anti-Flapping Cooldown (Minutes)
               </label>
               <div className="relative">
@@ -364,9 +364,9 @@ export default function AlertModal({
                   placeholder="60"
                   value={cooldownMinutes}
                   onChange={(e) => setCooldownMinutes(e.target.value)}
-                  className="w-full h-10 rounded-xl border border-slate-200 bg-white pl-3.5 pr-12 text-xs font-medium text-slate-900 placeholder-slate-400 transition focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs"
+                  className="w-full h-10 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#0F172A] pl-3.5 pr-12 text-xs font-medium text-slate-900 dark:text-[#F8FAFC] placeholder-slate-400 dark:placeholder-slate-500 transition focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none shadow-2xs"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 font-mono pointer-events-none">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 dark:text-[#94A3B8] font-mono pointer-events-none">
                   mins
                 </span>
               </div>
@@ -375,7 +375,7 @@ export default function AlertModal({
 
           {/* Row 4: Severity Badges Selector */}
           <div>
-            <label className="block text-xs font-semibold text-slate-800 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-800 dark:text-[#CBD5E1] mb-1.5">
               Incident Severity Level
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -389,7 +389,7 @@ export default function AlertModal({
                     className={`flex items-center justify-center gap-1.5 rounded-xl border h-9 px-2.5 text-xs font-semibold transition cursor-pointer ${
                       isSelected
                         ? `${sev.color} ring-2 ring-rose-500/20 shadow-xs font-bold`
-                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#94A3B8] dark:hover:bg-[#1E293B]'
                     }`}
                   >
                     <span className={`h-2 w-2 rounded-full ${sev.dot}`} />
@@ -401,10 +401,10 @@ export default function AlertModal({
           </div>
 
           {/* Row 5: Notification Channels & Recipient Emails */}
-          <div className="rounded-xl border border-slate-200/90 bg-slate-50/60 p-3 space-y-2.5">
+          <div className="rounded-xl border border-slate-200/90 dark:border-[#334155] bg-slate-50/60 dark:bg-[#0F172A] p-3 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                <Mail className="h-3.5 w-3.5 text-rose-600" />
+              <span className="text-xs font-semibold text-slate-800 dark:text-[#CBD5E1] flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5 text-rose-600 dark:text-[#FB7185]" />
                 <span>Notification Dispatch Channels</span>
               </span>
               <div className="flex items-center gap-1.5">
@@ -413,8 +413,8 @@ export default function AlertModal({
                   onClick={() => toggleChannel('in_app')}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
                     notificationChannels.includes('in_app')
-                      ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                      ? 'bg-rose-600 text-white border-rose-600 dark:bg-[#E11D48] dark:border-[#E11D48] shadow-2xs'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-[#1E293B] dark:text-[#CBD5E1] dark:border-[#334155] dark:hover:bg-[#334155]'
                   }`}
                 >
                   In-App Incident Center
@@ -424,8 +424,8 @@ export default function AlertModal({
                   onClick={() => toggleChannel('email')}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${
                     notificationChannels.includes('email')
-                      ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                      ? 'bg-rose-600 text-white border-rose-600 dark:bg-[#E11D48] dark:border-[#E11D48] shadow-2xs'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-[#1E293B] dark:text-[#CBD5E1] dark:border-[#334155] dark:hover:bg-[#334155]'
                   }`}
                 >
                   Email Notification
@@ -435,7 +435,7 @@ export default function AlertModal({
 
             {/* Email Recipients Input */}
             {notificationChannels.includes('email') && (
-              <div className="pt-2 border-t border-slate-200/70 space-y-2">
+              <div className="pt-2 border-t border-slate-200/70 dark:border-[#334155] space-y-2">
                 <div className="flex gap-2">
                   <input
                     type="email"
@@ -448,7 +448,7 @@ export default function AlertModal({
                         handleAddEmail();
                       }
                     }}
-                    className="flex-1 h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-800 placeholder-slate-400 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none"
+                    className="flex-1 h-9 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] px-3 text-xs text-slate-800 dark:text-[#F8FAFC] placeholder-slate-400 dark:placeholder-slate-500 focus:border-rose-600 focus:ring-2 focus:ring-rose-500/20 focus:outline-none"
                   />
                   <button
                     type="button"
@@ -466,7 +466,7 @@ export default function AlertModal({
                     {recipients.map((em) => (
                       <span
                         key={em}
-                        className="inline-flex items-center gap-1.5 rounded-md bg-white border border-slate-200 px-2 py-0.5 text-[11px] font-mono text-slate-700 shadow-2xs"
+                        className="inline-flex items-center gap-1.5 rounded-md bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-[#334155] px-2 py-0.5 text-[11px] font-mono text-slate-700 dark:text-[#CBD5E1] shadow-2xs"
                       >
                         <span>{em}</span>
                         <button
@@ -485,14 +485,14 @@ export default function AlertModal({
           </div>
 
           {/* Modal Footer: Active Switch on Left + Action Buttons on Right */}
-          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-[#334155]">
             {/* Activation Status Switch */}
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setStatus(status === 'active' ? 'disabled' : 'active')}
                 className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  status === 'active' ? 'bg-rose-600' : 'bg-slate-300'
+                  status === 'active' ? 'bg-rose-600' : 'bg-slate-300 dark:bg-slate-700'
                 }`}
               >
                 <span
@@ -501,7 +501,7 @@ export default function AlertModal({
                   }`}
                 />
               </button>
-              <span className="text-xs font-semibold text-slate-700">
+              <span className="text-xs font-semibold text-slate-700 dark:text-[#CBD5E1]">
                 {status === 'active' ? 'Rule Active' : 'Disabled'}
               </span>
             </div>

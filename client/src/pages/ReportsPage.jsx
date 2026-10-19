@@ -773,15 +773,15 @@ export default function ReportsPage() {
       {/* 3. SEGMENTED TABS & FILTERS TOOLBAR                                 */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3.5">
-        {/* Left: Segmented Tab Buttons */}
-        <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200 overflow-x-auto shrink-0">
+        {/* Left: Tab Buttons */}
+        <div className="flex items-center gap-1 bg-slate-100/90 dark:bg-transparent p-1 dark:p-0 rounded-xl dark:rounded-none border border-slate-200 dark:border-0 dark:border-b dark:border-[#334155] overflow-x-auto shrink-0 dark:gap-6 sm:dark:gap-8">
           <button
             type="button"
             onClick={() => setActiveTab('library')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 dark:rounded-none dark:border-b-2 dark:py-3 dark:px-1 dark:bg-transparent ${
               activeTab === 'library'
-                ? 'bg-rose-600 text-white shadow-xs font-bold'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                ? 'bg-rose-600 text-white shadow-xs font-bold dark:border-[#E11D48] dark:text-[#FB7185] dark:shadow-none'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:border-transparent dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:bg-transparent'
             }`}
           >
             <FileBarChart className="h-4 w-4" />
@@ -791,10 +791,10 @@ export default function ReportsPage() {
           <button
             type="button"
             onClick={() => setActiveTab('scheduled')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 dark:rounded-none dark:border-b-2 dark:py-3 dark:px-1 dark:bg-transparent ${
               activeTab === 'scheduled'
-                ? 'bg-rose-600 text-white shadow-xs font-bold'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                ? 'bg-rose-600 text-white shadow-xs font-bold dark:border-[#E11D48] dark:text-[#FB7185] dark:shadow-none'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:border-transparent dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:bg-transparent'
             }`}
           >
             <Calendar className="h-4 w-4" />
@@ -804,10 +804,10 @@ export default function ReportsPage() {
           <button
             type="button"
             onClick={() => setActiveTab('history')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 dark:rounded-none dark:border-b-2 dark:py-3 dark:px-1 dark:bg-transparent ${
               activeTab === 'history'
-                ? 'bg-rose-600 text-white shadow-xs font-bold'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                ? 'bg-rose-600 text-white shadow-xs font-bold dark:border-[#E11D48] dark:text-[#FB7185] dark:shadow-none'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:border-transparent dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:bg-transparent'
             }`}
           >
             <History className="h-4 w-4" />
@@ -817,10 +817,10 @@ export default function ReportsPage() {
           <button
             type="button"
             onClick={() => setActiveTab('templates')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 dark:rounded-none dark:border-b-2 dark:py-3 dark:px-1 dark:bg-transparent ${
               activeTab === 'templates'
-                ? 'bg-rose-600 text-white shadow-xs font-bold'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                ? 'bg-rose-600 text-white shadow-xs font-bold dark:border-[#E11D48] dark:text-[#FB7185] dark:shadow-none'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:border-transparent dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:bg-transparent'
             }`}
           >
             <Layout className="h-4 w-4" />
@@ -1188,18 +1188,18 @@ export default function ReportsPage() {
             </div>
 
             {/* Right 4 Cols: Report Templates (Pre-built blueprints) */}
-            <div className="xl:col-span-4 bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
+            <div className="xl:col-span-4 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+                <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-[#334155]">
                   <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185]">
                       <Layout className="h-4 w-4" />
                     </div>
                     <div>
-                      <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-tight">
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-tight">
                         Report Templates
                       </h3>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
                         Quick start with pre-built templates
                       </p>
                     </div>
@@ -1208,7 +1208,7 @@ export default function ReportsPage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('templates')}
-                    className="text-xs font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1 transition cursor-pointer"
+                    className="text-xs font-semibold text-rose-600 dark:text-[#FB7185] hover:text-rose-700 dark:hover:text-rose-300 flex items-center gap-1 transition cursor-pointer"
                   >
                     <span>View All</span>
                     <ChevronRight className="h-3.5 w-3.5" />
@@ -1220,17 +1220,17 @@ export default function ReportsPage() {
                   {PREBUILT_TEMPLATES.map((tpl) => (
                     <div
                       key={tpl.id}
-                      className="p-3 rounded-xl border border-slate-100 hover:border-rose-200 bg-slate-50/50 hover:bg-rose-50/20 transition-all flex items-center justify-between gap-3 group"
+                      className="p-3 rounded-xl border border-slate-100 dark:border-[#334155] hover:border-rose-200 dark:hover:border-rose-800 bg-slate-50/50 dark:bg-[#1E293B] hover:bg-rose-50/20 dark:hover:bg-[#1E293B]/80 transition-all flex items-center justify-between gap-3 group"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 border ${tpl.iconBg}`}>
                           <FileText className="h-4 w-4" />
                         </div>
                         <div className="min-w-0">
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-[#F8FAFC] truncate">
                             {tpl.title}
                           </h4>
-                          <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                          <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] truncate mt-0.5">
                             {tpl.description}
                           </p>
                         </div>
@@ -1239,7 +1239,7 @@ export default function ReportsPage() {
                       <button
                         type="button"
                         onClick={() => handleUseTemplate(tpl)}
-                        className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 text-xs font-semibold text-rose-600 hover:text-rose-700 transition cursor-pointer shrink-0 shadow-2xs"
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#0F172A] hover:bg-rose-50 dark:hover:bg-[#2A1422] text-xs font-semibold text-rose-600 dark:text-[#FB7185] hover:text-rose-700 dark:hover:text-rose-300 transition cursor-pointer shrink-0 shadow-2xs"
                       >
                         Use
                       </button>
@@ -1249,8 +1249,8 @@ export default function ReportsPage() {
               </div>
 
               {/* Template Promotion Banner */}
-              <div className="mt-5 p-3.5 rounded-xl bg-rose-50/60 border border-rose-100 flex items-center gap-3 text-xs text-rose-900">
-                <Sparkles className="h-4 w-4 text-rose-600 shrink-0" />
+              <div className="mt-5 p-3.5 rounded-xl bg-rose-50/60 dark:bg-[#0F172A] border border-rose-100 dark:border-[#334155] flex items-center gap-3 text-xs text-rose-900 dark:text-[#CBD5E1]">
+                <Sparkles className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
                 <span className="leading-relaxed">
                   Automated formats include PDF digest, XLSX multi-sheet tables, and lightweight CSV exports.
                 </span>

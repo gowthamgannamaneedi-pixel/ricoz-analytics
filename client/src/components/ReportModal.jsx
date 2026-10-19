@@ -168,27 +168,27 @@ export default function ReportModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
-      <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[88vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 dark:bg-black/80 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+      <div className="relative w-full max-w-2xl rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200 dark:border-[#334155] overflow-hidden my-auto max-h-[88vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-slate-100 bg-slate-50/70 shrink-0">
+        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-slate-100 dark:border-[#334155] bg-slate-50/70 dark:bg-[#111827] shrink-0">
           <div className="flex items-center gap-3.5">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-600 text-white shadow-xs shrink-0">
               <FileBarChart className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900 leading-tight">
+              <h2 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC] leading-tight">
                 {report ? 'Edit Report Configuration' : 'Create Automated Report'}
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1">
                 Configure data scopes, output formatting, and automated delivery schedule
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-400 hover:bg-slate-200/70 hover:text-slate-700 transition cursor-pointer shrink-0"
+            className="rounded-lg p-2 text-slate-400 hover:bg-slate-200/70 dark:hover:bg-[#1E293B] hover:text-slate-700 dark:hover:text-[#F8FAFC] transition cursor-pointer shrink-0"
             aria-label="Close modal"
           >
             <X className="h-5 w-5" />
@@ -198,7 +198,7 @@ export default function ReportModal({
         {/* Form Body — internal scrolling, clear section rhythm */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           {error && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-rose-50 dark:bg-[#2A1422] border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-[#FDA4AF] text-xs">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -270,7 +270,7 @@ export default function ReportModal({
 
           {/* Format Picker */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-2">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] mb-2">
               Output Export Format
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -283,16 +283,16 @@ export default function ReportModal({
                     onClick={() => setFormat(opt.value)}
                     className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition cursor-pointer ${
                       isSelected
-                        ? 'border-rose-600 bg-rose-50/50 ring-1 ring-rose-600 shadow-2xs'
-                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                        ? 'border-rose-600 dark:border-[#E11D48] bg-rose-50/50 dark:bg-[#2A1422] ring-1 ring-rose-600 dark:ring-[#E11D48] shadow-2xs'
+                        : 'border-slate-200 dark:border-[#334155] bg-white dark:bg-[#0F172A] hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-[#1E293B]'
                     }`}
                   >
                     <span className="text-xl shrink-0">{opt.icon}</span>
                     <div className="min-w-0">
-                      <p className={`text-xs font-bold ${isSelected ? 'text-rose-900' : 'text-slate-800'}`}>
+                      <p className={`text-xs font-bold ${isSelected ? 'text-rose-900 dark:text-[#FDA4AF]' : 'text-slate-800 dark:text-[#CBD5E1]'}`}>
                         {opt.label}
                       </p>
-                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">{opt.desc}</p>
+                      <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] line-clamp-1 mt-0.5">{opt.desc}</p>
                     </div>
                   </button>
                 );
@@ -302,7 +302,7 @@ export default function ReportModal({
 
           {/* Schedule Cadence */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] mb-1.5">
               Automated Schedule Cadence
             </label>
             <Select
@@ -323,9 +323,9 @@ export default function ReportModal({
                   value={customCron}
                   onChange={(e) => setCustomCron(e.target.value)}
                   placeholder="e.g. 0 18 * * 5 (Every Friday at 6:00 PM)"
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-mono text-slate-800 focus:border-rose-500 focus:outline-hidden focus:ring-2 focus:ring-rose-500/20"
+                  className="w-full rounded-xl border border-slate-300 dark:border-[#334155] bg-white dark:bg-[#0F172A] px-3.5 py-2 text-xs font-mono text-slate-800 dark:text-[#CBD5E1] focus:border-rose-500 dark:focus:border-[#E11D48] focus:outline-hidden focus:ring-2 focus:ring-rose-500/20"
                 />
-                <p className="text-[10px] text-slate-500 mt-1">
+                <p className="text-[10px] text-slate-500 dark:text-[#94A3B8] mt-1">
                   Standard 5-field cron syntax: <code>minute hour day-of-month month day-of-week</code>
                 </p>
               </div>
@@ -334,7 +334,7 @@ export default function ReportModal({
 
           {/* Email Delivery Recipients */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] mb-1.5">
               Stakeholder Email Recipients
             </label>
             <div className="flex gap-2">
@@ -349,12 +349,12 @@ export default function ReportModal({
                   }
                 }}
                 placeholder="colleague@company.com"
-                className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800 focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500"
+                className="flex-1 rounded-lg border border-slate-300 dark:border-[#334155] bg-white dark:bg-[#0F172A] px-3 py-2 text-xs text-slate-800 dark:text-[#CBD5E1] placeholder-slate-400 dark:placeholder-[#94A3B8] focus:border-rose-500 dark:focus:border-[#E11D48] focus:outline-hidden focus:ring-1 focus:ring-rose-500"
               />
               <button
                 type="button"
                 onClick={handleAddEmail}
-                className="inline-flex items-center gap-1 px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer"
+                className="inline-flex items-center gap-1 px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-[#1E293B] hover:bg-slate-200 dark:hover:bg-[#334155] text-slate-700 dark:text-[#CBD5E1] border border-transparent dark:border-[#334155] text-xs font-semibold transition cursor-pointer"
               >
                 <Plus className="h-3.5 w-3.5" /> Add
               </button>
@@ -365,14 +365,14 @@ export default function ReportModal({
                 {recipients.map((email) => (
                   <span
                     key={email}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-[#2A1422] border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-[#FDA4AF] text-xs font-medium"
                   >
-                    <Mail className="h-3 w-3 text-rose-600" />
+                    <Mail className="h-3 w-3 text-rose-600 dark:text-[#FB7185]" />
                     {email}
                     <button
                       type="button"
                       onClick={() => handleRemoveEmail(email)}
-                      className="text-rose-500 hover:text-rose-800 ml-0.5 cursor-pointer"
+                      className="text-rose-500 dark:text-[#FB7185] hover:text-rose-800 dark:hover:text-[#FDA4AF] ml-0.5 cursor-pointer"
                     >
                       <X className="h-3 w-3" />
                     </button>

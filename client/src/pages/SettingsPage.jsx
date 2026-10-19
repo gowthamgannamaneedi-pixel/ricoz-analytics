@@ -605,7 +605,7 @@ export default function SettingsPage() {
       {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* 2. HORIZONTAL SETTINGS NAVIGATION TABS                             */}
       {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <div className="border-b border-slate-200">
+      <div className="border-b border-slate-200 dark:border-[#334155]">
         <nav className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar py-0.5">
           {[
             { id: 'overview', label: 'Overview', icon: Laptop },
@@ -624,15 +624,15 @@ export default function SettingsPage() {
                 onClick={() => handleTabChange(tab.id)}
                 className={`flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-t-lg border-b-2 whitespace-nowrap transition cursor-pointer ${
                   isActive
-                    ? 'border-rose-600 text-rose-700 bg-rose-50/50'
-                    : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                    ? 'border-rose-600 text-rose-700 bg-rose-50/50 dark:border-b-2 dark:border-[#E11D48] dark:text-[#FB7185] dark:bg-transparent'
+                    : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] dark:hover:bg-transparent'
                 }`}
               >
-                <Icon className={`h-4 w-4 ${isActive ? 'text-rose-600' : 'text-slate-400'}`} />
+                <Icon className={`h-4 w-4 ${isActive ? 'text-rose-600 dark:text-[#FB7185]' : 'text-slate-400 dark:text-[#94A3B8]'}`} />
                 <span>{tab.label}</span>
                 {tab.count !== undefined && tab.count > 0 && (
                   <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                    isActive ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'
+                    isActive ? 'bg-rose-100 text-rose-800 dark:bg-[#2A1422] dark:text-[#FDA4AF]' : 'bg-slate-100 text-slate-600 dark:bg-[#1E293B] dark:text-[#CBD5E1]'
                   }`}>
                     {tab.count}
                   </span>
@@ -653,89 +653,89 @@ export default function SettingsPage() {
             {/* Card 1: Total Users */}
             <div
               onClick={() => handleTabChange('users')}
-              className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all cursor-pointer flex items-center justify-between"
+              className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-500 transition-all cursor-pointer flex items-center justify-between"
             >
               <div className="flex items-center gap-3.5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 shrink-0">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0">
                   <Users className="h-5 w-5" />
                 </div>
                 <div>
-                  <span className="text-xs font-semibold text-slate-500">Total Users</span>
-                  <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8]">Total Users</span>
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight mt-1">
                     {stats.membersCount}
                   </div>
-                  <span className="text-[11px] text-slate-400 font-medium">
+                  <span className="text-[11px] text-slate-400 dark:text-[#94A3B8] font-medium">
                     {stats.activeMembersCount} active accounts
                   </span>
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
+              <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B]" />
             </div>
 
             {/* Card 2: Connected Datasets */}
             <div
               onClick={() => navigate('/datasets')}
-              className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all cursor-pointer flex items-center justify-between"
+              className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-500 transition-all cursor-pointer flex items-center justify-between"
             >
               <div className="flex items-center gap-3.5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 shrink-0">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0">
                   <Database className="h-5 w-5" />
                 </div>
                 <div>
-                  <span className="text-xs font-semibold text-slate-500">Connected Datasets</span>
-                  <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8]">Connected Datasets</span>
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight mt-1">
                     {stats.datasetsCount}
                   </div>
-                  <span className="text-[11px] text-slate-400 font-medium">Enterprise data sources</span>
+                  <span className="text-[11px] text-slate-400 dark:text-[#94A3B8] font-medium">Enterprise data sources</span>
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
+              <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B]" />
             </div>
 
             {/* Card 3: Dashboards & Reports */}
             <div
               onClick={() => navigate('/dashboard')}
-              className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all cursor-pointer flex items-center justify-between"
+              className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-500 transition-all cursor-pointer flex items-center justify-between"
             >
               <div className="flex items-center gap-3.5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 shrink-0">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0">
                   <Layers className="h-5 w-5" />
                 </div>
                 <div>
-                  <span className="text-xs font-semibold text-slate-500">Dashboards & Reports</span>
-                  <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8]">Dashboards & Reports</span>
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight mt-1">
                     {stats.dashboardsCount + stats.reportsCount}
                   </div>
-                  <span className="text-[11px] text-slate-400 font-medium">
-                    {stats.dashboardsCount} dashboards â€¢ {stats.reportsCount} reports
+                  <span className="text-[11px] text-slate-400 dark:text-[#94A3B8] font-medium">
+                    {stats.dashboardsCount} dashboards • {stats.reportsCount} reports
                   </span>
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
+              <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B]" />
             </div>
 
             {/* Card 4: Security Status */}
             <div
               onClick={() => navigate('/governance')}
-              className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all cursor-pointer flex items-center justify-between"
+              className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-500 transition-all cursor-pointer flex items-center justify-between"
             >
               <div className="flex items-center gap-3.5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 shrink-0">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0">
                   <ShieldCheck className="h-5 w-5" />
                 </div>
                 <div>
-                  <span className="text-xs font-semibold text-slate-500">Security Status</span>
-                  <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8]">Security Status</span>
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight mt-1">
                     {healthStatus}
                   </div>
-                  <span className="text-[11px] text-slate-400 font-medium">
+                  <span className="text-[11px] text-slate-400 dark:text-[#94A3B8] font-medium">
                     {stats.alertsCount} active alert{stats.alertsCount !== 1 ? 's' : ''}
                   </span>
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
+              <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B]" />
             </div>
-          </div>{/* â”€â”€ end 4-card grid â”€â”€ */}
+          </div>{/* ── end 4-card grid ── */}
 
           {/* Two-column layout */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -743,14 +743,14 @@ export default function SettingsPage() {
             <div className="lg:col-span-7 space-y-6">
 
             {/* System Configuration Panel */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-3.5">
+            <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs space-y-3.5">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185]">
                   <Settings className="h-4 w-4" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold text-slate-900">System Configuration</h2>
-                  <p className="text-xs text-slate-500 font-medium">
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">System Configuration</h2>
+                  <p className="text-xs text-slate-500 dark:text-[#94A3B8] font-medium">
                     Configure your organization and platform settings.
                   </p>
                 </div>
@@ -760,188 +760,188 @@ export default function SettingsPage() {
                   {/* Tile 1: Organization Settings */}
                   <div
                     onClick={() => handleTabChange('organization')}
-                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-rose-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
+                    className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600 shrink-0 mt-0.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
                         <Building2 className="h-4 w-4" />
                       </div>
                       <div>
-                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
+                        <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
                            Organization Settings
                         </h3>
-                        <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">
+                        <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
                           Manage organization profile, branding, and regional settings.
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
+                    <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
                   </div>
 
                   {/* Tile 2: Users & Access */}
                   <div
                     onClick={() => handleTabChange('users')}
-                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-rose-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
+                    className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600 shrink-0 mt-0.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
                         <Users className="h-4 w-4" />
                       </div>
                       <div>
-                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
+                        <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
                           Users & Access
                         </h3>
-                        <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">
+                        <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
                           Manage team members, roles, and permissions.
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
+                    <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
                   </div>
 
                   {/* Tile 3: Data Settings */}
                   <div
                     onClick={() => navigate('/data-sources')}
-                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-rose-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
+                    className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600 shrink-0 mt-0.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
                         <Database className="h-4 w-4" />
                       </div>
                       <div>
-                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
+                        <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
                           Data Settings
                         </h3>
-                        <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">
+                        <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
                           Default datasets, refresh schedules, and data preferences.
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
+                    <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
                   </div>
 
                   {/* Tile 4: Integrations */}
                   <div
                     onClick={() => handleTabChange('integrations')}
-                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-rose-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
+                    className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600 shrink-0 mt-0.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
                         <Plug className="h-4 w-4" />
                       </div>
                       <div>
-                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
+                        <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
                           Integrations
                         </h3>
-                        <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">
+                        <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
                           Connect external tools and data sources.
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
+                    <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
                   </div>
 
                   {/* Tile 5: Notifications */}
                   <div
                     onClick={() => handleTabChange('notifications')}
-                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-rose-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
+                    className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600 shrink-0 mt-0.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
                         <Bell className="h-4 w-4" />
                       </div>
                       <div>
-                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
+                        <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
                           Notifications
                         </h3>
-                        <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">
+                        <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
                           Manage alerts, email notifications, and preferences.
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
+                    <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
                   </div>
 
                   {/* Tile 6: Platform Preferences */}
                   <div
                     onClick={() => handleTabChange('preferences')}
-                    className="group border border-slate-200/80 rounded-xl p-3.5 hover:border-rose-300 hover:bg-slate-50/60 transition cursor-pointer flex items-start justify-between"
+                    className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600 shrink-0 mt-0.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
                         <Sliders className="h-4 w-4" />
                       </div>
                       <div>
-                        <h3 className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
+                        <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
                           Platform Preferences
                         </h3>
-                        <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">
+                        <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
                           Customize your workspace experience.
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-0.5 transition shrink-0 mt-1" />
+                    <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
                   </div>
                 </div>
               </div>
 
               {/* Quick Actions Row */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-3">
+              <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs space-y-3">
                 <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-rose-600 shrink-0" />
-                  <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">Quick Actions</span>
-                  <span className="text-xs text-slate-400 font-normal">â€” Common administrative tasks.</span>
+                  <Zap className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
+                  <span className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] uppercase tracking-wider">Quick Actions</span>
+                  <span className="text-xs text-slate-400 dark:text-[#94A3B8] font-normal">— Common administrative tasks.</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
                   <button
                     type="button"
                     onClick={() => setIsInviteModalOpen(true)}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-rose-200 bg-rose-50/50 hover:bg-rose-100/70 text-rose-700 text-xs font-semibold transition cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-rose-200 dark:border-[#334155] bg-rose-50/50 dark:bg-[#1E293B] hover:bg-rose-100/70 dark:hover:bg-slate-700 text-rose-700 dark:text-[#CBD5E1] text-xs font-semibold transition cursor-pointer"
                   >
-                    <UserPlus className="h-3.5 w-3.5" />
+                    <UserPlus className="h-3.5 w-3.5 text-rose-600 dark:text-[#FB7185]" />
                     <span>Invite User</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => navigate('/data-sources')}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100/70 text-emerald-700 text-xs font-semibold transition cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-emerald-200 dark:border-[#334155] bg-emerald-50/50 dark:bg-[#1E293B] hover:bg-emerald-100/70 dark:hover:bg-slate-700 text-emerald-700 dark:text-[#CBD5E1] text-xs font-semibold transition cursor-pointer"
                   >
-                    <Database className="h-3.5 w-3.5" />
+                    <Database className="h-3.5 w-3.5 text-emerald-600 dark:text-[#FB7185]" />
                     <span>Connect Dataset</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => navigate('/alerts')}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-amber-200 bg-amber-50/50 hover:bg-amber-100/70 text-amber-700 text-xs font-semibold transition cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-amber-200 dark:border-[#334155] bg-amber-50/50 dark:bg-[#1E293B] hover:bg-amber-100/70 dark:hover:bg-slate-700 text-amber-700 dark:text-[#CBD5E1] text-xs font-semibold transition cursor-pointer"
                   >
-                    <Bell className="h-3.5 w-3.5" />
+                    <Bell className="h-3.5 w-3.5 text-amber-600 dark:text-[#FB7185]" />
                     <span>Configure Alerts</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => navigate('/governance')}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-purple-200 bg-purple-50/50 hover:bg-purple-100/70 text-purple-700 text-xs font-semibold transition cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-purple-200 dark:border-[#334155] bg-purple-50/50 dark:bg-[#1E293B] hover:bg-purple-100/70 dark:hover:bg-slate-700 text-purple-700 dark:text-[#CBD5E1] text-xs font-semibold transition cursor-pointer"
                   >
-                    <ShieldCheck className="h-3.5 w-3.5" />
+                    <ShieldCheck className="h-3.5 w-3.5 text-purple-600 dark:text-[#FB7185]" />
                     <span>Manage Permissions</span>
                   </button>
                 </div>
               </div>
-            </div>{/* â”€â”€ end Quick Actions â”€â”€ */}
-            </div>{/* â”€â”€ end left column â”€â”€ */}
+            </div>{/* ── end Quick Actions ── */}
+            </div>{/* ── end left column ── */}
 
             {/* Right Column: Organization Info + Recent Activity + Support */}
             <div className="lg:col-span-5 space-y-6">
               {/* Organization Information Card */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#334155]">
                   <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-rose-600" />
-                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    <Building2 className="h-4 w-4 text-rose-600 dark:text-[#FB7185]" />
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] uppercase tracking-wider">
                       Organization Information
                     </h3>
                   </div>
@@ -959,54 +959,54 @@ export default function SettingsPage() {
 
                 <div className="space-y-3 text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500 font-medium">Organization Name</span>
-                    <span className="font-bold text-slate-900">
+                    <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Organization Name</span>
+                    <span className="font-bold text-slate-900 dark:text-[#F8FAFC]">
                       {organization?.name || 'Ricoz Primary Organization'}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500 font-medium">Organization ID</span>
+                    <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Organization ID</span>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-[11px] text-slate-700 truncate max-w-[170px]" title={organization?.id}>
+                      <span className="font-mono text-[11px] text-slate-700 dark:text-[#CBD5E1] truncate max-w-[170px]" title={organization?.id}>
                         {organization?.id || '00000000-0000-0000-0000-000000000001'}
                       </span>
                       <button
                         type="button"
                         onClick={handleCopyOrgId}
-                        className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                        className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-[#1E293B] dark:hover:text-[#F8FAFC] transition cursor-pointer"
                         title={copiedId ? 'Copied!' : 'Copy Organization ID'}
                       >
-                        {copiedId ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                        {copiedId ? <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                       </button>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500 font-medium">Plan</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 capitalize">
+                    <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Plan</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 capitalize">
                       {organization?.plan || 'Enterprise'}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500 font-medium">Workspace Region</span>
-                    <span className="font-semibold text-slate-800">
+                    <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Workspace Region</span>
+                    <span className="font-semibold text-slate-800 dark:text-[#CBD5E1]">
                       {organization?.settings?.region || 'Mumbai (ap-south-1)'}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500 font-medium">Status</span>
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                    <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Status</span>
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                       <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                       Active
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500 font-medium">Created On</span>
-                    <span className="font-semibold text-slate-700">
+                    <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Created On</span>
+                    <span className="font-semibold text-slate-700 dark:text-[#CBD5E1]">
                       {organization?.created_at
                         ? new Date(organization.created_at).toLocaleDateString('en-US', {
                             year: 'numeric',
@@ -1020,51 +1020,51 @@ export default function SettingsPage() {
               </div>
 
               {/* Recent Activity Card */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#334155]">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-rose-600" />
-                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    <Clock className="h-4 w-4 text-rose-600 dark:text-[#FB7185]" />
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] uppercase tracking-wider">
                       Recent Activity
                     </h3>
                   </div>
                   <button
                     type="button"
                     onClick={() => navigate('/governance?tab=audit')}
-                    className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 transition cursor-pointer"
+                    className="text-[11px] font-semibold text-rose-600 dark:text-[#FB7185] hover:text-rose-800 dark:hover:text-rose-400 transition cursor-pointer"
                   >
                     View All
                   </button>
                 </div>
 
                 {recentLogs.length === 0 ? (
-                  <div className="py-6 text-center text-xs text-slate-400">
+                  <div className="py-6 text-center text-xs text-slate-400 dark:text-[#64748B]">
                     No recent activity recorded yet.
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {recentLogs.slice(0, 5).map((log, idx) => (
                       <div key={log.id || idx} className="flex items-start gap-3 text-xs">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-600 shrink-0 mt-0.5">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1] shrink-0 mt-0.5">
                           {log.action?.includes('LOGIN') ? (
-                            <Users className="h-3.5 w-3.5 text-emerald-600" />
+                            <Users className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                           ) : log.action?.includes('DATASET') ? (
-                            <Database className="h-3.5 w-3.5 text-rose-600" />
+                            <Database className="h-3.5 w-3.5 text-rose-600 dark:text-[#FB7185]" />
                           ) : log.action?.includes('REPORT') ? (
-                            <FileText className="h-3.5 w-3.5 text-purple-600" />
+                            <FileText className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
                           ) : (
-                            <Settings className="h-3.5 w-3.5 text-slate-600" />
+                            <Settings className="h-3.5 w-3.5 text-slate-600 dark:text-[#94A3B8]" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold text-slate-900 truncate">
+                          <p className="font-bold text-slate-900 dark:text-[#F8FAFC] truncate">
                             {formatActivityAction(log.action)}
                           </p>
-                          <p className="text-[11px] text-slate-500 truncate">
+                          <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] truncate">
                             {log.description || (log.user_name ? `By ${log.user_name}` : 'System operation')}
                           </p>
                         </div>
-                        <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                        <span className="text-[10px] text-slate-400 dark:text-[#64748B] whitespace-nowrap">
                           {formatRelativeTime(log.created_at)}
                         </span>
                       </div>
@@ -1074,12 +1074,12 @@ export default function SettingsPage() {
               </div>
 
               {/* Help & Support Card */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-3">
+              <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs space-y-3">
                 <div className="flex items-center gap-2">
-                  <HelpCircle className="h-4 w-4 text-rose-600 shrink-0" />
+                  <HelpCircle className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
                   <div>
-                    <h3 className="text-xs font-bold text-slate-900">Help & Support</h3>
-                    <p className="text-[11px] text-slate-500">Get help with settings and administration.</p>
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC]">Help & Support</h3>
+                    <p className="text-[11px] text-slate-500 dark:text-[#94A3B8]">Get help with settings and administration.</p>
                   </div>
                 </div>
 
@@ -1087,27 +1087,27 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => setIsDocsModalOpen(true)}
-                    className="flex flex-col items-center justify-center gap-1 p-2.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700 text-[11px] font-semibold transition cursor-pointer"
+                    className="flex flex-col items-center justify-center gap-1 p-2.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/50 dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-[#CBD5E1] text-[11px] font-semibold transition cursor-pointer"
                   >
-                    <FileText className="h-3.5 w-3.5 text-rose-600" />
+                    <FileText className="h-3.5 w-3.5 text-rose-600 dark:text-[#FB7185]" />
                     <span>Documentation</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setIsSupportModalOpen(true)}
-                    className="flex flex-col items-center justify-center gap-1 p-2.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700 text-[11px] font-semibold transition cursor-pointer"
+                    className="flex flex-col items-center justify-center gap-1 p-2.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/50 dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-[#CBD5E1] text-[11px] font-semibold transition cursor-pointer"
                   >
-                    <Mail className="h-3.5 w-3.5 text-rose-600" />
+                    <Mail className="h-3.5 w-3.5 text-rose-600 dark:text-[#FB7185]" />
                     <span>Contact Support</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setIsStatusModalOpen(true)}
-                    className="flex flex-col items-center justify-center gap-1 p-2.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700 text-[11px] font-semibold transition cursor-pointer"
+                    className="flex flex-col items-center justify-center gap-1 p-2.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/50 dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-[#CBD5E1] text-[11px] font-semibold transition cursor-pointer"
                   >
-                    <Radio className="h-3.5 w-3.5 text-emerald-600" />
+                    <Radio className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                     <span>System Status</span>
                   </button>
                 </div>
@@ -1120,15 +1120,15 @@ export default function SettingsPage() {
       {/* 4. TAB 2: ORGANIZATION CONFIGURATION                               */}
       {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeTab === 'organization' && (
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-6 w-full">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 shadow-2xs space-y-6 w-full">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-[#334155]">
             <div>
-              <h2 className="text-base font-bold text-slate-900">Organization Profile & Regional Settings</h2>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
+              <h2 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC]">Organization Profile & Regional Settings</h2>
+              <p className="text-xs text-slate-500 dark:text-[#94A3B8] font-medium mt-0.5">
                 Manage organization identity, localization, and enterprise plan details.
               </p>
             </div>
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
               Enterprise Active
             </span>
           </div>
@@ -1136,30 +1136,30 @@ export default function SettingsPage() {
           <form onSubmit={handleSaveOrganization} className="space-y-4 text-xs">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-700">Organization Name *</label>
+                <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Organization Name *</label>
                 <input
                   type="text"
                   value={editOrgName}
                   onChange={(e) => setEditOrgName(e.target.value)}
                   required
-                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-900 font-semibold"
+                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 dark:border-[#334155] bg-white dark:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-900 dark:text-[#F8FAFC] font-semibold"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-700">Organization Slug</label>
+                <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Organization Slug</label>
                 <input
                   type="text"
                   disabled
                   value={organization?.slug || 'ricoz-primary'}
-                  className="w-full h-10 px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 font-mono"
+                  className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50 dark:bg-[#0F172A]/70 text-slate-500 dark:text-[#94A3B8] font-mono"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-700">Workspace Cloud Region</label>
+                <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Workspace Cloud Region</label>
                 <Select
                   value={editOrgRegion}
                   onChange={(e) => setEditOrgRegion(e.target.value)}
@@ -1172,7 +1172,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-700">Default Currency</label>
+                <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Default Currency</label>
                 <Select
                   value={editOrgCurrency}
                   onChange={(e) => setEditOrgCurrency(e.target.value)}
@@ -1187,7 +1187,7 @@ export default function SettingsPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-700">Workspace Timezone</label>
+                <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Workspace Timezone</label>
                 <Select
                   value={editOrgTimezone}
                   onChange={(e) => setEditOrgTimezone(e.target.value)}
@@ -1200,17 +1200,17 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-700">Support / Admin Email</label>
+                <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Support / Admin Email</label>
                 <input
                   type="email"
                   disabled
                   value={user?.email || 'admin@ricoz.test'}
-                  className="w-full h-10 px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 font-medium"
+                  className="w-full h-10 px-3.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50 dark:bg-[#0F172A]/70 text-slate-500 dark:text-[#94A3B8] font-medium"
                 />
               </div>
             </div>
 
-            <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
+            <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-[#334155]">
               <Button
                 type="button"
                 variant="secondary"
@@ -1956,17 +1956,17 @@ export default function SettingsPage() {
 
       {/* Edit Organization Modal */}
       {isEditOrgModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-[#334155] shadow-2xl max-w-lg w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#334155]">
               <div className="flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-rose-600" />
-                <h3 className="text-sm font-bold text-slate-900">Edit Organization Profile</h3>
+                <Building2 className="h-5 w-5 text-rose-600 dark:text-[#FB7185]" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Edit Organization Profile</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsEditOrgModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1E293B] transition cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1974,18 +1974,18 @@ export default function SettingsPage() {
 
             <form onSubmit={handleSaveOrganization} className="space-y-4 text-xs">
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-700">Organization Name *</label>
+                <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Organization Name *</label>
                 <input
                   type="text"
                   value={editOrgName}
                   onChange={(e) => setEditOrgName(e.target.value)}
                   required
-                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 font-semibold text-slate-900"
+                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 dark:border-[#334155] bg-white dark:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-rose-500 font-semibold text-slate-900 dark:text-[#F8FAFC]"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-700">Primary Region</label>
+                <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Primary Region</label>
                 <Select
                   value={editOrgRegion}
                   onChange={(e) => setEditOrgRegion(e.target.value)}
@@ -1998,7 +1998,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-700">Default Currency</label>
+                <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Default Currency</label>
                 <Select
                   value={editOrgCurrency}
                   onChange={(e) => setEditOrgCurrency(e.target.value)}
@@ -2009,7 +2009,7 @@ export default function SettingsPage() {
                 </Select>
               </div>
 
-              <div className="pt-3 flex items-center justify-end gap-2.5">
+              <div className="pt-3 flex items-center justify-end gap-2.5 border-t border-slate-100 dark:border-[#334155]">
                 <Button
                   type="button"
                   variant="secondary"

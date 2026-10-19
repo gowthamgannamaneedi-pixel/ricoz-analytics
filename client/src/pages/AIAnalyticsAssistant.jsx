@@ -702,26 +702,26 @@ export default function AIAnalyticsAssistant() {
       {/* ------------------------------------------------------------------ */}
       {/* TOP HEADER BAR                                                     */}
       {/* ------------------------------------------------------------------ */}
-      <div className="space-y-3 border-b border-slate-200 pb-4 shrink-0">
+      <div className="space-y-3 border-b border-slate-200 dark:border-[#334155] pb-4 shrink-0">
         {/* Breadcrumb Navigation matching Reference */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-[#94A3B8]">
           <button
             type="button"
             onClick={() => navigate('/dashboard')}
-            className="hover:text-slate-600 transition-colors focus:outline-hidden"
+            className="hover:text-slate-600 dark:hover:text-[#F8FAFC] transition-colors focus:outline-hidden cursor-pointer"
           >
             Workspace
           </button>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
           <button
             type="button"
             onClick={() => navigate('/dashboard')}
-            className="hover:text-slate-600 transition-colors focus:outline-hidden"
+            className="hover:text-slate-600 dark:hover:text-[#F8FAFC] transition-colors focus:outline-hidden cursor-pointer"
           >
             Production
           </button>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-          <span className="text-slate-900 font-bold">
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
+          <span className="text-slate-900 dark:text-[#F8FAFC] font-bold">
             AI Analytics Assistant
           </span>
         </nav>
@@ -731,7 +731,7 @@ export default function AIAnalyticsAssistant() {
           <div className="flex items-start gap-3.5 min-w-0 flex-1">
           <button
             onClick={() => setMobileHistoryOpen(prev => !prev)}
-            className="lg:hidden p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition shrink-0 mt-0.5"
+            className="lg:hidden p-2 rounded-xl border border-slate-200 dark:border-[#334155] text-slate-600 dark:text-[#CBD5E1] hover:bg-slate-50 dark:hover:bg-[#1E293B] transition shrink-0 mt-0.5"
             aria-label="Toggle conversation history"
           >
             <Menu className="w-5 h-5" />
@@ -742,10 +742,10 @@ export default function AIAnalyticsAssistant() {
           </div>
 
           <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
               AI Analytics Assistant
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 font-normal">
               Your AI analyst for business data. Ask questions in plain English and get instant insights, visualizations, and recommendations.
             </p>
           </div>
@@ -755,32 +755,32 @@ export default function AIAnalyticsAssistant() {
         <div className="relative shrink-0 lg:ml-4" ref={datasetDropdownRef}>
           <div
             onClick={() => setDatasetDropdownOpen(prev => !prev)}
-            className="border border-slate-200 bg-white rounded-xl px-4 py-2.5 flex items-center gap-3 shadow-2xs hover:border-rose-300 hover:bg-rose-50/30 transition cursor-pointer"
+            className="border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] rounded-xl px-4 py-2.5 flex items-center gap-3 shadow-2xs hover:border-rose-300 dark:hover:border-rose-900/60 hover:bg-rose-50/30 dark:hover:bg-[#1E293B]/60 transition cursor-pointer"
           >
-            <Database className="h-5 w-5 text-rose-600 shrink-0" />
+            <Database className="h-5 w-5 text-rose-600 dark:text-[#FB7185] shrink-0" />
             <div className="text-left">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block leading-none">
+              <span className="text-[10px] font-semibold text-slate-400 dark:text-[#94A3B8] uppercase tracking-wider block leading-none">
                 Dataset Context
               </span>
-              <span className="text-xs font-bold text-slate-800 truncate block max-w-[200px] mt-0.5" title={currentDataset ? currentDataset.name : 'No Dataset Selected'}>
+              <span className="text-xs font-bold text-slate-800 dark:text-[#F8FAFC] truncate block max-w-[200px] mt-0.5" title={currentDataset ? currentDataset.name : 'No Dataset Selected'}>
                 {currentDataset ? currentDataset.name : 'No Dataset Selected'}
               </span>
-              <span className="text-[10px] text-slate-500 block leading-tight mt-0.5">
+              <span className="text-[10px] text-slate-500 dark:text-[#94A3B8] block leading-tight mt-0.5">
                 {currentDataset ? `${(currentDataset.row_count || 0).toLocaleString()} rows • ${currentDataset.column_count || 10} columns` : 'Connect a dataset'}
               </span>
             </div>
-            <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${datasetDropdownOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`h-4 w-4 text-slate-400 dark:text-[#94A3B8] transition-transform ${datasetDropdownOpen ? 'rotate-180' : ''}`} />
           </div>
 
         {/* Dataset Dropdown Menu */}
           {datasetDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-white border border-slate-200 shadow-xl py-2 z-50 animate-fade-in text-xs">
-              <div className="px-4 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+            <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#334155] shadow-xl py-2 z-50 animate-fade-in text-xs">
+              <div className="px-4 py-1.5 text-[10px] font-bold text-slate-400 dark:text-[#94A3B8] uppercase tracking-wider border-b border-slate-100 dark:border-[#334155]">
                 Select Active Dataset
               </div>
               <div className="max-h-60 overflow-y-auto p-1 space-y-1">
                 {datasets.length === 0 ? (
-                  <div className="p-3 text-center text-slate-400 text-xs">
+                  <div className="p-3 text-center text-slate-400 dark:text-[#94A3B8] text-xs">
                     No datasets available.
                   </div>
                 ) : (
@@ -796,17 +796,17 @@ export default function AIAnalyticsAssistant() {
                         }}
                         className={`p-2.5 rounded-xl cursor-pointer transition flex items-center justify-between gap-2 ${
                           isSelected
-                            ? 'bg-rose-50 text-rose-900 font-semibold'
-                            : 'hover:bg-rose-50/70 hover:text-rose-700 text-slate-700'
+                            ? 'bg-rose-50 dark:bg-[#2A1422] text-rose-900 dark:text-[#FDA4AF] font-semibold'
+                            : 'hover:bg-rose-50/70 dark:hover:bg-[#1E293B] hover:text-rose-700 dark:hover:text-[#FB7185] text-slate-700 dark:text-[#CBD5E1]'
                         }`}
                       >
                         <div className="min-w-0">
-                          <span className="truncate block font-bold text-slate-900 text-xs">{ds.name}</span>
-                          <span className="text-[11px] text-slate-500 block">
+                          <span className="truncate block font-bold text-slate-900 dark:text-[#F8FAFC] text-xs">{ds.name}</span>
+                          <span className="text-[11px] text-slate-500 dark:text-[#94A3B8] block">
                             {ds.row_count || 0} rows • {ds.column_count || 10} columns
                           </span>
                         </div>
-                        {isSelected && <Check className="w-4 h-4 text-rose-600 shrink-0" />}
+                        {isSelected && <Check className="w-4 h-4 text-rose-600 dark:text-[#FB7185] shrink-0" />}
                       </div>
                     );
                   })
@@ -825,11 +825,11 @@ export default function AIAnalyticsAssistant() {
         {/* LEFT PANEL: Conversation History Sidebar */}
         <div
           className={`${
-            mobileHistoryOpen ? 'flex absolute inset-0 z-40 bg-white' : 'hidden'
-          } lg:flex flex-col w-72 shrink-0 rounded-2xl border border-slate-200 bg-white shadow-2xs overflow-hidden`}
+            mobileHistoryOpen ? 'flex absolute inset-0 z-40 bg-white dark:bg-[#111827]' : 'hidden'
+          } lg:flex flex-col w-72 shrink-0 rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] shadow-2xs overflow-hidden`}
         >
           {/* Header & Primary New Chat Button */}
-          <div className="p-3 border-b border-slate-100 space-y-2.5 bg-slate-50/50">
+          <div className="p-3 border-b border-slate-100 dark:border-[#334155] space-y-2.5 bg-slate-50/50 dark:bg-[#0F172A]">
             <button
               onClick={handleNewChat}
               id="new-chat-btn"
@@ -841,18 +841,18 @@ export default function AIAnalyticsAssistant() {
 
             {/* Search History Input */}
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-3.5 h-3.5 text-slate-400 dark:text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Search conversations..."
                 value={searchHistoryQuery}
                 onChange={(e) => setSearchHistoryQuery(e.target.value)}
-                className="w-full h-8 pl-8 pr-7 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-rose-500 transition"
+                className="w-full h-8 pl-8 pr-7 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] text-xs text-slate-800 dark:text-[#CBD5E1] placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-rose-500 transition"
               />
               {searchHistoryQuery && (
                 <button
                   onClick={() => setSearchHistoryQuery('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-[#F8FAFC]"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -863,15 +863,15 @@ export default function AIAnalyticsAssistant() {
           {/* Grouped Conversation History Stream */}
           <div className="flex-1 overflow-y-auto p-2 space-y-3">
             {loadingHistory ? (
-              <div className="p-4 text-center text-xs text-slate-400 space-y-2">
-                <RefreshCw className="w-4 h-4 animate-spin mx-auto text-slate-400" />
+              <div className="p-4 text-center text-xs text-slate-400 dark:text-[#94A3B8] space-y-2">
+                <RefreshCw className="w-4 h-4 animate-spin mx-auto text-slate-400 dark:text-[#94A3B8]" />
                 <span>Loading conversation history...</span>
               </div>
             ) : conversations.length === 0 ? (
               <div className="py-12 text-center px-4 space-y-2">
-                <MessageSquare className="w-8 h-8 text-slate-300 mx-auto" />
-                <div className="text-xs font-bold text-slate-700">No conversations yet</div>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
+                <MessageSquare className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" />
+                <div className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1]">No conversations yet</div>
+                <p className="text-[11px] text-slate-400 dark:text-[#94A3B8] leading-relaxed">
                   Start a conversation with your data to see your history organized here.
                 </p>
               </div>
@@ -889,7 +889,7 @@ export default function AIAnalyticsAssistant() {
 
                 return (
                   <div key={groupKey} className="space-y-1">
-                    <div className="px-2 pt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <div className="px-2 pt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#94A3B8]">
                       {labelMap[groupKey]}
                     </div>
 
@@ -907,17 +907,17 @@ export default function AIAnalyticsAssistant() {
                           }}
                           className={`group w-full text-left p-2.5 rounded-xl text-xs cursor-pointer transition flex items-center justify-between gap-2 relative ${
                             isActive
-                              ? 'bg-rose-50/80 text-rose-900 font-semibold border-l-4 border-rose-600'
-                              : 'text-slate-700 hover:bg-slate-50'
+                              ? 'bg-rose-50/80 dark:bg-[#2A1422] text-rose-900 dark:text-[#FDA4AF] font-semibold border-l-4 border-rose-600 dark:border-[#E11D48]'
+                              : 'text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-50 dark:hover:bg-[#1E293B]'
                           }`}
                         >
                           <div className="min-w-0 flex items-center gap-2 flex-1">
-                            <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-rose-600' : 'text-slate-400'}`} />
+                            <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-rose-600 dark:text-[#FB7185]' : 'text-slate-400 dark:text-[#94A3B8]'}`} />
                             <div className="min-w-0 flex-1">
-                              <span className="truncate block font-bold leading-tight">
+                              <span className="truncate block font-bold leading-tight text-slate-900 dark:text-[#F8FAFC]">
                                 {conv.title || 'Analytics Conversation'}
                               </span>
-                              <span className="text-[10px] text-slate-400 truncate block mt-0.5 font-normal">
+                              <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] truncate block mt-0.5 font-normal">
                                 {conv.dataset_name || 'General Conversation'}
                               </span>
                             </div>
@@ -974,44 +974,44 @@ export default function AIAnalyticsAssistant() {
         </div>
 
         {/* RIGHT PANEL: Main AI Conversation Area */}
-        <div className="flex-1 flex flex-col rounded-2xl border border-slate-200 bg-white shadow-2xs overflow-hidden">
+        <div className="flex-1 flex flex-col rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] shadow-2xs overflow-hidden">
           {/* Scrollable Message & Canvas Area */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
             {messages.length === 0 ? (
               /* EMPTY / HERO STATE */
               <div className="space-y-6 max-w-4xl mx-auto">
-                {/* Hero Banner: "Ask your data anything" */}
-                <div className="rounded-2xl border border-slate-200/90 bg-gradient-to-r from-rose-50/70 via-amber-50/30 to-white p-6 sm:p-8 relative overflow-hidden shadow-2xs">
+                {/* Hero Banner: "Ask your data anything" (Issue 16) */}
+                <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-gradient-to-r from-rose-50/70 via-amber-50/30 to-white dark:bg-none dark:bg-[#111827] p-6 sm:p-8 relative overflow-hidden shadow-2xs">
                   <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                     <div className="space-y-2.5 max-w-xl">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-100/90 text-rose-800 text-[10px] font-bold tracking-wider uppercase font-mono">
-                        <Sparkles className="w-3 h-3 text-rose-600" />
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-100/90 dark:bg-[#2A1422] text-rose-800 dark:text-[#FDA4AF] text-[10px] font-bold tracking-wider uppercase font-mono border border-rose-200 dark:border-rose-900/40">
+                        <Sparkles className="w-3 h-3 text-rose-600 dark:text-[#FB7185]" />
                         <span>AI Analytics Assistant</span>
                       </div>
 
-                      <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                        Ask your data <span className="text-rose-600">anything</span>
+                      <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight">
+                        Ask your data <span className="text-rose-600 dark:text-[#FB7185]">anything</span>
                       </h2>
 
-                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-[#CBD5E1] leading-relaxed font-normal">
                         Get answers, discover insights, visualize trends, and make better business decisions using natural language.
                       </p>
 
                       {/* Capabilities Pills */}
                       <div className="flex flex-wrap items-center gap-2 pt-1.5">
-                        <span className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-semibold text-slate-700 shadow-2xs">
+                        <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#334155] text-[11px] font-semibold text-slate-700 dark:text-[#CBD5E1] shadow-2xs">
                           📈 Trends &amp; Analysis
                         </span>
-                        <span className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-semibold text-slate-700 shadow-2xs">
+                        <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#334155] text-[11px] font-semibold text-slate-700 dark:text-[#CBD5E1] shadow-2xs">
                           💬 Comparisons
                         </span>
-                        <span className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-semibold text-slate-700 shadow-2xs">
+                        <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#334155] text-[11px] font-semibold text-slate-700 dark:text-[#CBD5E1] shadow-2xs">
                           ⚠️ Anomalies
                         </span>
-                        <span className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-semibold text-slate-700 shadow-2xs">
+                        <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#334155] text-[11px] font-semibold text-slate-700 dark:text-[#CBD5E1] shadow-2xs">
                           🔮 Forecasts
                         </span>
-                        <span className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-semibold text-slate-700 shadow-2xs">
+                        <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#334155] text-[11px] font-semibold text-slate-700 dark:text-[#CBD5E1] shadow-2xs">
                           📊 Visual Charts
                         </span>
                       </div>
@@ -1019,16 +1019,16 @@ export default function AIAnalyticsAssistant() {
 
                     {/* Decorative Visual Illustration Preview */}
                     <div className="hidden sm:block shrink-0">
-                      <div className="rounded-xl border border-slate-200 bg-white/95 p-3.5 shadow-md w-56 space-y-2">
-                        <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-800 bg-slate-50 px-2 py-1 rounded-md">
-                          <Bot className="w-3.5 h-3.5 text-rose-600" />
+                      <div className="rounded-xl border border-slate-200 dark:border-[#334155] bg-white/95 dark:bg-[#0F172A] p-3.5 shadow-md w-56 space-y-2">
+                        <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-800 dark:text-[#CBD5E1] bg-slate-50 dark:bg-[#1E293B] px-2 py-1 rounded-md">
+                          <Bot className="w-3.5 h-3.5 text-rose-600 dark:text-[#FB7185]" />
                           <span>Show me revenue trend</span>
                         </div>
-                        <div className="h-16 flex items-end gap-1.5 px-2 pt-2 bg-gradient-to-t from-rose-50/50 to-transparent rounded">
+                        <div className="h-16 flex items-end gap-1.5 px-2 pt-2 bg-gradient-to-t from-rose-50/50 dark:from-rose-950/20 to-transparent rounded">
                           {[30, 45, 35, 60, 50, 75, 90].map((h, i) => (
                             <div
                               key={i}
-                              className="flex-1 bg-rose-600 rounded-t-xs"
+                              className="flex-1 bg-rose-600 dark:bg-[#E11D48] rounded-t-xs"
                               style={{ height: `${h}%`, opacity: 0.4 + (i / 7) * 0.6 }}
                             />
                           ))}
@@ -1042,8 +1042,8 @@ export default function AIAnalyticsAssistant() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900">Try asking these questions</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Try asking these questions</h3>
+                      <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
                         Click a question to get started. These are examples of what you can ask.
                       </p>
                     </div>
@@ -1056,10 +1056,10 @@ export default function AIAnalyticsAssistant() {
                       return (
                         <div
                           key={idx}
-                          className={`rounded-2xl border ${cat.borderColor} bg-white p-4 shadow-2xs transition space-y-3`}
+                          className={`rounded-2xl border ${cat.borderColor} dark:border-[#334155] bg-white dark:bg-[#111827] p-4 shadow-2xs transition space-y-3`}
                         >
                           <div className="flex items-center gap-2">
-                            <div className={`p-1.5 rounded-lg ${cat.iconBg}`}>
+                            <div className={`p-1.5 rounded-lg ${cat.iconBg} dark:bg-[#1E293B]`}>
                               <Icon className="w-4 h-4" />
                             </div>
                             <span className={`text-xs font-bold ${cat.headerColor}`}>
@@ -1072,10 +1072,10 @@ export default function AIAnalyticsAssistant() {
                               <button
                                 key={qIdx}
                                 onClick={() => handleSendQuery(q)}
-                                className="w-full text-left p-2.5 rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-rose-50/60 hover:border-rose-200 hover:text-rose-700 active:scale-[0.98] text-[11px] font-medium transition-all flex items-center gap-2 group cursor-pointer shadow-2xs hover:shadow-xs"
+                                className="w-full text-left p-2.5 rounded-xl border border-slate-200/80 dark:border-[#334155] bg-slate-50/70 dark:bg-[#0F172A] hover:bg-rose-50/60 dark:hover:bg-[#1E293B] hover:border-rose-200 dark:hover:border-rose-900/60 hover:text-rose-700 dark:hover:text-[#FB7185] active:scale-[0.98] text-[11px] font-medium transition-all flex items-center gap-2 group cursor-pointer shadow-2xs hover:shadow-xs"
                               >
-                                <ChevronRight className="w-3.5 h-3.5 text-rose-500 shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                                <span className="leading-snug flex-1 text-slate-700 group-hover:text-rose-700">{q}</span>
+                                <ChevronRight className="w-3.5 h-3.5 text-rose-500 dark:text-[#FB7185] shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                                <span className="leading-snug flex-1 text-slate-700 dark:text-[#CBD5E1] group-hover:text-rose-700 dark:group-hover:text-[#FB7185]">{q}</span>
                               </button>
                             ))}
                           </div>
@@ -1087,14 +1087,14 @@ export default function AIAnalyticsAssistant() {
 
                 {/* "Start a conversation" divider/hint */}
                 <div className="text-center pt-2 pb-1 space-y-1">
-                  <div className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700">
-                    <Bot className="w-4 h-4 text-rose-600" />
+                  <div className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-[#CBD5E1]">
+                    <Bot className="w-4 h-4 text-rose-600 dark:text-[#FB7185]" />
                     <span>Start a conversation</span>
                   </div>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-slate-400 dark:text-[#94A3B8]">
                     Select a suggested question or type your own question below.
                   </p>
-                  <ChevronDown className="w-4 h-4 text-slate-300 mx-auto animate-bounce mt-1" />
+                  <ChevronDown className="w-4 h-4 text-slate-300 dark:text-slate-600 mx-auto animate-bounce mt-1" />
                 </div>
               </div>
             ) : (
@@ -1207,17 +1207,17 @@ export default function AIAnalyticsAssistant() {
           {/* ------------------------------------------------------------------ */}
           {/* CHAT INPUT AREA                                                    */}
           {/* ------------------------------------------------------------------ */}
-          <div className="p-4 border-t border-slate-200 bg-white space-y-2.5">
+          <div className="p-4 border-t border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] space-y-2.5">
             {/* Input Bar */}
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 handleSendQuery();
               }}
-              className="relative flex items-center rounded-2xl border border-slate-300 bg-white p-1.5 shadow-2xs hover:border-slate-400 focus-within:border-rose-600 focus-within:ring-2 focus-within:ring-rose-500/20 transition"
+              className="relative flex items-center rounded-2xl border border-slate-300 dark:border-[#334155] bg-white dark:bg-[#0F172A] p-1.5 shadow-2xs hover:border-slate-400 dark:hover:border-slate-600 focus-within:border-rose-600 focus-within:ring-2 focus-within:ring-rose-500/20 transition"
             >
-              <div className="pl-3 text-slate-400">
-                <Sparkles className="w-4 h-4 text-rose-500" />
+              <div className="pl-3 text-slate-400 dark:text-[#94A3B8]">
+                <Sparkles className="w-4 h-4 text-rose-500 dark:text-[#FB7185]" />
               </div>
 
               <input
@@ -1225,7 +1225,7 @@ export default function AIAnalyticsAssistant() {
                 value={inputQuery}
                 onChange={(e) => setInputQuery(e.target.value)}
                 placeholder="Ask a question about revenue, trends, anomalies, or forecasts..."
-                className="flex-1 h-10 px-3 text-xs sm:text-sm font-medium bg-transparent focus:outline-none placeholder:text-slate-400"
+                className="flex-1 h-10 px-3 text-xs sm:text-sm font-medium bg-transparent focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-800 dark:text-[#F8FAFC]"
                 disabled={loading}
               />
 
@@ -1234,7 +1234,7 @@ export default function AIAnalyticsAssistant() {
                 disabled={loading || !inputQuery.trim()}
                 className={`h-9 w-9 rounded-xl flex items-center justify-center text-white transition shadow-2xs ${
                   !inputQuery.trim() || loading
-                    ? 'bg-slate-300 cursor-not-allowed'
+                    ? 'bg-slate-300 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed'
                     : 'bg-rose-600 hover:bg-rose-700 active:scale-95 cursor-pointer'
                 }`}
                 title="Send query"
@@ -1250,7 +1250,7 @@ export default function AIAnalyticsAssistant() {
                   <button
                     key={idx}
                     onClick={() => handleSendQuery(chip)}
-                    className="px-2.5 py-1 rounded-lg bg-slate-100/80 hover:bg-rose-50 text-slate-600 hover:text-rose-700 border border-slate-200/70 transition cursor-pointer flex items-center gap-1 font-medium"
+                    className="px-2.5 py-1 rounded-lg bg-slate-100/80 dark:bg-[#0F172A] hover:bg-rose-50 dark:hover:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1] hover:text-rose-700 dark:hover:text-[#FB7185] border border-slate-200/70 dark:border-[#334155] transition cursor-pointer flex items-center gap-1 font-medium"
                   >
                     <span>{chip}</span>
                   </button>
@@ -1258,8 +1258,8 @@ export default function AIAnalyticsAssistant() {
               </div>
 
               {/* Security Guardrail Tag */}
-              <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400 dark:text-[#94A3B8]">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 <span>Tenant-safe analysis • No raw SQL execution</span>
               </div>
             </div>

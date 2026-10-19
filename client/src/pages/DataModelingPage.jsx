@@ -408,16 +408,16 @@ export default function DataModelingPage() {
         </div>
 
         {relationships.length === 0 ? (
-          <div className="py-8 text-center border border-dashed border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50/60 dark:bg-slate-850/60">
-            <Layers className="h-10 w-10 text-slate-400 dark:text-slate-500 mx-auto mb-2 opacity-60" />
-            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">No relationships configured</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+          <div className="py-8 text-center border border-dashed border-slate-300 dark:border-[#334155] rounded-xl bg-slate-50/60 dark:bg-[#0F172A]">
+            <Layers className="h-10 w-10 text-slate-400 dark:text-[#94A3B8] mx-auto mb-2 opacity-60" />
+            <p className="text-sm font-semibold text-slate-800 dark:text-[#CBD5E1]">No relationships configured</p>
+            <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1 max-w-md mx-auto">
               Link datasets like Orders and Customers on matching keys to unlock cross-table dimensional metrics.
             </p>
             {canManage && (
               <button
                 onClick={handleOpenCreateModal}
-                className="mt-3.5 inline-flex items-center gap-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 px-4 py-2 text-xs font-semibold text-white transition cursor-pointer shadow-xs"
+                className="mt-3.5 inline-flex items-center gap-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 dark:bg-[#E11D48] dark:hover:bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition cursor-pointer shadow-xs"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Connect Datasets</span>
@@ -429,36 +429,36 @@ export default function DataModelingPage() {
             {relationships.slice(0, 3).map((rel) => (
               <div
                 key={rel.id}
-                className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/70 p-5 sm:p-6 flex flex-col justify-between"
+                className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-slate-50/70 dark:bg-[#1E293B] p-5 sm:p-6 flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400 pb-2 border-b border-slate-200 dark:border-slate-700">
-                    <span className="uppercase text-rose-700 dark:text-rose-400 font-bold">{rel.relationship_type.replace(/_/g, ' ')}</span>
+                  <div className="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400 pb-2 border-b border-slate-200 dark:border-[#334155]">
+                    <span className="uppercase text-rose-700 dark:text-[#FB7185] font-bold">{rel.relationship_type.replace(/_/g, ' ')}</span>
                     <span className="text-[10px] text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-900/60 font-semibold">
                       Verified
                     </span>
                   </div>
 
                   <div className="mt-3.5 flex items-center justify-between gap-3 text-xs">
-                    <div className="bg-white dark:bg-slate-900 rounded-xl p-3 flex-1 border border-slate-200 dark:border-slate-800 min-w-0 shadow-2xs">
-                      <div className="font-bold text-slate-800 dark:text-slate-200 truncate">{rel.source_dataset_name || 'Source Dataset'}</div>
-                      <div className="text-[11px] text-rose-600 dark:text-rose-400 font-mono truncate mt-0.5">.{rel.source_column}</div>
+                    <div className="bg-white dark:bg-[#0F172A] rounded-xl p-3 flex-1 border border-slate-200 dark:border-[#334155] min-w-0 shadow-2xs">
+                      <div className="font-bold text-slate-800 dark:text-[#F8FAFC] truncate">{rel.source_dataset_name || 'Source Dataset'}</div>
+                      <div className="text-[11px] text-rose-600 dark:text-[#FB7185] font-mono truncate mt-0.5">.{rel.source_column}</div>
                     </div>
 
                     <div className="flex flex-col items-center shrink-0 px-1">
-                      <ArrowRight className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-                      <span className="text-[9px] text-slate-400 dark:text-slate-500 font-mono">LEFT JOIN</span>
+                      <ArrowRight className="h-4 w-4 text-slate-400 dark:text-[#94A3B8]" />
+                      <span className="text-[9px] text-slate-400 dark:text-[#94A3B8] font-mono">LEFT JOIN</span>
                     </div>
 
-                    <div className="bg-white dark:bg-slate-900 rounded-xl p-3 flex-1 border border-slate-200 dark:border-slate-800 min-w-0 shadow-2xs">
-                      <div className="font-bold text-slate-800 dark:text-slate-200 truncate">{rel.target_dataset_name || 'Target Dataset'}</div>
+                    <div className="bg-white dark:bg-[#0F172A] rounded-xl p-3 flex-1 border border-slate-200 dark:border-[#334155] min-w-0 shadow-2xs">
+                      <div className="font-bold text-slate-800 dark:text-[#F8FAFC] truncate">{rel.target_dataset_name || 'Target Dataset'}</div>
                       <div className="text-[11px] text-indigo-600 dark:text-indigo-400 font-mono truncate mt-0.5">.{rel.target_column}</div>
                     </div>
                   </div>
                 </div>
 
                 {rel.description && (
-                  <p className="mt-3 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 italic">
+                  <p className="mt-3 text-[11px] text-slate-500 dark:text-[#94A3B8] line-clamp-1 italic">
                     "{rel.description}"
                   </p>
                 )}
@@ -471,18 +471,18 @@ export default function DataModelingPage() {
       {/* Filter & Search Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-[#94A3B8]" />
           <input
             type="text"
             placeholder="Search relationships, tables, columns..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-9 pr-3 h-10 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 focus:border-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/40 shadow-2xs transition"
+            className="w-full rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#0F172A] pl-9 pr-3 h-10 text-xs font-medium text-slate-900 dark:text-[#CBD5E1] placeholder:text-slate-400 dark:placeholder:text-[#94A3B8] hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/40 dark:hover:bg-[#2A1422] focus:border-rose-600 dark:focus:border-[#E11D48] focus:outline-none focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/40 shadow-2xs transition"
           />
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Filter className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
+          <Filter className="h-4 w-4 text-slate-400 dark:text-[#94A3B8] shrink-0" />
           <Select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
@@ -500,19 +500,19 @@ export default function DataModelingPage() {
             onClick={loadData}
             title="Refresh relationships"
             aria-label="Refresh relationships"
-            className="h-10 w-10 flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 transition shadow-2xs cursor-pointer"
+            className="h-10 w-10 flex items-center justify-center rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1] hover:text-rose-600 dark:hover:text-[#FB7185] hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/70 dark:hover:bg-[#334155] transition shadow-2xs cursor-pointer"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin text-rose-600 dark:text-rose-400' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin text-rose-600 dark:text-[#FB7185]' : ''}`} />
           </button>
         </div>
       </div>
 
       {/* Relationship List Table */}
-      <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden">
+      <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] shadow-2xs overflow-hidden">
         <div className="rz-table-wrap">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-200/90 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-850/80 text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+              <tr className="border-b border-slate-200/90 dark:border-[#334155] bg-slate-50/75 dark:bg-[#1E293B] text-[11px] font-semibold text-slate-600 dark:text-[#CBD5E1] uppercase tracking-wider">
                 <th className="px-4 py-3">Source Dataset & Column</th>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Target Dataset & Column</th>
@@ -521,7 +521,7 @@ export default function DataModelingPage() {
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs text-slate-700 dark:text-slate-200">
+            <tbody className="divide-y divide-slate-100 dark:divide-[#334155] text-xs text-slate-700 dark:text-[#CBD5E1]">
               {loading ? (
                 <tr>
                   <td colSpan="6" className="py-12 text-center text-slate-400 dark:text-slate-500">

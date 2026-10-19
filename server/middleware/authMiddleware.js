@@ -167,6 +167,19 @@ const authenticateToken = async (req, res, next) => {
         userEmail = dbUser.email;
       }
 
+      if (!userOrgId) {
+        try {
+          const db = require('../config/database');
+          const defaultOrgRes = await db.query('SELECT id FROM organizations ORDER BY created_at ASC LIMIT 1');
+          if (defaultOrgRes.rows[0]) {
+            userOrgId = defaultOrgRes.rows[0].id;
+            if (userId) {
+              await db.query('UPDATE users SET organization_id = $1 WHERE id = $2 AND organization_id IS NULL', [userOrgId, userId]).catch(() => {});
+            }
+          }
+        } catch (_) {}
+      }
+
       req.user = {
         id: userId,
         email: userEmail,

@@ -455,7 +455,7 @@ export default function DatasetTable({
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 pl-9 pr-8 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-850 focus:border-rose-600 dark:focus:border-rose-500 focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/40 focus:outline-hidden transition-all shadow-2xs"
+              className="w-full h-10 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#0F172A] pl-9 pr-8 text-xs text-slate-800 dark:text-[#CBD5E1] placeholder-slate-400 dark:placeholder-[#94A3B8] focus:bg-white dark:focus:bg-[#0F172A] focus:border-rose-600 dark:focus:border-[#E11D48] focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/40 focus:outline-hidden transition-all shadow-2xs"
             />
             {searchQuery && (
               <button
@@ -514,7 +514,7 @@ export default function DatasetTable({
             <button
               onClick={resetFilters}
               id="reset-filters-btn"
-              className="h-10 inline-flex items-center text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 px-2.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 transition shrink-0 cursor-pointer"
+              className="h-10 inline-flex items-center text-xs font-semibold text-rose-600 dark:text-[#FB7185] hover:text-rose-700 dark:hover:text-rose-300 px-2.5 rounded-xl hover:bg-rose-50 dark:hover:bg-[#2A1422] transition shrink-0 cursor-pointer"
             >
               Reset
             </button>
@@ -526,15 +526,15 @@ export default function DatasetTable({
       <div className="w-full overflow-x-auto overflow-y-visible">
         <table className="w-full text-left border-collapse text-xs table-fixed">
           <thead>
-            <tr className="border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850/60 text-slate-600 dark:text-slate-400">
+            <tr className="border-b border-slate-200/80 dark:border-[#334155] bg-slate-50/60 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1]">
               {/* Checkbox column */}
-              <th className="py-2.5 px-2 w-10 text-center select-none">
+              <th className="py-2.5 px-2 w-10 text-center select-none bg-slate-50/60 dark:bg-[#1E293B]">
                 <input
                   type="checkbox"
                   checked={isAllCurrentPageSelected}
                   onChange={toggleSelectAllCurrentPage}
                   aria-label="Select all datasets on page"
-                  className="rounded border-slate-300 dark:border-slate-600 text-rose-600 focus:ring-rose-500 h-3.5 w-3.5 cursor-pointer dark:bg-slate-800"
+                  className="rounded border-slate-300 dark:border-[#334155] text-rose-600 focus:ring-rose-500 h-3.5 w-3.5 cursor-pointer dark:bg-[#0F172A]"
                 />
               </th>
 

@@ -889,7 +889,7 @@ export default function ForecastsPage() {
 
             {/* 6. Confidence Interval (Segmented buttons) */}
             <div className="space-y-1.5 pt-1">
-              <label className="block text-xs font-bold text-slate-800">
+              <label className="block text-xs font-bold text-slate-800 dark:text-[#CBD5E1]">
                 Confidence Interval
               </label>
               <div className="grid grid-cols-4 gap-1.5 mt-1">
@@ -901,8 +901,8 @@ export default function ForecastsPage() {
                     onClick={() => setConfidenceLevel(lvl)}
                     className={`py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                       confidenceLevel === lvl
-                        ? 'border-2 border-rose-600 bg-rose-50 text-rose-700 font-bold shadow-2xs'
-                        : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-medium'
+                        ? 'border-2 border-rose-600 dark:border-[#E11D48] bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FB7185] font-bold shadow-2xs'
+                        : 'border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#0F172A] text-slate-600 dark:text-[#CBD5E1] hover:bg-slate-50 dark:hover:bg-[#1E293B] font-medium'
                     }`}
                   >
                     {(lvl * 100).toFixed(0)}%
@@ -912,14 +912,14 @@ export default function ForecastsPage() {
             </div>
 
             {/* 7. Anomaly Detection Toggle & Sensitivity */}
-            <div className="pt-2 border-t border-slate-100 space-y-3">
+            <div className="pt-2 border-t border-slate-100 dark:border-[#334155] space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-1.5">
                     <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-                    <span className="text-xs font-bold text-slate-800">Anomaly Detection</span>
+                    <span className="text-xs font-bold text-slate-800 dark:text-[#F8FAFC]">Anomaly Detection</span>
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-slate-400 dark:text-[#94A3B8] mt-0.5">
                     Detect unusual values in historical data
                   </p>
                 </div>
@@ -932,15 +932,15 @@ export default function ForecastsPage() {
                     onChange={(e) => setDetectAnomaliesActive(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rose-600"></div>
+                  <div className="w-10 h-5 bg-slate-200 dark:bg-[#1E293B] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-[#334155] after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rose-600 dark:peer-checked:bg-[#E11D48]"></div>
                 </label>
               </div>
 
               {detectAnomaliesActive && (
-                <div className="space-y-1.5 bg-slate-50/70 p-3 rounded-xl border border-slate-100">
+                <div className="space-y-1.5 bg-slate-50/70 dark:bg-[#0F172A] p-3 rounded-xl border border-slate-100 dark:border-[#334155]">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-slate-700">Sensitivity (Z-score)</span>
-                    <span className="font-mono font-bold text-rose-700 px-2 py-0.5 bg-white border border-rose-200 rounded-md">
+                    <span className="font-semibold text-slate-700 dark:text-[#CBD5E1]">Sensitivity (Z-score)</span>
+                    <span className="font-mono font-bold text-rose-700 dark:text-[#FB7185] px-2 py-0.5 bg-white dark:bg-[#1E293B] border border-rose-200 dark:border-[#334155] rounded-md">
                       {zThreshold}
                     </span>
                   </div>
@@ -952,9 +952,9 @@ export default function ForecastsPage() {
                     step="0.1"
                     value={zThreshold}
                     onChange={(e) => setZThreshold(parseFloat(e.target.value))}
-                    className="w-full accent-rose-600 cursor-pointer"
+                    className="w-full accent-rose-600 dark:accent-[#E11D48] cursor-pointer"
                   />
-                  <div className="flex justify-between text-[10px] text-slate-400 font-medium">
+                  <div className="flex justify-between text-[10px] text-slate-400 dark:text-[#94A3B8] font-medium">
                     <span>Lower sensitivity</span>
                     <span>Higher sensitivity</span>
                   </div>
@@ -990,15 +990,15 @@ export default function ForecastsPage() {
         {/* =============================================================== */}
         <div className="lg:col-span-8 space-y-4">
           {/* Segmented Tabs Bar */}
-          <div className="flex flex-wrap items-center gap-1 sm:gap-2 border-b border-slate-200/80 pb-2">
+          <div className="flex flex-wrap items-center gap-1 sm:gap-2 border-b border-slate-200/80 dark:border-[#334155] pb-2 dark:pb-0 dark:gap-6 sm:dark:gap-8 min-w-max">
             <button
               type="button"
               id="tab-forecast-chart"
               onClick={() => setActiveTab('chart')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer dark:rounded-none dark:border-b-2 dark:py-3 dark:px-1 dark:bg-transparent ${
                 activeTab === 'chart'
-                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold dark:border-[#E11D48] dark:text-[#FB7185] dark:shadow-none'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:border-transparent dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:bg-transparent'
               }`}
             >
               <TrendingUp className="h-3.5 w-3.5" />
@@ -1009,10 +1009,10 @@ export default function ForecastsPage() {
               type="button"
               id="tab-data-table"
               onClick={() => setActiveTab('table')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer dark:rounded-none dark:border-b-2 dark:py-3 dark:px-1 dark:bg-transparent ${
                 activeTab === 'table'
-                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold dark:border-[#E11D48] dark:text-[#FB7185] dark:shadow-none'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:border-transparent dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:bg-transparent'
               }`}
             >
               <FileSpreadsheet className="h-3.5 w-3.5" />
@@ -1023,16 +1023,16 @@ export default function ForecastsPage() {
               type="button"
               id="tab-anomalies"
               onClick={() => setActiveTab('anomalies')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer dark:rounded-none dark:border-b-2 dark:py-3 dark:px-1 dark:bg-transparent ${
                 activeTab === 'anomalies'
-                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold dark:border-[#E11D48] dark:text-[#FB7185] dark:shadow-none'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:border-transparent dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:bg-transparent'
               }`}
             >
               <AlertTriangle className="h-3.5 w-3.5" />
               <span>Anomalies</span>
               {anomaliesCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-md bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-mono font-bold">
+                <span className="px-1.5 py-0.2 rounded-md bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border border-rose-200 dark:border-rose-900/60 text-[10px] font-mono font-bold">
                   {anomaliesCount}
                 </span>
               )}
@@ -1042,15 +1042,15 @@ export default function ForecastsPage() {
               type="button"
               id="tab-forecast-history"
               onClick={() => setActiveTab('history')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer dark:rounded-none dark:border-b-2 dark:py-3 dark:px-1 dark:bg-transparent ${
                 activeTab === 'history'
-                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold dark:border-[#E11D48] dark:text-[#FB7185] dark:shadow-none'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:border-transparent dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:bg-transparent'
               }`}
             >
               <Clock className="h-3.5 w-3.5" />
               <span>Forecast History</span>
-              <span className="px-1.5 py-0.2 rounded-md bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-mono font-bold">
+              <span className="px-1.5 py-0.2 rounded-md bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1] border border-slate-200 dark:border-[#334155] text-[10px] font-mono font-bold">
                 {savedForecasts.length}
               </span>
             </button>
@@ -1372,9 +1372,9 @@ export default function ForecastsPage() {
 
           {/* TAB 2: DATA TABLE */}
           {activeTab === 'table' && (
-            <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-2xs">
-              <div className="flex items-center justify-between p-4 border-b border-slate-100">
-                <h4 className="font-bold text-slate-900 text-xs">
+            <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/90 dark:border-[#334155] overflow-hidden shadow-2xs">
+              <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-[#334155]">
+                <h4 className="font-bold text-slate-900 dark:text-[#F8FAFC] text-xs">
                   Forecast Data Points ({chartData.length} records)
                 </h4>
                 <Button
@@ -1391,7 +1391,7 @@ export default function ForecastsPage() {
 
               <div className="overflow-x-auto max-h-[500px]">
                 <table className="w-full text-left text-xs border-collapse min-w-[700px]">
-                  <thead className="bg-slate-50/80 sticky top-0 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                  <thead className="bg-slate-50/80 dark:bg-[#1E293B] sticky top-0 border-b border-slate-200 dark:border-[#334155] text-slate-500 dark:text-[#CBD5E1] font-bold uppercase text-[10px] tracking-wider">
                     <tr>
                       <th className="py-3 px-4">DATE</th>
                       <th className="py-3 px-4">TYPE</th>
@@ -1402,46 +1402,46 @@ export default function ForecastsPage() {
                       <th className="py-3 px-4 text-center">STATUS</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 font-mono">
+                  <tbody className="divide-y divide-slate-100 dark:divide-[#334155] font-mono">
                     {chartData.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-12 text-center text-xs text-slate-500 font-sans">
+                        <td colSpan={7} className="py-12 text-center text-xs text-slate-500 dark:text-[#94A3B8] font-sans">
                           No forecast data generated yet. Click "Generate Forecast" to populate data rows.
                         </td>
                       </tr>
                     ) : (
                       chartData.map((row, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
-                          <td className="py-2.5 px-4 font-semibold text-slate-900">{row.date}</td>
+                        <tr key={idx} className="hover:bg-slate-50/60 dark:hover:bg-[#1E293B]/50 transition-colors">
+                          <td className="py-2.5 px-4 font-semibold text-slate-900 dark:text-[#F8FAFC]">{row.date}</td>
                           <td className="py-2.5 px-4">
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase font-sans ${
                               row.type === 'historical'
-                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                                : 'bg-purple-50 text-purple-700 border border-purple-200'
+                                ? 'bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border border-rose-200 dark:border-rose-900/60'
+                                : 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60'
                             }`}>
                               {row.type}
                             </span>
                           </td>
-                          <td className="py-2.5 px-4 text-right font-bold text-rose-700">
+                          <td className="py-2.5 px-4 text-right font-bold text-rose-700 dark:text-[#FB7185]">
                             {row.historical !== null ? Number(row.historical).toLocaleString() : '—'}
                           </td>
-                          <td className="py-2.5 px-4 text-right font-bold text-purple-700">
+                          <td className="py-2.5 px-4 text-right font-bold text-purple-700 dark:text-purple-400">
                             {row.predicted !== null ? Number(row.predicted).toLocaleString() : '—'}
                           </td>
-                          <td className="py-2.5 px-4 text-right text-slate-500">
+                          <td className="py-2.5 px-4 text-right text-slate-500 dark:text-[#CBD5E1]">
                             {row.lower_bound !== null ? Number(row.lower_bound).toLocaleString(undefined, { maximumFractionDigits: 1 }) : '—'}
                           </td>
-                          <td className="py-2.5 px-4 text-right text-slate-500">
+                          <td className="py-2.5 px-4 text-right text-slate-500 dark:text-[#CBD5E1]">
                             {row.upper_bound !== null ? Number(row.upper_bound).toLocaleString(undefined, { maximumFractionDigits: 1 }) : '—'}
                           </td>
                           <td className="py-2.5 px-4 text-center font-sans">
                             {row.isAnomaly ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border border-rose-200 dark:border-rose-900/60 text-[10px] font-bold">
                                 <AlertTriangle className="h-3 w-3" />
                                 Anomaly
                               </span>
                             ) : (
-                              <span className="text-slate-400 text-[11px]">—</span>
+                              <span className="text-slate-400 dark:text-[#94A3B8] text-[11px]">—</span>
                             )}
                           </td>
                         </tr>
@@ -1455,33 +1455,33 @@ export default function ForecastsPage() {
 
           {/* TAB 3: ANOMALIES */}
           {activeTab === 'anomalies' && (
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/90 dark:border-[#334155] p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#334155] pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/40">
                     <AlertTriangle className="h-4 w-4" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">
                       Detected Time-Series Anomalies
                     </h4>
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-[11px] text-slate-400 dark:text-[#94A3B8]">
                       Outliers identified by Z-Score threshold ({zThreshold}σ)
                     </p>
                   </div>
                 </div>
-                <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">
+                <span className="text-xs font-mono font-bold text-slate-600 dark:text-[#CBD5E1] bg-slate-100 dark:bg-[#1E293B] px-2 py-0.5 rounded-lg border border-slate-200 dark:border-[#334155]">
                   {anomaliesCount} Total
                 </span>
               </div>
 
               {anomaliesCount === 0 ? (
                 <div className="py-14 text-center space-y-2.5">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 mx-auto">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 mx-auto">
                     <CheckCircle2 className="h-6 w-6" />
                   </div>
-                  <h5 className="text-sm font-bold text-slate-900">No Anomalies Detected</h5>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  <h5 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">No Anomalies Detected</h5>
+                  <p className="text-xs text-slate-500 dark:text-[#94A3B8] max-w-sm mx-auto">
                     All historical observations fall within normal {zThreshold}σ standard deviation boundaries.
                   </p>
                 </div>
@@ -1490,11 +1490,11 @@ export default function ForecastsPage() {
                   {forecastResult.anomalies.map((anom, idx) => (
                     <div
                       key={idx}
-                      className="p-3.5 rounded-xl border border-slate-200/90 bg-white hover:border-amber-200 transition flex items-center justify-between gap-4"
+                      className="p-3.5 rounded-xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#0F172A] hover:border-amber-200 dark:hover:border-amber-500/50 transition flex items-center justify-between gap-4"
                     >
                       <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-xs text-slate-900">
+                          <span className="font-mono font-bold text-xs text-slate-900 dark:text-[#F8FAFC]">
                             {anom.timestamp || anom.date}
                           </span>
                           <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${
@@ -1503,10 +1503,10 @@ export default function ForecastsPage() {
                             {anom.severity || 'warning'} {anom.direction ? `(${anom.direction})` : ''}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-500">
-                          Actual: <b className="text-slate-900 font-mono">{Number(anom.actual_value || anom.value || 0).toLocaleString()}</b>
+                        <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
+                          Actual: <b className="text-slate-900 dark:text-[#F8FAFC] font-mono">{Number(anom.actual_value || anom.value || 0).toLocaleString()}</b>
                           {anom.expected_value !== undefined && (
-                            <> | Expected: <span className="font-mono">{Number(anom.expected_value).toFixed(1)}</span></>
+                            <> | Expected: <span className="font-mono dark:text-[#CBD5E1]">{Number(anom.expected_value).toFixed(1)}</span></>
                           )}
                           {anom.deviation !== undefined && (
                             <> (Deviation: {Number(anom.deviation).toFixed(1)})</>
@@ -1515,10 +1515,10 @@ export default function ForecastsPage() {
                       </div>
 
                       <div className="text-right shrink-0">
-                        <span className="font-mono text-xs font-bold text-rose-600">
+                        <span className="font-mono text-xs font-bold text-rose-600 dark:text-[#FB7185]">
                           Z = {Number(anom.anomaly_score || anom.z_score || 0).toFixed(2)}σ
                         </span>
-                        <p className="text-[10px] text-slate-400">Outlier Score</p>
+                        <p className="text-[10px] text-slate-400 dark:text-[#94A3B8]">Outlier Score</p>
                       </div>
                     </div>
                   ))}
@@ -1529,13 +1529,13 @@ export default function ForecastsPage() {
 
           {/* TAB 4: FORECAST HISTORY */}
           {activeTab === 'history' && (
-            <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-2xs">
-              <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+            <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/90 dark:border-[#334155] overflow-hidden shadow-2xs">
+              <div className="p-4 border-b border-slate-100 dark:border-[#334155] flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-rose-900/40">
                     <Clock className="h-4 w-4" />
                   </div>
-                  <h4 className="font-bold text-slate-900 text-xs">
+                  <h4 className="font-bold text-slate-900 dark:text-[#F8FAFC] text-xs">
                     Saved Forecast History ({savedForecasts.length})
                   </h4>
                 </div>
@@ -1543,11 +1543,11 @@ export default function ForecastsPage() {
 
               {savedForecasts.length === 0 ? (
                 <div className="py-14 text-center space-y-2">
-                  <Clock className="h-8 w-8 text-slate-300 mx-auto" />
-                  <p className="text-xs text-slate-500">No saved forecasts found in history.</p>
+                  <Clock className="h-8 w-8 text-slate-300 dark:text-slate-600 mx-auto" />
+                  <p className="text-xs text-slate-500 dark:text-[#94A3B8]">No saved forecasts found in history.</p>
                 </div>
               ) : (
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-slate-100 dark:divide-[#334155]">
                   {savedForecasts.map(f => (
                     <div
                       key={f.id}
@@ -1556,20 +1556,20 @@ export default function ForecastsPage() {
                         formatAndDisplaySavedForecast(f);
                         setActiveTab('chart');
                       }}
-                      className={`p-4 flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/80 transition-colors ${
-                        selectedForecastId === f.id ? 'bg-rose-50/50 border-l-4 border-rose-600' : ''
+                      className={`p-4 flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/80 dark:hover:bg-[#1E293B]/50 transition-colors ${
+                        selectedForecastId === f.id ? 'bg-rose-50/50 dark:bg-[#2A1422]/60 border-l-4 border-rose-600 dark:border-[#E11D48]' : ''
                       }`}
                     >
                       <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-slate-900">
+                          <span className="font-bold text-xs text-slate-900 dark:text-[#F8FAFC]">
                             {f.dataset_name || 'Telemetry Forecast'} — {f.target_column || 'Metric'}
                           </span>
-                          <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200">
+                          <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-md bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border border-rose-200 dark:border-rose-900/60">
                             {f.model_name || 'AUTO'}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-500 font-mono">
+                        <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] font-mono">
                           Horizon: {f.horizon_periods} {f.interval} • Created: {new Date(f.created_at).toLocaleString()}
                         </p>
                       </div>
@@ -1583,13 +1583,13 @@ export default function ForecastsPage() {
                               e.stopPropagation();
                               setForecastToDelete(f);
                             }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 dark:hover:text-[#FB7185] transition cursor-pointer"
                             title="Delete forecast"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
                         )}
-                        <ChevronRight className="h-4 w-4 text-slate-400" />
+                        <ChevronRight className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                       </div>
                     </div>
                   ))}
@@ -1605,27 +1605,27 @@ export default function ForecastsPage() {
       {/* ───────────────────────────────────────────────────────────────── */}
       {forecastToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="relative w-full max-w-sm rounded-2xl bg-white shadow-2xl border border-slate-200 p-6 space-y-4 animate-in zoom-in-95 duration-150">
+          <div className="relative w-full max-w-sm rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200 dark:border-[#334155] p-6 space-y-4 animate-in zoom-in-95 duration-150">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 shrink-0">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] shrink-0">
                 <Trash2 className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Delete Forecast</h3>
-                <p className="text-[11px] text-slate-500">Remove saved prediction record</p>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Delete Forecast</h3>
+                <p className="text-[11px] text-slate-500 dark:text-[#94A3B8]">Remove saved prediction record</p>
               </div>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Are you sure you want to remove this forecast record for <strong className="text-slate-900">{forecastToDelete.target_column}</strong>? This action cannot be undone.
+            <p className="text-xs text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
+              Are you sure you want to remove this forecast record for <strong className="text-slate-900 dark:text-[#F8FAFC]">{forecastToDelete.target_column}</strong>? This action cannot be undone.
             </p>
 
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-[#334155]">
               <button
                 type="button"
                 id="cancel-delete-forecast-btn"
                 onClick={() => setForecastToDelete(null)}
-                className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-slate-300 dark:border-[#334155] text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-50 dark:hover:bg-[#1E293B] transition cursor-pointer"
               >
                 Cancel
               </button>

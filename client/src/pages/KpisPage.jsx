@@ -415,27 +415,27 @@ export default function KpisPage() {
 
       {/* Viewer Mode Notice */}
       {isViewer && (
-        <div className="flex items-center justify-between gap-2.5 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-2.5 text-xs text-slate-600">
+        <div className="flex items-center justify-between gap-2.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/80 dark:bg-[#0F172A] px-4 py-2.5 text-xs text-slate-600 dark:text-[#CBD5E1]">
           <span className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-slate-400" />
-            <span><strong>View-Only Mode:</strong> Your role ({currentRole}) has read access to metrics and target telemetry. Metric creation, modification, and deletion require Analyst or Admin privileges.</span>
+            <span className="h-2 w-2 rounded-full bg-slate-400 dark:bg-slate-500" />
+            <span><strong className="text-slate-800 dark:text-[#F8FAFC]">View-Only Mode:</strong> Your role ({currentRole}) has read access to metrics and target telemetry. Metric creation, modification, and deletion require Analyst or Admin privileges.</span>
           </span>
         </div>
       )}
 
       {/* Error Alert */}
       {error && (
-        <div className="flex items-start justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-xs text-rose-700">
+        <div className="flex items-start justify-between gap-3 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/80 dark:bg-[#2A1422] p-4 text-xs text-rose-700 dark:text-[#FDA4AF]">
           <div className="flex items-start gap-2.5">
-            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600" />
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600 dark:text-[#FB7185]" />
             <div>
-              <p className="font-bold">Failed to load KPIs</p>
-              <p className="mt-0.5">{error}</p>
+              <p className="font-bold text-rose-900 dark:text-[#FDA4AF]">Failed to load KPIs</p>
+              <p className="mt-0.5 text-rose-700 dark:text-[#FDA4AF]/90">{error}</p>
             </div>
           </div>
           <button
             onClick={() => fetchData(true)}
-            className="px-3 py-1 bg-white border border-rose-200 rounded-lg font-semibold text-rose-700 hover:bg-rose-100 transition shadow-2xs"
+            className="px-3.5 py-1.5 bg-white dark:bg-[#1E293B] border border-rose-200 dark:border-[#334155] rounded-lg font-semibold text-rose-700 dark:text-[#CBD5E1] hover:bg-rose-100 dark:hover:bg-[#334155] dark:hover:text-[#F8FAFC] transition shadow-2xs cursor-pointer shrink-0"
           >
             Retry
           </button>
@@ -444,8 +444,8 @@ export default function KpisPage() {
 
       {/* Success Alerts */}
       {deleteSuccess && (
-        <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50/80 p-3.5 text-xs text-emerald-800 animate-in fade-in">
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+        <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/80 dark:bg-emerald-950/60 p-3.5 text-xs text-emerald-800 dark:text-emerald-300 animate-in fade-in">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
           <span>{deleteSuccess}</span>
         </div>
       )}

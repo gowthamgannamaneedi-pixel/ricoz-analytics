@@ -17,7 +17,18 @@ const requireActiveSubscription = async (req, res, next) => {
     });
   }
 
-  const organizationId = req.user.organization_id;
+  let organizationId = req.user.organization_id;
+  if (!organizationId) {
+    try {
+      const db = require('../config/database');
+      const defaultOrgRes = await db.query('SELECT id FROM organizations ORDER BY created_at ASC LIMIT 1');
+      if (defaultOrgRes.rows[0]) {
+        organizationId = defaultOrgRes.rows[0].id;
+        req.user.organization_id = organizationId;
+      }
+    } catch (_) {}
+  }
+
   if (!organizationId) {
     return res.status(403).json({
       success: false,

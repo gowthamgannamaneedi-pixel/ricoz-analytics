@@ -31,10 +31,23 @@ export default {
         darkSurface: {
           canvas: '#0B0F19',
           card: '#111827',
-          cardHover: '#1F2937',
-          subtle: '#1E293B',
-          border: '#1F2937',
-          borderLight: '#374151',
+          input: '#0F172A',
+          raised: '#1E293B',
+          border: '#334155',
+          borderSubtle: '#1E293B',
+          redSurface: '#2A1422',
+        },
+        darkText: {
+          primary: '#F8FAFC',
+          body: '#CBD5E1',
+          muted: '#94A3B8',
+          accent: '#FB7185',
+          redTint: '#FDA4AF',
+        },
+        slate: {
+          750: '#1E293B',
+          755: '#1E293B',
+          850: '#0F172A',
         },
         semantic: {
           positive: '#16A34A',

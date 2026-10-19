@@ -237,9 +237,9 @@ export default function BillingPage() {
     <div className="space-y-6 pb-16 font-sans">
       {/* Top Banner if Trial Expired */}
       {isExpired && (
-        <div className="rounded-2xl bg-rose-900 text-white p-4 sm:p-5 shadow-sm border border-rose-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="rounded-2xl bg-rose-900 dark:bg-[#2A1422] text-white p-4 sm:p-5 shadow-sm border border-rose-800 dark:border-rose-900/80 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="p-2.5 rounded-xl bg-rose-800/80 border border-rose-700 shrink-0">
+            <div className="p-2.5 rounded-xl bg-rose-800/80 dark:bg-[#1E293B] border border-rose-700 dark:border-rose-900/60 shrink-0">
               <AlertTriangle className="h-5 w-5 text-rose-300" />
             </div>
             <div>
@@ -250,7 +250,7 @@ export default function BillingPage() {
             </div>
           </div>
           <div className="shrink-0 flex items-center gap-2">
-            <span className="text-xs font-mono bg-rose-950/70 px-3 py-1.5 rounded-lg border border-rose-800 text-rose-200 font-semibold">
+            <span className="text-xs font-mono bg-rose-950/70 dark:bg-[#1E293B] px-3 py-1.5 rounded-lg border border-rose-800 dark:border-rose-900/60 text-rose-200 font-semibold">
               Workspace Preserved
             </span>
           </div>
@@ -259,16 +259,16 @@ export default function BillingPage() {
 
       {/* 10-Day Expiry / Renewal Warning Banner */}
       {!isExpired && daysRemaining <= 10 && daysRemaining > 0 && (
-        <div className="rounded-2xl bg-amber-500 text-slate-950 p-4 sm:p-5 shadow-sm border border-amber-600 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="rounded-2xl bg-amber-500 text-slate-950 dark:bg-amber-950/40 dark:text-amber-100 dark:border-amber-800/80 p-4 sm:p-5 shadow-sm border border-amber-600 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="p-2.5 rounded-xl bg-amber-600 text-amber-50 shrink-0 shadow-xs">
+            <div className="p-2.5 rounded-xl bg-amber-600 text-amber-50 dark:bg-amber-900/60 dark:text-amber-200 shrink-0 shadow-xs">
               <Clock className="h-5 w-5" />
             </div>
             <div>
               <p className="font-bold text-sm">
                 {isActivePaid ? 'Subscription Renewal Approaching' : 'Free Trial Ending Soon'} — {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining
               </p>
-              <p className="text-xs text-amber-950/90 mt-0.5">
+              <p className="text-xs text-amber-950/90 dark:text-amber-200/90 mt-0.5">
                 Your {currentSub?.planDetails?.name || currentSub?.plan || 'Starter'} plan {isActivePaid ? 'renews or expires' : 'trial ends'} on{' '}
                 <span className="font-bold underline">
                   {currentSub?.relevantEndDate || currentSub?.currentPeriodEnd || currentSub?.trialEndsAt
@@ -285,7 +285,7 @@ export default function BillingPage() {
                 const el = document.getElementById('plans-selection-grid');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="text-xs font-bold bg-slate-950 text-white px-4 py-2 rounded-xl shadow-xs hover:bg-slate-800 transition cursor-pointer"
+              className="text-xs font-bold bg-slate-950 text-white dark:bg-[#E11D48] dark:hover:bg-[#BE123C] px-4 py-2 rounded-xl shadow-xs hover:bg-slate-800 transition cursor-pointer"
             >
               {isActivePaid ? 'Manage & Renew Plan' : 'Select Launch Plan'}
             </button>
@@ -294,101 +294,101 @@ export default function BillingPage() {
       )}
 
       {/* Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 border-b border-slate-200 pb-6">
+      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 border-b border-slate-200 dark:border-[#334155] pb-6">
         <div className="space-y-3 flex-1 min-w-0">
           {/* Breadcrumb Navigation */}
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
             <button
               type="button"
               onClick={() => navigate('/dashboard')}
-              className="hover:text-slate-600 transition-colors focus:outline-hidden cursor-pointer"
+              className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors focus:outline-hidden cursor-pointer"
             >
               Workspace
             </button>
-            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
             <button
               type="button"
               onClick={() => navigate('/settings')}
-              className="hover:text-slate-600 transition-colors focus:outline-hidden cursor-pointer"
+              className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors focus:outline-hidden cursor-pointer"
             >
               Settings
             </button>
-            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-            <span className="text-slate-900 font-bold">Plans & Billing</span>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
+            <span className="text-slate-900 dark:text-[#F8FAFC] font-bold">Plans & Billing</span>
           </nav>
 
           {/* Section Tag */}
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-rose-900/60 shrink-0">
               <CreditCard className="h-3.5 w-3.5" />
             </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8] font-mono">
               Subscription & Licensing
             </span>
           </div>
 
           {/* Title & Description */}
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
               Plans & Billing
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl font-normal leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 max-w-xl font-normal leading-relaxed">
               Scale your business intelligence workspace with enterprise security, relational modeling, and AI copilot compute.
             </p>
           </div>
         </div>
 
         {/* Current Subscription Status Card */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xs w-full lg:w-[380px] shrink-0 space-y-3 sm:space-y-3.5">
+        <div className="rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-5 sm:p-6 shadow-2xs w-full lg:w-[380px] shrink-0 space-y-3 sm:space-y-3.5">
           <div className="flex items-center justify-between gap-4">
-            <span className="text-xs sm:text-sm text-slate-500 font-medium">Workspace Status</span>
+            <span className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] font-medium">Workspace Status</span>
             {currentSub?.scheduledDowngradePlan ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200 whitespace-nowrap shadow-2xs">
-                <ArrowDownRight className="w-3.5 h-3.5 text-sky-600" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 whitespace-nowrap shadow-2xs">
+                <ArrowDownRight className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
                 Downgrade Scheduled
               </span>
             ) : currentSub?.cancelAtPeriodEnd ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shadow-2xs">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 whitespace-nowrap shadow-2xs">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                 Cancellation Pending
               </span>
             ) : isActivePaid ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/90 whitespace-nowrap shadow-2xs">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/90 dark:border-emerald-800/60 whitespace-nowrap shadow-2xs">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 Active Paid
               </span>
             ) : isExpired ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200/90 whitespace-nowrap shadow-2xs">
-                <Clock className="w-3.5 h-3.5 text-rose-600" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border border-rose-200/90 dark:border-rose-900/60 whitespace-nowrap shadow-2xs">
+                <Clock className="w-3.5 h-3.5 text-rose-600 dark:text-[#FB7185]" />
                 Free Trial Expired
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200/90 whitespace-nowrap shadow-2xs">
-                <Clock className="w-3.5 h-3.5 text-rose-600" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border border-rose-200/90 dark:border-rose-900/60 whitespace-nowrap shadow-2xs">
+                <Clock className="w-3.5 h-3.5 text-rose-600 dark:text-[#FB7185]" />
                 {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining
               </span>
             )}
           </div>
 
-          <div className="text-base sm:text-lg font-bold text-slate-900 capitalize leading-snug">
+          <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC] capitalize leading-snug">
             {currentSub?.planDetails?.name || currentSub?.plan || 'Enterprise'} Plan {isActivePaid ? `(${currentSub?.billingInterval || 'Monthly'})` : '(Trial Period)'}
           </div>
 
           {/* Server-Side Reliable Dates */}
-          <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+          <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 dark:bg-[#0F172A] p-2.5 rounded-xl border border-slate-100 dark:border-[#334155]">
             <div>
-              <span className="text-slate-400 block font-medium">Started</span>
-              <span className="text-slate-700 font-semibold">
+              <span className="text-slate-400 dark:text-[#94A3B8] block font-medium">Started</span>
+              <span className="text-slate-700 dark:text-[#CBD5E1] font-semibold">
                 {currentSub?.subscriptionStartDate || currentSub?.trialStartedAt
                   ? new Date(currentSub.subscriptionStartDate || currentSub.trialStartedAt).toLocaleDateString()
                   : 'Active'}
               </span>
             </div>
             <div>
-              <span className="text-slate-400 block font-medium">
+              <span className="text-slate-400 dark:text-[#94A3B8] block font-medium">
                 {isActivePaid ? (currentSub?.cancelAtPeriodEnd ? 'Ends On' : 'Renews On') : 'Trial Ends'}
               </span>
-              <span className={`font-semibold ${daysRemaining <= 10 ? 'text-rose-600 font-bold' : 'text-slate-700'}`}>
+              <span className={`font-semibold ${daysRemaining <= 10 ? 'text-rose-600 dark:text-[#FB7185] font-bold' : 'text-slate-700 dark:text-[#CBD5E1]'}`}>
                 {currentSub?.relevantEndDate || currentSub?.currentPeriodEnd || currentSub?.trialEndsAt
                   ? new Date(currentSub.relevantEndDate || currentSub.currentPeriodEnd || currentSub.trialEndsAt).toLocaleDateString()
                   : 'N/A'}
@@ -398,76 +398,76 @@ export default function BillingPage() {
 
           {/* Scheduled Downgrade Notice */}
           {currentSub?.scheduledDowngradePlan && (
-            <div className="text-xs bg-sky-50 border border-sky-200 p-2.5 rounded-xl text-sky-800">
+            <div className="text-xs bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 p-2.5 rounded-xl text-sky-800 dark:text-sky-200">
               <span className="font-bold">Scheduled Downgrade:</span> Switching to <strong>{currentSub.scheduledDowngradePlan.toUpperCase()}</strong> on{' '}
               {currentSub.scheduledDowngradeEffectiveDate ? new Date(currentSub.scheduledDowngradeEffectiveDate).toLocaleDateString() : 'period end'}. Higher-tier features remain fully active until then.
             </div>
           )}
 
           {/* Live Usage Telemetry Meters */}
-          <div className="space-y-1.5 pt-1 border-t border-slate-100">
-            <div className="flex items-center justify-between text-xs text-slate-600">
+          <div className="space-y-1.5 pt-1 border-t border-slate-100 dark:border-[#334155]">
+            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-[#94A3B8]">
               <span className="flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-slate-400" />
+                <Layers className="w-3.5 h-3.5 text-slate-400 dark:text-[#64748B]" />
                 <span>Datasets</span>
               </span>
-              <span className="font-semibold text-slate-800">
+              <span className="font-semibold text-slate-800 dark:text-[#F8FAFC]">
                 {currentSub?.usage?.datasets?.count || 0} / {currentSub?.usage?.datasets?.limit === -1 ? 'Unlimited' : (currentSub?.usage?.datasets?.limit || 10)}
               </span>
             </div>
-            <div className="flex items-center justify-between text-xs text-slate-600">
+            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-[#94A3B8]">
               <span className="flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-slate-400" />
+                <Users className="w-3.5 h-3.5 text-slate-400 dark:text-[#64748B]" />
                 <span>Team Members</span>
               </span>
-              <span className="font-semibold text-slate-800">
+              <span className="font-semibold text-slate-800 dark:text-[#F8FAFC]">
                 {currentSub?.usage?.users?.count || 0} / {currentSub?.usage?.users?.limit === -1 ? 'Unlimited' : (currentSub?.usage?.users?.limit || 5)}
               </span>
             </div>
           </div>
 
-          <p className="text-[11px] text-slate-400 pt-1">
-            Organization: <span className="font-semibold text-slate-600">{user?.organization_name || 'Ricoz Primary Organization'}</span>
+          <p className="text-[11px] text-slate-400 dark:text-[#94A3B8] pt-1">
+            Organization: <span className="font-semibold text-slate-600 dark:text-[#CBD5E1]">{user?.organization_name || 'Ricoz Primary Organization'}</span>
           </p>
         </div>
       </div>
 
       {/* Notifications */}
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-800 flex items-start gap-3">
-          <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+        <div className="rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-[#2A1422] p-4 text-xs text-rose-800 dark:text-[#FDA4AF] flex items-start gap-3">
+          <AlertTriangle className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5" />
           <div className="flex-1 font-medium">{error}</div>
         </div>
       )}
 
       {successMessage && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-800 flex items-start gap-3">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+        <div className="rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/40 p-4 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-3">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
           <div className="flex-1 font-medium">{successMessage}</div>
         </div>
       )}
 
       {/* Limited-Time Launch Offer Banner */}
       <div className="flex flex-col items-center justify-center pt-2">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-linear-to-r from-rose-50 via-amber-50 to-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold shadow-2xs">
-          <Sparkles className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-linear-to-r from-rose-50 via-amber-50 to-rose-50 dark:from-[#2A1422] dark:via-[#1E293B] dark:to-[#2A1422] border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-[#FDA4AF] text-xs font-semibold shadow-2xs">
+          <Sparkles className="w-3.5 h-3.5 text-rose-600 dark:text-[#FB7185] shrink-0" />
           <span>Limited-Time Launch Offer: Save up to 44% with special early-adopter pricing</span>
-          <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-rose-400"></span>
-          <span className="hidden sm:inline-block text-[11px] text-rose-600 font-bold uppercase tracking-wider">Launch Pricing</span>
+          <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-rose-400 dark:bg-rose-500"></span>
+          <span className="hidden sm:inline-block text-[11px] text-rose-600 dark:text-[#FB7185] font-bold uppercase tracking-wider">Launch Pricing</span>
         </div>
       </div>
 
       {/* Billing Interval Toggle (Monthly / Annual) */}
       <div className="flex flex-col items-center justify-center gap-2 pt-1 pb-2">
-        <div className="inline-flex p-1 rounded-xl bg-slate-200/80 border border-slate-300/80 shadow-2xs">
+        <div className="inline-flex p-1 rounded-xl bg-slate-200/80 dark:bg-[#0F172A] border border-slate-300/80 dark:border-[#334155] shadow-2xs">
           <button
             type="button"
             id="billing-monthly-toggle"
             onClick={() => setBillingInterval('monthly')}
             className={`px-5 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
               billingInterval === 'monthly'
-                ? 'bg-white text-slate-900 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white dark:bg-[#1E293B] text-slate-900 dark:text-[#F8FAFC] shadow-2xs'
+                : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC]'
             }`}
           >
             Monthly Billing
@@ -478,17 +478,17 @@ export default function BillingPage() {
             onClick={() => setBillingInterval('yearly')}
             className={`px-5 py-2 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
               billingInterval === 'yearly'
-                ? 'bg-white text-slate-900 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white dark:bg-[#1E293B] text-slate-900 dark:text-[#F8FAFC] shadow-2xs'
+                : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC]'
             }`}
           >
             <span>Annual Billing</span>
-            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
+            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-transparent dark:border-emerald-800/40">
               Save up to 44%
             </span>
           </button>
         </div>
-        <span className="text-[11px] text-slate-500 font-medium">
+        <span className="text-[11px] text-slate-500 dark:text-[#94A3B8] font-medium">
           {billingInterval === 'yearly'
             ? '✨ Billed annually — includes discounted monthly equivalent & maximum launch savings'
             : '⚡ Billed monthly with flexible month-to-month cancellation'}
@@ -521,15 +521,15 @@ export default function BillingPage() {
           return (
             <div
               key={p.id}
-              className={`relative flex flex-col justify-between rounded-2xl border bg-white p-6 sm:p-7 shadow-xs transition hover:shadow-md h-full ${
+              className={`relative flex flex-col justify-between rounded-2xl border bg-white dark:bg-[#111827] p-6 sm:p-7 shadow-xs transition hover:shadow-md h-full ${
                 isPopular
-                  ? 'border-rose-500 ring-2 ring-rose-500/20 shadow-md shadow-rose-100'
-                  : 'border-slate-200 hover:border-slate-300'
+                  ? 'border-rose-500 dark:border-[#E11D48] ring-2 ring-rose-500/20 dark:ring-[#E11D48]/30 shadow-md shadow-rose-100 dark:shadow-none'
+                  : 'border-slate-200 dark:border-[#334155] hover:border-slate-300 dark:hover:border-slate-500'
               }`}
             >
               {/* Most Popular Badge */}
               {isPopular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-rose-600 px-3.5 py-0.5 text-[10.5px] font-extrabold uppercase tracking-wider text-white shadow-xs z-10">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-rose-600 dark:bg-[#E11D48] px-3.5 py-0.5 text-[10.5px] font-extrabold uppercase tracking-wider text-white shadow-xs z-10">
                   Most Popular
                 </div>
               )}
@@ -538,56 +538,56 @@ export default function BillingPage() {
                 {/* Card Header & Icon */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-xl font-bold text-slate-950 font-sans tracking-tight">
+                    <h3 className="text-xl font-bold text-slate-950 dark:text-[#F8FAFC] font-sans tracking-tight">
                       {p.name}
                     </h3>
                     <div className="mt-2 min-h-[38px] sm:min-h-[42px] flex items-start">
-                      <span className="inline-flex items-start gap-1.5 text-[11px] font-semibold text-rose-700 bg-rose-50/90 px-2.5 py-1 rounded-md border border-rose-100 leading-snug">
-                        <Users className="h-3.5 w-3.5 text-rose-500 shrink-0 mt-0.5" />
+                      <span className="inline-flex items-start gap-1.5 text-[11px] font-semibold text-rose-700 dark:text-[#FDA4AF] bg-rose-50/90 dark:bg-[#2A1422] px-2.5 py-1 rounded-md border border-rose-100 dark:border-rose-900/60 leading-snug">
+                        <Users className="h-3.5 w-3.5 text-rose-500 dark:text-[#FB7185] shrink-0 mt-0.5" />
                         <span className="break-words leading-tight">{p.audience}</span>
                       </span>
                     </div>
                   </div>
                   <div className="shrink-0 mt-0.5">
                     {p.id === 'growth' ? (
-                      <div className="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 border border-rose-100">
+                      <div className="h-10 w-10 rounded-xl bg-rose-50 dark:bg-[#2A1422] flex items-center justify-center text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-rose-900/60">
                         <Zap className="h-5 w-5" />
                       </div>
                     ) : p.id === 'enterprise' ? (
-                      <div className="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 border border-indigo-100">
+                      <div className="h-10 w-10 rounded-xl bg-indigo-50 dark:bg-[#1E293B] flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-[#334155]">
                         <ShieldCheck className="h-5 w-5" />
                       </div>
                     ) : (
-                      <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600 border border-slate-100">
+                      <div className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-[#1E293B] flex items-center justify-center text-slate-600 dark:text-[#94A3B8] border border-slate-100 dark:border-[#334155]">
                         <Layers className="h-5 w-5" />
                       </div>
                     )}
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-500 mt-2.5 min-h-[42px] leading-relaxed break-words">
+                <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-2.5 min-h-[42px] leading-relaxed break-words">
                   {p.description}
                 </p>
 
                 {/* Pricing Block with Regular Price Crossed Out & Discount Badge */}
-                <div className="mt-4 pt-4 border-t border-slate-100 min-h-[104px] flex flex-col justify-center">
+                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-[#334155] min-h-[104px] flex flex-col justify-center">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs text-slate-400 line-through font-semibold">
+                    <span className="text-xs text-slate-400 dark:text-[#64748B] line-through font-semibold">
                       {currencySym}{regularPrice.toLocaleString('en-IN')}{isYearly ? '/year' : '/month'}
                     </span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-extrabold bg-rose-100 dark:bg-[#2A1422] text-rose-800 dark:text-[#FDA4AF] border border-rose-200 dark:border-rose-900/60">
                       {discountPct}% OFF
                     </span>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800/40">
                       Launch Offer
                     </span>
                   </div>
 
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight font-sans">
+                    <span className="text-3xl sm:text-4xl font-extrabold text-slate-950 dark:text-[#F8FAFC] tracking-tight font-sans">
                       {currencySym}{launchPrice.toLocaleString('en-IN')}
                     </span>
-                    <span className="text-xs text-slate-600 font-medium">
+                    <span className="text-xs text-slate-600 dark:text-[#94A3B8] font-medium">
                       {isYearly ? '/year' : '/month'}
                       {priceSuffix}
                     </span>
@@ -595,15 +595,15 @@ export default function BillingPage() {
 
                   {isYearly ? (
                     <div className="mt-1 flex items-center justify-between text-[11px]">
-                      <span className="text-slate-600 font-medium">
+                      <span className="text-slate-600 dark:text-[#94A3B8] font-medium">
                         ≈ {currencySym}{monthlyEquivalent.toLocaleString('en-IN')}/mo equivalent
                       </span>
-                      <span className="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 text-[10px]">
+                      <span className="font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/50 text-[10px]">
                         Save {currencySym}{annualSavings.toLocaleString('en-IN')}/yr
                       </span>
                     </div>
                   ) : (
-                    <div className="mt-1 text-[11px] text-slate-500">
+                    <div className="mt-1 text-[11px] text-slate-500 dark:text-[#94A3B8]">
                       Billed monthly • Cancel anytime
                     </div>
                   )}
@@ -611,13 +611,13 @@ export default function BillingPage() {
 
                 {/* Features List */}
                 <div className="mt-5 space-y-2.5 flex-1 flex flex-col">
-                  <p className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
+                  <p className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#64748B]">
                     What is included
                   </p>
-                  <ul className="space-y-2.5 text-xs text-slate-700 flex-1">
+                  <ul className="space-y-2.5 text-xs text-slate-700 dark:text-[#CBD5E1] flex-1">
                     {p.features.map((feat, idx) => (
                       <li key={idx} className="flex items-start gap-2.5">
-                        <CheckCircle2 className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                        <CheckCircle2 className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5" />
                         <span className="leading-tight">{feat}</span>
                       </li>
                     ))}
@@ -626,23 +626,23 @@ export default function BillingPage() {
               </div>
 
               {/* Call to Action Button & Contact Sales Footer */}
-              <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col gap-2.5">
+              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-[#334155] flex flex-col gap-2.5">
                 {isCurrentPlan ? (
                   <button
                     type="button"
                     disabled
-                    className="w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200 flex items-center justify-center gap-2"
+                    className="w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1E293B] text-slate-400 dark:text-[#64748B] cursor-not-allowed border border-slate-200 dark:border-[#334155] flex items-center justify-center gap-2"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <span>Current Active Plan</span>
                   </button>
                 ) : isDowngradeScheduledForThis ? (
                   <button
                     type="button"
                     disabled
-                    className="w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200 cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    <Clock className="w-4 h-4 text-sky-600" />
+                    <Clock className="w-4 h-4 text-sky-600 dark:text-sky-400" />
                     <span>Downgrade Scheduled</span>
                   </button>
                 ) : isDowngradeCandidate ? (
@@ -650,17 +650,17 @@ export default function BillingPage() {
                     type="button"
                     disabled={upgradingPlanId === p.id}
                     onClick={() => handleDowngrade(p.id)}
-                    className="w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+                    className="w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-[#334155] transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
                   >
                     {upgradingPlanId === p.id ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin text-slate-600" />
+                        <Loader2 className="w-4 h-4 animate-spin text-slate-600 dark:text-slate-300" />
                         <span>Scheduling Downgrade...</span>
                       </>
                     ) : (
                       <>
                         <span>Schedule Downgrade to {p.name}</span>
-                        <ArrowDownRight className="w-4 h-4 text-slate-500" />
+                        <ArrowDownRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                       </>
                     )}
                   </button>
@@ -671,8 +671,8 @@ export default function BillingPage() {
                     onClick={() => handleUpgrade(p.id)}
                     className={`w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs ${
                       isPopular
-                        ? 'bg-rose-600 text-white hover:bg-rose-700 focus:ring-2 focus:ring-rose-500 focus:ring-offset-2'
-                        : 'bg-slate-900 text-white hover:bg-slate-800 focus:ring-2 focus:ring-slate-700 focus:ring-offset-2'
+                        ? 'bg-rose-600 dark:bg-[#E11D48] text-white hover:bg-rose-700 dark:hover:bg-[#BE123C] focus:ring-2 focus:ring-rose-500 focus:ring-offset-2'
+                        : 'bg-slate-900 dark:bg-[#E11D48] text-white hover:bg-slate-800 dark:hover:bg-[#BE123C] focus:ring-2 focus:ring-slate-700 focus:ring-offset-2'
                     }`}
                   >
                     {upgradingPlanId === p.id ? (
@@ -699,19 +699,19 @@ export default function BillingPage() {
                   {p.hasContactSales ? (
                     <a
                       href="mailto:sales@ricoz.in?subject=Enterprise%20Plan%20Custom%20Pricing%20Inquiry%20-%20RicozAnalytics"
-                      className="w-full h-full py-1.5 px-3 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 transition text-center flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                      className="w-full h-full py-1.5 px-3 rounded-xl text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] hover:text-slate-900 dark:hover:text-[#F8FAFC] border border-slate-200 dark:border-[#334155] hover:bg-slate-50 dark:hover:bg-[#1E293B] transition text-center flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
                     >
-                      <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
+                      <HelpCircle className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                       <span>Contact Enterprise Sales</span>
                     </a>
                   ) : p.id === 'growth' ? (
-                    <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-rose-500" />
+                    <span className="text-[11px] font-medium text-slate-400 dark:text-[#94A3B8] flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-rose-500 dark:text-[#FB7185]" />
                       Priority SLA & AI Copilot included
                     </span>
                   ) : (
-                    <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                    <span className="text-[11px] font-medium text-slate-400 dark:text-[#94A3B8] flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
                       14-day money-back guarantee
                     </span>
                   )}
@@ -722,49 +722,49 @@ export default function BillingPage() {
         })}
       </div>
 
-        {/* GST Information Note */}
+      {/* GST Information Note */}
         <div className="text-center py-2">
-          <p className="text-xs text-slate-500 font-medium">
+          <p className="text-xs text-slate-500 dark:text-[#94A3B8] font-medium">
             * All displayed prices are in INR (₹) and exclusive of 18% GST where applicable. Official tax invoices with GSTIN provided upon checkout.
           </p>
         </div>
 
         {/* Enterprise Security & Guarantee Badges */}
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-2xs">
+        <div className="rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 shadow-2xs">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
+              <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-[#334155] shrink-0">
                 <Lock className="w-5 h-5" />
               </div>
               <div className="text-xs">
-                <p className="font-bold text-slate-900">256-Bit SSL Encryption</p>
-                <p className="text-slate-500 mt-0.5 text-[11px]">
+                <p className="font-bold text-slate-900 dark:text-[#F8FAFC]">256-Bit SSL Encryption</p>
+                <p className="text-slate-500 dark:text-[#94A3B8] mt-0.5 text-[11px]">
                   All transactions are cryptographically verified via Stripe PCI-DSS Level 1 compliant gateway.
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
+              <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-[#334155] shrink-0">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div className="text-xs">
-                <p className="font-bold text-slate-900">Zero Data Loss Guarantee</p>
-                <p className="text-slate-500 mt-0.5 text-[11px]">
+                <p className="font-bold text-slate-900 dark:text-[#F8FAFC]">Zero Data Loss Guarantee</p>
+                <p className="text-slate-500 dark:text-[#94A3B8] mt-0.5 text-[11px]">
                   Your datasets, models, and dashboards remain safely preserved upon trial end.
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
+              <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-[#334155] shrink-0">
                 <HelpCircle className="w-5 h-5" />
               </div>
               <div className="text-xs">
-                <p className="font-bold text-slate-900">Enterprise Support & Invoicing</p>
-                <p className="text-slate-500 mt-0.5 text-[11px]">
+                <p className="font-bold text-slate-900 dark:text-[#F8FAFC]">Enterprise Support & Invoicing</p>
+                <p className="text-slate-500 dark:text-[#94A3B8] mt-0.5 text-[11px]">
                   Need custom PO billing or wire transfer?{' '}
-                  <a href="mailto:sales@ricoz.in" className="text-rose-600 underline font-semibold">
+                  <a href="mailto:sales@ricoz.in" className="text-rose-600 dark:text-[#FB7185] underline font-semibold">
                     Contact Enterprise Sales
                   </a>
                 </p>
@@ -774,18 +774,18 @@ export default function BillingPage() {
         </div>
 
         {/* Invoices History Table */}
-        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-          <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+        <div className="rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] overflow-hidden shadow-2xs">
+          <div className="px-6 py-4 border-b border-slate-200 dark:border-[#334155] flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-bold text-slate-900">Billing History & Invoices</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Download official tax invoices for accounting records</p>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Billing History & Invoices</h2>
+              <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">Download official tax invoices for accounting records</p>
             </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
+                <tr className="border-b border-slate-100 dark:border-[#334155] bg-slate-50/70 dark:bg-[#1E293B] text-slate-500 dark:text-[#CBD5E1] font-semibold uppercase tracking-wider text-[10px]">
                   <th className="py-3 px-6">Invoice ID</th>
                   <th className="py-3 px-6">Date</th>
                   <th className="py-3 px-6">Amount</th>
@@ -793,7 +793,7 @@ export default function BillingPage() {
                   <th className="py-3 px-6 text-right">Receipt</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
+              <tbody className="divide-y divide-slate-100 dark:divide-[#334155] text-slate-700 dark:text-[#CBD5E1]">
                 {currentSub?.invoices && currentSub.invoices.length > 0 ? (
                   currentSub.invoices.map((inv) => {
                     const isINR = (inv.currency || 'inr').toLowerCase() === 'inr';
@@ -803,12 +803,12 @@ export default function BillingPage() {
                       : ((inv.amount_paid || 0) / 100).toLocaleString('en-IN');
 
                     return (
-                      <tr key={inv.id} className="hover:bg-slate-50/50">
-                        <td className="py-3 px-6 font-mono font-medium text-slate-900">{inv.id}</td>
+                      <tr key={inv.id} className="hover:bg-slate-50/50 dark:hover:bg-[#1E293B]/50">
+                        <td className="py-3 px-6 font-mono font-medium text-slate-900 dark:text-[#F8FAFC]">{inv.id}</td>
                         <td className="py-3 px-6">{new Date(inv.created_at || Date.now()).toLocaleDateString()}</td>
                         <td className="py-3 px-6 font-semibold">{sym}{formattedAmt}</td>
                         <td className="py-3 px-6">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 uppercase">
                             {inv.status || 'Paid'}
                           </span>
                         </td>
@@ -816,7 +816,7 @@ export default function BillingPage() {
                           <button
                             type="button"
                             onClick={() => alert(`Downloading invoice ${inv.id}`)}
-                            className="text-rose-600 hover:text-rose-700 font-semibold cursor-pointer"
+                            className="text-rose-600 dark:text-[#FB7185] hover:text-rose-700 dark:hover:text-rose-400 font-semibold cursor-pointer"
                           >
                             PDF &darr;
                           </button>
@@ -826,7 +826,7 @@ export default function BillingPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-slate-400 text-xs">
+                    <td colSpan={5} className="py-8 text-center text-slate-400 dark:text-[#64748B] text-xs">
                       No invoices yet. Your 14-day free trial does not generate billing charges.
                     </td>
                   </tr>
@@ -837,18 +837,18 @@ export default function BillingPage() {
         </div>
 
         {/* Subscription & Entitlement Audit History */}
-        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-          <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+        <div className="rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] overflow-hidden shadow-2xs">
+          <div className="px-6 py-4 border-b border-slate-200 dark:border-[#334155] flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <History className="w-4 h-4 text-slate-700" />
-                <h2 className="text-sm font-bold text-slate-900">Subscription & Entitlement Audit History</h2>
+                <History className="w-4 h-4 text-slate-700 dark:text-[#CBD5E1]" />
+                <h2 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Subscription & Entitlement Audit History</h2>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
                 Immutable event record of upgrades, scheduled downgrades, renewals, and cancellations
               </p>
             </div>
-            <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-[#94A3B8] bg-slate-100 dark:bg-[#1E293B] px-2.5 py-1 rounded-md border border-slate-200 dark:border-[#334155]">
               {history.length} {history.length === 1 ? 'Event' : 'Events'}
             </span>
           </div>
@@ -856,7 +856,7 @@ export default function BillingPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
+                <tr className="border-b border-slate-100 dark:border-[#334155] bg-slate-50/70 dark:bg-[#1E293B] text-slate-500 dark:text-[#CBD5E1] font-semibold uppercase tracking-wider text-[10px]">
                   <th className="py-3 px-6">Event</th>
                   <th className="py-3 px-6">Plan Transition</th>
                   <th className="py-3 px-6">Billing Cycle</th>
@@ -865,19 +865,19 @@ export default function BillingPage() {
                   <th className="py-3 px-6 text-right">Recorded At</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
+              <tbody className="divide-y divide-slate-100 dark:divide-[#334155] text-slate-700 dark:text-[#CBD5E1]">
                 {history && history.length > 0 ? (
                   history.map((ev) => {
                     const badgeClass =
                       ev.event_type === 'upgrade'
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60'
                         : ev.event_type === 'downgrade_scheduled'
-                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60'
                         : ev.event_type === 'downgrade_applied'
-                        ? 'bg-sky-50 text-sky-700 border-sky-200'
+                        ? 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800/60'
                         : ev.event_type === 'cancelled'
-                        ? 'bg-rose-50 text-rose-700 border-rose-200'
-                        : 'bg-slate-50 text-slate-700 border-slate-200';
+                        ? 'bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border-rose-200 dark:border-rose-900/60'
+                        : 'bg-slate-50 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] border-slate-200 dark:border-[#334155]';
 
                     const eventLabel =
                       ev.event_type === 'downgrade_scheduled'
@@ -887,7 +887,7 @@ export default function BillingPage() {
                         : ev.event_type ? ev.event_type.charAt(0).toUpperCase() + ev.event_type.slice(1) : 'Event';
 
                     return (
-                      <tr key={ev.id || `${ev.event_type}-${ev.created_at}`} className="hover:bg-slate-50/50">
+                      <tr key={ev.id || `${ev.event_type}-${ev.created_at}`} className="hover:bg-slate-50/50 dark:hover:bg-[#1E293B]/50">
                         <td className="py-3 px-6">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider ${badgeClass}`}>
                             {eventLabel}
@@ -896,26 +896,26 @@ export default function BillingPage() {
                         <td className="py-3 px-6 font-medium">
                           {ev.from_plan ? (
                             <span className="inline-flex items-center gap-1.5 capitalize">
-                              <span className="text-slate-500">{ev.from_plan}</span>
-                              <ArrowRight className="w-3 h-3 text-slate-400" />
-                              <span className="text-slate-900 font-bold">{ev.to_plan || 'None'}</span>
+                              <span className="text-slate-500 dark:text-[#94A3B8]">{ev.from_plan}</span>
+                              <ArrowRight className="w-3 h-3 text-slate-400 dark:text-slate-500" />
+                              <span className="text-slate-900 dark:text-[#F8FAFC] font-bold">{ev.to_plan || 'None'}</span>
                             </span>
                           ) : (
-                            <span className="capitalize text-slate-900 font-bold">{ev.to_plan || 'Initial Setup'}</span>
+                            <span className="capitalize text-slate-900 dark:text-[#F8FAFC] font-bold">{ev.to_plan || 'Initial Setup'}</span>
                           )}
                         </td>
-                        <td className="py-3 px-6 capitalize text-slate-600">
+                        <td className="py-3 px-6 capitalize text-slate-600 dark:text-[#CBD5E1]">
                           {ev.billing_interval || 'Monthly'}
                         </td>
-                        <td className="py-3 px-6 text-slate-600">
+                        <td className="py-3 px-6 text-slate-600 dark:text-[#CBD5E1]">
                           {ev.effective_date ? new Date(ev.effective_date).toLocaleDateString() : 'Immediate'}
                         </td>
                         <td className="py-3 px-6">
-                          <span className="text-[11px] font-semibold text-slate-700 capitalize">
+                          <span className="text-[11px] font-semibold text-slate-700 dark:text-[#CBD5E1] capitalize">
                             {ev.status || 'Processed'}
                           </span>
                         </td>
-                        <td className="py-3 px-6 text-right font-mono text-[11px] text-slate-500">
+                        <td className="py-3 px-6 text-right font-mono text-[11px] text-slate-500 dark:text-[#94A3B8]">
                           {ev.created_at ? new Date(ev.created_at).toLocaleString() : '—'}
                         </td>
                       </tr>
@@ -923,7 +923,7 @@ export default function BillingPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400 text-xs">
+                    <td colSpan={6} className="py-8 text-center text-slate-400 dark:text-[#64748B] text-xs">
                       No subscription change events recorded yet. Plan transitions, upgrades, and scheduled downgrades will appear here.
                     </td>
                   </tr>
@@ -931,7 +931,7 @@ export default function BillingPage() {
               </tbody>
             </table>
           </div>
+        </div>
       </div>
-    </div>
   );
 }

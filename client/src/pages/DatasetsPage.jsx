@@ -207,16 +207,16 @@ export default function DatasetsPage() {
   return (
     <div className="space-y-6 font-sans">
       {/* 1. Breadcrumbs matching Wireframe */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-        <span className="hover:text-slate-600 transition cursor-pointer" onClick={() => navigate('/dashboard')}>
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-[#94A3B8] font-medium">
+        <span className="hover:text-slate-600 dark:hover:text-[#F8FAFC] transition cursor-pointer" onClick={() => navigate('/dashboard')}>
           Workspace
         </span>
-        <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-        <span className="hover:text-slate-600 transition cursor-pointer">
+        <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-[#334155]" />
+        <span className="hover:text-slate-600 dark:hover:text-[#F8FAFC] transition cursor-pointer">
           Production
         </span>
-        <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-        <span className="text-slate-900 font-bold">
+        <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-[#334155]" />
+        <span className="text-slate-900 dark:text-[#F8FAFC] font-bold">
           Datasets
         </span>
       </nav>
@@ -225,16 +225,16 @@ export default function DatasetsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
               Datasets
             </h1>
             {currentRole && (
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200/80">
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1] border border-slate-200/80 dark:border-[#334155]">
                 {currentRole.charAt(0).toUpperCase() + currentRole.slice(1)}
               </span>
             )}
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 font-normal leading-relaxed">
             Explore schema, preview records, and manage imported business telemetry.
           </p>
           {!isViewer && (
@@ -264,9 +264,9 @@ export default function DatasetsPage() {
 
       {/* Viewer Mode Notice */}
       {isViewer && (
-        <div className="flex items-center justify-between gap-2.5 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-2.5 text-xs text-slate-600">
+        <div className="flex items-center justify-between gap-2.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/80 dark:bg-[#111827] px-4 py-2.5 text-xs text-slate-600 dark:text-[#CBD5E1]">
           <span className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-slate-400" />
+            <span className="h-2 w-2 rounded-full bg-slate-400 dark:bg-[#94A3B8]" />
             <span><strong>View-Only Mode:</strong> Your role ({currentRole}) has dataset inspection and sample preview access. Uploads, ingestion, and deletion require Analyst or Admin privileges.</span>
           </span>
         </div>
@@ -308,60 +308,60 @@ export default function DatasetsPage() {
       {/* 3. Three Summary Cards matching Wireframe Layout */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Card 1: Total Datasets */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+            <span className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] uppercase tracking-wider block">
               Total Datasets
             </span>
-            <div className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+            <div className="p-2 rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
               <Database className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-3xl font-extrabold font-mono tracking-tight text-slate-900 block">
+            <span className="text-3xl font-extrabold font-mono tracking-tight text-slate-900 dark:text-[#F8FAFC] block">
               {totalDatasets}
             </span>
-            <p className="mt-1.5 text-xs text-slate-400">
+            <p className="mt-1.5 text-xs text-slate-400 dark:text-[#94A3B8]">
               Processed from CSV, JSON, and Postgres
             </p>
           </div>
         </div>
 
         {/* Card 2: Total Record Volume */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+            <span className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] uppercase tracking-wider block">
               Total Record Volume
             </span>
-            <div className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+            <div className="p-2 rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
               <CheckCircle2 className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-3xl font-extrabold font-mono tracking-tight text-slate-900 block">
+            <span className="text-3xl font-extrabold font-mono tracking-tight text-slate-900 dark:text-[#F8FAFC] block">
               {formatNumberAbbreviated(totalRows)}
             </span>
-            <p className="mt-1.5 text-xs text-slate-400">
+            <p className="mt-1.5 text-xs text-slate-400 dark:text-[#94A3B8]">
               Processed through parsing and type inferencing
             </p>
           </div>
         </div>
 
         {/* Card 3: Inferred Dimensions */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+            <span className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] uppercase tracking-wider block">
               Inferred Dimensions
             </span>
-            <div className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+            <div className="p-2 rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
               <LayoutGrid className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-3xl font-extrabold font-mono tracking-tight text-slate-900 block">
+            <span className="text-3xl font-extrabold font-mono tracking-tight text-slate-900 dark:text-[#F8FAFC] block">
               {totalDimensions}
             </span>
-            <p className="mt-1.5 text-xs text-slate-400">
+            <p className="mt-1.5 text-xs text-slate-400 dark:text-[#94A3B8]">
               Dimensions available for dynamic OLAP analytics
             </p>
           </div>
@@ -370,9 +370,9 @@ export default function DatasetsPage() {
 
       {/* 5. Datasets Table Card */}
       {isLoading ? (
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-16 flex flex-col items-center justify-center space-y-3 shadow-2xs">
-          <Loader2 className="h-8 w-8 animate-spin text-rose-600" />
-          <p className="text-xs font-medium text-slate-500">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] p-16 flex flex-col items-center justify-center space-y-3 shadow-2xs">
+          <Loader2 className="h-8 w-8 animate-spin text-[#D91542] dark:text-[#FB7185]" />
+          <p className="text-xs font-medium text-slate-500 dark:text-[#94A3B8]">
             Fetching dataset metadata and schemas...
           </p>
         </div>
@@ -422,29 +422,29 @@ export default function DatasetsPage() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && datasetToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs font-sans">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200/90 animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm font-sans">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#111827] p-6 shadow-2xl border border-slate-200/90 dark:border-[#334155] animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+              <div className="h-10 w-10 rounded-full bg-rose-50 dark:bg-[#2A1422] border border-rose-200/80 dark:border-[#FB7185]/40 flex items-center justify-center text-rose-600 dark:text-[#FB7185] shrink-0">
                 <Trash2 className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 text-sm">Delete Dataset?</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <h3 className="font-bold text-slate-900 dark:text-[#F8FAFC] text-sm">Delete Dataset?</h3>
+                <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
                   This will remove the dataset and clean up all dependent metrics and alerts.
                 </p>
               </div>
             </div>
 
-            <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200/70 mb-4 text-xs space-y-1.5">
+            <div className="p-3.5 bg-slate-50/80 dark:bg-[#0F172A] rounded-xl border border-slate-200/70 dark:border-[#334155] mb-4 text-xs space-y-1.5">
               <div className="flex justify-between items-center">
-                <span className="text-slate-500">Dataset Name:</span>
-                <span className="font-semibold text-slate-800">{datasetToDelete.name}</span>
+                <span className="text-slate-500 dark:text-[#94A3B8]">Dataset Name:</span>
+                <span className="font-semibold text-slate-800 dark:text-[#F8FAFC]">{datasetToDelete.name}</span>
               </div>
               {datasetToDelete.row_count !== undefined && (
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Record Count:</span>
-                  <span className="font-mono text-slate-700 font-semibold">
+                  <span className="text-slate-500 dark:text-[#94A3B8]">Record Count:</span>
+                  <span className="font-mono text-slate-700 dark:text-[#CBD5E1] font-semibold">
                     {Number(datasetToDelete.row_count || 0).toLocaleString()} rows
                   </span>
                 </div>
@@ -452,13 +452,13 @@ export default function DatasetsPage() {
             </div>
 
             {deleteError && (
-              <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+              <div className="mb-4 p-3 bg-rose-50 dark:bg-[#2A1422] border border-rose-200 dark:border-[#FB7185]/40 rounded-xl text-xs text-rose-700 dark:text-[#FB7185] flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-[#FB7185]" />
                 <span>{deleteError}</span>
               </div>
             )}
 
-            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-[#334155]">
               <button
                 type="button"
                 onClick={() => {
@@ -467,7 +467,7 @@ export default function DatasetsPage() {
                   setDeleteError(null);
                 }}
                 disabled={isDeleting !== null}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-[#CBD5E1] hover:bg-slate-100 dark:hover:bg-[#1E293B] rounded-lg transition"
               >
                 Cancel
               </button>
@@ -476,7 +476,7 @@ export default function DatasetsPage() {
                 onClick={handleConfirmDelete}
                 disabled={isDeleting !== null}
                 id="confirm-delete-dataset-btn"
-                className="px-4 py-2 text-xs font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50 transition flex items-center gap-1.5 shadow-2xs"
+                className="px-4 py-2 text-xs font-semibold bg-[#D91542] hover:bg-[#B91238] dark:bg-[#D91542] dark:hover:bg-[#B91238] text-white rounded-lg disabled:opacity-50 transition flex items-center gap-1.5 shadow-2xs"
               >
                 {isDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                 <span>{isDeleting ? 'Deleting...' : 'Delete Dataset'}</span>
