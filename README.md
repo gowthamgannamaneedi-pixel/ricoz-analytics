@@ -101,6 +101,9 @@ Copy from `server/.env.example`.
 | `SUPABASE_URL` | Supabase project URL | `https://[YOUR_PROJECT_ID].supabase.co` |
 | `SUPABASE_ANON_KEY` | Supabase anonymous public key | `your-anon-key` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (backend only, optional) | `your-service-key` |
+| `RAZORPAY_KEY_ID` | Razorpay API Key ID (`rzp_test_...` or `rzp_live_...`) | (empty) |
+| `RAZORPAY_KEY_SECRET` | Razorpay Secret Key for HMAC signature verification | (empty) |
+| `RAZORPAY_WEBHOOK_SECRET` | Secret token for validating webhook payloads | (empty) |
 | `GEMINI_API_KEY` | Google Gemini API key for AI assistant features (optional) | `your-gemini-key` |
 | `ML_SERVICE_URL` | Python FastAPI ML service endpoint (optional) | `http://127.0.0.1:8000` |
 
@@ -110,6 +113,7 @@ Copy from `client/.env.example`.
 | Variable | Description | Default / Example |
 | :--- | :--- | :--- |
 | `VITE_API_URL` | Base URL for backend API requests | `http://localhost:5000/api` |
+| `VITE_RAZORPAY_KEY_ID` | Razorpay Public Key ID for Checkout modal popup | (empty) |
 | `VITE_ENABLE_DEV_AUTH` | Toggle quick-login test accounts helper on Login page | `false` |
 | `VITE_SUPABASE_URL` | Optional Supabase project URL for frontend client | (empty) |
 | `VITE_SUPABASE_ANON_KEY` | Optional Supabase anon key for frontend client | (empty) |
@@ -154,3 +158,61 @@ In production, RicozAnalytics separates concerns cleanly:
 2. **Backend**: Node.js/Express service containerized or deployed on a platform like Render, Railway, Fly.io, or AWS ECS/App Runner.
    - Environment: Set `NODE_ENV=production`, `PORT=5000`, `CLIENT_URL=https://<DEPLOYED-FRONTEND-DOMAIN>`, `DATABASE_URL`, `JWT_SECRET`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`.
 3. **Database**: Managed PostgreSQL hosted on Supabase with connection pooling enabled.
+
+---
+
+## Razorpay Payment Gateway Configuration Guide
+
+RicozAnalytics includes an end-to-end Razorpay integration for SaaS billing, subscriptions, invoices, and entitlements.
+
+### 1. Local Development Setup
+1. In `server/.env`:
+   ```env
+   # Razorpay Payment Gateway
+   RAZORPAY_KEY_ID=rzp_test_your_test_key_id
+   RAZORPAY_KEY_SECRET=your_test_key_secret
+   RAZORPAY_WEBHOOK_SECRET=your_test_webhook_secret
+   CLIENT_URL=http://localhost:5173
+   ```
+2. In `client/.env`:
+   ```env
+   # Razorpay Public Checkout Key
+   VITE_RAZORPAY_KEY_ID=rzp_test_your_test_key_id
+   ```
+   *Note*: In non-production development without live API keys, the application supports sandbox test mode simulation for local testing.
+
+### 2. Render Deployment (Backend)
+Configure these environment variables in your Render Web Service dashboard (**Environment** tab):
+- `RAZORPAY_KEY_ID`: Your Razorpay Key ID (`rzp_live_...` or `rzp_test_...`)
+- `RAZORPAY_KEY_SECRET`: Your Razorpay Key Secret (kept confidential, never committed)
+- `RAZORPAY_WEBHOOK_SECRET`: The webhook signing secret configured in your Razorpay Dashboard
+- `CLIENT_URL`: `https://ricoz-analytics.vercel.app` (used for CORS and redirect origins)
+
+### 3. Vercel Deployment (Frontend)
+Configure this environment variable in your Vercel Project settings (**Settings > Environment Variables**):
+- `VITE_RAZORPAY_KEY_ID`: Your public Razorpay Key ID (`rzp_live_...` or `rzp_test_...`)
+- `VITE_API_URL`: `https://<YOUR-RENDER-BACKEND-URL>/api`
+
+### 4. Razorpay Webhook Configuration
+1. Log in to your [Razorpay Dashboard](https://dashboard.razorpay.com/) and navigate to **Settings > Webhooks**.
+2. Click **Add New Webhook**.
+3. Set the **Webhook URL** to:
+   ```text
+   https://<YOUR-RENDER-BACKEND-URL>/api/billing/razorpay-webhook
+   ```
+   *(or the unified endpoint `https://<YOUR-RENDER-BACKEND-URL>/api/billing/webhook`)*
+4. Enter a strong secret string and set the same value in Render's `RAZORPAY_WEBHOOK_SECRET`.
+5. Under **Active Events**, select:
+   - `payment.captured`
+   - `order.paid`
+   - `payment.failed`
+   - `refund.created`
+   - `refund.processed`
+6. Click **Save Webhook**.
+
+### 5. Automated Testing & Verification
+Run the automated Razorpay payment gateway test suite:
+```bash
+node server/test-razorpay-payment-gateway.js
+```
+The test suite validates cryptographic signatures, price tampering prevention, cross-tenant isolation, duplicate callback idempotency, webhook deduplication, and entitlement limits.

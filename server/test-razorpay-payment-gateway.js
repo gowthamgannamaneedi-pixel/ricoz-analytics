@@ -146,6 +146,48 @@ async function runTestSuite() {
     }
     assert(invalidPlanFailed, 'Rejects unrecognized plan ID');
 
+    // Missing Credentials in Production Mode
+    const prevNodeEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    let missingCredsOrderFailed = false;
+    const tempRzp = razorpayService.razorpay;
+    try {
+      razorpayService.razorpay = null;
+      await razorpayService.createOrder({
+        organizationId: testOrgId,
+        planId: 'starter',
+        billingInterval: 'monthly'
+      });
+    } catch (err) {
+      missingCredsOrderFailed = true;
+      assert(err.message.includes('Razorpay Payment Gateway is not configured'), `Missing credentials error thrown: ${err.message}`);
+    } finally {
+      razorpayService.razorpay = tempRzp;
+      process.env.NODE_ENV = prevNodeEnv;
+    }
+    assert(missingCredsOrderFailed, 'Missing credentials produce clear configuration error rather than silent success');
+
+    // Missing Secret in Verify Payment
+    process.env.NODE_ENV = 'production';
+    let missingSecretVerifyFailed = false;
+    const tempSecret = razorpayService.keySecret;
+    try {
+      razorpayService.keySecret = '';
+      await razorpayService.verifyPayment({
+        organizationId: testOrgId,
+        orderId: starterOrder.orderId,
+        paymentId: 'pay_test_dummy',
+        signature: 'sig_test_dummy'
+      });
+    } catch (err) {
+      missingSecretVerifyFailed = true;
+      assert(err.message.includes('Missing RAZORPAY_KEY_SECRET'), `Missing secret error caught: ${err.message}`);
+    } finally {
+      razorpayService.keySecret = tempSecret;
+      process.env.NODE_ENV = prevNodeEnv;
+    }
+    assert(missingSecretVerifyFailed, 'Missing RAZORPAY_KEY_SECRET produces clear configuration error in production');
+
     // -------------------------------------------------------------
     // TEST 2: Cryptographic Signature Verification
     // -------------------------------------------------------------

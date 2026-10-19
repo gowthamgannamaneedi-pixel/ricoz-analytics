@@ -255,8 +255,13 @@ export default function BillingPage() {
       }
 
       // 3. Configure Razorpay Checkout options
+      const checkoutKeyId = orderData.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID;
+      if (!checkoutKeyId) {
+        throw new Error('Razorpay Public Key ID is not configured. Please set VITE_RAZORPAY_KEY_ID in your environment variables.');
+      }
+
       const options = {
-        key: orderData.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: checkoutKeyId,
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
         name: 'RicozAnalytics',

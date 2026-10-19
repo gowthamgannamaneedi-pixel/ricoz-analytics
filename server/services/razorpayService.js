@@ -138,7 +138,11 @@ class RazorpayService {
         throw new Error(`Razorpay Order Creation Failed: ${rzpErr.error?.description || rzpErr.message}`);
       }
     } else {
-      // Test / development simulation mode
+      // In production mode, missing credentials must produce an explicit configuration error
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('Razorpay Payment Gateway is not configured. Missing RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET in server environment settings.');
+      }
+      // Non-production test/development simulation mode
       orderId = `order_test_${crypto.randomBytes(8).toString('hex')}`;
     }
 
@@ -220,6 +224,9 @@ class RazorpayService {
     }
 
     // 4. Cryptographic Signature Verification
+    if (process.env.NODE_ENV === 'production' && (!this.keySecret || this.keySecret.includes('placeholder'))) {
+      throw new Error('Razorpay Payment Gateway configuration error: Missing RAZORPAY_KEY_SECRET on server.');
+    }
     // Razorpay standard: generated_signature = hmac_sha256(order_id + "|" + razorpay_payment_id, secret)
     const secretToUse = this.keySecret || 'test_secret_placeholder';
     const expectedSignature = crypto
@@ -447,6 +454,9 @@ class RazorpayService {
       : (typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody));
 
     // 1. Verify Cryptographic Webhook Signature
+    if (process.env.NODE_ENV === 'production' && (!this.webhookSecret || this.webhookSecret.includes('placeholder'))) {
+      throw new Error('Razorpay Webhook configuration error: Missing RAZORPAY_WEBHOOK_SECRET on server.');
+    }
     const secret = this.webhookSecret || 'test_webhook_secret_placeholder';
     const expectedSignature = crypto
       .createHmac('sha256', secret)
