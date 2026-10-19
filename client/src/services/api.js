@@ -1242,6 +1242,35 @@ export async function getBillingSubscription() {
 }
 
 /**
+ * Fetch public Razorpay gateway configuration
+ */
+export async function getRazorpayConfig() {
+  return apiRequest('/billing/razorpay-config');
+}
+
+/**
+ * Create a server-validated Razorpay order
+ * @param {{ planId: string, interval?: string, billingCycle?: string, customAmount?: number }} payload 
+ */
+export async function createRazorpayOrder(payload) {
+  return apiRequest('/billing/create-order', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+/**
+ * Cryptographically verify Razorpay payment and activate subscription
+ * @param {{ orderId: string, paymentId: string, signature: string }} payload 
+ */
+export async function verifyRazorpayPayment(payload) {
+  return apiRequest('/billing/verify-payment', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+/**
  * Create a Stripe checkout session for plan upgrade
  * @param {{ planId: string, interval?: string }} payload 
  */

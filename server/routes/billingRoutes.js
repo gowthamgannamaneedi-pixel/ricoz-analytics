@@ -6,11 +6,16 @@ const { requireRole } = require('../middleware/roleMiddleware');
 
 // Public endpoints
 router.get('/plans', billingController.getPlans);
+router.get('/razorpay-config', billingController.getRazorpayConfig);
 router.post('/webhook', billingController.handleWebhook);
+router.post('/razorpay-webhook', billingController.handleRazorpayWebhook);
 
 // Protected endpoints
 router.get('/subscription', authenticateToken, billingController.getSubscription);
 router.get('/history', authenticateToken, billingController.getSubscriptionHistory);
+router.post('/create-order', authenticateToken, requireRole('owner', 'admin'), billingController.createRazorpayOrder);
+router.post('/create-razorpay-order', authenticateToken, requireRole('owner', 'admin'), billingController.createRazorpayOrder);
+router.post('/verify-payment', authenticateToken, requireRole('owner', 'admin'), billingController.verifyRazorpayPayment);
 router.post('/create-checkout-session', authenticateToken, requireRole('owner', 'admin'), billingController.createCheckoutSession);
 router.post('/schedule-downgrade', authenticateToken, requireRole('owner', 'admin'), billingController.scheduleDowngrade);
 router.post('/cancel-subscription', authenticateToken, requireRole('owner', 'admin'), billingController.cancelSubscription);

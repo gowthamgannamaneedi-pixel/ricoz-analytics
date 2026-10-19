@@ -412,7 +412,7 @@ class PaymentService {
    */
   async getInvoices(organizationId) {
     const sql = `
-      SELECT id, stripe_invoice_id, amount, currency, plan, status, invoice_url, created_at
+      SELECT id, stripe_invoice_id, razorpay_payment_id, razorpay_order_id, receipt_number, payment_gateway, amount, currency, plan, status, invoice_url, created_at
       FROM invoices
       WHERE organization_id = $1
       ORDER BY created_at DESC;

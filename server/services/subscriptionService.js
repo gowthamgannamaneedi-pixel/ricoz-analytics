@@ -481,8 +481,12 @@ class SubscriptionService {
     currency = 'inr',
     stripeCustomerId = null,
     stripeSubscriptionId = null,
+    razorpayPaymentId = null,
+    razorpayOrderId = null,
+    razorpayCustomerId = null,
+    paymentGateway = 'razorpay',
     currentPeriodEnd = null
-  }) {
+  } = {}) {
     const plan = getPlan(planId);
     const now = new Date();
     const isAnnual = billingInterval === 'yearly' || billingInterval === 'annual';
@@ -507,6 +511,9 @@ class SubscriptionService {
 
     if (stripeCustomerId) updates.stripe_customer_id = stripeCustomerId;
     if (stripeSubscriptionId) updates.stripe_subscription_id = stripeSubscriptionId;
+    if (razorpayPaymentId) updates.razorpay_payment_id = razorpayPaymentId;
+    if (razorpayOrderId) updates.razorpay_order_id = razorpayOrderId;
+    if (razorpayCustomerId) updates.razorpay_customer_id = razorpayCustomerId;
 
     const updatedOrg = await this.updateSubscription(organizationId, updates);
 
@@ -524,6 +531,10 @@ class SubscriptionService {
       metadata: {
         stripeCustomerId,
         stripeSubscriptionId,
+        razorpayPaymentId,
+        razorpayOrderId,
+        razorpayCustomerId,
+        paymentGateway: paymentGateway || (razorpayPaymentId ? 'razorpay' : 'stripe'),
         currentPeriodEnd: effectivePeriodEnd
       }
     }).catch(err => console.warn('[SubscriptionHistory] Recording error:', err.message));

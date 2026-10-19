@@ -20,10 +20,24 @@ import {
   ChevronRight,
   Tag,
   History,
-  ArrowDownRight
+  ArrowDownRight,
+  Receipt,
+  RotateCcw,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getBillingPlans, getBillingSubscription, createBillingCheckoutSession, cancelBillingSubscription, scheduleBillingDowngrade, getBillingHistory } from '../services/api';
+import {
+  getBillingPlans,
+  getBillingSubscription,
+  createBillingCheckoutSession,
+  cancelBillingSubscription,
+  scheduleBillingDowngrade,
+  getBillingHistory,
+  getRazorpayConfig,
+  createRazorpayOrder,
+  verifyRazorpayPayment
+} from '../services/api';
+import { loadRazorpayCheckout } from '../utils/razorpayLoader';
 
 /**
  * Proposed RicozAnalytics Launch Pricing Plans
@@ -107,9 +121,12 @@ export default function BillingPage() {
   const [plans, setPlans] = useState(DEFAULT_LAUNCH_PLANS);
   const [currentSub, setCurrentSub] = useState(subscription || null);
   const [invoices, setInvoices] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [upgradingPlanId, setUpgradingPlanId] = useState(null);
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
+  const [verificationStep, setVerificationStep] = useState('');
   const [error, setError] = useState(location.state?.trialExpired ? 'Your 14-day free trial has completed. Please choose a plan to continue accessing your workspace.' : '');
   const [successMessage, setSuccessMessage] = useState(location.state?.paymentSuccess ? 'Payment confirmed! Your enterprise workspace is now active.' : '');
 
@@ -155,6 +172,9 @@ export default function BillingPage() {
           if (subRes && Array.isArray(subRes.invoices)) {
             setInvoices(subRes.invoices);
           }
+          if (subRes && Array.isArray(subRes.orders)) {
+            setOrders(subRes.orders);
+          }
           if (subRes && Array.isArray(subRes.history)) {
             setHistory(subRes.history);
           }
@@ -174,31 +194,140 @@ export default function BillingPage() {
     return () => { isMounted = false; };
   }, []);
 
-  // Handle plan checkout creation
+  // Handle Razorpay checkout & cryptographic verification
   const handleUpgrade = async (planId) => {
     setUpgradingPlanId(planId);
     setError('');
     setSuccessMessage('');
 
     try {
-      const data = await createBillingCheckoutSession({
+      // 1. Authoritative server-side Razorpay order generation
+      const orderData = await createRazorpayOrder({
         planId,
         interval: billingInterval,
         billingCycle: billingInterval
       });
 
-      if (data && data.checkoutUrl) {
-        // Redirect to Stripe checkout
-        window.location.href = data.checkoutUrl;
-      } else {
-        // Fallback local update
+      if (!orderData || !orderData.orderId) {
+        throw new Error('Unable to create payment order with backend server.');
+      }
+
+      // Check if sandbox test simulation mode is active (when dummy keys in development)
+      const isSimulatedTest = orderData.orderId.startsWith('order_test_') && (!orderData.keyId || orderData.keyId.includes('placeholder'));
+
+      if (isSimulatedTest) {
+        const proceedSimulated = window.confirm(
+          `[Sandbox Test Simulation]\n\nRazorpay keys are in local sandbox simulation mode.\n\nPlan: ${orderData.planName || planId.toUpperCase()} (${billingInterval})\nAmount: ₹${(orderData.amount / 100).toLocaleString('en-IN')}\nOrder ID: ${orderData.orderId}\n\nProceed with simulated payment verification and plan activation?`
+        );
+
+        if (!proceedSimulated) {
+          setUpgradingPlanId(null);
+          return;
+        }
+
+        setVerifyingPayment(true);
+        setVerificationStep('Cryptographically verifying simulated payment signature...');
+
+        const verifyRes = await verifyRazorpayPayment({
+          orderId: orderData.orderId,
+          paymentId: `pay_test_${Date.now()}`,
+          signature: 'test_bypass_sig',
+          planId,
+          billingInterval
+        });
+
+        setSuccessMessage(verifyRes.message || 'Payment confirmed! Your subscription is now active.');
         if (typeof refreshSubscription === 'function') {
           await refreshSubscription();
         }
-        setSuccessMessage('Checkout initiated successfully.');
+        const subRes = await getBillingSubscription().catch(() => null);
+        if (subRes?.subscription) setCurrentSub(subRes.subscription);
+        if (subRes?.invoices) setInvoices(subRes.invoices);
+        if (subRes?.orders) setOrders(subRes.orders);
+        if (subRes?.history) setHistory(subRes.history);
+        return;
       }
+
+      // 2. Dynamically load Razorpay Checkout SDK
+      const RazorpaySDK = await loadRazorpayCheckout();
+      if (!RazorpaySDK) {
+        throw new Error('Razorpay Checkout SDK is not available. Please check your internet connection or adblocker.');
+      }
+
+      // 3. Configure Razorpay Checkout options
+      const options = {
+        key: orderData.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: orderData.amount,
+        currency: orderData.currency || 'INR',
+        name: 'RicozAnalytics',
+        description: `${orderData.planName || planId.toUpperCase()} Plan (${billingInterval === 'yearly' ? 'Annual' : 'Monthly'})`,
+        image: '/favicon.ico',
+        order_id: orderData.orderId,
+        prefill: {
+          name: user?.name || user?.full_name || '',
+          email: user?.email || '',
+          contact: user?.phone || ''
+        },
+        notes: {
+          organization_id: user?.organization_id,
+          plan_id: planId,
+          billing_interval: billingInterval
+        },
+        theme: {
+          color: '#E11D48'
+        },
+        modal: {
+          ondismiss: () => {
+            setUpgradingPlanId(null);
+            setVerifyingPayment(false);
+          }
+        },
+        handler: async (response) => {
+          try {
+            setVerifyingPayment(true);
+            setVerificationStep('Cryptographically verifying payment signature with Razorpay...');
+
+            // Submit cryptographic signature for authoritative verification
+            const verifyRes = await verifyRazorpayPayment({
+              orderId: response.razorpay_order_id || orderData.orderId,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+              planId,
+              billingInterval
+            });
+
+            setVerificationStep('Activating plan entitlements and syncing workspace...');
+            setSuccessMessage(verifyRes.message || `Payment verified successfully! Welcome to the ${orderData.planName || planId.toUpperCase()} tier.`);
+
+            if (typeof refreshSubscription === 'function') {
+              await refreshSubscription();
+            }
+
+            const subRes = await getBillingSubscription().catch(() => null);
+            if (subRes?.subscription) setCurrentSub(subRes.subscription);
+            if (subRes?.invoices) setInvoices(subRes.invoices);
+            if (subRes?.orders) setOrders(subRes.orders);
+            if (subRes?.history) setHistory(subRes.history);
+          } catch (verifyErr) {
+            setError(verifyErr.message || 'Payment verification failed. If your payment was deducted, our webhook will auto-credit your workspace shortly.');
+          } finally {
+            setVerifyingPayment(false);
+            setUpgradingPlanId(null);
+            setVerificationStep('');
+          }
+        }
+      };
+
+      const rzpInstance = new RazorpaySDK(options);
+      rzpInstance.on('payment.failed', (resp) => {
+        setError(`Payment failed: ${resp.error?.description || resp.error?.reason || 'Transaction could not be completed.'}`);
+        setUpgradingPlanId(null);
+        setVerifyingPayment(false);
+      });
+
+      rzpInstance.open();
     } catch (err) {
-      setError(err.message || 'Unable to initiate payment checkout. Please try again.');
+      setError(err.message || 'Unable to initiate Razorpay checkout. Please try again.');
     } finally {
       setUpgradingPlanId(null);
     }
@@ -739,7 +868,7 @@ export default function BillingPage() {
               <div className="text-xs">
                 <p className="font-bold text-slate-900 dark:text-[#F8FAFC]">256-Bit SSL Encryption</p>
                 <p className="text-slate-500 dark:text-[#94A3B8] mt-0.5 text-[11px]">
-                  All transactions are cryptographically verified via Stripe PCI-DSS Level 1 compliant gateway.
+                  All transactions are cryptographically secured via Razorpay PCI-DSS Level 1 certified gateway with HMAC-SHA256 signature verification.
                 </p>
               </div>
             </div>
@@ -751,7 +880,7 @@ export default function BillingPage() {
               <div className="text-xs">
                 <p className="font-bold text-slate-900 dark:text-[#F8FAFC]">Zero Data Loss Guarantee</p>
                 <p className="text-slate-500 dark:text-[#94A3B8] mt-0.5 text-[11px]">
-                  Your datasets, models, and dashboards remain safely preserved upon trial end.
+                  Your datasets, models, and dashboards remain safely preserved upon trial end or plan downgrade.
                 </p>
               </div>
             </div>
@@ -761,7 +890,7 @@ export default function BillingPage() {
                 <HelpCircle className="w-5 h-5" />
               </div>
               <div className="text-xs">
-                <p className="font-bold text-slate-900 dark:text-[#F8FAFC]">Enterprise Support & Invoicing</p>
+                <p className="font-bold text-slate-900 dark:text-[#F8FAFC]">Enterprise Invoicing & GST</p>
                 <p className="text-slate-500 dark:text-[#94A3B8] mt-0.5 text-[11px]">
                   Need custom PO billing or wire transfer?{' '}
                   <a href="mailto:sales@ricoz.in" className="text-rose-600 dark:text-[#FB7185] underline font-semibold">
@@ -773,12 +902,98 @@ export default function BillingPage() {
           </div>
         </div>
 
+        {/* Razorpay Orders & Transaction Ledger */}
+        {orders && orders.length > 0 && (
+          <div className="rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] overflow-hidden shadow-2xs">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-[#334155] flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Receipt className="w-4 h-4 text-slate-700 dark:text-[#CBD5E1]" />
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Razorpay Payment Gateway Orders</h2>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">Authoritative order records and cryptographic transaction IDs</p>
+              </div>
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-[#94A3B8] bg-slate-100 dark:bg-[#1E293B] px-2.5 py-1 rounded-md border border-slate-200 dark:border-[#334155]">
+                {orders.length} {orders.length === 1 ? 'Order' : 'Orders'}
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-[#334155] bg-slate-50/70 dark:bg-[#1E293B] text-slate-500 dark:text-[#CBD5E1] font-semibold uppercase tracking-wider text-[10px]">
+                    <th className="py-3 px-6">Order ID</th>
+                    <th className="py-3 px-6">Payment ID</th>
+                    <th className="py-3 px-6">Plan / Interval</th>
+                    <th className="py-3 px-6">Amount</th>
+                    <th className="py-3 px-6">Status</th>
+                    <th className="py-3 px-6">Date</th>
+                    <th className="py-3 px-6 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-[#334155] text-slate-700 dark:text-[#CBD5E1]">
+                  {orders.map((ord) => {
+                    const isPaid = ord.status === 'paid';
+                    const isFailed = ord.status === 'failed';
+                    const amt = (Number(ord.amount_paise || 0) / 100).toLocaleString('en-IN');
+
+                    return (
+                      <tr key={ord.id || ord.order_id} className="hover:bg-slate-50/50 dark:hover:bg-[#1E293B]/50">
+                        <td className="py-3 px-6 font-mono font-medium text-slate-900 dark:text-[#F8FAFC]">
+                          {ord.order_id}
+                        </td>
+                        <td className="py-3 px-6 font-mono text-[11px] text-slate-600 dark:text-[#94A3B8]">
+                          {ord.payment_id || '—'}
+                        </td>
+                        <td className="py-3 px-6 capitalize">
+                          <span className="font-semibold text-slate-900 dark:text-[#F8FAFC]">{ord.plan_id}</span> ({ord.billing_interval || 'monthly'})
+                        </td>
+                        <td className="py-3 px-6 font-semibold">₹{amt}</td>
+                        <td className="py-3 px-6">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                            isPaid
+                              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60'
+                              : isFailed
+                              ? 'bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border-rose-200 dark:border-rose-900/60'
+                              : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60'
+                          }`}>
+                            {ord.status || 'Created'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-6 font-mono text-[11px] text-slate-500 dark:text-[#94A3B8]">
+                          {ord.created_at ? new Date(ord.created_at).toLocaleDateString() : '—'}
+                        </td>
+                        <td className="py-3 px-6 text-right">
+                          {isFailed ? (
+                            <button
+                              type="button"
+                              onClick={() => handleUpgrade(ord.plan_id)}
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 dark:text-[#FB7185] hover:underline cursor-pointer"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              <span>Retry Payment</span>
+                            </button>
+                          ) : (
+                            <span className="text-[11px] font-mono text-slate-400 dark:text-[#64748B]">
+                              {ord.receipt || 'Verified'}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* Invoices History Table */}
         <div className="rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] overflow-hidden shadow-2xs">
           <div className="px-6 py-4 border-b border-slate-200 dark:border-[#334155] flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Billing History & Invoices</h2>
-              <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">Download official tax invoices for accounting records</p>
+              <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">Download official tax invoices and receipts for accounting records</p>
             </div>
           </div>
 
@@ -787,6 +1002,7 @@ export default function BillingPage() {
               <thead>
                 <tr className="border-b border-slate-100 dark:border-[#334155] bg-slate-50/70 dark:bg-[#1E293B] text-slate-500 dark:text-[#CBD5E1] font-semibold uppercase tracking-wider text-[10px]">
                   <th className="py-3 px-6">Invoice ID</th>
+                  <th className="py-3 px-6">Payment Reference</th>
                   <th className="py-3 px-6">Date</th>
                   <th className="py-3 px-6">Amount</th>
                   <th className="py-3 px-6">Status</th>
@@ -794,17 +1010,21 @@ export default function BillingPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-[#334155] text-slate-700 dark:text-[#CBD5E1]">
-                {currentSub?.invoices && currentSub.invoices.length > 0 ? (
-                  currentSub.invoices.map((inv) => {
+                {invoices && invoices.length > 0 ? (
+                  invoices.map((inv) => {
                     const isINR = (inv.currency || 'inr').toLowerCase() === 'inr';
                     const sym = isINR ? '₹' : '$';
                     const formattedAmt = typeof inv.amount === 'number'
                       ? inv.amount.toLocaleString('en-IN')
                       : ((inv.amount_paid || 0) / 100).toLocaleString('en-IN');
+                    const paymentRef = inv.razorpay_payment_id || inv.razorpay_order_id || inv.stripe_invoice_id || '—';
 
                     return (
                       <tr key={inv.id} className="hover:bg-slate-50/50 dark:hover:bg-[#1E293B]/50">
                         <td className="py-3 px-6 font-mono font-medium text-slate-900 dark:text-[#F8FAFC]">{inv.id}</td>
+                        <td className="py-3 px-6 font-mono text-[11px] text-slate-600 dark:text-[#94A3B8]">
+                          {paymentRef}
+                        </td>
                         <td className="py-3 px-6">{new Date(inv.created_at || Date.now()).toLocaleDateString()}</td>
                         <td className="py-3 px-6 font-semibold">{sym}{formattedAmt}</td>
                         <td className="py-3 px-6">
@@ -815,10 +1035,10 @@ export default function BillingPage() {
                         <td className="py-3 px-6 text-right">
                           <button
                             type="button"
-                            onClick={() => alert(`Downloading invoice ${inv.id}`)}
+                            onClick={() => alert(`Receipt Reference: ${inv.receipt_number || inv.razorpay_payment_id || inv.id}`)}
                             className="text-rose-600 dark:text-[#FB7185] hover:text-rose-700 dark:hover:text-rose-400 font-semibold cursor-pointer"
                           >
-                            PDF &darr;
+                            Receipt &darr;
                           </button>
                         </td>
                       </tr>
@@ -826,7 +1046,7 @@ export default function BillingPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-slate-400 dark:text-[#64748B] text-xs">
+                    <td colSpan={6} className="py-8 text-center text-slate-400 dark:text-[#64748B] text-xs">
                       No invoices yet. Your 14-day free trial does not generate billing charges.
                     </td>
                   </tr>
@@ -932,6 +1152,30 @@ export default function BillingPage() {
             </table>
           </div>
         </div>
+
+        {/* Cryptographic Payment Verification Modal */}
+        {verifyingPayment && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#334155] rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center space-y-4">
+              <div className="h-14 w-14 rounded-2xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-rose-900/60 mx-auto flex items-center justify-center">
+                <ShieldCheck className="h-7 w-7 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-[#F8FAFC]">Cryptographic Verification</h3>
+                <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1.5 leading-relaxed">
+                  {verificationStep || 'Authoritatively validating payment signature and activating enterprise entitlements...'}
+                </p>
+              </div>
+              <div className="flex items-center justify-center gap-2 text-xs font-mono text-rose-600 dark:text-[#FB7185] bg-rose-50 dark:bg-[#2A1422] py-2 px-3 rounded-lg border border-rose-100 dark:border-rose-900/40">
+                <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                <span>Synchronizing with Razorpay network</span>
+              </div>
+              <p className="text-[11px] text-slate-400 dark:text-[#64748B]">
+                Please do not refresh or close this browser tab while your workspace is being provisioned.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
   );
 }

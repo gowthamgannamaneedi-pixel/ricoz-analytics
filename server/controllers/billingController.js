@@ -1,7 +1,9 @@
 const paymentService = require('../services/paymentService');
+const razorpayService = require('../services/razorpayService');
 const subscriptionService = require('../services/subscriptionService');
 const { PLANS, comparePlans, getPlan } = require('../config/plans');
 const SubscriptionHistoryModel = require('../models/subscriptionHistoryModel');
+const RazorpayOrderModel = require('../models/razorpayOrderModel');
 const db = require('../config/database');
 const { logAuditEvent, AUDIT_ACTIONS } = require('../services/auditService');
 
@@ -30,8 +32,28 @@ const billingController = {
   },
 
   /**
+   * GET /api/billing/razorpay-config
+   * Public configuration for frontend Razorpay checkout modal
+   */
+  async getRazorpayConfig(req, res) {
+    try {
+      const config = razorpayService.getPublicConfig();
+      return res.status(200).json({
+        success: true,
+        ...config
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to retrieve Razorpay configuration',
+        error: err.message
+      });
+    }
+  },
+
+  /**
    * GET /api/billing/subscription
-   * Get current organization subscription, entitlements, usage telemetry & invoice history
+   * Get current organization subscription, entitlements, usage telemetry, invoice & order history
    */
   async getSubscription(req, res) {
     try {
@@ -44,16 +66,18 @@ const billingController = {
         });
       }
 
-      const [invoices, history] = await Promise.all([
+      const [invoices, history, orders] = await Promise.all([
         paymentService.getInvoices(orgId).catch(() => []),
-        SubscriptionHistoryModel.findByOrganizationId(orgId, 10).catch(() => [])
+        SubscriptionHistoryModel.findByOrganizationId(orgId, 10).catch(() => []),
+        RazorpayOrderModel.listByOrganization(orgId, 10).catch(() => [])
       ]);
 
       return res.status(200).json({
         success: true,
         subscription,
         invoices,
-        history
+        history,
+        orders
       });
     } catch (err) {
       return res.status(500).json({
@@ -137,6 +161,100 @@ const billingController = {
   },
 
   /**
+   * POST /api/billing/create-order or /api/billing/create-razorpay-order
+   * Create an authoritative server-validated Razorpay order
+   */
+  async createRazorpayOrder(req, res) {
+    try {
+      const orgId = req.user.organization_id;
+      const { planId, interval, billingCycle, customAmount } = req.body;
+      const effectiveCycle = (billingCycle || interval || 'monthly').toLowerCase();
+
+      if (!planId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Plan ID is required (starter, growth, or enterprise).'
+        });
+      }
+
+      const orderData = await razorpayService.createOrder({
+        organizationId: orgId,
+        userId: req.user.id,
+        userEmail: req.user.email,
+        planId,
+        billingInterval: effectiveCycle,
+        customAmount: customAmount ? Number(customAmount) : null
+      });
+
+      await logAuditEvent({
+        organizationId: orgId,
+        userId: req.user.id,
+        action: AUDIT_ACTIONS.SETTINGS_UPDATED,
+        resourceType: 'billing',
+        resourceId: orderData.orderId,
+        description: `Razorpay payment order created for ${planId} (${effectiveCycle})`,
+        metadata: {
+          orderId: orderData.orderId,
+          planId,
+          billingInterval: effectiveCycle,
+          amountPaise: orderData.amount
+        },
+        req
+      }).catch(() => null);
+
+      return res.status(200).json({
+        success: true,
+        ...orderData
+      });
+    } catch (err) {
+      console.error('[BillingController.createRazorpayOrder] Error:', err.message);
+      return res.status(err.message && err.message.includes('Invalid plan') ? 400 : 500).json({
+        success: false,
+        message: err.message || 'Failed to create payment order.'
+      });
+    }
+  },
+
+  /**
+   * POST /api/billing/verify-payment
+   * Cryptographically verify payment signature and activate subscription
+   */
+  async verifyRazorpayPayment(req, res) {
+    try {
+      const orgId = req.user.organization_id;
+      const { orderId, paymentId, signature } = req.body;
+
+      if (!orderId || !paymentId || !signature) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required payment verification parameters: orderId, paymentId, signature.'
+        });
+      }
+
+      const result = await razorpayService.verifyPayment({
+        organizationId: orgId,
+        userId: req.user.id,
+        orderId,
+        paymentId,
+        signature,
+        req
+      });
+
+      return res.status(200).json(result);
+    } catch (err) {
+      console.error('[BillingController.verifyRazorpayPayment] Error:', err.message);
+      const isSignatureError = err.message && err.message.includes('signature');
+      const isAuthError = err.message && err.message.includes('Unauthorized organization');
+      const statusCode = isAuthError ? 403 : (isSignatureError ? 400 : 500);
+
+      return res.status(statusCode).json({
+        success: false,
+        message: err.message || 'Payment verification failed.'
+      });
+    }
+  },
+
+  /**
    * POST /api/billing/schedule-downgrade
    * Schedule plan downgrade at current period end
    */
@@ -199,16 +317,53 @@ const billingController = {
   },
 
   /**
+   * POST /api/billing/razorpay-webhook
+   * Dedicated secure Razorpay webhook endpoint
+   */
+  async handleRazorpayWebhook(req, res) {
+    try {
+      const signature = req.headers['x-razorpay-signature'];
+      const eventId = req.headers['x-razorpay-event-id'];
+      const rawPayload = req.rawBody || req.body;
+
+      if (!signature) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing x-razorpay-signature header'
+        });
+      }
+
+      const result = await razorpayService.handleWebhook(rawPayload, signature, eventId);
+      return res.status(200).json({
+        status: 'ok',
+        received: true,
+        ...result
+      });
+    } catch (err) {
+      console.error('[BillingController.handleRazorpayWebhook] Error:', err.message);
+      return res.status(400).json({
+        success: false,
+        message: err.message || 'Webhook verification failed'
+      });
+    }
+  },
+
+  /**
    * POST /api/billing/webhook
-   * Process incoming Stripe webhooks with cryptographic signature verification
+   * Universal Webhook Router: automatically routes between Razorpay and Stripe signatures
    */
   async handleWebhook(req, res) {
     try {
-      const signature = req.headers['stripe-signature'] || req.headers['x-webhook-signature'];
+      // Check for Razorpay signature first
+      if (req.headers['x-razorpay-signature']) {
+        return billingController.handleRazorpayWebhook(req, res);
+      }
+
+      // Check for Stripe signature
+      const stripeSig = req.headers['stripe-signature'] || req.headers['x-webhook-signature'];
       const payload = req.rawBody || req.body;
 
-      const result = await paymentService.handleWebhook(payload, signature);
-
+      const result = await paymentService.handleWebhook(payload, stripeSig);
       return res.status(200).json({
         received: true,
         result
