@@ -14,6 +14,7 @@ const { testRestApiConnection, ingestRestApiData } = require('../services/restSo
 const { encryptConfig, decryptConfig, sanitizeDataSourceConfig } = require('../services/encryptionService');
 const { ingestDatasetFileStream } = require('../services/datasetIngestionService');
 const subscriptionService = require('../services/subscriptionService');
+const insightService = require('../services/insightService');
 
 /**
  * Data Source Controller
@@ -778,6 +779,10 @@ const uploadDataSource = async (req, res, next) => {
       fs.unlink(file.path, () => {});
     }
 
+    if (organizationId) {
+      insightService.invalidateCache(organizationId);
+    }
+
     return res.status(201).json({
       success: true,
       message: 'Data source and dataset created successfully.',
@@ -838,6 +843,7 @@ const deleteDataSource = async (req, res, next) => {
 
     if (organizationId) {
       await DataSource.deleteByIdAndOrgId(id, organizationId);
+      insightService.invalidateCache(organizationId);
     } else {
       await DataSource.deleteByIdAndUserId(id, userId);
     }

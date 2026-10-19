@@ -16,6 +16,8 @@ const insightRelationshipService = require('./insightRelationshipService');
 
 // In-memory cache for high-throughput AI insight lookups (3-minute TTL)
 const insightMemoryCache = new Map();
+// In-flight promise map for deduplicating concurrent identical insight generation requests
+const inflightGenerations = new Map();
 
 /**
  * Enterprise AI Automated Insights Engine Service
@@ -38,10 +40,17 @@ class InsightService {
   invalidateCache(organizationId = null) {
     if (!organizationId) {
       insightMemoryCache.clear();
+      inflightGenerations.clear();
     } else {
+      const prefix = `${organizationId}:`;
       for (const key of insightMemoryCache.keys()) {
-        if (key.startsWith(`${organizationId}:`)) {
+        if (key.startsWith(prefix)) {
           insightMemoryCache.delete(key);
+        }
+      }
+      for (const key of inflightGenerations.keys()) {
+        if (key.startsWith(prefix)) {
+          inflightGenerations.delete(key);
         }
       }
     }
@@ -63,6 +72,75 @@ class InsightService {
   }
 
   /**
+   * Build validated structured chart recommendation and time-series data
+   */
+  _buildStructuredChartRecommendation(type, context = {}) {
+    try {
+      if ((type === 'growth' || type === 'decline' || type === 'trend') && Array.isArray(context.trends) && context.trends.length >= 2) {
+        const data = context.trends.map(t => ({
+          name: String(t.formattedDate || t.date || 'Period'),
+          value: Number(t.revenue !== undefined ? t.revenue : (t.value !== undefined ? t.value : 0))
+        })).filter(d => isFinite(d.value));
+
+        if (data.length >= 2) {
+          return {
+            type: type === 'trend' ? 'area' : 'line',
+            title: 'Telemetry Trend Over Time',
+            xAxisKey: 'name',
+            yAxisKey: 'value',
+            data
+          };
+        }
+      }
+
+      if (type === 'ranking' && Array.isArray(context.breakdown) && context.breakdown.length > 0) {
+        const data = context.breakdown.slice(0, 7).map(b => ({
+          name: String(b.name || b.category || 'Category'),
+          value: Number(b.value || 0)
+        })).filter(d => isFinite(d.value));
+
+        if (data.length > 0) {
+          return {
+            type: 'bar',
+            title: 'Distribution Breakdown',
+            xAxisKey: 'name',
+            yAxisKey: 'value',
+            data
+          };
+        }
+      }
+
+      if (type === 'forecast' && Array.isArray(context.predictions) && context.predictions.length >= 2) {
+        const data = context.predictions.slice(0, 12).map((p, idx) => ({
+          name: String(p.period || p.date || `T+${idx + 1}`),
+          value: Number(p.predicted !== undefined ? p.predicted : (p.value !== undefined ? p.value : 0))
+        })).filter(d => isFinite(d.value));
+
+        if (data.length >= 2) {
+          return {
+            type: 'area',
+            title: 'Forecast Projection',
+            xAxisKey: 'name',
+            yAxisKey: 'value',
+            data
+          };
+        }
+      }
+
+      if (context.currentValue !== undefined && isFinite(Number(context.currentValue))) {
+        return {
+          type: 'metric_card',
+          title: 'Current Telemetry Value',
+          xAxisKey: 'name',
+          yAxisKey: 'value',
+          data: [{ name: String(context.metricName || 'Metric'), value: Number(context.currentValue) }]
+        };
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /**
    * Generate comprehensive organization insights across all available subsystems
    */
   async generateInsights(organizationId, options = {}) {
@@ -70,7 +148,9 @@ class InsightService {
       throw new Error('Organization ID is required to generate insights.');
     }
 
-    const cacheKey = `${organizationId}:${options.datasetId || 'all'}`;
+    const cacheKey = `${organizationId}:${options.datasetId || 'all'}:${options.metricId || 'all'}`;
+
+    // 1. Fast cache check (3-minute TTL)
     if (!options.forceFresh && insightMemoryCache.has(cacheKey)) {
       const cached = insightMemoryCache.get(cacheKey);
       if (Date.now() - cached.timestamp < 180000) {
@@ -78,52 +158,71 @@ class InsightService {
       }
     }
 
-    const detectedInsights = [];
-    const allRelationships = [];
-
-    // 1. Gather all tenant data concurrently with error boundaries
-    const [datasets, metrics, forecasts, alerts, relationships] = await Promise.all([
-      (Dataset.findByOrganizationId ? Dataset.findByOrganizationId(organizationId) : (Dataset.findByUserId ? Dataset.findByUserId(options.userId || 1) : [])).catch(() => []),
-      MetricModel.findByOrganizationId(organizationId).catch(() => []),
-      ForecastModel.findByOrganizationId(organizationId, 10).catch(() => []),
-      AlertModel.findByOrganizationId(organizationId).catch(() => []),
-      DatasetRelationshipModel.findByOrganizationId(organizationId).catch(() => [])
-    ]);
-
-    let targetDatasets = [];
-    if (options.datasetId) {
-      const single = datasets.find(d => String(d.id) === String(options.datasetId)) ||
-        (Dataset.findByIdAndOrgId ? await Dataset.findByIdAndOrgId(options.datasetId, organizationId) : null) ||
-        (Dataset.findById ? await Dataset.findById(options.datasetId) : null);
-      if (single) targetDatasets = [single];
-    } else {
-      targetDatasets = datasets;
+    // 2. In-flight request deduplication: coalesce identical concurrent requests onto single promise
+    if (inflightGenerations.has(cacheKey)) {
+      return inflightGenerations.get(cacheKey);
     }
 
-    const targetForecasts = options.datasetId
-      ? forecasts.filter(fc => String(fc.dataset_id) === String(options.datasetId))
-      : forecasts;
+    const generationTask = (async () => {
+      // Reusable in-memory dataset records loader for this execution run
+      const loadedDatasetRecordsMap = new Map();
+      const getOrLoadRecords = async (ds) => {
+        if (!ds || !ds.file_path) return [];
+        const dsKey = String(ds.id || ds.file_path);
+        if (loadedDatasetRecordsMap.has(dsKey)) {
+          return loadedDatasetRecordsMap.get(dsKey);
+        }
+        const recs = await analyticsService.loadDatasetRecords(ds, 5000);
+        loadedDatasetRecordsMap.set(dsKey, recs || []);
+        return recs || [];
+      };
 
-    const targetRelationships = options.datasetId
-      ? relationships.filter(rel => String(rel.source_dataset_id) === String(options.datasetId) || String(rel.target_dataset_id) === String(options.datasetId))
-      : relationships;
+      const detectedInsights = [];
+      const allRelationships = [];
 
-    const targetAlerts = options.datasetId
-      ? alerts.filter(al => String(al.dataset_id) === String(options.datasetId))
-      : alerts;
+      // 1. Gather all tenant data concurrently with error boundaries
+      const [datasets, metrics, forecasts, alerts, relationships] = await Promise.all([
+        (Dataset.findByOrganizationId ? Dataset.findByOrganizationId(organizationId) : (Dataset.findByUserId ? Dataset.findByUserId(options.userId || 1) : [])).catch(() => []),
+        MetricModel.findByOrganizationId(organizationId).catch(() => []),
+        ForecastModel.findByOrganizationId(organizationId, 10).catch(() => []),
+        AlertModel.findByOrganizationId(organizationId).catch(() => []),
+        DatasetRelationshipModel.findByOrganizationId(organizationId).catch(() => [])
+      ]);
 
-    // 2. Evaluate Datasets for Growth, Decline, Trends, and Breakdown Insights
-    for (const ds of targetDatasets.slice(0, 5)) {
-      try {
-        if (!ds.file_path) continue;
-        const records = await analyticsService.loadDatasetRecords(ds, 5000);
-        if (!records || records.length === 0) continue;
+      let targetDatasets = [];
+      if (options.datasetId) {
+        const single = datasets.find(d => String(d.id) === String(options.datasetId)) ||
+          (Dataset.findByIdAndOrgId ? await Dataset.findByIdAndOrgId(options.datasetId, organizationId) : null) ||
+          (Dataset.findById ? await Dataset.findById(options.datasetId) : null);
+        if (single) targetDatasets = [single];
+      } else {
+        targetDatasets = datasets;
+      }
 
-        const schema = Array.isArray(ds.schema) ? ds.schema : [];
-        const dims = analyticsService.detectDatasetDimensions(schema, records.slice(0, 20));
+      const targetForecasts = options.datasetId
+        ? forecasts.filter(fc => String(fc.dataset_id) === String(options.datasetId))
+        : forecasts;
 
-        // A. Growth & Decline Detection
-        const trends = analyticsService.computeDatasetTrends(records, dims);
+      const targetRelationships = options.datasetId
+        ? relationships.filter(rel => String(rel.source_dataset_id) === String(options.datasetId) || String(rel.target_dataset_id) === String(options.datasetId))
+        : relationships;
+
+      const targetAlerts = options.datasetId
+        ? alerts.filter(al => String(al.dataset_id) === String(options.datasetId))
+        : alerts;
+
+      // 2. Evaluate Datasets for Growth, Decline, Trends, and Breakdown Insights
+      for (const ds of targetDatasets.slice(0, 5)) {
+        try {
+          if (!ds.file_path) continue;
+          const records = await getOrLoadRecords(ds);
+          if (!records || records.length === 0) continue;
+
+          const schema = Array.isArray(ds.schema) ? ds.schema : [];
+          const dims = analyticsService.detectDatasetDimensions(schema, records.slice(0, 20));
+
+          // A. Growth & Decline Detection
+          const trends = analyticsService.computeDatasetTrends(records, dims);
         if (trends && trends.length >= 2) {
           const prevPoint = trends[trends.length - 2];
           const currPoint = trends[trends.length - 1];
@@ -563,8 +662,8 @@ class InsightService {
         const tgtDs = datasets.find(d => String(d.id) === String(rel.target_dataset_id) || d.name === rel.target_dataset_id);
 
         if (srcDs && tgtDs && srcDs.file_path && tgtDs.file_path) {
-          const srcRecords = await analyticsService.loadDatasetRecords(srcDs, 5000);
-          const tgtRecords = await analyticsService.loadDatasetRecords(tgtDs, 5000);
+          const srcRecords = await getOrLoadRecords(srcDs);
+          const tgtRecords = await getOrLoadRecords(tgtDs);
 
           const relationalRes = await analyticsService.executeRelationalQuery({
             baseDataset: srcDs,
@@ -632,7 +731,7 @@ class InsightService {
 
           if (linkedDs && linkedDs.file_path) {
             try {
-              linkedRecords = await analyticsService.loadDatasetRecords(linkedDs, 5000);
+              linkedRecords = await getOrLoadRecords(linkedDs);
               const schema = Array.isArray(linkedDs.schema) ? linkedDs.schema : [];
               linkedDims = analyticsService.detectDatasetDimensions(schema, linkedRecords.slice(0, 20));
             } catch (_) {}
@@ -819,7 +918,28 @@ class InsightService {
     // 7. Deterministic Insight Ranking & Grounded Executive AI Briefing
     const rawList = processedInsights.length > 0 ? processedInsights : detectedInsights;
     const rankedInsights = insightPrioritizationService.rankInsights(
-      rawList.map(i => insightPrioritizationService.enrichInsight(i))
+      rawList.map(i => {
+        const enriched = insightPrioritizationService.enrichInsight(i);
+        if (!enriched.chart_recommendation) {
+          const ev = enriched.evidence || {};
+          const chartRec = this._buildStructuredChartRecommendation(enriched.type, {
+            trends: ev.trends || ev.recentPoints,
+            breakdown: ev.breakdown,
+            currentValue: ev.currentValue ?? ev.current_value,
+            metricName: ev.metric
+          });
+          if (chartRec && Array.isArray(chartRec.data) && chartRec.data.length > 0) {
+            enriched.chart_recommendation = chartRec;
+            enriched.chartRecommendation = chartRec;
+            enriched.chart_data = chartRec.data;
+            enriched.chartData = chartRec.data;
+          }
+        } else if (!enriched.chartRecommendation) {
+          enriched.chartRecommendation = enriched.chart_recommendation;
+          enriched.chartData = enriched.chart_data;
+        }
+        return enriched;
+      })
     );
 
     let briefing = null;
@@ -866,16 +986,23 @@ class InsightService {
       }).catch(() => {});
     }
 
-    const finalResult = {
-      insights: rankedInsights,
-      executive_summary: executiveSummary,
-      briefing,
-      relationships: allRelationships,
-      count: rankedInsights.length,
-      generated_at: new Date()
-    };
-    insightMemoryCache.set(cacheKey, { timestamp: Date.now(), data: finalResult });
-    return finalResult;
+      const finalResult = {
+        insights: rankedInsights,
+        executive_summary: executiveSummary,
+        briefing,
+        relationships: allRelationships,
+        count: rankedInsights.length,
+        generated_at: new Date()
+      };
+      insightMemoryCache.set(cacheKey, { timestamp: Date.now(), data: finalResult });
+      return finalResult;
+    })();
+
+    const safeFlightPromise = generationTask.finally(() => {
+      inflightGenerations.delete(cacheKey);
+    });
+    inflightGenerations.set(cacheKey, safeFlightPromise);
+    return safeFlightPromise;
   }
 
   /**

@@ -210,9 +210,31 @@ export default function BillingPage() {
 
   // Handle Razorpay checkout & cryptographic verification
   const handleUpgrade = async (planId) => {
-    setUpgradingPlanId(planId);
     setError('');
     setSuccessMessage('');
+
+    // Guard: Prevent paying for current active plan when no renewal or change is needed
+    const currentPlanId = currentSub?.plan || 'starter';
+    const isAlreadyActiveOnThis =
+      isActivePaid &&
+      currentPlanId === planId &&
+      (currentSub?.billingInterval || 'monthly') === billingInterval &&
+      !isExpired &&
+      (currentSub?.daysRemaining == null || currentSub.daysRemaining > 10);
+
+    if (isAlreadyActiveOnThis) {
+      setError(`Your workspace already has an active ${planId.toUpperCase()} subscription (${billingInterval}). No change or payment is needed.`);
+      return;
+    }
+
+    // Guard: Prevent creating a payment order for a plan downgrade
+    const planComparison = comparePlanIds(planId, currentPlanId);
+    if (isActivePaid && planComparison < 0) {
+      setError(`Downgrades cannot be processed as payments. Downgrades take effect at the end of your billing cycle without payment.`);
+      return;
+    }
+
+    setUpgradingPlanId(planId);
 
     try {
       // 1. Authoritative server-side Razorpay order generation
@@ -860,19 +882,41 @@ export default function BillingPage() {
               {/* Call to Action Button & Contact Sales Footer */}
               <div className="mt-6 pt-4 border-t border-slate-100 dark:border-[#334155] flex flex-col gap-2.5">
                 {isCurrentPlan ? (
-                  <button
-                    type="button"
-                    disabled
-                    className="w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1E293B] text-slate-400 dark:text-[#64748B] cursor-not-allowed border border-slate-200 dark:border-[#334155] flex items-center justify-center gap-2"
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span>Current Active Plan</span>
-                  </button>
+                  isExpired ? (
+                    <button
+                      type="button"
+                      disabled={upgradingPlanId === p.id}
+                      onClick={() => handleUpgrade(p.id)}
+                      className="w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold bg-rose-600 dark:bg-[#E11D48] text-white hover:bg-rose-700 dark:hover:bg-[#BE123C] transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+                    >
+                      {upgradingPlanId === p.id ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Connecting to Gateway...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Renew {p.name} Plan</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <div
+                      className="w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1E293B] text-slate-500 dark:text-[#94A3B8] border border-slate-200 dark:border-[#334155] flex items-center justify-center gap-2 select-none"
+                      title="Your workspace is currently active on this plan"
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span>Current Active Plan</span>
+                    </div>
+                  )
                 ) : isDowngradeScheduledForThis ? (
                   <div className="flex flex-col gap-2 w-full">
                     <div className="w-full h-10 py-2 px-3 rounded-xl text-xs font-bold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 flex items-center justify-center gap-1.5 text-center">
                       <Clock className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" />
-                      <span className="truncate">Downgrade Scheduled</span>
+                      <span className="truncate">
+                        Scheduled Change • Effective {currentSub?.scheduledDowngradeEffectiveDate ? new Date(currentSub.scheduledDowngradeEffectiveDate).toLocaleDateString() : 'Next Cycle'}
+                      </span>
                     </div>
                     <button
                       type="button"
@@ -883,7 +927,7 @@ export default function BillingPage() {
                       {cancellingDowngrade ? (
                         <>
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          <span>Cancelling Downgrade...</span>
+                          <span>Cancelling Scheduled Change...</span>
                         </>
                       ) : (
                         <>
@@ -894,29 +938,13 @@ export default function BillingPage() {
                     </button>
                   </div>
                 ) : isDowngradeCandidate ? (
-                  <button
-                    type="button"
-                    disabled={isActionPending}
-                    onClick={() => handleDowngrade(p)}
-                    className="w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-[#334155] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs"
+                  <div
+                    className="w-full h-10 py-2.5 px-4 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-[#1E293B]/60 text-slate-500 dark:text-[#94A3B8] border border-slate-200 dark:border-[#334155] flex items-center justify-center gap-2 select-none"
+                    title="All features of this tier are already included in your current subscription"
                   >
-                    {downgradingPlanId === p.id ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin text-slate-600 dark:text-slate-300" />
-                        <span>Scheduling Downgrade...</span>
-                      </>
-                    ) : currentSub?.scheduledDowngradePlan ? (
-                      <>
-                        <span>Change Downgrade to {p.name}</span>
-                        <ArrowDownRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                      </>
-                    ) : (
-                      <>
-                        <span>Schedule Downgrade to {p.name}</span>
-                        <ArrowDownRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                      </>
-                    )}
-                  </button>
+                    <CheckCircle2 className="w-4 h-4 text-slate-400 dark:text-[#64748B]" />
+                    <span>Included in your current plan</span>
+                  </div>
                 ) : (
                   <button
                     type="button"
@@ -949,7 +977,16 @@ export default function BillingPage() {
 
                 {/* Secondary Action / Reassurance Slot (Identical h-9 height across all cards) */}
                 <div className="h-9 flex items-center justify-center">
-                  {p.hasContactSales ? (
+                  {isDowngradeCandidate && !currentSub?.scheduledDowngradePlan ? (
+                    <button
+                      type="button"
+                      disabled={isActionPending}
+                      onClick={() => handleDowngrade(p)}
+                      className="text-[11.5px] text-slate-500 hover:text-slate-700 dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] underline underline-offset-2 transition cursor-pointer"
+                    >
+                      Schedule change to {p.name} at period end
+                    </button>
+                  ) : p.hasContactSales ? (
                     <a
                       href="mailto:sales@ricoz.in?subject=Enterprise%20Plan%20Custom%20Pricing%20Inquiry%20-%20RicozAnalytics"
                       className="w-full h-full py-1.5 px-3 rounded-xl text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] hover:text-slate-900 dark:hover:text-[#F8FAFC] border border-slate-200 dark:border-[#334155] hover:bg-slate-50 dark:hover:bg-[#1E293B] transition text-center flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"

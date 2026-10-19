@@ -51,125 +51,152 @@ export function removeAuthToken() {
   }
 }
 
+// In-flight GET request deduplication cache to eliminate duplicate network calls across components
+const inflightGetRequests = new Map();
+
 /**
- * Perform an HTTP request to the backend API
+ * Perform an HTTP request to the backend API with deduplication & bounded timeouts
  * @param {string} endpoint 
- * @param {RequestInit} [options] 
+ * @param {RequestInit & { skipDedupe?: boolean, forceFresh?: boolean, timeout?: number }} [options] 
  * @returns {Promise<any>}
  */
 export async function apiRequest(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
-  
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(options.headers || {})
-  };
+  const method = (options.method || 'GET').toUpperCase();
+  const isGet = method === 'GET';
+  const shouldDedupe = isGet && !options.skipDedupe && !options.forceFresh && !options.signal;
 
-  // Attach auth token if valid token present
   const token = getAuthToken();
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  const dedupeKey = shouldDedupe ? `${token ? token.slice(-16) : 'anon'}:${endpoint}` : null;
+
+  if (dedupeKey && inflightGetRequests.has(dedupeKey)) {
+    return inflightGetRequests.get(dedupeKey);
   }
 
-  // Setup default 25-second timeout to prevent requests from hanging indefinitely
-  const timeoutMs = options.timeout || 25000;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => {
-    controller.abort();
-  }, timeoutMs);
+  const execute = async () => {
+    const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+    
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    };
 
-  const fetchOptions = {
-    ...options,
-    headers,
-    signal: options.signal || controller.signal
+    // Attach auth token if valid token present
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    // Setup default 25-second timeout to prevent requests from hanging indefinitely
+    const timeoutMs = options.timeout || 25000;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, timeoutMs);
+
+    const fetchOptions = {
+      ...options,
+      headers,
+      signal: options.signal || controller.signal
+    };
+    delete fetchOptions.timeout;
+    delete fetchOptions.skipDedupe;
+    delete fetchOptions.forceFresh;
+
+    try {
+      const response = await fetch(url, fetchOptions);
+      clearTimeout(timeoutId);
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type') || '';
+      let data;
+      if (contentType.includes('application/json')) {
+        data = await response.json().catch(() => ({
+          success: false,
+          message: 'Failed to parse response JSON'
+        }));
+      } else {
+        // Non-JSON response (e.g. HTML 404 from static host like Vercel)
+        const text = await response.text().catch(() => '');
+        data = {
+          success: false,
+          isOfflineOrHtml: true,
+          message: `Backend API route not available (${response.status})`
+        };
+      }
+
+      if (!response.ok) {
+        if (response.status === 402) {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth:trial_expired', {
+              detail: {
+                message: data?.message || 'Your 14-day free trial has expired. Please select a plan to continue.',
+                subscription: data?.subscription
+              }
+            }));
+          }
+        }
+
+        if (response.status === 401 && 
+            endpoint !== '/auth/login' && 
+            endpoint !== '/auth/register' && 
+            endpoint !== '/auth/verify-otp' && 
+            endpoint !== '/auth/resend-otp' && 
+            endpoint !== '/auth/verify-email' &&
+            endpoint !== '/auth/forgot-password' &&
+            !endpoint.startsWith('/auth/reset-password')) {
+          removeAuthToken();
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth:session_expired', {
+              detail: { message: 'Your session has expired. Please sign in again.' }
+            }));
+          }
+        }
+
+        // Format user-facing error message
+        let errorMsg = data?.error?.message || data?.message;
+        if (response.status === 401) {
+          if (!errorMsg || errorMsg.includes('No authorization header') || errorMsg.includes('Access denied')) {
+            errorMsg = 'Please sign in to continue.';
+          }
+        } else if (response.status === 403) {
+          if (!errorMsg) {
+            errorMsg = "You don't have permission to access this resource.";
+          }
+        } else if (!errorMsg) {
+          errorMsg = `Request failed with status ${response.status}`;
+        }
+
+        const error = new Error(errorMsg);
+        error.statusCode = response.status;
+        error.data = data;
+        throw error;
+      }
+
+      return data;
+    } catch (err) {
+      if (typeof timeoutId !== 'undefined') clearTimeout(timeoutId);
+      if (err.name === 'AbortError' || err.code === 'ABORT_ERR') {
+        const timeoutErr = new Error('The request timed out. Please check your network connection and try again.');
+        timeoutErr.statusCode = 408;
+        timeoutErr.code = 'REQUEST_TIMEOUT';
+        throw timeoutErr;
+      }
+      // Gracefully annotate connection failures
+      if (!err.statusCode) {
+        err.isOffline = true;
+      }
+      throw err;
+    }
   };
-  delete fetchOptions.timeout;
 
-  try {
-    const response = await fetch(url, fetchOptions);
-    clearTimeout(timeoutId);
-
-    // Check if response is JSON
-    const contentType = response.headers.get('content-type') || '';
-    let data;
-    if (contentType.includes('application/json')) {
-      data = await response.json().catch(() => ({
-        success: false,
-        message: 'Failed to parse response JSON'
-      }));
-    } else {
-      // Non-JSON response (e.g. HTML 404 from static host like Vercel)
-      const text = await response.text().catch(() => '');
-      data = {
-        success: false,
-        isOfflineOrHtml: true,
-        message: `Backend API route not available (${response.status})`
-      };
-    }
-
-    if (!response.ok) {
-      if (response.status === 402) {
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('auth:trial_expired', {
-            detail: {
-              message: data?.message || 'Your 14-day free trial has expired. Please select a plan to continue.',
-              subscription: data?.subscription
-            }
-          }));
-        }
-      }
-
-      if (response.status === 401 && 
-          endpoint !== '/auth/login' && 
-          endpoint !== '/auth/register' && 
-          endpoint !== '/auth/verify-otp' && 
-          endpoint !== '/auth/resend-otp' && 
-          endpoint !== '/auth/verify-email' &&
-          endpoint !== '/auth/forgot-password' &&
-          !endpoint.startsWith('/auth/reset-password')) {
-        removeAuthToken();
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('auth:session_expired', {
-            detail: { message: 'Your session has expired. Please sign in again.' }
-          }));
-        }
-      }
-
-      // Format user-facing error message
-      let errorMsg = data?.error?.message || data?.message;
-      if (response.status === 401) {
-        if (!errorMsg || errorMsg.includes('No authorization header') || errorMsg.includes('Access denied')) {
-          errorMsg = 'Please sign in to continue.';
-        }
-      } else if (response.status === 403) {
-        if (!errorMsg) {
-          errorMsg = "You don't have permission to access this resource.";
-        }
-      } else if (!errorMsg) {
-        errorMsg = `Request failed with status ${response.status}`;
-      }
-
-      const error = new Error(errorMsg);
-      error.statusCode = response.status;
-      error.data = data;
-      throw error;
-    }
-
-    return data;
-  } catch (err) {
-    if (typeof timeoutId !== 'undefined') clearTimeout(timeoutId);
-    if (err.name === 'AbortError' || err.code === 'ABORT_ERR') {
-      const timeoutErr = new Error('The request timed out. Please check your network connection and try again.');
-      timeoutErr.statusCode = 408;
-      timeoutErr.code = 'REQUEST_TIMEOUT';
-      throw timeoutErr;
-    }
-    // Gracefully annotate connection failures
-    if (!err.statusCode) {
-      err.isOffline = true;
-    }
-    throw err;
+  if (dedupeKey) {
+    const flightPromise = execute().finally(() => {
+      inflightGetRequests.delete(dedupeKey);
+    });
+    inflightGetRequests.set(dedupeKey, flightPromise);
+    return flightPromise;
   }
+
+  return execute();
 }
 
 /**

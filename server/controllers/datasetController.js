@@ -6,6 +6,7 @@ const storage = require('../storage');
 const auditService = require('../services/auditService');
 const { parseDatasetFile, parseDatasetPreviewStream } = require('../services/fileParserService');
 const { invalidateParsedDatasetCache } = require('../services/analyticsService');
+const insightService = require('../services/insightService');
 
 /**
  * Dataset Controller
@@ -215,9 +216,10 @@ const deleteDataset = async (req, res, next) => {
       await Dataset.deleteByIdAndUserId(id, userId);
     }
 
-    // Invalidate cached parsed dataset records
+    // Invalidate cached parsed dataset records & tenant AI insights cache
     invalidateParsedDatasetCache(id);
     if (dataset.file_path) invalidateParsedDatasetCache(dataset.file_path);
+    if (organizationId) insightService.invalidateCache(organizationId);
 
     // Log audit event
     await auditService.logAuditEvent({
@@ -343,9 +345,10 @@ const refreshDataset = async (req, res, next) => {
       req
     }).catch(() => null);
 
-    // Invalidate cached parsed dataset records
+    // Invalidate cached parsed dataset records & tenant AI insights cache
     invalidateParsedDatasetCache(id);
     if (dataset.file_path) invalidateParsedDatasetCache(dataset.file_path);
+    if (organizationId) insightService.invalidateCache(organizationId);
 
     return res.status(200).json({
       success: true,
@@ -474,9 +477,10 @@ const rehydrateDataset = async (req, res, next) => {
       req
     }).catch(() => null);
 
-    // Invalidate cached parsed dataset records
+    // Invalidate cached parsed dataset records & tenant AI insights cache
     invalidateParsedDatasetCache(id);
     if (targetFilePath) invalidateParsedDatasetCache(targetFilePath);
+    if (organizationId) insightService.invalidateCache(organizationId);
 
     return res.status(200).json({
       success: true,

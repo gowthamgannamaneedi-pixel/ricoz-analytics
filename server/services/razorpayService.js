@@ -92,6 +92,25 @@ class RazorpayService {
     const isAnnual = billingInterval === 'yearly' || billingInterval === 'annual';
     const effectiveInterval = isAnnual ? 'yearly' : 'monthly';
 
+    // Guard: Prevent accidental duplicate payment on current active plan when no renewal or change is needed
+    if (
+      orgSub.isActive &&
+      orgSub.plan === normalizedPlanId &&
+      (orgSub.billingInterval || 'monthly') === effectiveInterval &&
+      !orgSub.isExpired &&
+      orgSub.daysRemaining > 10
+    ) {
+      throw new Error(`Workspace already has an active ${plan.name} (${effectiveInterval}) subscription. No payment is needed.`);
+    }
+
+    // Guard: Prevent creating a payment order for a plan downgrade
+    if (
+      orgSub.isActive &&
+      comparePlans(normalizedPlanId, orgSub.plan) < 0
+    ) {
+      throw new Error(`Cannot create a payment order for a plan downgrade. Downgrades take effect at the end of your billing cycle without payment.`);
+    }
+
     // 2. Authoritative Price Resolution (Never trust client-supplied amounts for standard tiers)
     let amountInRupees;
     if (normalizedPlanId === 'enterprise' && customAmount != null && customAmount > 0) {

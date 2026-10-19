@@ -511,6 +511,22 @@ async function runDowngradeSuite() {
     recordTest(18, rzpConfigRes.status === 200, 'GET /api/billing/razorpay-config returns 200');
     recordTest(18, rzpConfigRes.data?.keyId !== undefined, 'Returns configured Razorpay key ID property (keyId)');
 
+    // Guard test: creating an order for growth while on enterprise must be rejected as downgrade
+    const downgradeOrderRes = await request('/api/billing/create-order', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: { planId: 'growth', billingInterval: 'monthly' }
+    });
+    recordTest(18, downgradeOrderRes.status === 400, 'POST /api/billing/create-order for downgrade rejected with 400');
+
+    // Reset organization to starter to verify valid upgrade checkout
+    await subscriptionService.updateSubscription(testOrg.id, {
+      plan: 'starter',
+      scheduled_downgrade_plan: null,
+      scheduled_downgrade_effective_date: null
+    });
+    subscriptionService.clearOrganizationCache(testOrg.id);
+
     const orderRes = await request('/api/billing/create-order', {
       method: 'POST',
       headers: { Authorization: `Bearer ${adminToken}` },
@@ -542,6 +558,8 @@ async function runDowngradeSuite() {
 
   if (stats.failed > 0) {
     process.exit(1);
+  } else {
+    process.exit(0);
   }
 }
 

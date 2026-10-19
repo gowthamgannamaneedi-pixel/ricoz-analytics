@@ -101,6 +101,7 @@ async function runSuite() {
     // TEST 3: Order Creation with Server Authoritative Pricing
     // -------------------------------------------------------------------------
     console.log('\n--- TEST 3: Create Server Authoritative Order ---');
+    await db.query("UPDATE organizations SET plan = 'starter', subscription_status = 'active' WHERE id = $1", [testOrgId]);
     const orderData = await razorpayService.createOrder({
       organizationId: testOrgId,
       userId: testUserId,

@@ -208,7 +208,12 @@ const billingController = {
       });
     } catch (err) {
       console.error('[BillingController.createRazorpayOrder] Error:', err.message);
-      return res.status(err.message && err.message.includes('Invalid plan') ? 400 : 500).json({
+      const isClientError = err.message && (
+        err.message.includes('Invalid plan') ||
+        err.message.includes('downgrade') ||
+        err.message.includes('already has an active subscription')
+      );
+      return res.status(isClientError ? 400 : 500).json({
         success: false,
         message: err.message || 'Failed to create payment order.'
       });
