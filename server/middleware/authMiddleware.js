@@ -92,12 +92,19 @@ const authenticateToken = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, config.jwtSecret);
     if (decoded && (decoded.id || decoded.email)) {
-      // Resolve latest organization and role EXCLUSIVELY from database record
-      let userOrgId = decoded.organization_id || null;
-      let userRole = decoded.role || 'viewer';
-      let userName = decoded.name || decoded.email;
-      let userId = decoded.id;
-      let userEmail = decoded.email;
+      // Check user revocation blacklist immediately
+      const tokenUserId = decoded.id || decoded.userId;
+      if (tokenUserId && tokenBlacklist.isUserRevoked(tokenUserId)) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message: 'This account has been deactivated or removed from the workspace. Access revoked.'
+          },
+          message: 'This account has been deactivated or removed from the workspace. Access revoked.',
+          request_id: req.id
+        });
+      }
 
       // Query database for real, unforgeable user record with single-flight coalescing & micro-caching
       const cacheKey = (decoded.email || decoded.id || '').toLowerCase();
@@ -131,7 +138,26 @@ const authenticateToken = async (req, res, next) => {
         }
       }
 
+      let userId = decoded.id || decoded.userId;
+      let userEmail = decoded.email;
+      let userName = decoded.name || decoded.email;
+      let userRole = decoded.role || 'viewer';
+      let userOrgId = decoded.organization_id || null;
+
       if (dbUser) {
+        // Check user revocation blacklist against dbUser ID as well
+        if (tokenBlacklist.isUserRevoked(dbUser.id)) {
+          return res.status(403).json({
+            success: false,
+            error: {
+              code: 'FORBIDDEN',
+              message: 'This account has been deactivated or removed from the workspace. Access revoked.'
+            },
+            message: 'This account has been deactivated or removed from the workspace. Access revoked.',
+            request_id: req.id
+          });
+        }
+
         // Enforce account status check
         if (dbUser.status === 'pending_verification') {
           return res.status(403).json({
@@ -159,25 +185,12 @@ const authenticateToken = async (req, res, next) => {
           });
         }
 
-        // ROLE AND TENANT COME EXCLUSIVELY FROM DATABASE RECORD (Overrides any payload claim)
+        // ROLE AND TENANT COME EXCLUSIVELY FROM DATABASE RECORD (Strict isolation: never forgeable, never auto-assigned to existing tenants)
         userRole = dbUser.role || 'viewer';
-        userOrgId = dbUser.organization_id || userOrgId;
-        userName = dbUser.name || userName;
+        userOrgId = dbUser.organization_id || null;
+        userName = dbUser.name || dbUser.email;
         userId = dbUser.id;
         userEmail = dbUser.email;
-      }
-
-      if (!userOrgId) {
-        try {
-          const db = require('../config/database');
-          const defaultOrgRes = await db.query('SELECT id FROM organizations ORDER BY created_at ASC LIMIT 1');
-          if (defaultOrgRes.rows[0]) {
-            userOrgId = defaultOrgRes.rows[0].id;
-            if (userId) {
-              await db.query('UPDATE users SET organization_id = $1 WHERE id = $2 AND organization_id IS NULL', [userOrgId, userId]).catch(() => {});
-            }
-          }
-        } catch (_) {}
       }
 
       req.user = {

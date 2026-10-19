@@ -24,23 +24,57 @@ CREATE INDEX IF NOT EXISTS idx_invoices_razorpay_payment ON public.invoices(razo
 CREATE INDEX IF NOT EXISTS idx_invoices_razorpay_order ON public.invoices(razorpay_order_id);
 
 -- 3. Razorpay Orders Table: Authoritative Server-Generated Checkout Orders
-CREATE TABLE IF NOT EXISTS public.razorpay_orders (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_id VARCHAR(255) NOT NULL,
-    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-    user_id INTEGER REFERENCES public.users(id) ON DELETE SET NULL,
-    plan_id VARCHAR(50) NOT NULL,
-    billing_interval VARCHAR(20) NOT NULL DEFAULT 'monthly',
-    amount_paise BIGINT NOT NULL,
-    currency VARCHAR(10) NOT NULL DEFAULT 'INR',
-    status VARCHAR(50) NOT NULL DEFAULT 'created' CHECK (status IN ('created', 'attempted', 'paid', 'failed', 'cancelled')),
-    payment_id VARCHAR(255),
-    signature VARCHAR(255),
-    receipt VARCHAR(100),
-    notes JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
+DO $$
+DECLARE
+    user_id_type text;
+BEGIN
+    SELECT data_type INTO user_id_type
+    FROM information_schema.columns 
+    WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'id';
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' AND table_name = 'razorpay_orders'
+    ) THEN
+        IF user_id_type = 'uuid' THEN
+            CREATE TABLE public.razorpay_orders (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                order_id VARCHAR(255) NOT NULL,
+                organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+                user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+                plan_id VARCHAR(50) NOT NULL,
+                billing_interval VARCHAR(20) NOT NULL DEFAULT 'monthly',
+                amount_paise BIGINT NOT NULL,
+                currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+                status VARCHAR(50) NOT NULL DEFAULT 'created' CHECK (status IN ('created', 'attempted', 'paid', 'failed', 'cancelled')),
+                payment_id VARCHAR(255),
+                signature VARCHAR(255),
+                receipt VARCHAR(100),
+                notes JSONB DEFAULT '{}'::jsonb,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+        ELSE
+            CREATE TABLE public.razorpay_orders (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                order_id VARCHAR(255) NOT NULL,
+                organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+                user_id INTEGER REFERENCES public.users(id) ON DELETE SET NULL,
+                plan_id VARCHAR(50) NOT NULL,
+                billing_interval VARCHAR(20) NOT NULL DEFAULT 'monthly',
+                amount_paise BIGINT NOT NULL,
+                currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+                status VARCHAR(50) NOT NULL DEFAULT 'created' CHECK (status IN ('created', 'attempted', 'paid', 'failed', 'cancelled')),
+                payment_id VARCHAR(255),
+                signature VARCHAR(255),
+                receipt VARCHAR(100),
+                notes JSONB DEFAULT '{}'::jsonb,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+        END IF;
+    END IF;
+END $$;
 
 -- Unique constraint on order_id
 DO $$

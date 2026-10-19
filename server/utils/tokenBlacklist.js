@@ -5,6 +5,7 @@
 class TokenBlacklist {
   constructor() {
     this.revokedTokens = new Map(); // token -> expiresAt (timestamp)
+    this.revokedUsers = new Map();  // userId -> expiresAt (timestamp)
     // Run garbage collection every 10 minutes to remove expired entries
     this.cleanupInterval = setInterval(() => this.cleanup(), 10 * 60 * 1000);
     if (this.cleanupInterval.unref) {
@@ -42,13 +43,47 @@ class TokenBlacklist {
   }
 
   /**
-   * Remove expired tokens from memory
+   * Revoke all active sessions for a user ID (e.g., on member removal/deactivation)
+   * @param {string|number} userId 
+   * @param {number} [expiresInMs=86400000] Default 24 hours
+   */
+  revokeUser(userId, expiresInMs = 24 * 60 * 60 * 1000) {
+    if (!userId) return;
+    const cleanId = String(userId).trim().toLowerCase();
+    const expiresAt = Date.now() + expiresInMs;
+    this.revokedUsers.set(cleanId, expiresAt);
+  }
+
+  /**
+   * Check if a user's sessions have been revoked
+   * @param {string|number} userId 
+   * @returns {boolean}
+   */
+  isUserRevoked(userId) {
+    if (!userId) return false;
+    const cleanId = String(userId).trim().toLowerCase();
+    const expiresAt = this.revokedUsers.get(cleanId);
+    if (!expiresAt) return false;
+    if (Date.now() > expiresAt) {
+      this.revokedUsers.delete(cleanId);
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Remove expired tokens and user revocations from memory
    */
   cleanup() {
     const now = Date.now();
     for (const [token, expiresAt] of this.revokedTokens.entries()) {
       if (now > expiresAt) {
         this.revokedTokens.delete(token);
+      }
+    }
+    for (const [userId, expiresAt] of this.revokedUsers.entries()) {
+      if (now > expiresAt) {
+        this.revokedUsers.delete(userId);
       }
     }
   }
@@ -58,6 +93,7 @@ class TokenBlacklist {
    */
   clear() {
     this.revokedTokens.clear();
+    this.revokedUsers.clear();
   }
 }
 

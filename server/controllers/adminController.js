@@ -7,6 +7,7 @@ const emailService = require('../services/emailService');
 const subscriptionService = require('../services/subscriptionService');
 const { logAuditEvent, AUDIT_ACTIONS } = require('../services/auditService');
 const { getFullPermissionMatrix, getPermissionsForRole } = require('../utils/permissions');
+const tokenBlacklist = require('../utils/tokenBlacklist');
 const config = require('../config');
 
 /**
@@ -418,8 +419,9 @@ const adminController = {
         req
       });
 
-      // Clear presence and evict auth cache if deactivated
-      if (cleanStatus === 'deactivated') {
+      // Clear presence, revoke session tokens, and evict auth cache if deactivated
+      if (cleanStatus === 'deactivated' || cleanStatus === 'inactive') {
+        tokenBlacklist.revokeUser(targetUserId);
         await UserModel.clearLastActive(targetUserId).catch(() => null);
         const authMiddleware = require('../middleware/authMiddleware');
         if (authMiddleware.clearUserAuthCache) {
@@ -911,7 +913,8 @@ const adminController = {
       // Clear online presence immediately
       await UserModel.clearLastActive(targetUserId).catch(() => null);
 
-      // Invalidate target user's auth cache
+      // Revoke target user's session and invalidate auth cache immediately
+      tokenBlacklist.revokeUser(targetUserId);
       const authMiddleware = require('../middleware/authMiddleware');
       if (authMiddleware.clearUserAuthCache) {
         authMiddleware.clearUserAuthCache(targetUser.email);

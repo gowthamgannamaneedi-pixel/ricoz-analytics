@@ -18,6 +18,7 @@ router.post('/create-razorpay-order', authenticateToken, requireRole('owner', 'a
 router.post('/verify-payment', authenticateToken, requireRole('owner', 'admin'), billingController.verifyRazorpayPayment);
 router.post('/create-checkout-session', authenticateToken, requireRole('owner', 'admin'), billingController.createCheckoutSession);
 router.post('/schedule-downgrade', authenticateToken, requireRole('owner', 'admin'), billingController.scheduleDowngrade);
+router.post('/cancel-downgrade', authenticateToken, requireRole('owner', 'admin'), billingController.cancelScheduledDowngrade);
 router.post('/cancel-subscription', authenticateToken, requireRole('owner', 'admin'), billingController.cancelSubscription);
 router.post('/check-reminders', authenticateToken, requireRole('owner', 'admin'), billingController.triggerReminderCheck);
 

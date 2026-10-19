@@ -23,7 +23,9 @@ import {
   ArrowDownRight,
   Receipt,
   RotateCcw,
-  RefreshCw
+  RefreshCw,
+  XCircle,
+  X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -32,6 +34,7 @@ import {
   createBillingCheckoutSession,
   cancelBillingSubscription,
   scheduleBillingDowngrade,
+  cancelBillingDowngrade,
   getBillingHistory,
   getRazorpayConfig,
   createRazorpayOrder,
@@ -125,6 +128,9 @@ export default function BillingPage() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [upgradingPlanId, setUpgradingPlanId] = useState(null);
+  const [downgradingPlanId, setDowngradingPlanId] = useState(null);
+  const [cancellingDowngrade, setCancellingDowngrade] = useState(false);
+  const [downgradeConfirmTarget, setDowngradeConfirmTarget] = useState(null);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [verificationStep, setVerificationStep] = useState('');
   const [error, setError] = useState(location.state?.trialExpired ? 'Your 14-day free trial has completed. Please choose a plan to continue accessing your workspace.' : '');
@@ -132,6 +138,7 @@ export default function BillingPage() {
 
   const PLAN_ORDER = ['starter', 'growth', 'enterprise'];
   const comparePlanIds = (a, b) => PLAN_ORDER.indexOf(String(a || 'starter').toLowerCase()) - PLAN_ORDER.indexOf(String(b || 'starter').toLowerCase());
+  const isActionPending = Boolean(upgradingPlanId || downgradingPlanId || cancellingDowngrade || verifyingPayment);
 
   // Handle URL query parameters from checkout redirect
   useEffect(() => {
@@ -338,28 +345,73 @@ export default function BillingPage() {
     }
   };
 
-  // Handle plan downgrade scheduling
-  const handleDowngrade = async (planId) => {
-    if (!window.confirm(`Are you sure you want to schedule a downgrade to the ${planId.toUpperCase()} plan? Your current plan entitlements will remain active until the end of your billing period.`)) {
-      return;
-    }
-    setUpgradingPlanId(planId);
+  // Initiate plan downgrade flow (non-blocking accessible modal)
+  const handleDowngrade = (plan) => {
+    if (isActionPending) return;
+    setError('');
+    setDowngradeConfirmTarget(plan);
+  };
+
+  // Execute confirmed downgrade
+  const executeDowngrade = async (planId) => {
+    if (isActionPending) return;
+    setDowngradingPlanId(planId);
     setError('');
     setSuccessMessage('');
 
     try {
       const data = await scheduleBillingDowngrade({ planId });
-      setSuccessMessage(data.message || 'Downgrade scheduled successfully.');
-      if (typeof refreshSubscription === 'function') {
-        await refreshSubscription();
+      setDowngradeConfirmTarget(null);
+      setSuccessMessage(data?.message || `Downgrade to ${planId.toUpperCase()} scheduled successfully.`);
+
+      // Immediate authoritative update from backend response
+      if (data?.subscription) {
+        setCurrentSub(data.subscription);
       }
-      const subRes = await getBillingSubscription().catch(() => null);
-      if (subRes?.subscription) setCurrentSub(subRes.subscription);
-      if (subRes?.history) setHistory(subRes.history);
+
+      // Background telemetry and history refresh
+      if (typeof refreshSubscription === 'function') {
+        refreshSubscription().catch(() => null);
+      }
+      getBillingSubscription().then((subRes) => {
+        if (subRes?.subscription) setCurrentSub(subRes.subscription);
+        if (subRes?.history) setHistory(subRes.history);
+      }).catch(() => null);
     } catch (err) {
-      setError(err.message || 'Failed to schedule plan downgrade.');
+      setError(err.message || 'Failed to schedule plan downgrade. Please try again.');
     } finally {
-      setUpgradingPlanId(null);
+      setDowngradingPlanId(null);
+    }
+  };
+
+  // Handle cancelling a pending scheduled downgrade
+  const handleCancelDowngrade = async () => {
+    if (isActionPending) return;
+    setCancellingDowngrade(true);
+    setError('');
+    setSuccessMessage('');
+
+    try {
+      const data = await cancelBillingDowngrade();
+      setSuccessMessage(data?.message || 'Scheduled downgrade cancelled successfully. Your current plan remains active.');
+
+      // Immediate authoritative update from backend response
+      if (data?.subscription) {
+        setCurrentSub(data.subscription);
+      }
+
+      // Background telemetry and history refresh
+      if (typeof refreshSubscription === 'function') {
+        refreshSubscription().catch(() => null);
+      }
+      getBillingSubscription().then((subRes) => {
+        if (subRes?.subscription) setCurrentSub(subRes.subscription);
+        if (subRes?.history) setHistory(subRes.history);
+      }).catch(() => null);
+    } catch (err) {
+      setError(err.message || 'Failed to cancel scheduled downgrade. Please try again.');
+    } finally {
+      setCancellingDowngrade(false);
     }
   };
 
@@ -532,9 +584,38 @@ export default function BillingPage() {
 
           {/* Scheduled Downgrade Notice */}
           {currentSub?.scheduledDowngradePlan && (
-            <div className="text-xs bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 p-2.5 rounded-xl text-sky-800 dark:text-sky-200">
-              <span className="font-bold">Scheduled Downgrade:</span> Switching to <strong>{currentSub.scheduledDowngradePlan.toUpperCase()}</strong> on{' '}
-              {currentSub.scheduledDowngradeEffectiveDate ? new Date(currentSub.scheduledDowngradeEffectiveDate).toLocaleDateString() : 'period end'}. Higher-tier features remain fully active until then.
+            <div className="text-xs bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 p-3 rounded-xl text-sky-800 dark:text-sky-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-start gap-2.5">
+                <Clock className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold">Scheduled Downgrade:</span> Switching to{' '}
+                  <strong className="font-extrabold uppercase">{currentSub.scheduledDowngradePlan}</strong> on{' '}
+                  <span className="underline decoration-sky-400 underline-offset-2">
+                    {currentSub.scheduledDowngradeEffectiveDate
+                      ? new Date(currentSub.scheduledDowngradeEffectiveDate).toLocaleDateString()
+                      : 'billing period end'}
+                  </span>. Your current plan entitlements remain 100% active until then.
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={isActionPending}
+                onClick={handleCancelDowngrade}
+                className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-[#1E293B] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-rose-200 dark:border-rose-800/50 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs"
+                title="Cancel pending downgrade and keep current active plan"
+              >
+                {cancellingDowngrade ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Cancelling...</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Cancel Downgrade</span>
+                  </>
+                )}
+              </button>
             </div>
           )}
 
@@ -771,25 +852,46 @@ export default function BillingPage() {
                     <span>Current Active Plan</span>
                   </button>
                 ) : isDowngradeScheduledForThis ? (
-                  <button
-                    type="button"
-                    disabled
-                    className="w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    <Clock className="w-4 h-4 text-sky-600 dark:text-sky-400" />
-                    <span>Downgrade Scheduled</span>
-                  </button>
+                  <div className="flex flex-col gap-2 w-full">
+                    <div className="w-full h-10 py-2 px-3 rounded-xl text-xs font-bold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 flex items-center justify-center gap-1.5 text-center">
+                      <Clock className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" />
+                      <span className="truncate">Downgrade Scheduled</span>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={isActionPending}
+                      onClick={handleCancelDowngrade}
+                      className="w-full h-9 py-1.5 px-3 rounded-xl text-xs font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800/50 transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs"
+                    >
+                      {cancellingDowngrade ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Cancelling Downgrade...</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-3.5 h-3.5 text-rose-500" />
+                          <span>Cancel Scheduled Downgrade</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 ) : isDowngradeCandidate ? (
                   <button
                     type="button"
-                    disabled={upgradingPlanId === p.id}
-                    onClick={() => handleDowngrade(p.id)}
-                    className="w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-[#334155] transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+                    disabled={isActionPending}
+                    onClick={() => handleDowngrade(p)}
+                    className="w-full h-10 py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-[#334155] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs"
                   >
-                    {upgradingPlanId === p.id ? (
+                    {downgradingPlanId === p.id ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin text-slate-600 dark:text-slate-300" />
                         <span>Scheduling Downgrade...</span>
+                      </>
+                    ) : currentSub?.scheduledDowngradePlan ? (
+                      <>
+                        <span>Change Downgrade to {p.name}</span>
+                        <ArrowDownRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                       </>
                     ) : (
                       <>
@@ -1178,6 +1280,92 @@ export default function BillingPage() {
               <p className="text-[11px] text-slate-400 dark:text-[#64748B]">
                 Please do not refresh or close this browser tab while your workspace is being provisioned.
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* Scheduled Downgrade Confirmation Modal */}
+        {downgradeConfirmTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+            <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#334155] rounded-2xl p-6 sm:p-7 max-w-lg w-full shadow-2xl space-y-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-11 w-11 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 flex items-center justify-center shrink-0">
+                    <Clock className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC]">
+                      Schedule Downgrade to {downgradeConfirmTarget.name}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
+                      Takes effect on your next billing renewal date
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  disabled={isActionPending}
+                  onClick={() => setDowngradeConfirmTarget(null)}
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-xs text-slate-600 dark:text-[#CBD5E1] bg-slate-50 dark:bg-[#1E293B]/60 p-4 rounded-xl border border-slate-200 dark:border-[#334155]/80">
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Active Benefits Preserved:</strong> You will remain on the <strong>{currentSub?.plan?.toUpperCase() || 'CURRENT'}</strong> plan with all premium entitlements until{' '}
+                    <strong>
+                      {currentSub?.currentPeriodEnd || currentSub?.relevantEndDate
+                        ? new Date(currentSub.currentPeriodEnd || currentSub.relevantEndDate).toLocaleDateString()
+                        : 'the end of your current billing period'}
+                    </strong>.
+                  </span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <ShieldCheck className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Zero Data Loss:</strong> All existing datasets, dashboards, team members, and audit history will remain intact and securely preserved.
+                  </span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <RotateCcw className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Flexible Cancellation:</strong> You can cancel or reschedule this downgrade at any time before the billing cycle completes.
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-1">
+                <button
+                  type="button"
+                  disabled={isActionPending}
+                  onClick={() => setDowngradeConfirmTarget(null)}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-[#334155] transition cursor-pointer disabled:opacity-50"
+                >
+                  Keep Current Plan
+                </button>
+                <button
+                  type="button"
+                  disabled={isActionPending}
+                  onClick={() => executeDowngrade(downgradeConfirmTarget.id)}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-rose-600 dark:hover:bg-rose-700 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-sm"
+                >
+                  {downgradingPlanId === downgradeConfirmTarget.id ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Scheduling Downgrade...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ArrowDownRight className="w-4 h-4" />
+                      <span>Confirm Scheduled Downgrade</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         )}

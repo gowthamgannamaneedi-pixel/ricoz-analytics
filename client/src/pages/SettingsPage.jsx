@@ -111,6 +111,7 @@ export default function SettingsPage() {
   const [usersList, setUsersList] = useState([]);
   const [userSearch, setUserSearch] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState('all');
+  const [userStatusFilter, setUserStatusFilter] = useState('active');
 
   // Recent Activity from Audit Logs
   const [recentLogs, setRecentLogs] = useState([]);
@@ -201,7 +202,7 @@ export default function SettingsPage() {
 
       const [orgRes, usersRes, logsRes, healthRes, invitesRes] = await Promise.all([
         getAdminOrganization().catch(() => null),
-        getAdminUsers().catch(() => null),
+        getAdminUsers({ status: 'all' }).catch(() => null),
         getAdminAuditLogs({ limit: 6 }).catch(() => null),
         fetch(`${API_BASE_URL}/health`).then(r => r.json()).catch(() => null),
         getAdminInvitations().catch(() => null)
@@ -231,11 +232,13 @@ export default function SettingsPage() {
       }
 
       if (usersRes && usersRes.data?.users) {
-        setUsersList(usersRes.data.users);
+        const allUsers = usersRes.data.users;
+        setUsersList(allUsers);
+        const activeCount = allUsers.filter(u => (u.status || 'active') === 'active').length;
         setStats(prev => ({
           ...prev,
-          membersCount: usersRes.data.users.length,
-          activeMembersCount: usersRes.data.users.filter(u => u.status === 'active').length
+          membersCount: activeCount,
+          activeMembersCount: activeCount
         }));
       }
 
@@ -447,16 +450,16 @@ export default function SettingsPage() {
       setError(null);
       await removeAdminUser(memberToRemove.id);
 
-      // Immediately remove from active state so row disappears without lag
-      setUsersList(prev => prev.filter(u => u.id !== memberToRemove.id));
+      // Immediately mark as deactivated and remove from active list
+      const targetId = memberToRemove.id;
+      setUsersList(prev => prev.map(u => u.id === targetId ? { ...u, status: 'deactivated', presence: 'deactivated' } : u));
 
       const removedEmail = memberToRemove.email;
       setMemberToRemove(null);
-      setSuccessMessage(`Team member ${removedEmail} removed and seat freed.`);
+      setSuccessMessage(`Team member ${removedEmail} removed from workspace and seat freed.`);
 
       // Server-authoritative reload of settings, seat usage, and roster
-      loadSettingsData(true);
-      loadInvitations();
+      await Promise.all([loadSettingsData(true), loadInvitations()]);
     } catch (err) {
       setRemoveMemberError(err.message || 'Failed to remove team member.');
     } finally {
@@ -506,9 +509,14 @@ export default function SettingsPage() {
       .replace(/\b\w/g, c => c.toUpperCase());
   };
 
-  // Filtered Users for Users & Access Tab (strictly excludes deactivated accounts from active roster)
+  // Filtered Users for Users & Access Tab with explicit status isolation
   const filteredUsers = usersList.filter(u => {
-    if (u.status === 'deactivated') return false;
+    const s = u.status || 'active';
+    if (userStatusFilter === 'active' && s !== 'active') return false;
+    if (userStatusFilter === 'inactive' && s !== 'inactive') return false;
+    if (userStatusFilter === 'deactivated' && s !== 'deactivated') return false;
+    // 'all' includes all statuses
+
     const q = userSearch.toLowerCase();
     const matchQuery = !q || u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q);
     const matchRole = userRoleFilter === 'all' || u.role === userRoleFilter;
@@ -1238,7 +1246,12 @@ export default function SettingsPage() {
         const planId = organization?.plan || 'starter';
         const planDisplayName = planId === 'enterprise' ? 'Enterprise' : planId === 'growth' ? 'Growth' : 'Starter';
         const seatLimit = userUsage?.limit !== undefined ? userUsage.limit : (planId === 'growth' ? 25 : planId === 'enterprise' ? -1 : 5);
-        const activeMembersCount = usersList.filter(u => u.status !== 'deactivated').length;
+        const activeMembersList = usersList.filter(u => (u.status || 'active') === 'active');
+        const inactiveMembersList = usersList.filter(u => u.status === 'inactive');
+        const deactivatedMembersList = usersList.filter(u => u.status === 'deactivated');
+        const activeMembersCount = activeMembersList.length;
+        const inactiveMembersCount = inactiveMembersList.length;
+        const deactivatedMembersCount = deactivatedMembersList.length;
         const pendingCount = pendingInvitations.length;
         const currentSeatsUsed = userUsage?.count ?? (activeMembersCount + pendingCount);
         const isAtSeatLimit = userUsage?.isAtLimit ?? (seatLimit !== -1 && currentSeatsUsed >= seatLimit);
@@ -1306,7 +1319,11 @@ export default function SettingsPage() {
                   </span>
                 </div>
                 <div className="text-[11px] font-semibold text-slate-500">
-                  {activeMembersCount} active member{activeMembersCount !== 1 ? 's' : ''} • {pendingCount} pending invite{pendingCount !== 1 ? 's' : ''} • {remainingSeatsText} seat{remainingSeatsText !== 1 ? 's' : ''} remaining
+                  {activeMembersCount} active member{activeMembersCount !== 1 ? 's' : ''}
+                  {inactiveMembersCount > 0 ? ` • ${inactiveMembersCount} inactive` : ''}
+                  {deactivatedMembersCount > 0 ? ` • ${deactivatedMembersCount} deactivated` : ''}
+                  {` • ${pendingCount} pending invite${pendingCount !== 1 ? 's' : ''}`}
+                  {` • ${remainingSeatsText} seat${remainingSeatsText !== 1 ? 's' : ''} remaining`}
                 </div>
               </div>
 
@@ -1346,7 +1363,7 @@ export default function SettingsPage() {
               )}
             </div>
 
-            {/* Search & Filter Bar */}
+            {/* Search & Filter Bar with Status Isolation */}
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative flex-1 min-w-[220px]">
                 <Search className="h-4 w-4 text-slate-400 absolute left-3 top-3" />
@@ -1357,6 +1374,19 @@ export default function SettingsPage() {
                   onChange={(e) => setUserSearch(e.target.value)}
                   className="w-full h-10 pl-9 pr-3.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-rose-500"
                 />
+              </div>
+
+              <div className="w-40 sm:w-48">
+                <Select
+                  value={userStatusFilter}
+                  onChange={(e) => setUserStatusFilter(e.target.value)}
+                  size="sm"
+                >
+                  <option value="active">Active Members ({activeMembersCount})</option>
+                  <option value="inactive">Inactive Members ({inactiveMembersCount})</option>
+                  <option value="deactivated">Deactivated ({deactivatedMembersCount})</option>
+                  <option value="all">All Statuses ({usersList.length})</option>
+                </Select>
               </div>
 
               <div className="w-36 sm:w-40">
@@ -1374,14 +1404,14 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Active Members Table */}
+            {/* Members Table */}
             <div className="overflow-x-auto border border-slate-200 dark:border-[#334155] rounded-xl bg-white dark:bg-[#111827]">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-[#1E293B] border-b border-slate-200 dark:border-[#334155] text-slate-600 dark:text-[#CBD5E1] font-bold uppercase tracking-wider text-[11px]">
                     <th className="py-3 px-4">Member</th>
                     <th className="py-3 px-4">Role & Access</th>
-                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4">Status & Presence</th>
                     <th className="py-3 px-4">Last Login</th>
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
@@ -1390,14 +1420,15 @@ export default function SettingsPage() {
                   {filteredUsers.length === 0 ? (
                     <tr>
                       <td colSpan="5" className="py-8 text-center text-slate-400 dark:text-[#94A3B8]">
-                        No members match the selected criteria.
+                        No members match the selected criteria ({userStatusFilter === 'active' ? 'no active members' : userStatusFilter === 'inactive' ? 'no inactive members' : userStatusFilter === 'deactivated' ? 'no deactivated members' : 'no records'}).
                       </td>
                     </tr>
                   ) : (
                     filteredUsers.map((m) => {
                       const isSelf = m.id === user?.id || m.email === user?.email;
                       const isOwner = m.role === 'owner';
-                      const canManage = isAdmin && !isSelf && !isOwner;
+                      const isDeactivated = m.status === 'deactivated';
+                      const canManage = isAdmin && !isSelf && !isOwner && !isDeactivated;
 
                       return (
                         <tr key={m.id} className="hover:bg-slate-50/60 dark:hover:bg-[#1E293B]/70 transition">
@@ -1453,26 +1484,33 @@ export default function SettingsPage() {
                             )}
                           </td>
                           <td className="py-3 px-4">
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
-                              m.status === 'deactivated' || m.presence === 'deactivated'
-                                ? 'bg-slate-50 text-slate-500 border-slate-200'
-                                : m.presence === 'active'
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                : 'bg-slate-50 text-slate-600 border-slate-200'
-                            }`}>
-                              <span className={`h-1.5 w-1.5 rounded-full ${
-                                m.status === 'deactivated' || m.presence === 'deactivated'
-                                  ? 'bg-slate-400'
-                                  : m.presence === 'active'
-                                  ? 'bg-emerald-500 animate-pulse'
-                                  : 'bg-slate-400'
-                              }`} />
-                              {m.status === 'deactivated' || m.presence === 'deactivated'
-                                ? 'Deactivated'
-                                : m.presence === 'active'
-                                ? 'Active'
-                                : 'Inactive'}
-                            </span>
+                            <div className="flex flex-col gap-1 items-start">
+                              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                                m.status === 'deactivated'
+                                  ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-800'
+                                  : m.status === 'inactive'
+                                  ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800'
+                                  : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800'
+                              }`}>
+                                <span className={`h-1.5 w-1.5 rounded-full ${
+                                  m.status === 'deactivated'
+                                    ? 'bg-rose-500'
+                                    : m.status === 'inactive'
+                                    ? 'bg-amber-500'
+                                    : 'bg-emerald-500'
+                                }`} />
+                                {m.status === 'deactivated'
+                                  ? 'Deactivated'
+                                  : m.status === 'inactive'
+                                  ? 'Inactive'
+                                  : 'Active'}
+                              </span>
+
+                              <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1 pl-1">
+                                <span className={`h-1 w-1 rounded-full ${m.presence === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                                {m.presence === 'active' ? 'Online' : 'Offline'}
+                              </span>
+                            </div>
                           </td>
                           <td className="py-3 px-4">
                             {m.last_login_at ? (
@@ -1485,7 +1523,11 @@ export default function SettingsPage() {
                             )}
                           </td>
                           <td className="py-3 px-4 text-right">
-                            {canManage ? (
+                            {isDeactivated ? (
+                              <span className="text-[11px] text-slate-400 italic font-medium">
+                                Access Revoked
+                              </span>
+                            ) : canManage ? (
                               <button
                                 type="button"
                                 onClick={() => openRemoveMemberModal(m)}
@@ -2352,9 +2394,23 @@ export default function SettingsPage() {
             </div>
 
             {removeMemberError && (
-              <div className="p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-xs flex items-start gap-2 animate-in fade-in">
-                <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
-                <span className="leading-relaxed">{removeMemberError}</span>
+              <div className="p-3.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-xs flex flex-col gap-2.5 animate-in fade-in">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                  <span className="leading-relaxed font-medium">{removeMemberError}</span>
+                </div>
+                <div className="self-end flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="xs"
+                    onClick={handleConfirmRemoveMember}
+                    loading={isRemovingMember}
+                    className="border-rose-300 text-rose-700 hover:bg-rose-100 font-semibold"
+                  >
+                    Retry Removal
+                  </Button>
+                </div>
               </div>
             )}
 

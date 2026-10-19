@@ -124,8 +124,11 @@ const OrganizationModel = {
   async getOrganizationStats(organizationId) {
     const sql = `
       SELECT
-        (SELECT COUNT(*)::integer FROM users WHERE organization_id = $1) AS members_count,
+        (SELECT COUNT(*)::integer FROM users WHERE organization_id = $1 AND COALESCE(status, 'active') != 'deactivated') AS members_count,
         (SELECT COUNT(*)::integer FROM users WHERE organization_id = $1 AND COALESCE(status, 'active') = 'active') AS active_members_count,
+        (SELECT COUNT(*)::integer FROM users WHERE organization_id = $1 AND COALESCE(status, 'active') = 'inactive') AS inactive_members_count,
+        (SELECT COUNT(*)::integer FROM users WHERE organization_id = $1 AND COALESCE(status, 'active') = 'deactivated') AS deactivated_members_count,
+        (SELECT COUNT(*)::integer FROM invitations WHERE organization_id = $1 AND status = 'pending' AND expires_at > CURRENT_TIMESTAMP) AS pending_invitations_count,
         (SELECT COUNT(*)::integer FROM datasets WHERE user_id IN (SELECT id FROM users WHERE organization_id = $1)) AS datasets_count,
         (SELECT COUNT(*)::integer FROM dashboards WHERE organization_id = $1) AS dashboards_count,
         (SELECT COUNT(*)::integer FROM reports WHERE organization_id = $1) AS reports_count,
@@ -138,11 +141,11 @@ const OrganizationModel = {
     const result = await db.query(sql, [organizationId]);
     const row = result.rows[0] || {};
 
-    // Get role distribution
+    // Get role distribution (exclusively active/non-deactivated members)
     const roleSql = `
       SELECT role, COUNT(*)::integer as count
       FROM users
-      WHERE organization_id = $1
+      WHERE organization_id = $1 AND COALESCE(status, 'active') != 'deactivated'
       GROUP BY role;
     `;
     const roleRes = await db.query(roleSql, [organizationId]);
@@ -159,6 +162,9 @@ const OrganizationModel = {
     return {
       membersCount: Number(row.members_count || 0),
       activeMembersCount: Number(row.active_members_count || 0),
+      inactiveMembersCount: Number(row.inactive_members_count || 0),
+      deactivatedMembersCount: Number(row.deactivated_members_count || 0),
+      pendingInvitationsCount: Number(row.pending_invitations_count || 0),
       roleDistribution,
       datasetsCount: Number(row.datasets_count || 0),
       dashboardsCount: Number(row.dashboards_count || 0),

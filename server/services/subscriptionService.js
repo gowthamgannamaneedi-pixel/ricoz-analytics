@@ -556,22 +556,38 @@ class SubscriptionService {
     const targetPlan = getPlan(newPlanId);
     const effectiveDate = sub.currentPeriodEnd || calculateNextBillingDate(new Date(), sub.billingInterval || 'monthly');
 
-    // Schedule downgrade at current_period_end
+    // Idempotency: if already scheduled for the exact same target plan, return current schedule
+    if (sub.scheduledDowngradePlan === targetPlan.id) {
+      return {
+        scheduled: true,
+        alreadyScheduled: true,
+        currentPlan: sub.plan,
+        targetPlan: targetPlan.id,
+        effectiveDate: sub.scheduledDowngradeEffectiveDate || effectiveDate
+      };
+    }
+
+    const previousScheduledPlan = sub.scheduledDowngradePlan;
+
+    // Schedule or replace downgrade at current_period_end
     await this.updateSubscription(organizationId, {
       scheduled_downgrade_plan: targetPlan.id,
       scheduled_downgrade_effective_date: effectiveDate
     });
 
+    const eventType = previousScheduledPlan ? 'downgrade_rescheduled' : 'downgrade_scheduled';
+
     await SubscriptionHistoryModel.recordEvent({
       organizationId,
-      eventType: 'downgrade_scheduled',
+      eventType,
       fromPlan: sub.plan,
       toPlan: targetPlan.id,
       billingInterval: sub.billingInterval,
       status: sub.status,
       effectiveDate,
       metadata: {
-        reason: 'User scheduled downgrade',
+        reason: previousScheduledPlan ? `User updated scheduled downgrade from ${previousScheduledPlan} to ${targetPlan.id}` : 'User scheduled downgrade',
+        previousScheduledPlan: previousScheduledPlan || null,
         effectiveAt: effectiveDate
       }
     }).catch(err => console.warn('[SubscriptionHistory] Downgrade schedule record warning:', err.message));
@@ -580,7 +596,53 @@ class SubscriptionService {
       scheduled: true,
       currentPlan: sub.plan,
       targetPlan: targetPlan.id,
+      previousScheduledPlan: previousScheduledPlan || null,
       effectiveDate
+    };
+  }
+
+  /**
+   * Cancel a pending scheduled downgrade before the effective date
+   * @param {string} organizationId 
+   */
+  async cancelScheduledDowngrade(organizationId) {
+    const sub = await this.getOrganizationSubscription(organizationId);
+    if (!sub) throw new Error('Organization not found');
+
+    if (!sub.scheduledDowngradePlan) {
+      return {
+        cancelled: true,
+        currentPlan: sub.plan,
+        alreadyCancelled: true,
+        message: 'No downgrade is currently scheduled.'
+      };
+    }
+
+    const previousTargetPlan = sub.scheduledDowngradePlan;
+
+    await this.updateSubscription(organizationId, {
+      scheduled_downgrade_plan: null,
+      scheduled_downgrade_effective_date: null
+    });
+
+    await SubscriptionHistoryModel.recordEvent({
+      organizationId,
+      eventType: 'downgrade_cancelled',
+      fromPlan: sub.plan,
+      toPlan: sub.plan,
+      billingInterval: sub.billingInterval,
+      status: sub.status,
+      effectiveDate: new Date(),
+      metadata: {
+        reason: 'User cancelled scheduled downgrade',
+        cancelledPlan: previousTargetPlan
+      }
+    }).catch(err => console.warn('[SubscriptionHistory] Downgrade cancel record warning:', err.message));
+
+    return {
+      cancelled: true,
+      currentPlan: sub.plan,
+      cancelledTargetPlan: previousTargetPlan
     };
   }
 

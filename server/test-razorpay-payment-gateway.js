@@ -26,8 +26,8 @@ const RazorpayWebhookEventModel = require('./models/razorpayWebhookEventModel');
 const subscriptionService = require('./services/subscriptionService');
 
 const PORT = 5089;
-const TEST_WEBHOOK_SECRET = 'whsec_test_razorpay_secret_2026';
-const TEST_KEY_SECRET = 'test_secret_placeholder';
+const TEST_WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET || 'whsec_test_razorpay_secret_2026';
+const TEST_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'test_secret_placeholder';
 
 let passed = 0;
 let total = 0;

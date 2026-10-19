@@ -174,6 +174,17 @@ export default function VerifyEmailPage() {
         navigate('/dashboard', { replace: true });
       }, 1800);
     } catch (err) {
+      if (err.data?.code === 'ALREADY_VERIFIED_OR_USED' || err.data?.code === 'EMAIL_ALREADY_VERIFIED' || err.data?.alreadyVerified) {
+        setIsSuccess(true);
+        setSuccessMsg('This account is already verified! Redirecting to sign in...');
+        setTimeout(() => {
+          navigate('/login', {
+            replace: true,
+            state: { email: email.trim(), message: 'Your account is already verified. Please sign in directly.' }
+          });
+        }, 1500);
+        return;
+      }
       setError(err.message || 'Invalid or expired verification code. Please check your email or resend.');
     } finally {
       setIsManualVerifying(false);
@@ -194,13 +205,13 @@ export default function VerifyEmailPage() {
 
     try {
       const res = await resendVerification({ email: email.trim() });
-      if (res?.alreadyVerified) {
+      if (res?.alreadyVerified || res?.code === 'EMAIL_ALREADY_VERIFIED') {
         setIsSuccess(true);
         setSuccessMsg('Your email address is already verified! Redirecting to login...');
         setTimeout(() => {
           navigate('/login', {
             replace: true,
-            state: { message: 'Your email address is already verified. Please sign in.' }
+            state: { email: email.trim(), message: 'Your email address is already verified. Please sign in directly.' }
           });
         }, 1500);
         return;
@@ -215,6 +226,17 @@ export default function VerifyEmailPage() {
         inputRefs.current[0]?.focus();
       }
     } catch (err) {
+      if (err.data?.code === 'EMAIL_ALREADY_VERIFIED' || err.data?.alreadyVerified) {
+        setIsSuccess(true);
+        setSuccessMsg('Your email address is already verified! Redirecting to login...');
+        setTimeout(() => {
+          navigate('/login', {
+            replace: true,
+            state: { email: email.trim(), message: 'Your email address is already verified. Please sign in directly.' }
+          });
+        }, 1500);
+        return;
+      }
       setError(err.message || 'Failed to resend verification code. Please try again.');
       setCountdown(0);
     } finally {

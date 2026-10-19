@@ -71,6 +71,12 @@ let nextSubHistoryId = 1;
 const fallbackSubscriptionReminders = [];
 let nextSubReminderId = 1;
 
+const fallbackRazorpayOrders = [];
+let nextRazorpayOrderId = 1;
+
+const fallbackRazorpayWebhookEvents = [];
+let nextRazorpayWebhookEventId = 1;
+
 const fallbackUsers = [
   {
     id: 1,
@@ -4444,6 +4450,132 @@ function handleFallbackQuery(text, params = []) {
     return Promise.resolve({ rows: [], rowCount: 0 });
   }
 
+  // ----------------- RAZORPAY ORDERS -----------------
+  if (normalizedSql.startsWith('insert into razorpay_orders')) {
+    const [order_id, organization_id, user_id, plan_id, billing_interval = 'monthly', amount_paise, currency = 'INR', receipt = null, notes = '{}'] = params;
+    const existing = fallbackRazorpayOrders.find(o => o.order_id === order_id);
+    if (existing) {
+      existing.updated_at = new Date();
+      return Promise.resolve({ rows: [{ ...existing }], rowCount: 1 });
+    }
+    const newOrder = {
+      id: crypto.randomUUID(),
+      order_id,
+      organization_id: String(organization_id),
+      user_id: user_id ? (isNaN(user_id) ? String(user_id) : Number(user_id)) : null,
+      plan_id,
+      billing_interval,
+      amount_paise: String(amount_paise),
+      currency,
+      status: 'created',
+      payment_id: null,
+      signature: null,
+      receipt,
+      notes: typeof notes === 'string' ? JSON.parse(notes) : (notes || {}),
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+    fallbackRazorpayOrders.push(newOrder);
+    return Promise.resolve({ rows: [{ ...newOrder }], rowCount: 1 });
+  }
+
+  if (normalizedSql.startsWith('select') && normalizedSql.includes('from razorpay_orders')) {
+    let list = [...fallbackRazorpayOrders];
+    if (normalizedSql.includes('where order_id = $1')) {
+      const oId = String(params[0]);
+      list = list.filter(o => o.order_id === oId);
+    } else if (normalizedSql.includes('where payment_id = $1')) {
+      const pId = String(params[0]);
+      list = list.filter(o => o.payment_id === pId);
+    } else if (normalizedSql.includes('where organization_id = $1')) {
+      const orgId = String(params[0]);
+      list = list.filter(o => String(o.organization_id) === orgId);
+    }
+    list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const limitMatch = normalizedSql.match(/limit\s+\$(\d+)/i);
+    if (limitMatch) {
+      const limitVal = Number(params[parseInt(limitMatch[1], 10) - 1]) || 20;
+      list = list.slice(0, limitVal);
+    }
+    return Promise.resolve({ rows: list.map(o => ({ ...o })), rowCount: list.length });
+  }
+
+  if (normalizedSql.startsWith('update razorpay_orders')) {
+    const oId = String(params[0]);
+    const order = fallbackRazorpayOrders.find(o => o.order_id === oId);
+    if (order) {
+      if (normalizedSql.includes("status = 'paid'")) {
+        order.status = 'paid';
+        order.payment_id = params[1] || order.payment_id;
+        order.signature = params[2] || order.signature;
+      } else if (normalizedSql.includes("status = 'failed'")) {
+        order.status = 'failed';
+        order.payment_id = params[1] || order.payment_id;
+        if (params[2]) {
+          const addNotes = typeof params[2] === 'string' ? JSON.parse(params[2]) : params[2];
+          order.notes = { ...order.notes, ...addNotes };
+        }
+      }
+      order.updated_at = new Date();
+      return Promise.resolve({ rows: [{ ...order }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
+  // ----------------- RAZORPAY WEBHOOK EVENTS -----------------
+  if (normalizedSql.startsWith('insert into razorpay_webhook_events')) {
+    const [event_id, event_type, organization_id = null, payment_id = null, order_id = null, payload = '{}'] = params;
+    const existing = fallbackRazorpayWebhookEvents.find(e => e.event_id === event_id);
+    if (existing) {
+      const err = new Error('duplicate key value violates unique constraint "uq_razorpay_webhook_events_event_id"');
+      err.code = '23505';
+      return Promise.reject(err);
+    }
+    const newEvent = {
+      id: crypto.randomUUID(),
+      event_id,
+      event_type,
+      status: 'processing',
+      organization_id: organization_id ? String(organization_id) : null,
+      payment_id: payment_id ? String(payment_id) : null,
+      order_id: order_id ? String(order_id) : null,
+      error_message: null,
+      payload: typeof payload === 'string' ? JSON.parse(payload) : (payload || {}),
+      processed_at: null,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+    fallbackRazorpayWebhookEvents.push(newEvent);
+    return Promise.resolve({ rows: [{ ...newEvent }], rowCount: 1 });
+  }
+
+  if (normalizedSql.startsWith('select') && normalizedSql.includes('from razorpay_webhook_events')) {
+    let list = [...fallbackRazorpayWebhookEvents];
+    if (normalizedSql.includes('where event_id = $1')) {
+      const eId = String(params[0]);
+      list = list.filter(e => e.event_id === eId);
+    }
+    return Promise.resolve({ rows: list.map(e => ({ ...e })), rowCount: list.length });
+  }
+
+  if (normalizedSql.startsWith('update razorpay_webhook_events')) {
+    const eId = String(params[params.length - 1]);
+    const event = fallbackRazorpayWebhookEvents.find(e => e.event_id === eId);
+    if (event) {
+      if (normalizedSql.includes("status = 'completed'")) {
+        event.status = 'completed';
+        event.processed_at = new Date();
+      } else if (normalizedSql.includes("status = 'failed'")) {
+        event.status = 'failed';
+        event.error_message = params[0] || event.error_message;
+        event.processed_at = new Date();
+      }
+      event.updated_at = new Date();
+      return Promise.resolve({ rows: [{ ...event }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
   // Schema creation or other generic commands
   return Promise.resolve({ rows: [], rowCount: 0 });
 }
@@ -5123,6 +5255,64 @@ async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_stripe_webhook_events_status ON stripe_webhook_events(status);
     CREATE INDEX IF NOT EXISTS idx_stripe_webhook_events_created_at ON stripe_webhook_events(created_at DESC);
 
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS razorpay_customer_id VARCHAR(255);
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS razorpay_subscription_id VARCHAR(255);
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS razorpay_order_id VARCHAR(255);
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS razorpay_payment_id VARCHAR(255);
+
+    ALTER TABLE invoices ADD COLUMN IF NOT EXISTS razorpay_payment_id VARCHAR(255);
+    ALTER TABLE invoices ADD COLUMN IF NOT EXISTS razorpay_order_id VARCHAR(255);
+    ALTER TABLE invoices ADD COLUMN IF NOT EXISTS razorpay_invoice_id VARCHAR(255);
+    ALTER TABLE invoices ADD COLUMN IF NOT EXISTS payment_gateway VARCHAR(50) DEFAULT 'razorpay';
+    ALTER TABLE invoices ADD COLUMN IF NOT EXISTS receipt_number VARCHAR(100);
+    CREATE INDEX IF NOT EXISTS idx_invoices_razorpay_payment ON invoices(razorpay_payment_id);
+    CREATE INDEX IF NOT EXISTS idx_invoices_razorpay_order ON invoices(razorpay_order_id);
+
+    CREATE TABLE IF NOT EXISTS razorpay_orders (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      order_id VARCHAR(255) NOT NULL UNIQUE,
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      plan_id VARCHAR(50) NOT NULL,
+      billing_interval VARCHAR(20) NOT NULL DEFAULT 'monthly',
+      amount_paise BIGINT NOT NULL,
+      currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+      status VARCHAR(50) NOT NULL DEFAULT 'created' CHECK (status IN ('created', 'attempted', 'paid', 'failed', 'cancelled')),
+      payment_id VARCHAR(255),
+      signature VARCHAR(255),
+      receipt VARCHAR(100),
+      notes JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_razorpay_orders_order_id ON razorpay_orders(order_id);
+    CREATE INDEX IF NOT EXISTS idx_razorpay_orders_org_id ON razorpay_orders(organization_id);
+    CREATE INDEX IF NOT EXISTS idx_razorpay_orders_payment_id ON razorpay_orders(payment_id);
+    CREATE INDEX IF NOT EXISTS idx_razorpay_orders_status ON razorpay_orders(status);
+    CREATE INDEX IF NOT EXISTS idx_razorpay_orders_created_at ON razorpay_orders(created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS razorpay_webhook_events (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      event_id VARCHAR(255) NOT NULL UNIQUE,
+      event_type VARCHAR(100) NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'processing' CHECK (status IN ('processing', 'completed', 'failed')),
+      organization_id UUID REFERENCES organizations(id) ON DELETE SET NULL,
+      payment_id VARCHAR(255),
+      order_id VARCHAR(255),
+      error_message TEXT,
+      payload JSONB,
+      processed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_razorpay_webhook_events_event_id ON razorpay_webhook_events(event_id);
+    CREATE INDEX IF NOT EXISTS idx_razorpay_webhook_events_event_type ON razorpay_webhook_events(event_type);
+    CREATE INDEX IF NOT EXISTS idx_razorpay_webhook_events_org_id ON razorpay_webhook_events(organization_id);
+    CREATE INDEX IF NOT EXISTS idx_razorpay_webhook_events_status ON razorpay_webhook_events(status);
+    CREATE INDEX IF NOT EXISTS idx_razorpay_webhook_events_order_id ON razorpay_webhook_events(order_id);
+    CREATE INDEX IF NOT EXISTS idx_razorpay_webhook_events_payment_id ON razorpay_webhook_events(payment_id);
+    CREATE INDEX IF NOT EXISTS idx_razorpay_webhook_events_created_at ON razorpay_webhook_events(created_at DESC);
+
     INSERT INTO organizations (id, name, slug, plan)
     VALUES 
       ('00000000-0000-0000-0000-000000000001', 'Ricoz Primary Organization', 'ricoz-primary', 'enterprise'),
@@ -5245,6 +5435,104 @@ async function initDb() {
     `);
   } catch (colErr) {
     console.warn('[initDb org columns notice]', colErr.message);
+  }
+
+  // 1c. Ensure Razorpay columns, tables, and constraints exist dynamically
+  try {
+    const userDtCheck = await pool.query(`
+      SELECT data_type FROM information_schema.columns 
+      WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'id'
+      LIMIT 1;
+    `);
+    const isUserUuid = userDtCheck.rows[0]?.data_type === 'uuid';
+    const userIdType = isUserUuid ? 'UUID' : 'INTEGER';
+
+    await pool.query(`
+      ALTER TABLE public.organizations 
+        ADD COLUMN IF NOT EXISTS razorpay_customer_id VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS razorpay_subscription_id VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS razorpay_order_id VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS razorpay_payment_id VARCHAR(255);
+
+      ALTER TABLE public.invoices
+        ADD COLUMN IF NOT EXISTS razorpay_payment_id VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS razorpay_order_id VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS razorpay_invoice_id VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS payment_gateway VARCHAR(50) DEFAULT 'razorpay',
+        ADD COLUMN IF NOT EXISTS receipt_number VARCHAR(100);
+
+      CREATE INDEX IF NOT EXISTS idx_invoices_razorpay_payment ON public.invoices(razorpay_payment_id);
+      CREATE INDEX IF NOT EXISTS idx_invoices_razorpay_order ON public.invoices(razorpay_order_id);
+
+      CREATE TABLE IF NOT EXISTS public.razorpay_orders (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        order_id VARCHAR(255) NOT NULL,
+        organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+        user_id ${userIdType} REFERENCES public.users(id) ON DELETE SET NULL,
+        plan_id VARCHAR(50) NOT NULL,
+        billing_interval VARCHAR(20) NOT NULL DEFAULT 'monthly',
+        amount_paise BIGINT NOT NULL,
+        currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+        status VARCHAR(50) NOT NULL DEFAULT 'created' CHECK (status IN ('created', 'attempted', 'paid', 'failed', 'cancelled')),
+        payment_id VARCHAR(255),
+        signature VARCHAR(255),
+        receipt VARCHAR(100),
+        notes JSONB DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'uq_razorpay_orders_order_id'
+        ) THEN
+          ALTER TABLE public.razorpay_orders
+            ADD CONSTRAINT uq_razorpay_orders_order_id UNIQUE (order_id);
+        END IF;
+      END $$;
+
+      CREATE INDEX IF NOT EXISTS idx_razorpay_orders_order_id ON public.razorpay_orders(order_id);
+      CREATE INDEX IF NOT EXISTS idx_razorpay_orders_org_id ON public.razorpay_orders(organization_id);
+      CREATE INDEX IF NOT EXISTS idx_razorpay_orders_payment_id ON public.razorpay_orders(payment_id);
+      CREATE INDEX IF NOT EXISTS idx_razorpay_orders_status ON public.razorpay_orders(status);
+      CREATE INDEX IF NOT EXISTS idx_razorpay_orders_created_at ON public.razorpay_orders(created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS public.razorpay_webhook_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        event_id VARCHAR(255) NOT NULL,
+        event_type VARCHAR(100) NOT NULL,
+        status VARCHAR(50) NOT NULL DEFAULT 'processing' CHECK (status IN ('processing', 'completed', 'failed')),
+        organization_id UUID REFERENCES public.organizations(id) ON DELETE SET NULL,
+        payment_id VARCHAR(255),
+        order_id VARCHAR(255),
+        error_message TEXT,
+        payload JSONB,
+        processed_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'uq_razorpay_webhook_events_event_id'
+        ) THEN
+          ALTER TABLE public.razorpay_webhook_events
+            ADD CONSTRAINT uq_razorpay_webhook_events_event_id UNIQUE (event_id);
+        END IF;
+      END $$;
+
+      CREATE INDEX IF NOT EXISTS idx_razorpay_webhook_events_event_id ON public.razorpay_webhook_events(event_id);
+      CREATE INDEX IF NOT EXISTS idx_razorpay_webhook_events_event_type ON public.razorpay_webhook_events(event_type);
+      CREATE INDEX IF NOT EXISTS idx_razorpay_webhook_events_org_id ON public.razorpay_webhook_events(organization_id);
+      CREATE INDEX IF NOT EXISTS idx_razorpay_webhook_events_status ON public.razorpay_webhook_events(status);
+      CREATE INDEX IF NOT EXISTS idx_razorpay_webhook_events_order_id ON public.razorpay_webhook_events(order_id);
+      CREATE INDEX IF NOT EXISTS idx_razorpay_webhook_events_payment_id ON public.razorpay_webhook_events(payment_id);
+      CREATE INDEX IF NOT EXISTS idx_razorpay_webhook_events_created_at ON public.razorpay_webhook_events(created_at DESC);
+    `);
+  } catch (rzpErr) {
+    console.warn('[initDb razorpay notice]', rzpErr.message);
   }
 
   // 2. Ensure users_status_check constraint permits pending_verification & suspended
@@ -5601,6 +5889,8 @@ module.exports = {
   fallbackWebhookEvents,
   fallbackSubscriptionHistory,
   fallbackSubscriptionReminders,
+  fallbackRazorpayOrders,
+  fallbackRazorpayWebhookEvents,
   closeDb: async () => {
     if (pool) {
       try {
@@ -5615,6 +5905,8 @@ module.exports = {
     fallbackUsers.length = 0;
     fallbackSubscriptionHistory.length = 0;
     fallbackSubscriptionReminders.length = 0;
+    fallbackRazorpayOrders.length = 0;
+    fallbackRazorpayWebhookEvents.length = 0;
     fallbackDataSources.length = 0;
     fallbackDatasets.length = 0;
     fallbackDatasets.push({

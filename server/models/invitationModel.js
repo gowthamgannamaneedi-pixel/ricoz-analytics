@@ -450,6 +450,14 @@ const InvitationModel = {
 
       const cleanEmail = String(invitation.email).trim().toLowerCase();
 
+      // Enforce recipient email binding: authenticated user cannot accept an invitation issued to someone else
+      if (authenticatedUser && authenticatedUser.email && String(authenticatedUser.email).trim().toLowerCase() !== cleanEmail) {
+        const err = new Error(`This invitation was issued to ${invitation.email}, which does not match your currently authenticated account (${authenticatedUser.email}).`);
+        err.statusCode = 403;
+        err.code = 'INVITATION_EMAIL_MISMATCH';
+        throw err;
+      }
+
       // 2. Query user by email
       const userRes = await client.query(
         `SELECT id, name, email, role, organization_id, password_hash, password_hash_alt, status
@@ -460,6 +468,27 @@ const InvitationModel = {
       );
 
       let user = userRes.rows[0] || null;
+
+      // Check organization seat capacity if accepting user is not already an active member of this organization
+      const isAlreadyActiveInOrg = user && String(user.organization_id) === String(invitation.organization_id) && user.status === 'active';
+      if (!isAlreadyActiveInOrg) {
+        const plansConfig = require('../config/plans');
+        const plan = plansConfig.getPlan(invitation.organization_plan || 'starter');
+        const maxUsers = plan?.limits?.maxUsers ?? 5;
+        if (maxUsers !== -1) {
+          const activeCountRes = await client.query(
+            `SELECT COUNT(*)::int as count FROM users WHERE organization_id::text = $1::text AND COALESCE(status, 'active') = 'active'`,
+            [invitation.organization_id]
+          );
+          const activeCount = Number(activeCountRes.rows[0]?.count || 0);
+          if (activeCount >= maxUsers) {
+            const err = new Error(`Cannot accept invitation: Organization seat capacity (${maxUsers}) has been reached.`);
+            err.statusCode = 403;
+            err.code = 'RESOURCE_LIMIT_EXCEEDED';
+            throw err;
+          }
+        }
+      }
 
       if (user) {
         // Existing user: verify email ownership

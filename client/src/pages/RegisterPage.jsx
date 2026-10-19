@@ -141,18 +141,79 @@ export default function RegisterPage() {
         setInfoMessage(result?.message || 'A 6-digit verification code has been sent to your email.');
       }
     } catch (err) {
-      if (err.data?.code === 'EMAIL_ALREADY_VERIFIED') {
+      if (err.data?.code === 'EMAIL_ALREADY_VERIFIED' || err.data?.isVerified) {
         setError('This email address is already verified and active. Please sign in directly.');
-        setErrorData(err.data || null);
+        setErrorData(err.data || { code: 'EMAIL_ALREADY_VERIFIED', isVerified: true });
       } else if (err.data?.code === 'EMAIL_ALREADY_EXISTS' && err.data?.isVerified === false) {
-        // Switch to verification step so the user can enter their code or request resend
-        setOtpDigits(['', '', '', '', '', '']);
-        setStep('verify');
-        setError('An unverified account already exists for this email. Enter your code or click Resend Code below.');
-        setResendCountdown(0);
+        setError('An unverified account already exists for this email. Click Verify account below to receive your verification code.');
+        setErrorData(err.data || { code: 'EMAIL_ALREADY_EXISTS', isVerified: false, isExistingUnverified: true });
       } else {
         setError(err.message || 'Failed to create account.');
         setErrorData(err.data || null);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle explicit "Verify account" action
+  const handleVerifyAccountAction = async () => {
+    const cleanEmail = formData.email.trim();
+    if (!cleanEmail) {
+      setError('Please enter your work email address first.');
+      return;
+    }
+
+    // Case A: Account already verified and active — redirect directly to sign in with guidance
+    if (errorData?.code === 'EMAIL_ALREADY_VERIFIED' || errorData?.isVerified || (error && error.toLowerCase().includes('already verified'))) {
+      navigate('/login', {
+        state: {
+          email: cleanEmail,
+          message: 'This email address is already verified and active. Please sign in directly with your password.'
+        }
+      });
+      return;
+    }
+
+    // Case B: Account exists but is unverified — verify with backend before navigating to OTP page
+    setIsLoading(true);
+    setError('');
+    setInfoMessage('');
+
+    try {
+      const res = await resendOtp({ email: cleanEmail });
+      if (res?.alreadyVerified) {
+        navigate('/login', {
+          state: {
+            email: cleanEmail,
+            message: 'This email address is already verified and active. Please sign in directly.'
+          }
+        });
+        return;
+      }
+
+      if (res?.email_delivery && !res.email_delivery.success) {
+        setError(res?.message || 'Failed to dispatch verification email. Please check your email configuration or click to retry.');
+        return;
+      }
+
+      // Backend confirmed successful dispatch! Now show OTP entry page
+      setOtpDigits(['', '', '', '', '', '']);
+      setStep('verify');
+      setResendCountdown(60);
+      setInfoMessage(res?.message || `A fresh 6-digit verification code has been dispatched to ${cleanEmail}.`);
+    } catch (err) {
+      if (err.data?.code === 'EMAIL_ALREADY_VERIFIED' || err.data?.alreadyVerified) {
+        navigate('/login', {
+          state: {
+            email: cleanEmail,
+            message: 'This account is already verified and active. Please sign in directly.'
+          }
+        });
+      } else if (err.status === 429 || err.data?.code === 'RATE_LIMITED') {
+        setError(err.message || 'A verification code was recently sent. Please wait before requesting another.');
+      } else {
+        setError(err.message || 'Failed to send verification code. Please try again.');
       }
     } finally {
       setIsLoading(false);
@@ -358,11 +419,12 @@ export default function RegisterPage() {
                   </div>
 
                   {/* Contextual actions if email already exists or is unverified */}
-                  {(error.toLowerCase().includes('already exists') || errorData?.code === 'EMAIL_ALREADY_VERIFIED' || errorData?.isVerified || errorData?.isExistingUnverified) && (
+                  {(error.toLowerCase().includes('already exists') || error.toLowerCase().includes('already verified') || errorData?.code === 'EMAIL_ALREADY_VERIFIED' || errorData?.isVerified || errorData?.isExistingUnverified) && (
                     <div className="pt-2 flex flex-wrap items-center gap-3 border-t border-rose-200/60 dark:border-rose-800/60 text-[11px]">
                       <Link
                         to="/login"
                         state={{ email: formData.email }}
+                        id="already-verified-signin-btn"
                         className="font-semibold text-rose-700 dark:text-rose-300 hover:underline flex items-center gap-1"
                       >
                         Sign in to account &rarr;
@@ -370,20 +432,20 @@ export default function RegisterPage() {
                       <Link
                         to="/forgot-password"
                         state={{ email: formData.email }}
+                        id="already-verified-reset-btn"
                         className="text-slate-600 dark:text-slate-400 hover:underline"
                       >
                         Reset password
                       </Link>
                       <button
                         type="button"
-                        onClick={() => {
-                          setStep('verify');
-                          setInfoMessage('Enter the 6-digit verification code sent to your email, or request a fresh code.');
-                          setError('');
-                        }}
-                        className="font-semibold text-rose-700 dark:text-rose-300 hover:underline"
+                        id="verify-account-action-btn"
+                        onClick={handleVerifyAccountAction}
+                        disabled={isLoading}
+                        className="font-semibold text-rose-700 dark:text-rose-300 hover:underline inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                       >
-                        Verify account &rarr;
+                        {isLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+                        <span>Verify account &rarr;</span>
                       </button>
                     </div>
                   )}

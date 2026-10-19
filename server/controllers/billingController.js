@@ -260,13 +260,25 @@ const billingController = {
    */
   async scheduleDowngrade(req, res) {
     try {
-      const orgId = req.user.organization_id;
-      const { planId } = req.body;
+      const orgId = req.user?.organization_id;
+      const { planId } = req.body || {};
 
-      if (!planId) {
+      if (!orgId) {
+        return res.status(404).json({ success: false, message: 'Organization not found' });
+      }
+
+      if (!planId || typeof planId !== 'string' || !planId.trim()) {
         return res.status(400).json({
           success: false,
           message: 'Target planId is required (starter, growth, or enterprise).'
+        });
+      }
+
+      const targetPlanNormalized = planId.trim().toLowerCase();
+      if (!PLANS[targetPlanNormalized]) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid plan "${planId}". Valid plans are: ${Object.keys(PLANS).join(', ')}.`
         });
       }
 
@@ -275,9 +287,7 @@ const billingController = {
         return res.status(404).json({ success: false, message: 'Organization not found' });
       }
 
-      const comparison = PLANS[planId.toLowerCase()]
-        ? comparePlans(planId, currentSub.plan)
-        : -1;
+      const comparison = comparePlans(targetPlanNormalized, currentSub.plan);
 
       if (comparison >= 0) {
         return res.status(400).json({
@@ -286,7 +296,7 @@ const billingController = {
         });
       }
 
-      const result = await subscriptionService.scheduleDowngrade(orgId, planId);
+      const result = await subscriptionService.scheduleDowngrade(orgId, targetPlanNormalized);
 
       await logAuditEvent({
         organizationId: orgId,
@@ -294,16 +304,22 @@ const billingController = {
         action: AUDIT_ACTIONS.SETTINGS_UPDATED,
         resourceType: 'billing',
         resourceId: orgId,
-        description: `Downgrade to ${planId} scheduled for ${result.effectiveDate}`,
-        metadata: { targetPlan: planId, effectiveDate: result.effectiveDate },
+        description: result.alreadyScheduled
+          ? `Downgrade to ${targetPlanNormalized} verified (already scheduled)`
+          : `Downgrade to ${targetPlanNormalized} scheduled for ${result.effectiveDate}`,
+        metadata: { targetPlan: targetPlanNormalized, effectiveDate: result.effectiveDate, isDuplicate: Boolean(result.alreadyScheduled) },
         req
       }).catch(() => null);
 
       const freshSub = await subscriptionService.getOrganizationSubscription(orgId);
 
+      const message = result.alreadyScheduled
+        ? `Downgrade to ${result.targetPlan.toUpperCase()} is already scheduled for ${new Date(result.effectiveDate).toLocaleDateString()}. Your current features remain active until then.`
+        : `Downgrade to ${result.targetPlan.toUpperCase()} successfully scheduled. Your current plan features remain active until ${new Date(result.effectiveDate).toLocaleDateString()}.`;
+
       return res.status(200).json({
         success: true,
-        message: `Downgrade to ${result.targetPlan} successfully scheduled. Your current plan features remain active until ${new Date(result.effectiveDate).toLocaleDateString()}.`,
+        message,
         subscription: freshSub,
         ...result
       });
@@ -312,6 +328,63 @@ const billingController = {
       return res.status(500).json({
         success: false,
         message: err.message || 'Failed to schedule plan downgrade.'
+      });
+    }
+  },
+
+  /**
+   * POST /api/billing/cancel-downgrade
+   * Cancel a pending scheduled downgrade before it takes effect
+   */
+  async cancelScheduledDowngrade(req, res) {
+    try {
+      const orgId = req.user?.organization_id;
+
+      if (!orgId) {
+        return res.status(404).json({ success: false, message: 'Organization not found' });
+      }
+
+      const currentSub = await subscriptionService.getOrganizationSubscription(orgId);
+      if (!currentSub) {
+        return res.status(404).json({ success: false, message: 'Organization not found' });
+      }
+
+      if (!currentSub.scheduledDowngradePlan) {
+        return res.status(200).json({
+          success: true,
+          message: 'No downgrade is currently scheduled for this organization.',
+          subscription: currentSub,
+          cancelled: true,
+          alreadyCancelled: true
+        });
+      }
+
+      const result = await subscriptionService.cancelScheduledDowngrade(orgId);
+
+      await logAuditEvent({
+        organizationId: orgId,
+        userId: req.user.id,
+        action: AUDIT_ACTIONS.SETTINGS_UPDATED,
+        resourceType: 'billing',
+        resourceId: orgId,
+        description: `Cancelled scheduled downgrade to ${result.cancelledTargetPlan}`,
+        metadata: { cancelledPlan: result.cancelledTargetPlan },
+        req
+      }).catch(() => null);
+
+      const freshSub = await subscriptionService.getOrganizationSubscription(orgId);
+
+      return res.status(200).json({
+        success: true,
+        message: `Scheduled downgrade to ${result.cancelledTargetPlan ? result.cancelledTargetPlan.toUpperCase() : 'lower plan'} has been successfully cancelled. You will remain on the ${freshSub.plan.toUpperCase()} plan.`,
+        subscription: freshSub,
+        ...result
+      });
+    } catch (err) {
+      console.error('[BillingController.cancelScheduledDowngrade] Error:', err.message);
+      return res.status(500).json({
+        success: false,
+        message: err.message || 'Failed to cancel scheduled downgrade.'
       });
     }
   },

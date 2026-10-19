@@ -1303,6 +1303,15 @@ export async function scheduleBillingDowngrade(payload) {
 }
 
 /**
+ * Cancel a pending scheduled downgrade
+ */
+export async function cancelBillingDowngrade() {
+  return apiRequest('/billing/cancel-downgrade', {
+    method: 'POST'
+  });
+}
+
+/**
  * Retrieve subscription audit history
  */
 export async function getBillingHistory() {

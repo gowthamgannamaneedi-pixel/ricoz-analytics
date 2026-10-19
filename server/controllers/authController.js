@@ -18,6 +18,26 @@ const resendRateLimits = new Map();
 const inFlightResends = new Set();
 const RESEND_COOLDOWN_MS = 60 * 1000; // 60s cooldown
 
+// In-memory verification attempts tracker: email -> { attempts: number, lockedUntil: number | null }
+const verificationAttemptLimits = new Map();
+const MAX_VERIFICATION_ATTEMPTS = 5;
+const ATTEMPT_LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes lockout after 5 failures
+
+/**
+ * Constant-time string comparison to prevent timing side-channel attacks on OTPs and tokens
+ */
+function safeOtpCompare(a, b) {
+  if (!a || !b) return false;
+  const strA = String(a).trim();
+  const strB = String(b).trim();
+  if (strA.length !== strB.length) return false;
+  try {
+    return crypto.timingSafeEqual(Buffer.from(strA, 'utf8'), Buffer.from(strB, 'utf8'));
+  } catch (_) {
+    return false;
+  }
+}
+
 /**
  * Helper to generate signed JWT token containing multi-tenant user claims
  */
@@ -160,7 +180,7 @@ const register = async (req, res, next) => {
 
         // B. Generate replacement verification credentials
         const verificationToken = crypto.randomBytes(32).toString('hex');
-        const verificationOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        const verificationOtp = crypto.randomInt(100000, 1000000).toString();
         const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
         const frontendBase = resolveFrontendUrl(req);
@@ -271,7 +291,7 @@ const register = async (req, res, next) => {
 
     // 6. Generate cryptographic verification token and 6-digit OTP
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificationOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationOtp = crypto.randomInt(100000, 1000000).toString();
     const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     // 7. Supabase Auth registration (if configured)
@@ -437,6 +457,8 @@ const verifyOtp = async (req, res, next) => {
       });
     }
 
+    const userEmailKey = (user.email || cleanEmail || '').toLowerCase();
+
     if (user.status === 'active' || (!user.verification_otp && !user.verification_token)) {
       return res.status(400).json({
         success: false,
@@ -448,32 +470,48 @@ const verifyOtp = async (req, res, next) => {
       });
     }
 
+    // Check failed attempt rate-limit lockout
+    const attemptData = verificationAttemptLimits.get(userEmailKey);
+    const now = Date.now();
+    if (attemptData && attemptData.lockedUntil && now < attemptData.lockedUntil) {
+      const remainingMinutes = Math.ceil((attemptData.lockedUntil - now) / 60000);
+      return res.status(429).json({
+        success: false,
+        error: {
+          code: 'TOO_MANY_VERIFICATION_ATTEMPTS',
+          message: `Too many failed verification attempts. Please wait ${remainingMinutes} minute(s) or click Resend Code to request a fresh verification code.`
+        },
+        message: `Too many failed verification attempts. Please wait ${remainingMinutes} minute(s) or click Resend Code to request a fresh verification code.`,
+        retryAfter: remainingMinutes * 60
+      });
+    }
+
+    // Check expiration immediately
+    if (user.verification_token_expires_at && new Date() > new Date(user.verification_token_expires_at)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: cleanOtp ? 'OTP_EXPIRED' : 'TOKEN_EXPIRED',
+          message: cleanOtp
+            ? 'The 6-digit code has expired. Please request a new one.'
+            : 'The verification link has expired. Please request a new one.'
+        },
+        message: cleanOtp
+          ? 'The 6-digit code has expired. Please request a new one.'
+          : 'The verification link has expired. Please request a new one.'
+      });
+    }
+
     let isValid = false;
 
-    // A. Check against cryptographic token
-    if (cleanToken && user.verification_token === cleanToken) {
-      if (user.verification_token_expires_at && new Date() > new Date(user.verification_token_expires_at)) {
-        return res.status(400).json({
-          success: false,
-          error: { code: 'TOKEN_EXPIRED', message: 'The verification link has expired. Please request a new one.' },
-          message: 'The verification link has expired. Please request a new one.'
-        });
-      }
+    // A. Check against cryptographic token (timing-safe)
+    if (cleanToken && user.verification_token && safeOtpCompare(user.verification_token, cleanToken)) {
       isValid = true;
     }
 
-    // B. Check against 6-digit OTP
-    if (!isValid && cleanOtp) {
-      if (user.verification_otp && user.verification_otp === cleanOtp) {
-        if (user.verification_token_expires_at && new Date() > new Date(user.verification_token_expires_at)) {
-          return res.status(400).json({
-            success: false,
-            error: { code: 'OTP_EXPIRED', message: 'The 6-digit code has expired. Please request a new one.' },
-            message: 'The 6-digit code has expired. Please request a new one.'
-          });
-        }
-        isValid = true;
-      }
+    // B. Check against 6-digit OTP (timing-safe)
+    if (!isValid && cleanOtp && user.verification_otp && safeOtpCompare(user.verification_otp, cleanOtp)) {
+      isValid = true;
     }
 
     // C. Supabase Auth fallback if configured
@@ -489,15 +527,43 @@ const verifyOtp = async (req, res, next) => {
     }
 
     if (!isValid) {
+      const currentAttempts = (attemptData?.attempts || 0) + 1;
+      if (currentAttempts >= MAX_VERIFICATION_ATTEMPTS) {
+        // Lock out for 15 minutes and invalidate the compromised OTP in DB
+        verificationAttemptLimits.set(userEmailKey, {
+          attempts: currentAttempts,
+          lockedUntil: now + ATTEMPT_LOCKOUT_MS
+        });
+        await UserModel.setVerificationDetails(user.email, null, null, null).catch(() => null);
+        return res.status(429).json({
+          success: false,
+          error: {
+            code: 'TOO_MANY_VERIFICATION_ATTEMPTS',
+            message: 'Too many failed verification attempts. For your security, this verification code has been invalidated. Please click Resend Code to request a fresh code.'
+          },
+          message: 'Too many failed verification attempts. For your security, this verification code has been invalidated. Please click Resend Code to request a fresh code.'
+        });
+      }
+
+      verificationAttemptLimits.set(userEmailKey, {
+        attempts: currentAttempts,
+        lockedUntil: null
+      });
+
+      const remaining = MAX_VERIFICATION_ATTEMPTS - currentAttempts;
       return res.status(400).json({
         success: false,
         error: {
           code: 'INVALID_CODE',
-          message: 'Invalid verification code or link. Please check your email and try again.'
+          message: `Invalid verification code or link. ${remaining} attempt(s) remaining.`
         },
-        message: 'Invalid verification code or link. Please check your email and try again.'
+        message: `Invalid verification code or link. ${remaining} attempt(s) remaining.`,
+        remainingAttempts: remaining
       });
     }
+
+    // Verification succeeded: clear failed attempt tracker
+    verificationAttemptLimits.delete(userEmailKey);
 
     // Mark verified in database and record initial login/presence
     await UserModel.markEmailVerified(user.email);
@@ -580,7 +646,8 @@ const resendOtp = async (req, res, next) => {
       return res.status(200).json({
         success: true,
         alreadyVerified: true,
-        message: 'This email address is already verified. You can log in directly.'
+        code: 'EMAIL_ALREADY_VERIFIED',
+        message: 'This email address is already verified and active. Please sign in directly.'
       });
     }
 
@@ -617,7 +684,7 @@ const resendOtp = async (req, res, next) => {
     try {
       // 3. Prepare fresh verification credentials (persisted ONLY after successful dispatch)
       const verificationToken = crypto.randomBytes(32).toString('hex');
-      const verificationOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const verificationOtp = crypto.randomInt(100000, 1000000).toString();
       const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
       // 4. Dispatch verification email with dynamic frontend domain resolution FIRST
@@ -657,6 +724,7 @@ const resendOtp = async (req, res, next) => {
 
       // 6. Provider accepted delivery! Now update database and rate limit
       await UserModel.setVerificationDetails(cleanEmail, verificationToken, verificationOtp, tokenExpiresAt);
+      verificationAttemptLimits.delete(cleanEmail);
 
       if (isConfigured && supabase) {
         await supabase.auth.resend({ type: 'signup', email: cleanEmail }).catch(() => null);
