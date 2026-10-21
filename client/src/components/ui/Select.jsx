@@ -369,10 +369,12 @@ export function Select({
                     opt.disabled
                       ? 'opacity-40 cursor-not-allowed text-slate-400 dark:text-[#64748B]'
                       : isSelected
-                      ? 'bg-rose-50 dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] font-semibold'
+                      ? (isHighlighted
+                          ? 'bg-rose-100/90 dark:bg-[#381829] text-[#D91542] dark:text-[#FB7185] font-semibold'
+                          : 'bg-rose-50 dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] font-semibold')
                       : isHighlighted
-                      ? 'bg-rose-50/80 dark:bg-[#1E293B] text-rose-700 dark:text-[#F8FAFC] font-medium'
-                      : 'text-slate-700 dark:text-[#CBD5E1] font-medium hover:bg-rose-50 dark:hover:bg-[#1E293B] hover:text-rose-700 dark:hover:text-[#F8FAFC]'
+                      ? 'bg-rose-50/80 dark:bg-[#2A1422]/70 text-rose-700 dark:text-[#FB7185] font-medium'
+                      : 'text-slate-700 dark:text-[#CBD5E1] font-medium hover:bg-rose-50 dark:hover:bg-[#2A1422]/70 hover:text-rose-700 dark:hover:text-[#FB7185]'
                   ].join(' ')}
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -395,7 +397,7 @@ export function Select({
                       </span>
                     )}
                     {isSelected && (
-                      <Check className="h-4 w-4 text-[#D91542] dark:text-rose-400 shrink-0" strokeWidth={2.5} />
+                      <Check className="h-4 w-4 text-[#D91542] dark:text-[#FB7185] shrink-0" strokeWidth={2.5} />
                     )}
                   </div>
                 </button>

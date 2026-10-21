@@ -113,17 +113,17 @@ export default function DatasetSelector({
       {isOpen && (
         <div
           role="listbox"
-          className="absolute left-0 mt-2 w-84 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-1.5 shadow-xl z-50 text-xs animate-in fade-in zoom-in-95 duration-100"
+          className="absolute left-0 mt-2 w-84 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-1.5 shadow-xl z-50 text-xs animate-in fade-in zoom-in-95 duration-100"
         >
           {/* Search Header */}
           <div className="relative mb-2 px-1 pt-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 dark:text-[#94A3B8]" />
             <input
               type="text"
               placeholder="Search datasets..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 pl-9 pr-3 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:border-[#D91542] focus:outline-none"
+              className="w-full rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50 dark:bg-[#0F172A] py-2 pl-9 pr-3 text-xs text-slate-900 dark:text-[#CBD5E1] placeholder-slate-400 dark:placeholder-[#94A3B8] focus:bg-white dark:focus:bg-[#0F172A] focus:border-[#D91542] dark:focus:border-[#E11D48] focus:outline-none"
               autoFocus
             />
           </div>
@@ -131,7 +131,7 @@ export default function DatasetSelector({
           {/* Dataset List */}
           <div className="max-h-64 overflow-y-auto space-y-1">
             {filteredDatasets.length === 0 ? (
-              <div className="p-3 text-center text-xs text-slate-400">
+              <div className="p-3 text-center text-xs text-slate-400 dark:text-[#94A3B8]">
                 No datasets matched your search.
               </div>
             ) : (
@@ -150,8 +150,8 @@ export default function DatasetSelector({
                     }}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition cursor-pointer select-none ${
                       isSelected
-                        ? 'bg-rose-50 dark:bg-rose-950/60 text-[#D91542] dark:text-rose-300 font-semibold'
-                        : 'text-slate-700 dark:text-slate-200 font-medium hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/40 dark:hover:text-rose-300'
+                        ? 'bg-rose-50 dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] font-semibold'
+                        : 'text-slate-700 dark:text-[#CBD5E1] font-medium hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-[#2A1422]/70 dark:hover:text-[#FB7185]'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">

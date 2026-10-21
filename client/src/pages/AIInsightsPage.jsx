@@ -775,100 +775,100 @@ export default function AIInsightsPage() {
       {/* ------------------------------------------------------------------ */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
         {/* Card 1: Total Insights */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
+        <div className="rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
-              <Bot className="w-6 h-6" />
+            <div className="h-11 w-11 rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] flex items-center justify-center shrink-0 shadow-2xs">
+              <Bot className="w-5 h-5" />
             </div>
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/80">
               <TrendingUp className="w-3 h-3" />
               {totalCount > 0 ? 'Live Telemetry' : 'Zero State'}
             </span>
           </div>
           <div className="mt-4">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+            <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider block">
               Total Insights
             </span>
-            <div className="text-3xl font-extrabold text-slate-900 mt-1.5">
+            <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] mt-1.5">
               {totalCount}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1">
               Across all connected datasets
             </p>
           </div>
         </div>
 
         {/* Card 2: Positive Insights */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
+        <div className="rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6" />
+            <div className="h-11 w-11 rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] flex items-center justify-center shrink-0 shadow-2xs">
+              <TrendingUp className="w-5 h-5" />
             </div>
             {totalCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/80">
                 <ArrowUpRight className="w-3 h-3" />
                 {positivePercent}%
               </span>
             )}
           </div>
           <div className="mt-4">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+            <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider block">
               Positive Insights
             </span>
-            <div className="text-3xl font-extrabold text-slate-900 mt-1.5">
+            <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] mt-1.5">
               {positiveCount}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1">
               Growth opportunities &amp; expansion
             </p>
           </div>
         </div>
 
         {/* Card 3: Critical Insights */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
+        <div className="rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6" />
+            <div className="h-11 w-11 rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] flex items-center justify-center shrink-0 shadow-2xs">
+              <AlertTriangle className="w-5 h-5" />
             </div>
             {criticalCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 dark:text-[#FDA4AF] bg-rose-50 dark:bg-[#2A1422] px-2.5 py-1 rounded-full border border-rose-200 dark:border-rose-900/60">
                 {criticalPercent}%
               </span>
             )}
           </div>
           <div className="mt-4">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+            <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider block">
               Critical Insights
             </span>
-            <div className="text-3xl font-extrabold text-slate-900 mt-1.5">
+            <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] mt-1.5">
               {criticalCount}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1">
               Require immediate business attention
             </p>
           </div>
         </div>
 
         {/* Card 4: Informational Insights */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
+        <div className="rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
-              <Info className="w-6 h-6" />
+            <div className="h-11 w-11 rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] flex items-center justify-center shrink-0 shadow-2xs">
+              <Info className="w-5 h-5" />
             </div>
             {totalCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 dark:text-[#FDA4AF] bg-rose-50 dark:bg-[#2A1422] px-2.5 py-1 rounded-full border border-rose-200 dark:border-rose-900/60">
                 {infoPercent}%
               </span>
             )}
           </div>
           <div className="mt-4">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+            <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider block">
               Informational Insights
             </span>
-            <div className="text-3xl font-extrabold text-slate-900 mt-1.5">
+            <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] mt-1.5">
               {infoCount}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1">
               General business observations
             </p>
           </div>
@@ -1046,12 +1046,14 @@ export default function AIInsightsPage() {
           </button>
         </div>
       ) : filteredInsights.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-2xs">
-          <Sparkles className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-slate-900">
+        <div className="rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-12 text-center shadow-2xs">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] mx-auto mb-3 shadow-2xs">
+            <Sparkles className="h-6 w-6" />
+          </div>
+          <h3 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC]">
             {hasActiveFilters ? 'No Matching Insights Found' : 'No Insights Available'}
           </h3>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1 mb-5 leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] max-w-md mx-auto mt-1 mb-5 leading-relaxed">
             {hasActiveFilters
               ? 'No insights match your active search and filter parameters. Try clearing filters to view all records.'
               : 'AI Insights are calculated by evaluating patterns, growth velocity, and anomalies across your uploaded datasets.'}
@@ -1059,7 +1061,7 @@ export default function AIInsightsPage() {
           {hasActiveFilters ? (
             <button
               onClick={resetFilters}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 dark:border-[#334155] bg-white dark:bg-[#1E293B] px-4 py-2 text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-50 dark:hover:bg-[#2A1422] cursor-pointer"
             >
               Clear Filters
             </button>

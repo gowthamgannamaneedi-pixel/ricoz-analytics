@@ -24,7 +24,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  Info
+  Info,
+  Plus
 } from 'lucide-react';
 import { Select } from './ui/Select';
 
@@ -631,9 +632,10 @@ export default function DatasetTable({
                       {onOpenUploadModal && !isViewer && (
                         <button
                           onClick={onOpenUploadModal}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700 transition shadow-xs"
+                          className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700 transition shadow-xs cursor-pointer"
                         >
-                          + Upload Dataset
+                          <Plus className="h-4 w-4 shrink-0" strokeWidth={2.5} />
+                          <span>Upload Dataset</span>
                         </button>
                       )}
                     </div>

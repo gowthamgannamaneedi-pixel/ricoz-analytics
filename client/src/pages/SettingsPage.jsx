@@ -1627,11 +1627,11 @@ export default function SettingsPage() {
       {/* 6. TAB 4: INTEGRATIONS                                             */}
       {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {activeTab === 'integrations' && (
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-6 w-full">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 shadow-2xs space-y-6 w-full">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100 dark:border-[#334155]">
             <div>
-              <h2 className="text-base font-bold text-slate-900">Connected Services & Infrastructure</h2>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
+              <h2 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC]">Connected Services & Infrastructure</h2>
+              <p className="text-xs text-slate-500 dark:text-[#CBD5E1] font-medium mt-0.5">
                 Active connectors, storage providers, mail delivery gateways, and external APIs.
               </p>
             </div>
@@ -1648,65 +1648,65 @@ export default function SettingsPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
             {/* Integration 1: PostgreSQL & Supabase Engine */}
-            <div className="bg-slate-50/50 border border-slate-200/90 rounded-2xl p-6 space-y-4 hover:border-slate-300 hover:bg-slate-50/80 transition flex flex-col justify-between shadow-2xs">
+            <div className="bg-slate-50/50 dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/80 dark:hover:bg-[#1E293B]/60 transition flex flex-col justify-between shadow-2xs">
               <div className="space-y-3.5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3.5">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 font-bold shrink-0">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] font-bold shrink-0">
                       <Database className="h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900">PostgreSQL / Supabase Storage</h3>
-                      <p className="text-xs text-slate-500 font-medium">Core database & dataset storage provider</p>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">PostgreSQL / Supabase Storage</h3>
+                      <p className="text-xs text-slate-500 dark:text-[#CBD5E1] font-medium">Core database & dataset storage provider</p>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
                     Operational
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
                   Connects to the enterprise SQL telemetry hub with automated health heartbeats and query fallback protection.
                 </p>
               </div>
-              <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 border-t border-slate-200/70">
-                <span className="font-mono text-slate-600">Latency: 1.2ms</span>
+              <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 dark:text-[#CBD5E1] border-t border-slate-200/70 dark:border-[#334155]">
+                <span className="font-mono text-slate-600 dark:text-[#CBD5E1]">Latency: 1.2ms</span>
                 <button
                   type="button"
                   onClick={() => navigate('/data-sources')}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-rose-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-rose-50 dark:hover:bg-[#2A1422] hover:border-rose-200 dark:hover:border-[#E11D48]/50 text-rose-700 dark:text-[#FB7185] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                 >
-                  Configure Connector â†’
+                  Configure Connector →
                 </button>
               </div>
             </div>
 
             {/* Integration 2: Zoho SMTP Mail Gateway */}
-            <div className="bg-slate-50/50 border border-slate-200/90 rounded-2xl p-6 space-y-4 hover:border-slate-300 hover:bg-slate-50/80 transition flex flex-col justify-between shadow-2xs">
+            <div className="bg-slate-50/50 dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/80 dark:hover:bg-[#1E293B]/60 transition flex flex-col justify-between shadow-2xs">
               <div className="space-y-3.5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3.5">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600 font-bold shrink-0">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] font-bold shrink-0">
                       <Mail className="h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900">Zoho SMTP Gateway</h3>
-                      <p className="text-xs text-slate-500 font-medium">Alert dispatch & automated report emails</p>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Zoho SMTP Gateway</h3>
+                      <p className="text-xs text-slate-500 dark:text-[#CBD5E1] font-medium">Alert dispatch & automated report emails</p>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
                     Connected
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
                   Transports transactional notifications, schedule execution summaries, and critical incident alerts.
                 </p>
               </div>
-              <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 border-t border-slate-200/70">
-                <span className="font-mono text-slate-600">Host: smtp.zoho.com:587</span>
+              <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 dark:text-[#CBD5E1] border-t border-slate-200/70 dark:border-[#334155]">
+                <span className="font-mono text-slate-600 dark:text-[#CBD5E1]">Host: smtp.zoho.com:587</span>
                 <button
                   type="button"
                   onClick={() => setSuccessMessage('SMTP test handshake validated successfully.')}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-rose-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-rose-50 dark:hover:bg-[#2A1422] hover:border-rose-200 dark:hover:border-[#E11D48]/50 text-rose-700 dark:text-[#FB7185] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                 >
                   Test Connection
                 </button>
@@ -1714,67 +1714,67 @@ export default function SettingsPage() {
             </div>
 
             {/* Integration 3: Enterprise Export Pipeline */}
-            <div className="bg-slate-50/50 border border-slate-200/90 rounded-2xl p-6 space-y-4 hover:border-slate-300 hover:bg-slate-50/80 transition flex flex-col justify-between shadow-2xs">
+            <div className="bg-slate-50/50 dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/80 dark:hover:bg-[#1E293B]/60 transition flex flex-col justify-between shadow-2xs">
               <div className="space-y-3.5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3.5">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-purple-600 font-bold shrink-0">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] font-bold shrink-0">
                       <FileText className="h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900">PDF & Excel Generation Pipeline</h3>
-                      <p className="text-xs text-slate-500 font-medium">PDFKit & ExcelJS high-fidelity generators</p>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">PDF & Excel Generation Pipeline</h3>
+                      <p className="text-xs text-slate-500 dark:text-[#CBD5E1] font-medium">PDFKit & ExcelJS high-fidelity generators</p>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
                     Ready
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
                   Produces automated report digests, telemetry audit spreadsheets, and printable executive summaries.
                 </p>
               </div>
-              <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 border-t border-slate-200/70">
-                <span className="font-mono text-slate-600">Formats: PDF, XLSX, CSV</span>
+              <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 dark:text-[#CBD5E1] border-t border-slate-200/70 dark:border-[#334155]">
+                <span className="font-mono text-slate-600 dark:text-[#CBD5E1]">Formats: PDF, XLSX, CSV</span>
                 <button
                   type="button"
                   onClick={() => navigate('/reports')}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-rose-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-rose-50 dark:hover:bg-[#2A1422] hover:border-rose-200 dark:hover:border-[#E11D48]/50 text-rose-700 dark:text-[#FB7185] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                 >
-                  View Reports Engine â†’
+                  View Reports Engine →
                 </button>
               </div>
             </div>
 
             {/* Integration 4: AI Analytics Engine */}
-            <div className="bg-slate-50/50 border border-slate-200/90 rounded-2xl p-6 space-y-4 hover:border-slate-300 hover:bg-slate-50/80 transition flex flex-col justify-between shadow-2xs">
+            <div className="bg-slate-50/50 dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/80 dark:hover:bg-[#1E293B]/60 transition flex flex-col justify-between shadow-2xs">
               <div className="space-y-3.5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3.5">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-600 font-bold shrink-0">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] font-bold shrink-0">
                       <Sparkles className="h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900">AI Intelligence Core</h3>
-                      <p className="text-xs text-slate-500 font-medium">Natural-language analytics & telemetry insight</p>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">AI Intelligence Core</h3>
+                      <p className="text-xs text-slate-500 dark:text-[#CBD5E1] font-medium">Natural-language analytics & telemetry insight</p>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
                     Active
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
                   Powers conversational intelligence, automated anomalies, narrative digests, and query planning.
                 </p>
               </div>
-              <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 border-t border-slate-200/70">
-                <span className="font-mono text-slate-600">Status: Operational</span>
+              <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 dark:text-[#CBD5E1] border-t border-slate-200/70 dark:border-[#334155]">
+                <span className="font-mono text-slate-600 dark:text-[#CBD5E1]">Status: Operational</span>
                 <button
                   type="button"
                   onClick={() => navigate('/ai-insights')}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-rose-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-rose-50 dark:hover:bg-[#2A1422] hover:border-rose-200 dark:hover:border-[#E11D48]/50 text-rose-700 dark:text-[#FB7185] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
                 >
-                  Explore AI Core â†’
+                  Explore AI Core →
                 </button>
               </div>
             </div>

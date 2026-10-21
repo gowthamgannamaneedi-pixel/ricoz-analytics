@@ -231,7 +231,7 @@ export default function Sidebar({ isOpen, onClose }) {
         </div>
 
         {/* User Account / Workspace Footer Area */}
-        <div className="border-t border-slate-200 dark:border-[#334155] p-3 bg-slate-50/70 dark:bg-[#111827]">
+        <div className="border-t border-slate-200/80 dark:border-[#334155] p-3 bg-white dark:bg-[#111827]">
           <div className="flex items-center justify-between gap-2.5">
             {/* Clickable user profile identity strip */}
             <button
@@ -240,7 +240,7 @@ export default function Sidebar({ isOpen, onClose }) {
                 onClose?.();
                 navigate('/settings');
               }}
-              className="flex items-center gap-2.5 min-w-0 flex-1 text-left p-1 rounded-xl hover:bg-slate-200/50 dark:hover:bg-[#1E293B] transition cursor-pointer select-none"
+              className="flex items-center gap-2.5 min-w-0 flex-1 text-left p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-[#1E293B] transition cursor-pointer select-none"
               title="View account & workspace settings"
             >
               {/* Universal Shared Avatar Component */}

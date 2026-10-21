@@ -544,101 +544,101 @@ export default function CollaborationPage() {
       {/* ------------------------------------------------------------------ */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
         {/* Card 1: Total Items Shared */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
-              <Users className="w-6 h-6" />
+            <div className="h-11 w-11 rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] flex items-center justify-center shrink-0 shadow-2xs">
+              <Users className="w-5 h-5" />
             </div>
             {totalItemsShared > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/80">
                 <ExternalLink className="w-3 h-3" />
                 Active
               </span>
             )}
           </div>
           <div className="mt-4">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+            <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider block">
               Total Items Shared
             </span>
-            <div className="text-3xl font-extrabold text-slate-900 mt-1.5">
+            <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] mt-1.5">
               {totalItemsShared}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1">
               Dashboards, reports &amp; insights
             </p>
           </div>
         </div>
 
         {/* Card 2: Shared with Me */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
-              <Share2 className="w-6 h-6" />
+            <div className="h-11 w-11 rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] flex items-center justify-center shrink-0 shadow-2xs">
+              <Share2 className="w-5 h-5" />
             </div>
             {sharedWithMeTotal > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/80">
                 Received
               </span>
             )}
           </div>
           <div className="mt-4">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+            <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider block">
               Shared with Me
             </span>
-            <div className="text-3xl font-extrabold text-slate-900 mt-1.5">
+            <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] mt-1.5">
               {sharedWithMeTotal}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1">
               Items shared by team members
             </p>
           </div>
         </div>
 
         {/* Card 3: My Shares */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
-              <UserCheck className="w-6 h-6" />
+            <div className="h-11 w-11 rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] flex items-center justify-center shrink-0 shadow-2xs">
+              <UserCheck className="w-5 h-5" />
             </div>
             {mySharesTotal > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 dark:text-[#FDA4AF] bg-rose-50 dark:bg-[#2A1422] px-2.5 py-1 rounded-full border border-rose-200 dark:border-rose-900/60">
                 Bookmarks
               </span>
             )}
           </div>
           <div className="mt-4">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+            <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider block">
               My Shares
             </span>
-            <div className="text-3xl font-extrabold text-slate-900 mt-1.5">
+            <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] mt-1.5">
               {mySharesTotal}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1">
               Items I have bookmarked/shared
             </p>
           </div>
         </div>
 
         {/* Card 4: Teams & Groups */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 sm:p-7 min-h-[160px] shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
-              <Users2 className="w-6 h-6" />
+            <div className="h-11 w-11 rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] flex items-center justify-center shrink-0 shadow-2xs">
+              <Users2 className="w-5 h-5" />
             </div>
             {activeTeamsCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-800/80">
                 Workspace
               </span>
             )}
           </div>
           <div className="mt-4">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+            <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider block">
               Teams &amp; Groups
             </span>
-            <div className="text-3xl font-extrabold text-slate-900 mt-1.5">
+            <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] mt-1.5">
               {activeTeamsCount}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1">
               Active collaboration teams
             </p>
           </div>
@@ -977,34 +977,34 @@ export default function CollaborationPage() {
         </div>
       ) : currentTabItems.length === 0 ? (
         /* TAB EMPTY STATE */
-        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-2xs w-full">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] p-12 text-center shadow-2xs w-full">
           {activeTab === 'favorites' ? (
             <>
-              <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center mx-auto mb-3">
-                <Star className="h-6 w-6 text-rose-600" />
+              <div className="h-12 w-12 rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] flex items-center justify-center mx-auto mb-3 shadow-2xs">
+                <Star className="h-6 w-6 text-rose-600 dark:text-[#FB7185]" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">No favorites yet</h3>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1 mb-5 leading-relaxed max-w-md mx-auto">
+              <h3 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC]">No favorites yet</h3>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 mb-5 leading-relaxed max-w-md mx-auto">
                 Favorite dashboards, reports, and AI insights to keep your most important resources within easy reach.
               </p>
             </>
           ) : activeTab === 'recent' ? (
             <>
-              <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center mx-auto mb-3">
-                <Clock className="h-6 w-6 text-rose-600" />
+              <div className="h-12 w-12 rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] flex items-center justify-center mx-auto mb-3 shadow-2xs">
+                <Clock className="h-6 w-6 text-rose-600 dark:text-[#FB7185]" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">No recent activity</h3>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1 mb-5 leading-relaxed max-w-md mx-auto">
+              <h3 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC]">No recent activity</h3>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 mb-5 leading-relaxed max-w-md mx-auto">
                 Dashboards, reports, and AI insights you open will automatically appear in your chronological access history.
               </p>
             </>
           ) : (
             <>
-              <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center mx-auto mb-3">
-                <Share2 className="h-6 w-6 text-rose-600" />
+              <div className="h-12 w-12 rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] flex items-center justify-center mx-auto mb-3 shadow-2xs">
+                <Share2 className="h-6 w-6 text-rose-600 dark:text-[#FB7185]" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">No items shared with you yet</h3>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1 mb-5 leading-relaxed max-w-md mx-auto">
+              <h3 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC]">No items shared with you yet</h3>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 mb-5 leading-relaxed max-w-md mx-auto">
                 When team members share dashboards, reports, or automated AI insights with you or your groups, they will appear here with assigned permissions.
               </p>
             </>
@@ -1013,19 +1013,19 @@ export default function CollaborationPage() {
           <div className="flex flex-wrap items-center justify-center gap-2.5">
             <button
               onClick={() => navigate('/dashboard')}
-              className="px-4 py-2 rounded-xl border border-rose-200/90 bg-white hover:bg-rose-50 hover:border-rose-300 text-rose-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-rose-200/90 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-rose-50 dark:hover:bg-[#2A1422] hover:border-rose-300 dark:hover:border-rose-900/60 text-rose-700 dark:text-[#FB7185] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
             >
               Browse Dashboards
             </button>
             <button
               onClick={() => navigate('/reports')}
-              className="px-4 py-2 rounded-xl border border-rose-200/90 bg-white hover:bg-rose-50 hover:border-rose-300 text-rose-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-rose-200/90 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-rose-50 dark:hover:bg-[#2A1422] hover:border-rose-300 dark:hover:border-rose-900/60 text-rose-700 dark:text-[#FB7185] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
             >
               Browse Reports
             </button>
             <button
               onClick={() => navigate('/ai-insights')}
-              className="px-4 py-2 rounded-xl border border-rose-200/90 bg-white hover:bg-rose-50 hover:border-rose-300 text-rose-700 text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-rose-200/90 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-rose-50 dark:hover:bg-[#2A1422] hover:border-rose-300 dark:hover:border-rose-900/60 text-rose-700 dark:text-[#FB7185] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
             >
               Explore AI Insights
             </button>

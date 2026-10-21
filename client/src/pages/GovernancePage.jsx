@@ -500,14 +500,14 @@ export default function GovernancePage() {
           </nav>
 
           <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 shadow-2xs shrink-0">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-[#334155] shadow-2xs shrink-0">
               <Shield className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight">
                 Workspace Governance & Audit Logs
               </h1>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-[#CBD5E1] font-medium mt-0.5">
                 Enterprise tenant administration, team access controls, RBAC matrix, and immutable audit trails
               </p>
             </div>
@@ -516,19 +516,19 @@ export default function GovernancePage() {
 
         {/* Right: Organization Badge & Refresh Button */}
         <div className="flex items-center gap-3 shrink-0 self-start sm:self-auto">
-          <div className="flex items-center gap-3 bg-white border border-slate-200/90 rounded-xl px-3.5 py-2 shadow-2xs">
-            <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-3 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-xl px-3.5 py-2 shadow-2xs">
+            <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] flex items-center justify-center shrink-0">
               <Building2 className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="text-[10px] font-bold text-slate-400 dark:text-[#94A3B8] uppercase tracking-wider">
                 ORGANIZATION
               </div>
-              <div className="text-xs font-bold text-slate-900 truncate max-w-[160px]">
+              <div className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] truncate max-w-[160px]">
                 {orgData?.name || 'Ricoz Primary Organization'}
               </div>
             </div>
-            <span className="ml-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+            <span className="ml-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800 shrink-0">
               {orgData?.plan ? String(orgData.plan).toUpperCase() : 'ENTERPRISE'}
             </span>
           </div>
@@ -644,26 +644,26 @@ export default function GovernancePage() {
             {/* Card 1: TEAM MEMBERS */}
             <div
               onClick={() => setActiveTab('users')}
-              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-rose-200 transition-all duration-200 group cursor-pointer"
+              className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-[#334155] p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-rose-200 dark:hover:border-rose-900/60 transition-all duration-200 group cursor-pointer"
             >
               <div className="flex items-center gap-4 min-w-0">
-                <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-[#334155] flex items-center justify-center shrink-0">
                   <Users className="w-6 h-6" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#CBD5E1]/70">
                     TEAM MEMBERS
                   </div>
-                  <div className="text-2xl font-bold text-slate-900 mt-1">
+                  <div className="text-2xl font-bold text-slate-900 dark:text-[#F8FAFC] mt-1">
                     {statsData?.membersCount ?? 0}
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium mt-1">
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
                     <span>{statsData?.activeMembersCount ?? 0} Active accounts</span>
                   </div>
                 </div>
               </div>
-              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-rose-600 group-hover:bg-rose-50 group-hover:text-rose-700 transition-colors shrink-0 ml-2">
+              <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-[#1E293B] border border-slate-100 dark:border-[#334155] flex items-center justify-center text-slate-400 dark:text-[#FB7185] group-hover:bg-rose-50 dark:group-hover:bg-[#2A1422] group-hover:text-rose-700 dark:group-hover:text-[#FB7185] transition-colors shrink-0 ml-2">
                 <ChevronRight className="w-4 h-4" />
               </div>
             </div>
@@ -671,25 +671,25 @@ export default function GovernancePage() {
             {/* Card 2: DATASETS CONNECTED */}
             <div
               onClick={() => navigate('/datasets')}
-              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-rose-200 transition-all duration-200 group cursor-pointer"
+              className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-[#334155] p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-rose-200 dark:hover:border-rose-900/60 transition-all duration-200 group cursor-pointer"
             >
               <div className="flex items-center gap-4 min-w-0">
-                <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-[#334155] flex items-center justify-center shrink-0">
                   <Database className="w-6 h-6" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#CBD5E1]/70">
                     DATASETS CONNECTED
                   </div>
-                  <div className="text-2xl font-bold text-slate-900 mt-1">
+                  <div className="text-2xl font-bold text-slate-900 dark:text-[#F8FAFC] mt-1">
                     {statsData?.datasetsCount ?? 0}
                   </div>
-                  <div className="text-xs text-slate-500 mt-1 truncate">
+                  <div className="text-xs text-slate-500 dark:text-[#CBD5E1] mt-1 truncate">
                     Enterprise multi-tenant isolated
                   </div>
                 </div>
               </div>
-              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-rose-50 group-hover:text-rose-700 transition-colors shrink-0 ml-2">
+              <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-[#1E293B] border border-slate-100 dark:border-[#334155] flex items-center justify-center text-slate-400 dark:text-[#FB7185] group-hover:bg-rose-50 dark:group-hover:bg-[#2A1422] group-hover:text-rose-700 dark:group-hover:text-[#FB7185] transition-colors shrink-0 ml-2">
                 <ChevronRight className="w-4 h-4" />
               </div>
             </div>
@@ -697,25 +697,25 @@ export default function GovernancePage() {
             {/* Card 3: DASHBOARDS & REPORTS */}
             <div
               onClick={() => navigate('/dashboard')}
-              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-rose-200 transition-all duration-200 group cursor-pointer"
+              className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-[#334155] p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-rose-200 dark:hover:border-rose-900/60 transition-all duration-200 group cursor-pointer"
             >
               <div className="flex items-center gap-4 min-w-0">
-                <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-[#334155] flex items-center justify-center shrink-0">
                   <Layers className="w-6 h-6" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#CBD5E1]/70">
                     DASHBOARDS & REPORTS
                   </div>
-                  <div className="text-2xl font-bold text-slate-900 mt-1">
+                  <div className="text-2xl font-bold text-slate-900 dark:text-[#F8FAFC] mt-1">
                     {(statsData?.dashboardsCount || 0) + (statsData?.reportsCount || 0)}
                   </div>
-                  <div className="text-xs text-slate-500 mt-1 truncate">
+                  <div className="text-xs text-slate-500 dark:text-[#CBD5E1] mt-1 truncate">
                     {statsData?.dashboardsCount || 0} Dashboards • {statsData?.reportsCount || 0} Scheduled reports
                   </div>
                 </div>
               </div>
-              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-rose-50 group-hover:text-rose-700 transition-colors shrink-0 ml-2">
+              <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-[#1E293B] border border-slate-100 dark:border-[#334155] flex items-center justify-center text-slate-400 dark:text-[#FB7185] group-hover:bg-rose-50 dark:group-hover:bg-[#2A1422] group-hover:text-rose-700 dark:group-hover:text-[#FB7185] transition-colors shrink-0 ml-2">
                 <ChevronRight className="w-4 h-4" />
               </div>
             </div>
@@ -723,25 +723,25 @@ export default function GovernancePage() {
             {/* Card 4: ML & AI TELEMETRY */}
             <div
               onClick={() => navigate('/ai-insights')}
-              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-rose-200 transition-all duration-200 group cursor-pointer"
+              className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-[#334155] p-5 shadow-xs flex items-center justify-between hover:shadow-md hover:border-rose-200 dark:hover:border-rose-900/60 transition-all duration-200 group cursor-pointer"
             >
               <div className="flex items-center gap-4 min-w-0">
-                <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-[#334155] flex items-center justify-center shrink-0">
                   <Sparkles className="w-6 h-6" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#CBD5E1]/70">
                     ML & AI TELEMETRY
                   </div>
-                  <div className="text-2xl font-bold text-slate-900 mt-1">
+                  <div className="text-2xl font-bold text-slate-900 dark:text-[#F8FAFC] mt-1">
                     {(statsData?.forecastsCount || 0) + (statsData?.aiQueriesCount || 0)}
                   </div>
-                  <div className="text-xs text-slate-500 mt-1 truncate">
+                  <div className="text-xs text-slate-500 dark:text-[#CBD5E1] mt-1 truncate">
                     {statsData?.forecastsCount || 0} Forecasts • {statsData?.aiQueriesCount || 0} AI queries
                   </div>
                 </div>
               </div>
-              <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-rose-50 group-hover:text-rose-700 transition-colors shrink-0 ml-2">
+              <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-[#1E293B] border border-slate-100 dark:border-[#334155] flex items-center justify-center text-slate-400 dark:text-[#FB7185] group-hover:bg-rose-50 dark:group-hover:bg-[#2A1422] group-hover:text-rose-700 dark:group-hover:text-[#FB7185] transition-colors shrink-0 ml-2">
                 <ChevronRight className="w-4 h-4" />
               </div>
             </div>
@@ -831,8 +831,8 @@ export default function GovernancePage() {
 
                 {/* Viewers */}
                 <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 dark:hover:border-rose-500 transition">
-                  <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-[#94A3B8]">
-                    <Eye className="w-4.5 h-4.5 text-slate-500 dark:text-[#94A3B8] shrink-0" />
+                  <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700 dark:text-[#FB7185]">
+                    <Eye className="w-4.5 h-4.5 text-rose-600 dark:text-[#FB7185] shrink-0" />
                     <span className="truncate uppercase tracking-wider">Viewers</span>
                   </div>
                   <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight my-2">
@@ -952,19 +952,19 @@ export default function GovernancePage() {
         return (
           <div className="space-y-6">
             {/* Top Workspace Seat Telemetry & Invite CTA Card */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-[#334155] p-5 sm:p-6 shadow-xs space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-rose-600" />
-                    <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                  <div className="flex items-center gap-2.5">
+                    <Users className="w-5 h-5 text-rose-600 dark:text-[#FB7185]" />
+                    <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC]">
                       Team Members & Seat Management
                     </h2>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wider">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FB7185] border border-rose-200 dark:border-[#334155] uppercase tracking-wider">
                       {planDisplayName} Plan
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-slate-500 dark:text-[#CBD5E1] mt-1">
                     Manage active members, assigned RBAC roles, and pending email invitation reservations.
                   </p>
                 </div>
@@ -989,7 +989,7 @@ export default function GovernancePage() {
                       type="button"
                       disabled
                       title="Only workspace administrators and owners can invite members"
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 text-slate-400 text-xs font-semibold cursor-not-allowed"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-[#1E293B] text-slate-400 dark:text-[#64748B] text-xs font-semibold cursor-not-allowed"
                     >
                       <UserPlus className="w-4 h-4" />
                       <span>Invite Member</span>
@@ -999,29 +999,29 @@ export default function GovernancePage() {
               </div>
 
               {/* Seat Capacity Bar & Badges */}
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 space-y-3">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                   <div className="flex items-center gap-3">
-                    <span className="font-semibold text-slate-700">Seat Allocation:</span>
-                    <span className="font-bold text-slate-900 font-mono">
+                    <span className="font-semibold text-slate-700 dark:text-[#CBD5E1]">Seat Allocation:</span>
+                    <span className="font-bold text-slate-900 dark:text-[#F8FAFC] font-mono">
                       {currentSeatsUsed} / {seatLimit === -1 ? 'Unlimited' : `${seatLimit} Seats`}
                     </span>
-                    <span className="text-slate-300">|</span>
-                    <span className="text-slate-600">
-                      <strong className="text-slate-900 font-semibold">{activeMembersCount}</strong> Active
+                    <span className="text-slate-300 dark:text-[#475569]">|</span>
+                    <span className="text-slate-600 dark:text-[#CBD5E1]">
+                      <strong className="text-slate-900 dark:text-[#F8FAFC] font-semibold">{activeMembersCount}</strong> Active
                     </span>
-                    <span className="text-slate-300">•</span>
-                    <span className="text-slate-600">
-                      <strong className="text-slate-900 font-semibold">{pendingCount}</strong> Pending
+                    <span className="text-slate-300 dark:text-[#475569]">•</span>
+                    <span className="text-slate-600 dark:text-[#CBD5E1]">
+                      <strong className="text-slate-900 dark:text-[#F8FAFC] font-semibold">{pendingCount}</strong> Pending
                     </span>
                   </div>
-                  <div className="text-[11px] font-semibold text-slate-500 font-mono">
+                  <div className="text-[11px] font-semibold text-slate-500 dark:text-[#94A3B8] font-mono">
                     {seatLimit === -1 ? '100% Available' : `${Math.max(0, seatLimit - currentSeatsUsed)} Seats Remaining`}
                   </div>
                 </div>
 
                 {seatLimit !== -1 && (
-                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                  <div className="w-full bg-slate-200 dark:bg-[#1E293B] h-2 rounded-full overflow-hidden">
                     <div
                       className={`h-full transition-all duration-300 rounded-full ${
                         percentAllocated >= 100

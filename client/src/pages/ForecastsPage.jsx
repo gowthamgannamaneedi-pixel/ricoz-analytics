@@ -995,10 +995,10 @@ export default function ForecastsPage() {
               type="button"
               id="tab-forecast-chart"
               onClick={() => setActiveTab('chart')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer dark:rounded-none dark:border-b-2 dark:py-3 dark:px-1 dark:bg-transparent ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none dark:rounded-none dark:border-0 dark:border-b-2 dark:py-3 dark:px-1 dark:bg-transparent ${
                 activeTab === 'chart'
-                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold dark:border-[#E11D48] dark:text-[#FB7185] dark:shadow-none'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:border-transparent dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:bg-transparent'
+                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold dark:border-[#E11D48] dark:text-[#FB7185] dark:shadow-none dark:bg-transparent'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:border-transparent dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:border-slate-600 dark:hover:bg-transparent'
               }`}
             >
               <TrendingUp className="h-3.5 w-3.5" />
@@ -1009,10 +1009,10 @@ export default function ForecastsPage() {
               type="button"
               id="tab-data-table"
               onClick={() => setActiveTab('table')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer dark:rounded-none dark:border-b-2 dark:py-3 dark:px-1 dark:bg-transparent ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none dark:rounded-none dark:border-0 dark:border-b-2 dark:py-3 dark:px-1 dark:bg-transparent ${
                 activeTab === 'table'
-                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold dark:border-[#E11D48] dark:text-[#FB7185] dark:shadow-none'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:border-transparent dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:bg-transparent'
+                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold dark:border-[#E11D48] dark:text-[#FB7185] dark:shadow-none dark:bg-transparent'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:border-transparent dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:border-slate-600 dark:hover:bg-transparent'
               }`}
             >
               <FileSpreadsheet className="h-3.5 w-3.5" />
@@ -1023,10 +1023,10 @@ export default function ForecastsPage() {
               type="button"
               id="tab-anomalies"
               onClick={() => setActiveTab('anomalies')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer dark:rounded-none dark:border-b-2 dark:py-3 dark:px-1 dark:bg-transparent ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none dark:rounded-none dark:border-0 dark:border-b-2 dark:py-3 dark:px-1 dark:bg-transparent ${
                 activeTab === 'anomalies'
-                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold dark:border-[#E11D48] dark:text-[#FB7185] dark:shadow-none'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:border-transparent dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:bg-transparent'
+                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold dark:border-[#E11D48] dark:text-[#FB7185] dark:shadow-none dark:bg-transparent'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:border-transparent dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:border-slate-600 dark:hover:bg-transparent'
               }`}
             >
               <AlertTriangle className="h-3.5 w-3.5" />
@@ -1042,10 +1042,10 @@ export default function ForecastsPage() {
               type="button"
               id="tab-forecast-history"
               onClick={() => setActiveTab('history')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer dark:rounded-none dark:border-b-2 dark:py-3 dark:px-1 dark:bg-transparent ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none dark:rounded-none dark:border-0 dark:border-b-2 dark:py-3 dark:px-1 dark:bg-transparent ${
                 activeTab === 'history'
-                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold dark:border-[#E11D48] dark:text-[#FB7185] dark:shadow-none'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:border-transparent dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:bg-transparent'
+                  ? 'bg-rose-50 text-rose-700 shadow-2xs border border-rose-200/80 font-bold dark:border-[#E11D48] dark:text-[#FB7185] dark:shadow-none dark:bg-transparent'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:border-transparent dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:border-slate-600 dark:hover:bg-transparent'
               }`}
             >
               <Clock className="h-3.5 w-3.5" />

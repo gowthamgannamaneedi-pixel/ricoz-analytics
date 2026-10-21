@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, AlertCircle, Sparkles, Database, Plus, HelpCircle, ChevronDown } from 'lucide-react';
+import { X, CheckCircle2, AlertCircle, Sparkles, Database, Plus, HelpCircle, ChevronDown, Gauge } from 'lucide-react';
 import Button from './ui/Button';
 import { Select } from './ui/Select';
 import { getDatasets, getDatasetById } from '../services/api';
@@ -216,13 +216,18 @@ export default function MetricModal({
       <div className="flex flex-col w-full max-w-xl max-h-[92vh] rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-[#334155] bg-white dark:bg-[#111827] shrink-0">
-          <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC]">
-              {metricToEdit ? 'Edit Key Performance Indicator' : 'Define New Metric (KPI)'}
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
-              Configure business metrics with formula expressions, benchmarks, and automated status tracking.
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] shadow-2xs shrink-0">
+              <Gauge className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC]">
+                {metricToEdit ? 'Edit Key Performance Indicator' : 'Define New Metric (KPI)'}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
+                Configure business metrics with formula expressions, benchmarks, and automated status tracking.
+              </p>
+            </div>
           </div>
           <button
             type="button"

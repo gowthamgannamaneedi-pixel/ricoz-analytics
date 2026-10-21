@@ -74,7 +74,7 @@ const PREBUILT_TEMPLATES = [
     title: 'Executive Summary',
     description: 'High-level KPIs, revenue trajectories, and decision intelligence signals.',
     format: 'pdf',
-    iconBg: 'bg-rose-50 text-rose-600 border-rose-200/80',
+    iconBg: 'bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border-rose-200/80 dark:border-[#334155]',
     category: 'Executive'
   },
   {
@@ -82,7 +82,7 @@ const PREBUILT_TEMPLATES = [
     title: 'Financial Performance',
     description: 'Comprehensive revenue breakdown, realization rates, and channel contribution.',
     format: 'pdf',
-    iconBg: 'bg-rose-50 text-rose-600 border-rose-200/80',
+    iconBg: 'bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border-rose-200/80 dark:border-[#334155]',
     category: 'Finance'
   },
   {
@@ -90,7 +90,7 @@ const PREBUILT_TEMPLATES = [
     title: 'Sales & Channel Analysis',
     description: 'Detailed channel performance, partner distribution, and conversion volume.',
     format: 'excel',
-    iconBg: 'bg-rose-50 text-rose-600 border-rose-200/80',
+    iconBg: 'bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border-rose-200/80 dark:border-[#334155]',
     category: 'Sales'
   },
   {
@@ -98,7 +98,7 @@ const PREBUILT_TEMPLATES = [
     title: 'Operational Report',
     description: 'Line item transactional telemetry, fulfillment speed, and order volume.',
     format: 'csv',
-    iconBg: 'bg-rose-50 text-rose-600 border-rose-200/80',
+    iconBg: 'bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border-rose-200/80 dark:border-[#334155]',
     category: 'Operations'
   },
   {
@@ -106,7 +106,7 @@ const PREBUILT_TEMPLATES = [
     title: 'Data Quality Report',
     description: 'Dataset completeness, validation issues, schema integrity, and health score.',
     format: 'pdf',
-    iconBg: 'bg-rose-50 text-rose-600 border-rose-200/80',
+    iconBg: 'bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border-rose-200/80 dark:border-[#334155]',
     category: 'Governance'
   }
 ];
@@ -673,96 +673,96 @@ export default function ReportsPage() {
       {/* ─────────────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
         {/* Card 1: Total Reports */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all flex flex-col justify-between min-h-[156px]">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[156px]">
           <div>
-            <div className="flex items-center gap-3 text-slate-600">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80 shrink-0">
+            <div className="flex items-center gap-3 text-slate-600 dark:text-[#CBD5E1]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] shrink-0 shadow-2xs">
                 <FileBarChart className="h-5 w-5" />
               </div>
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Reports</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider">Total Reports</span>
             </div>
             <div className="mt-3.5 flex items-baseline justify-between">
-              <span className="text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
+              <span className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight font-sans">
                 {loading ? '—' : totalReportsCount}
               </span>
               <MiniSparklineBars count={totalReportsCount} color="#e11d48" />
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs">
-            <span className="font-semibold text-emerald-600 flex items-center gap-0.5">
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-[#334155] flex items-center gap-1.5 text-xs">
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
               <ArrowUpRight className="h-3.5 w-3.5" />
               {totalReportsCount > 0 ? `${reports.filter(r => r.status === 'active').length} active` : '0 active'}
             </span>
-            <span className="text-slate-400 font-normal">in library</span>
+            <span className="text-slate-400 dark:text-[#94A3B8] font-normal">in library</span>
           </div>
         </div>
 
         {/* Card 2: Active Schedules */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all flex flex-col justify-between min-h-[156px]">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[156px]">
           <div>
-            <div className="flex items-center gap-3 text-slate-600">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80 shrink-0">
+            <div className="flex items-center gap-3 text-slate-600 dark:text-[#CBD5E1]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] shrink-0 shadow-2xs">
                 <Calendar className="h-5 w-5" />
               </div>
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Schedules</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider">Active Schedules</span>
             </div>
             <div className="mt-3.5 flex items-baseline justify-between">
-              <span className="text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
+              <span className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight font-sans">
                 {loading ? '—' : activeSchedulesCount}
               </span>
               <MiniSparklineBars count={activeSchedulesCount} color="#059669" />
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs">
-            <span className="font-semibold text-emerald-600 flex items-center gap-0.5">
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-[#334155] flex items-center gap-1.5 text-xs">
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
               <ArrowUpRight className="h-3.5 w-3.5" />
               {totalReportsCount > 0 ? `${Math.round((activeSchedulesCount / totalReportsCount) * 100)}%` : '0%'}
             </span>
-            <span className="text-slate-400 font-normal">automated recurring</span>
+            <span className="text-slate-400 dark:text-[#94A3B8] font-normal">automated recurring</span>
           </div>
         </div>
 
         {/* Card 3: Draft Reports */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all flex flex-col justify-between min-h-[156px]">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[156px]">
           <div>
-            <div className="flex items-center gap-3 text-slate-600">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80 shrink-0">
+            <div className="flex items-center gap-3 text-slate-600 dark:text-[#CBD5E1]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] shrink-0 shadow-2xs">
                 <Edit3 className="h-5 w-5" />
               </div>
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Draft Reports</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider">Draft Reports</span>
             </div>
             <div className="mt-3.5 flex items-baseline justify-between">
-              <span className="text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
+              <span className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight font-sans">
                 {loading ? '—' : draftReportsCount}
               </span>
               <MiniSparklineBars count={draftReportsCount} color="#7c3aed" />
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs">
-            <span className="font-semibold text-slate-600">
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-[#334155] flex items-center gap-1.5 text-xs">
+            <span className="font-semibold text-slate-600 dark:text-[#CBD5E1]">
               {draftReportsCount > 0 ? `${draftReportsCount} pending publish` : 'All reports configured'}
             </span>
           </div>
         </div>
 
         {/* Card 4: Executions Logged */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 transition-all flex flex-col justify-between min-h-[156px]">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[156px]">
           <div>
-            <div className="flex items-center gap-3 text-slate-600">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100/80 shrink-0">
+            <div className="flex items-center gap-3 text-slate-600 dark:text-[#CBD5E1]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] shrink-0 shadow-2xs">
                 <Clock className="h-5 w-5" />
               </div>
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Executions Logged</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider">Executions Logged</span>
             </div>
             <div className="mt-3.5 flex items-baseline justify-between">
-              <span className="text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
+              <span className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight font-sans">
                 {loading ? '—' : executionsCount}
               </span>
               <MiniSparklineBars count={executionsCount} color="#d97706" />
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs">
-            <span className="font-semibold text-rose-600">
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-[#334155] flex items-center gap-1.5 text-xs">
+            <span className="font-semibold text-rose-600 dark:text-[#FB7185]">
               {executionsCount > 0 ? `${executions.filter(e => e.status === 'completed').length} completed` : 'Audit log ready'}
             </span>
           </div>
@@ -899,19 +899,19 @@ export default function ReportsPage() {
       {activeTab === 'library' && (
         <div className="space-y-6">
           {/* Upper Section: Featured Reports (8 cols) + Report Templates (4 cols) */}
-          <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+          <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
             {/* Left 8 Cols: Featured Reports */}
-            <div className="xl:col-span-8 bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div className="xl:col-span-8 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between h-full">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-[#334155]">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] shadow-2xs">
                     <FileBarChart className="h-4 w-4" />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-tight">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-tight">
                       Featured Reports
                     </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
                       Most used and important reports for your organization
                     </p>
                   </div>
@@ -924,7 +924,7 @@ export default function ReportsPage() {
                     setTypeFilter('all');
                     setStatusFilter('all');
                   }}
-                  className="text-xs font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1 transition cursor-pointer"
+                  className="text-xs font-semibold text-rose-600 dark:text-[#FB7185] hover:text-rose-700 dark:hover:text-rose-300 flex items-center gap-1 transition cursor-pointer"
                 >
                   <span>View All Reports</span>
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -936,20 +936,22 @@ export default function ReportsPage() {
                 {loading ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {[1, 2].map((n) => (
-                      <div key={n} className="rounded-xl border border-slate-200 bg-white p-4 animate-pulse space-y-3">
-                        <div className="h-4 bg-slate-200 rounded w-1/3" />
-                        <div className="h-16 bg-slate-100 rounded" />
-                        <div className="h-4 bg-slate-200 rounded w-3/4" />
-                        <div className="h-3 bg-slate-100 rounded w-full" />
+                      <div key={n} className="rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#0F172A] p-4 animate-pulse space-y-3">
+                        <div className="h-4 bg-slate-200 dark:bg-[#1E293B] rounded w-1/3" />
+                        <div className="h-16 bg-slate-100 dark:bg-[#1E293B]/60 rounded" />
+                        <div className="h-4 bg-slate-200 dark:bg-[#1E293B] rounded w-3/4" />
+                        <div className="h-3 bg-slate-100 dark:bg-[#1E293B]/60 rounded w-full" />
                       </div>
                     ))}
                   </div>
                 ) : filteredReports.length === 0 ? (
-                  <div className="p-10 text-center text-slate-400 space-y-3">
-                    <FileBarChart className="h-10 w-10 text-slate-300 mx-auto" />
+                  <div className="p-10 text-center text-slate-400 dark:text-[#94A3B8] space-y-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] mx-auto shadow-2xs">
+                      <FileBarChart className="h-6 w-6" />
+                    </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-700">No matching reports found</p>
-                      <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                      <p className="text-sm font-bold text-slate-700 dark:text-[#F8FAFC]">No matching reports found</p>
+                      <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1 max-w-sm mx-auto">
                         {hasActiveFilters
                           ? 'Try adjusting your search criteria or resetting filters.'
                           : 'Create your first report or use one of the ready templates.'}
@@ -1188,11 +1190,11 @@ export default function ReportsPage() {
             </div>
 
             {/* Right 4 Cols: Report Templates (Pre-built blueprints) */}
-            <div className="xl:col-span-4 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
+            <div className="xl:col-span-4 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between h-full">
               <div>
                 <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-[#334155]">
                   <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185]">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] shadow-2xs">
                       <Layout className="h-4 w-4" />
                     </div>
                     <div>
@@ -1259,19 +1261,19 @@ export default function ReportsPage() {
           </section>
 
           {/* Lower Section: Recent Reports (8 cols) + Scheduled Reports (4 cols) */}
-          <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+          <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
             {/* Left 8 Cols: Recent Reports / Executions Table */}
-            <div className="xl:col-span-8 bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div className="xl:col-span-8 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between h-full">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-[#334155]">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] shadow-2xs">
                     <FileBarChart className="h-4 w-4" />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-tight">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-tight">
                       Recent Reports
                     </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
                       Latest generated reports and their status
                     </p>
                   </div>
@@ -1280,7 +1282,7 @@ export default function ReportsPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab('history')}
-                  className="text-xs font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1 transition cursor-pointer"
+                  className="text-xs font-semibold text-rose-600 dark:text-[#FB7185] hover:text-rose-700 dark:hover:text-rose-300 flex items-center gap-1 transition cursor-pointer"
                 >
                   <span>View All</span>
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -1290,10 +1292,12 @@ export default function ReportsPage() {
               {/* Enterprise Table */}
               <div className="mt-4 overflow-x-auto">
                 {executions.length === 0 ? (
-                  <div className="p-8 text-center text-slate-400 space-y-2">
-                    <History className="h-8 w-8 text-slate-300 mx-auto" />
-                    <p className="text-sm font-semibold text-slate-700">No executions recorded yet</p>
-                    <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  <div className="p-8 text-center text-slate-400 dark:text-[#94A3B8] space-y-2">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] mx-auto mb-2 shadow-2xs">
+                      <History className="h-6 w-6" />
+                    </div>
+                    <p className="text-sm font-semibold text-slate-700 dark:text-[#F8FAFC]">No executions recorded yet</p>
+                    <p className="text-xs text-slate-500 dark:text-[#94A3B8] max-w-sm mx-auto">
                       Click "Run Now" on any featured report above to generate artifacts and view execution history.
                     </p>
                   </div>
@@ -1377,18 +1381,18 @@ export default function ReportsPage() {
             </div>
 
             {/* Right 4 Cols: Scheduled Reports (Upcoming automated triggers derived 100% from real cron data) */}
-            <div className="xl:col-span-4 bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
+            <div className="xl:col-span-4 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between h-full">
               <div>
-                <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+                <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-[#334155]">
                   <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] shadow-2xs">
                       <Clock className="h-4 w-4" />
                     </div>
                     <div>
-                      <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-tight">
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-tight">
                         Scheduled Reports
                       </h3>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
                         Upcoming automated report executions
                       </p>
                     </div>
@@ -1397,7 +1401,7 @@ export default function ReportsPage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('scheduled')}
-                    className="text-xs font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1 transition cursor-pointer"
+                    className="text-xs font-semibold text-rose-600 dark:text-[#FB7185] hover:text-rose-700 dark:hover:text-rose-300 flex items-center gap-1 transition cursor-pointer"
                   >
                     <span>View All</span>
                     <ChevronRight className="h-3.5 w-3.5" />
@@ -1407,10 +1411,12 @@ export default function ReportsPage() {
                 {/* Timeline of Scheduled Reports derived 100% from real schedule_cron */}
                 <div className="mt-4 space-y-3">
                   {scheduledReports.length === 0 ? (
-                    <div className="p-8 text-center text-slate-400 space-y-2">
-                      <Calendar className="h-8 w-8 text-slate-300 mx-auto" />
-                      <p className="text-sm font-semibold text-slate-700">No scheduled reports</p>
-                      <p className="text-xs text-slate-500">
+                    <div className="p-8 text-center text-slate-400 dark:text-[#94A3B8] space-y-2">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] mx-auto mb-2 shadow-2xs">
+                        <Calendar className="h-6 w-6" />
+                      </div>
+                      <p className="text-sm font-semibold text-slate-700 dark:text-[#F8FAFC]">No scheduled reports</p>
+                      <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
                         Configure a recurring schedule on any report to automate distribution.
                       </p>
                     </div>
