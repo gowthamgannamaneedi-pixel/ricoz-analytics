@@ -8,16 +8,63 @@ import Navbar from '../components/Navbar';
  */
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('ricoz_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleSidebar = () => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setSidebarOpen(prev => !prev);
+    } else {
+      setIsCollapsed(prev => {
+        const next = !prev;
+        try {
+          localStorage.setItem('ricoz_sidebar_collapsed', String(next));
+        } catch {}
+        return next;
+      });
+    }
+  };
+
+  const handleCloseSidebar = () => {
+    setSidebarOpen(false);
+    setIsCollapsed(true);
+    try {
+      localStorage.setItem('ricoz_sidebar_collapsed', 'true');
+    } catch {}
+  };
+
+  const handleOpenSidebar = () => {
+    setSidebarOpen(true);
+    setIsCollapsed(false);
+    try {
+      localStorage.setItem('ricoz_sidebar_collapsed', 'false');
+    } catch {}
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] text-[#0F172A] dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
       {/* Sidebar Navigation */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar
+        isOpen={sidebarOpen}
+        isCollapsed={isCollapsed}
+        onClose={handleCloseSidebar}
+      />
 
       {/* Main Workspace Frame */}
-      <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
+      <div className={`flex-1 flex flex-col min-w-0 transition-[padding] duration-200 ease-in-out ${
+        isCollapsed ? 'lg:pl-0' : 'lg:pl-64'
+      }`}>
         {/* Top Navbar */}
-        <Navbar onOpenSidebar={() => setSidebarOpen(true)} />
+        <Navbar
+          onOpenSidebar={handleOpenSidebar}
+          isSidebarCollapsed={isCollapsed}
+          onToggleSidebar={handleToggleSidebar}
+        />
 
         {/* Dynamic Route Container */}
         <main className="flex-1 p-4 sm:p-6 lg:px-8 lg:py-7 space-y-6 max-w-[1536px] w-full mx-auto">

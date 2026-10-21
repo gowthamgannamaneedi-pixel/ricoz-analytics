@@ -50,7 +50,7 @@ const routeTitleMap = {
  * - Clicking outside or pressing Escape closes the active popover.
  * - Global debounced cross-entity search with keyboard navigation.
  */
-export default function Navbar({ onOpenSidebar }) {
+export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onToggleSidebar }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, token, subscription, isTrialExpired, trialDaysRemaining } = useAuth();
@@ -224,15 +224,18 @@ export default function Navbar({ onOpenSidebar }) {
       <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-xl">
         <button
           type="button"
-          onClick={onOpenSidebar}
-          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 lg:hidden transition cursor-pointer"
-          aria-label="Open sidebar"
+          onClick={onToggleSidebar || onOpenSidebar}
+          className={`rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition cursor-pointer ${
+            isSidebarCollapsed ? 'flex' : 'lg:hidden'
+          }`}
+          aria-label={isSidebarCollapsed ? "Expand sidebar" : "Open sidebar"}
+          title={isSidebarCollapsed ? "Expand sidebar" : "Open sidebar"}
         >
           <Menu className="h-5 w-5" />
         </button>
 
-        {/* Mobile Brand Logo */}
-        <Logo size="sm" linkTo="/dashboard" className="lg:hidden shrink-0" />
+        {/* Brand Logo (shown on mobile, and on desktop when sidebar is collapsed) */}
+        <Logo size="sm" linkTo="/dashboard" className={`${isSidebarCollapsed ? 'block' : 'lg:hidden'} shrink-0`} />
 
         {/* Global Search Bar */}
         <div ref={searchContainerRef} className="relative w-full max-w-md">

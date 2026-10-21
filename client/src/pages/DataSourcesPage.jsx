@@ -90,8 +90,6 @@ export default function DataSourcesPage() {
   const [actionMenuId, setActionMenuId] = useState(null);
   const [actionMenuPosition, setActionMenuPosition] = useState(null);
 
-  // Selection
-  const [selectedIds, setSelectedIds] = useState([]);
 
   // Refs for outside click & focus restoration
   const filterDropdownRef = useRef(null);
@@ -1045,26 +1043,14 @@ export default function DataSourcesPage() {
         </div>
       ) : viewMode === 'table' ? (
         /* TABLE VIEW */
-        <div className="rounded-2xl border border-slate-200/90 bg-white overflow-hidden shadow-2xs">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] overflow-hidden shadow-2xs">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs min-w-[900px]">
+            <table className="w-full text-left border-collapse text-xs table-fixed">
               <thead>
-                <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
-                  <th className="py-3.5 px-4 w-10">
-                    <input
-                      type="checkbox"
-                      checked={
-                        paginatedSources.length > 0 &&
-                        paginatedSources.every(s => selectedIds.includes(s.id))
-                      }
-                      onChange={handleSelectAll}
-                      className="rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
-                    />
-                  </th>
-
+                <tr className="border-b border-slate-200/80 dark:border-[#334155] bg-slate-50/70 dark:bg-[#1E293B] text-slate-500 dark:text-[#CBD5E1] text-[10px] font-bold uppercase tracking-wider">
                   <th
                     onClick={() => handleSort('name')}
-                    className="py-3.5 px-4 cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
+                    className="py-3.5 pl-4 sm:pl-5 pr-3 w-[28%] cursor-pointer hover:text-slate-900 dark:hover:text-[#F8FAFC] select-none whitespace-nowrap min-w-0"
                   >
                     <div className="flex items-center gap-1.5">
                       <span>NAME & DETAILS</span>
@@ -1072,13 +1058,13 @@ export default function DataSourcesPage() {
                     </div>
                   </th>
 
-                  <th className="py-3.5 px-4 whitespace-nowrap">TYPE</th>
+                  <th className="py-3.5 px-3 w-[11%] whitespace-nowrap">TYPE</th>
 
-                  <th className="py-3.5 px-4 whitespace-nowrap">CONNECTION STATUS</th>
+                  <th className="py-3.5 px-3 w-[16%] whitespace-nowrap">CONNECTION STATUS</th>
 
                   <th
                     onClick={() => handleSort('dataset_count')}
-                    className="py-3.5 px-4 cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
+                    className="py-3.5 px-3 w-[14%] cursor-pointer hover:text-slate-900 dark:hover:text-[#F8FAFC] select-none whitespace-nowrap"
                   >
                     <div className="flex items-center gap-1.5">
                       <span>DATASETS PRODUCED</span>
@@ -1088,7 +1074,7 @@ export default function DataSourcesPage() {
 
                   <th
                     onClick={() => handleSort('total_rows')}
-                    className="py-3.5 px-4 cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
+                    className="py-3.5 px-3 w-[12%] cursor-pointer hover:text-slate-900 dark:hover:text-[#F8FAFC] select-none whitespace-nowrap"
                   >
                     <div className="flex items-center gap-1.5">
                       <span>INGESTED RECORDS</span>
@@ -1098,7 +1084,7 @@ export default function DataSourcesPage() {
 
                   <th
                     onClick={() => handleSort('created_at')}
-                    className="py-3.5 px-4 cursor-pointer hover:text-slate-900 select-none whitespace-nowrap"
+                    className="py-3.5 px-3 w-[11%] cursor-pointer hover:text-slate-900 dark:hover:text-[#F8FAFC] select-none whitespace-nowrap"
                   >
                     <div className="flex items-center gap-1.5">
                       <span>LAST SYNC / IMPORT</span>
@@ -1106,25 +1092,15 @@ export default function DataSourcesPage() {
                     </div>
                   </th>
 
-                  <th className="py-3.5 px-4 text-right whitespace-nowrap">ACTIONS</th>
+                  <th className="py-3.5 pr-4 pl-2 w-[8%] text-right whitespace-nowrap">ACTIONS</th>
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-[#111827]">
                 {paginatedSources.map((source, idx) => (
-                  <tr key={source.id} className={`transition-colors hover:bg-slate-50/60 group ${actionMenuId === source.id ? 'relative z-30' : ''}`}>
-                    {/* Checkbox */}
-                    <td className="py-3.5 px-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(source.id)}
-                        onChange={() => handleToggleSelect(source.id)}
-                        className="rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
-                      />
-                    </td>
-
+                  <tr key={source.id} className={`transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/60 group ${actionMenuId === source.id ? 'relative z-30' : ''}`}>
                     {/* Name & Details */}
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 pl-4 sm:pl-5 pr-3 min-w-0">
                       <div className="flex items-center gap-3">
                         <div className={`p-2.5 rounded-xl shrink-0 ${getTypeBg(source.type)}`}>
                           {getTypeIcon(source.type)}
@@ -1133,14 +1109,14 @@ export default function DataSourcesPage() {
                           <button
                             type="button"
                             onClick={() => handleOpenDetails(source)}
-                            className="font-bold text-slate-900 hover:text-rose-600 transition text-left truncate block text-xs cursor-pointer"
+                            className="font-bold text-slate-900 dark:text-[#F8FAFC] hover:text-rose-600 dark:hover:text-[#FB7185] transition text-left truncate block text-xs cursor-pointer"
                           >
                             {source.name}
                           </button>
-                          <span className="text-[11px] text-slate-500 font-normal block truncate mt-0.5">
+                          <span className="text-[11px] text-slate-500 dark:text-[#CBD5E1] font-normal block truncate mt-0.5">
                             {getOriginSummary(source)}
                           </span>
-                          <span className="text-[10px] text-slate-400 block truncate">
+                          <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] block truncate">
                             {source.created_by_name ? `Uploaded by ${source.created_by_name}` : 'Added by Admin'}
                           </span>
                         </div>
@@ -1158,10 +1134,10 @@ export default function DataSourcesPage() {
                     </td>
 
                     {/* Datasets Produced */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
+                    <td className="py-3.5 px-3 whitespace-nowrap">
                       <Link
                         to="/datasets"
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-rose-600 group/link transition"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] hover:text-rose-600 dark:hover:text-[#FB7185] group/link transition"
                         title="View table in Datasets workspace"
                       >
                         <TableIcon className="h-3.5 w-3.5 text-slate-400 group-hover/link:text-rose-500" />
@@ -1171,14 +1147,14 @@ export default function DataSourcesPage() {
                     </td>
 
                     {/* Ingested Records */}
-                    <td className="py-3.5 px-4 whitespace-nowrap font-mono font-bold text-slate-800">
+                    <td className="py-3.5 px-3 whitespace-nowrap font-mono font-bold text-slate-800 dark:text-[#F8FAFC]">
                       {typeof source.total_rows === 'number'
                         ? `${source.total_rows.toLocaleString()} rows`
                         : '0 rows'}
                     </td>
 
                     {/* Last Sync / Import */}
-                    <td className="py-3.5 px-4 whitespace-nowrap text-slate-600 text-[11px]">
+                    <td className="py-3.5 px-3 whitespace-nowrap text-slate-600 dark:text-[#CBD5E1] text-[11px]">
                       {source.created_at ? (
                         <div className="flex items-center gap-1.5">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
@@ -1254,17 +1230,17 @@ export default function DataSourcesPage() {
           </div>
 
           {/* Table Pagination Footer */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-t border-slate-100 bg-white text-xs text-slate-500 font-medium">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-t border-slate-100 dark:border-[#334155] bg-white dark:bg-[#111827] text-xs text-slate-500 dark:text-[#CBD5E1] font-medium">
             <div>
               Showing{' '}
-              <strong className="text-slate-800">
+              <strong className="text-slate-800 dark:text-[#F8FAFC]">
                 {filteredSources.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}
               </strong>{' '}
               to{' '}
-              <strong className="text-slate-800">
+              <strong className="text-slate-800 dark:text-[#F8FAFC]">
                 {Math.min(currentPage * pageSize, filteredSources.length)}
               </strong>{' '}
-              of <strong className="text-slate-800">{filteredSources.length}</strong> sources
+              of <strong className="text-slate-800 dark:text-[#F8FAFC]">{filteredSources.length}</strong> sources
             </div>
 
             <div className="flex items-center gap-3">

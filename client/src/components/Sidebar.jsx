@@ -60,7 +60,7 @@ const navigation = [
  * Enterprise Left Sidebar Navigation
  * @param {{ isOpen: boolean, onClose: () => void }} props
  */
-export default function Sidebar({ isOpen, onClose }) {
+export default function Sidebar({ isOpen, isCollapsed = false, onClose }) {
   const { user, logout, subscription, isTrialExpired, trialDaysRemaining } = useAuth();
   const navigate = useNavigate();
 
@@ -85,8 +85,10 @@ export default function Sidebar({ isOpen, onClose }) {
 
       {/* Sidebar Shell */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200/80 dark:border-[#334155] bg-white dark:bg-[#111827] transition-transform duration-200 ease-in-out lg:translate-x-0 select-none shadow-xs ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed top-0 bottom-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200/80 dark:border-[#334155] bg-white dark:bg-[#111827] transition-transform duration-200 ease-in-out select-none shadow-xs ${
+          isCollapsed
+            ? '-translate-x-full'
+            : (isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0')
         }`}
       >
         {/* Top Brand Header */}
