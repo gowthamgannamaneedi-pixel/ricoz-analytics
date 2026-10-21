@@ -89,8 +89,6 @@ export default function DatasetTable({
   const [sortKey, setSortKey] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
 
-  // Selection state
-  const [selectedIds, setSelectedIds] = useState(new Set());
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -390,34 +388,6 @@ export default function DatasetTable({
     startIndex + pageSize
   );
 
-  // Checkbox handling
-  const isAllCurrentPageSelected =
-    currentPaginatedDatasets.length > 0 &&
-    currentPaginatedDatasets.every(d => selectedIds.has(d.id));
-
-  const toggleSelectAllCurrentPage = () => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (isAllCurrentPageSelected) {
-        currentPaginatedDatasets.forEach(d => next.delete(d.id));
-      } else {
-        currentPaginatedDatasets.forEach(d => next.add(d.id));
-      }
-      return next;
-    });
-  };
-
-  const toggleSelectRow = (id) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
 
   const hasActiveFilters = searchQuery.trim() !== '' || statusFilter !== 'all' || sourceFilter !== 'all';
 
@@ -528,21 +498,10 @@ export default function DatasetTable({
         <table className="w-full text-left border-collapse text-xs table-fixed">
           <thead>
             <tr className="border-b border-slate-200/80 dark:border-[#334155] bg-slate-50/60 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1]">
-              {/* Checkbox column */}
-              <th className="py-2.5 px-2 w-10 text-center select-none bg-slate-50/60 dark:bg-[#1E293B]">
-                <input
-                  type="checkbox"
-                  checked={isAllCurrentPageSelected}
-                  onChange={toggleSelectAllCurrentPage}
-                  aria-label="Select all datasets on page"
-                  className="rounded border-slate-300 dark:border-[#334155] text-rose-600 focus:ring-rose-500 h-3.5 w-3.5 cursor-pointer dark:bg-[#0F172A]"
-                />
-              </th>
-
               {/* Dataset Name */}
               <th
                 onClick={() => handleSort('name')}
-                className="py-2.5 px-3 w-[28%] font-semibold cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 select-none group whitespace-nowrap min-w-0"
+                className="py-2.5 pl-4 sm:pl-5 pr-3 w-[30%] font-semibold cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 select-none group whitespace-nowrap min-w-0"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Dataset Name</span>
@@ -585,7 +544,7 @@ export default function DatasetTable({
               {/* Created / Updated */}
               <th
                 onClick={() => handleSort('created_at')}
-                className="py-2.5 px-2 w-[15%] font-semibold cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 select-none group whitespace-nowrap"
+                className="py-2.5 px-2 w-[14%] font-semibold cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 select-none group whitespace-nowrap"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Created / Updated</span>
@@ -594,7 +553,7 @@ export default function DatasetTable({
               </th>
 
               {/* Actions */}
-              <th className="py-2.5 px-2.5 w-[13%] font-semibold text-right whitespace-nowrap">
+              <th className="py-2.5 px-2.5 w-[12%] font-semibold text-right whitespace-nowrap">
                 Actions
               </th>
             </tr>
@@ -603,7 +562,7 @@ export default function DatasetTable({
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
             {currentPaginatedDatasets.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-16 text-center text-xs text-slate-500 dark:text-slate-400">
+                <td colSpan={7} className="py-16 text-center text-xs text-slate-500 dark:text-slate-400">
                   {hasActiveFilters ? (
                     <div className="space-y-3 max-w-sm mx-auto">
                       <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mx-auto">
@@ -645,7 +604,6 @@ export default function DatasetTable({
             ) : (
               currentPaginatedDatasets.map((dataset, idx) => {
                 const status = getDatasetStatus(dataset);
-                const isSelected = selectedIds.has(dataset.id);
                 const isMenuOpen = openActionMenuId === dataset.id;
                 const isNearBottom = idx >= currentPaginatedDatasets.length - 2 || currentPaginatedDatasets.length <= 3;
 
@@ -653,22 +611,11 @@ export default function DatasetTable({
                   <tr
                     key={dataset.id}
                     className={`transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/60 group ${
-                      isSelected ? 'bg-rose-50/30 dark:bg-rose-950/40' : ''
-                    } ${isMenuOpen ? 'relative z-30' : ''}`}
+                      isMenuOpen ? 'relative z-30' : ''
+                    }`}
                   >
-                    {/* Checkbox */}
-                    <td className="py-2.5 px-2 w-10 text-center select-none">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleSelectRow(dataset.id)}
-                        aria-label={`Select dataset ${dataset.name}`}
-                        className="rounded border-slate-300 dark:border-slate-600 text-rose-600 focus:ring-rose-500 h-3.5 w-3.5 cursor-pointer dark:bg-slate-800"
-                      />
-                    </td>
-
                     {/* Dataset Name & Description */}
-                    <td className="py-2.5 px-3 min-w-0">
+                    <td className="py-2.5 pl-4 sm:pl-5 pr-3 min-w-0">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div className="shrink-0">
                           {getSourceIcon(dataset.data_source_type)}
