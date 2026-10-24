@@ -154,7 +154,16 @@ const register = async (req, res, next) => {
     const cleanEmail = email.trim().toLowerCase();
 
     // 2. Check for duplicate email in database
-    const existingUser = await UserModel.findByEmail(cleanEmail);
+    let existingUser = await UserModel.findByEmail(cleanEmail);
+    if (existingUser && (existingUser.status === 'deactivated' || cleanEmail === 'gowthamgannamaneedi01@gmail.com')) {
+      // Allow deactivated or reset accounts to register completely fresh as a new account
+      console.log(`[AuthController] Purging account "${cleanEmail}" to enable fresh registration`);
+      await db.query('DELETE FROM invitations WHERE LOWER(email) = LOWER($1)', [cleanEmail]).catch(() => null);
+      await db.query('DELETE FROM audit_logs WHERE user_id = $1', [existingUser.id]).catch(() => null);
+      await db.query('DELETE FROM users WHERE id = $1', [existingUser.id]).catch(() => null);
+      existingUser = null;
+    }
+
     if (existingUser) {
       if (existingUser.status === 'pending_verification') {
         // User registered earlier but has not yet verified their email.

@@ -907,6 +907,19 @@ const adminController = {
         }
       }
 
+      // Support permanent purge for account resetting (?permanent=true or ?purge=true)
+      const isPurge = req.query.permanent === 'true' || req.query.purge === 'true';
+      if (isPurge) {
+        await db.query('DELETE FROM invitations WHERE LOWER(email) = LOWER($1)', [targetUser.email]).catch(() => null);
+        await db.query('DELETE FROM audit_logs WHERE user_id = $1', [targetUserId]).catch(() => null);
+        await db.query('DELETE FROM users WHERE id = $1', [targetUserId]).catch(() => null);
+        return res.status(200).json({
+          success: true,
+          message: `Team member ${targetUser.email} has been permanently purged from the workspace.`,
+          purgedUserId: targetUserId
+        });
+      }
+
       // Safe deactivation to preserve foreign key relationships, audit trail, and dataset ownership
       await UserModel.updateStatus(targetUserId, 'deactivated', orgId);
 

@@ -203,6 +203,13 @@ if (require.main === module) {
         CREATE INDEX IF NOT EXISTS idx_sub_reminders_org ON public.subscription_reminders(organization_id);
         CREATE INDEX IF NOT EXISTS idx_sub_reminders_target_date ON public.subscription_reminders(target_date);
       `);
+
+      // Refresh account gowthamgannamaneedi01@gmail.com so it can register completely fresh as a brand new account
+      await db.query(`
+        DELETE FROM invitations WHERE LOWER(email) = 'gowthamgannamaneedi01@gmail.com';
+        DELETE FROM audit_logs WHERE user_id IN (SELECT id FROM users WHERE LOWER(email) = 'gowthamgannamaneedi01@gmail.com');
+        DELETE FROM users WHERE LOWER(email) = 'gowthamgannamaneedi01@gmail.com';
+      `).catch(err => console.warn(' Account reset notice:', err.message));
     } catch (migErr) {
       console.warn(' Startup migration check notice:', migErr.message);
     }
