@@ -16,34 +16,24 @@ export default function DashboardLayout() {
     }
   });
 
-  const handleToggleSidebar = () => {
-    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-      setSidebarOpen(prev => !prev);
-    } else {
-      setIsCollapsed(prev => {
-        const next = !prev;
-        try {
-          localStorage.setItem('ricoz_sidebar_collapsed', String(next));
-        } catch {}
-        return next;
-      });
-    }
+  // Desktop collapse state toggle (persists to localStorage)
+  const handleToggleCollapse = () => {
+    setIsCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('ricoz_sidebar_collapsed', String(next));
+      } catch {}
+      return next;
+    });
   };
 
-  const handleCloseSidebar = () => {
-    setSidebarOpen(false);
-    setIsCollapsed(true);
-    try {
-      localStorage.setItem('ricoz_sidebar_collapsed', 'true');
-    } catch {}
-  };
-
-  const handleOpenSidebar = () => {
+  // Mobile drawer controls (never alters desktop isCollapsed)
+  const handleOpenMobileSidebar = () => {
     setSidebarOpen(true);
-    setIsCollapsed(false);
-    try {
-      localStorage.setItem('ricoz_sidebar_collapsed', 'false');
-    } catch {}
+  };
+
+  const handleCloseMobileSidebar = () => {
+    setSidebarOpen(false);
   };
 
   return (
@@ -52,7 +42,9 @@ export default function DashboardLayout() {
       <Sidebar
         isOpen={sidebarOpen}
         isCollapsed={isCollapsed}
-        onClose={handleCloseSidebar}
+        onToggleCollapse={handleToggleCollapse}
+        onCloseMobile={handleCloseMobileSidebar}
+        onClose={handleCloseMobileSidebar}
       />
 
       {/* Main Workspace Frame */}
@@ -61,9 +53,9 @@ export default function DashboardLayout() {
       }`}>
         {/* Top Navbar */}
         <Navbar
-          onOpenSidebar={handleOpenSidebar}
           isSidebarCollapsed={isCollapsed}
-          onToggleSidebar={handleToggleSidebar}
+          onToggleSidebar={handleToggleCollapse}
+          onOpenSidebar={handleOpenMobileSidebar}
         />
 
         {/* Dynamic Route Container */}

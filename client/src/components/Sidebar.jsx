@@ -58,9 +58,9 @@ const navigation = [
 
 /**
  * Enterprise Left Sidebar Navigation
- * @param {{ isOpen: boolean, onClose: () => void }} props
+ * @param {{ isOpen: boolean, isCollapsed: boolean, onToggleCollapse?: () => void, onCloseMobile?: () => void, onClose?: () => void }} props
  */
-export default function Sidebar({ isOpen, isCollapsed = false, onClose }) {
+export default function Sidebar({ isOpen, isCollapsed = false, onToggleCollapse, onCloseMobile, onClose }) {
   const { user, logout, subscription, isTrialExpired, trialDaysRemaining } = useAuth();
   const navigate = useNavigate();
 
@@ -72,13 +72,26 @@ export default function Sidebar({ isOpen, isCollapsed = false, onClose }) {
     navigate('/login', { replace: true });
   };
 
+  const handleNavClick = () => {
+    // Only close mobile navigation drawer when on mobile; never collapse desktop sidebar
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      if (onCloseMobile) onCloseMobile();
+      else if (onClose) onClose();
+    }
+  };
+
+  const handleBackdropClick = () => {
+    if (onCloseMobile) onCloseMobile();
+    else if (onClose) onClose();
+  };
+
   return (
     <>
       {/* Mobile Backdrop */}
       {isOpen && (
         <div
           className="fixed inset-0 z-40 bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-xs lg:hidden"
-          onClick={onClose}
+          onClick={handleBackdropClick}
           aria-hidden="true"
         />
       )}
@@ -93,16 +106,28 @@ export default function Sidebar({ isOpen, isCollapsed = false, onClose }) {
       >
         {/* Top Brand Header */}
         <div className="flex h-16 shrink-0 items-center justify-between px-4 border-b border-slate-100 dark:border-[#334155] bg-white dark:bg-[#111827]">
-          <Logo size="lg" linkTo="/dashboard" onClick={onClose} />
+          <Logo size="lg" linkTo="/dashboard" onClick={handleNavClick} />
 
+          {/* Desktop Toggle Button: Double-chevron Left (<<) */}
           <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-slate-700 dark:hover:text-[#CBD5E1] transition cursor-pointer"
-            aria-label="Collapse navigation"
-            title="Collapse Sidebar"
+            type="button"
+            onClick={onToggleCollapse}
+            className="hidden lg:flex items-center justify-center rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-slate-700 dark:hover:text-[#CBD5E1] transition cursor-pointer"
+            aria-label="Collapse sidebar"
+            title="Collapse sidebar"
           >
-            <ChevronsLeft className="h-4 w-4 hidden lg:block" />
-            <X className="h-5 w-5 lg:hidden" />
+            <ChevronsLeft className="h-4 w-4" />
+          </button>
+
+          {/* Mobile Close Button (X) */}
+          <button
+            type="button"
+            onClick={handleBackdropClick}
+            className="lg:hidden flex items-center justify-center rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-slate-700 dark:hover:text-[#CBD5E1] transition cursor-pointer"
+            aria-label="Close navigation"
+            title="Close navigation"
+          >
+            <X className="h-5 w-5" />
           </button>
         </div>
 
@@ -120,7 +145,7 @@ export default function Sidebar({ isOpen, isCollapsed = false, onClose }) {
                     <NavLink
                       key={item.path}
                       to={item.path}
-                      onClick={onClose}
+                      onClick={handleNavClick}
                       className={({ isActive }) =>
                         `group relative flex items-center justify-between rounded-xl px-3 py-2 text-xs sm:text-[13px] font-medium transition-all ${
                           isActive
@@ -176,7 +201,7 @@ export default function Sidebar({ isOpen, isCollapsed = false, onClose }) {
               <button
                 type="button"
                 onClick={() => {
-                  onClose?.();
+                  handleNavClick();
                   navigate('/billing');
                 }}
                 className="w-full py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 dark:bg-[#E11D48] dark:hover:bg-rose-600 text-white text-xs font-bold transition shadow-2xs cursor-pointer text-center"
@@ -193,7 +218,7 @@ export default function Sidebar({ isOpen, isCollapsed = false, onClose }) {
               <button
                 type="button"
                 onClick={() => {
-                  onClose?.();
+                  handleNavClick();
                   navigate('/billing');
                 }}
                 className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 cursor-pointer"
@@ -221,7 +246,7 @@ export default function Sidebar({ isOpen, isCollapsed = false, onClose }) {
               <button
                 type="button"
                 onClick={() => {
-                  onClose?.();
+                  handleNavClick();
                   navigate('/billing');
                 }}
                 className="w-full py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 dark:bg-[#E11D48] dark:hover:bg-rose-600 text-white text-xs font-bold transition shadow-2xs cursor-pointer text-center"
@@ -239,7 +264,7 @@ export default function Sidebar({ isOpen, isCollapsed = false, onClose }) {
             <button
               type="button"
               onClick={() => {
-                onClose?.();
+                handleNavClick();
                 navigate('/settings');
               }}
               className="flex items-center gap-2.5 min-w-0 flex-1 text-left p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-[#1E293B] transition cursor-pointer select-none"

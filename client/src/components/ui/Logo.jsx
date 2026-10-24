@@ -46,7 +46,7 @@ export default function Logo({
   }
 
   const content = (
-    <div className={`inline-flex items-center gap-2.5 shrink-0 select-none ${className}`}>
+    <div className={`inline-flex items-center gap-2.5 shrink-0 select-none ${linkTo ? '' : className}`}>
       {theme === 'light' ? (
         <img
           src={lightSrc}
@@ -93,7 +93,7 @@ export default function Logo({
       <Link
         to={linkTo}
         onClick={onClick}
-        className="inline-flex items-center group transition-transform duration-150 hover:opacity-95 focus:outline-hidden"
+        className={`inline-flex items-center shrink-0 group transition-transform duration-150 hover:opacity-95 focus:outline-hidden ${className}`}
         aria-label={alt}
       >
         {content}

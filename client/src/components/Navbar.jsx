@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Menu,
+  ChevronsRight,
   Search,
   Building2,
   ChevronDown,
@@ -220,26 +221,44 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
 
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 sm:px-6 lg:px-8 shadow-2xs transition-colors duration-200">
-      {/* Left: Mobile Navigation Drawer Toggle, Mobile Brand Logo & Global Search */}
-      <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-xl">
-        <button
-          type="button"
-          onClick={onToggleSidebar || onOpenSidebar}
-          className={`rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition cursor-pointer ${
-            isSidebarCollapsed ? 'flex' : 'lg:hidden'
-          }`}
-          aria-label={isSidebarCollapsed ? "Expand sidebar" : "Open sidebar"}
-          title={isSidebarCollapsed ? "Expand sidebar" : "Open sidebar"}
-        >
-          <Menu className="h-5 w-5" />
-        </button>
+      {/* Left: Brand Logo & Navigation Toggle (Collapsed/Mobile) + Global Search Bar */}
+      <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0 mr-4">
+        {/* Brand & Toggle Container for Collapsed desktop & Mobile */}
+        <div className={`items-center gap-2.5 sm:gap-3 shrink-0 ${isSidebarCollapsed ? 'flex' : 'flex lg:hidden'}`}>
+          {/* Mobile Navigation Drawer Toggle */}
+          <button
+            type="button"
+            onClick={onOpenSidebar}
+            className="lg:hidden flex items-center justify-center p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition cursor-pointer shrink-0"
+            aria-label="Open sidebar"
+            title="Open sidebar"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
 
-        {/* Brand Logo (shown on mobile, and on desktop when sidebar is collapsed) */}
-        <Logo size="sm" linkTo="/dashboard" className={`${isSidebarCollapsed ? 'block' : 'lg:hidden'} shrink-0`} />
+          {/* Desktop Double-Chevron Expand Toggle (>>) */}
+          {isSidebarCollapsed && (
+            <button
+              type="button"
+              onClick={onToggleSidebar}
+              className="hidden lg:flex items-center justify-center p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition cursor-pointer shrink-0"
+              aria-label="Expand sidebar"
+              title="Expand sidebar"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </button>
+          )}
+
+          {/* Brand Logo */}
+          <Logo size="sm" linkTo="/dashboard" className="shrink-0" />
+
+          {/* Subtle vertical divider keeping logo/toggle completely separate from search bar */}
+          <div className="h-5 w-px bg-slate-200 dark:bg-slate-750 shrink-0 hidden sm:block" />
+        </div>
 
         {/* Global Search Bar */}
-        <div ref={searchContainerRef} className="relative w-full max-w-md">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
+        <div ref={searchContainerRef} className="relative flex-1 max-w-md min-w-[200px]">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
           <input
             ref={searchRef}
             type="text"
