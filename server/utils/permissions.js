@@ -79,6 +79,7 @@ const PERMISSIONS = {
 
 const ROLE_PERMISSIONS = {
   admin: Object.keys(PERMISSIONS),
+  owner: Object.keys(PERMISSIONS),
   manager: [
     'datasets.view', 'datasets.create', 'datasets.delete',
     'dashboard.view', 'dashboard.create', 'dashboard.edit', 'dashboard.delete',
@@ -94,6 +95,20 @@ const ROLE_PERMISSIONS = {
     'users.view', 'audit.view'
   ],
   analyst: [
+    'datasets.view', 'datasets.create',
+    'dashboard.view', 'dashboard.create', 'dashboard.edit',
+    'metrics.view', 'metrics.create', 'metrics.edit',
+    'reports.view', 'reports.create', 'reports.run',
+    'alerts.view', 'alerts.create', 'alerts.resolve',
+    'forecasts.view', 'forecasts.generate',
+    'ai.query', 'ai.history',
+    'relationships.view', 'relationships.create', 'relationships.edit', 'relationships.query',
+    'quality.view', 'quality.evaluate', 'quality.manage_rules',
+    'insights.view', 'insights.generate', 'insights.manage',
+    'collaboration.view', 'collaboration.share', 'collaboration.comment', 'collaboration.manage_saved_views',
+    'users.view'
+  ],
+  member: [
     'datasets.view', 'datasets.create',
     'dashboard.view', 'dashboard.create', 'dashboard.edit',
     'metrics.view', 'metrics.create', 'metrics.edit',
