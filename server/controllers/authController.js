@@ -10,6 +10,7 @@ const InvitationModel = require('../models/invitationModel');
 const subscriptionService = require('../services/subscriptionService');
 const plansConfig = require('../config/plans');
 const emailService = require('../services/emailService');
+const tenantService = require('../services/tenantService');
 const { logAuditEvent, AUDIT_ACTIONS } = require('../services/auditService');
 const tokenBlacklist = require('../utils/tokenBlacklist');
 
@@ -875,13 +876,21 @@ const login = async (req, res, next) => {
     }
 
     // 5. Check organization subscription & 14-day trial status
-    const orgId = user.organization_id;
+    const tenantRes = await tenantService.resolveAndAuthorizeOrganization(req, user);
+    const orgId = tenantRes.organizationId || user.organization_id || null;
+    if (orgId && !user.organization_id) {
+      user.organization_id = orgId;
+    }
+    if (tenantRes.role) {
+      user.role = tenantRes.role;
+    }
+    const memberships = await tenantService.getUserMemberships(user.id, user.email);
     let subscription = null;
 
     if (orgId) {
       subscription = await subscriptionService.getOrganizationSubscription(orgId);
     }
-    const orgName = subscription?.organizationName || 'Workspace';
+    const orgName = subscription?.organizationName || tenantRes.organization?.name || 'Workspace';
 
     // Prime subscription cache and ensure user auth cache is clean
     const authMiddleware = require('../middleware/authMiddleware');
@@ -930,6 +939,13 @@ const login = async (req, res, next) => {
         status: user.status || 'active',
         organization_id: orgId,
         organization_name: orgName,
+        organizations: memberships.map(m => ({
+          id: m.organization_id,
+          name: m.organization_name,
+          role: m.role,
+          plan: m.plan,
+          source: m.source
+        })),
         created_at: user.created_at
       },
       subscription: subscription || {
@@ -961,7 +977,9 @@ const getMe = async (req, res, next) => {
       });
     }
 
-    const orgId = resolvedUser.organization_id;
+    const tenantRes = await tenantService.resolveAndAuthorizeOrganization(req, resolvedUser);
+    const orgId = tenantRes.organizationId || resolvedUser.organization_id || null;
+    const memberships = await tenantService.getUserMemberships(resolvedUser.id, resolvedUser.email);
     let subscription = null;
 
     if (orgId) {
@@ -979,9 +997,16 @@ const getMe = async (req, res, next) => {
         id: resolvedUser.id,
         name: resolvedUser.name,
         email: resolvedUser.email,
-        role: resolvedUser.role || 'viewer',
+        role: tenantRes.role || resolvedUser.role || 'viewer',
         organization_id: orgId,
-        organization_name: subscription?.organizationName || 'Workspace',
+        organization_name: subscription?.organizationName || tenantRes.organization?.name || 'Workspace',
+        organizations: memberships.map(m => ({
+          id: m.organization_id,
+          name: m.organization_name,
+          role: m.role,
+          plan: m.plan,
+          source: m.source
+        })),
         avatar_url: resolvedUser.avatar_url || null,
         created_at: resolvedUser.created_at || new Date()
       },

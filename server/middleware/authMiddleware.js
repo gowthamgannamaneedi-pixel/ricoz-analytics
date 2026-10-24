@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const config = require('../config');
 const { supabase, isConfigured } = require('../config/supabase');
 const UserModel = require('../models/userModel');
+const tenantService = require('../services/tenantService');
 const tokenBlacklist = require('../utils/tokenBlacklist');
 
 // In-flight single-flight request coalescing and short micro-cache (10s TTL)
@@ -201,6 +202,26 @@ const authenticateToken = async (req, res, next) => {
         organization_id: userOrgId
       };
 
+      // Resolve and verify authoritative active organization context (including explicit X-Organization-Id selection or memberships)
+      const tenantRes = await tenantService.resolveAndAuthorizeOrganization(req, req.user);
+      if (tenantRes.code === 'FORBIDDEN_ORGANIZATION') {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'FORBIDDEN_ORGANIZATION',
+            message: tenantRes.error
+          },
+          message: tenantRes.error,
+          request_id: req.id
+        });
+      }
+
+      if (tenantRes.organizationId) {
+        req.user.organization_id = tenantRes.organizationId;
+        req.user.role = tenantRes.role || userRole;
+        req.organization = tenantRes.organization;
+      }
+
       const authDur = Date.now() - authStart;
       try {
         res.setHeader('Server-Timing', `auth;dur=${authDur}`);
@@ -250,6 +271,26 @@ const authenticateToken = async (req, res, next) => {
             role: dbUser?.role || sbUser.user_metadata?.role || 'viewer', // Database role takes precedence
             organization_id: dbUser?.organization_id || null
           };
+
+          const sbTenantRes = await tenantService.resolveAndAuthorizeOrganization(req, req.user);
+          if (sbTenantRes.code === 'FORBIDDEN_ORGANIZATION') {
+            return res.status(403).json({
+              success: false,
+              error: {
+                code: 'FORBIDDEN_ORGANIZATION',
+                message: sbTenantRes.error
+              },
+              message: sbTenantRes.error,
+              request_id: req.id
+            });
+          }
+
+          if (sbTenantRes.organizationId) {
+            req.user.organization_id = sbTenantRes.organizationId;
+            req.user.role = sbTenantRes.role || req.user.role;
+            req.organization = sbTenantRes.organization;
+          }
+
           return next();
         }
       } catch (_) {

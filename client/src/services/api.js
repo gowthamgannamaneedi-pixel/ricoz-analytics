@@ -16,6 +16,41 @@ export const MAX_UPLOAD_SIZE_MB = (() => {
   return !isNaN(envVal) && envVal > 0 ? envVal : 250;
 })();
 const TOKEN_STORAGE_KEY = 'ricoz_auth_token';
+const ORG_STORAGE_KEY = 'ricoz_active_org_id';
+
+/**
+ * Get active tenant organization ID stored in browser
+ */
+export function getActiveOrganizationId() {
+  if (typeof window === 'undefined') return null;
+  const orgId = localStorage.getItem(ORG_STORAGE_KEY);
+  if (!orgId || orgId === 'undefined' || orgId === 'null' || typeof orgId !== 'string' || orgId.trim() === '') {
+    return null;
+  }
+  return orgId.trim();
+}
+
+/**
+ * Persist active tenant organization ID
+ * @param {string} orgId
+ */
+export function setActiveOrganizationId(orgId) {
+  if (typeof window === 'undefined') return;
+  if (orgId && typeof orgId === 'string' && orgId !== 'undefined' && orgId !== 'null' && orgId.trim() !== '') {
+    localStorage.setItem(ORG_STORAGE_KEY, orgId.trim());
+  } else {
+    removeActiveOrganizationId();
+  }
+}
+
+/**
+ * Remove active tenant organization ID
+ */
+export function removeActiveOrganizationId() {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(ORG_STORAGE_KEY);
+  }
+}
 
 /**
  * Get current stored authentication token with validation
@@ -48,6 +83,7 @@ export function setAuthToken(token) {
 export function removeAuthToken() {
   if (typeof window !== 'undefined') {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
+    removeActiveOrganizationId();
   }
 }
 
@@ -66,7 +102,8 @@ export async function apiRequest(endpoint, options = {}) {
   const shouldDedupe = isGet && !options.skipDedupe && !options.forceFresh && !options.signal;
 
   const token = getAuthToken();
-  const dedupeKey = shouldDedupe ? `${token ? token.slice(-16) : 'anon'}:${endpoint}` : null;
+  const activeOrgId = getActiveOrganizationId();
+  const dedupeKey = shouldDedupe ? `${token ? token.slice(-16) : 'anon'}:${activeOrgId || 'default'}:${endpoint}` : null;
 
   if (dedupeKey && inflightGetRequests.has(dedupeKey)) {
     return inflightGetRequests.get(dedupeKey);
@@ -83,6 +120,11 @@ export async function apiRequest(endpoint, options = {}) {
     // Attach auth token if valid token present
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    // Attach active tenant organization ID header
+    if (activeOrgId && !headers['X-Organization-Id']) {
+      headers['X-Organization-Id'] = activeOrgId;
     }
 
     // Setup default 25-second timeout to prevent requests from hanging indefinitely
@@ -409,12 +451,17 @@ export async function getDataSourceById(id) {
 }
 
 /**
- * Create a new data source (PostgreSQL, REST API, etc.)
+ * Create a new data source (PostgreSQL, MongoDB, REST API, etc.)
  */
 export async function createDataSource(data) {
+  const activeOrgId = getActiveOrganizationId();
+  const payload = {
+    ...data,
+    ...(activeOrgId && !data.organization_id ? { organization_id: activeOrgId } : {})
+  };
   return apiRequest('/data-sources', {
     method: 'POST',
-    body: JSON.stringify(data)
+    body: JSON.stringify(payload)
   });
 }
 
@@ -2033,9 +2080,10 @@ export const getUsers = getOrganizationUsersApi;
  * Upload a dataset file with real-time XMLHttpRequest progress tracking
  * @param {FormData} formData 
  * @param {(progressEvent: { loaded: number, total: number, percentage: number, stage: string, message: string }) => void} [onProgress]
+ * @param {{ organizationId?: string }} [options]
  * @returns {Promise<any>}
  */
-export function uploadDataSourceFile(formData, onProgress) {
+export function uploadDataSourceFile(formData, onProgress, options = {}) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     const url = `${API_BASE_URL}/data-sources/upload`;
@@ -2044,6 +2092,14 @@ export function uploadDataSourceFile(formData, onProgress) {
     const token = getAuthToken();
     if (token) {
       xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    }
+
+    const activeOrgId = options.organizationId || getActiveOrganizationId();
+    if (activeOrgId) {
+      xhr.setRequestHeader('X-Organization-Id', activeOrgId);
+      if (!formData.has('organization_id')) {
+        formData.append('organization_id', activeOrgId);
+      }
     }
 
     xhr.upload.onprogress = (event) => {

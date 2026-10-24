@@ -50,13 +50,14 @@ const UserModel = {
    * @returns {Promise<any | null>}
    */
   async findById(id) {
+    if (id === null || id === undefined) return null;
     const sql = `
       SELECT id, name, email, role, organization_id, avatar_url, status, 
              verification_token, verification_otp, verification_token_expires_at, email_verified_at,
              reset_password_token, reset_password_expires_at,
              last_login_at, last_active_at, created_at, updated_at
       FROM users
-      WHERE id = $1
+      WHERE id::text = $1::text
       LIMIT 1;
     `;
     try {
@@ -70,7 +71,7 @@ const UserModel = {
                  reset_password_token, reset_password_expires_at,
                  last_login_at, created_at, updated_at
           FROM users
-          WHERE id = $1
+          WHERE id::text = $1::text
           LIMIT 1;
         `;
         const res = await db.query(fallbackSql, [id]);
@@ -88,10 +89,11 @@ const UserModel = {
    * @returns {Promise<any | null>}
    */
   async findByIdAndOrgId(id, organizationId) {
+    if (id === null || id === undefined || !organizationId) return null;
     const sql = `
       SELECT id, name, email, role, organization_id, avatar_url, status, last_login_at, last_active_at, created_at, updated_at
       FROM users
-      WHERE id = $1 AND organization_id = $2
+      WHERE id::text = $1::text AND organization_id::text = $2::text
       LIMIT 1;
     `;
     try {
@@ -102,7 +104,7 @@ const UserModel = {
         const fallbackSql = `
           SELECT id, name, email, role, organization_id, avatar_url, status, last_login_at, created_at, updated_at
           FROM users
-          WHERE id = $1 AND organization_id = $2
+          WHERE id::text = $1::text AND organization_id::text = $2::text
           LIMIT 1;
         `;
         const res = await db.query(fallbackSql, [id, organizationId]);

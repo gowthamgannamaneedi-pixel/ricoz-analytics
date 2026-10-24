@@ -3,6 +3,9 @@ import {
   getAuthToken, 
   setAuthToken, 
   removeAuthToken, 
+  getActiveOrganizationId,
+  setActiveOrganizationId,
+  removeActiveOrganizationId,
   loginUser, 
   registerUser, 
   verifyOtpUser,
@@ -21,6 +24,7 @@ export function AuthProvider({ children }) {
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState(null);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(getAuthToken() || null);
+  const [activeOrganizationId, setActiveOrganizationIdState] = useState(getActiveOrganizationId() || null);
   const [subscription, setSubscription] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,6 +37,7 @@ export function AuthProvider({ children }) {
         setUser(null);
         setToken(null);
         setSubscription(null);
+        setActiveOrganizationIdState(null);
         setIsLoading(false);
         return;
       }
@@ -42,6 +47,12 @@ export function AuthProvider({ children }) {
         if (data && data.user && data.user.status !== 'pending_verification') {
           setUser(data.user);
           setToken(storedToken);
+          const currentStoredOrg = getActiveOrganizationId();
+          const targetOrgId = currentStoredOrg || data.user.organization_id;
+          if (targetOrgId) {
+            setActiveOrganizationId(targetOrgId);
+            setActiveOrganizationIdState(targetOrgId);
+          }
           if (data.subscription) {
             setSubscription(data.subscription);
           } else {
@@ -57,8 +68,10 @@ export function AuthProvider({ children }) {
           }
         } else {
           removeAuthToken();
+          removeActiveOrganizationId();
           setUser(null);
           setToken(null);
+          setActiveOrganizationIdState(null);
           setSubscription(null);
         }
       } catch (err) {
@@ -67,8 +80,10 @@ export function AuthProvider({ children }) {
         const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError');
         if (!isRateLimit && !isNetworkErr) {
           removeAuthToken();
+          removeActiveOrganizationId();
           setUser(null);
           setToken(null);
+          setActiveOrganizationIdState(null);
           setSubscription(null);
         }
       } finally {
@@ -143,6 +158,11 @@ export function AuthProvider({ children }) {
     setAuthToken(data.token);
     setToken(data.token);
     setUser(data.user);
+    const orgId = data.user.organization_id;
+    if (orgId) {
+      setActiveOrganizationId(orgId);
+      setActiveOrganizationIdState(orgId);
+    }
     if (data.subscription) {
       setSubscription(data.subscription);
     }
@@ -241,6 +261,8 @@ export function AuthProvider({ children }) {
       // Continue cleanup
     }
     removeAuthToken();
+    removeActiveOrganizationId();
+    setActiveOrganizationIdState(null);
     setToken(null);
     setUser(null);
     setSubscription(null);
@@ -283,10 +305,32 @@ export function AuthProvider({ children }) {
     }
     if (sessionData?.user) {
       setUser(sessionData.user);
+      if (sessionData.user.organization_id) {
+        setActiveOrganizationId(sessionData.user.organization_id);
+        setActiveOrganizationIdState(sessionData.user.organization_id);
+      }
     }
     if (sessionData?.subscription) {
       setSubscription(sessionData.subscription);
     }
+  }, []);
+
+  /**
+   * Switch active workspace organization
+   */
+  const switchOrganization = useCallback(async (orgId) => {
+    if (!orgId) return;
+    setActiveOrganizationId(orgId);
+    setActiveOrganizationIdState(orgId);
+    try {
+      const data = await getCurrentUser();
+      if (data && data.user) {
+        setUser(data.user);
+        if (data.subscription) {
+          setSubscription(data.subscription);
+        }
+      }
+    } catch (_) {}
   }, []);
 
   const value = {
@@ -304,6 +348,10 @@ export function AuthProvider({ children }) {
     logout,
     refreshSubscription,
     setAuthSession,
+    // Multi-tenant Organization context
+    activeOrganizationId: activeOrganizationId || user?.organization_id || null,
+    organizations: user?.organizations || [],
+    switchOrganization,
     // Subscription & 14-Day Trial
     subscription,
     isTrialExpired,

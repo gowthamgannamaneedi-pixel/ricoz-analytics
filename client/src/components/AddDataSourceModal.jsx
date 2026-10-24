@@ -2,14 +2,22 @@ import React, { useState } from 'react';
 import { X, FileSpreadsheet, FileCode, Database, CheckCircle2, AlertCircle, Loader2, ArrowRight, Server, Key, ShieldCheck, RefreshCw } from 'lucide-react';
 import FileUpload from './FileUpload';
 import UploadProgress from './UploadProgress';
-import { API_BASE_URL, testApiDataSource, testMongoDataSource, createDataSource, uploadDataSourceFile, MAX_UPLOAD_SIZE_MB } from '../services/api';
+import { API_BASE_URL, testApiDataSource, testMongoDataSource, createDataSource, uploadDataSourceFile, MAX_UPLOAD_SIZE_MB, getActiveOrganizationId } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { Select } from './ui/Select';
 
 /**
  * Enterprise Add Data Source Modal
  * Supports CSV/JSON file ingestion, PostgreSQL databases, MongoDB, and REST API connectors
  */
-export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }) {
+export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: propToken }) {
+  const auth = useAuth();
+  const user = auth?.user || null;
+  const isAuthLoading = Boolean(auth?.isLoading);
+  const activeOrgId = auth?.activeOrganizationId || user?.organization_id || getActiveOrganizationId();
+  const isOrgReady = Boolean(!isAuthLoading && activeOrgId);
+  const token = propToken || auth?.token;
+
   const [activeTab, setActiveTab] = useState('csv'); // 'csv' | 'json' | 'postgresql' | 'mongodb' | 'rest_api'
 
   // File Upload State
@@ -123,12 +131,16 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
     setError('');
 
     try {
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+      if (activeOrgId) {
+        headers['X-Organization-Id'] = activeOrgId;
+      }
       const res = await fetch(`${API_BASE_URL}/data-sources/test-connection`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify(pgForm)
       });
       const contentType = res.headers.get('content-type') || '';
@@ -241,6 +253,10 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
   // Submit PostgreSQL Source
   const handlePostgresSubmit = async (e) => {
     e.preventDefault();
+    if (!activeOrgId) {
+      setError('Cannot create PostgreSQL data source: No tenant organization associated with current session.');
+      return;
+    }
     if (!pgForm.name.trim()) {
       setError('Please provide a Data Source Name.');
       return;
@@ -257,7 +273,8 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
       const res = await createDataSource({
         name: pgForm.name.trim(),
         type: 'postgresql',
-        config: pgForm
+        config: pgForm,
+        organization_id: activeOrgId
       });
 
       if (res && res.success) {
@@ -276,6 +293,10 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
   // Submit MongoDB Source
   const handleMongoSubmit = async (e) => {
     e.preventDefault();
+    if (!activeOrgId) {
+      setError('Cannot create MongoDB data source: No tenant organization associated with current session.');
+      return;
+    }
     if (!mongoForm.name.trim()) {
       setError('Please provide a Data Source Name.');
       return;
@@ -309,7 +330,8 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
       const res = await createDataSource({
         name: mongoForm.name.trim(),
         type: 'mongodb',
-        config
+        config,
+        organization_id: activeOrgId
       });
 
       if (res && res.success) {
@@ -359,7 +381,8 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
           password: apiForm.password || undefined,
           headers: parsedHeaders,
           dataKey: apiForm.dataKey.trim() || undefined
-        }
+        },
+        organization_id: activeOrgId
       });
       if (res && res.success) {
         onSuccess(res.data);
@@ -377,6 +400,10 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
   // Submit File Upload (CSV/JSON)
   const handleFileUploadSubmit = async (e) => {
     e.preventDefault();
+    if (!activeOrgId) {
+      setError('Cannot upload dataset: No tenant organization associated with current session. Please verify your workspace membership.');
+      return;
+    }
     const errs = {};
     if (!selectedFile) {
       errs.file = `Please select a ${activeTab.toUpperCase()} file to upload.`;
@@ -399,6 +426,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
       const formData = new FormData();
       formData.append('file', selectedFile);
       formData.append('name', sourceName.trim());
+      formData.append('organization_id', activeOrgId);
       if (description.trim()) {
         formData.append('description', description.trim());
       }
@@ -407,7 +435,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
         setUploadProgress(progressEvent.percentage);
         setUploadStage(progressEvent.stage);
         setStageMessage(progressEvent.message);
-      });
+      }, { organizationId: activeOrgId });
 
       if (res && res.success) {
         onSuccess(res.data);
@@ -542,6 +570,25 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
 
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-4 flex-1">
+          {isAuthLoading && (
+            <div className="flex items-center gap-2.5 rounded-xl border border-blue-200 bg-blue-50/80 dark:border-blue-900/50 dark:bg-blue-950/40 p-3.5 text-xs text-blue-700 dark:text-blue-300">
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-blue-600 dark:text-blue-400" />
+              <span>Initializing workspace organization context. Please wait...</span>
+            </div>
+          )}
+
+          {!isAuthLoading && !activeOrgId && (
+            <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50/80 dark:border-amber-900/50 dark:bg-amber-950/40 p-3.5 text-xs text-amber-700 dark:text-amber-300">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+              <div>
+                <p className="font-semibold">No Tenant Workspace Associated</p>
+                <p className="mt-0.5 text-[11px] opacity-90">
+                  Your session does not have an active tenant organization assigned. Please verify your workspace membership or contact your organization administrator.
+                </p>
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50/80 p-3.5 text-xs text-rose-700">
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600" />
@@ -624,7 +671,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                 </button>
                 <button
                   type="submit"
-                  disabled={isProcessing || !selectedFile || !sourceName.trim()}
+                  disabled={isProcessing || !isOrgReady || !selectedFile || !sourceName.trim()}
                   id="submit-file-source-btn"
                   className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs cursor-pointer"
                 >
@@ -823,7 +870,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   </button>
                   <button
                     type="submit"
-                    disabled={isProcessing || !isPgValid}
+                    disabled={isProcessing || !isOrgReady || !isPgValid}
                     id="submit-pg-source-btn"
                     className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs cursor-pointer"
                   >
@@ -1118,7 +1165,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   </button>
                   <button
                     type="submit"
-                    disabled={isProcessing || !isMongoValid}
+                    disabled={isProcessing || !isOrgReady || !isMongoValid}
                     id="submit-mongo-source-btn"
                     className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs cursor-pointer"
                   >
@@ -1379,7 +1426,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token }
                   </button>
                   <button
                     type="submit"
-                    disabled={isProcessing || !isApiValid}
+                    disabled={isProcessing || !isOrgReady || !isApiValid}
                     id="submit-api-source-btn"
                     className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs cursor-pointer"
                   >

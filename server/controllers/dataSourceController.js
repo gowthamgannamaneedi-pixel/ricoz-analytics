@@ -15,6 +15,7 @@ const { encryptConfig, decryptConfig, sanitizeDataSourceConfig } = require('../s
 const { ingestDatasetFileStream } = require('../services/datasetIngestionService');
 const subscriptionService = require('../services/subscriptionService');
 const insightService = require('../services/insightService');
+const tenantService = require('../services/tenantService');
 
 /**
  * Data Source Controller
@@ -23,28 +24,17 @@ const insightService = require('../services/insightService');
  */
 
 /**
- * Resolves and validates the organization ID for an authenticated user.
+ * Resolves and authoritatively validates the organization ID for an authenticated user.
  */
-async function resolveTrustedOrganizationId(user) {
-  if (!user || !user.id) return null;
-  let orgId = user.organization_id || null;
+async function resolveTrustedOrganizationId(reqOrUser, optionalUser) {
+  const req = optionalUser ? reqOrUser : null;
+  const user = optionalUser || reqOrUser;
+  if (!user || (!user.id && !user.email)) return null;
 
-  if (!orgId) {
-    try {
-      const dbUser = await UserModel.findById(user.id);
-      orgId = dbUser?.organization_id || null;
-    } catch (_) {}
+  const tenantRes = await tenantService.resolveAndAuthorizeOrganization(req, user);
+  if (tenantRes.organizationId) {
+    return tenantRes.organizationId;
   }
-
-  if (!orgId) return null;
-
-  try {
-    const org = await OrganizationModel.findById(orgId);
-    if (org && org.id) {
-      return org.id;
-    }
-  } catch (_) {}
-
   return null;
 }
 
@@ -124,7 +114,7 @@ async function clientCleanup(datasetId, dataSourceId, organizationId, filePath) 
 const getDataSources = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const organizationId = await resolveTrustedOrganizationId(req.user);
+    const organizationId = await resolveTrustedOrganizationId(req, req.user);
 
     const sources = organizationId
       ? await DataSource.findByOrganizationId(organizationId)
@@ -153,7 +143,7 @@ const getDataSources = async (req, res, next) => {
 const getDataSourceById = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const organizationId = await resolveTrustedOrganizationId(req.user);
+    const organizationId = await resolveTrustedOrganizationId(req, req.user);
     const { id } = req.params;
 
     const source = organizationId
@@ -189,16 +179,16 @@ const getDataSourceById = async (req, res, next) => {
 const createDataSource = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const organizationId = await resolveTrustedOrganizationId(req.user);
+    const organizationId = await resolveTrustedOrganizationId(req, req.user);
 
     if (!organizationId) {
-      return res.status(400).json({
+      return res.status(403).json({
         success: false,
         error: {
-          code: 'ORGANIZATION_REQUIRED',
-          message: 'User does not belong to a valid organization. Organization membership is required to create data sources.'
+          code: 'NO_ORGANIZATION',
+          message: 'No tenant organization associated with current session.'
         },
-        message: 'User does not belong to a valid organization. Organization membership is required to create data sources.'
+        message: 'No tenant organization associated with current session.'
       });
     }
 
@@ -666,18 +656,18 @@ const uploadDataSource = async (req, res, next) => {
       });
     }
 
-    organizationId = await resolveTrustedOrganizationId(req.user);
+    organizationId = await resolveTrustedOrganizationId(req, req.user);
     if (!organizationId) {
       if (file.path && fs.existsSync(file.path)) {
         fs.unlink(file.path, () => {});
       }
-      return res.status(400).json({
+      return res.status(403).json({
         success: false,
         error: {
-          code: 'ORGANIZATION_REQUIRED',
-          message: 'User does not belong to a valid organization. Organization membership is required to upload datasets.'
+          code: 'NO_ORGANIZATION',
+          message: 'No tenant organization associated with current session.'
         },
-        message: 'User does not belong to a valid organization. Organization membership is required to upload datasets.'
+        message: 'No tenant organization associated with current session.'
       });
     }
 

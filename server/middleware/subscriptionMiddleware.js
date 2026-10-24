@@ -1,4 +1,22 @@
 const subscriptionService = require('../services/subscriptionService');
+const tenantService = require('../services/tenantService');
+
+/**
+ * Authoritatively resolve and verify tenant organization for subscription middleware
+ */
+async function resolveOrganizationForRequest(req) {
+  if (req.user?.organization_id && req.organization) {
+    return req.user.organization_id;
+  }
+  const tenantRes = await tenantService.resolveAndAuthorizeOrganization(req, req.user);
+  if (tenantRes.organizationId) {
+    req.user.organization_id = tenantRes.organizationId;
+    req.user.role = tenantRes.role || req.user.role;
+    req.organization = tenantRes.organization;
+    return tenantRes.organizationId;
+  }
+  return req.user?.organization_id || null;
+}
 
 /**
  * Subscription & 14-Day Free Trial Verification Middleware
@@ -17,17 +35,7 @@ const requireActiveSubscription = async (req, res, next) => {
     });
   }
 
-  let organizationId = req.user.organization_id;
-  if (!organizationId) {
-    try {
-      const db = require('../config/database');
-      const defaultOrgRes = await db.query('SELECT id FROM organizations ORDER BY created_at ASC LIMIT 1');
-      if (defaultOrgRes.rows[0]) {
-        organizationId = defaultOrgRes.rows[0].id;
-        req.user.organization_id = organizationId;
-      }
-    } catch (_) {}
-  }
+  const organizationId = await resolveOrganizationForRequest(req);
 
   if (!organizationId) {
     return res.status(403).json({
@@ -84,7 +92,7 @@ const requirePlanFeature = (featureKey) => {
       });
     }
 
-    const organizationId = req.user.organization_id;
+    const organizationId = await resolveOrganizationForRequest(req);
     if (!organizationId) {
       return res.status(403).json({
         success: false,
@@ -140,7 +148,7 @@ const requireUsageLimit = (resourceType) => {
       });
     }
 
-    const organizationId = req.user.organization_id;
+    const organizationId = await resolveOrganizationForRequest(req);
     if (!organizationId) {
       return res.status(403).json({
         success: false,
