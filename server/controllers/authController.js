@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('../config');
+const db = require('../config/database');
 const { supabase, isConfigured } = require('../config/supabase');
 const UserModel = require('../models/userModel');
 const OrganizationModel = require('../models/organizationModel');
