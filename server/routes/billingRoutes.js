@@ -13,6 +13,7 @@ router.post('/razorpay-webhook', billingController.handleRazorpayWebhook);
 // Protected endpoints
 router.get('/subscription', authenticateToken, billingController.getSubscription);
 router.get('/history', authenticateToken, billingController.getSubscriptionHistory);
+router.get('/invoices/:id/receipt', authenticateToken, billingController.downloadInvoiceReceipt);
 router.post('/create-order', authenticateToken, requireRole('owner', 'admin'), billingController.createRazorpayOrder);
 router.post('/create-razorpay-order', authenticateToken, requireRole('owner', 'admin'), billingController.createRazorpayOrder);
 router.post('/verify-payment', authenticateToken, requireRole('owner', 'admin'), billingController.verifyRazorpayPayment);

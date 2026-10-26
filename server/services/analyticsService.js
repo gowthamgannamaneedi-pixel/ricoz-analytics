@@ -418,15 +418,80 @@ function applyDatasetFilters(records = [], filters = {}, dimensions = {}) {
  * @param {object} dimensions 
  * @returns {object}
  */
+/**
+ * Safely resolve column names against record keys and semantic dimension synonyms
+ * Prevents metric mismatch (e.g. asking for 'revenue' when dataset column is 'sales_amount')
+ */
+function resolveColumnKey(sampleRecord, requestedCol, semanticFallback = null) {
+  if (!sampleRecord || typeof sampleRecord !== 'object') return requestedCol || semanticFallback;
+  const keys = Object.keys(sampleRecord);
+  if (!requestedCol) return semanticFallback && sampleRecord[semanticFallback] !== undefined ? semanticFallback : keys[0];
+
+  // 1. Exact match
+  if (sampleRecord[requestedCol] !== undefined) return requestedCol;
+
+  // 2. Case-insensitive match
+  const lowerReq = String(requestedCol).toLowerCase().trim();
+  const caseMatch = keys.find(k => k.toLowerCase().trim() === lowerReq);
+  if (caseMatch) return caseMatch;
+
+  // 3. Normalized / underscore / hyphen match (e.g. salesAmount vs sales_amount vs sales-amount)
+  const normReq = lowerReq.replace(/[\s_-]+/g, '');
+  const normMatch = keys.find(k => k.toLowerCase().replace(/[\s_-]+/g, '') === normReq);
+  if (normMatch) return normMatch;
+
+  // 4. Semantic synonyms for common financial / analytical metrics
+  if (['revenue', 'sales', 'amount', 'total', 'metric', 'turnover', 'sales_amount', 'salesamount'].includes(lowerReq)) {
+    if (semanticFallback && sampleRecord[semanticFallback] !== undefined) return semanticFallback;
+    const candidates = ['sales_amount', 'revenue', 'amount', 'sales', 'total_amount', 'net_sales', 'gross_sales', 'profit', 'price', 'value'];
+    for (const c of candidates) {
+      const m = keys.find(k => k.toLowerCase() === c || k.toLowerCase().includes(c));
+      if (m && !isNaN(Number(sampleRecord[m]))) return m;
+    }
+  }
+
+  // 5. Semantic synonyms for common geographical / regional dimensions
+  if (['region', 'state', 'location', 'area', 'territory', 'country', 'city', 'zone', 'province'].includes(lowerReq)) {
+    if (semanticFallback && sampleRecord[semanticFallback] !== undefined) return semanticFallback;
+    const candidates = ['region', 'state', 'city', 'territory', 'location', 'zone', 'country', 'province', 'area'];
+    for (const c of candidates) {
+      const m = keys.find(k => k.toLowerCase() === c || k.toLowerCase().includes(c));
+      if (m) return m;
+    }
+  }
+
+  // 6. Semantic synonyms for products / categories
+  if (['product', 'item', 'product_name', 'sku', 'service'].includes(lowerReq)) {
+    if (semanticFallback && sampleRecord[semanticFallback] !== undefined) return semanticFallback;
+    const candidates = ['product', 'item', 'product_name', 'sku', 'service', 'item_name'];
+    for (const c of candidates) {
+      const m = keys.find(k => k.toLowerCase() === c || k.toLowerCase().includes(c));
+      if (m) return m;
+    }
+  }
+
+  if (['category', 'segment', 'department', 'group'].includes(lowerReq)) {
+    if (semanticFallback && sampleRecord[semanticFallback] !== undefined) return semanticFallback;
+    const candidates = ['category', 'segment', 'department', 'group', 'class'];
+    for (const c of candidates) {
+      const m = keys.find(k => k.toLowerCase() === c || k.toLowerCase().includes(c));
+      if (m) return m;
+    }
+  }
+
+  return (semanticFallback && sampleRecord[semanticFallback] !== undefined) ? semanticFallback : requestedCol;
+}
+
 function computeDatasetKpis(allRecords = [], filteredRecords = [], dimensions = {}) {
-  const primaryCol = dimensions.primaryMetric;
-  const qtyCol = dimensions.quantityMetric;
-  const idCol = dimensions.orderIdColumn;
-  const dateCol = dimensions.dateColumn;
+  const sample = filteredRecords[0] || allRecords[0];
+  const primaryCol = resolveColumnKey(sample, dimensions.primaryMetric, dimensions.primaryMetric);
+  const qtyCol = resolveColumnKey(sample, dimensions.quantityMetric, dimensions.quantityMetric);
+  const idCol = resolveColumnKey(sample, dimensions.orderIdColumn, dimensions.orderIdColumn);
+  const dateCol = resolveColumnKey(sample, dimensions.dateColumn, dimensions.dateColumn);
 
   const totalRecordsCount = filteredRecords.length;
 
-  if (totalRecordsCount === 0 || !primaryCol) {
+  if (totalRecordsCount === 0 || !primaryCol || (sample && sample[primaryCol] === undefined)) {
     return {
       totalSales: 0,
       totalOrders: 0,
@@ -542,11 +607,13 @@ function computeDatasetKpis(allRecords = [], filteredRecords = [], dimensions = 
  * @returns {any[]}
  */
 function computeDatasetTrends(filteredRecords = [], dimensions = {}) {
-  const dateCol = dimensions.dateColumn;
-  const primaryCol = dimensions.primaryMetric;
-  const qtyCol = dimensions.quantityMetric;
+  if (!filteredRecords || filteredRecords.length === 0) return [];
+  const sample = filteredRecords[0];
+  const dateCol = resolveColumnKey(sample, dimensions.dateColumn, dimensions.dateColumn);
+  const primaryCol = resolveColumnKey(sample, dimensions.primaryMetric, dimensions.primaryMetric);
+  const qtyCol = resolveColumnKey(sample, dimensions.quantityMetric, dimensions.quantityMetric);
 
-  if (!dateCol || !primaryCol || filteredRecords.length === 0) {
+  if (!dateCol || !primaryCol || sample[primaryCol] === undefined) {
     return [];
   }
 
@@ -601,9 +668,15 @@ function computeDatasetTrends(filteredRecords = [], dimensions = {}) {
  * @returns {any[]}
  */
 function computeDatasetBreakdown(filteredRecords = [], groupByCol, dimensions = {}) {
-  const primaryCol = dimensions.primaryMetric;
+  if (!filteredRecords || filteredRecords.length === 0) {
+    return [];
+  }
 
-  if (!groupByCol || !primaryCol || filteredRecords.length === 0) {
+  const sample = filteredRecords[0];
+  const actualGroupCol = resolveColumnKey(sample, groupByCol, dimensions.regionColumn || dimensions.categoryColumn || dimensions.productColumn);
+  const actualPrimaryCol = resolveColumnKey(sample, dimensions.primaryMetric, dimensions.primaryMetric);
+
+  if (!actualGroupCol || !actualPrimaryCol || sample[actualPrimaryCol] === undefined) {
     return [];
   }
 
@@ -611,11 +684,12 @@ function computeDatasetBreakdown(filteredRecords = [], groupByCol, dimensions = 
   let grandTotal = 0;
 
   filteredRecords.forEach(r => {
-    const category = r[groupByCol] !== undefined && r[groupByCol] !== null && String(r[groupByCol]).trim() !== ''
-      ? String(r[groupByCol]).trim()
+    const rawCategory = r[actualGroupCol];
+    const category = rawCategory !== undefined && rawCategory !== null && String(rawCategory).trim() !== ''
+      ? String(rawCategory).trim()
       : 'Uncategorized';
 
-    const val = Number(r[primaryCol]) || 0;
+    const val = Number(r[actualPrimaryCol]) || 0;
     grandTotal += val;
 
     if (!groupMap.has(category)) {
@@ -2153,6 +2227,7 @@ module.exports = {
   computeDatasetKpis,
   computeDatasetTrends,
   computeDatasetBreakdown,
+  resolveColumnKey,
   getPaginatedDatasetRows,
   getDatasetFilterOptions,
   validateRelationshipDefinition,

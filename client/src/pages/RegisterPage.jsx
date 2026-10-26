@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { AlertCircle, ArrowRight, ArrowLeft, Loader2, Mail, CheckCircle2, RefreshCw, KeyRound, ShieldCheck } from 'lucide-react';
+import { AlertCircle, ArrowRight, ArrowLeft, Loader2, Mail, CheckCircle2, RefreshCw, KeyRound, ShieldCheck, Eye, EyeOff, Check, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { evaluatePasswordStrength } from '../utils/passwordSecurity';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import Logo from '../components/ui/Logo';
 
@@ -22,6 +23,10 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: ''
   });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const passwordStrength = evaluatePasswordStrength(formData.password);
 
   // Sync pre-filled email if navigation state or query param changes
   useEffect(() => {
@@ -107,8 +112,8 @@ export default function RegisterPage() {
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long.');
+    if (!passwordStrength.isValid) {
+      setError(passwordStrength.feedback || 'Please choose a stronger password. Weak passwords are not accepted.');
       return;
     }
 
@@ -504,43 +509,163 @@ export default function RegisterPage() {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" htmlFor="password">
-                    Password (min. 6 chars)
+                    Password (min. 8 characters)
                   </label>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete="new-password"
-                    required
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
-                  />
+                  <div className="relative">
+                    <input
+                      id="password"
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      required
+                      placeholder="••••••••"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 pl-3.5 pr-10 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
+                    />
+                    <button
+                      type="button"
+                      id="toggle-register-password-visibility"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer focus:outline-none"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+
+                  {/* Real-time Password Strength Meter & Guidance */}
+                  {formData.password.length > 0 && (
+                    <div className="mt-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 p-2.5 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-slate-600 dark:text-slate-400 text-[11px]">
+                          Password Strength:
+                        </span>
+                        <span
+                          id="password-strength-badge"
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
+                            passwordStrength.strength === 'weak'
+                              ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800'
+                              : passwordStrength.strength === 'moderate'
+                              ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                              : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                          }`}
+                        >
+                          {passwordStrength.strength}
+                        </span>
+                      </div>
+
+                      {/* 3-Bar Visual Indicator */}
+                      <div className="grid grid-cols-3 gap-1.5 h-1.5">
+                        <div
+                          className={`h-full rounded-full transition-all duration-300 ${
+                            passwordStrength.strength === 'weak'
+                              ? 'bg-rose-500'
+                              : passwordStrength.strength === 'moderate'
+                              ? 'bg-amber-500'
+                              : 'bg-emerald-500'
+                          }`}
+                        />
+                        <div
+                          className={`h-full rounded-full transition-all duration-300 ${
+                            passwordStrength.strength === 'moderate'
+                              ? 'bg-amber-500'
+                              : passwordStrength.strength === 'strong'
+                              ? 'bg-emerald-500'
+                              : 'bg-slate-200 dark:bg-slate-700'
+                          }`}
+                        />
+                        <div
+                          className={`h-full rounded-full transition-all duration-300 ${
+                            passwordStrength.strength === 'strong'
+                              ? 'bg-emerald-500'
+                              : 'bg-slate-200 dark:bg-slate-700'
+                          }`}
+                        />
+                      </div>
+
+                      {/* Concise Requirements Guidance */}
+                      <div className="pt-1 space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                        <div className={`flex items-center gap-1.5 ${passwordStrength.requirements.minLength ? 'text-emerald-600 dark:text-emerald-400 font-medium' : ''}`}>
+                          {passwordStrength.requirements.minLength ? <Check className="w-3 h-3 shrink-0" /> : <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600 mx-0.5" />}
+                          <span>At least 8 characters</span>
+                        </div>
+                        <div className={`flex items-center gap-1.5 ${passwordStrength.requirements.hasUpper && passwordStrength.requirements.hasLower ? 'text-emerald-600 dark:text-emerald-400 font-medium' : ''}`}>
+                          {passwordStrength.requirements.hasUpper && passwordStrength.requirements.hasLower ? <Check className="w-3 h-3 shrink-0" /> : <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600 mx-0.5" />}
+                          <span>Uppercase & lowercase letters</span>
+                        </div>
+                        <div className={`flex items-center gap-1.5 ${passwordStrength.requirements.hasNumber ? 'text-emerald-600 dark:text-emerald-400 font-medium' : ''}`}>
+                          {passwordStrength.requirements.hasNumber ? <Check className="w-3 h-3 shrink-0" /> : <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600 mx-0.5" />}
+                          <span>At least one number (0-9)</span>
+                        </div>
+                        <div className={`flex items-center gap-1.5 ${passwordStrength.requirements.hasSymbol ? 'text-emerald-600 dark:text-emerald-400 font-medium' : ''}`}>
+                          {passwordStrength.requirements.hasSymbol ? <Check className="w-3 h-3 shrink-0" /> : <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600 mx-0.5" />}
+                          <span>At least one symbol (!@#$%^&*)</span>
+                        </div>
+                        {!passwordStrength.requirements.notPredictable && (
+                          <div className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-medium">
+                            <X className="w-3 h-3 shrink-0" />
+                            <span>Avoid common words or predictable patterns</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" htmlFor="confirmPassword">
                     Confirm Password
                   </label>
-                  <input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    autoComplete="new-password"
-                    required
-                    placeholder="••••••••"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
-                  />
+                  <div className="relative">
+                    <input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      required
+                      placeholder="••••••••"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 pl-3.5 pr-10 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
+                    />
+                    <button
+                      type="button"
+                      id="toggle-register-confirm-password-visibility"
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer focus:outline-none"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {formData.confirmPassword.length > 0 && (
+                    <div className="mt-1">
+                      {formData.password === formData.confirmPassword ? (
+                        <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Passwords match
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                          <X className="w-3 h-3" /> Passwords do not match
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={
+                    isLoading ||
+                    !passwordStrength.isValid ||
+                    formData.password !== formData.confirmPassword ||
+                    !formData.name.trim() ||
+                    !formData.email.trim() ||
+                    !formData.organization_name.trim()
+                  }
                   id="register-submit-btn"
-                  className="w-full flex items-center justify-center gap-2 rounded-lg bg-rose-600 py-2.5 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-600 focus:ring-offset-2 disabled:opacity-50 mt-2 cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 rounded-lg bg-rose-600 py-2.5 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed mt-2 cursor-pointer"
                 >
                   {isLoading ? (
                     <>

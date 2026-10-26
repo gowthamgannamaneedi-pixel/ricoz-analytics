@@ -605,7 +605,7 @@ export default function DataQualityPage() {
               Data Quality & Observability
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal leading-relaxed">
-              Continuous telemetry, anomaly detection, schema tracking, and relational integrity.
+              Monitor the accuracy, completeness, and freshness of your business data across datasets.
             </p>
             {/* Run Quality Audit Button (Primary Action - Left Aligned per Screenshot A12) */}
             <div className="mt-3">
@@ -741,7 +741,7 @@ export default function DataQualityPage() {
               id="refresh-quality-btn"
               onClick={() => selectedDatasetId && loadDatasetQuality(selectedDatasetId)}
               isRefreshing={loading}
-              title="Refresh Quality Telemetry"
+              title="Refresh Quality Score"
             />
           </div>
         </div>
@@ -898,7 +898,7 @@ export default function DataQualityPage() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
                       <Droplet className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-bold font-mono text-slate-400 dark:text-[#94A3B8] uppercase">25% Wgt</span>
+                    <span className="text-[10px] font-semibold font-mono text-slate-500 dark:text-[#94A3B8]">Weight: 25%</span>
                   </div>
                   <h4 className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] mt-3">Completeness</h4>
                   <div className="text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] font-sans mt-1">
@@ -924,7 +924,7 @@ export default function DataQualityPage() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
                       <Check className="h-5 w-5 stroke-[2.5]" />
                     </div>
-                    <span className="text-[10px] font-bold font-mono text-slate-400 dark:text-[#94A3B8] uppercase">25% Wgt</span>
+                    <span className="text-[10px] font-semibold font-mono text-slate-500 dark:text-[#94A3B8]">Weight: 25%</span>
                   </div>
                   <h4 className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] mt-3">Validity / Types</h4>
                   <div className="text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] font-sans mt-1">
@@ -950,7 +950,7 @@ export default function DataQualityPage() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
                       <Layers className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-bold font-mono text-slate-400 dark:text-[#94A3B8] uppercase">20% Wgt</span>
+                    <span className="text-[10px] font-semibold font-mono text-slate-500 dark:text-[#94A3B8]">Weight: 20%</span>
                   </div>
                   <h4 className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] mt-3">Uniqueness</h4>
                   <div className="text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] font-sans mt-1">
@@ -976,7 +976,7 @@ export default function DataQualityPage() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
                       <Link2 className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-bold font-mono text-slate-400 dark:text-[#94A3B8] uppercase">20% Wgt</span>
+                    <span className="text-[10px] font-semibold font-mono text-slate-500 dark:text-[#94A3B8]">Weight: 20%</span>
                   </div>
                   <h4 className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] mt-3">Consistency & Joins</h4>
                   <div className="text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] font-sans mt-1">
@@ -993,9 +993,9 @@ export default function DataQualityPage() {
                 <div className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-3 pt-2 border-t border-slate-50 dark:border-[#334155]/60">
                   {evaluating && !dimensions.consistency
                     ? 'Evaluating consistency...'
-                    : (dimensions.consistency?.relationship_match_rate !== undefined
+                    : (dimensions.consistency?.relationship_match_rate != null
                     ? `${dimensions.consistency.relationship_match_rate}% match rate`
-                    : '0 consistency issues')}
+                    : 'All cross-table links valid')}
                 </div>
               </div>
 
@@ -1006,7 +1006,7 @@ export default function DataQualityPage() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
                       <Clock className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-bold font-mono text-slate-400 dark:text-[#94A3B8] uppercase">10% Wgt</span>
+                    <span className="text-[10px] font-semibold font-mono text-slate-500 dark:text-[#94A3B8]">Weight: 10%</span>
                   </div>
                   <h4 className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] mt-3">Freshness</h4>
                   <div className="text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] font-sans mt-1">

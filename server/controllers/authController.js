@@ -13,6 +13,7 @@ const emailService = require('../services/emailService');
 const tenantService = require('../services/tenantService');
 const { logAuditEvent, AUDIT_ACTIONS } = require('../services/auditService');
 const tokenBlacklist = require('../utils/tokenBlacklist');
+const { evaluatePasswordStrength } = require('../utils/passwordSecurity');
 
 // In-memory rate limiting map for verification resends: email -> lastSentTimestamp
 const resendRateLimits = new Map();
@@ -139,10 +140,17 @@ const register = async (req, res, next) => {
       });
     }
 
-    if (!password || typeof password !== 'string' || password.length < 6) {
+    const passwordEvaluation = evaluatePasswordStrength(password);
+    if (!passwordEvaluation.isValid) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters long.'
+        error: {
+          code: 'WEAK_PASSWORD',
+          message: passwordEvaluation.feedback,
+          missingRequirements: passwordEvaluation.missingRequirements
+        },
+        message: passwordEvaluation.feedback,
+        missingRequirements: passwordEvaluation.missingRequirements
       });
     }
 
@@ -382,6 +390,8 @@ const register = async (req, res, next) => {
 
     const token = generateToken(newUser);
 
+    const subscription = await subscriptionService.getOrganizationSubscription(organizationId).catch(() => null);
+
     return res.status(201).json({
       success: true,
       message: emailResult.success
@@ -393,6 +403,7 @@ const register = async (req, res, next) => {
       email: newUser.email,
       organization_id: organizationId,
       organization_name: orgName,
+      subscription: subscription || null,
       ...(process.env.NODE_ENV !== 'production' ? {
         _devVerificationOtp: verificationOtp,
         _devVerificationToken: verificationToken
@@ -608,6 +619,8 @@ const verifyOtp = async (req, res, next) => {
       req
     }).catch(() => null);
 
+    const subscription = await subscriptionService.getOrganizationSubscription(user.organization_id).catch(() => null);
+
     return res.status(200).json({
       success: true,
       message: 'Email verified successfully! You can now access your workspace.',
@@ -620,7 +633,8 @@ const verifyOtp = async (req, res, next) => {
         role: user.role,
         organization_id: user.organization_id,
         status: 'active'
-      }
+      },
+      subscription: subscription || null
     });
   } catch (err) {
     next(err);

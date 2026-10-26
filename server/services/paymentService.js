@@ -420,6 +420,22 @@ class PaymentService {
     const res = await db.query(sql, [organizationId]);
     return res.rows || [];
   }
+
+  /**
+   * Get specific invoice record by ID scoped to organization
+   * @param {string} organizationId 
+   * @param {string} invoiceId 
+   */
+  async getInvoiceById(organizationId, invoiceId) {
+    const sql = `
+      SELECT id, organization_id, stripe_invoice_id, razorpay_payment_id, razorpay_order_id, receipt_number, payment_gateway, amount, currency, plan, status, invoice_url, created_at
+      FROM invoices
+      WHERE organization_id = $1 AND id::text = $2::text
+      LIMIT 1;
+    `;
+    const res = await db.query(sql, [organizationId, invoiceId]);
+    return res.rows[0] || null;
+  }
 }
 
 module.exports = new PaymentService();

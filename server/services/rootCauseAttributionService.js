@@ -342,7 +342,7 @@ class RootCauseAttributionService {
 
     const result = {
       insightId: String(insight.id || ''),
-      datasetId: Number(datasetId),
+      datasetId: isNaN(Number(datasetId)) ? String(datasetId) : Number(datasetId),
       datasetName: dataset.name,
       metric: metricName,
       dimension: targetDimension,

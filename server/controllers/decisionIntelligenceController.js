@@ -4,20 +4,35 @@ const scenarioSimulationService = require('../services/scenarioSimulationService
 const geminiService = require('../services/geminiService');
 const evidenceBuilderService = require('../services/evidenceBuilderService');
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidUuid(val) {
+  return typeof val === 'string' && UUID_REGEX.test(val.trim());
+}
+
 /**
- * Enterprise Decision Intelligence Controller (Phase 6)
- * Handles root-cause variance attribution and counterfactual scenario modeling.
+ * Enterprise Decision Intelligence & Business Radar Controller (Phase 6)
+ * Handles root-cause variance attribution, Business Radar decomposition, and counterfactual scenario modeling.
  */
 const decisionIntelligenceController = {
   /**
    * GET /api/insights/:id/root-cause
-   * Decompose metric variance across dimensional slices
+   * Decompose metric variance across dimensional slices for Business Radar
    */
   async getRootCause(req, res) {
     try {
       const organizationId = req.user.organization_id;
       const { id } = req.params;
       const { dimension, limit } = req.query;
+
+      if (!isValidUuid(id)) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: `Insight #${id} not found or access denied.`
+          }
+        });
+      }
 
       const insight = await insightService.getInsightById(id, organizationId);
       if (!insight) {
@@ -40,10 +55,52 @@ const decisionIntelligenceController = {
       // Generate grounded natural-language explanation
       const aiResult = await geminiService.generateDriverExplanation({ attribution });
 
+      // Structured Business Radar telemetry
+      const radar = {
+        metric: attribution.metric,
+        dimension: attribution.dimension,
+        availableDimensions: attribution.availableDimensions,
+        severity: insight.severity || (Math.abs(attribution.totalDeltaPercent) >= 25 ? 'critical' : (Math.abs(attribution.totalDeltaPercent) >= 10 ? 'warning' : 'info')),
+        magnitude: {
+          totalDelta: attribution.totalDelta,
+          totalDeltaPercent: attribution.totalDeltaPercent,
+          totalBaseline: attribution.totalBaseline,
+          totalCurrent: attribution.totalCurrent
+        },
+        evidence: {
+          metric: attribution.metric,
+          comparisonPeriod: insight.evidence?.comparisonPeriod || 'Historical Baseline',
+          currentPeriod: insight.evidence?.currentPeriod || 'Current Observation',
+          baselineValue: attribution.totalBaseline,
+          currentValue: attribution.totalCurrent,
+          delta: attribution.totalDelta,
+          deltaPercent: attribution.totalDeltaPercent,
+          calculationMethod: '((currentValue - baselineValue) / ABS(baselineValue)) * 100',
+          mathBalanceVerified: attribution.mathBalanceVerified,
+          recordsAnalyzed: attribution.recordsAnalyzed
+        },
+        drivers: attribution.drivers,
+        primaryDetractor: attribution.primaryDetractor,
+        primarySustainer: attribution.primarySustainer,
+        concentration: attribution.concentration,
+        observationalSummary: attribution.observationalSummary,
+        correlationDisclaimer: 'Observational movement breakdown: segment variances reflect statistical accounting of net change. Telemetry does not establish causal direction without controlled experimentation.',
+        suggestedQuestions: [
+          `Did transaction frequency or unit prices shift across the ${attribution.drivers[0]?.segment || 'primary'} segment?`,
+          `Are inventory shortages or regional supply dynamics impacting ${attribution.primaryDetractor?.segment || 'lagging'} areas?`,
+          `How did channel marketing or seasonality align with observed movement across ${attribution.dimension}?`
+        ],
+        recommendation: insight.recommendation || {
+          action: `Investigate ${attribution.dimension} performance drivers`,
+          target_page: '/datasets'
+        }
+      };
+
       return res.status(200).json({
         success: true,
         data: {
           ...attribution,
+          radar,
           explanation: aiResult.explanation,
           aiGenerated: aiResult.aiGenerated,
           fallback: aiResult.fallback,
@@ -79,6 +136,16 @@ const decisionIntelligenceController = {
           error: {
             code: 'INVALID_PAYLOAD',
             message: 'Body field "adjustments" must be an array of { segment, deltaPercent } objects.'
+          }
+        });
+      }
+
+      if (!isValidUuid(id)) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: `Insight #${id} not found or access denied.`
           }
         });
       }
@@ -148,6 +215,16 @@ const decisionIntelligenceController = {
       const organizationId = req.user.organization_id;
       const { id } = req.params;
 
+      if (!isValidUuid(id)) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: `Insight #${id} not found or access denied.`
+          }
+        });
+      }
+
       const insight = await insightService.getInsightById(id, organizationId);
       if (!insight) {
         return res.status(404).json({
@@ -178,7 +255,7 @@ const decisionIntelligenceController = {
         success: true,
         data: {
           insightId: id,
-          datasetId: Number(datasetId),
+          datasetId: isNaN(Number(datasetId)) ? String(datasetId) : Number(datasetId),
           availableDimensions
         }
       });

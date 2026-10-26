@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const Dataset = require('../models/datasetModel');
 const MetricModel = require('../models/metricModel');
 const Dashboard = require('../models/dashboardModel');
@@ -55,12 +57,17 @@ class AIQueryPlannerService {
     let targetDataset = null;
     if (datasetId) {
       targetDataset = await Dataset.findById(datasetId);
-      if (!targetDataset) {
+      if (!targetDataset || (organizationId && String(targetDataset.organization_id) !== String(organizationId))) {
         // Multi-tenant security isolation check
         throw new Error('Dataset not found or you do not have permission to access it.');
       }
     } else if (userDatasets.length > 0) {
-      targetDataset = userDatasets[0];
+      const validDataset = userDatasets.find(d => {
+        if (!d.file_path) return false;
+        const p = path.isAbsolute(d.file_path) ? d.file_path : path.join(__dirname, '../uploads/datasets', d.file_path);
+        return fs.existsSync(p);
+      });
+      targetDataset = validDataset || userDatasets[0];
     }
 
     // Select dashboard context if provided
@@ -154,6 +161,17 @@ class AIQueryPlannerService {
         dimensions = analyticsService.detectDatasetDimensions(datasetSchema, datasetRecords.slice(0, 10));
       } catch (fileErr) {
         console.warn(`[AIQueryPlanner] Could not load physical dataset records for ${targetDataset.name}:`, fileErr.message);
+        return {
+          question: cleanQuestion,
+          answer: `The selected dataset **${targetDataset.name}** does not have accessible physical records on storage to calculate "${cleanQuestion}". Please choose an authorized dataset with verified physical data records.`,
+          intent: validatedPlan.intent,
+          plan: validatedPlan,
+          data: { error: 'Dataset physical file is unavailable on storage.', records: 0 },
+          visualization: null,
+          sources: [{ dataset_id: targetDataset.id, dataset_name: targetDataset.name, row_count: 0 }],
+          confidence: 'low',
+          insufficientData: true
+        };
       }
     }
 
@@ -583,7 +601,7 @@ class AIQueryPlannerService {
 
     // 3. Ranking Intent
     if (plan.intent === 'ranking') {
-      const groupByCol = plan.group_by || effectiveDimensions.productColumn || effectiveDimensions.categoryColumn || effectiveDimensions.regionColumn || 'category';
+      const groupByCol = plan.group_by || effectiveDimensions.regionColumn || effectiveDimensions.productColumn || effectiveDimensions.categoryColumn || 'region';
       let breakdown = analyticsService.computeDatasetBreakdown(records, groupByCol, effectiveDimensions);
       
       if (plan.order === 'asc') {
@@ -594,12 +612,57 @@ class AIQueryPlannerService {
 
       const limit = plan.limit || 5;
       const ranked = breakdown.slice(0, limit);
+      const topItem = ranked[0] || null;
+      const runnerUpItem = ranked[1] || null;
+      const grandTotal = breakdown.reduce((sum, item) => sum + (item.value || 0), 0);
+
+      // Compute lead difference between #1 and #2
+      let difference = null;
+      if (topItem && runnerUpItem && runnerUpItem.value > 0) {
+        const absDiff = Number((topItem.value - runnerUpItem.value).toFixed(2));
+        const pctDiff = Number((((topItem.value - runnerUpItem.value) / runnerUpItem.value) * 100).toFixed(1));
+        difference = {
+          leader: topItem.name,
+          runnerUp: runnerUpItem.name,
+          absoluteDifference: absDiff,
+          percentageDifference: pctDiff,
+          formatted: `${topItem.name} leads ${runnerUpItem.name} by ${absDiff.toLocaleString()} (+${pctDiff}%)`
+        };
+      }
+
+      // Detect sub-drivers (e.g. top product or channel in the winning region)
+      let winningDrivers = [];
+      if (topItem && records.length > 0) {
+        const actualGroupCol = analyticsService.resolveColumnKey(records[0], groupByCol, effectiveDimensions.regionColumn);
+        const actualMetricCol = analyticsService.resolveColumnKey(records[0], plan.metric, effectiveDimensions.primaryMetric);
+        const subDimension = effectiveDimensions.productColumn || effectiveDimensions.categoryColumn || effectiveDimensions.channelColumn;
+        
+        if (subDimension && actualGroupCol && actualMetricCol) {
+          const leaderRecords = records.filter(r => String(r[actualGroupCol]).trim() === String(topItem.name).trim());
+          const subBreakdown = analyticsService.computeDatasetBreakdown(leaderRecords, subDimension, { primaryMetric: actualMetricCol });
+          winningDrivers = subBreakdown.slice(0, 3);
+        }
+      }
 
       return {
         data: {
           dimension: groupByCol,
+          metric: plan.metric,
           ranking: ranked,
-          total_categories: breakdown.length
+          total_categories: breakdown.length,
+          grand_total: Number(grandTotal.toFixed(2)),
+          top_performer: topItem ? {
+            name: topItem.name,
+            value: topItem.value,
+            share: topItem.percentage
+          } : null,
+          runner_up: runnerUpItem ? {
+            name: runnerUpItem.name,
+            value: runnerUpItem.value,
+            share: runnerUpItem.percentage
+          } : null,
+          difference,
+          winning_drivers: winningDrivers
         },
         visualization: {
           type: 'bar',

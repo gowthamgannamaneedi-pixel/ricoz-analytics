@@ -354,8 +354,8 @@ export default function AlertModal({
 
             {/* Cooldown Period */}
             <div>
-              <label className="block text-xs font-semibold text-slate-800 dark:text-[#CBD5E1] mb-1">
-                Anti-Flapping Cooldown (Minutes)
+              <label className="block text-xs font-semibold text-slate-800 dark:text-[#CBD5E1] mb-1" title="Minimum minutes between repeat alert notifications">
+                Notification Delay (Minutes)
               </label>
               <div className="relative">
                 <input

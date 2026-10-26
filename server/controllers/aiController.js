@@ -1,4 +1,5 @@
 const aiQueryPlannerService = require('../services/aiQueryPlannerService');
+const langGraphAssistantService = require('../services/langGraphAssistantService');
 const aiConversationModel = require('../models/aiConversationModel');
 const Dashboard = require('../models/dashboardModel');
 const geminiService = require('../services/geminiService');
@@ -6,12 +7,12 @@ const { logAuditEvent, AUDIT_ACTIONS } = require('../services/auditService');
 
 /**
  * AI Analytics Assistant Controller
- * Coordinates natural-language conversations, query planning, explanations, and conversation persistence.
+ * Coordinates natural-language conversations, LangGraph orchestration, query planning, and RAG retrieval.
  */
 const AIController = {
   /**
    * POST /api/ai/query
-   * Process natural-language analytical question
+   * Process natural-language analytical question via LangGraph + RAG pipeline
    */
   async query(req, res) {
     try {
@@ -43,15 +44,26 @@ const AIController = {
       const effectiveMetricId = metricId || metric_id || null;
       let effectiveConvId = conversationId || conversation_id || null;
 
-      // 1. Process Analytical Query & Plan
-      const result = await aiQueryPlannerService.processQuery({
+      // 1. Fetch recent conversation history if existing thread
+      let conversationHistory = [];
+      if (effectiveConvId) {
+        try {
+          conversationHistory = await aiConversationModel.getMessages(effectiveConvId);
+        } catch (_) {
+          conversationHistory = [];
+        }
+      }
+
+      // 2. Process Analytical Query via LangGraph StateGraph (Intent -> RAG -> Analytics -> Synthesis)
+      const result = await langGraphAssistantService.processQuery({
         message,
         organizationId,
         userId,
         userRole,
         datasetId: effectiveDatasetId,
         dashboardId: effectiveDashboardId,
-        metricId: effectiveMetricId
+        metricId: effectiveMetricId,
+        conversationHistory
       });
 
       // 2. Persist in conversation thread if active or auto-create thread
@@ -85,7 +97,14 @@ const AIController = {
             role: 'assistant',
             content: result.answer,
             intent: result.intent,
-            queryPlan: result.plan,
+            queryPlan: {
+              ...(result.plan || {}),
+              grounded: result.grounded,
+              evidenceValidated: result.evidenceValidated,
+              insufficientData: result.insufficientData,
+              analysisStatus: result.analysisStatus,
+              tableData: result.tableData
+            },
             data: result.data,
             visualization: result.visualization,
             sources: result.sources,

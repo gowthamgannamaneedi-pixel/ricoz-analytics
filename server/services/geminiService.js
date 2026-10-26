@@ -583,6 +583,32 @@ Provide:
       return 'HELP';
     }
 
+    // 4b. ORGANIZATION & WORKSPACE CONTEXT
+    // Typo-tolerant matching (e.g., "origination", "organisation", "org", "company", "workspace", "tenant", "enterprise")
+    const orgTerms = ['organization', 'organisation', 'origination', 'org', 'company', 'workspace', 'tenant', 'enterprise'];
+    const hasOrgTerm = orgTerms.some(t => {
+      const regex = new RegExp(`\\b${t}s?\\b`, 'i');
+      return regex.test(q);
+    });
+    const isOrgQuestion = hasOrgTerm && (
+      q.includes('name') || q.includes('what is') || q.includes('who is') || q.includes('which') ||
+      q.includes('current') || q.includes('my') || q.includes('our') || q.includes('tell me') ||
+      q.includes('show') || q.includes('info') || q.includes('details') || q.includes('plan')
+    );
+    if (isOrgQuestion || orgTerms.some(t => cleanQ === t || cleanQ === `my ${t}` || cleanQ === `what is my ${t}`)) {
+      return 'ORGANIZATION_CONTEXT';
+    }
+
+    // 4c. USER & ACCOUNT CONTEXT
+    const userPhrases = [
+      'who am i', 'what is my name', 'my name', 'my role', 'what is my role',
+      'my email', 'what is my email', 'my profile', 'my account', 'current user',
+      'logged in as', 'my permissions', 'user details'
+    ];
+    if (userPhrases.some(p => cleanQ === p || cleanQ.includes(p))) {
+      return 'USER_CONTEXT';
+    }
+
     // 5. Analytics Intents
     if (q.includes('executive summary') || q.includes('important insight') || q.includes('what changed') || q.includes('what should i investigate') || q.includes('investigate') || q.includes('top insights') || q.includes('automated insights') || q.includes('tell me what is important')) {
       return 'executive_summary';
@@ -628,14 +654,17 @@ Provide:
       return 'breakdown';
     }
 
-    if ((q.includes('what is') || q.includes('what does')) && (q.includes('kpi') || q.includes('mean') || q.includes('definition') || q.includes('formula')) || q.includes('explain this metric') || q.includes('explain metric')) {
+    if (
+      ((q.includes('what is') || q.includes('what does')) && (q.includes('kpi') || q.includes('metric') || q.includes('formula') || q.includes('definition of') || (/\bmeans?\b/.test(q) && hasAnalyticsSignal))) ||
+      q.includes('explain this metric') || q.includes('explain metric')
+    ) {
       return 'metric_explanation';
     }
 
     if (
-      q.includes('total') || q.includes('average') || q.includes('avg') || q.includes('mean') ||
+      q.includes('total') || q.includes('average') || q.includes('avg') ||
       q.includes('sum') || q.includes('count') || q.includes('how many') || q.includes('how much') ||
-      q.includes('kpi') || q.includes('metric')
+      ((q.includes('kpi') || q.includes('metric')) && hasAnalyticsSignal)
     ) {
       return 'kpi';
     }
@@ -644,15 +673,21 @@ Provide:
       return 'kpi';
     }
 
-    // 6. Unknown / Non-Analytics Input (Never convert unknown input to arbitrary KPI query)
-    return 'NON_ANALYTICS';
+    // 6. Ambiguous / Incomplete Queries requiring clarification
+    const ambiguousSingleTokens = ['difference', 'why', 'tell me', 'what', 'explain', 'show me', 'details', 'data', 'metrics', 'compare'];
+    if (words.length <= 2 && ambiguousSingleTokens.includes(cleanQ)) {
+      return 'AMBIGUOUS';
+    }
+
+    // 7. Unknown / Non-Analytics Input
+    return 'AMBIGUOUS';
   }
 
   _ruleBasedPlanQuery(question, context = {}) {
     const q = (question || '').toLowerCase().trim();
     const intent = this._classifyIntent(question, context);
 
-    if (['GREETING', 'FAREWELL', 'THANKS', 'HELP', 'CAPABILITIES', 'NON_ANALYTICS'].includes(intent)) {
+    if (['GREETING', 'FAREWELL', 'THANKS', 'HELP', 'CAPABILITIES', 'ORGANIZATION_CONTEXT', 'USER_CONTEXT', 'AMBIGUOUS', 'NON_ANALYTICS'].includes(intent)) {
       return {
         intent,
         metric: null,
@@ -928,8 +963,25 @@ Provide:
 Ask me a question about your data to get started!`;
       }
 
+      case 'ORGANIZATION_CONTEXT': {
+        if (context.organization?.name) {
+          const org = context.organization;
+          return `Your authorized workspace organization is **${org.name}**${org.plan ? ` (Plan: **${org.plan.toUpperCase()}**)` : ''}.`;
+        }
+        return 'Your authenticated organization details are currently unavailable in this workspace session.';
+      }
+
+      case 'USER_CONTEXT': {
+        if (context.user?.name || context.user?.email) {
+          const u = context.user;
+          return `You are currently logged in as **${u.name || 'User'}** (${u.email || 'N/A'}) with the role of **${(u.role || 'viewer').toUpperCase()}**.`;
+        }
+        return 'Your authenticated user details are currently unavailable in this workspace session.';
+      }
+
+      case 'AMBIGUOUS':
       case 'NON_ANALYTICS': {
-        return "I’m focused on RicozAnalytics data and analytics. Ask me about your KPIs, trends, forecasts, anomalies, or dashboards.";
+        return "Could you please clarify what you'd like to analyze? For example, you can ask about your total revenue, regional breakdown, top performers, sales trends, or workspace details.";
       }
 
       case 'EXECUTIVE_SUMMARY': {
@@ -959,18 +1011,45 @@ Ask me a question about your data to get started!`;
 
       case 'RANKING': {
         const items = Array.isArray(structuredData.ranking) ? structuredData.ranking : (Array.isArray(structuredData) ? structuredData : []);
-        const topItem = items[0];
-        if (topItem) {
+        const topItem = structuredData.top_performer || items[0];
+        if (topItem && Number(topItem.value || 0) > 0) {
           const topName = topItem.name || topItem.category || 'Top Item';
           const topVal = Number(topItem.value || 0).toLocaleString();
-          return `**${topName}** leads all categories with **${topVal}** in total ${metricName}. Top ${items.length} contributors account for the dominant portion of organizational output.`;
+          const topShare = topItem.share || topItem.percentage ? ` (${topItem.share || topItem.percentage}% of total)` : '';
+          let response = `**${topName}** generated the highest ${metricName} with **${topVal}**${topShare}.`;
+
+          if (structuredData.difference) {
+            response += ` It leads second-place **${structuredData.difference.runnerUp}** (${Number(structuredData.runner_up?.value || 0).toLocaleString()}) by **${Number(structuredData.difference.absoluteDifference).toLocaleString()}** (+${structuredData.difference.percentageDifference}%).`;
+          } else if (items.length > 1) {
+            const runnerUp = items[1];
+            const diff = Number(topItem.value || 0) - Number(runnerUp.value || 0);
+            const pct = runnerUp.value > 0 ? ((diff / runnerUp.value) * 100).toFixed(1) : 0;
+            response += ` It leads second-place **${runnerUp.name || runnerUp.category}** by **${diff.toLocaleString()}** (+${pct}%).`;
+          }
+
+          if (Array.isArray(structuredData.winning_drivers) && structuredData.winning_drivers.length > 0) {
+            const drivers = structuredData.winning_drivers
+              .slice(0, 2)
+              .map(d => `**${d.name || d.category}** (${Number(d.value || 0).toLocaleString()})`)
+              .join(' and ');
+            response += ` Performance was primarily driven by ${drivers}.`;
+          }
+
+          return response;
         }
-        return `Top contributors for **${metricName}** have been ranked according to total aggregated volume.`;
+        return `The selected dataset does not contain sufficient positive values for **${metricName}** to determine a category ranking.`;
       }
 
       case 'BREAKDOWN': {
         const items = Array.isArray(structuredData.breakdown) ? structuredData.breakdown : (Array.isArray(structuredData) ? structuredData : []);
-        return `Breakdown of **${metricName}** across ${items.length} categories. Primary segments represent the key drivers of distribution.`;
+        if (items.length > 0) {
+          const topItem = items[0];
+          const topName = topItem.name || topItem.category || 'Primary segment';
+          const topVal = Number(topItem.value || 0).toLocaleString();
+          const topPct = topItem.percentage ? ` (${topItem.percentage}%)` : '';
+          return `Breakdown of **${metricName}** across ${items.length} categories. **${topName}** leads with **${topVal}**${topPct}.`;
+        }
+        return `No breakdown records available for **${metricName}**.`;
       }
 
       case 'RELATIONAL_BREAKDOWN':

@@ -13,6 +13,7 @@ import {
   Download,
   Search,
   X,
+  Radio,
   ChevronDown,
   ExternalLink,
   Layers,
@@ -63,7 +64,7 @@ import {
   getAuthToken
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import RootCauseDrawer from '../components/RootCauseDrawer';
+import BusinessRadarDrawer from '../components/BusinessRadarDrawer';
 import ScenarioSimulatorModal from '../components/ScenarioSimulatorModal';
 import ShareModal from '../components/ShareModal';
 import AlertModal from '../components/AlertModal';
@@ -317,7 +318,7 @@ export default function AIInsightsPage() {
   // Modals
   const [selectedInsightForDetails, setSelectedInsightForDetails] = useState(null);
   const [isLearnMoreOpen, setIsLearnMoreOpen] = useState(false);
-  const [rootCauseInsight, setRootCauseInsight] = useState(null);
+  const [businessRadarInsight, setBusinessRadarInsight] = useState(null);
   const [simulatorData, setSimulatorData] = useState(null);
   const [shareModalConfig, setShareModalConfig] = useState({ isOpen: false, insightId: null, title: '' });
 
@@ -610,7 +611,7 @@ export default function AIInsightsPage() {
     if (ins.type === 'trend' || ins.type === 'growth') {
       setSimulatorData({ insight: ins, attribution: null });
     } else if (ins.dataset_id || ins.source_metadata?.dataset_id) {
-      setRootCauseInsight(ins);
+      setBusinessRadarInsight(ins);
     } else {
       setSelectedInsightForDetails(ins);
     }
@@ -1222,17 +1223,18 @@ export default function AIInsightsPage() {
                   {/* Button 2: Contextual Middle Action */}
                   <button
                     onClick={() => handleMiddleAction(ins)}
-                    className="h-8 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 flex items-center gap-1 transition cursor-pointer"
+                    id={`investigate-radar-btn-${ins.id}`}
+                    className="h-8 px-2.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] text-xs font-semibold hover:bg-slate-50 dark:hover:bg-[#334155] flex items-center gap-1 transition cursor-pointer"
                   >
                     {ins.type === 'trend' || ins.type === 'growth' ? (
                       <>
-                        <Compass className="w-3 h-3 text-purple-600" />
+                        <Compass className="w-3 h-3 text-purple-600 dark:text-purple-400" />
                         <span>Explore What-If</span>
                       </>
                     ) : (
                       <>
-                        <Layers className="w-3 h-3 text-rose-600" />
-                        <span>Investigate</span>
+                        <Radio className="w-3 h-3 text-rose-600 dark:text-[#FB7185]" />
+                        <span>Business Radar</span>
                       </>
                     )}
                   </button>
@@ -1613,12 +1615,12 @@ export default function AIInsightsPage() {
       {/* ------------------------------------------------------------------ */}
       {/* 8. CONNECTED COMPONENT MODALS & DRAWERS                            */}
       {/* ------------------------------------------------------------------ */}
-      <RootCauseDrawer
-        isOpen={Boolean(rootCauseInsight)}
-        onClose={() => setRootCauseInsight(null)}
-        insight={rootCauseInsight}
+      <BusinessRadarDrawer
+        isOpen={Boolean(businessRadarInsight)}
+        onClose={() => setBusinessRadarInsight(null)}
+        insight={businessRadarInsight}
         onLaunchSimulator={(ins, attr) => {
-          setRootCauseInsight(null);
+          setBusinessRadarInsight(null);
           setSimulatorData({ insight: ins, attribution: attr });
         }}
       />

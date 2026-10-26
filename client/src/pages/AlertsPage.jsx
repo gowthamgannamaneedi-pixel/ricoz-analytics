@@ -570,7 +570,7 @@ export default function AlertsPage() {
                         {/* Condition Expression */}
                         <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-600 dark:text-[#CBD5E1] flex-wrap">
                           <span className="font-semibold text-slate-800 dark:text-[#F8FAFC]">
-                            {alert.metric_name || 'Generic Metric'}
+                            {alert.metric_name || 'Target Metric'}
                           </span>
                           <span className="font-mono font-bold text-rose-600 dark:text-[#FB7185] bg-rose-50 dark:bg-[#2A1422] px-1.5 py-0.5 rounded border border-rose-100 dark:border-rose-900/40">
                             {condSymbol} {alert.threshold} {alert.metric_unit || ''}
@@ -578,7 +578,7 @@ export default function AlertsPage() {
                           <span className="text-slate-400 dark:text-[#94A3B8]">·</span>
                           <span className="text-[11px] text-slate-500 dark:text-[#94A3B8] flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            <span>Cooldown: {alert.cooldown_minutes || 60}m</span>
+                            <span>Notify Interval: {alert.cooldown_minutes || 60}m</span>
                           </span>
                         </div>
                       </div>

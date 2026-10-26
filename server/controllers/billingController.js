@@ -513,6 +513,93 @@ const billingController = {
   },
 
   /**
+   * GET /api/billing/invoices/:id/receipt
+   * Download official tax receipt / invoice PDF
+   */
+  async downloadInvoiceReceipt(req, res) {
+    try {
+      const orgId = req.user.organization_id;
+      const { id } = req.params;
+      const invoice = await paymentService.getInvoiceById(orgId, id);
+      if (!invoice) {
+        return res.status(404).json({ success: false, message: 'Invoice record not found' });
+      }
+
+      if (invoice.invoice_url && invoice.invoice_url.startsWith('http')) {
+        return res.redirect(invoice.invoice_url);
+      }
+
+      const PDFDocument = require('pdfkit');
+      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="Invoice-${invoice.receipt_number || invoice.id}.pdf"`);
+
+      doc.pipe(res);
+
+      // Header Brand
+      doc.fontSize(22).fillColor('#E11D48').text('RicozAnalytics', 50, 50);
+      doc.fontSize(10).fillColor('#64748B').text('Enterprise Cloud Business Intelligence & Telemetry', 50, 78);
+
+      doc.moveTo(50, 95).lineTo(545, 95).strokeColor('#E2E8F0').lineWidth(1).stroke();
+
+      // Invoice Details Block
+      doc.fontSize(16).fillColor('#0F172A').text('OFFICIAL PAYMENT RECEIPT', 50, 115);
+
+      doc.fontSize(10).fillColor('#475569');
+      doc.text(`Receipt Number: ${invoice.receipt_number || invoice.id}`, 50, 145);
+      doc.text(`Date of Issue: ${new Date(invoice.created_at || Date.now()).toLocaleDateString()}`, 50, 160);
+      doc.text(`Payment Status: ${(invoice.status || 'Paid').toUpperCase()}`, 50, 175);
+      if (invoice.razorpay_payment_id) {
+        doc.text(`Gateway Reference: ${invoice.razorpay_payment_id}`, 50, 190);
+      } else if (invoice.stripe_invoice_id) {
+        doc.text(`Gateway Reference: ${invoice.stripe_invoice_id}`, 50, 190);
+      }
+
+      // Customer Block
+      doc.fontSize(10).fillColor('#0F172A').text('Billed To:', 340, 145);
+      doc.fillColor('#475569');
+      doc.text(`Organization: ${req.user.organization_name || 'Enterprise Workspace'}`, 340, 160);
+      doc.text(`Account Email: ${req.user.email}`, 340, 175);
+
+      // Item Table
+      doc.rect(50, 220, 495, 24).fill('#F8FAFC');
+      doc.fillColor('#334155').fontSize(10).font('Helvetica-Bold');
+      doc.text('DESCRIPTION', 60, 227);
+      doc.text('CADENCE', 280, 227);
+      doc.text('AMOUNT', 480, 227, { align: 'right' });
+
+      doc.font('Helvetica').fontSize(10).fillColor('#0F172A');
+      const planName = (invoice.plan || 'Starter').toUpperCase();
+      doc.text(`RicozAnalytics SaaS Subscription - ${planName} Plan`, 60, 255);
+      doc.text('Monthly/Annual', 280, 255);
+      const isINR = (invoice.currency || 'inr').toLowerCase() === 'inr';
+      const sym = isINR ? '₹ ' : '$ ';
+      const amtStr = typeof invoice.amount === 'number'
+        ? `${sym}${invoice.amount.toLocaleString('en-IN')}`
+        : `${sym}${((invoice.amount_paid || 0) / 100).toLocaleString('en-IN')}`;
+      doc.text(amtStr, 480, 255, { align: 'right' });
+
+      doc.moveTo(50, 280).lineTo(545, 280).strokeColor('#E2E8F0').lineWidth(1).stroke();
+
+      // Total
+      doc.font('Helvetica-Bold').fontSize(12).fillColor('#0F172A');
+      doc.text('Total Paid:', 340, 295);
+      doc.text(amtStr, 480, 295, { align: 'right' });
+
+      // Footer
+      doc.font('Helvetica').fontSize(9).fillColor('#94A3B8');
+      doc.text('Thank you for subscribing to RicozAnalytics Enterprise Platform.', 50, 360, { align: 'center', width: 495 });
+      doc.text('For billing inquiries or tax support, contact billing@ricoz.in', 50, 375, { align: 'center', width: 495 });
+
+      doc.end();
+    } catch (err) {
+      console.error('[BillingController.downloadInvoiceReceipt] Error:', err.message);
+      return res.status(500).json({ success: false, message: 'Failed to generate receipt PDF' });
+    }
+  },
+
+  /**
    * DEV ONLY: Simulate trial expiration for integration tests
    */
   devSimulateTrialExpiry: async (req, res) => {
@@ -526,6 +613,7 @@ const billingController = {
         `UPDATE organizations SET trial_ends_at = $1, subscription_status = 'trial_expired' WHERE id = $2`,
         [pastDate, orgId]
       );
+      subscriptionService.clearOrganizationCache(orgId);
       return res.status(200).json({ success: true, message: 'Trial simulated as expired' });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });
@@ -549,6 +637,7 @@ const billingController = {
       if (plan !== undefined) updates.plan = plan;
 
       const updated = await subscriptionService.updateSubscription(orgId, updates);
+      subscriptionService.clearOrganizationCache(orgId);
       return res.status(200).json({ success: true, message: 'Dates updated for testing', organization: updated });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });

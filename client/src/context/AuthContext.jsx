@@ -286,13 +286,22 @@ export function AuthProvider({ children }) {
   };
 
   // Subscription & 14-Day Trial Helpers
+  const isPaid = subscription?.status === 'active';
+  const rawTrialEnd = subscription?.relevantEndDate || subscription?.trialEndsAt || subscription?.trial_ends_at;
+  const isTimeElapsed = rawTrialEnd ? new Date(rawTrialEnd).getTime() <= Date.now() : false;
   const isTrialExpired = Boolean(
-    subscription?.status === 'trial_expired' || 
-    (subscription?.daysRemaining <= 0 && subscription?.status !== 'active') ||
-    subscription?.hasWorkspaceAccess === false
+    !isPaid && (
+      subscription?.status === 'trial_expired' || 
+      subscription?.status === 'expired' ||
+      isTimeElapsed ||
+      (subscription?.daysRemaining != null && subscription.daysRemaining <= 0) ||
+      subscription?.hasWorkspaceAccess === false
+    )
   );
-  const trialDaysRemaining = subscription?.daysRemaining != null ? subscription.daysRemaining : 14;
-  const subscriptionStatus = subscription?.status || 'trial';
+  const trialDaysRemaining = rawTrialEnd && !isPaid
+    ? Math.max(0, Math.ceil((new Date(rawTrialEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : (subscription?.daysRemaining != null ? subscription.daysRemaining : 0);
+  const subscriptionStatus = isPaid ? 'active' : (isTrialExpired ? 'trial_expired' : (subscription?.status || 'trial'));
   const plan = subscription?.plan || 'starter';
 
   /**

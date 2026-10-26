@@ -1392,6 +1392,45 @@ export async function getBillingHistory() {
   return apiRequest('/billing/history');
 }
 
+/**
+ * Download official invoice receipt PDF
+ * @param {string} invoiceId
+ */
+export async function downloadInvoiceReceipt(invoiceId) {
+  const token = getAuthToken();
+  const orgId = getActiveOrganizationId();
+  const response = await fetch(`${API_BASE_URL}/billing/invoices/${encodeURIComponent(invoiceId)}/receipt`, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(orgId ? { 'X-Organization-Id': orgId } : {})
+    }
+  });
+
+  if (!response.ok) {
+    const errorJson = await response.json().catch(() => ({}));
+    throw new Error(errorJson.message || 'Failed to download receipt');
+  }
+
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    const json = await response.json();
+    if (json.invoice_url) {
+      window.open(json.invoice_url, '_blank');
+      return;
+    }
+  }
+
+  const blob = await response.blob();
+  const downloadUrl = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = downloadUrl;
+  a.download = `Invoice-${invoiceId}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(downloadUrl);
+}
+
 // ==========================================
 // PHASE 14: RELATIONAL DATA MODELING & JOINS
 // ==========================================
@@ -1739,6 +1778,15 @@ export async function submitAIInsightFeedback(id, feedback) {
 export async function getRootCauseAttribution(insightId, params = {}) {
   const query = new URLSearchParams(params).toString();
   return apiRequest(`/insights/${insightId}/root-cause${query ? `?${query}` : ''}`);
+}
+
+/**
+ * Phase 6: Retrieve Business Radar Telemetry for an insight
+ * @param {string} insightId 
+ * @param {{ dimension?: string, limit?: number }} [params={}] 
+ */
+export async function getBusinessRadar(insightId, params = {}) {
+  return getRootCauseAttribution(insightId, params);
 }
 
 /**

@@ -222,16 +222,29 @@ class InsightService {
           const dims = analyticsService.detectDatasetDimensions(schema, records.slice(0, 20));
 
           // A. Growth & Decline Detection
-          const trends = analyticsService.computeDatasetTrends(records, dims);
-        if (trends && trends.length >= 2) {
-          const prevPoint = trends[trends.length - 2];
-          const currPoint = trends[trends.length - 1];
-          const prevVal = Number(prevPoint.revenue || prevPoint.value || 0);
-          const currVal = Number(currPoint.revenue || currPoint.value || 0);
+          const rawTrends = analyticsService.computeDatasetTrends(records, dims);
+          // Filter out incomplete boundary buckets at the trailing edge (e.g. partial day with insufficient order volume)
+          const trends = [...(rawTrends || [])];
+          if (trends.length >= 2) {
+            const last = trends[trends.length - 1];
+            const secondLast = trends[trends.length - 2];
+            // If the trailing point has an incomplete sample (< 3 orders, or < 25% of the preceding point's orders when preceding has >= 10 orders), discard it as incomplete boundary bucket
+            if (records.length > 10 && last.orders !== undefined && secondLast.orders !== undefined) {
+              if (last.orders < 3 || (secondLast.orders >= 10 && last.orders < secondLast.orders * 0.25)) {
+                trends.pop();
+              }
+            }
+          }
 
-          if (prevVal > 0) {
-            const changePct = Number((((currVal - prevVal) / prevVal) * 100).toFixed(1));
-            const metricName = (dims.primaryMetric || 'revenue').replace(/_/g, ' ');
+          if (trends && trends.length >= 2) {
+            const prevPoint = trends[trends.length - 2];
+            const currPoint = trends[trends.length - 1];
+            const prevVal = Number(prevPoint.revenue || prevPoint.value || 0);
+            const currVal = Number(currPoint.revenue || currPoint.value || 0);
+
+            if (prevVal > 0) {
+              const changePct = Number((((currVal - prevVal) / prevVal) * 100).toFixed(1));
+              const metricName = (dims.primaryMetric || 'revenue').replace(/_/g, ' ');
 
             // Significant Growth (>= +10%)
             if (changePct >= 10) {

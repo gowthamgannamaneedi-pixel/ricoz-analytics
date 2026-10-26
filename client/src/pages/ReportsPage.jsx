@@ -968,8 +968,9 @@ export default function ReportsPage() {
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {filteredReports.map((r, idx) => {
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {filteredReports.slice(0, 4).map((r, idx) => {
                       const recipients = Array.isArray(r.recipients)
                         ? r.recipients
                         : (typeof r.recipients === 'string'
@@ -1185,7 +1186,20 @@ export default function ReportsPage() {
                       );
                     })}
                   </div>
-                )}
+                  {filteredReports.length > 4 && (
+                    <div className="mt-4 pt-3 flex items-center justify-between text-xs text-slate-500 dark:text-[#94A3B8] border-t border-slate-100 dark:border-[#334155]">
+                      <span>Showing top 4 featured reports ({filteredReports.length} total)</span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('history')}
+                        className="font-semibold text-rose-600 dark:text-[#FB7185] hover:underline cursor-pointer"
+                      >
+                        View Execution Logs &rarr;
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
               </div>
             </div>
 

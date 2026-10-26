@@ -214,13 +214,20 @@ class AIConversationModel {
       ORDER BY created_at ASC;
     `;
     const result = await db.query(sql, [conversationId]);
-    return (result.rows || []).map(row => ({
-      ...row,
-      query_plan: typeof row.query_plan === 'string' ? JSON.parse(row.query_plan) : (row.query_plan || {}),
-      data: typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || []),
-      visualization: typeof row.visualization === 'string' ? JSON.parse(row.visualization) : (row.visualization || null),
-      sources: typeof row.sources === 'string' ? JSON.parse(row.sources) : (row.sources || [])
-    }));
+    return (result.rows || []).map(row => {
+      const qPlan = typeof row.query_plan === 'string' ? JSON.parse(row.query_plan) : (row.query_plan || {});
+      return {
+        ...row,
+        query_plan: qPlan,
+        grounded: qPlan.grounded !== undefined ? qPlan.grounded : (row.confidence === 'high' && Array.isArray(row.sources) && row.sources.length > 0),
+        evidence_validated: qPlan.evidenceValidated !== undefined ? qPlan.evidenceValidated : false,
+        analysis_status: qPlan.analysisStatus || '',
+        table_data: qPlan.tableData || null,
+        data: typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || []),
+        visualization: typeof row.visualization === 'string' ? JSON.parse(row.visualization) : (row.visualization || null),
+        sources: typeof row.sources === 'string' ? JSON.parse(row.sources) : (row.sources || [])
+      };
+    });
   }
 
   /**

@@ -1,6 +1,11 @@
 const db = require('../config/database');
 const crypto = require('crypto');
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidUuid(val) {
+  return typeof val === 'string' && UUID_REGEX.test(val.trim());
+}
+
 /**
  * AI Automated Insights Data Access Model
  * Multi-tenant model for managing persistent, evidence-grounded AI insights and summaries.
@@ -75,7 +80,7 @@ const InsightModel = {
       id,
       String(organizationId),
       userId ? Number(userId) : null,
-      datasetId ? Number(datasetId) : null,
+      datasetId ? (isNaN(Number(datasetId)) ? String(datasetId) : Number(datasetId)) : null,
       metricId ? String(metricId) : null,
       dashboardId ? String(dashboardId) : null,
       type.toLowerCase(),
@@ -101,19 +106,23 @@ const InsightModel = {
    * @returns {Promise<any|null>}
    */
   async findByIdAndOrgId(id, organizationId) {
+    if (!isValidUuid(id) || !isValidUuid(organizationId)) {
+      return null;
+    }
+
     const sql = `
       SELECT 
         i.*,
         d.name AS dataset_name,
         m.name AS metric_name
       FROM ai_insights i
-      LEFT JOIN datasets d ON d.id = i.dataset_id
+      LEFT JOIN datasets d ON CAST(d.id AS TEXT) = CAST(i.dataset_id AS TEXT)
       LEFT JOIN metrics m ON m.id = i.metric_id
       WHERE i.id = $1 AND i.organization_id = $2
       LIMIT 1;
     `;
 
-    const result = await db.query(sql, [String(id), String(organizationId)]);
+    const result = await db.query(sql, [String(id).trim(), String(organizationId).trim()]);
     return result.rows[0] || null;
   },
 
@@ -233,6 +242,10 @@ const InsightModel = {
     sourceMetadata,
     recommendation
   } = {}) {
+    if (!isValidUuid(id) || !isValidUuid(organizationId)) {
+      return null;
+    }
+
     const fields = [];
     const params = [];
     let paramIndex = 1;
@@ -298,6 +311,10 @@ const InsightModel = {
    * @returns {Promise<Array<any>>}
    */
   async findByOrganizationId(organizationId, filters = {}) {
+    if (!isValidUuid(organizationId)) {
+      return [];
+    }
+
     const conditions = ['i.organization_id = $1'];
     const params = [String(organizationId)];
     let paramIndex = 2;
@@ -342,7 +359,7 @@ const InsightModel = {
           d.name AS dataset_name,
           m.name AS metric_name
         FROM ai_insights i
-        LEFT JOIN datasets d ON d.id = i.dataset_id
+        LEFT JOIN datasets d ON CAST(d.id AS TEXT) = CAST(i.dataset_id AS TEXT)
         LEFT JOIN metrics m ON m.id = i.metric_id
         WHERE ${conditions.join(' AND ')}
         ORDER BY i.created_at DESC
@@ -357,7 +374,7 @@ const InsightModel = {
             d.name AS dataset_name,
             m.name AS metric_name
           FROM ai_insights i
-          LEFT JOIN datasets d ON d.id = i.dataset_id
+          LEFT JOIN datasets d ON CAST(d.id AS TEXT) = CAST(i.dataset_id AS TEXT)
           LEFT JOIN metrics m ON m.id = i.metric_id
           WHERE ${conditions.join(' AND ')}
           ORDER BY i.type, COALESCE(i.dataset_id, 0), i.title, i.created_at DESC
@@ -381,6 +398,10 @@ const InsightModel = {
    * @returns {Promise<any|null>}
    */
   async updateStatus(id, organizationId, status) {
+    if (!isValidUuid(id) || !isValidUuid(organizationId)) {
+      return null;
+    }
+
     const sql = `
       UPDATE ai_insights
       SET status = $1
@@ -388,7 +409,7 @@ const InsightModel = {
       RETURNING *;
     `;
 
-    const result = await db.query(sql, [status.toLowerCase(), String(id), String(organizationId)]);
+    const result = await db.query(sql, [status.toLowerCase(), String(id).trim(), String(organizationId).trim()]);
     return result.rows[0] || null;
   },
 
@@ -400,6 +421,10 @@ const InsightModel = {
    * @returns {Promise<any|null>}
    */
   async updateFeedback(id, organizationId, feedback) {
+    if (!isValidUuid(id) || !isValidUuid(organizationId)) {
+      return null;
+    }
+
     const sql = `
       UPDATE ai_insights
       SET feedback = $1
@@ -407,7 +432,7 @@ const InsightModel = {
       RETURNING *;
     `;
 
-    const result = await db.query(sql, [feedback.toLowerCase(), String(id), String(organizationId)]);
+    const result = await db.query(sql, [feedback.toLowerCase(), String(id).trim(), String(organizationId).trim()]);
     return result.rows[0] || null;
   },
 
@@ -418,13 +443,17 @@ const InsightModel = {
    * @returns {Promise<any|null>}
    */
   async deleteByIdAndOrgId(id, organizationId) {
+    if (!isValidUuid(id) || !isValidUuid(organizationId)) {
+      return null;
+    }
+
     const sql = `
       DELETE FROM ai_insights
       WHERE id = $1 AND organization_id = $2
       RETURNING *;
     `;
 
-    const result = await db.query(sql, [String(id), String(organizationId)]);
+    const result = await db.query(sql, [String(id).trim(), String(organizationId).trim()]);
     return result.rows[0] || null;
   }
 };

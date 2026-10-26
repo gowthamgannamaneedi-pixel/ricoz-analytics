@@ -508,7 +508,7 @@ export default function GovernancePage() {
                 Workspace Governance & Audit Logs
               </h1>
               <p className="text-xs text-slate-500 dark:text-[#CBD5E1] font-medium mt-0.5">
-                Enterprise tenant administration, team access controls, RBAC matrix, and immutable audit trails
+                Manage team access controls, user permissions, and compliance audit logs.
               </p>
             </div>
           </div>
@@ -617,7 +617,7 @@ export default function GovernancePage() {
             }`}
           >
             <GitBranch className="w-4 h-4" />
-            RBAC Matrix
+            Permissions Matrix
           </button>
 
           <button

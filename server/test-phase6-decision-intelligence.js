@@ -605,6 +605,12 @@ async function runPhase6Tests() {
   const tokenAdminA = generateToken(1, 'admin@ricoz.test', 'admin', testOrgA);
   const tokenAdminB = generateToken(10, 'admin_b@other.test', 'admin', testOrgB);
 
+  // Ensure test organizations are entitled to insights
+  const dbModule = require('./config/database');
+  await dbModule.query("UPDATE organizations SET plan = 'enterprise', subscription_status = 'active' WHERE id = $1", [testOrgB]).catch(() => null);
+  const fbOrgB = dbModule.fallbackOrganizations?.find(o => o.id === testOrgB);
+  if (fbOrgB) fbOrgB.plan = 'enterprise';
+
   // Persist test insight in database/store for HTTP lookup
   const persistedInsight = await InsightModel.create({
     organizationId: testOrgA,

@@ -22,6 +22,7 @@ import {
   ChevronsLeft
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTrialCountdown } from '../hooks/useTrialCountdown';
 import UserAvatar, { getCleanDisplayName } from './ui/UserAvatar';
 import RoleBadge from './ui/RoleBadge';
 import Logo from './ui/Logo';
@@ -62,6 +63,7 @@ const navigation = [
  */
 export default function Sidebar({ isOpen, isCollapsed = false, onToggleCollapse, onCloseMobile, onClose }) {
   const { user, logout, subscription, isTrialExpired, trialDaysRemaining } = useAuth();
+  const trialCountdown = useTrialCountdown(subscription);
   const navigate = useNavigate();
 
   const displayName = getCleanDisplayName(user);
@@ -84,6 +86,8 @@ export default function Sidebar({ isOpen, isCollapsed = false, onToggleCollapse,
     if (onCloseMobile) onCloseMobile();
     else if (onClose) onClose();
   };
+
+  const isExpired = isTrialExpired || trialCountdown.isTrialExpired;
 
   return (
     <>
@@ -189,7 +193,7 @@ export default function Sidebar({ isOpen, isCollapsed = false, onToggleCollapse,
 
         {/* 14-Day Free Trial / License Upgrade Status Widget */}
         <div className="p-3 border-t border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827]">
-          {isTrialExpired ? (
+          {isExpired ? (
             <div className="p-3 rounded-xl border border-rose-200 dark:border-rose-900/80 bg-rose-50/80 dark:bg-[#2A1422] shadow-2xs space-y-2">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
@@ -209,11 +213,11 @@ export default function Sidebar({ isOpen, isCollapsed = false, onToggleCollapse,
                 Choose Plan &rarr;
               </button>
             </div>
-          ) : subscription?.status === 'active' ? (
+          ) : trialCountdown.isPaid || subscription?.status === 'active' ? (
             <div className="p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/60 dark:bg-emerald-950/40 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="font-bold text-emerald-900 dark:text-emerald-200 capitalize">{subscription?.plan || 'Enterprise'} Plan</span>
+                <span className="font-bold text-emerald-900 dark:text-emerald-200 capitalize">{trialCountdown.planName || subscription?.plan || 'Enterprise'} Plan</span>
               </div>
               <button
                 type="button"
@@ -234,13 +238,13 @@ export default function Sidebar({ isOpen, isCollapsed = false, onToggleCollapse,
                   <span>14-Day Free Trial</span>
                 </div>
                 <span className="text-[10px] font-mono font-bold text-rose-700 dark:text-[#FDA4AF] px-1.5 py-0.5 rounded bg-rose-100/70 dark:bg-[#2A1422] border border-rose-200 dark:border-rose-900/60">
-                  {trialDaysRemaining}d left
+                  {trialCountdown.sidebarBadgeText}
                 </span>
               </div>
               <div className="w-full bg-rose-200/60 dark:bg-[#1E293B] h-1.5 rounded-full overflow-hidden">
                 <div
-                  className="bg-rose-600 dark:bg-[#E11D48] h-full rounded-full transition-all"
-                  style={{ width: `${Math.max(5, Math.min(100, ((14 - trialDaysRemaining) / 14) * 100))}%` }}
+                  className="bg-rose-600 dark:bg-[#E11D48] h-full rounded-full transition-all duration-500"
+                  style={{ width: `${trialCountdown.progressPercent}%` }}
                 />
               </div>
               <button

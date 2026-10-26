@@ -346,12 +346,12 @@ export default function ExecutiveDashboard({
               Executive Overview
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-normal leading-relaxed">
-              Enterprise revenue telemetry, predictive forecasting models, and decision intelligence signals across connected datasets.
+              Key sales performance, revenue trends, and operational insights across your active dataset.
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-normal">
               <span className="font-semibold text-slate-700 dark:text-slate-300">{activeDataset?.name || 'Dataset'}</span>
               <span className="mx-2 text-slate-300 dark:text-slate-700">|</span>
-              <span>Telemetry {dateRangeLabel}</span>
+              <span>Date Range: {dateRangeLabel}</span>
               <span className="mx-2 text-slate-300 dark:text-slate-700">|</span>
               <span className="font-mono font-medium text-slate-700 dark:text-slate-300">{Number(kpiData?.recordCount || summaryData?.totalRows || tableData?.totalCount || 0).toLocaleString()} records</span>
             </p>
@@ -631,14 +631,14 @@ export default function ExecutiveDashboard({
             </div>
           </div>
 
-          {/* KPI 3: Total Unit Sold */}
+          {/* KPI 3: Total Units Sold */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[190px]">
             <div>
               <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs">
                   <Package className="h-5 w-5" />
                 </div>
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Total Unit Sold</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Total Units Sold</span>
               </div>
               <div className="mt-3.5 flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
@@ -656,7 +656,7 @@ export default function ExecutiveDashboard({
             </div>
             {/* Real Secondary Metric */}
             <div className="mt-3.5 pt-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
-              <span>Avg Unit Realization:</span>
+              <span>Avg Price per Unit:</span>
               <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
                 {kpiData?.totalQuantity > 0
                   ? formatCurrency(kpiData.totalSales / kpiData.totalQuantity)
@@ -796,10 +796,10 @@ export default function ExecutiveDashboard({
               </div>
               <div>
                 <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
-                  Sales Amount Realisation Trend
+                  Sales Revenue Trend
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                  Daily revenue performance and realization against dataset baseline.
+                  Daily revenue performance against dataset baseline.
                 </p>
               </div>
             </div>
@@ -810,7 +810,7 @@ export default function ExecutiveDashboard({
               <div className="flex items-center gap-3 text-xs font-semibold">
                 <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
                   <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
-                  <span>Realized Metric</span>
+                  <span>Actual Revenue</span>
                 </span>
                 <span className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
                   <span className="h-2.5 w-2.5 rounded-full bg-slate-300 dark:bg-slate-700" />
@@ -1185,7 +1185,7 @@ export default function ExecutiveDashboard({
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                     }`}
                   >
-                    {cat} ({decisionSignals.filter(s => (s.type || s.severity || 'general').toLowerCase() === cat).length})
+                    {cat === 'relationship' ? 'Correlations' : cat} ({decisionSignals.filter(s => (s.type || s.severity || 'general').toLowerCase() === cat).length})
                   </button>
                 ))}
               </div>
@@ -1300,13 +1300,13 @@ export default function ExecutiveDashboard({
         >
           <div>
             <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2">
-              <span>Recent Sales Transactions (Source Dataset)</span>
+              <span>Recent Sales Transactions</span>
               <span className="text-xs font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
                 {tableData.totalCount?.toLocaleString() || 0} Records
               </span>
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Live transactional records and order-level audit logs from the active enterprise database.
+              Sample transactions from the active dataset.
             </p>
           </div>
           <button

@@ -48,15 +48,15 @@ function formatMetricValue(val, type, unit) {
 
   if (isCurrency) {
     const symbol = unit === '$' ? '$' : '₹';
-    return `${symbol} ${num.toLocaleString()}`;
+    return `${symbol} ${num.toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: num % 1 !== 0 ? 2 : 0 })}`;
   }
   if (isPercentage) {
-    return `${num}%`;
+    return `${num.toLocaleString(undefined, { maximumFractionDigits: 2 })}%`;
   }
   if (unit) {
-    return `${num.toLocaleString()} ${unit}`;
+    return `${num.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${unit}`;
   }
-  return num.toLocaleString();
+  return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
 export default function KpisPage() {
@@ -358,7 +358,9 @@ export default function KpisPage() {
           </div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-normal">
             <span className="font-semibold text-slate-700 dark:text-slate-300">
-              {datasets.find(d => String(d.id) === String(datasetFilter))?.name || (datasets[0]?.name ?? 'Enterprise Telemetry')}
+              {datasetFilter === 'all'
+                ? 'All Datasets'
+                : (datasets.find(d => String(d.id) === String(datasetFilter))?.name || 'Dataset')}
             </span>
             <span className="mx-2 text-slate-300 dark:text-slate-700">|</span>
             <span>{metrics.length} tracked KPIs</span>
@@ -367,7 +369,7 @@ export default function KpisPage() {
           </p>
         </div>
 
-        {/* Action Buttons Row: Define Metric on Left, Dataset Selector & Refresh on Right */}
+        {/* Action Buttons Row: Add Metric on Left, Dataset Selector & Refresh on Right */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-0.5">
           <div>
             {!isViewer && (
@@ -378,7 +380,7 @@ export default function KpisPage() {
                 className="h-10 px-4 text-xs font-semibold rounded-xl shadow-xs gap-2"
               >
                 <Plus className="h-4 w-4" />
-                <span>Define Metric</span>
+                <span>Add Metric</span>
               </Button>
             )}
           </div>

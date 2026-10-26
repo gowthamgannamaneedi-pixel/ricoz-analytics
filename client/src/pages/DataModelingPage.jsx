@@ -351,7 +351,7 @@ export default function DataModelingPage() {
             Data Modeling & Relationships
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-normal leading-relaxed">
-            Define relational foreign keys and join boundaries across multi-table datasets.
+            Link datasets together on common fields (like Customer ID or Order ID) for combined reporting and AI insights.
           </p>
         </div>
 
@@ -366,7 +366,7 @@ export default function DataModelingPage() {
                 className="h-10 px-4 text-xs font-semibold rounded-xl shadow-xs gap-2"
               >
                 <Plus className="h-4 w-4" />
-                <span>New Relationship</span>
+                <span>Link Datasets</span>
               </Button>
             )}
 
@@ -380,7 +380,7 @@ export default function DataModelingPage() {
               className="h-10 px-4 text-xs font-semibold rounded-xl shadow-2xs gap-2"
             >
               <Play className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
-              <span>Test Relational Query</span>
+              <span>Preview Joined Data</span>
             </Button>
           </div>
 
@@ -399,7 +399,7 @@ export default function DataModelingPage() {
           <div className="flex items-center gap-2">
             <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
             <h2 className="text-sm font-bold tracking-tight text-slate-800 dark:text-slate-200">
-              Active Relational Architecture Graph
+              Connected Dataset Relationships
             </h2>
           </div>
           <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">

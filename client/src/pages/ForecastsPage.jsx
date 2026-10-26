@@ -939,7 +939,7 @@ export default function ForecastsPage() {
               {detectAnomaliesActive && (
                 <div className="space-y-1.5 bg-slate-50/70 dark:bg-[#0F172A] p-3 rounded-xl border border-slate-100 dark:border-[#334155]">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-slate-700 dark:text-[#CBD5E1]">Sensitivity (Z-score)</span>
+                    <span className="font-semibold text-slate-700 dark:text-[#CBD5E1]">Anomaly Sensitivity</span>
                     <span className="font-mono font-bold text-rose-700 dark:text-[#FB7185] px-2 py-0.5 bg-white dark:bg-[#1E293B] border border-rose-200 dark:border-[#334155] rounded-md">
                       {zThreshold}
                     </span>
@@ -1281,8 +1281,8 @@ export default function ForecastsPage() {
                   </div>
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      <span>MAE</span>
-                      <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" title="Mean Absolute Error" />
+                      <span>Mean Error (MAE)</span>
+                      <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" title="Average absolute difference between actual and predicted values" />
                     </div>
                     <p className="font-mono text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 truncate">
                       {forecastResult?.metrics?.mae !== undefined ? Number(forecastResult.metrics.mae).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 }) : '—'}
@@ -1297,8 +1297,8 @@ export default function ForecastsPage() {
                   </div>
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      <span>RMSE</span>
-                      <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" title="Root Mean Squared Error" />
+                      <span>Variance (RMSE)</span>
+                      <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" title="Standard deviation of prediction errors" />
                     </div>
                     <p className="font-mono text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 truncate">
                       {forecastResult?.metrics?.rmse !== undefined ? Number(forecastResult.metrics.rmse).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 }) : '—'}
@@ -1313,8 +1313,8 @@ export default function ForecastsPage() {
                   </div>
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      <span>MAPE</span>
-                      <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" title="Mean Absolute Percentage Error" />
+                      <span>Error Margin (MAPE)</span>
+                      <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" title="Average percentage difference between forecast and actuals" />
                     </div>
                     <p className="font-mono text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 truncate">
                       {forecastResult?.metrics?.mape !== undefined ? `${Number(forecastResult.metrics.mape).toFixed(1)}%` : '—'}
@@ -1329,8 +1329,8 @@ export default function ForecastsPage() {
                   </div>
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      <span>R² Score</span>
-                      <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" title="Coefficient of Determination (R-squared)" />
+                      <span>Trend Fit (R²)</span>
+                      <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" title="How well the trend model explains historical fluctuations (0 to 1)" />
                     </div>
                     <p className="font-mono text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-400 truncate">
                       {forecastResult?.metrics?.r2 !== undefined ? Number(forecastResult.metrics.r2).toFixed(3) : '—'}

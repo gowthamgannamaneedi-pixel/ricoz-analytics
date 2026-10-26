@@ -103,8 +103,8 @@ async function runTests() {
       userId: 1,
       name: 'Enterprise Indian Telemetry Q4',
       description: 'Q4 regional transaction telemetry',
-      filePath: '',
-      rowCount: 1000,
+      filePath: '1/sample_sales_q4.csv',
+      rowCount: 20,
       columnCount: 6,
       schema: [
         { name: 'date', type: 'date' },

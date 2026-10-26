@@ -21,13 +21,15 @@ import {
   Tag,
   History,
   ArrowDownRight,
-  Receipt,
   RotateCcw,
   RefreshCw,
   XCircle,
-  X
+  X,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTrialCountdown } from '../hooks/useTrialCountdown';
 import {
   getBillingPlans,
   getBillingSubscription,
@@ -123,6 +125,7 @@ export default function BillingPage() {
   const [billingInterval, setBillingInterval] = useState('monthly'); // 'monthly' | 'yearly'
   const [plans, setPlans] = useState(DEFAULT_LAUNCH_PLANS);
   const [currentSub, setCurrentSub] = useState(subscription || null);
+  const trialCountdown = useTrialCountdown(currentSub);
   const [invoices, setInvoices] = useState([]);
   const [orders, setOrders] = useState([]);
   const [history, setHistory] = useState([]);
@@ -133,8 +136,19 @@ export default function BillingPage() {
   const [downgradeConfirmTarget, setDowngradeConfirmTarget] = useState(null);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [verificationStep, setVerificationStep] = useState('');
+  const [isAuditOpen, setIsAuditOpen] = useState(false);
   const [error, setError] = useState(location.state?.trialExpired ? 'Your 14-day free trial has completed. Please choose a plan to continue accessing your workspace.' : '');
   const [successMessage, setSuccessMessage] = useState(location.state?.paymentSuccess ? 'Payment confirmed! Your enterprise workspace is now active.' : '');
+
+  // Keep currentSub in sync with AuthContext subscription updates
+  useEffect(() => {
+    if (subscription) {
+      setCurrentSub((prev) => ({
+        ...prev,
+        ...subscription
+      }));
+    }
+  }, [subscription]);
 
   const PLAN_ORDER = ['starter', 'growth', 'enterprise'];
   const comparePlanIds = (a, b) => PLAN_ORDER.indexOf(String(a || 'starter').toLowerCase()) - PLAN_ORDER.indexOf(String(b || 'starter').toLowerCase());
@@ -207,6 +221,10 @@ export default function BillingPage() {
     loadData();
     return () => { isMounted = false; };
   }, []);
+
+  const daysRemaining = trialCountdown.daysRemaining;
+  const isExpired = trialCountdown.isTrialExpired || isTrialExpired;
+  const isActivePaid = trialCountdown.isPaid || currentSub?.status === 'active';
 
   // Handle Razorpay checkout & cryptographic verification
   const handleUpgrade = async (planId) => {
@@ -454,10 +472,6 @@ export default function BillingPage() {
     }
   };
 
-  const daysRemaining = currentSub?.daysRemaining != null ? currentSub.daysRemaining : 14;
-  const isExpired = currentSub?.status === 'trial_expired' || (daysRemaining <= 0 && currentSub?.status !== 'active') || isTrialExpired;
-  const isActivePaid = currentSub?.status === 'active';
-
   return (
     <div className="space-y-6 pb-16 font-sans">
       {/* Top Banner if Trial Expired */}
@@ -494,11 +508,9 @@ export default function BillingPage() {
                 {isActivePaid ? 'Subscription Renewal Approaching' : 'Free Trial Ending Soon'} — {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining
               </p>
               <p className="text-xs text-amber-950/90 dark:text-amber-200/90 mt-0.5">
-                Your {currentSub?.planDetails?.name || currentSub?.plan || 'Starter'} plan {isActivePaid ? 'renews or expires' : 'trial ends'} on{' '}
+                Your {trialCountdown.planName || currentSub?.plan || 'Starter'} plan {isActivePaid ? 'renews or expires' : 'trial ends'} on{' '}
                 <span className="font-bold underline">
-                  {currentSub?.relevantEndDate || currentSub?.currentPeriodEnd || currentSub?.trialEndsAt
-                    ? new Date(currentSub.relevantEndDate || currentSub.currentPeriodEnd || currentSub.trialEndsAt).toLocaleDateString()
-                    : 'soon'}
+                  {trialCountdown.endDateFormatted || 'soon'}
                 </span>. Your workspace datasets and models remain 100% preserved.
               </p>
             </div>
@@ -585,41 +597,68 @@ export default function BillingPage() {
             ) : isExpired ? (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border border-rose-200/90 dark:border-rose-900/60 whitespace-nowrap shadow-2xs">
                 <Clock className="w-3.5 h-3.5 text-rose-600 dark:text-[#FB7185]" />
-                Free Trial Expired
+                Trial Expired
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border border-rose-200/90 dark:border-rose-900/60 whitespace-nowrap shadow-2xs">
                 <Clock className="w-3.5 h-3.5 text-rose-600 dark:text-[#FB7185]" />
-                {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining
+                {trialCountdown.trialStatusText}
               </span>
             )}
           </div>
 
           <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC] capitalize leading-snug">
-            {currentSub?.planDetails?.name || currentSub?.plan || 'Enterprise'} Plan {isActivePaid ? `(${currentSub?.billingInterval || 'Monthly'})` : '(Trial Period)'}
+            {trialCountdown.planName || currentSub?.plan || 'Enterprise'} Plan
+            <span className="text-xs sm:text-sm font-normal text-slate-500 dark:text-[#94A3B8] ml-2">
+              ({currentSub?.billingInterval ? (currentSub.billingInterval.charAt(0).toUpperCase() + currentSub.billingInterval.slice(1)) : (isActivePaid ? 'Monthly' : '14-Day Free Trial')})
+            </span>
           </div>
 
-          {/* Server-Side Reliable Dates */}
+          {/* Server-Side Authoritative Dates */}
           <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 dark:bg-[#0F172A] p-2.5 rounded-xl border border-slate-100 dark:border-[#334155]">
             <div>
               <span className="text-slate-400 dark:text-[#94A3B8] block font-medium">Started</span>
               <span className="text-slate-700 dark:text-[#CBD5E1] font-semibold">
-                {currentSub?.subscriptionStartDate || currentSub?.trialStartedAt
-                  ? new Date(currentSub.subscriptionStartDate || currentSub.trialStartedAt).toLocaleDateString()
-                  : 'Active'}
+                {trialCountdown.startDateFormatted || 'Active'}
               </span>
             </div>
             <div>
               <span className="text-slate-400 dark:text-[#94A3B8] block font-medium">
                 {isActivePaid ? (currentSub?.cancelAtPeriodEnd ? 'Ends On' : 'Renews On') : 'Trial Ends'}
               </span>
-              <span className={`font-semibold ${daysRemaining <= 10 ? 'text-rose-600 dark:text-[#FB7185] font-bold' : 'text-slate-700 dark:text-[#CBD5E1]'}`}>
-                {currentSub?.relevantEndDate || currentSub?.currentPeriodEnd || currentSub?.trialEndsAt
-                  ? new Date(currentSub.relevantEndDate || currentSub.currentPeriodEnd || currentSub.trialEndsAt).toLocaleDateString()
-                  : 'N/A'}
+              <span className={`font-semibold ${daysRemaining <= 10 && !isActivePaid ? 'text-rose-600 dark:text-[#FB7185] font-bold' : 'text-slate-700 dark:text-[#CBD5E1]'}`}>
+                {trialCountdown.endDateFormatted || (isActivePaid ? 'Active' : 'Pending')}
               </span>
             </div>
           </div>
+
+          {/* Genuine Backend Financial Fields (Only Rendered When Real Data Exists) */}
+          {(currentSub?.nextInvoiceAmount != null || currentSub?.amountDue != null) && (
+            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-[#94A3B8]">
+              <span>Next Invoice Amount</span>
+              <span className="font-semibold text-slate-800 dark:text-[#F8FAFC]">
+                ₹{Number((currentSub.nextInvoiceAmount ?? currentSub.amountDue) / 100).toLocaleString('en-IN')}
+              </span>
+            </div>
+          )}
+
+          {currentSub?.paymentMethod && (
+            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-[#94A3B8]">
+              <span>Payment Method</span>
+              <span className="font-semibold text-slate-800 dark:text-[#F8FAFC]">
+                {currentSub.paymentMethod}
+              </span>
+            </div>
+          )}
+
+          {currentSub?.outstandingBalance != null && currentSub.outstandingBalance > 0 && (
+            <div className="flex items-center justify-between text-xs text-rose-600 dark:text-rose-400">
+              <span>Outstanding Balance</span>
+              <span className="font-bold">
+                ₹{Number(currentSub.outstandingBalance / 100).toLocaleString('en-IN')}
+              </span>
+            </div>
+          )}
 
           {/* Scheduled Downgrade Notice */}
           {currentSub?.scheduledDowngradePlan && (
@@ -1019,7 +1058,7 @@ export default function BillingPage() {
           </p>
         </div>
 
-        {/* Enterprise Security & Guarantee Badges */}
+        {/* Enterprise Security & Payment Verification Information */}
         <div className="rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 shadow-2xs">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left">
             <div className="flex items-center gap-3">
@@ -1027,9 +1066,9 @@ export default function BillingPage() {
                 <Lock className="w-5 h-5" />
               </div>
               <div className="text-xs">
-                <p className="font-bold text-slate-900 dark:text-[#F8FAFC]">256-Bit SSL Encryption</p>
+                <p className="font-bold text-slate-900 dark:text-[#F8FAFC]">Encrypted Transactions</p>
                 <p className="text-slate-500 dark:text-[#94A3B8] mt-0.5 text-[11px]">
-                  All transactions are cryptographically secured via Razorpay PCI-DSS Level 1 certified gateway with HMAC-SHA256 signature verification.
+                  Transactions are cryptographically processed via Razorpay gateway using HMAC-SHA256 signature verification.
                 </p>
               </div>
             </div>
@@ -1039,9 +1078,9 @@ export default function BillingPage() {
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div className="text-xs">
-                <p className="font-bold text-slate-900 dark:text-[#F8FAFC]">Zero Data Loss Guarantee</p>
+                <p className="font-bold text-slate-900 dark:text-[#F8FAFC]">Data Retention</p>
                 <p className="text-slate-500 dark:text-[#94A3B8] mt-0.5 text-[11px]">
-                  Your datasets, models, and dashboards remain safely preserved upon trial end or plan downgrade.
+                  Your datasets, models, and dashboards remain safely preserved in your workspace upon trial expiration or plan changes.
                 </p>
               </div>
             </div>
@@ -1051,9 +1090,9 @@ export default function BillingPage() {
                 <HelpCircle className="w-5 h-5" />
               </div>
               <div className="text-xs">
-                <p className="font-bold text-slate-900 dark:text-[#F8FAFC]">Enterprise Invoicing & GST</p>
+                <p className="font-bold text-slate-900 dark:text-[#F8FAFC]">Enterprise Invoicing & Support</p>
                 <p className="text-slate-500 dark:text-[#94A3B8] mt-0.5 text-[11px]">
-                  Need custom PO billing or wire transfer?{' '}
+                  Need custom purchase orders or assistance?{' '}
                   <a href="mailto:sales@ricoz.in" className="text-rose-600 dark:text-[#FB7185] underline font-semibold">
                     Contact Enterprise Sales
                   </a>
@@ -1063,163 +1102,14 @@ export default function BillingPage() {
           </div>
         </div>
 
-        {/* Razorpay Orders & Transaction Ledger */}
-        {orders && orders.length > 0 && (
-          <div className="rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] overflow-hidden shadow-2xs">
-            <div className="px-6 py-4 border-b border-slate-200 dark:border-[#334155] flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Receipt className="w-4 h-4 text-slate-700 dark:text-[#CBD5E1]" />
-                  <h2 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Razorpay Payment Gateway Orders</h2>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">Authoritative order records and cryptographic transaction IDs</p>
-              </div>
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-[#94A3B8] bg-slate-100 dark:bg-[#1E293B] px-2.5 py-1 rounded-md border border-slate-200 dark:border-[#334155]">
-                {orders.length} {orders.length === 1 ? 'Order' : 'Orders'}
-              </span>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-slate-100 dark:border-[#334155] bg-slate-50/70 dark:bg-[#1E293B] text-slate-500 dark:text-[#CBD5E1] font-semibold uppercase tracking-wider text-[10px]">
-                    <th className="py-3 px-6">Order ID</th>
-                    <th className="py-3 px-6">Payment ID</th>
-                    <th className="py-3 px-6">Plan / Interval</th>
-                    <th className="py-3 px-6">Amount</th>
-                    <th className="py-3 px-6">Status</th>
-                    <th className="py-3 px-6">Date</th>
-                    <th className="py-3 px-6 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-[#334155] text-slate-700 dark:text-[#CBD5E1]">
-                  {orders.map((ord) => {
-                    const isPaid = ord.status === 'paid';
-                    const isFailed = ord.status === 'failed';
-                    const amt = (Number(ord.amount_paise || 0) / 100).toLocaleString('en-IN');
-
-                    return (
-                      <tr key={ord.id || ord.order_id} className="hover:bg-slate-50/50 dark:hover:bg-[#1E293B]/50">
-                        <td className="py-3 px-6 font-mono font-medium text-slate-900 dark:text-[#F8FAFC]">
-                          {ord.order_id}
-                        </td>
-                        <td className="py-3 px-6 font-mono text-[11px] text-slate-600 dark:text-[#94A3B8]">
-                          {ord.payment_id || '—'}
-                        </td>
-                        <td className="py-3 px-6 capitalize">
-                          <span className="font-semibold text-slate-900 dark:text-[#F8FAFC]">{ord.plan_id}</span> ({ord.billing_interval || 'monthly'})
-                        </td>
-                        <td className="py-3 px-6 font-semibold">₹{amt}</td>
-                        <td className="py-3 px-6">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                            isPaid
-                              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60'
-                              : isFailed
-                              ? 'bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border-rose-200 dark:border-rose-900/60'
-                              : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60'
-                          }`}>
-                            {ord.status || 'Created'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-6 font-mono text-[11px] text-slate-500 dark:text-[#94A3B8]">
-                          {ord.created_at ? new Date(ord.created_at).toLocaleDateString() : '—'}
-                        </td>
-                        <td className="py-3 px-6 text-right">
-                          {isFailed ? (
-                            <button
-                              type="button"
-                              onClick={() => handleUpgrade(ord.plan_id)}
-                              className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 dark:text-[#FB7185] hover:underline cursor-pointer"
-                            >
-                              <RotateCcw className="w-3 h-3" />
-                              <span>Retry Payment</span>
-                            </button>
-                          ) : (
-                            <span className="text-[11px] font-mono text-slate-400 dark:text-[#64748B]">
-                              {ord.receipt || 'Verified'}
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Invoices History Table */}
+        {/* Subscription & Entitlement Audit History (Separate Compact Collapsible Section) */}
         <div className="rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] overflow-hidden shadow-2xs">
-          <div className="px-6 py-4 border-b border-slate-200 dark:border-[#334155] flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Billing History & Invoices</h2>
-              <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">Download official tax invoices and receipts for accounting records</p>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-slate-100 dark:border-[#334155] bg-slate-50/70 dark:bg-[#1E293B] text-slate-500 dark:text-[#CBD5E1] font-semibold uppercase tracking-wider text-[10px]">
-                  <th className="py-3 px-6">Invoice ID</th>
-                  <th className="py-3 px-6">Payment Reference</th>
-                  <th className="py-3 px-6">Date</th>
-                  <th className="py-3 px-6">Amount</th>
-                  <th className="py-3 px-6">Status</th>
-                  <th className="py-3 px-6 text-right">Receipt</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-[#334155] text-slate-700 dark:text-[#CBD5E1]">
-                {invoices && invoices.length > 0 ? (
-                  invoices.map((inv) => {
-                    const isINR = (inv.currency || 'inr').toLowerCase() === 'inr';
-                    const sym = isINR ? '₹' : '$';
-                    const formattedAmt = typeof inv.amount === 'number'
-                      ? inv.amount.toLocaleString('en-IN')
-                      : ((inv.amount_paid || 0) / 100).toLocaleString('en-IN');
-                    const paymentRef = inv.razorpay_payment_id || inv.razorpay_order_id || inv.stripe_invoice_id || '—';
-
-                    return (
-                      <tr key={inv.id} className="hover:bg-slate-50/50 dark:hover:bg-[#1E293B]/50">
-                        <td className="py-3 px-6 font-mono font-medium text-slate-900 dark:text-[#F8FAFC]">{inv.id}</td>
-                        <td className="py-3 px-6 font-mono text-[11px] text-slate-600 dark:text-[#94A3B8]">
-                          {paymentRef}
-                        </td>
-                        <td className="py-3 px-6">{new Date(inv.created_at || Date.now()).toLocaleDateString()}</td>
-                        <td className="py-3 px-6 font-semibold">{sym}{formattedAmt}</td>
-                        <td className="py-3 px-6">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 uppercase">
-                            {inv.status || 'Paid'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-6 text-right">
-                          <button
-                            type="button"
-                            onClick={() => alert(`Receipt Reference: ${inv.receipt_number || inv.razorpay_payment_id || inv.id}`)}
-                            className="text-rose-600 dark:text-[#FB7185] hover:text-rose-700 dark:hover:text-rose-400 font-semibold cursor-pointer"
-                          >
-                            Receipt &darr;
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400 dark:text-[#64748B] text-xs">
-                      No invoices yet. Your 14-day free trial does not generate billing charges.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Subscription & Entitlement Audit History */}
-        <div className="rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] overflow-hidden shadow-2xs">
-          <div className="px-6 py-4 border-b border-slate-200 dark:border-[#334155] flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setIsAuditOpen((prev) => !prev)}
+            className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-slate-50/50 dark:hover:bg-[#1E293B]/30 transition-colors cursor-pointer border-b border-transparent data-[open=true]:border-slate-200 dark:data-[open=true]:border-[#334155]"
+            data-open={isAuditOpen}
+          >
             <div>
               <div className="flex items-center gap-2">
                 <History className="w-4 h-4 text-slate-700 dark:text-[#CBD5E1]" />
@@ -1229,89 +1119,98 @@ export default function BillingPage() {
                 Immutable event record of upgrades, scheduled downgrades, renewals, and cancellations
               </p>
             </div>
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-[#94A3B8] bg-slate-100 dark:bg-[#1E293B] px-2.5 py-1 rounded-md border border-slate-200 dark:border-[#334155]">
-              {history.length} {history.length === 1 ? 'Event' : 'Events'}
-            </span>
-          </div>
+            <div className="flex items-center gap-2.5">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-[#94A3B8] bg-slate-100 dark:bg-[#1E293B] px-2.5 py-1 rounded-md border border-slate-200 dark:border-[#334155]">
+                {history.length} {history.length === 1 ? 'Event' : 'Events'}
+              </span>
+              {isAuditOpen ? (
+                <ChevronUp className="w-4 h-4 text-slate-400" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-slate-400" />
+              )}
+            </div>
+          </button>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-slate-100 dark:border-[#334155] bg-slate-50/70 dark:bg-[#1E293B] text-slate-500 dark:text-[#CBD5E1] font-semibold uppercase tracking-wider text-[10px]">
-                  <th className="py-3 px-6">Event</th>
-                  <th className="py-3 px-6">Plan Transition</th>
-                  <th className="py-3 px-6">Billing Cycle</th>
-                  <th className="py-3 px-6">Effective Date</th>
-                  <th className="py-3 px-6">Status</th>
-                  <th className="py-3 px-6 text-right">Recorded At</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-[#334155] text-slate-700 dark:text-[#CBD5E1]">
-                {history && history.length > 0 ? (
-                  history.map((ev) => {
-                    const badgeClass =
-                      ev.event_type === 'upgrade'
-                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60'
-                        : ev.event_type === 'downgrade_scheduled'
-                        ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60'
-                        : ev.event_type === 'downgrade_applied'
-                        ? 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800/60'
-                        : ev.event_type === 'cancelled'
-                        ? 'bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border-rose-200 dark:border-rose-900/60'
-                        : 'bg-slate-50 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] border-slate-200 dark:border-[#334155]';
+          {isAuditOpen && (
+            history && history.length > 0 ? (
+              <div className="overflow-x-auto border-t border-slate-200 dark:border-[#334155]">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-100 dark:border-[#334155] bg-slate-50/70 dark:bg-[#1E293B] text-slate-500 dark:text-[#CBD5E1] font-semibold uppercase tracking-wider text-[10px]">
+                      <th className="py-2.5 px-5">Event</th>
+                      <th className="py-2.5 px-5">Plan Transition</th>
+                      <th className="py-2.5 px-5">Billing Cycle</th>
+                      <th className="py-2.5 px-5">Effective Date</th>
+                      <th className="py-2.5 px-5">Status</th>
+                      <th className="py-2.5 px-5 text-right">Recorded At</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-[#334155] text-slate-700 dark:text-[#CBD5E1]">
+                    {history.map((ev) => {
+                      const badgeClass =
+                        ev.event_type === 'upgrade'
+                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60'
+                          : ev.event_type === 'downgrade_scheduled'
+                          ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60'
+                          : ev.event_type === 'downgrade_applied'
+                          ? 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800/60'
+                          : ev.event_type === 'cancelled'
+                          ? 'bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border-rose-200 dark:border-rose-900/60'
+                          : 'bg-slate-50 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] border-slate-200 dark:border-[#334155]';
 
-                    const eventLabel =
-                      ev.event_type === 'downgrade_scheduled'
-                        ? 'Downgrade Scheduled'
-                        : ev.event_type === 'downgrade_applied'
-                        ? 'Downgrade Applied'
-                        : ev.event_type ? ev.event_type.charAt(0).toUpperCase() + ev.event_type.slice(1) : 'Event';
+                      const eventLabel =
+                        ev.event_type === 'downgrade_scheduled'
+                          ? 'Downgrade Scheduled'
+                          : ev.event_type === 'downgrade_applied'
+                          ? 'Downgrade Applied'
+                          : ev.event_type ? ev.event_type.charAt(0).toUpperCase() + ev.event_type.slice(1) : 'Event';
 
-                    return (
-                      <tr key={ev.id || `${ev.event_type}-${ev.created_at}`} className="hover:bg-slate-50/50 dark:hover:bg-[#1E293B]/50">
-                        <td className="py-3 px-6">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider ${badgeClass}`}>
-                            {eventLabel}
-                          </span>
-                        </td>
-                        <td className="py-3 px-6 font-medium">
-                          {ev.from_plan ? (
-                            <span className="inline-flex items-center gap-1.5 capitalize">
-                              <span className="text-slate-500 dark:text-[#94A3B8]">{ev.from_plan}</span>
-                              <ArrowRight className="w-3 h-3 text-slate-400 dark:text-slate-500" />
-                              <span className="text-slate-900 dark:text-[#F8FAFC] font-bold">{ev.to_plan || 'None'}</span>
+                      return (
+                        <tr key={ev.id || `${ev.event_type}-${ev.created_at}`} className="hover:bg-slate-50/50 dark:hover:bg-[#1E293B]/50 transition-colors">
+                          <td className="py-3 px-5">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider ${badgeClass}`}>
+                              {eventLabel}
                             </span>
-                          ) : (
-                            <span className="capitalize text-slate-900 dark:text-[#F8FAFC] font-bold">{ev.to_plan || 'Initial Setup'}</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-6 capitalize text-slate-600 dark:text-[#CBD5E1]">
-                          {ev.billing_interval || 'Monthly'}
-                        </td>
-                        <td className="py-3 px-6 text-slate-600 dark:text-[#CBD5E1]">
-                          {ev.effective_date ? new Date(ev.effective_date).toLocaleDateString() : 'Immediate'}
-                        </td>
-                        <td className="py-3 px-6">
-                          <span className="text-[11px] font-semibold text-slate-700 dark:text-[#CBD5E1] capitalize">
-                            {ev.status || 'Processed'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-6 text-right font-mono text-[11px] text-slate-500 dark:text-[#94A3B8]">
-                          {ev.created_at ? new Date(ev.created_at).toLocaleString() : '—'}
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400 dark:text-[#64748B] text-xs">
-                      No subscription change events recorded yet. Plan transitions, upgrades, and scheduled downgrades will appear here.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                          </td>
+                          <td className="py-3 px-5 font-medium">
+                            {ev.from_plan ? (
+                              <span className="inline-flex items-center gap-1.5 capitalize">
+                                <span className="text-slate-500 dark:text-[#94A3B8]">{ev.from_plan}</span>
+                                <ArrowRight className="w-3 h-3 text-slate-400 dark:text-slate-500" />
+                                <span className="text-slate-900 dark:text-[#F8FAFC] font-bold">{ev.to_plan || 'None'}</span>
+                              </span>
+                            ) : (
+                              <span className="capitalize text-slate-900 dark:text-[#F8FAFC] font-bold">{ev.to_plan || 'Initial Setup'}</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-5 capitalize text-slate-600 dark:text-[#CBD5E1]">
+                            {ev.billing_interval || 'Monthly'}
+                          </td>
+                          <td className="py-3 px-5 text-slate-600 dark:text-[#CBD5E1]">
+                            {ev.effective_date ? new Date(ev.effective_date).toLocaleDateString() : 'Immediate'}
+                          </td>
+                          <td className="py-3 px-5">
+                            <span className="text-[11px] font-semibold text-slate-700 dark:text-[#CBD5E1] capitalize">
+                              {ev.status || 'Processed'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-5 text-right font-mono text-[11px] text-slate-500 dark:text-[#94A3B8]">
+                            {ev.created_at ? new Date(ev.created_at).toLocaleString() : '—'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              /* Compact Empty Note for 0 Events */
+              <div className="py-6 px-4 text-center flex items-center justify-center gap-2 text-xs text-slate-400 dark:text-[#64748B] border-t border-slate-200 dark:border-[#334155]">
+                <History className="w-4 h-4" />
+                <span>No subscription changes recorded yet.</span>
+              </div>
+            )
+          )}
         </div>
 
         {/* Cryptographic Payment Verification Modal */}
@@ -1322,9 +1221,9 @@ export default function BillingPage() {
                 <ShieldCheck className="h-7 w-7 animate-pulse" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-[#F8FAFC]">Cryptographic Verification</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-[#F8FAFC]">Verifying Payment</h3>
                 <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1.5 leading-relaxed">
-                  {verificationStep || 'Authoritatively validating payment signature and activating enterprise entitlements...'}
+                  {verificationStep || 'Validating payment confirmation and activating your plan...'}
                 </p>
               </div>
               <div className="flex items-center justify-center gap-2 text-xs font-mono text-rose-600 dark:text-[#FB7185] bg-rose-50 dark:bg-[#2A1422] py-2 px-3 rounded-lg border border-rose-100 dark:border-rose-900/40">
@@ -1381,7 +1280,7 @@ export default function BillingPage() {
                 <div className="flex items-start gap-2.5">
                   <ShieldCheck className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" />
                   <span>
-                    <strong>Zero Data Loss:</strong> All existing datasets, dashboards, team members, and audit history will remain intact and securely preserved.
+                    <strong>Data Retention:</strong> All existing datasets, dashboards, team members, and audit history remain safely preserved in your workspace.
                   </span>
                 </div>
                 <div className="flex items-start gap-2.5">

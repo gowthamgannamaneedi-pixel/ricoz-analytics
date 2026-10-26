@@ -64,6 +64,22 @@ function formatDate(dateString) {
 }
 
 /**
+ * Windowed pagination helper to prevent horizontal row blowout
+ */
+function getPaginationItems(current, total) {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  if (current <= 4) {
+    return [1, 2, 3, 4, 5, '...', total];
+  }
+  if (current >= total - 3) {
+    return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+  }
+  return [1, '...', current - 1, current, current + 1, '...', total];
+}
+
+/**
  * Enterprise Datasets Table Component
  * Matches the reference layout, typography, controls, actions, and pagination
  */
@@ -751,21 +767,34 @@ export default function DatasetTable({
               <ChevronLeft className="h-4 w-4" />
             </button>
 
-            {/* Page number buttons */}
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-              <button
-                key={pageNum}
-                onClick={() => setCurrentPage(pageNum)}
-                id={`pagination-page-${pageNum}`}
-                className={`h-7 min-w-[28px] px-2 rounded-lg text-xs font-semibold transition ${
-                  validPage === pageNum
-                    ? 'bg-rose-600 text-white shadow-2xs'
-                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
-              >
-                {pageNum}
-              </button>
-            ))}
+            {/* Page number buttons with windowing */}
+            {getPaginationItems(validPage, totalPages).map((item, idx) => {
+              if (item === '...') {
+                return (
+                  <span
+                    key={`ellipsis-${idx}`}
+                    className="h-7 min-w-[28px] px-1 flex items-center justify-center text-xs text-slate-400 dark:text-slate-500 select-none"
+                  >
+                    …
+                  </span>
+                );
+              }
+              const pageNum = Number(item);
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  id={`pagination-page-${pageNum}`}
+                  className={`h-7 min-w-[28px] px-2 rounded-lg text-xs font-semibold transition ${
+                    validPage === pageNum
+                      ? 'bg-rose-600 text-white shadow-2xs'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
 
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}

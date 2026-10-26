@@ -235,7 +235,7 @@ export default function DatasetsPage() {
             )}
           </div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 font-normal leading-relaxed">
-            Explore schema, preview records, and manage imported business telemetry.
+            Explore tables, preview records, and manage imported business data.
           </p>
           {!isViewer && (
             <div className="mt-2.5">
@@ -246,7 +246,7 @@ export default function DatasetsPage() {
                 className="h-10 px-4 text-xs font-semibold rounded-xl shadow-xs gap-2"
               >
                 <Plus className="h-4 w-4" />
-                <span>Ingest New Dataset</span>
+                <span>Upload Dataset</span>
               </Button>
             </div>
           )}
@@ -322,7 +322,7 @@ export default function DatasetsPage() {
               {totalDatasets}
             </span>
             <p className="mt-1.5 text-xs text-slate-400 dark:text-[#94A3B8]">
-              Processed from CSV, JSON, and Postgres
+              Imported from uploaded files and connected databases
             </p>
           </div>
         </div>
@@ -342,7 +342,7 @@ export default function DatasetsPage() {
               {formatNumberAbbreviated(totalRows)}
             </span>
             <p className="mt-1.5 text-xs text-slate-400 dark:text-[#94A3B8]">
-              Processed through parsing and type inferencing
+              Total rows imported across all connected tables
             </p>
           </div>
         </div>
@@ -351,7 +351,7 @@ export default function DatasetsPage() {
         <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] uppercase tracking-wider block">
-              Inferred Dimensions
+              Tracked Columns
             </span>
             <div className="p-2 rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
               <LayoutGrid className="h-4 w-4" />
@@ -362,7 +362,7 @@ export default function DatasetsPage() {
               {totalDimensions}
             </span>
             <p className="mt-1.5 text-xs text-slate-400 dark:text-[#94A3B8]">
-              Dimensions available for dynamic OLAP analytics
+              Attributes ready for reporting and AI analysis
             </p>
           </div>
         </div>

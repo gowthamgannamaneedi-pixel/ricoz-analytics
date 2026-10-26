@@ -116,10 +116,21 @@ class SubscriptionService {
       }
     }
 
-    const trialStartedAt = org.trial_started_at ? new Date(org.trial_started_at) : new Date(org.created_at || now);
-    const trialEndsAt = org.trial_ends_at
-      ? new Date(org.trial_ends_at)
-      : calculateTrialEndDate(trialStartedAt, 14);
+    // Ensure authoritative trial timestamps are present; safely backfill if missing
+    if (!org.trial_started_at || !org.trial_ends_at) {
+      const backfillStart = org.trial_started_at ? new Date(org.trial_started_at) : (org.created_at ? new Date(org.created_at) : now);
+      const backfillEnd = org.trial_ends_at ? new Date(org.trial_ends_at) : calculateTrialEndDate(backfillStart, 14);
+      org.trial_started_at = backfillStart;
+      org.trial_ends_at = backfillEnd;
+      // Persist safe idempotent backfill to database without blocking
+      db.query(
+        `UPDATE organizations SET trial_started_at = COALESCE(trial_started_at, $1), trial_ends_at = COALESCE(trial_ends_at, $2) WHERE id = $3`,
+        [backfillStart.toISOString(), backfillEnd.toISOString(), org.id]
+      ).catch(err => console.warn('[SubscriptionService] Backfill trial dates warning:', err.message));
+    }
+
+    const trialStartedAt = new Date(org.trial_started_at);
+    const trialEndsAt = new Date(org.trial_ends_at);
 
     const currentPeriodStart = org.current_period_start ? new Date(org.current_period_start) : null;
     const currentPeriodEnd = org.current_period_end ? new Date(org.current_period_end) : null;
@@ -146,6 +157,14 @@ class SubscriptionService {
       // In trial lifecycle
       if (now > trialEndsAt) {
         effectiveStatus = SUBSCRIPTION_STATUSES.TRIAL_EXPIRED;
+        // Persist expiry to DB safely without destroying any customer workspace data
+        if (org.subscription_status !== SUBSCRIPTION_STATUSES.TRIAL_EXPIRED) {
+          db.query(
+            `UPDATE organizations SET subscription_status = 'trial_expired' WHERE id = $1 AND subscription_status != 'active'`,
+            [org.id]
+          ).catch(() => null);
+          org.subscription_status = SUBSCRIPTION_STATUSES.TRIAL_EXPIRED;
+        }
       } else {
         const msRemaining = trialEndsAt.getTime() - now.getTime();
         const daysToTrialEnd = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
@@ -162,16 +181,22 @@ class SubscriptionService {
     let hoursRemaining = 0;
     let relevantEndDate = null;
 
-    if (effectiveStatus === SUBSCRIPTION_STATUSES.ACTIVE && currentPeriodEnd) {
-      relevantEndDate = currentPeriodEnd;
-      const ms = currentPeriodEnd.getTime() - now.getTime();
-      daysRemaining = Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
-      hoursRemaining = Math.max(0, Math.ceil(ms / (1000 * 60 * 60)));
+    if (effectiveStatus === SUBSCRIPTION_STATUSES.ACTIVE) {
+      relevantEndDate = currentPeriodEnd || org.next_billing_date || trialEndsAt;
+      if (relevantEndDate) {
+        const ms = new Date(relevantEndDate).getTime() - now.getTime();
+        daysRemaining = Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
+        hoursRemaining = Math.max(0, Math.ceil(ms / (1000 * 60 * 60)));
+      }
     } else if ([SUBSCRIPTION_STATUSES.TRIAL, SUBSCRIPTION_STATUSES.TRIAL_EXPIRING].includes(effectiveStatus)) {
       relevantEndDate = trialEndsAt;
       const ms = trialEndsAt.getTime() - now.getTime();
       daysRemaining = Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
       hoursRemaining = Math.max(0, Math.ceil(ms / (1000 * 60 * 60)));
+    } else if (effectiveStatus === SUBSCRIPTION_STATUSES.TRIAL_EXPIRED) {
+      relevantEndDate = trialEndsAt;
+      daysRemaining = 0;
+      hoursRemaining = 0;
     }
 
     const isExpiringSoon = daysRemaining <= 10 && daysRemaining > 0 && (
@@ -216,6 +241,9 @@ class SubscriptionService {
       relevantEndDate,
       trialStartedAt,
       trialEndsAt,
+      trial_started_at: trialStartedAt,
+      trial_ends_at: trialEndsAt,
+      relevant_end_date: relevantEndDate,
       subscriptionStartDate: org.subscription_start_date || org.created_at,
       currentPeriodStart,
       currentPeriodEnd,
@@ -319,21 +347,26 @@ class SubscriptionService {
     const cached = orgSubscriptionCache.get(String(organizationId));
     if (cached && (Date.now() - cached.cachedAt < ORG_CACHE_TTL_MS)) {
       const sub = cached.data;
-      if (!sub.canAccessApp) {
-        const isTrialExp = sub.status === SUBSCRIPTION_STATUSES.TRIAL_EXPIRED;
+      // Real-time expiry check: If organization is on trial and now > trialEndsAt, cache is stale!
+      if (sub.isTrial && sub.trialEndsAt && new Date() > new Date(sub.trialEndsAt)) {
+        orgSubscriptionCache.delete(String(organizationId));
+      } else {
+        if (!sub.canAccessApp) {
+          const isTrialExp = sub.status === SUBSCRIPTION_STATUSES.TRIAL_EXPIRED;
+          return {
+            allowed: false,
+            code: isTrialExp ? 'TRIAL_EXPIRED' : 'SUBSCRIPTION_REQUIRED',
+            message: isTrialExp
+              ? 'Your 14-day free trial has expired. Select a plan to continue accessing your workspace.'
+              : 'An active paid subscription is required to access workspace data.',
+            subscription: sub
+          };
+        }
         return {
-          allowed: false,
-          code: isTrialExp ? 'TRIAL_EXPIRED' : 'SUBSCRIPTION_REQUIRED',
-          message: isTrialExp
-            ? 'Your 14-day free trial has expired. Select a plan to continue accessing your workspace.'
-            : 'An active paid subscription is required to access workspace data.',
+          allowed: true,
           subscription: sub
         };
       }
-      return {
-        allowed: true,
-        subscription: sub
-      };
     }
 
     // 2. Fetch subscription status without running 3 usage count queries

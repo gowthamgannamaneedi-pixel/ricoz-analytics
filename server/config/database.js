@@ -3572,7 +3572,7 @@ function handleFallbackQuery(text, params = []) {
     const [id, orgId] = params;
     const ins = fallbackInsights.find(i => String(i.id) === String(id) && String(i.organization_id) === String(orgId));
     if (!ins) return Promise.resolve({ rows: [], rowCount: 0 });
-    const ds = fallbackDatasets.find(d => Number(d.id) === Number(ins.dataset_id));
+    const ds = fallbackDatasets.find(d => String(d.id) === String(ins.dataset_id) || (Number(d.id) && Number(d.id) === Number(ins.dataset_id)));
     const m = fallbackMetrics.find(met => String(met.id) === String(ins.metric_id));
     return Promise.resolve({
       rows: [{

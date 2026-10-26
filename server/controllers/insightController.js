@@ -1,5 +1,10 @@
 const insightService = require('../services/insightService');
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidUuid(val) {
+  return typeof val === 'string' && UUID_REGEX.test(val.trim());
+}
+
 /**
  * Enterprise AI Automated Insights Controller
  * Handles REST endpoints for on-demand insight generation, structured evidence retrieval,
@@ -166,6 +171,13 @@ const insightController = {
       const { id } = req.params;
       const organizationId = req.user.organization_id;
 
+      if (!isValidUuid(id)) {
+        return res.status(404).json({
+          success: false,
+          message: `Insight #${id} not found or access denied.`
+        });
+      }
+
       const insight = await insightService.getInsightById(id, organizationId);
       if (!insight) {
         return res.status(404).json({
@@ -199,6 +211,13 @@ const insightController = {
       const { id } = req.params;
       const organizationId = req.user.organization_id;
 
+      if (!isValidUuid(id)) {
+        return res.status(404).json({
+          success: false,
+          message: `Insight #${id} not found or access denied.`
+        });
+      }
+
       const dismissed = await insightService.dismissInsight(id, organizationId, {
         userId: req.user.id,
         ipAddress: req.ip,
@@ -231,6 +250,13 @@ const insightController = {
       const { id } = req.params;
       const organizationId = req.user.organization_id;
       const { feedback } = req.body;
+
+      if (!isValidUuid(id)) {
+        return res.status(404).json({
+          success: false,
+          message: `Insight #${id} not found or access denied.`
+        });
+      }
 
       if (!feedback) {
         return res.status(400).json({
