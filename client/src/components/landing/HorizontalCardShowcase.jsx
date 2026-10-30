@@ -49,19 +49,19 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
       ],
       features: ['Automated schema discovery', 'Incremental change data capture', 'Multi-tenant isolation'],
       mockup: (
-        <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-[11px] space-y-2 mb-4">
-          <div className="flex justify-between text-slate-400 border-b border-slate-800/80 pb-1.5 text-[10px]">
-            <span>FEDERATED_INGESTION_FABRIC</span>
-            <span className="text-emerald-400">P99: 142ms</span>
+        <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] space-y-2 mb-4">
+          <div className="flex justify-between items-center text-slate-300 border-b border-slate-800/80 pb-1.5 text-[10px]">
+            <span className="font-bold text-white">FEDERATED_INGESTION_FABRIC</span>
+            <span className="text-emerald-400 font-mono font-bold">P99: 142ms</span>
           </div>
-          <div className="space-y-1">
-            <div className="flex justify-between text-slate-300">
-              <span className="text-blue-400">PostgreSQL (Primary)</span>
-              <span className="text-emerald-400">42.8K evt/s</span>
+          <div className="space-y-1.5 text-[10px]">
+            <div className="flex justify-between items-center bg-slate-900 p-1.5 rounded border border-slate-800">
+              <span className="text-blue-400 font-medium">PostgreSQL Primary (CDC)</span>
+              <span className="text-emerald-400 font-mono font-bold">42.8K evt/s</span>
             </div>
-            <div className="flex justify-between text-slate-300">
-              <span className="text-purple-400">Snowflake Data Lake</span>
-              <span className="text-emerald-400">Zero-Copy Pushdown</span>
+            <div className="flex justify-between items-center bg-slate-900 p-1.5 rounded border border-slate-800">
+              <span className="text-purple-400 font-medium">Snowflake Data Lake</span>
+              <span className="text-emerald-400 font-mono font-bold">Zero-Copy Pushdown</span>
             </div>
           </div>
         </div>
@@ -81,17 +81,31 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
       ],
       features: ['Dynamic dimensional filters', 'Custom chart composition', 'Automatic responsive scaling'],
       mockup: (
-        <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-[11px] space-y-2 mb-4">
-          <div className="flex justify-between text-slate-400 border-b border-slate-800/80 pb-1.5 text-[10px]">
-            <span>Q3 REVENUE PACING</span>
-            <span className="text-emerald-400">+24.8% vs FY25</span>
+        <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] space-y-2 mb-4">
+          <div className="flex justify-between items-center text-slate-300 border-b border-slate-800/80 pb-1.5 text-[10px]">
+            <span className="font-bold text-white">REVENUE PACING VS BUDGET</span>
+            <span className="text-emerald-400 font-mono font-bold">+24.8% FY26</span>
           </div>
-          <div className="flex items-end justify-between h-14 gap-2 pt-2 px-1">
-            {[45, 60, 75, 90, 118].map((v, i) => (
-              <div key={i} className="flex-1 bg-slate-800 rounded-t flex flex-col justify-end" style={{ height: '100%' }}>
-                <div className="bg-red-600 rounded-t w-full" style={{ height: `${(v / 125) * 100}%` }} />
+          <div className="flex items-end justify-between h-14 gap-2 pt-1 px-1">
+            {[
+              { m: 'M1', t: 40, a: 45 },
+              { m: 'M2', t: 55, a: 62 },
+              { m: 'M3', t: 70, a: 80 },
+              { m: 'M4', t: 85, a: 98 },
+              { m: 'M5', t: 100, a: 118 }
+            ].map((pt, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
+                <div className="w-full flex items-end justify-center gap-1 h-10">
+                  <div className="w-2 bg-slate-700 rounded-t" style={{ height: `${(pt.t / 125) * 100}%` }} title={`Target: ₹${pt.t}L`} />
+                  <div className="w-2.5 bg-red-600 rounded-t" style={{ height: `${(pt.a / 125) * 100}%` }} title={`Actual: ₹${pt.a}L`} />
+                </div>
+                <span className="text-[9px] font-mono text-slate-400 mt-1">{pt.m}</span>
               </div>
             ))}
+          </div>
+          <div className="flex justify-between items-center pt-1 text-[9px] text-slate-400 border-t border-slate-800/60 font-mono">
+            <span>■ Gray: Target Budget</span>
+            <span className="text-red-400 font-bold">■ Red: Actual Invoiced</span>
           </div>
         </div>
       )
@@ -110,13 +124,23 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
       ],
       features: ['Version-controlled definitions', 'Relational entity joins', 'Automatic query optimizer'],
       mockup: (
-        <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-[11px] space-y-2 mb-4">
-          <div className="flex justify-between text-slate-400 border-b border-slate-800/80 pb-1.5 text-[10px]">
-            <span>EXPRESSION: [EBITDA_MARGIN]</span>
-            <span className="text-emerald-400">VALID</span>
+        <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] space-y-2 mb-4">
+          <div className="flex justify-between items-center text-slate-300 border-b border-slate-800/80 pb-1.5 text-[10px]">
+            <span className="font-bold text-white">EXPRESSION: [EBITDA_MARGIN]</span>
+            <span className="text-emerald-400 font-mono font-bold">VALIDATED</span>
           </div>
-          <div className="p-2 rounded bg-slate-900 text-[10px] text-slate-200 truncate">
-            (SUM(Revenue) - SUM(COGS)) / SUM(Revenue)
+          <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono py-1">
+            <span className="px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800">[Revenue]</span>
+            <span className="text-red-400 font-bold">-</span>
+            <span className="px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">[COGS]</span>
+            <span className="text-slate-400 font-bold">÷</span>
+            <span className="px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800">[Revenue]</span>
+            <span className="text-emerald-400 font-bold">=</span>
+            <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-bold">68.4%</span>
+          </div>
+          <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-800/60 flex justify-between">
+            <span>Query Runtime: 14ms</span>
+            <span className="text-emerald-400">Propagated to 48 Hubs</span>
           </div>
         </div>
       )
@@ -135,13 +159,20 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
       ],
       features: ['Dynamic Z-Score triggers', 'Autonomous incident routing', '1-Click ledger remediation'],
       mockup: (
-        <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-[11px] space-y-2 mb-4">
-          <div className="flex justify-between text-slate-400 border-b border-slate-800/80 pb-1.5 text-[10px]">
-            <span>ROOT-CAUSE ATTRIBUTION</span>
-            <span className="text-purple-400">p &lt; 0.01</span>
+        <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] space-y-2 mb-4">
+          <div className="flex justify-between items-center text-slate-300 border-b border-slate-800/80 pb-1.5 text-[10px]">
+            <span className="font-bold text-white">ROOT-CAUSE ATTRIBUTION</span>
+            <span className="text-purple-400 font-mono font-bold">p &lt; 0.01 CONFIDENCE</span>
           </div>
-          <div className="text-[10px] text-slate-300 font-sans leading-snug">
-            South hub enterprise reorders drove 65% of Q3 surplus.
+          <div className="space-y-1.5 text-[10px]">
+            <div className="flex justify-between items-center bg-slate-900 p-1.5 rounded border border-slate-800">
+              <span className="text-slate-200">South Hub Enterprise Reorders</span>
+              <span className="text-emerald-400 font-mono font-bold">+16.2% Driver</span>
+            </div>
+            <div className="flex justify-between items-center bg-slate-900 p-1.5 rounded border border-slate-800">
+              <span className="text-slate-200">High-Ticket Order Basket Size</span>
+              <span className="text-emerald-400 font-mono font-bold">+7.4% Driver</span>
+            </div>
           </div>
         </div>
       )
@@ -160,13 +191,24 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
       ],
       features: ['Interactive parameter sliders', 'EBITDA sensitivity waterfalls', 'Hedging recommendations'],
       mockup: (
-        <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-[11px] space-y-2 mb-4">
-          <div className="flex justify-between text-slate-400 border-b border-slate-800/80 pb-1.5 text-[10px]">
-            <span>90-DAY CASH RUNWAY</span>
-            <span className="text-emerald-400">P90: ₹14.8 Cr</span>
+        <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] space-y-2 mb-4">
+          <div className="flex justify-between items-center text-slate-300 border-b border-slate-800/80 pb-1.5 text-[10px]">
+            <span className="font-bold text-white">90-DAY CASH RUNWAY CORRIDOR</span>
+            <span className="text-emerald-400 font-mono font-bold">R² = 0.94</span>
           </div>
-          <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-1">
-            <div className="bg-emerald-500 h-full rounded-full" style={{ width: '82%' }} />
+          <div className="grid grid-cols-3 gap-1.5 text-center text-[10px] font-mono py-1">
+            <div className="p-1 rounded bg-slate-900 border border-slate-800">
+              <span className="text-slate-400 block text-[9px]">P10 Worst</span>
+              <span className="text-slate-200 font-bold">11.2 Mo</span>
+            </div>
+            <div className="p-1 rounded bg-slate-900 border border-slate-800">
+              <span className="text-slate-400 block text-[9px]">P50 Median</span>
+              <span className="text-slate-200 font-bold">13.4 Mo</span>
+            </div>
+            <div className="p-1 rounded bg-emerald-950/60 border border-emerald-800">
+              <span className="text-emerald-400 block text-[9px]">P90 Target</span>
+              <span className="text-emerald-300 font-bold">14.8 Mo</span>
+            </div>
           </div>
         </div>
       )
@@ -185,14 +227,20 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
       ],
       features: ['Zero cross-branch exposure', 'Single Sign-On (SAML / OIDC)', 'Full forensic audit trails'],
       mockup: (
-        <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-[11px] space-y-2 mb-4">
-          <div className="flex justify-between text-slate-400 border-b border-slate-800/80 pb-1.5 text-[10px]">
-            <span>ROW-LEVEL SECURITY (RLS)</span>
-            <span className="text-emerald-400">ACTIVE</span>
+        <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] space-y-2 mb-4">
+          <div className="flex justify-between items-center text-slate-300 border-b border-slate-800/80 pb-1.5 text-[10px]">
+            <span className="font-bold text-white">ROW-LEVEL SECURITY (RLS) MATRIX</span>
+            <span className="text-emerald-400 font-mono font-bold">ACTIVE</span>
           </div>
-          <div className="flex justify-between text-[10px] text-slate-300">
-            <span>Branch Masking: Enabled</span>
-            <span className="text-blue-400">48 Hubs Isolated</span>
+          <div className="space-y-1.5 text-[10px]">
+            <div className="flex justify-between items-center bg-slate-900 p-1.5 rounded border border-slate-800">
+              <span className="text-slate-200">HQ Leadership Level</span>
+              <span className="text-emerald-400 font-bold font-mono">Consolidated (48 Hubs)</span>
+            </div>
+            <div className="flex justify-between items-center bg-slate-900 p-1.5 rounded border border-slate-800">
+              <span className="text-slate-200">Branch Manager Level</span>
+              <span className="text-blue-400 font-bold font-mono">Store-Isolated (1 Hub)</span>
+            </div>
           </div>
         </div>
       )

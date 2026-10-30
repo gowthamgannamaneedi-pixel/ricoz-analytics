@@ -17,6 +17,7 @@ export default function Interactive3DCard({
   scale = 1.02,
   glare = true,
   elevation = true,
+  overflowHidden = true,
   onClick,
   style = {},
   ...props
@@ -108,13 +109,13 @@ export default function Interactive3DCard({
         willChange: 'transform',
         ...style,
       }}
-      className={`relative overflow-hidden ${className}`}
+      className={`relative ${overflowHidden ? 'overflow-hidden' : 'overflow-visible'} ${className}`}
       {...props}
     >
       {/* Specular Glare / Reflection Layer */}
       {glare && (
         <div
-          className="absolute inset-0 pointer-events-none z-30 transition-opacity duration-300 rounded-[inherit]"
+          className="absolute inset-0 pointer-events-none z-30 transition-opacity duration-300 rounded-[inherit] overflow-hidden"
           style={{
             opacity: glarePos.opacity,
             background: `radial-gradient(circle 280px at ${glarePos.x}% ${glarePos.y}%, rgba(255, 255, 255, 0.35), transparent 70%)`,

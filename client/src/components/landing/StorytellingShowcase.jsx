@@ -36,7 +36,7 @@ export default function StorytellingShowcase({ onOpenDemo }) {
   const steps = [
     {
       step: '01',
-      tag: '01 CONNECT',
+      tag: 'CONNECT',
       title: 'Connect Multiple Business Data Sources',
       subtitle: 'Eliminate complex batch data pipelines and fragile nightly cron jobs.',
       description: 'Stream transactions directly from production PostgreSQL, Snowflake, MongoDB, Google Sheets, and REST Webhooks into a unified semantic memory layer with sub-250ms ingestion latency.',
@@ -49,7 +49,7 @@ export default function StorytellingShowcase({ onOpenDemo }) {
     },
     {
       step: '02',
-      tag: '02 MODEL',
+      tag: 'MODEL',
       title: 'Transform Raw Data into Governed Business Metrics',
       subtitle: 'Build once. Standardize enterprise business logic across the company.',
       description: 'Define EBITDA, Customer Acquisition Cost, and Regional Store Velocity in a visual drag-and-drop formula canvas. Changes instantly synchronize across all dashboards, reports, and AI models.',
@@ -62,7 +62,7 @@ export default function StorytellingShowcase({ onOpenDemo }) {
     },
     {
       step: '03',
-      tag: '03 DISCOVER',
+      tag: 'DISCOVER',
       title: 'Identify Hidden Patterns, Trends & Anomalies',
       subtitle: 'Never ask "why did revenue change?" in a boardroom again.',
       description: 'When regional gross margins or inventory turn rates deviate from expected seasonal baselines, the autonomous attribution engine evaluates millions of permutations in 0.38 seconds to pinpoint exact root causes.',
@@ -75,7 +75,7 @@ export default function StorytellingShowcase({ onOpenDemo }) {
     },
     {
       step: '04',
-      tag: '04 DECIDE',
+      tag: 'DECIDE',
       title: 'Turn Analytics into Actionable Business Decisions',
       subtitle: 'Transform raw charts into prescriptive corporate decisions.',
       description: 'Automated executive briefs delivered at 7:00 AM every Monday to board members, regional franchise directors, and department heads with 1-click ledger credit authorization and prescriptive action playbooks.',
@@ -272,67 +272,78 @@ export default function StorytellingShowcase({ onOpenDemo }) {
                 {/* ─── STAGE 01: ZERO-ETL INGESTION VISUAL ─── */}
                 {activeStep === 0 && (
                   <div className="space-y-4 animate-fadeIn">
+                    <div className="flex items-center justify-between text-xs pb-1 border-b border-slate-800">
+                      <span className="font-bold text-white flex items-center gap-2">
+                        <Database size={14} className="text-red-500" />
+                        <span>Direct Multi-Source Federated Ingestion Fabric</span>
+                      </span>
+                      <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 font-bold">
+                        P99: 142ms LATENCY
+                      </span>
+                    </div>
+
+                    {/* 4 Data Source Cards */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-mono">
-                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
-                        <div className="text-[10px] text-slate-400">PostgreSQL Primary</div>
+                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors">
+                        <div className="text-[10px] font-semibold text-slate-300">PostgreSQL OLTP</div>
                         <div className="text-sm font-bold text-white mt-1">42,890 evt/s</div>
-                        <div className="text-[10px] text-emerald-400 flex items-center gap-1 mt-0.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          <span>Connected</span>
+                        <div className="text-[10px] text-emerald-400 font-bold flex items-center gap-1.5 mt-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>Sub-250ms CDC</span>
                         </div>
                       </div>
-                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
-                        <div className="text-[10px] text-slate-400">Snowflake DW</div>
+                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors">
+                        <div className="text-[10px] font-semibold text-slate-300">Snowflake DW</div>
                         <div className="text-sm font-bold text-white mt-1">1.2 TB Query</div>
-                        <div className="text-[10px] text-emerald-400 flex items-center gap-1 mt-0.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <div className="text-[10px] text-emerald-400 font-bold flex items-center gap-1.5 mt-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                           <span>Zero-Copy</span>
                         </div>
                       </div>
-                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
-                        <div className="text-[10px] text-slate-400">MongoDB Clusters</div>
+                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors">
+                        <div className="text-[10px] font-semibold text-slate-300">MongoDB Clusters</div>
                         <div className="text-sm font-bold text-white mt-1">18 Nodes</div>
-                        <div className="text-[10px] text-emerald-400 flex items-center gap-1 mt-0.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          <span>Active Shard</span>
+                        <div className="text-[10px] text-emerald-400 font-bold flex items-center gap-1.5 mt-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>Active Shards</span>
                         </div>
                       </div>
-                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
-                        <div className="text-[10px] text-slate-400">REST Webhooks</div>
-                        <div className="text-sm font-bold text-white mt-1">214 ms Latency</div>
-                        <div className="text-[10px] text-emerald-400 flex items-center gap-1 mt-0.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors">
+                        <div className="text-[10px] font-semibold text-slate-300">REST &amp; Webhooks</div>
+                        <div className="text-sm font-bold text-white mt-1">214 ms Stream</div>
+                        <div className="text-[10px] text-emerald-400 font-bold flex items-center gap-1.5 mt-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                           <span>Streaming</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Animated Data Pipeline Stream Graphic */}
-                    <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-xs font-mono space-y-2">
-                      <div className="flex items-center justify-between text-[11px] text-slate-400 border-b border-slate-800 pb-2">
-                        <span>LIVE_EVENT_INGESTION_BUFFER</span>
-                        <span className="text-emerald-400">NO_BACKPRESSURE</span>
+                    <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-mono space-y-2.5">
+                      <div className="flex items-center justify-between text-[11px] text-slate-300 border-b border-slate-800 pb-2">
+                        <span className="font-bold text-white">LIVE_EVENT_INGESTION_STREAM</span>
+                        <span className="text-emerald-400 font-bold">1,280,000 EVT/HR • ZERO BACKPRESSURE</span>
                       </div>
                       <div className="space-y-1.5 text-[11px]">
-                        <div className="flex justify-between text-slate-300">
-                          <span>[19:24:02.108] INGEST: franchise_store_id=812 Bangalore West</span>
-                          <span className="text-emerald-400">+₹48,200</span>
+                        <div className="flex justify-between items-center text-slate-200 bg-slate-950/60 p-1.5 rounded border border-slate-800/60">
+                          <span className="truncate pr-2 font-mono">[19:24:02] INGEST: Store #812 Bangalore West</span>
+                          <span className="text-emerald-400 font-bold shrink-0">+₹48,200</span>
                         </div>
-                        <div className="flex justify-between text-slate-300">
-                          <span>[19:24:02.312] INGEST: franchise_store_id=402 Mumbai Central</span>
-                          <span className="text-emerald-400">+₹1,12,400</span>
+                        <div className="flex justify-between items-center text-slate-200 bg-slate-950/60 p-1.5 rounded border border-slate-800/60">
+                          <span className="truncate pr-2 font-mono">[19:24:02] CDC_COMMIT: Store #402 Mumbai Central</span>
+                          <span className="text-emerald-400 font-bold shrink-0">+₹1,12,400</span>
                         </div>
-                        <div className="flex justify-between text-slate-300">
-                          <span>[19:24:02.490] CDC: inventory_decrement item_sku=RCZ-PRO-09</span>
-                          <span className="text-blue-400">QNTY -24</span>
+                        <div className="flex justify-between items-center text-slate-200 bg-slate-950/60 p-1.5 rounded border border-slate-800/60">
+                          <span className="truncate pr-2 font-mono">[19:24:03] INVENTORY: SKU-RCZ-PRO-09 Auto-Synced</span>
+                          <span className="text-blue-400 font-bold shrink-0">QTY -24</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-red-950/40 border border-red-900/50 flex items-center justify-between text-xs font-mono text-red-300">
+                    <div className="p-3 rounded-xl bg-red-950/50 border border-red-800/60 flex items-center justify-between text-xs font-mono text-red-200">
                       <span className="flex items-center gap-2">
-                        <Zap size={14} className="text-red-400" />
-                        <span>Sub-second streaming pipeline active</span>
+                        <Zap size={15} className="text-red-400" />
+                        <span className="font-semibold">Ricoz Federated Data Mesh Active</span>
                       </span>
                       <span className="text-white font-bold">100% Ingestion Integrity</span>
                     </div>
@@ -342,43 +353,72 @@ export default function StorytellingShowcase({ onOpenDemo }) {
                 {/* ─── STAGE 02: FORMULA STUDIO VISUAL ─── */}
                 {activeStep === 1 && (
                   <div className="space-y-4 animate-fadeIn">
-                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3 font-mono">
-                      <div className="flex items-center justify-between text-xs text-slate-400 border-b border-slate-800 pb-2">
-                        <span className="text-red-400 font-bold">FORMULA_EXPRESSION_STUDIO</span>
-                        <span className="text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 text-[10px]">
-                          SYNTAX_VALID
+                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3.5">
+                      <div className="flex items-center justify-between text-xs border-b border-slate-800 pb-2.5">
+                        <span className="text-white font-bold flex items-center gap-2">
+                          <Sliders size={14} className="text-red-500" />
+                          <span>Visual Governed KPI Formula Builder</span>
+                        </span>
+                        <span className="text-emerald-400 bg-emerald-950/60 px-2.5 py-0.5 rounded border border-emerald-800/60 text-[10px] font-mono font-bold">
+                          SYNTAX VALIDATED (14ms Compile)
                         </span>
                       </div>
                       
-                      {/* Code Block Expression */}
-                      <div className="p-3 rounded-lg bg-slate-950 text-xs text-slate-200 border border-slate-800/80 leading-relaxed">
-                        <span className="text-purple-400">METRIC</span> Regional_EBITDA_Velocity = <br />
-                        &nbsp;&nbsp;(<span className="text-blue-400">SUM</span>(Orders.Revenue) - <span className="text-amber-400">SUM</span>(SupplyChain.CostOfGoods)) <br />
-                        &nbsp;&nbsp;/ <span className="text-emerald-400">COUNT_DISTINCT</span>(FranchiseHubs.ActiveStoreIDs);
+                      {/* Visual Flow Nodes instead of raw code */}
+                      <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2.5 text-xs">
+                        <div className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                          Metric: [Regional_EBITDA_Velocity]
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-2 font-mono">
+                          <span className="px-3 py-1.5 rounded-lg bg-blue-950/80 border border-blue-800 text-blue-300 font-bold text-xs">
+                            Invoiced Revenue: ₹8.42 Cr
+                          </span>
+                          <span className="w-6 h-6 rounded-full bg-slate-800 text-red-400 font-black flex items-center justify-center text-sm">
+                            -
+                          </span>
+                          <span className="px-3 py-1.5 rounded-lg bg-amber-950/80 border border-amber-800 text-amber-300 font-bold text-xs">
+                            Supply Chain COGS: ₹2.66 Cr
+                          </span>
+                          <span className="w-6 h-6 rounded-full bg-slate-800 text-slate-300 font-black flex items-center justify-center text-sm">
+                            ÷
+                          </span>
+                          <span className="px-3 py-1.5 rounded-lg bg-purple-950/80 border border-purple-800 text-purple-300 font-bold text-xs">
+                            Active Store Hubs: 48
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between text-xs mt-2">
+                          <span className="font-semibold text-slate-300">Computed Output:</span>
+                          <span className="font-mono font-black text-emerald-400 text-sm">
+                            ₹1.20 Cr / Hub (68.4% Operating Margin)
+                          </span>
+                        </div>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-2 text-xs pt-1">
-                        <div className="p-2 rounded bg-slate-950/80 border border-slate-800 text-center">
-                          <div className="text-[10px] text-slate-400">Query Time</div>
-                          <div className="text-xs font-bold text-white mt-0.5">14 ms</div>
+                      {/* Engine Execution Performance */}
+                      <div className="grid grid-cols-3 gap-2.5 text-xs pt-1">
+                        <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-center">
+                          <div className="text-[10px] font-mono text-slate-400">Execution Speed</div>
+                          <div className="text-xs font-mono font-bold text-white mt-0.5">14 ms</div>
                         </div>
-                        <div className="p-2 rounded bg-slate-950/80 border border-slate-800 text-center">
-                          <div className="text-[10px] text-slate-400">Rows Scanned</div>
-                          <div className="text-xs font-bold text-white mt-0.5">1.42 M</div>
+                        <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-center">
+                          <div className="text-[10px] font-mono text-slate-400">Rows Scanned</div>
+                          <div className="text-xs font-mono font-bold text-white mt-0.5">1.42 Million</div>
                         </div>
-                        <div className="p-2 rounded bg-slate-950/80 border border-slate-800 text-center">
-                          <div className="text-[10px] text-slate-400">Cache Hit</div>
-                          <div className="text-xs font-bold text-emerald-400 mt-0.5">99.4%</div>
+                        <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-center">
+                          <div className="text-[10px] font-mono text-slate-400">Cache Hit Rate</div>
+                          <div className="text-xs font-mono font-bold text-emerald-400 mt-0.5">99.4%</div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between text-xs text-slate-300">
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs text-slate-200">
                       <span className="flex items-center gap-2">
-                        <GitBranch size={14} className="text-red-400" />
-                        <span>Propagating expression to 48 franchise dashboards</span>
+                        <GitBranch size={15} className="text-emerald-400" />
+                        <span>Propagated to 48 franchise dashboards &amp; AI models</span>
                       </span>
-                      <span className="font-mono text-emerald-400 font-bold">Synchronized</span>
+                      <span className="font-mono text-emerald-400 font-bold">100% Synchronized</span>
                     </div>
                   </div>
                 )}
@@ -386,57 +426,62 @@ export default function StorytellingShowcase({ onOpenDemo }) {
                 {/* ─── STAGE 03: ROOT-CAUSE ATTRIBUTION VISUAL ─── */}
                 {activeStep === 2 && (
                   <div className="space-y-4 animate-fadeIn">
-                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3 font-mono">
-                      <div className="flex items-center justify-between text-xs text-slate-400 border-b border-slate-800 pb-2">
-                        <span className="text-red-400 font-bold">AUTONOMOUS_VARIANCE_DIAGNOSIS</span>
-                        <span className="text-slate-400 text-[10px]">p &lt; 0.01 (High Significance)</span>
+                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3.5">
+                      <div className="flex items-center justify-between text-xs border-b border-slate-800 pb-2.5">
+                        <span className="font-bold text-white flex items-center gap-2">
+                          <TrendingUp size={14} className="text-emerald-400" />
+                          <span>Autonomous Variance Attribution Waterfall</span>
+                        </span>
+                        <span className="text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 text-[10px] font-mono font-bold">
+                          p &lt; 0.01 (High Significance)
+                        </span>
                       </div>
 
-                      {/* Diagnostic Summary */}
+                      {/* Clear Diagnostic Statement */}
                       <p className="text-xs text-slate-200 leading-relaxed font-sans">
-                        South Region revenue jumped <span className="text-emerald-400 font-bold">+28.4%</span> (₹3.82 Cr). Primary driver: High-ticket enterprise reorders at Bangalore &amp; Chennai franchise hubs.
+                        South Region generated <strong className="text-emerald-400">+28.4% Surplus</strong> (₹3.82 Cr vs ₹2.97 Cr plan). Primary driver: High-ticket enterprise reorders at Bangalore &amp; Chennai franchise hubs.
                       </p>
 
-                      {/* Attribution Waterfall Bars */}
-                      <div className="space-y-2 pt-1">
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-[11px]">
-                            <span className="text-slate-300 font-sans">Bangalore &amp; Chennai Hub expansion</span>
-                            <span className="text-emerald-400 font-bold">+16.2%</span>
-                          </div>
-                          <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
-                            <div className="h-full bg-emerald-500 rounded-full" style={{ width: '65%' }} />
-                          </div>
+                      {/* Attribution Waterfall Steps */}
+                      <div className="space-y-2 pt-1 font-mono text-xs">
+                        {/* Baseline */}
+                        <div className="flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800">
+                          <span className="text-slate-300 font-sans">1. Baseline Planned Target</span>
+                          <span className="text-slate-300 font-bold">₹6.62 Cr (Budget)</span>
                         </div>
 
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-[11px]">
-                            <span className="text-slate-300 font-sans">Average order basket size increase</span>
-                            <span className="text-emerald-400 font-bold">+7.4%</span>
-                          </div>
-                          <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
-                            <div className="h-full bg-emerald-500 rounded-full" style={{ width: '35%' }} />
-                          </div>
+                        {/* Positive Delta 1 */}
+                        <div className="flex items-center justify-between p-2 rounded-lg bg-emerald-950/40 border border-emerald-900/60">
+                          <span className="text-emerald-200 font-sans">+ Bangalore &amp; Chennai Store Expansion</span>
+                          <span className="text-emerald-400 font-bold">+₹1.36 Cr (+16.2%)</span>
                         </div>
 
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-[11px]">
-                            <span className="text-slate-300 font-sans">Raw logistics fuel price surge</span>
-                            <span className="text-red-400 font-bold">-2.1%</span>
-                          </div>
-                          <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
-                            <div className="h-full bg-red-500 rounded-full" style={{ width: '12%' }} />
-                          </div>
+                        {/* Positive Delta 2 */}
+                        <div className="flex items-center justify-between p-2 rounded-lg bg-emerald-950/40 border border-emerald-900/60">
+                          <span className="text-emerald-200 font-sans">+ Enterprise Average Basket Size Surge</span>
+                          <span className="text-emerald-400 font-bold">+₹0.62 Cr (+7.4%)</span>
+                        </div>
+
+                        {/* Negative Delta */}
+                        <div className="flex items-center justify-between p-2 rounded-lg bg-red-950/40 border border-red-900/60">
+                          <span className="text-red-200 font-sans">- Regional Logistics Fuel Surcharge</span>
+                          <span className="text-red-400 font-bold">-₹0.18 Cr (-2.1%)</span>
+                        </div>
+
+                        {/* Final Actual */}
+                        <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-950 border border-emerald-800 font-bold">
+                          <span className="text-white font-sans">= Final Actual Invoiced Revenue</span>
+                          <span className="text-emerald-400 text-sm">₹8.42 Cr (+28.4% Surplus)</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-900/50 flex items-center justify-between text-xs text-emerald-300 font-mono">
+                    <div className="p-3 rounded-xl bg-emerald-950/50 border border-emerald-800/60 flex items-center justify-between text-xs text-emerald-200 font-mono">
                       <span className="flex items-center gap-2">
-                        <CheckCircle2 size={14} className="text-emerald-400" />
-                        <span>Prescriptive action generated</span>
+                        <CheckCircle2 size={15} className="text-emerald-400" />
+                        <span>Prescriptive Action Generated:</span>
                       </span>
-                      <span className="text-white font-bold">15% Inventory Buffer Added</span>
+                      <span className="text-white font-bold">15% Inventory Safety Buffer Added</span>
                     </div>
                   </div>
                 )}
@@ -444,47 +489,61 @@ export default function StorytellingShowcase({ onOpenDemo }) {
                 {/* ─── STAGE 04: EXECUTIVE COCKPIT VISUAL ─── */}
                 {activeStep === 3 && (
                   <div className="space-y-4 animate-fadeIn">
-                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3 font-mono">
-                      <div className="flex items-center justify-between text-xs text-slate-400 border-b border-slate-800 pb-2">
-                        <span className="text-red-400 font-bold">EXECUTIVE_BRIEF_DISPATCH_QUEUE</span>
-                        <span className="text-emerald-400 text-[10px]">SCHEDULED: 07:00 AM MON</span>
+                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3.5">
+                      <div className="flex items-center justify-between text-xs border-b border-slate-800 pb-2.5">
+                        <span className="font-bold text-white flex items-center gap-2">
+                          <FileText size={14} className="text-red-500" />
+                          <span>Executive Brief Dispatch Engine</span>
+                        </span>
+                        <span className="text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 text-[10px] font-mono font-bold">
+                          SCHEDULED: 07:00 AM EVERY MONDAY
+                        </span>
                       </div>
 
                       {/* Brief Card Preview */}
-                      <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-2 text-xs font-sans">
+                      <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2.5 text-xs font-sans">
                         <div className="flex items-center justify-between">
-                          <div className="font-bold text-white">Weekly Leadership Performance Digest</div>
-                          <span className="text-[10px] font-mono bg-purple-950/80 text-purple-300 px-2 py-0.5 rounded border border-purple-800">
-                            BOARD_CONFIDENTIAL
+                          <div className="font-bold text-white text-sm">Weekly Leadership Performance Digest</div>
+                          <span className="text-[10px] font-mono bg-purple-950/80 text-purple-300 px-2.5 py-0.5 rounded-full border border-purple-800 font-bold">
+                            BOARD CONFIDENTIAL
                           </span>
                         </div>
-                        <p className="text-xs text-slate-400 leading-relaxed">
-                          Delivered automatically to 14 Executive stakeholders across Email, Slack, and secure iOS Mobile PWA.
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          Delivered automatically to 14 executive stakeholders across Email, Slack, and secure iOS Mobile PWA.
                         </p>
                         
-                        <div className="flex items-center gap-4 text-xs font-mono text-slate-300 pt-1">
-                          <span>✓ Net MRR: ₹8.44 Cr</span>
-                          <span>✓ Growth: +24.8%</span>
-                          <span>✓ Health: 100%</span>
+                        <div className="grid grid-cols-3 gap-2 text-xs font-mono pt-1 text-center">
+                          <div className="p-2 rounded bg-slate-900 border border-slate-800">
+                            <div className="text-[10px] text-slate-400">Net Invoiced</div>
+                            <div className="text-xs font-bold text-white mt-0.5">₹8.42 Cr</div>
+                          </div>
+                          <div className="p-2 rounded bg-slate-900 border border-slate-800">
+                            <div className="text-[10px] text-slate-400">Growth vs Plan</div>
+                            <div className="text-xs font-bold text-emerald-400 mt-0.5">+24.8%</div>
+                          </div>
+                          <div className="p-2 rounded bg-slate-900 border border-slate-800">
+                            <div className="text-[10px] text-slate-400">Operating Health</div>
+                            <div className="text-xs font-bold text-emerald-400 mt-0.5">100% SLA</div>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 text-xs pt-1">
-                        <div className="p-2.5 rounded bg-slate-950 border border-slate-800 flex items-center justify-between">
-                          <span className="text-slate-400 font-sans">Security Masking</span>
-                          <span className="text-emerald-400 font-bold">Row-Level RLS</span>
+                      <div className="grid grid-cols-2 gap-2.5 text-xs pt-1 font-mono">
+                        <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                          <span className="text-slate-400 font-sans text-xs">Security Masking</span>
+                          <span className="text-emerald-400 font-bold">Row-Level (RLS)</span>
                         </div>
-                        <div className="p-2.5 rounded bg-slate-950 border border-slate-800 flex items-center justify-between">
-                          <span className="text-slate-400 font-sans">Audit Trail</span>
-                          <span className="text-blue-400 font-bold">Immutable SHA</span>
+                        <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                          <span className="text-slate-400 font-sans text-xs">Audit Verification</span>
+                          <span className="text-blue-400 font-bold">Immutable SHA-256</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-red-950/40 border border-red-900/50 flex items-center justify-between text-xs text-red-300 font-mono">
+                    <div className="p-3 rounded-xl bg-red-950/50 border border-red-800/60 flex items-center justify-between text-xs text-red-200 font-mono">
                       <span className="flex items-center gap-2">
-                        <ShieldCheck size={14} className="text-red-400" />
-                        <span>Ready for enterprise franchise networks</span>
+                        <ShieldCheck size={15} className="text-red-400" />
+                        <span className="font-semibold">Ready for enterprise franchise networks</span>
                       </span>
                       <span className="text-white font-bold">Full Governance Active</span>
                     </div>

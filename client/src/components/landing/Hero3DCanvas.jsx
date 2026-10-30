@@ -48,8 +48,27 @@ export default function Hero3DCanvas() {
     renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
+    // Create a smooth circular sprite texture to avoid harsh square fragments
+    const createCircleTexture = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 30);
+      gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.85)');
+      gradient.addColorStop(0.9, 'rgba(255, 255, 255, 0.2)');
+      gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(32, 32, 30, 0, Math.PI * 2);
+      ctx.fill();
+      return new THREE.CanvasTexture(canvas);
+    };
+    const circleTexture = createCircleTexture();
+
     // 2. Data Nodes (Precise Vector Points)
-    const nodeCount = isMobile ? 80 : 160;
+    const nodeCount = isMobile ? 70 : 130;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(nodeCount * 3);
     const colors = new Float32Array(nodeCount * 3);
@@ -59,13 +78,22 @@ export default function Hero3DCanvas() {
     const faintSlate = new THREE.Color('#CBD5E1');
 
     for (let i = 0; i < nodeCount; i++) {
-      const radius = 20 + Math.random() * 45;
+      const radius = 28 + Math.random() * 45;
       const theta = Math.random() * Math.PI * 2;
       const phi = (Math.random() - 0.5) * Math.PI * 0.75;
 
-      positions[i * 3] = radius * Math.cos(theta) * Math.cos(phi);
-      positions[i * 3 + 1] = radius * Math.sin(phi) * 0.65;
-      positions[i * 3 + 2] = radius * Math.sin(theta) * Math.cos(phi) * 0.7;
+      let x = radius * Math.cos(theta) * Math.cos(phi);
+      let y = radius * Math.sin(phi) * 0.65;
+      let z = radius * Math.sin(theta) * Math.cos(phi) * 0.7;
+
+      // Keep central text corridor clear so headline and subtext are 100% readable
+      if (Math.abs(x) < 32 && Math.abs(y) < 22) {
+        x = (x >= 0 ? 1 : -1) * (34 + Math.random() * 22);
+      }
+
+      positions[i * 3] = x;
+      positions[i * 3 + 1] = y;
+      positions[i * 3 + 2] = z;
 
       // 85% quiet architectural slate, 15% focal crimson
       const c = Math.random() > 0.85 ? accentCrimson : (Math.random() > 0.5 ? neutralSlate : faintSlate);
@@ -77,12 +105,14 @@ export default function Hero3DCanvas() {
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-    // Sharp circular node shader
+    // Sharp anti-aliased circular node material
     const pointMaterial = new THREE.PointsMaterial({
-      size: isMobile ? 2.0 : 2.6,
+      size: isMobile ? 3.0 : 4.0,
+      map: circleTexture,
       vertexColors: true,
       transparent: true,
       opacity: 0.65,
+      alphaTest: 0.02,
       depthWrite: false,
     });
 
@@ -200,6 +230,7 @@ export default function Hero3DCanvas() {
       }
       geometry.dispose();
       pointMaterial.dispose();
+      circleTexture.dispose();
       lineGeometry.dispose();
       lineMaterial.dispose();
       orbitGeo.dispose();

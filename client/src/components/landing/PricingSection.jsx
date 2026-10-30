@@ -166,6 +166,7 @@ export default function PricingSection({ onOpenDemo }) {
                 maxTilt={10}
                 scale={plan.popular ? 1.04 : 1.02}
                 glare={true}
+                overflowHidden={false}
                 className={`flex flex-col rounded-3xl transition-all duration-300 ${
                   plan.popular
                     ? 'bg-white dark:bg-slate-900 border-2 border-red-600 dark:border-red-500 shadow-2xl shadow-red-600/15 lg:-translate-y-2'
@@ -191,29 +192,29 @@ export default function PricingSection({ onOpenDemo }) {
                         {plan.name}
                       </h3>
                       {!plan.popular && (
-                        <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">
+                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200/60 dark:border-slate-700/60">
                           {plan.badge}
                         </span>
                       )}
                     </div>
 
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 min-h-[40px] leading-relaxed mb-6" style={{ transform: 'translateZ(10px)' }}>
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 min-h-[40px] leading-relaxed mb-6" style={{ transform: 'translateZ(10px)' }}>
                       {plan.description}
                     </p>
 
                     {/* Price Tag (Layer +25px) */}
                     <div className="mb-6 pb-6 border-b border-slate-100 dark:border-slate-800" style={{ transform: 'translateZ(25px)' }}>
                       <div className="flex items-baseline gap-1.5">
-                        <span className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight font-mono">
+                        <span className={`text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight ${isCustom ? 'font-sans' : 'font-mono'}`}>
                           {price}
                         </span>
                         {!isCustom && (
-                          <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                          <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                             / month
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-400 dark:text-slate-500 mt-1.5 font-medium">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
                         {billingSubtext}
                       </div>
                     </div>

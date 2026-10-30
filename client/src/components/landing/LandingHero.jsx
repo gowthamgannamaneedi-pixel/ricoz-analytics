@@ -162,18 +162,22 @@ export default function LandingHero({ onOpenDemo }) {
           </div>
 
           {/* Reassurance Trust Pills */}
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-3 text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span className="inline-flex items-center gap-1.5">
-              <CheckCircle2 size={14} className="text-emerald-500" /> Sub-second multi-source queries
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 pt-4 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200">
+            <span className="inline-flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-emerald-500 shrink-0" /> 
+              <span>Sub-second multi-source queries</span>
             </span>
-            <span className="inline-flex items-center gap-1.5">
-              <CheckCircle2 size={14} className="text-emerald-500" /> Zero-code KPI metric builder
+            <span className="inline-flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-emerald-500 shrink-0" /> 
+              <span>Zero-code KPI metric builder</span>
             </span>
-            <span className="inline-flex items-center gap-1.5">
-              <CheckCircle2 size={14} className="text-emerald-500" /> Enterprise RBAC &amp; TLS Encryption
+            <span className="inline-flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-emerald-500 shrink-0" /> 
+              <span>Enterprise RBAC &amp; TLS Encryption</span>
             </span>
-            <span className="inline-flex items-center gap-1.5">
-              <CheckCircle2 size={14} className="text-emerald-500" /> Real-time anomaly AI alerts
+            <span className="inline-flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-emerald-500 shrink-0" /> 
+              <span>Real-time anomaly AI alerts</span>
             </span>
           </div>
         </div>
@@ -312,7 +316,7 @@ export default function LandingHero({ onOpenDemo }) {
               >
                 {/* KPI 1: Invoiced Revenue */}
                 <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-red-500/50 transition-colors">
-                  <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-300 mb-1">
                     <span>Net Invoiced Revenue</span>
                     <TrendingUp size={14} className="text-emerald-400" />
                   </div>
@@ -327,7 +331,7 @@ export default function LandingHero({ onOpenDemo }) {
 
                 {/* KPI 2: Operating Margin */}
                 <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-red-500/50 transition-colors">
-                  <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-300 mb-1">
                     <span>Operating Margin (EBITDA)</span>
                     <Sliders size={14} className="text-red-400" />
                   </div>
@@ -342,7 +346,7 @@ export default function LandingHero({ onOpenDemo }) {
 
                 {/* KPI 3: Franchise Hubs */}
                 <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-red-500/50 transition-colors">
-                  <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-300 mb-1">
                     <span>Active Franchise Hubs</span>
                     <Building2 size={14} className="text-blue-400" />
                   </div>
@@ -357,7 +361,7 @@ export default function LandingHero({ onOpenDemo }) {
 
                 {/* KPI 4: Ingestion Latency */}
                 <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-red-500/50 transition-colors">
-                  <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-300 mb-1">
                     <span>P99 Query Latency</span>
                     <Zap size={14} className="text-amber-400" />
                   </div>
@@ -387,31 +391,43 @@ export default function LandingHero({ onOpenDemo }) {
                             <BarChart3 size={16} className="text-red-500" />
                             <span>Revenue vs Target Trajectory (H1 FY26)</span>
                           </h3>
-                          <p className="text-[11px] text-slate-400">Currency: INR Lakhs • Real-time audit verified</p>
+                          <p className="text-[11px] text-slate-300">Currency: INR Lakhs • Real-time audit verified</p>
                         </div>
 
                         <div className="flex items-center gap-3 text-xs">
-                          <span className="flex items-center gap-1.5 text-slate-300">
+                          <span className="flex items-center gap-1.5 text-slate-200 font-medium">
                             <span className="w-2.5 h-2.5 rounded-full bg-red-600" /> Actual Invoiced
                           </span>
-                          <span className="flex items-center gap-1.5 text-slate-400">
-                            <span className="w-2.5 h-0.5 border-t border-dashed border-slate-400" /> Target
+                          <span className="flex items-center gap-1.5 text-slate-300 font-medium">
+                            <span className="w-2.5 h-0.5 border-t-2 border-dashed border-slate-400" /> Target
                           </span>
                         </div>
                       </div>
 
-                      {/* SVG Chart Graphic with Animated Drawing */}
+                      {/* SVG Chart Graphic with Animated Drawing & Y-Axis Scale */}
                       <div className="relative w-full h-52 bg-slate-950/60 rounded-xl p-3 border border-slate-800/80 flex flex-col justify-end overflow-hidden">
-                        {/* Grid lines */}
-                        <div className="absolute inset-x-3 inset-y-4 flex flex-col justify-between pointer-events-none opacity-20">
-                          <div className="border-b border-slate-500" />
-                          <div className="border-b border-slate-500" />
-                          <div className="border-b border-slate-500" />
-                          <div className="border-b border-slate-500" />
+                        {/* Y-Axis Scale Values & Grid lines */}
+                        <div className="absolute inset-x-3 inset-y-4 flex flex-col justify-between pointer-events-none">
+                          <div className="flex items-center gap-2 border-b border-slate-800/80 pb-0.5">
+                            <span className="text-[9px] font-mono text-slate-500 w-8 text-right">₹120L</span>
+                            <div className="flex-1" />
+                          </div>
+                          <div className="flex items-center gap-2 border-b border-slate-800/80 pb-0.5">
+                            <span className="text-[9px] font-mono text-slate-500 w-8 text-right">₹80L</span>
+                            <div className="flex-1" />
+                          </div>
+                          <div className="flex items-center gap-2 border-b border-slate-800/80 pb-0.5">
+                            <span className="text-[9px] font-mono text-slate-500 w-8 text-right">₹40L</span>
+                            <div className="flex-1" />
+                          </div>
+                          <div className="flex items-center gap-2 border-b border-slate-800/80 pb-0.5">
+                            <span className="text-[9px] font-mono text-slate-500 w-8 text-right">₹0L</span>
+                            <div className="flex-1" />
+                          </div>
                         </div>
 
                         {/* Chart Bars & Interactive Markers */}
-                        <div className="relative w-full h-full flex items-end justify-between px-3 sm:px-6 z-10">
+                        <div className="relative w-full h-full flex items-end justify-between pl-10 pr-3 sm:pr-6 z-10">
                           {monthlyData.map((m) => {
                             const isHovered = hoveredMonth === m.month;
                             const heightPct = (m.val / 125) * 100;
@@ -430,8 +446,9 @@ export default function LandingHero({ onOpenDemo }) {
                                 )}
 
                                 <div 
-                                  className="absolute w-8 border-t-2 border-dashed border-slate-500"
+                                  className="absolute w-8 border-t-2 border-dashed border-slate-400"
                                   style={{ bottom: `${targetHeight}%` }}
+                                  title={`Target: ₹${m.target}L`}
                                 />
 
                                 <div
@@ -444,7 +461,7 @@ export default function LandingHero({ onOpenDemo }) {
                                 />
 
                                 <span className={`mt-2 text-[10px] font-mono font-bold ${
-                                  isHovered ? 'text-red-400' : 'text-slate-400'
+                                  isHovered ? 'text-red-400' : 'text-slate-300'
                                 }`}>
                                   {m.month}
                                 </span>

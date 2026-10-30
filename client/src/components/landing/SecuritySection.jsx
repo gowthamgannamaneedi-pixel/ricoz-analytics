@@ -147,7 +147,7 @@ export default function SecuritySection({ onOpenDemo }) {
                       {card.title}
                     </h3>
                     <p 
-                      className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-4"
+                      className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-4"
                       style={{ transform: 'translateZ(10px)' }}
                     >
                       {card.desc}

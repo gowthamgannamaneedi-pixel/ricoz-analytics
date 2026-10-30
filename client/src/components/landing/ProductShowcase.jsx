@@ -283,119 +283,178 @@ export default function ProductShowcase({ onOpenDemo }) {
             {activeTab === 'cockpit' && (
               <div className="space-y-6 animate-fadeIn">
                 
-                {/* 4 KPI Cards */}
+                {/* 4 KPI Cards with High Contrast & Clear Hierarchy */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                    <div className="text-[11px] font-mono text-slate-400">Net Revenue Invoiced</div>
+                  <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-300">Net Revenue Invoiced</div>
                     <div className="text-2xl font-black text-white font-mono mt-1">₹{currentMetrics.revenue.toLocaleString('en-IN')}</div>
-                    <div className="text-[11px] font-bold text-emerald-400 mt-1 flex items-center gap-1">
-                      <TrendingUp size={12} />
+                    <div className="text-xs font-bold text-emerald-400 mt-1 flex items-center gap-1.5">
+                      <TrendingUp size={13} />
                       <span>{currentMetrics.surplusPct} vs Target</span>
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                    <div className="text-[11px] font-mono text-slate-400">Operating Margin (EBITDA)</div>
+                  <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-300">Operating Margin (EBITDA)</div>
                     <div className="text-2xl font-black text-white font-mono mt-1">{currentMetrics.margin}</div>
-                    <div className="text-[11px] font-bold text-emerald-400 mt-1">+3.4% Baseline Surplus</div>
+                    <div className="text-xs font-bold text-emerald-400 mt-1">+3.4% Baseline Surplus</div>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                    <div className="text-[11px] font-mono text-slate-400">Active Nodes Monitored</div>
+                  <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-300">Active Nodes Monitored</div>
                     <div className="text-2xl font-black text-white font-mono mt-1">{currentMetrics.hubs}</div>
-                    <div className="text-[11px] font-bold text-emerald-400 mt-1">100% Operational Health</div>
+                    <div className="text-xs font-bold text-emerald-400 mt-1">100% Operational Health</div>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                    <div className="text-[11px] font-mono text-slate-400">Query P99 Latency</div>
+                  <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-300">Query P99 Latency</div>
                     <div className="text-2xl font-black text-white font-mono mt-1">{currentMetrics.latency}</div>
-                    <div className="text-[11px] font-bold text-emerald-400 mt-1">Direct Zero-ETL Sync</div>
+                    <div className="text-xs font-bold text-emerald-400 mt-1">Direct Zero-ETL Sync</div>
                   </div>
                 </div>
 
-                {/* Trajectory Bar Chart & Regional Performance */}
+                {/* Trajectory Bar Chart & Regional Performance with Full Axes & Legends */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                  <div className="lg:col-span-8 p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
-                    <div className="flex items-center justify-between text-xs mb-4">
+                  <div className="lg:col-span-8 p-5 sm:p-6 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                       <div>
-                        <span className="font-bold text-white">Monthly Revenue Velocity vs Plan</span>
-                        <div className="text-[11px] text-slate-400 font-mono">Dataset: {datasets.find(d => d.id === selectedDataset)?.name}</div>
-                      </div>
-                      <span className="text-emerald-400 font-mono font-bold">+₹{(currentMetrics.surplus / 100000).toFixed(1)}L Surplus</span>
-                    </div>
-
-                    <div className="h-44 flex items-end justify-between gap-3 px-3 pt-3">
-                      {[
-                        { m: 'Jan', val: 42, t: 38 },
-                        { m: 'Feb', val: 58, t: 50 },
-                        { m: 'Mar', val: 72, t: 65 },
-                        { m: 'Apr', val: 89, t: 78 },
-                        { m: 'May', val: 94, t: 85 },
-                        { m: 'Jun', val: 118, t: 100 },
-                      ].map(pt => (
-                        <div key={pt.m} className="flex-1 flex flex-col items-center justify-end h-full group cursor-pointer">
-                          <div className="w-full flex items-end justify-center gap-1 h-32">
-                            <div className="w-3 bg-slate-700 rounded-t" style={{ height: `${(pt.t / 125) * 100}%` }} title={`Target: ₹${pt.t}L`} />
-                            <div className="w-4 bg-red-600 rounded-t group-hover:bg-rose-400 group-hover:scale-110 transition-all" style={{ height: `${(pt.val / 125) * 100}%` }} title={`Actual: ₹${pt.val}L`} />
-                          </div>
-                          <span className="text-[10px] text-slate-400 font-mono mt-2 group-hover:text-red-400">{pt.m}</span>
+                        <span className="text-sm font-bold text-white flex items-center gap-2">
+                          <BarChart3 size={15} className="text-red-500" />
+                          <span>Monthly Revenue Velocity vs Plan (H1 FY26)</span>
+                        </span>
+                        <div className="text-xs text-slate-300 font-mono mt-0.5">
+                          Dataset: {datasets.find(d => d.id === selectedDataset)?.name} • Currency in INR Lakhs
                         </div>
-                      ))}
+                      </div>
+                      <span className="text-emerald-400 font-mono font-bold bg-emerald-950/60 px-2.5 py-1 rounded border border-emerald-800/60 text-xs">
+                        +₹{(currentMetrics.surplus / 100000).toFixed(1)}L Net Surplus
+                      </span>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-800 text-[11px] text-slate-400">
-                      <span>Gray = Target • Red = Actual Invoiced Revenue</span>
-                      <span className="text-white font-bold">112% Target Attainment</span>
+                    {/* Chart Container with Y-Axis Scale Values & Gridlines */}
+                    <div className="relative w-full h-48 bg-slate-950/60 rounded-xl p-3 border border-slate-800 flex flex-col justify-end overflow-hidden">
+                      {/* Horizontal Gridlines & Y-Axis Scale */}
+                      <div className="absolute inset-x-3 inset-y-3 flex flex-col justify-between pointer-events-none">
+                        <div className="flex items-center gap-2 border-b border-slate-800/80 pb-0.5">
+                          <span className="text-[9px] font-mono text-slate-400 w-9 text-right font-semibold">₹120L</span>
+                          <div className="flex-1" />
+                        </div>
+                        <div className="flex items-center gap-2 border-b border-slate-800/80 pb-0.5">
+                          <span className="text-[9px] font-mono text-slate-400 w-9 text-right font-semibold">₹90L</span>
+                          <div className="flex-1" />
+                        </div>
+                        <div className="flex items-center gap-2 border-b border-slate-800/80 pb-0.5">
+                          <span className="text-[9px] font-mono text-slate-400 w-9 text-right font-semibold">₹60L</span>
+                          <div className="flex-1" />
+                        </div>
+                        <div className="flex items-center gap-2 border-b border-slate-800/80 pb-0.5">
+                          <span className="text-[9px] font-mono text-slate-400 w-9 text-right font-semibold">₹30L</span>
+                          <div className="flex-1" />
+                        </div>
+                        <div className="flex items-center gap-2 border-b border-slate-800/80 pb-0.5">
+                          <span className="text-[9px] font-mono text-slate-400 w-9 text-right font-semibold">₹0L</span>
+                          <div className="flex-1" />
+                        </div>
+                      </div>
+
+                      {/* Actual Bars */}
+                      <div className="relative w-full h-full flex items-end justify-between pl-11 pr-2 sm:pr-4 z-10">
+                        {[
+                          { m: 'Jan', val: 42, t: 38 },
+                          { m: 'Feb', val: 58, t: 50 },
+                          { m: 'Mar', val: 72, t: 65 },
+                          { m: 'Apr', val: 89, t: 78 },
+                          { m: 'May', val: 94, t: 85 },
+                          { m: 'Jun', val: 118, t: 100 },
+                        ].map(pt => (
+                          <div key={pt.m} className="flex-1 flex flex-col items-center justify-end h-full group cursor-pointer">
+                            <div className="w-full flex items-end justify-center gap-1.5 h-32">
+                              <div 
+                                className="w-3.5 bg-slate-700/80 rounded-t border-t border-slate-500" 
+                                style={{ height: `${(pt.t / 125) * 100}%` }} 
+                                title={`Target Plan: ₹${pt.t} Lakhs`} 
+                              />
+                              <div 
+                                className="w-4.5 bg-red-600 rounded-t group-hover:bg-rose-400 group-hover:scale-110 transition-all shadow-md shadow-red-600/30" 
+                                style={{ height: `${(pt.val / 125) * 100}%` }} 
+                                title={`Actual Invoiced: ₹${pt.val} Lakhs (+${((pt.val - pt.t)/pt.t * 100).toFixed(1)}%)`} 
+                              />
+                            </div>
+                            <span className="text-[10px] text-slate-300 font-mono font-bold mt-2 group-hover:text-red-400">
+                              {pt.m}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Chart Legend with Swatches */}
+                    <div className="flex flex-wrap items-center justify-between pt-3 mt-3 border-t border-slate-800 text-xs">
+                      <div className="flex items-center gap-4">
+                        <span className="flex items-center gap-1.5 text-slate-300 font-medium">
+                          <span className="w-3 h-3 rounded bg-slate-700 border border-slate-500 inline-block" />
+                          <span>Target Budget Plan</span>
+                        </span>
+                        <span className="flex items-center gap-1.5 text-slate-200 font-medium">
+                          <span className="w-3 h-3 rounded bg-red-600 inline-block" />
+                          <span>Actual Invoiced Revenue</span>
+                        </span>
+                      </div>
+                      <span className="text-white font-bold bg-slate-800 px-2.5 py-0.5 rounded border border-slate-700">
+                        112% Target Attainment
+                      </span>
                     </div>
                   </div>
 
-                  <div className="lg:col-span-4 p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
+                  {/* Regional Distribution with Explicit Rupee Totals */}
+                  <div className="lg:col-span-4 p-5 sm:p-6 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
                     <div>
-                      <div className="text-xs font-bold text-white mb-3 pb-2 border-b border-slate-800 flex justify-between">
-                        <span>Regional Distribution</span>
-                        <span className="text-emerald-400 font-mono">100% Target Met</span>
+                      <div className="text-xs font-bold text-white mb-3 pb-2 border-b border-slate-800 flex justify-between items-center">
+                        <span className="text-sm">Regional Franchise Distribution</span>
+                        <span className="text-emerald-400 font-mono font-bold text-xs">100% Target Met</span>
                       </div>
-                      <div className="space-y-3">
+                      <div className="space-y-3.5 pt-1">
                         <div>
-                          <div className="flex justify-between text-xs text-slate-300 mb-1">
-                            <span>South Region</span>
-                            <span className="font-mono font-bold text-white">45.3%</span>
+                          <div className="flex justify-between text-xs text-slate-200 mb-1 font-medium">
+                            <span>South Region (22 Hubs)</span>
+                            <span className="font-mono font-bold text-white">₹3.82 Cr (45.3%)</span>
                           </div>
-                          <div className="w-full h-1.5 rounded-full bg-slate-800">
+                          <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
                             <div className="h-full bg-red-600 rounded-full" style={{ width: '100%' }} />
                           </div>
                         </div>
                         <div>
-                          <div className="flex justify-between text-xs text-slate-300 mb-1">
-                            <span>North Region</span>
-                            <span className="font-mono font-bold text-white">28.5%</span>
+                          <div className="flex justify-between text-xs text-slate-200 mb-1 font-medium">
+                            <span>North Region (14 Hubs)</span>
+                            <span className="font-mono font-bold text-white">₹2.41 Cr (28.5%)</span>
                           </div>
-                          <div className="w-full h-1.5 rounded-full bg-slate-800">
+                          <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
                             <div className="h-full bg-red-600 rounded-full" style={{ width: '84%' }} />
                           </div>
                         </div>
                         <div>
-                          <div className="flex justify-between text-xs text-slate-300 mb-1">
-                            <span>West Region</span>
-                            <span className="font-mono font-bold text-white">18.9%</span>
+                          <div className="flex justify-between text-xs text-slate-200 mb-1 font-medium">
+                            <span>West Region (8 Hubs)</span>
+                            <span className="font-mono font-bold text-white">₹1.59 Cr (18.9%)</span>
                           </div>
-                          <div className="w-full h-1.5 rounded-full bg-slate-800">
+                          <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
                             <div className="h-full bg-red-600 rounded-full" style={{ width: '72%' }} />
                           </div>
                         </div>
                         <div>
-                          <div className="flex justify-between text-xs text-slate-300 mb-1">
-                            <span>East Region</span>
-                            <span className="font-mono font-bold text-white">7.3%</span>
+                          <div className="flex justify-between text-xs text-slate-200 mb-1 font-medium">
+                            <span>East Region (4 Hubs)</span>
+                            <span className="font-mono font-bold text-white">₹0.61 Cr (7.3%)</span>
                           </div>
-                          <div className="w-full h-1.5 rounded-full bg-slate-800">
+                          <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
                             <div className="h-full bg-red-600 rounded-full" style={{ width: '48%' }} />
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="pt-4 border-t border-slate-800 text-xs text-slate-400">
+                    <div className="pt-4 mt-3 border-t border-slate-800 text-xs text-slate-300 flex items-center gap-2">
+                      <ShieldCheck size={14} className="text-emerald-400 shrink-0" />
                       <span>Row-Level Security (RLS) active across all 48 branches.</span>
                     </div>
                   </div>

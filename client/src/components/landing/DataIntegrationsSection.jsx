@@ -205,7 +205,7 @@ export default function DataIntegrationsSection({ onOpenDemo }) {
             <div className="w-full lg:w-1/4 flex flex-col items-center lg:items-start text-center lg:text-left">
               <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-red-600 dark:text-red-400 mb-1">Step 01 • Source Ingestion</span>
               <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2">Disparate Enterprise Systems</h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                 SQL tables, cloud data warehouses, CRM feeds, and Excel workbooks securely connected.
               </p>
               <div className="mt-3 flex items-center gap-2">
@@ -258,11 +258,11 @@ export default function DataIntegrationsSection({ onOpenDemo }) {
             <div className="w-full lg:w-1/4 flex flex-col items-center lg:items-end text-center lg:text-right">
               <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">Step 03 • Actionable Output</span>
               <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2">Unified Executive Intelligence</h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                 Live executive cockpits, scheduled PDF briefs, proactive alerts, and autonomous AI answers.
               </p>
               <div className="mt-3 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
                   <ShieldCheck size={11} className="text-emerald-500" /> AES-256 Sovereign Encryption
                 </span>
               </div>
@@ -285,7 +285,7 @@ export default function DataIntegrationsSection({ onOpenDemo }) {
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shadow-xs ${c.iconBg}`}>
                     <Database size={20} />
                   </div>
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
                     {c.badge}
                   </span>
                 </div>
@@ -296,17 +296,17 @@ export default function DataIntegrationsSection({ onOpenDemo }) {
                 >
                   {c.name}
                 </h3>
-                <div className="text-[11px] font-medium text-slate-400 mb-2">
+                <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">
                   {c.type}
                 </div>
 
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4" style={{ transform: 'translateZ(10px)' }}>
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4" style={{ transform: 'translateZ(10px)' }}>
                   {c.description}
                 </p>
               </div>
 
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]" style={{ transform: 'translateZ(15px)' }}>
-                <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-1 text-slate-600 dark:text-slate-300 font-medium">
                   <Clock size={12} className="text-slate-400" />
                   <span>{c.speed}</span>
                 </div>
