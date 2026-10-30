@@ -13,6 +13,8 @@ import LandingFAQ from '../components/landing/LandingFAQ';
 import CallToAction from '../components/landing/CallToAction';
 import LandingFooter from '../components/landing/LandingFooter';
 import DemoModal from '../components/landing/DemoModal';
+import StorytellingShowcase from '../components/landing/StorytellingShowcase';
+import HorizontalCardShowcase from '../components/landing/HorizontalCardShowcase';
 
 /**
  * Public Landing Page for RicozAnalytics
@@ -53,11 +55,17 @@ export default function LandingPage() {
         {/* Supporting Platform Metric Counters Ticker */}
         <StatsBanner />
 
+        {/* Stellar-Inspired Pinned Scroll Storytelling Showcase */}
+        <StorytellingShowcase onOpenDemo={handleOpenDemo} />
+
         {/* 3. Product Dashboard Showcase */}
         <ProductShowcase onOpenDemo={handleOpenDemo} />
 
         {/* 4. Key Features with Custom Graphics */}
         <KeyFeaturesSection />
+
+        {/* Stellar-Inspired Pinned Horizontal Gallery Showcase */}
+        <HorizontalCardShowcase onOpenDemo={handleOpenDemo} />
 
         {/* 5. Analytics & Visualization Showcase */}
         <AnalyticsShowcase />

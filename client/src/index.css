@@ -655,3 +655,18 @@ html.dark select option:checked {
 .perspective-1400 {
   perspective: 1400px;
 }
+
+@keyframes maskSlideUp {
+  0% {
+    transform: translateY(115%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0%);
+    opacity: 1;
+  }
+}
+
+.animate-maskSlideUp {
+  animation: maskSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

@@ -125,20 +125,21 @@ export default function LandingHero({ onOpenDemo }) {
 
         {/* Hero Headline with Animated Word Reveal */}
         <div className="max-w-4xl mx-auto text-center space-y-5 mb-10">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.12] flex flex-wrap justify-center gap-x-3 gap-y-1">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.15] flex flex-wrap justify-center gap-x-3 gap-y-1">
             {headlineWords.map((word, idx) => (
-              <span
-                key={idx}
-                className={`inline-block transition-all duration-700 ${
-                  word.highlight
-                    ? 'text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-rose-600 to-red-700 dark:from-red-500 dark:via-rose-400 dark:to-red-400'
-                    : ''
-                }`}
-                style={{
-                  animation: `fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 60}ms both`,
-                }}
-              >
-                {word.text}
+              <span key={idx} className="overflow-hidden inline-block align-bottom py-0.5">
+                <span
+                  className={`inline-block transition-all duration-700 ${
+                    word.highlight
+                      ? 'text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-rose-600 to-red-700 dark:from-red-500 dark:via-rose-400 dark:to-red-400'
+                      : ''
+                  }`}
+                  style={{
+                    animation: `maskSlideUp 0.75s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 55}ms both`,
+                  }}
+                >
+                  {word.text}
+                </span>
               </span>
             ))}
           </h1>
@@ -538,6 +539,11 @@ export default function LandingHero({ onOpenDemo }) {
               </div>
             </div>
           </div>
+        </div>
+        {/* Stellar-style Architectural Scroll Indicator */}
+        <div className="flex flex-col items-center justify-center pt-8 text-slate-400">
+          <span className="text-[10px] font-mono uppercase tracking-[0.2em] opacity-70">Scroll To Explore Workflow</span>
+          <div className="w-px h-8 bg-gradient-to-b from-red-500 to-transparent mt-2 animate-pulse" />
         </div>
       </div>
     </section>

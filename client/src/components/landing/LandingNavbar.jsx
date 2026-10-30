@@ -47,14 +47,14 @@ export default function LandingNavbar({ onOpenDemo }) {
   }, [mobileMenuOpen]);
 
   const navLinks = [
+    { name: 'Workflow', href: '#storytelling' },
     { name: 'Product', href: '#product' },
-    { name: 'Features', href: '#features' },
+    { name: 'Capabilities', href: '#capabilities-gallery' },
     { name: 'Analytics', href: '#analytics' },
     { name: 'AI Copilot', href: '#ai-insights' },
     { name: 'Integrations', href: '#integrations' },
     { name: 'Security', href: '#security' },
     { name: 'Pricing', href: '#pricing' },
-    { name: 'FAQ', href: '#faq' },
   ];
 
   return (
