@@ -3,7 +3,6 @@ import LandingNavbar from '../components/landing/LandingNavbar';
 import LandingHero from '../components/landing/LandingHero';
 import StatsBanner from '../components/landing/StatsBanner';
 import ProductShowcase from '../components/landing/ProductShowcase';
-import KeyFeaturesSection from '../components/landing/KeyFeaturesSection';
 import AnalyticsShowcase from '../components/landing/AnalyticsShowcase';
 import AIInsightsSection from '../components/landing/AIInsightsSection';
 import DataIntegrationsSection from '../components/landing/DataIntegrationsSection';
@@ -58,13 +57,10 @@ export default function LandingPage() {
         {/* Stellar-Inspired Pinned Scroll Storytelling Showcase */}
         <StorytellingShowcase onOpenDemo={handleOpenDemo} />
 
-        {/* 3. Product Dashboard Showcase */}
+        {/* 3. Product Dashboard Demonstration Section */}
         <ProductShowcase onOpenDemo={handleOpenDemo} />
 
-        {/* 4. Key Features with Custom Graphics */}
-        <KeyFeaturesSection />
-
-        {/* Stellar-Inspired Pinned Horizontal Gallery Showcase */}
+        {/* 4. Stellar-Inspired Pinned Horizontal Gallery Showcase */}
         <HorizontalCardShowcase onOpenDemo={handleOpenDemo} />
 
         {/* 5. Analytics & Visualization Showcase */}

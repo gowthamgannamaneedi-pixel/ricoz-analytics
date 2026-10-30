@@ -36,38 +36,38 @@ export default function StorytellingShowcase({ onOpenDemo }) {
   const steps = [
     {
       step: '01',
-      tag: 'Zero-ETL Ingestion',
-      title: 'Sub-Second Multi-Source Ingestion',
+      tag: '01 CONNECT',
+      title: 'Connect Multiple Business Data Sources',
       subtitle: 'Eliminate complex batch data pipelines and fragile nightly cron jobs.',
       description: 'Stream transactions directly from production PostgreSQL, Snowflake, MongoDB, Google Sheets, and REST Webhooks into a unified semantic memory layer with sub-250ms ingestion latency.',
       highlights: [
         'Zero transformation schema backpressure',
-        'Multi-tenant logical partition isolation',
+        'Direct federated querying without secondary egress fees',
         'Continuous real-time change data capture (CDC)'
       ],
-      badge: 'Live Pipeline'
+      badge: 'Multi-Source Federation'
     },
     {
       step: '02',
-      tag: 'Semantic Modeling',
-      title: 'Governed Relational Metric Engine',
+      tag: '02 MODEL',
+      title: 'Transform Raw Data into Governed Business Metrics',
       subtitle: 'Build once. Standardize enterprise business logic across the company.',
       description: 'Define EBITDA, Customer Acquisition Cost, and Regional Store Velocity in a visual drag-and-drop formula canvas. Changes instantly synchronize across all dashboards, reports, and AI models.',
       highlights: [
-        'Version-controlled metric definitions',
+        'Version-controlled KPI formula definitions',
         'Automatic SQL query tree optimization',
         'Cross-source relational entity joins'
       ],
-      badge: 'Formula Studio'
+      badge: 'Semantic Formula Studio'
     },
     {
       step: '03',
-      tag: 'Root-Cause Attribution',
-      title: 'Autonomous Variance Diagnosis',
+      tag: '03 DISCOVER',
+      title: 'Identify Hidden Patterns, Trends & Anomalies',
       subtitle: 'Never ask "why did revenue change?" in a boardroom again.',
       description: 'When regional gross margins or inventory turn rates deviate from expected seasonal baselines, the autonomous attribution engine evaluates millions of permutations in 0.38 seconds to pinpoint exact root causes.',
       highlights: [
-        'Attribution waterfall with p < 0.01 significance',
+        'Attribution waterfall with p < 0.01 statistical significance',
         'Dynamic seasonal trend baseline modeling',
         'Proactive anomaly alerts before ledger closes'
       ],
@@ -75,8 +75,8 @@ export default function StorytellingShowcase({ onOpenDemo }) {
     },
     {
       step: '04',
-      tag: 'Executive Cockpit',
-      title: 'Action-Oriented Leadership Digests',
+      tag: '04 DECIDE',
+      title: 'Turn Analytics into Actionable Business Decisions',
       subtitle: 'Transform raw charts into prescriptive corporate decisions.',
       description: 'Automated executive briefs delivered at 7:00 AM every Monday to board members, regional franchise directors, and department heads with 1-click ledger credit authorization and prescriptive action playbooks.',
       highlights: [
@@ -84,7 +84,7 @@ export default function StorytellingShowcase({ onOpenDemo }) {
         '1-click discrepancy workflow dispatch',
         'Franchise row-level security masking'
       ],
-      badge: 'Autonomous Cockpit'
+      badge: 'Autonomous Decision Cockpit'
     }
   ];
 

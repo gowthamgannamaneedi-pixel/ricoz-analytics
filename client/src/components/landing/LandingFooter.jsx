@@ -99,10 +99,10 @@ export default function LandingFooter() {
                 <a href="#product" className="hover:text-white transition">Executive Cockpit</a>
               </li>
               <li>
-                <a href="#features" className="hover:text-white transition">Zero-ETL Data Lake</a>
+                <a href="#storytelling" className="hover:text-white transition">Multi-Source Ingestion</a>
               </li>
               <li>
-                <a href="#features" className="hover:text-white transition">KPI &amp; Formula Studio</a>
+                <a href="#capabilities-gallery" className="hover:text-white transition">KPI &amp; Formula Studio</a>
               </li>
               <li>
                 <a href="#analytics" className="hover:text-white transition">Interactive Visualizations</a>
@@ -111,10 +111,10 @@ export default function LandingFooter() {
                 <a href="#ai-insights" className="hover:text-white transition">AI Copilot &amp; Forecasts</a>
               </li>
               <li>
-                <a href="#features" className="hover:text-white transition">Scheduled PDF Briefings</a>
+                <a href="#product" className="hover:text-white transition">Scheduled PDF Briefings</a>
               </li>
               <li>
-                <a href="#features" className="hover:text-white transition">Anomaly Sentinel Alerts</a>
+                <a href="#capabilities-gallery" className="hover:text-white transition">Anomaly Sentinel Alerts</a>
               </li>
             </ul>
           </div>

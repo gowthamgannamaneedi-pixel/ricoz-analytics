@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   BarChart3, 
   Sliders, 
@@ -16,410 +16,658 @@ import {
   Cpu,
   Share2,
   Table as TableIcon,
-  Maximize2
+  Search,
+  Filter,
+  Calendar,
+  Building2,
+  ChevronRight,
+  Send,
+  RefreshCw,
+  AlertTriangle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+/**
+ * ProductShowcase — Interactive Enterprise Product Simulator
+ * Shows the actual RicozAnalytics platform in action:
+ * - Dataset selection (Franchise Retail, E-Commerce, Supply Chain)
+ * - Dynamic filters (Date range, Region)
+ * - 5 functional view modes:
+ *   1. Executive Cockpit (KPIs, Charts, Regional Progress)
+ *   2. Data Explorer & Table (Live search, sorting, records)
+ *   3. AI Copilot (Natural language conversational insights)
+ *   4. Forecasting & Scenarios (Interactive what-if slider)
+ *   5. Executive Report Dispatcher (Scheduled PDF/XLSX briefs)
+ */
 export default function ProductShowcase({ onOpenDemo }) {
-  const [activeTab, setActiveTab] = useState(0);
-  const [mouseTilt, setMouseTilt] = useState({ x: 0, y: 0 });
-  const containerRef = useRef(null);
-
-  const handleMouseMove = (e) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setMouseTilt({ x: -y * 8, y: x * 8 });
-  };
-
-  const handleMouseLeave = () => {
-    setMouseTilt({ x: 0, y: 0 });
-  };
-
-  const showcaseTabs = [
+  const [selectedDataset, setSelectedDataset] = useState('franchise');
+  const [activeTab, setActiveTab] = useState('cockpit'); // cockpit, table, copilot, forecast, report
+  const [selectedRegion, setSelectedRegion] = useState('all');
+  const [selectedTimeRange, setSelectedTimeRange] = useState('q3');
+  const [tableSearch, setTableSearch] = useState('');
+  const [growthSlider, setGrowthSlider] = useState(15); // for forecasting
+  const [copilotQuery, setCopilotQuery] = useState('');
+  const [chatLog, setChatLog] = useState([
     {
-      id: 'cockpit',
-      label: 'Executive Cockpit',
-      icon: BarChart3,
-      tagline: 'Instant Leadership Clarity Across All Franchise Hubs',
-      description: 'Consolidate multi-branch revenue streams, gross margin pacing, and regional store performance into a single unified cockpit that renders in sub-second time.',
-      highlights: [
-        'Real-time revenue pacing against quarterly board targets',
-        'Multi-branch franchise rollups with one-click drilldowns',
-        'Sub-second query caching with zero data pipeline latency'
-      ],
-      previewTitle: 'Ricoz Enterprise Executive Cockpit',
-      badge: 'Real-time Streaming',
-      badgeColor: 'emerald',
-      renderGraphic: () => (
-        <div className="space-y-4">
-          {/* Top KPI Metric Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-red-500/40 transition-colors">
-              <div className="text-[10px] text-slate-400 font-medium">Net Revenue (Q3)</div>
-              <div className="text-lg font-black text-white font-mono mt-0.5">₹8,42,80,000</div>
-              <div className="text-[9px] font-bold text-emerald-400 mt-0.5">+24.8% vs FY25</div>
-            </div>
-            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-red-500/40 transition-colors">
-              <div className="text-[10px] text-slate-400 font-medium">Operating Margin</div>
-              <div className="text-lg font-black text-white font-mono mt-0.5">68.4%</div>
-              <div className="text-[9px] font-bold text-emerald-400 mt-0.5">Target &gt;65% Met</div>
-            </div>
-            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-red-500/40 transition-colors">
-              <div className="text-[10px] text-slate-400 font-medium">Active Franchises</div>
-              <div className="text-lg font-black text-white font-mono mt-0.5">48 Hubs</div>
-              <div className="text-[9px] font-bold text-emerald-400 mt-0.5">100% Operational</div>
-            </div>
-            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-red-500/40 transition-colors">
-              <div className="text-[10px] text-slate-400 font-medium">Query Latency</div>
-              <div className="text-lg font-black text-white font-mono mt-0.5">142 ms</div>
-              <div className="text-[9px] font-bold text-emerald-400 mt-0.5">Sub-second P99</div>
-            </div>
-          </div>
-
-          {/* Miniature Trajectory Graphic with Interactive Hover */}
-          <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-            <div className="flex items-center justify-between text-xs mb-3">
-              <span className="font-bold text-slate-200">Revenue Trajectory vs Baseline Target (H1 FY26)</span>
-              <span className="text-[10px] font-mono text-emerald-400 font-bold">+₹92.8L Surplus</span>
-            </div>
-            <div className="h-28 flex items-end justify-between gap-2 px-2 pt-2">
-              {[
-                { m: 'Jan', val: 42, t: 38 },
-                { m: 'Feb', val: 58, t: 50 },
-                { m: 'Mar', val: 72, t: 65 },
-                { m: 'Apr', val: 89, t: 78 },
-                { m: 'May', val: 94, t: 85 },
-                { m: 'Jun', val: 118, t: 100 },
-              ].map((pt) => (
-                <div key={pt.m} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group cursor-pointer">
-                  <div className="w-full flex items-end justify-center gap-1 h-20">
-                    <div className="w-3 bg-slate-700 rounded-t" style={{ height: `${(pt.t / 125) * 100}%` }} title={`Target: ₹${pt.t}L`} />
-                    <div className="w-3 bg-red-600 rounded-t shadow-sm shadow-red-600/50 group-hover:bg-rose-400 group-hover:scale-110 transition-all" style={{ height: `${(pt.val / 125) * 100}%` }} title={`Actual: ₹${pt.val}L`} />
-                  </div>
-                  <span className="text-[10px] text-slate-400 font-mono group-hover:text-red-400 transition-colors">{pt.m}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Regional Table Row */}
-          <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-xs">
-            <span className="text-slate-300">South Region (HQ &amp; 48 Hubs): ₹3.82 Cr (109% of Target)</span>
-            <span className="text-emerald-400 font-bold">+28.4% YoY</span>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: 'formula',
-      label: 'KPI Formula Studio',
-      icon: Sliders,
-      tagline: 'Define Business Metrics Without Touching SQL or Python',
-      description: 'Build formulaic enterprise metrics with mathematical syntax validation, variance targets, and automated status thresholds (Healthy, Warning, Critical).',
-      highlights: [
-        'Compose mathematical formulas with interactive metric tokens',
-        'Configure tolerance thresholds and automated anomaly floors',
-        'Inherit dimensional filters (Store, Region, Category) automatically'
-      ],
-      previewTitle: 'Ricoz Dynamic Metric Studio',
-      badge: 'Zero-Code Formula Compiler',
-      badgeColor: 'amber',
-      renderGraphic: () => (
-        <div className="space-y-4 font-mono text-xs">
-          {/* Formula Builder Mockup */}
-          <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
-            <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">
-              Active Formula Definition: [EBITDA_MARGIN_PCT]
-            </div>
-            <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex flex-wrap items-center gap-2 text-xs">
-              <span className="px-2 py-1 rounded bg-red-950 text-red-300 border border-red-800">[Net Invoiced Sales]</span>
-              <span className="text-slate-400">-</span>
-              <span className="px-2 py-1 rounded bg-blue-950 text-blue-300 border border-blue-800">[Cost of Goods Sold]</span>
-              <span className="text-slate-400">-</span>
-              <span className="px-2 py-1 rounded bg-purple-950 text-purple-300 border border-purple-800">[Operating OpEx]</span>
-            </div>
-            <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-              <span className="text-emerald-400 flex items-center gap-1">
-                <CheckCircle2 size={13} /> Formula syntax valid &amp; verified
-              </span>
-              <span>Evaluated in 1.4 ms</span>
-            </div>
-          </div>
-
-          {/* Tolerance Thresholds */}
-          <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2.5">
-            <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">
-              Automated Status Thresholds
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between p-2 rounded bg-slate-950 border border-emerald-900/40 text-emerald-400">
-                <span>Healthy Status (&gt; 65.0% Margin)</span>
-                <span className="font-bold">Current: 68.4% (Healthy)</span>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded bg-slate-950 border border-amber-900/40 text-amber-400">
-                <span>Warning Floor (55.0% - 65.0%)</span>
-                <span>Automatic Slack Alert</span>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded bg-slate-950 border border-rose-900/40 text-rose-400">
-                <span>Critical Incident (&lt; 55.0%)</span>
-                <span>P1 Incident Dispatch</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: 'modeling',
-      label: 'Relational Schema Modeler',
-      icon: Database,
-      tagline: 'Automatic Entity-Relationship Discovery & Type Normalization',
-      description: 'Visualize cross-table foreign key links, detect schema drifts, and validate data quality across thousands of tables without building manual data pipelines.',
-      highlights: [
-        'Automatic primary & foreign key relationship inference',
-        'Continuous data profiling and null-value leakage detection',
-        'Lineage tracking from source database to executive dashboard widget'
-      ],
-      previewTitle: 'Data Lineage & Relational Mapper',
-      badge: 'Active Relational Graph',
-      badgeColor: 'sky',
-      renderGraphic: () => (
-        <div className="space-y-3 font-mono text-xs">
-          {/* Table Schema Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
-              <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
-                <span className="text-white font-bold">orders_fact</span>
-                <span className="text-[10px] text-emerald-400">1,420,890 rows</span>
-              </div>
-              <div className="space-y-1 text-[11px] text-slate-400">
-                <div className="flex justify-between"><span>order_id (PK)</span><span className="text-slate-500">uuid</span></div>
-                <div className="flex justify-between text-blue-400"><span>customer_id (FK)</span><span>uuid</span></div>
-                <div className="flex justify-between text-purple-400"><span>branch_id (FK)</span><span>int4</span></div>
-                <div className="flex justify-between"><span>gross_amount</span><span className="text-slate-500">numeric</span></div>
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
-              <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
-                <span className="text-white font-bold">franchise_branches</span>
-                <span className="text-[10px] text-emerald-400">48 Hubs</span>
-              </div>
-              <div className="space-y-1 text-[11px] text-slate-400">
-                <div className="flex justify-between text-purple-400"><span>branch_id (PK)</span><span>int4</span></div>
-                <div className="flex justify-between"><span>branch_name</span><span className="text-slate-500">varchar</span></div>
-                <div className="flex justify-between"><span>region_code</span><span className="text-slate-500">varchar</span></div>
-                <div className="flex justify-between"><span>target_arr</span><span className="text-slate-500">numeric</span></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Lineage Mapping Bar */}
-          <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-[11px]">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              <span className="text-slate-300">FK Relation Verified: orders_fact.branch_id ➔ franchise_branches.branch_id</span>
-            </div>
-            <span className="text-emerald-400 font-bold">100% Integrity</span>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: 'reports',
-      label: 'Scheduled Briefing Studio',
-      icon: FileText,
-      tagline: 'Automated Executive PDF Reports Dispatched on Cron',
-      description: 'Eliminate manual Monday morning slide-deck preparation. Configure cron schedules to compile beautiful, branded PDF digests with executive KPIs and charts.',
-      highlights: [
-        'Automated Monday morning PDF executive briefing dispatches',
-        'Corporate branded headers, footers, and executive commentary',
-        'Multi-format export: PDF, XLSX workbook, and raw CSV'
-      ],
-      previewTitle: 'Automated Briefing Scheduler',
-      badge: 'Cron Automation Active',
-      badgeColor: 'purple',
-      renderGraphic: () => (
-        <div className="space-y-4 text-xs">
-          {/* Cron Job Specification */}
-          <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3 font-mono">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Clock size={15} className="text-purple-400" />
-                <span className="text-white font-bold">CRON SCHEDULE: 0 8 * * 1 (Every Monday 08:00 AM IST)</span>
-              </div>
-              <span className="text-[10px] text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800">
-                Active Schedule
-              </span>
-            </div>
-
-            {/* Document Preview Box */}
-            <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-12 rounded bg-red-600 text-white flex flex-col items-center justify-center font-bold text-[10px] shadow-sm">
-                  <span>PDF</span>
-                  <span className="text-[8px] font-normal">v2.4</span>
-                </div>
-                <div>
-                  <div className="font-bold text-white text-xs">Q3-Enterprise-Revenue-Report-Upgraded.pdf</div>
-                  <div className="text-[10px] text-slate-400">14 recipients (Board &amp; Regional VPs) • 66.7 KB</div>
-                </div>
-              </div>
-              <span className="text-xs text-red-400 font-bold flex items-center gap-1">
-                <Download size={13} /> Ready
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-400 pt-1">
-              <div>Next run: Monday at 08:00 AM IST</div>
-              <div className="text-right text-emerald-400">Delivery status: 100% SLA Met</div>
-            </div>
-          </div>
-        </div>
-      )
+      role: 'assistant',
+      text: 'Hello! I am your Ricoz AI Copilot. I analyze live transactions across all 48 franchise hubs. Ask a question or click a prompt below.'
     }
+  ]);
+
+  // Dataset configurations
+  const datasets = [
+    { id: 'franchise', name: 'Franchise Retail Operations', count: '48 Hubs • Q3 FY26' },
+    { id: 'ecommerce', name: 'Omnichannel E-Commerce', count: '124,800 Orders • H1' },
+    { id: 'supplychain', name: 'Supply Chain & Logistics', count: '18 Warehouses • Live' },
   ];
 
-  const currentTab = showcaseTabs[activeTab];
+  // Dynamic calculations based on dataset and filters
+  const currentMetrics = useMemo(() => {
+    let multiplier = 1;
+    if (selectedDataset === 'ecommerce') multiplier = 1.35;
+    if (selectedDataset === 'supplychain') multiplier = 0.82;
+    if (selectedRegion === 'south') multiplier *= 0.45;
+    if (selectedRegion === 'north') multiplier *= 0.28;
+    if (selectedRegion === 'west') multiplier *= 0.19;
+    if (selectedRegion === 'east') multiplier *= 0.08;
+
+    const baseRev = Math.round(84280000 * multiplier);
+    const targetRev = Math.round(75000000 * multiplier);
+    const surplus = baseRev - targetRev;
+
+    return {
+      revenue: baseRev,
+      target: targetRev,
+      surplus: surplus,
+      surplusPct: '+24.8%',
+      margin: selectedDataset === 'supplychain' ? '54.2%' : '68.4%',
+      hubs: selectedRegion === 'all' ? (selectedDataset === 'supplychain' ? '18 Nodes' : '48 Hubs') : (selectedRegion === 'south' ? '22 Hubs' : '10 Hubs'),
+      latency: '142 ms'
+    };
+  }, [selectedDataset, selectedRegion]);
+
+  // Interactive Table Rows
+  const tableRows = useMemo(() => {
+    const raw = [
+      { code: 'HUB-812', city: 'Bangalore West', region: 'South', rev: '₹1.48 Cr', target: '₹1.15 Cr', variance: '+28.7%', status: 'Exceeding' },
+      { code: 'HUB-402', city: 'Mumbai Central', region: 'West', rev: '₹1.12 Cr', target: '₹1.05 Cr', variance: '+6.6%', status: 'Healthy' },
+      { code: 'HUB-204', city: 'Delhi Connaught', region: 'North', rev: '₹1.35 Cr', target: '₹1.20 Cr', variance: '+12.5%', status: 'Healthy' },
+      { code: 'HUB-318', city: 'Chennai OMR', region: 'South', rev: '₹1.22 Cr', target: '₹0.95 Cr', variance: '+28.4%', status: 'Exceeding' },
+      { code: 'HUB-501', city: 'Hyderabad Hitec', region: 'South', rev: '₹1.12 Cr', target: '₹0.88 Cr', variance: '+27.2%', status: 'Exceeding' },
+      { code: 'HUB-109', city: 'Kolkata SaltLake', region: 'East', rev: '₹0.62 Cr', target: '₹0.60 Cr', variance: '+3.3%', status: 'On Target' },
+      { code: 'HUB-604', city: 'Pune Baner', region: 'West', rev: '₹0.48 Cr', target: '₹0.55 Cr', variance: '-12.7%', status: 'Alert' },
+    ];
+
+    return raw.filter(r => {
+      const matchRegion = selectedRegion === 'all' || r.region.toLowerCase() === selectedRegion;
+      const matchSearch = tableSearch === '' || 
+        r.code.toLowerCase().includes(tableSearch.toLowerCase()) || 
+        r.city.toLowerCase().includes(tableSearch.toLowerCase()) ||
+        r.region.toLowerCase().includes(tableSearch.toLowerCase());
+      return matchRegion && matchSearch;
+    });
+  }, [selectedRegion, tableSearch]);
+
+  const handleCopilotSend = (queryText) => {
+    const q = queryText || copilotQuery;
+    if (!q.trim()) return;
+
+    const userMsg = { role: 'user', text: q };
+    let replyText = "Analyzing multi-source telemetry...";
+
+    if (q.toLowerCase().includes('south') || q.toLowerCase().includes('variance')) {
+      replyText = "South Region delivered +28.4% above quarterly plan (₹3.82 Cr vs ₹2.97 Cr target). Autonomous variance attribution shows high-ticket enterprise reorders across Bangalore West (HUB-812) and Chennai OMR (HUB-318) accounted for 65% of the surplus.";
+    } else if (q.toLowerCase().includes('forecast') || q.toLowerCase().includes('cash')) {
+      replyText = "Based on continuous Monte Carlo simulation (R² = 0.94), projected Q4 cash runway stands at 14.8 months with 90% statistical confidence assuming current 15% reinvestment velocity.";
+    } else if (q.toLowerCase().includes('anomaly') || q.toLowerCase().includes('alert')) {
+      replyText = "1 operational variance detected: Pune Baner (HUB-604) margin contracted -12.7% due to temporary local supplier freight surcharge. Automated P1 notification dispatched to West Regional Director.";
+    } else {
+      replyText = `Evaluated across ${currentMetrics.hubs}: Query executed in 14ms across 1.2M rows. Current Gross Margin is ${currentMetrics.margin} with zero data drops.`;
+    }
+
+    setChatLog(prev => [...prev, userMsg, { role: 'assistant', text: replyText }]);
+    setCopilotQuery('');
+  };
 
   return (
-    <section 
-      id="product" 
-      ref={containerRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="py-20 lg:py-28 bg-white dark:bg-[#0B0F19] transition-colors duration-200 border-t border-slate-200/80 dark:border-slate-800"
-      style={{ perspective: '1400px' }}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="product" className="py-20 lg:py-28 bg-white dark:bg-[#0B0F19] text-slate-900 dark:text-white border-t border-slate-200 dark:border-slate-800 transition-colors duration-200">
+      <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8">
+        
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider mb-4 shadow-2xs">
-            <Layers size={14} className="text-red-600 dark:text-red-400" />
-            <span>Platform Capabilities Showcase</span>
+        <div className="text-center max-w-3xl mx-auto mb-12">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-red-600 dark:text-red-400 text-xs font-mono font-bold uppercase tracking-wider mb-3">
+            <Cpu size={13} className="text-red-600 dark:text-red-400" />
+            <span>Interactive Platform Demonstration</span>
           </div>
-
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-            One Sovereign Platform.{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-rose-600 to-red-700">
-              Complete Operational Visibility.
-            </span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
+            See the Actual Product in Action.
           </h2>
-
-          <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-            Explore how RicozAnalytics bridges the gap between complex database infrastructure and executive boardroom decision-making.
+          <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300">
+            Switch datasets, adjust filters, and test the real analytics cockpit directly in your browser.
           </p>
-
-          {/* Interactive Showcase Tabs with spring active pill */}
-          <div className="mt-8 flex flex-wrap justify-center gap-2">
-            {showcaseTabs.map((tab, idx) => {
-              const TabIcon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(idx)}
-                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer ${
-                    activeTab === idx
-                      ? 'bg-red-600 text-white shadow-lg shadow-red-600/30 scale-105'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                  }`}
-                >
-                  <TabIcon size={16} />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
         </div>
 
-        {/* 3D Interactive Showcase Stage Frame */}
-        <div 
-          className="bg-slate-900 text-white rounded-3xl border border-slate-800 shadow-2xl overflow-hidden transition-transform duration-300 ease-out"
-          style={{
-            transform: `rotateX(${mouseTilt.x.toFixed(2)}deg) rotateY(${mouseTilt.y.toFixed(2)}deg)`,
-            transformStyle: 'preserve-3d',
-            willChange: 'transform',
-          }}
-        >
-          {/* Top Window Bar */}
-          <div 
-            className="px-6 py-4 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between"
-            style={{ transform: 'translateZ(15px)' }}
-          >
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-red-500/80" />
-              <span className="w-3 h-3 rounded-full bg-amber-500/80" />
-              <span className="w-3 h-3 rounded-full bg-emerald-500/80" />
-              <span className="ml-3 text-xs font-mono text-slate-400">ricoz.app/workspace/{currentTab.id}</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[11px] font-mono text-slate-300 uppercase tracking-wider">{currentTab.badge}</span>
-            </div>
-          </div>
-
-          {/* Main Stage Grid with 3D Depth */}
-          <div className="p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center" style={{ transformStyle: 'preserve-3d' }}>
-            {/* Left Info Column (5 cols) */}
-            <div className="lg:col-span-5 space-y-5" style={{ transform: 'translateZ(25px)' }}>
-              <div className="inline-block text-[11px] font-mono font-bold uppercase tracking-wider text-red-400 bg-red-950/60 px-3 py-1 rounded-md border border-red-900/60">
-                Pillar {activeTab + 1} of {showcaseTabs.length} • Illustrative Dataset
-              </div>
-
-              <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-snug">
-                {currentTab.tagline}
-              </h3>
-
-              <p className="text-sm text-slate-300 leading-relaxed">
-                {currentTab.description}
-              </p>
-
-              <ul className="space-y-3 pt-2 text-xs sm:text-sm text-slate-200">
-                {currentTab.highlights.map((h, i) => (
-                  <li key={i} className="flex items-start gap-2.5">
-                    <CheckCircle2 size={16} className="text-red-500 shrink-0 mt-0.5" />
-                    <span>{h}</span>
-                  </li>
+        {/* ─── COCKPIT WINDOW CONTAINER ──────────────── */}
+        <div className="rounded-3xl bg-slate-950 border border-slate-800 shadow-2xl overflow-hidden text-slate-200">
+          
+          {/* Top Control Bar: Dataset Switcher & Global Filters */}
+          <div className="p-4 sm:p-5 bg-slate-900/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4">
+            
+            {/* Dataset Dropdown / Tabs */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-mono text-slate-400 font-bold uppercase tracking-wider hidden sm:inline">Dataset:</span>
+              <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                {datasets.map(ds => (
+                  <button
+                    key={ds.id}
+                    type="button"
+                    onClick={() => setSelectedDataset(ds.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      selectedDataset === ds.id
+                        ? 'bg-red-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>{ds.name}</span>
+                  </button>
                 ))}
-              </ul>
-
-              <div className="pt-4 flex flex-wrap items-center gap-3">
-                <Link
-                  to="/register"
-                  className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-red-600/30 transition-all inline-flex items-center gap-2 cursor-pointer hover:scale-105"
-                >
-                  <span>Test in Free Workspace</span>
-                  <ArrowRight size={14} />
-                </Link>
-                <button
-                  type="button"
-                  onClick={onOpenDemo}
-                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs sm:text-sm transition-colors cursor-pointer"
-                >
-                  Schedule Walkthrough
-                </button>
               </div>
             </div>
 
-            {/* Right Interactive Graphic Container (7 cols) with Layer Elevation */}
-            <div 
-              className="lg:col-span-7 bg-slate-950/70 rounded-2xl p-5 sm:p-6 border border-slate-800/80 shadow-2xl transition-all duration-300"
-              style={{ transform: 'translateZ(40px)' }}
-            >
-              <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-800 text-xs">
-                <span className="font-bold text-slate-200 font-mono">{currentTab.previewTitle}</span>
-                <span className="text-[10px] text-slate-400 font-mono">Live Interactive Mockup</span>
+            {/* Dynamic Interactive Filters */}
+            <div className="flex items-center gap-2.5 text-xs font-mono">
+              <div className="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-slate-300">
+                <Filter size={12} className="text-red-400" />
+                <span>Region:</span>
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => setSelectedRegion(e.target.value)}
+                  className="bg-transparent text-white font-bold outline-none cursor-pointer"
+                >
+                  <option value="all" className="bg-slate-900 text-white">All Hubs (Consolidated)</option>
+                  <option value="south" className="bg-slate-900 text-white">South Region (HQ)</option>
+                  <option value="north" className="bg-slate-900 text-white">North Region</option>
+                  <option value="west" className="bg-slate-900 text-white">West Region</option>
+                  <option value="east" className="bg-slate-900 text-white">East Region</option>
+                </select>
               </div>
 
-              {/* Render Tab Specific Graphic */}
-              {currentTab.renderGraphic()}
+              <div className="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-slate-300 hidden sm:flex">
+                <Calendar size={12} className="text-blue-400" />
+                <select
+                  value={selectedTimeRange}
+                  onChange={(e) => setSelectedTimeRange(e.target.value)}
+                  className="bg-transparent text-white font-bold outline-none cursor-pointer"
+                >
+                  <option value="q3" className="bg-slate-900 text-white">Q3 FY26</option>
+                  <option value="mtd" className="bg-slate-900 text-white">Month to Date</option>
+                  <option value="ytd" className="bg-slate-900 text-white">Year to Date (H1)</option>
+                </select>
+              </div>
             </div>
+
           </div>
+
+          {/* Module Navigation Tabs */}
+          <div className="px-5 py-2.5 bg-slate-950 border-b border-slate-800/80 flex items-center gap-2 overflow-x-auto scrollbar-none text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => setActiveTab('cockpit')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-colors cursor-pointer shrink-0 ${
+                activeTab === 'cockpit'
+                  ? 'bg-slate-800 text-white font-bold border border-slate-700'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <BarChart3 size={14} className="text-red-500" />
+              <span>1. Executive Cockpit</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('table')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-colors cursor-pointer shrink-0 ${
+                activeTab === 'table'
+                  ? 'bg-slate-800 text-white font-bold border border-slate-700'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <TableIcon size={14} className="text-blue-400" />
+              <span>2. Live Data Table ({tableRows.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('copilot')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-colors cursor-pointer shrink-0 ${
+                activeTab === 'copilot'
+                  ? 'bg-slate-800 text-white font-bold border border-slate-700'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Sparkles size={14} className="text-purple-400" />
+              <span>3. AI Copilot Simulator</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('forecast')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-colors cursor-pointer shrink-0 ${
+                activeTab === 'forecast'
+                  ? 'bg-slate-800 text-white font-bold border border-slate-700'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <TrendingUp size={14} className="text-emerald-400" />
+              <span>4. Forecasting &amp; What-If</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('report')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-colors cursor-pointer shrink-0 ${
+                activeTab === 'report'
+                  ? 'bg-slate-800 text-white font-bold border border-slate-700'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <FileText size={14} className="text-amber-400" />
+              <span>5. Scheduled PDF Report</span>
+            </button>
+          </div>
+
+          {/* ─── INSIDE MODULE VIEWS ──────────────── */}
+          <div className="p-5 sm:p-7 min-h-[440px]">
+            
+            {/* VIEW 1: EXECUTIVE COCKPIT */}
+            {activeTab === 'cockpit' && (
+              <div className="space-y-6 animate-fadeIn">
+                
+                {/* 4 KPI Cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+                    <div className="text-[11px] font-mono text-slate-400">Net Revenue Invoiced</div>
+                    <div className="text-2xl font-black text-white font-mono mt-1">₹{currentMetrics.revenue.toLocaleString('en-IN')}</div>
+                    <div className="text-[11px] font-bold text-emerald-400 mt-1 flex items-center gap-1">
+                      <TrendingUp size={12} />
+                      <span>{currentMetrics.surplusPct} vs Target</span>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+                    <div className="text-[11px] font-mono text-slate-400">Operating Margin (EBITDA)</div>
+                    <div className="text-2xl font-black text-white font-mono mt-1">{currentMetrics.margin}</div>
+                    <div className="text-[11px] font-bold text-emerald-400 mt-1">+3.4% Baseline Surplus</div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+                    <div className="text-[11px] font-mono text-slate-400">Active Nodes Monitored</div>
+                    <div className="text-2xl font-black text-white font-mono mt-1">{currentMetrics.hubs}</div>
+                    <div className="text-[11px] font-bold text-emerald-400 mt-1">100% Operational Health</div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+                    <div className="text-[11px] font-mono text-slate-400">Query P99 Latency</div>
+                    <div className="text-2xl font-black text-white font-mono mt-1">{currentMetrics.latency}</div>
+                    <div className="text-[11px] font-bold text-emerald-400 mt-1">Direct Zero-ETL Sync</div>
+                  </div>
+                </div>
+
+                {/* Trajectory Bar Chart & Regional Performance */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                  <div className="lg:col-span-8 p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
+                    <div className="flex items-center justify-between text-xs mb-4">
+                      <div>
+                        <span className="font-bold text-white">Monthly Revenue Velocity vs Plan</span>
+                        <div className="text-[11px] text-slate-400 font-mono">Dataset: {datasets.find(d => d.id === selectedDataset)?.name}</div>
+                      </div>
+                      <span className="text-emerald-400 font-mono font-bold">+₹{(currentMetrics.surplus / 100000).toFixed(1)}L Surplus</span>
+                    </div>
+
+                    <div className="h-44 flex items-end justify-between gap-3 px-3 pt-3">
+                      {[
+                        { m: 'Jan', val: 42, t: 38 },
+                        { m: 'Feb', val: 58, t: 50 },
+                        { m: 'Mar', val: 72, t: 65 },
+                        { m: 'Apr', val: 89, t: 78 },
+                        { m: 'May', val: 94, t: 85 },
+                        { m: 'Jun', val: 118, t: 100 },
+                      ].map(pt => (
+                        <div key={pt.m} className="flex-1 flex flex-col items-center justify-end h-full group cursor-pointer">
+                          <div className="w-full flex items-end justify-center gap-1 h-32">
+                            <div className="w-3 bg-slate-700 rounded-t" style={{ height: `${(pt.t / 125) * 100}%` }} title={`Target: ₹${pt.t}L`} />
+                            <div className="w-4 bg-red-600 rounded-t group-hover:bg-rose-400 group-hover:scale-110 transition-all" style={{ height: `${(pt.val / 125) * 100}%` }} title={`Actual: ₹${pt.val}L`} />
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-mono mt-2 group-hover:text-red-400">{pt.m}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-800 text-[11px] text-slate-400">
+                      <span>Gray = Target • Red = Actual Invoiced Revenue</span>
+                      <span className="text-white font-bold">112% Target Attainment</span>
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-4 p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
+                    <div>
+                      <div className="text-xs font-bold text-white mb-3 pb-2 border-b border-slate-800 flex justify-between">
+                        <span>Regional Distribution</span>
+                        <span className="text-emerald-400 font-mono">100% Target Met</span>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex justify-between text-xs text-slate-300 mb-1">
+                            <span>South Region</span>
+                            <span className="font-mono font-bold text-white">45.3%</span>
+                          </div>
+                          <div className="w-full h-1.5 rounded-full bg-slate-800">
+                            <div className="h-full bg-red-600 rounded-full" style={{ width: '100%' }} />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-xs text-slate-300 mb-1">
+                            <span>North Region</span>
+                            <span className="font-mono font-bold text-white">28.5%</span>
+                          </div>
+                          <div className="w-full h-1.5 rounded-full bg-slate-800">
+                            <div className="h-full bg-red-600 rounded-full" style={{ width: '84%' }} />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-xs text-slate-300 mb-1">
+                            <span>West Region</span>
+                            <span className="font-mono font-bold text-white">18.9%</span>
+                          </div>
+                          <div className="w-full h-1.5 rounded-full bg-slate-800">
+                            <div className="h-full bg-red-600 rounded-full" style={{ width: '72%' }} />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-xs text-slate-300 mb-1">
+                            <span>East Region</span>
+                            <span className="font-mono font-bold text-white">7.3%</span>
+                          </div>
+                          <div className="w-full h-1.5 rounded-full bg-slate-800">
+                            <div className="h-full bg-red-600 rounded-full" style={{ width: '48%' }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-800 text-xs text-slate-400">
+                      <span>Row-Level Security (RLS) active across all 48 branches.</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* VIEW 2: DATA EXPLORER & TABLE */}
+            {activeTab === 'table' && (
+              <div className="space-y-4 animate-fadeIn font-mono text-xs">
+                
+                {/* Search Bar & Table Controls */}
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 p-3 rounded-xl border border-slate-800">
+                  <div className="flex items-center gap-2 flex-1 max-w-md bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+                    <Search size={14} className="text-slate-400" />
+                    <input
+                      type="text"
+                      value={tableSearch}
+                      onChange={(e) => setTableSearch(e.target.value)}
+                      placeholder="Search store code, city, region..."
+                      className="bg-transparent text-white placeholder-slate-500 outline-none w-full text-xs font-sans"
+                    />
+                  </div>
+                  <div className="text-slate-400 text-[11px]">
+                    Showing {tableRows.length} nodes matching filters
+                  </div>
+                </div>
+
+                {/* Table Records */}
+                <div className="overflow-x-auto rounded-xl border border-slate-800">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-900 text-slate-400 text-[11px] uppercase tracking-wider border-b border-slate-800">
+                      <tr>
+                        <th className="p-3">Store Code</th>
+                        <th className="p-3">Hub City</th>
+                        <th className="p-3">Territory</th>
+                        <th className="p-3">Q3 Invoiced</th>
+                        <th className="p-3">Target</th>
+                        <th className="p-3">Variance</th>
+                        <th className="p-3">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/80 bg-slate-950/70 font-sans">
+                      {tableRows.map((row, idx) => (
+                        <tr key={idx} className="hover:bg-slate-900/60 transition-colors">
+                          <td className="p-3 font-mono font-bold text-white">{row.code}</td>
+                          <td className="p-3 text-slate-200">{row.city}</td>
+                          <td className="p-3 text-slate-400">{row.region}</td>
+                          <td className="p-3 font-mono text-white font-bold">{row.rev}</td>
+                          <td className="p-3 font-mono text-slate-400">{row.target}</td>
+                          <td className="p-3 font-mono">
+                            <span className={row.variance.startsWith('+') ? 'text-emerald-400 font-bold' : 'text-red-400 font-bold'}>
+                              {row.variance}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                              row.status === 'Exceeding' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' :
+                              row.status === 'Alert' ? 'bg-red-950 text-red-400 border border-red-800' :
+                              'bg-blue-950 text-blue-400 border border-blue-800'
+                            }`}>
+                              {row.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+              </div>
+            )}
+
+            {/* VIEW 3: AI COPILOT SIMULATOR */}
+            {activeTab === 'copilot' && (
+              <div className="space-y-4 animate-fadeIn">
+                <div className="h-64 overflow-y-auto p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3 font-sans text-xs">
+                  {chatLog.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-lg p-3 rounded-2xl ${
+                        msg.role === 'user'
+                          ? 'bg-red-600 text-white rounded-br-xs'
+                          : 'bg-slate-950 text-slate-200 border border-slate-800 rounded-bl-xs'
+                      }`}>
+                        <div className="text-[10px] font-mono opacity-70 mb-1">
+                          {msg.role === 'user' ? 'You' : 'Ricoz AI Copilot'}
+                        </div>
+                        <p className="leading-relaxed">{msg.text}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Quick Prompts */}
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="text-[11px] font-mono text-slate-400">Quick queries:</span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopilotSend("Explain Q3 South variance and top driver")}
+                    className="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs transition cursor-pointer"
+                  >
+                    "Explain Q3 South variance"
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleCopilotSend("Forecast Q4 cash runway")}
+                    className="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs transition cursor-pointer"
+                  >
+                    "Forecast Q4 cash runway"
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleCopilotSend("Check active anomaly alerts")}
+                    className="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs transition cursor-pointer"
+                  >
+                    "Check active anomaly alerts"
+                  </button>
+                </div>
+
+                {/* Input Bar */}
+                <form 
+                  onSubmit={(e) => { e.preventDefault(); handleCopilotSend(); }}
+                  className="flex gap-2"
+                >
+                  <input
+                    type="text"
+                    value={copilotQuery}
+                    onChange={(e) => setCopilotQuery(e.target.value)}
+                    placeholder="Ask Ricoz AI any question about your revenue, hubs, or margin..."
+                    className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-red-500"
+                  />
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span>Analyze</span>
+                    <Send size={13} />
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* VIEW 4: FORECASTING & WHAT-IF ENGINE */}
+            {activeTab === 'forecast' && (
+              <div className="space-y-6 animate-fadeIn font-mono text-xs">
+                
+                {/* Interactive Slider Box */}
+                <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 font-sans">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <div className="font-bold text-white text-sm">Monte Carlo What-If Parameter Simulator</div>
+                      <div className="text-xs text-slate-400 font-mono">Statistical Confidence: R² = 0.94 • 10,000 scenarios/sec</div>
+                    </div>
+                    <div className="px-3 py-1 rounded-lg bg-emerald-950 border border-emerald-800 text-emerald-400 font-mono font-bold text-xs">
+                      Simulated Growth Rate: {growthSlider}%
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs text-slate-400 font-mono">
+                      <span>Conservative (0%)</span>
+                      <span>Target (+15%)</span>
+                      <span>Aggressive (+35%)</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="35"
+                      value={growthSlider}
+                      onChange={(e) => setGrowthSlider(Number(e.target.value))}
+                      className="w-full accent-red-600 cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                {/* Simulated Outcome Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                    <div className="text-[11px] text-slate-400">Simulated FY27 Revenue</div>
+                    <div className="text-xl font-bold text-white mt-1">
+                      ₹{Math.round(84280000 * (1 + growthSlider / 100) * 1.25).toLocaleString('en-IN')}
+                    </div>
+                    <div className="text-[10px] text-emerald-400 mt-1">+{growthSlider}% Model Attainment</div>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                    <div className="text-[11px] text-slate-400">Projected Cash Runway</div>
+                    <div className="text-xl font-bold text-white mt-1">
+                      {(12 + growthSlider * 0.2).toFixed(1)} Months
+                    </div>
+                    <div className="text-[10px] text-emerald-400 mt-1">Zero Dilution Buffer</div>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                    <div className="text-[11px] text-slate-400">Franchise Expansion Capacity</div>
+                    <div className="text-xl font-bold text-white mt-1">
+                      {Math.round(48 + growthSlider * 0.8)} Hubs
+                    </div>
+                    <div className="text-[10px] text-blue-400 mt-1">Self-Funding Velocity</div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* VIEW 5: SCHEDULED PDF REPORT */}
+            {activeTab === 'report' && (
+              <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-5 animate-fadeIn">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                  <div>
+                    <h3 className="font-bold text-white text-base">Weekly Leadership Performance Digest</h3>
+                    <p className="text-xs text-slate-400 mt-0.5">Automated cron delivery to Board Members &amp; Franchise Directors</p>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-purple-950 text-purple-300 border border-purple-800 text-xs font-mono font-bold">
+                    DISPATCH: 07:00 AM EVERY MONDAY
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-3 text-xs">
+                  <div className="flex justify-between text-slate-300 font-mono">
+                    <span>DOCUMENT_TITLE:</span>
+                    <span className="text-white font-bold">Ricoz_Executive_Briefing_Q3_Consolidated.pdf</span>
+                  </div>
+                  <div className="flex justify-between text-slate-300 font-mono">
+                    <span>SECTIONS_INCLUDED:</span>
+                    <span className="text-slate-400">EBITDA Pacing, Regional Variance, Anomaly Audit, Cash Velocity</span>
+                  </div>
+                  <div className="flex justify-between text-slate-300 font-mono">
+                    <span>RECIPIENTS:</span>
+                    <span className="text-emerald-400">14 Verified Leadership Stakeholders</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <Link
+                    to="/register"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition"
+                  >
+                    <span>Configure Scheduled Dispatch</span>
+                    <ArrowRight size={14} />
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={onOpenDemo}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition"
+                  >
+                    <Download size={14} />
+                    <span>Download Sample Briefing</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+          </div>
+
+          {/* Bottom Bar: Quick CTA */}
+          <div className="px-6 py-4 bg-slate-900/60 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <span className="text-slate-400 font-mono">
+              Ready to deploy this cockpit to your business databases?
+            </span>
+            <Link
+              to="/register"
+              className="font-bold text-red-400 hover:text-red-300 inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>Start 14-Day Free Trial (Zero Setup Fees)</span>
+              <ArrowRight size={13} />
+            </Link>
+          </div>
+
         </div>
+
       </div>
     </section>
   );

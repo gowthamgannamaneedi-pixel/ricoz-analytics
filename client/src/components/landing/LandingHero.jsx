@@ -101,25 +101,19 @@ export default function LandingHero({ onOpenDemo }) {
         <Hero3DCanvas />
       </React.Suspense>
 
-      {/* Ambient Lighting Gradients */}
+      {/* Ambient Lighting & Architectural Grid (Restrained, Minimal) */}
       <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
-        <div 
-          className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[50rem] h-[30rem] bg-gradient-to-r from-red-600/15 via-rose-500/12 to-amber-500/8 dark:from-red-600/25 dark:via-rose-600/20 dark:to-transparent rounded-full blur-3xl opacity-80 transition-transform duration-700 ease-out"
-          style={{
-            transform: `translate(-50%, 0) translate3d(${mousePos.normX * -30}px, ${mousePos.normY * -30}px, 0)`,
-          }}
-        />
-        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-60 dark:opacity-30" />
+        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:28px_28px] opacity-70 dark:opacity-25" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Top Trust Pill Badge with Entrance Shimmer */}
         <div className="flex justify-center mb-6">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-50/90 dark:bg-red-950/70 border border-red-200/90 dark:border-red-900/60 shadow-xs text-red-600 dark:text-red-400 text-xs sm:text-sm font-bold tracking-wide backdrop-blur-md hover:scale-105 transition-transform duration-200 cursor-default">
-            <span className="flex h-2 w-2 rounded-full bg-red-600 animate-ping" />
-            <span className="uppercase tracking-wider">Enterprise Business Intelligence</span>
-            <span className="text-red-300 dark:text-red-700 hidden sm:inline">|</span>
-            <span className="text-slate-600 dark:text-slate-300 hidden sm:inline font-normal">Next-Gen Real-Time Analytics</span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-2xs text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-semibold tracking-wide backdrop-blur-md hover:border-red-500/50 transition-colors duration-200 cursor-default">
+            <span className="flex h-2 w-2 rounded-full bg-red-600 animate-pulse" />
+            <span className="uppercase tracking-wider font-mono text-[11px] text-red-600 dark:text-red-400 font-bold">Enterprise Intelligence</span>
+            <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
+            <span className="text-slate-600 dark:text-slate-400 hidden sm:inline font-normal">Next-Gen Real-Time Analytics</span>
           </div>
         </div>
 
@@ -148,26 +142,23 @@ export default function LandingHero({ onOpenDemo }) {
             RicozAnalytics connects databases, warehouses, and spreadsheets into a sovereign intelligence cockpit—monitoring enterprise KPIs, projecting AI forecasts, and delivering automated leadership digests in real-time.
           </p>
 
-          {/* Interactive 3D CTA Buttons */}
+          {/* Two Clear Primary CTAs as Specified */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
             <Link
               to="/register"
-              className="group relative w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-base transition-all duration-200 shadow-xl shadow-red-600/30 hover:shadow-red-600/50 hover:-translate-y-1 active:translate-y-0 cursor-pointer overflow-hidden"
+              className="group relative w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-base transition-all duration-200 shadow-xl shadow-red-600/25 hover:shadow-red-600/40 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer overflow-hidden"
             >
-              {/* Shimmer Sheen */}
-              <div className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-1000 ease-in-out pointer-events-none" />
-              <span className="relative z-10">Start 14-Day Free Trial</span>
+              <span className="relative z-10">Start Free Trial</span>
               <ArrowRight size={18} className="relative z-10 group-hover:translate-x-1 transition-transform" />
             </Link>
 
-            <button
-              type="button"
-              onClick={onOpenDemo}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-xl bg-white/90 dark:bg-slate-900/90 hover:bg-white dark:hover:bg-slate-800 text-slate-800 dark:text-white font-bold text-base border border-slate-200 dark:border-slate-700 backdrop-blur-md transition-all duration-200 shadow-sm hover:shadow-lg hover:-translate-y-1 cursor-pointer"
+            <a
+              href="#product"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-xl bg-white/90 dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-white font-bold text-base border border-slate-200 dark:border-slate-800 backdrop-blur-md transition-all duration-200 shadow-xs hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
             >
-              <Play size={16} className="text-red-600 fill-red-600" />
-              <span>Schedule Enterprise Demo</span>
-            </button>
+              <Play size={15} className="text-red-600 fill-red-600" />
+              <span>Explore Platform</span>
+            </a>
           </div>
 
           {/* Reassurance Trust Pills */}
@@ -382,160 +373,256 @@ export default function LandingHero({ onOpenDemo }) {
 
               {/* Main Interactive Chart & Side Panel Row (Layer +30px) */}
               <div 
-                className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch"
+                className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch min-h-[340px]"
                 style={{ transform: 'translateZ(30px)' }}
               >
-                {/* Interactive Chart Canvas (8 cols) */}
-                <div className="lg:col-span-8 p-5 sm:p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between">
-                  <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <div>
-                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                        <BarChart3 size={16} className="text-red-500" />
-                        <span>Revenue vs Target Trajectory (H1 FY26)</span>
-                      </h3>
-                      <p className="text-[11px] text-slate-400">Currency: INR Lakhs • Real-time audit verified</p>
-                    </div>
+                {/* VIEW 1: EXECUTIVE COCKPIT VIEW */}
+                {activeTab === 'executive' && (
+                  <>
+                    {/* Interactive Chart Canvas (8 cols) */}
+                    <div className="lg:col-span-8 p-5 sm:p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between animate-fadeIn">
+                      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                        <div>
+                          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                            <BarChart3 size={16} className="text-red-500" />
+                            <span>Revenue vs Target Trajectory (H1 FY26)</span>
+                          </h3>
+                          <p className="text-[11px] text-slate-400">Currency: INR Lakhs • Real-time audit verified</p>
+                        </div>
 
-                    <div className="flex items-center gap-3 text-xs">
-                      <span className="flex items-center gap-1.5 text-slate-300">
-                        <span className="w-2.5 h-2.5 rounded-full bg-red-600" /> Actual Invoiced
-                      </span>
-                      <span className="flex items-center gap-1.5 text-slate-400">
-                        <span className="w-2.5 h-0.5 border-t border-dashed border-slate-400" /> Target
-                      </span>
-                    </div>
-                  </div>
+                        <div className="flex items-center gap-3 text-xs">
+                          <span className="flex items-center gap-1.5 text-slate-300">
+                            <span className="w-2.5 h-2.5 rounded-full bg-red-600" /> Actual Invoiced
+                          </span>
+                          <span className="flex items-center gap-1.5 text-slate-400">
+                            <span className="w-2.5 h-0.5 border-t border-dashed border-slate-400" /> Target
+                          </span>
+                        </div>
+                      </div>
 
-                  {/* SVG Chart Graphic with Animated Drawing */}
-                  <div className="relative w-full h-52 bg-slate-950/60 rounded-xl p-3 border border-slate-800/80 flex flex-col justify-end overflow-hidden">
-                    {/* Grid lines */}
-                    <div className="absolute inset-x-3 inset-y-4 flex flex-col justify-between pointer-events-none opacity-20">
-                      <div className="border-b border-slate-500" />
-                      <div className="border-b border-slate-500" />
-                      <div className="border-b border-slate-500" />
-                      <div className="border-b border-slate-500" />
-                    </div>
+                      {/* SVG Chart Graphic with Animated Drawing */}
+                      <div className="relative w-full h-52 bg-slate-950/60 rounded-xl p-3 border border-slate-800/80 flex flex-col justify-end overflow-hidden">
+                        {/* Grid lines */}
+                        <div className="absolute inset-x-3 inset-y-4 flex flex-col justify-between pointer-events-none opacity-20">
+                          <div className="border-b border-slate-500" />
+                          <div className="border-b border-slate-500" />
+                          <div className="border-b border-slate-500" />
+                          <div className="border-b border-slate-500" />
+                        </div>
 
-                    {/* Chart Bars & Interactive Markers */}
-                    <div className="relative w-full h-full flex items-end justify-between px-3 sm:px-6 z-10">
-                      {monthlyData.map((m) => {
-                        const isHovered = hoveredMonth === m.month;
-                        const heightPct = (m.val / 125) * 100;
-                        const targetHeight = (m.target / 125) * 100;
+                        {/* Chart Bars & Interactive Markers */}
+                        <div className="relative w-full h-full flex items-end justify-between px-3 sm:px-6 z-10">
+                          {monthlyData.map((m) => {
+                            const isHovered = hoveredMonth === m.month;
+                            const heightPct = (m.val / 125) * 100;
+                            const targetHeight = (m.target / 125) * 100;
 
-                        return (
-                          <div
-                            key={m.month}
-                            onMouseEnter={() => setHoveredMonth(m.month)}
-                            className="relative flex-1 flex flex-col items-center justify-end h-full cursor-pointer group"
-                          >
-                            {/* Hover tooltip */}
-                            {isHovered && (
-                              <div className="absolute -top-12 z-30 bg-slate-900 border border-red-500 text-white px-2 py-1 rounded-md text-[10px] font-mono shadow-xl whitespace-nowrap animate-fadeIn">
-                                ₹{m.val} Lakhs ({m.variance})
+                            return (
+                              <div
+                                key={m.month}
+                                onMouseEnter={() => setHoveredMonth(m.month)}
+                                className="relative flex-1 flex flex-col items-center justify-end h-full cursor-pointer group"
+                              >
+                                {isHovered && (
+                                  <div className="absolute -top-12 z-30 bg-slate-900 border border-red-500 text-white px-2 py-1 rounded-md text-[10px] font-mono shadow-xl whitespace-nowrap animate-fadeIn">
+                                    ₹{m.val} Lakhs ({m.variance})
+                                  </div>
+                                )}
+
+                                <div 
+                                  className="absolute w-8 border-t-2 border-dashed border-slate-500"
+                                  style={{ bottom: `${targetHeight}%` }}
+                                />
+
+                                <div
+                                  className={`w-6 sm:w-10 rounded-t transition-all duration-300 ${
+                                    isHovered
+                                      ? 'bg-gradient-to-t from-red-700 to-rose-400 shadow-xl shadow-red-600/60 scale-105'
+                                      : 'bg-gradient-to-t from-red-600 to-red-500 hover:scale-102'
+                                  }`}
+                                  style={{ height: `${heightPct}%` }}
+                                />
+
+                                <span className={`mt-2 text-[10px] font-mono font-bold ${
+                                  isHovered ? 'text-red-400' : 'text-slate-400'
+                                }`}>
+                                  {m.month}
+                                </span>
                               </div>
-                            )}
+                            );
+                          })}
+                        </div>
+                      </div>
 
-                            {/* Target Dotted Line */}
-                            <div 
-                              className="absolute w-8 border-t-2 border-dashed border-slate-500"
-                              style={{ bottom: `${targetHeight}%` }}
-                            />
+                      <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-800 text-[11px] text-slate-400">
+                        <span>Active Selected: <strong className="text-white">{currentHovered.month} FY26 (₹{currentHovered.val}L)</strong></span>
+                        <span className="text-emerald-400 font-bold">+29.4% Growth vs Prev Year</span>
+                      </div>
+                    </div>
 
-                            {/* Bar with spring hover elevation */}
-                            <div
-                              className={`w-6 sm:w-10 rounded-t transition-all duration-300 ${
-                                isHovered
-                                  ? 'bg-gradient-to-t from-red-700 to-rose-400 shadow-xl shadow-red-600/60 scale-105'
-                                  : 'bg-gradient-to-t from-red-600 to-red-500 hover:scale-102'
-                              }`}
-                              style={{ height: `${heightPct}%` }}
-                            />
+                    {/* Right Regional Performance Panel (4 cols) */}
+                    <div className="lg:col-span-4 p-5 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between animate-fadeIn">
+                      <div>
+                        <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-800">
+                          <span className="text-xs font-bold text-white">Regional Performance</span>
+                          <span className="text-[10px] font-mono text-emerald-400 font-bold">100% Target Met</span>
+                        </div>
 
-                            <span className={`mt-2 text-[10px] font-mono font-bold ${
-                              isHovered ? 'text-red-400' : 'text-slate-400'
-                            }`}>
-                              {m.month}
-                            </span>
+                        <div className="space-y-3">
+                          <div>
+                            <div className="flex justify-between text-xs text-slate-300 mb-1">
+                              <span>South (HQ &amp; 48 Hubs)</span>
+                              <span className="font-mono font-bold text-white">₹3.8 Cr</span>
+                            </div>
+                            <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                              <div className="h-full bg-red-600 rounded-full" style={{ width: '100%' }} />
+                            </div>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
 
-                  {/* Chart Bottom Info */}
-                  <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-800 text-[11px] text-slate-400">
-                    <span>Active Selected: <strong className="text-white">{currentHovered.month} FY26 (₹{currentHovered.val}L)</strong></span>
-                    <span className="text-emerald-400 font-bold">+29.4% Growth vs Prev Year</span>
-                  </div>
-                </div>
+                          <div>
+                            <div className="flex justify-between text-xs text-slate-300 mb-1">
+                              <span>North Region</span>
+                              <span className="font-mono font-bold text-white">₹2.4 Cr</span>
+                            </div>
+                            <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                              <div className="h-full bg-red-600 rounded-full" style={{ width: '84%' }} />
+                            </div>
+                          </div>
 
-                {/* Right Regional Performance Panel (4 cols) */}
-                <div className="lg:col-span-4 p-5 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-800">
-                      <span className="text-xs font-bold text-white">Regional Performance</span>
-                      <span className="text-[10px] font-mono text-emerald-400 font-bold">100% Target Met</span>
-                    </div>
+                          <div>
+                            <div className="flex justify-between text-xs text-slate-300 mb-1">
+                              <span>West Region</span>
+                              <span className="font-mono font-bold text-white">₹1.6 Cr</span>
+                            </div>
+                            <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                              <div className="h-full bg-red-600 rounded-full" style={{ width: '72%' }} />
+                            </div>
+                          </div>
 
-                    <div className="space-y-3">
-                      <div>
-                        <div className="flex justify-between text-xs text-slate-300 mb-1">
-                          <span>South (HQ &amp; 48 Hubs)</span>
-                          <span className="font-mono font-bold text-white">₹3.8 Cr</span>
-                        </div>
-                        <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                          <div className="h-full bg-red-600 rounded-full" style={{ width: '100%' }} />
+                          <div>
+                            <div className="flex justify-between text-xs text-slate-300 mb-1">
+                              <span>East Region</span>
+                              <span className="font-mono font-bold text-white">₹0.6 Cr</span>
+                            </div>
+                            <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                              <div className="h-full bg-red-600 rounded-full" style={{ width: '55%' }} />
+                            </div>
+                          </div>
                         </div>
                       </div>
 
-                      <div>
-                        <div className="flex justify-between text-xs text-slate-300 mb-1">
-                          <span>North Region</span>
-                          <span className="font-mono font-bold text-white">₹2.4 Cr</span>
+                      <div className="mt-4 p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 text-slate-300">
+                          <FileText size={15} className="text-red-500" />
+                          <span>Executive Briefing: PDF &amp; XLSX</span>
                         </div>
-                        <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                          <div className="h-full bg-red-600 rounded-full" style={{ width: '84%' }} />
+                        <Link
+                          to="/login"
+                          className="text-red-400 hover:text-red-300 font-bold text-[11px] flex items-center gap-1"
+                        >
+                          <span>View Live</span>
+                          <ArrowRight size={12} />
+                        </Link>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* VIEW 2: MULTI-SOURCE ZERO-ETL VIEW */}
+                {activeTab === 'trajectory' && (
+                  <div className="lg:col-span-12 p-5 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-4 animate-fadeIn font-mono text-xs">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <div className="flex items-center gap-2 text-white font-bold">
+                        <Database size={16} className="text-red-500" />
+                        <span>Federated Multi-Source Connectors (Zero-ETL Fabric)</span>
+                      </div>
+                      <span className="text-emerald-400 text-xs font-bold bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-800/80">
+                        P99 Latency: 142ms • Zero Data Drops
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
+                        <div className="text-slate-400 text-[11px]">PostgreSQL Master</div>
+                        <div className="text-base font-bold text-white mt-1">42,890 evt/sec</div>
+                        <div className="text-emerald-400 text-[10px] mt-1 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live CDC Streaming
                         </div>
                       </div>
-
-                      <div>
-                        <div className="flex justify-between text-xs text-slate-300 mb-1">
-                          <span>West Region</span>
-                          <span className="font-mono font-bold text-white">₹1.6 Cr</span>
-                        </div>
-                        <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                          <div className="h-full bg-red-600 rounded-full" style={{ width: '72%' }} />
+                      <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
+                        <div className="text-slate-400 text-[11px]">Snowflake DW</div>
+                        <div className="text-base font-bold text-white mt-1">1.2 TB Ingestion</div>
+                        <div className="text-emerald-400 text-[10px] mt-1 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Zero-Copy Pushdown
                         </div>
                       </div>
-
-                      <div>
-                        <div className="flex justify-between text-xs text-slate-300 mb-1">
-                          <span>East Region</span>
-                          <span className="font-mono font-bold text-white">₹0.6 Cr</span>
+                      <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
+                        <div className="text-slate-400 text-[11px]">MongoDB Shards</div>
+                        <div className="text-base font-bold text-white mt-1">18 Cluster Nodes</div>
+                        <div className="text-emerald-400 text-[10px] mt-1 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Read Replica Sync
                         </div>
-                        <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                          <div className="h-full bg-red-600 rounded-full" style={{ width: '55%' }} />
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
+                        <div className="text-slate-400 text-[11px]">Webhook Streams</div>
+                        <div className="text-base font-bold text-white mt-1">214 ms Avg Latency</div>
+                        <div className="text-emerald-400 text-[10px] mt-1 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Event Gateway OK
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Export Ready Card */}
-                  <div className="mt-4 p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 text-slate-300">
-                      <FileText size={15} className="text-red-500" />
-                      <span>Executive Briefing: PDF &amp; XLSX</span>
+                    <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-slate-300">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                        <span>Active Telemetry: 100% of 48 Franchise branch stores streaming without backpressure</span>
+                      </span>
+                      <span className="text-red-400 font-bold">Audit Verified</span>
                     </div>
-                    <Link
-                      to="/login"
-                      className="text-red-400 hover:text-red-300 font-bold text-[11px] flex items-center gap-1"
-                    >
-                      <span>View Live</span>
-                      <ArrowRight size={12} />
-                    </Link>
                   </div>
-                </div>
+                )}
+
+                {/* VIEW 3: AI ANOMALY COPILOT VIEW */}
+                {activeTab === 'anomaly' && (
+                  <div className="lg:col-span-12 p-5 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-4 animate-fadeIn font-mono text-xs">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <div className="flex items-center gap-2 text-white font-bold">
+                        <Sparkles size={16} className="text-red-500" />
+                        <span>Autonomous AI Anomaly Sentinel &amp; Root-Cause Copilot</span>
+                      </div>
+                      <span className="text-red-400 text-xs font-bold bg-red-950/80 px-2.5 py-1 rounded-lg border border-red-800/80">
+                        Confidence: 99.4% (p &lt; 0.01)
+                      </span>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-slate-300 font-sans">
+                      <div className="text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider">
+                        DIAGNOSTIC SUMMARY // Q3 SURPLUS ATTRIBUTION
+                      </div>
+                      <p className="text-sm text-white font-medium leading-relaxed">
+                        South Region revenue surged <strong className="text-emerald-400">+28.4%</strong> (₹3.82 Cr vs ₹2.97 Cr target). Autonomous variance decomposition attributes 65% of expansion to high-ticket reorders across 14 newly provisioned Bangalore and Chennai franchise nodes.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
+                        <div className="text-[10px] text-slate-400">Node Expansion Driver</div>
+                        <div className="text-sm font-bold text-emerald-400 mt-0.5">+16.2% Impact</div>
+                        <div className="text-[10px] text-slate-500 mt-1">Bangalore &amp; Chennai hubs</div>
+                      </div>
+                      <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
+                        <div className="text-[10px] text-slate-400">Basket Size Acceleration</div>
+                        <div className="text-sm font-bold text-emerald-400 mt-0.5">+7.4% Impact</div>
+                        <div className="text-[10px] text-slate-500 mt-1">Enterprise SKU upgrade</div>
+                      </div>
+                      <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
+                        <div className="text-[10px] text-slate-400">Fuel &amp; Freight Headwind</div>
+                        <div className="text-sm font-bold text-red-400 mt-0.5">-2.1% Impact</div>
+                        <div className="text-[10px] text-slate-500 mt-1">Absorbed by gross margin</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
