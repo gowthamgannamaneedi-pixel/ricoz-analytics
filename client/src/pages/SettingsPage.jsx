@@ -61,6 +61,7 @@ import { Button } from '../components/ui/Button';
 import { RefreshButton } from '../components/ui/RefreshButton';
 import { ResetButton } from '../components/ui/ResetButton';
 import { Select } from '../components/ui/Select';
+import { Modal } from '../components/ui/Modal';
 
 /**
  * Enterprise Settings Page â€” RicozAnalytics
@@ -667,8 +668,8 @@ export default function SettingsPage() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0">
                   <Users className="h-5 w-5" />
                 </div>
-                <div>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8]">Total Users</span>
+                <div className="min-w-0">
+                  <span className="text-base sm:text-[17px] font-semibold text-slate-800 dark:text-slate-100 truncate block">Total Users</span>
                   <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight mt-1">
                     {stats.membersCount}
                   </div>
@@ -689,8 +690,8 @@ export default function SettingsPage() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0">
                   <Database className="h-5 w-5" />
                 </div>
-                <div>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8]">Connected Datasets</span>
+                <div className="min-w-0">
+                  <span className="text-base sm:text-[17px] font-semibold text-slate-800 dark:text-slate-100 truncate block">Connected Datasets</span>
                   <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight mt-1">
                     {stats.datasetsCount}
                   </div>
@@ -709,8 +710,8 @@ export default function SettingsPage() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0">
                   <Layers className="h-5 w-5" />
                 </div>
-                <div>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8]">Dashboards & Reports</span>
+                <div className="min-w-0">
+                  <span className="text-base sm:text-[17px] font-semibold text-slate-800 dark:text-slate-100 truncate block">Dashboards & Reports</span>
                   <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight mt-1">
                     {stats.dashboardsCount + stats.reportsCount}
                   </div>
@@ -731,8 +732,8 @@ export default function SettingsPage() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0">
                   <ShieldCheck className="h-5 w-5" />
                 </div>
-                <div>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8]">Security Status</span>
+                <div className="min-w-0">
+                  <span className="text-base sm:text-[17px] font-semibold text-slate-800 dark:text-slate-100 truncate block">Security Status</span>
                   <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight mt-1">
                     {healthStatus}
                   </div>
@@ -745,383 +746,378 @@ export default function SettingsPage() {
             </div>
           </div>{/* ── end 4-card grid ── */}
 
-          {/* Two-column layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left Column: System Config + Quick Actions */}
-            <div className="lg:col-span-7 space-y-6">
-
-            {/* System Configuration Panel */}
-            <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs space-y-3.5">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185]">
-                  <Settings className="h-4 w-4" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">System Configuration</h2>
-                  <p className="text-xs text-slate-500 dark:text-[#94A3B8] font-medium">
-                    Configure your organization and platform settings.
-                  </p>
-                </div>
+          {/* System Configuration Panel - Full Available Width (Req 10) */}
+          <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4 w-full">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185]">
+                <Settings className="h-4 w-4" />
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-                  {/* Tile 1: Organization Settings */}
-                  <div
-                    onClick={() => handleTabChange('organization')}
-                    className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
-                        <Building2 className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
-                           Organization Settings
-                        </h3>
-                        <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
-                          Manage organization profile, branding, and regional settings.
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
-                  </div>
-
-                  {/* Tile 2: Users & Access */}
-                  <div
-                    onClick={() => handleTabChange('users')}
-                    className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
-                        <Users className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
-                          Users & Access
-                        </h3>
-                        <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
-                          Manage team members, roles, and permissions.
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
-                  </div>
-
-                  {/* Tile 3: Data Settings */}
-                  <div
-                    onClick={() => navigate('/data-sources')}
-                    className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
-                        <Database className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
-                          Data Settings
-                        </h3>
-                        <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
-                          Default datasets, refresh schedules, and data preferences.
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
-                  </div>
-
-                  {/* Tile 4: Integrations */}
-                  <div
-                    onClick={() => handleTabChange('integrations')}
-                    className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
-                        <Plug className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
-                          Integrations
-                        </h3>
-                        <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
-                          Connect external tools and data sources.
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
-                  </div>
-
-                  {/* Tile 5: Notifications */}
-                  <div
-                    onClick={() => handleTabChange('notifications')}
-                    className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
-                        <Bell className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
-                          Notifications
-                        </h3>
-                        <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
-                          Manage alerts, email notifications, and preferences.
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
-                  </div>
-
-                  {/* Tile 6: Platform Preferences */}
-                  <div
-                    onClick={() => handleTabChange('preferences')}
-                    className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
-                        <Sliders className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
-                          Platform Preferences
-                        </h3>
-                        <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
-                          Customize your workspace experience.
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
-                  </div>
-                </div>
+              <div>
+                <h2 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">System Configuration</h2>
+                <p className="text-xs text-slate-500 dark:text-[#94A3B8] font-medium">
+                  Configure your organization and platform settings.
+                </p>
               </div>
+            </div>
 
-              {/* Quick Actions Row */}
-              <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs space-y-3">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
-                  <span className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] uppercase tracking-wider">Quick Actions</span>
-                  <span className="text-xs text-slate-400 dark:text-[#94A3B8] font-normal">— Common administrative tasks.</span>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setIsInviteModalOpen(true)}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-rose-200 dark:border-[#334155] bg-rose-50/50 dark:bg-[#1E293B] hover:bg-rose-100/70 dark:hover:bg-slate-700 text-rose-700 dark:text-[#CBD5E1] text-xs font-semibold transition cursor-pointer"
-                  >
-                    <UserPlus className="h-3.5 w-3.5 text-rose-600 dark:text-[#FB7185]" />
-                    <span>Invite User</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => navigate('/data-sources')}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-emerald-200 dark:border-[#334155] bg-emerald-50/50 dark:bg-[#1E293B] hover:bg-emerald-100/70 dark:hover:bg-slate-700 text-emerald-700 dark:text-[#CBD5E1] text-xs font-semibold transition cursor-pointer"
-                  >
-                    <Database className="h-3.5 w-3.5 text-emerald-600 dark:text-[#FB7185]" />
-                    <span>Connect Dataset</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => navigate('/alerts')}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-amber-200 dark:border-[#334155] bg-amber-50/50 dark:bg-[#1E293B] hover:bg-amber-100/70 dark:hover:bg-slate-700 text-amber-700 dark:text-[#CBD5E1] text-xs font-semibold transition cursor-pointer"
-                  >
-                    <Bell className="h-3.5 w-3.5 text-amber-600 dark:text-[#FB7185]" />
-                    <span>Configure Alerts</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => navigate('/governance')}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-purple-200 dark:border-[#334155] bg-purple-50/50 dark:bg-[#1E293B] hover:bg-purple-100/70 dark:hover:bg-slate-700 text-purple-700 dark:text-[#CBD5E1] text-xs font-semibold transition cursor-pointer"
-                  >
-                    <ShieldCheck className="h-3.5 w-3.5 text-purple-600 dark:text-[#FB7185]" />
-                    <span>Manage Permissions</span>
-                  </button>
-                </div>
-              </div>
-            </div>{/* ── end Quick Actions ── */}
-            </div>{/* ── end left column ── */}
-
-            {/* Right Column: Organization Info + Recent Activity + Support */}
-            <div className="lg:col-span-5 space-y-6">
-              {/* Organization Information Card */}
-              <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#334155]">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-rose-600 dark:text-[#FB7185]" />
-                    <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] uppercase tracking-wider">
-                      Organization Information
-                    </h3>
+            {/* 6 configuration options in 3 columns and 2 rows on wide screens */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 pt-1">
+              {/* Tile 1: Organization Settings */}
+              <div
+                onClick={() => handleTabChange('organization')}
+                className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
+                    <Building2 className="h-4 w-4" />
                   </div>
-                  {isAdmin && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setIsEditOrgModalOpen(true)}
-                      className="h-7 px-2.5 text-[11px]"
-                    >
-                      Edit
-                    </Button>
-                  )}
-                </div>
-
-                <div className="space-y-3 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Organization Name</span>
-                    <span className="font-bold text-slate-900 dark:text-[#F8FAFC]">
-                      {organization?.name || 'Ricoz Primary Organization'}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Organization ID</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-[11px] text-slate-700 dark:text-[#CBD5E1] truncate max-w-[170px]" title={organization?.id}>
-                        {organization?.id || '00000000-0000-0000-0000-000000000001'}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleCopyOrgId}
-                        className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-[#1E293B] dark:hover:text-[#F8FAFC] transition cursor-pointer"
-                        title={copiedId ? 'Copied!' : 'Copy Organization ID'}
-                      >
-                        {copiedId ? <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Plan</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 capitalize">
-                      {organization?.plan || 'Enterprise'}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Workspace Region</span>
-                    <span className="font-semibold text-slate-800 dark:text-[#CBD5E1]">
-                      {organization?.settings?.region || 'Mumbai (ap-south-1)'}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Status</span>
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                      Active
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Created On</span>
-                    <span className="font-semibold text-slate-700 dark:text-[#CBD5E1]">
-                      {organization?.created_at
-                        ? new Date(organization.created_at).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          })
-                        : 'Jan 1, 2026'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Recent Activity Card */}
-              <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#334155]">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-rose-600 dark:text-[#FB7185]" />
-                    <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] uppercase tracking-wider">
-                      Recent Activity
-                    </h3>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/governance?tab=audit')}
-                    className="text-[11px] font-semibold text-rose-600 dark:text-[#FB7185] hover:text-rose-800 dark:hover:text-rose-400 transition cursor-pointer"
-                  >
-                    View All
-                  </button>
-                </div>
-
-                {recentLogs.length === 0 ? (
-                  <div className="py-6 text-center text-xs text-slate-400 dark:text-[#64748B]">
-                    No recent activity recorded yet.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {recentLogs.slice(0, 5).map((log, idx) => (
-                      <div key={log.id || idx} className="flex items-start gap-3 text-xs">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1] shrink-0 mt-0.5">
-                          {log.action?.includes('LOGIN') ? (
-                            <Users className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                          ) : log.action?.includes('DATASET') ? (
-                            <Database className="h-3.5 w-3.5 text-rose-600 dark:text-[#FB7185]" />
-                          ) : log.action?.includes('REPORT') ? (
-                            <FileText className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
-                          ) : (
-                            <Settings className="h-3.5 w-3.5 text-slate-600 dark:text-[#94A3B8]" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-slate-900 dark:text-[#F8FAFC] truncate">
-                            {formatActivityAction(log.action)}
-                          </p>
-                          <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] truncate">
-                            {log.description || (log.user_name ? `By ${log.user_name}` : 'System operation')}
-                          </p>
-                        </div>
-                        <span className="text-[10px] text-slate-400 dark:text-[#64748B] whitespace-nowrap">
-                          {formatRelativeTime(log.created_at)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Help & Support Card */}
-              <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs space-y-3">
-                <div className="flex items-center gap-2">
-                  <HelpCircle className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
                   <div>
-                    <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC]">Help & Support</h3>
-                    <p className="text-[11px] text-slate-500 dark:text-[#94A3B8]">Get help with settings and administration.</p>
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
+                      Organization Settings
+                    </h3>
+                    <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
+                      Manage organization profile, branding, and regional settings.
+                    </p>
                   </div>
                 </div>
+                <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
+              </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setIsDocsModalOpen(true)}
-                    className="flex flex-col items-center justify-center gap-1 p-2.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/50 dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-[#CBD5E1] text-[11px] font-semibold transition cursor-pointer"
-                  >
-                    <FileText className="h-3.5 w-3.5 text-rose-600 dark:text-[#FB7185]" />
-                    <span>Documentation</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsSupportModalOpen(true)}
-                    className="flex flex-col items-center justify-center gap-1 p-2.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/50 dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-[#CBD5E1] text-[11px] font-semibold transition cursor-pointer"
-                  >
-                    <Mail className="h-3.5 w-3.5 text-rose-600 dark:text-[#FB7185]" />
-                    <span>Contact Support</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsStatusModalOpen(true)}
-                    className="flex flex-col items-center justify-center gap-1 p-2.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/50 dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-[#CBD5E1] text-[11px] font-semibold transition cursor-pointer"
-                  >
-                    <Radio className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                    <span>System Status</span>
-                  </button>
+              {/* Tile 2: Users & Access */}
+              <div
+                onClick={() => handleTabChange('users')}
+                className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
+                    <Users className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
+                      Users & Access
+                    </h3>
+                    <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
+                      Manage team members, roles, and permissions.
+                    </p>
+                  </div>
                 </div>
+                <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
+              </div>
+
+              {/* Tile 3: Data Settings */}
+              <div
+                onClick={() => navigate('/data-sources')}
+                className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
+                    <Database className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
+                      Data Settings
+                    </h3>
+                    <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
+                      Default datasets, refresh schedules, and data preferences.
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
+              </div>
+
+              {/* Tile 4: Integrations */}
+              <div
+                onClick={() => handleTabChange('integrations')}
+                className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
+                    <Plug className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
+                      Integrations
+                    </h3>
+                    <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
+                      Connect external tools and data sources.
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
+              </div>
+
+              {/* Tile 5: Notifications */}
+              <div
+                onClick={() => handleTabChange('notifications')}
+                className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
+                    <Bell className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
+                      Notifications
+                    </h3>
+                    <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
+                      Manage alerts, email notifications, and preferences.
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
+              </div>
+
+              {/* Tile 6: Platform Preferences */}
+              <div
+                onClick={() => handleTabChange('preferences')}
+                className="group border border-slate-200/80 dark:border-[#334155] bg-transparent dark:bg-[#0F172A] rounded-xl p-3.5 hover:border-rose-300 dark:hover:border-rose-500 hover:bg-slate-50/60 dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start justify-between"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5">
+                    <Sliders className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] transition">
+                      Platform Preferences
+                    </h3>
+                    <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] leading-relaxed mt-0.5">
+                      Customize your workspace experience.
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-rose-600 dark:group-hover:text-[#FB7185] group-hover:translate-x-0.5 transition shrink-0 mt-1" />
               </div>
             </div>
           </div>
+
+          {/* Quick Actions Panel - Full Available Width (Req 10) */}
+          <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-3.5 w-full">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
+              <span className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] uppercase tracking-wider">Quick Actions</span>
+              <span className="text-xs text-slate-400 dark:text-[#94A3B8] font-normal">— Common administrative tasks.</span>
+            </div>
+
+            {/* 4 existing quick actions in equal-width desktop controls */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setIsInviteModalOpen(true)}
+                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-rose-200 dark:border-[#334155] bg-rose-50/50 dark:bg-[#1E293B] hover:bg-rose-100/70 dark:hover:bg-slate-700 text-rose-700 dark:text-[#CBD5E1] text-xs font-semibold transition cursor-pointer min-h-[44px]"
+              >
+                <UserPlus className="h-4 w-4 text-rose-600 dark:text-[#FB7185]" />
+                <span>Invite User</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate('/data-sources')}
+                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-emerald-200 dark:border-[#334155] bg-emerald-50/50 dark:bg-[#1E293B] hover:bg-emerald-100/70 dark:hover:bg-slate-700 text-emerald-700 dark:text-[#CBD5E1] text-xs font-semibold transition cursor-pointer min-h-[44px]"
+              >
+                <Database className="h-4 w-4 text-emerald-600 dark:text-[#FB7185]" />
+                <span>Connect Dataset</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate('/alerts')}
+                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-amber-200 dark:border-[#334155] bg-amber-50/50 dark:bg-[#1E293B] hover:bg-amber-100/70 dark:hover:bg-slate-700 text-amber-700 dark:text-[#CBD5E1] text-xs font-semibold transition cursor-pointer min-h-[44px]"
+              >
+                <Bell className="h-4 w-4 text-amber-600 dark:text-[#FB7185]" />
+                <span>Configure Alerts</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate('/governance')}
+                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-purple-200 dark:border-[#334155] bg-purple-50/50 dark:bg-[#1E293B] hover:bg-purple-100/70 dark:hover:bg-slate-700 text-purple-700 dark:text-[#CBD5E1] text-xs font-semibold transition cursor-pointer min-h-[44px]"
+              >
+                <ShieldCheck className="h-4 w-4 text-purple-600 dark:text-[#FB7185]" />
+                <span>Manage Permissions</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Three-Column Overview Grid: Org Info + Recent Activity + Support */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+            {/* Organization Information Card */}
+            <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#334155]">
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-rose-600 dark:text-[#FB7185]" />
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] uppercase tracking-wider">
+                    Organization Information
+                  </h3>
+                </div>
+                {isAdmin && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setIsEditOrgModalOpen(true)}
+                    className="h-7 px-2.5 text-[11px]"
+                  >
+                    Edit
+                  </Button>
+                )}
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Organization Name</span>
+                  <span className="font-bold text-slate-900 dark:text-[#F8FAFC]">
+                    {organization?.name || 'Ricoz Primary Organization'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Organization ID</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-[11px] text-slate-700 dark:text-[#CBD5E1] truncate max-w-[170px]" title={organization?.id}>
+                      {organization?.id || '00000000-0000-0000-0000-000000000001'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleCopyOrgId}
+                      className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-[#1E293B] dark:hover:text-[#F8FAFC] transition cursor-pointer"
+                      title={copiedId ? 'Copied!' : 'Copy Organization ID'}
+                    >
+                      {copiedId ? <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Plan</span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 capitalize">
+                    {organization?.plan || 'Enterprise'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Workspace Region</span>
+                  <span className="font-semibold text-slate-800 dark:text-[#CBD5E1]">
+                    {organization?.settings?.region || 'Mumbai (ap-south-1)'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Status</span>
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    Active
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Created On</span>
+                  <span className="font-semibold text-slate-700 dark:text-[#CBD5E1]">
+                    {organization?.created_at
+                      ? new Date(organization.created_at).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })
+                      : 'Jan 1, 2026'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Activity Card */}
+            <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#334155]">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-rose-600 dark:text-[#FB7185]" />
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] uppercase tracking-wider">
+                    Recent Activity
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate('/governance?tab=audit')}
+                  className="text-[11px] font-semibold text-rose-600 dark:text-[#FB7185] hover:text-rose-800 dark:hover:text-rose-400 transition cursor-pointer"
+                >
+                  View All
+                </button>
+              </div>
+
+              {recentLogs.length === 0 ? (
+                <div className="py-6 text-center text-xs text-slate-400 dark:text-[#64748B]">
+                  No recent activity recorded yet.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentLogs.slice(0, 5).map((log, idx) => (
+                    <div key={log.id || idx} className="flex items-start gap-3 text-xs">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1] shrink-0 mt-0.5">
+                        {log.action?.includes('LOGIN') ? (
+                          <Users className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                        ) : log.action?.includes('DATASET') ? (
+                          <Database className="h-3.5 w-3.5 text-rose-600 dark:text-[#FB7185]" />
+                        ) : log.action?.includes('REPORT') ? (
+                          <FileText className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+                        ) : (
+                          <Settings className="h-3.5 w-3.5 text-slate-600 dark:text-[#94A3B8]" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-slate-900 dark:text-[#F8FAFC] truncate">
+                          {formatActivityAction(log.action)}
+                        </p>
+                        <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] truncate">
+                          {log.description || (log.user_name ? `By ${log.user_name}` : 'System operation')}
+                        </p>
+                      </div>
+                      <span className="text-[10px] text-slate-400 dark:text-[#64748B] whitespace-nowrap">
+                        {formatRelativeTime(log.created_at)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Help & Support Card */}
+            <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs space-y-3">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC]">Help & Support</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-[#94A3B8]">Get help with settings and administration.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsDocsModalOpen(true)}
+                  className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/50 dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-[#CBD5E1] text-[11px] font-semibold transition cursor-pointer"
+                >
+                  <FileText className="h-4 w-4 text-rose-600 dark:text-[#FB7185]" />
+                  <span>Documentation</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsSupportModalOpen(true)}
+                  className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/50 dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-[#CBD5E1] text-[11px] font-semibold transition cursor-pointer"
+                >
+                  <Mail className="h-4 w-4 text-rose-600 dark:text-[#FB7185]" />
+                  <span>Contact Support</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsStatusModalOpen(true)}
+                  className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/50 dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-[#CBD5E1] text-[11px] font-semibold transition cursor-pointer"
+                >
+                  <Radio className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>System Status</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
@@ -1996,85 +1992,73 @@ export default function SettingsPage() {
       {/* 9. MODALS                                                          */}
       {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
 
-      {/* Edit Organization Modal */}
-      {isEditOrgModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-[#334155] shadow-2xl max-w-lg w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#334155]">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-rose-600 dark:text-[#FB7185]" />
-                <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Edit Organization Profile</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsEditOrgModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1E293B] transition cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveOrganization} className="space-y-4 text-xs">
-              <div className="space-y-1.5">
-                <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Organization Name *</label>
-                <input
-                  type="text"
-                  value={editOrgName}
-                  onChange={(e) => setEditOrgName(e.target.value)}
-                  required
-                  className="w-full h-10 px-3.5 rounded-xl border border-slate-300 dark:border-[#334155] bg-white dark:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-rose-500 font-semibold text-slate-900 dark:text-[#F8FAFC]"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Primary Region</label>
-                <Select
-                  value={editOrgRegion}
-                  onChange={(e) => setEditOrgRegion(e.target.value)}
-                >
-                  <option value="Mumbai (ap-south-1)">Mumbai (ap-south-1) — Primary Indian Hub</option>
-                  <option value="Singapore (ap-southeast-1)">Singapore (ap-southeast-1)</option>
-                  <option value="Frankfurt (eu-central-1)">Frankfurt (eu-central-1)</option>
-                  <option value="N. Virginia (us-east-1)">N. Virginia (us-east-1)</option>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Default Currency</label>
-                <Select
-                  value={editOrgCurrency}
-                  onChange={(e) => setEditOrgCurrency(e.target.value)}
-                >
-                  <option value="INR">INR — Indian Rupee (₹)</option>
-                  <option value="USD">USD — US Dollar ($)</option>
-                  <option value="EUR">EUR — Euro (€)</option>
-                </Select>
-              </div>
-
-              <div className="pt-3 flex items-center justify-end gap-2.5 border-t border-slate-100 dark:border-[#334155]">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setIsEditOrgModalOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  loading={isSavingOrg}
-                >
-                  Save Changes
-                </Button>
-              </div>
-            </form>
+      {/* Edit Organization Modal (Req 4) */}
+      <Modal
+        isOpen={isEditOrgModalOpen}
+        onClose={() => setIsEditOrgModalOpen(false)}
+        title="Edit Organization Profile"
+        description="Update workspace name, region, and primary currency"
+        icon={Building2}
+        maxWidth="max-w-lg"
+      >
+        <form onSubmit={handleSaveOrganization} className="space-y-4 text-xs">
+          <div className="space-y-1.5">
+            <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Organization Name *</label>
+            <input
+              type="text"
+              value={editOrgName}
+              onChange={(e) => setEditOrgName(e.target.value)}
+              required
+              className="w-full h-10 px-3.5 rounded-xl border border-slate-300 dark:border-[#334155] bg-white dark:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-rose-500 font-semibold text-slate-900 dark:text-[#F8FAFC]"
+            />
           </div>
-        </div>
-      )}
 
-      {/* Invite Member Modal */}
-      {/* Invite Member Modal */}
-      {isInviteModalOpen && (() => {
+          <div className="space-y-1.5">
+            <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Primary Region</label>
+            <Select
+              value={editOrgRegion}
+              onChange={(e) => setEditOrgRegion(e.target.value)}
+            >
+              <option value="Mumbai (ap-south-1)">Mumbai (ap-south-1) — Primary Indian Hub</option>
+              <option value="Singapore (ap-southeast-1)">Singapore (ap-southeast-1)</option>
+              <option value="Frankfurt (eu-central-1)">Frankfurt (eu-central-1)</option>
+              <option value="N. Virginia (us-east-1)">N. Virginia (us-east-1)</option>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Default Currency</label>
+            <Select
+              value={editOrgCurrency}
+              onChange={(e) => setEditOrgCurrency(e.target.value)}
+            >
+              <option value="INR">INR — Indian Rupee (₹)</option>
+              <option value="USD">USD — US Dollar ($)</option>
+              <option value="EUR">EUR — Euro (€)</option>
+            </Select>
+          </div>
+
+          <div className="pt-3 flex items-center justify-end gap-2.5 border-t border-slate-100 dark:border-[#334155]">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setIsEditOrgModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              loading={isSavingOrg}
+            >
+              Save Changes
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Invite Member Modal (Req 4) */}
+      {(() => {
         const userUsage = organization?.usage?.users || null;
         const planId = organization?.plan || 'starter';
         const planDisplayName = planId === 'enterprise' ? 'Enterprise' : planId === 'growth' ? 'Growth' : 'Starter';
@@ -2083,38 +2067,30 @@ export default function SettingsPage() {
         const isAtSeatLimit = userUsage?.isAtLimit ?? (seatLimit !== -1 && currentSeatsUsed >= seatLimit);
 
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <UserPlus className="h-5 w-5 text-rose-600" />
-                  <h3 className="text-sm font-bold text-slate-900">Invite Team Member</h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => !isSendingInvite && setIsInviteModalOpen(false)}
-                  disabled={isSendingInvite}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
+          <Modal
+            isOpen={isInviteModalOpen}
+            onClose={() => !isSendingInvite && setIsInviteModalOpen(false)}
+            title="Invite Team Member"
+            description="Invite colleagues to collaborate in this workspace"
+            icon={UserPlus}
+            maxWidth="max-w-md"
+          >
+            <div className="space-y-5 text-xs">
               {/* Seat Capacity Badge */}
-              <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between text-xs">
-                <span className="font-semibold text-slate-600">{planDisplayName} Plan Capacity:</span>
-                <span className="font-bold text-slate-900 font-mono">
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50 dark:bg-[#172131] flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-600 dark:text-[#CBD5E1]">{planDisplayName} Plan Capacity:</span>
+                <span className="font-bold text-slate-900 dark:text-[#F8FAFC] font-mono">
                   {currentSeatsUsed} / {seatLimit === -1 ? 'Unlimited' : `${seatLimit} seats`}
                 </span>
               </div>
 
               {isAtSeatLimit ? (
-                <div className="p-4 rounded-xl border border-rose-200 bg-rose-50/80 text-rose-800 space-y-3">
+                <div className="p-4 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/80 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 space-y-3">
                   <div className="flex items-start gap-2.5">
-                    <AlertTriangle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+                    <AlertTriangle className="h-5 w-5 text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="text-xs font-bold text-rose-900">Plan Seat Limit Reached</h4>
-                      <p className="text-xs text-rose-700 mt-1">
+                      <h4 className="text-xs font-bold text-rose-900 dark:text-rose-200">Plan Seat Limit Reached</h4>
+                      <p className="text-xs text-rose-700 dark:text-rose-300 mt-1">
                         Your {planDisplayName} plan allows up to {seatLimit} seats. All {seatLimit} seats are currently allocated across active members and pending invitations.
                       </p>
                     </div>
@@ -2145,49 +2121,49 @@ export default function SettingsPage() {
                 </div>
               ) : inviteSuccess ? (
                 <div className="py-6 text-center space-y-2">
-                  <CheckCircle className="h-10 w-10 text-emerald-600 mx-auto" />
-                  <h4 className="text-sm font-bold text-slate-900">Invitation Dispatched!</h4>
-                  <p className="text-xs text-slate-500">
+                  <CheckCircle className="h-10 w-10 text-emerald-600 dark:text-emerald-400 mx-auto" />
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Invitation Dispatched!</h4>
+                  <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
                     An email invite with workspace activation instructions has been sent to {inviteEmail}.
                   </p>
                 </div>
               ) : (
                 <form onSubmit={handleSendInvite} className="space-y-4 text-xs">
                   {inviteError && (
-                    <div className="p-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-xs flex items-start gap-2 animate-in fade-in">
-                      <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                    <div className="p-3 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 text-xs flex items-start gap-2 animate-in fade-in">
+                      <AlertCircle className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <span className="font-semibold block">Invitation could not be sent</span>
-                        <span className="text-[11px] text-rose-700 leading-relaxed">{inviteError}</span>
+                        <span className="text-[11px] text-rose-700 dark:text-rose-300 leading-relaxed">{inviteError}</span>
                       </div>
                     </div>
                   )}
 
                   <div className="space-y-1.5">
-                    <label className="font-bold text-slate-700">Email Address *</label>
+                    <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Email Address *</label>
                     <input
                       type="email"
                       placeholder="colleague@company.com"
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
                       required
-                      className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium"
+                      className="w-full h-10 px-3.5 rounded-xl border border-slate-300 dark:border-[#334155] bg-white dark:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium text-slate-900 dark:text-[#F8FAFC]"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="font-bold text-slate-700">Full Name (Optional)</label>
+                    <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Full Name (Optional)</label>
                     <input
                       type="text"
                       placeholder="Priya Sharma"
                       value={inviteName}
                       onChange={(e) => setInviteName(e.target.value)}
-                      className="w-full h-10 px-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium"
+                      className="w-full h-10 px-3.5 rounded-xl border border-slate-300 dark:border-[#334155] bg-white dark:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium text-slate-900 dark:text-[#F8FAFC]"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="font-bold text-slate-700">Role & Access Level</label>
+                    <label className="font-bold text-slate-700 dark:text-[#CBD5E1]">Role & Access Level</label>
                     <Select
                       value={inviteRole}
                       onChange={(e) => setInviteRole(e.target.value)}
@@ -2220,183 +2196,178 @@ export default function SettingsPage() {
                 </form>
               )}
             </div>
-          </div>
+          </Modal>
         );
       })()}
 
-      {/* Documentation Modal */}
-      {isDocsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-rose-600" />
-                <h3 className="text-sm font-bold text-slate-900">RicozAnalytics Documentation</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsDocsModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
-              >
-                <X className="h-4 w-4" />
-              </button>
+      {/* Documentation Modal (Req 4) */}
+      <Modal
+        isOpen={isDocsModalOpen}
+        onClose={() => setIsDocsModalOpen(false)}
+        title="RicozAnalytics Documentation"
+        description="Platform architecture and user operational guide"
+        icon={FileText}
+        maxWidth="max-w-lg"
+        footer={
+          <div className="flex justify-end w-full">
+            <Button variant="secondary" size="sm" onClick={() => setIsDocsModalOpen(false)}>
+              Close
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3.5 text-xs text-slate-600 dark:text-[#CBD5E1] leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+          <p className="font-semibold text-slate-900 dark:text-[#F8FAFC]">Platform Architecture & User Manual</p>
+          <p>
+            RicozAnalytics provides real-time transactional telemetry, executive sales command dashboards, automated AI narrative generation, and secure RBAC governance.
+          </p>
+          <div className="space-y-2.5 pt-1 font-sans">
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#172131] border border-slate-200 dark:border-[#334155]">
+              <span className="font-bold text-slate-900 dark:text-[#F8FAFC] block text-xs">1. Datasets & Connectors</span>
+              <span className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-0.5 block">Upload CSV, Excel, or connect PostgreSQL data sources with automatic column detection.</span>
             </div>
-            <div className="space-y-3 text-xs text-slate-600 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
-              <p className="font-semibold text-slate-900">Platform Architecture & User Manual</p>
-              <p>
-                RicozAnalytics provides real-time transactional telemetry, executive sales command dashboards, automated AI narrative generation, and secure RBAC governance.
-              </p>
-              <div className="space-y-2 pt-1 font-sans">
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                  <span className="font-bold text-slate-900 block">1. Datasets & Connectors</span>
-                  <span className="text-[11px] text-slate-500">Upload CSV, Excel, or connect PostgreSQL data sources with automatic column detection.</span>
-                </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                  <span className="font-bold text-slate-900 block">2. Executive Dashboards</span>
-                  <span className="text-[11px] text-slate-500">Real-time KPI calculations with COUNT(DISTINCT order_id) and dynamic dimension filters.</span>
-                </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                  <span className="font-bold text-slate-900 block">3. Governance & Audit</span>
-                  <span className="text-[11px] text-slate-500">Full audit trail logging every administrative and data access operation with tenant isolation.</span>
-                </div>
-              </div>
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#172131] border border-slate-200 dark:border-[#334155]">
+              <span className="font-bold text-slate-900 dark:text-[#F8FAFC] block text-xs">2. Executive Dashboards</span>
+              <span className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-0.5 block">Real-time KPI calculations with COUNT(DISTINCT order_id) and dynamic dimension filters.</span>
             </div>
-            <div className="pt-2 flex justify-end">
-              <Button variant="secondary" size="sm" onClick={() => setIsDocsModalOpen(false)}>
-                Close
-              </Button>
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#172131] border border-slate-200 dark:border-[#334155]">
+              <span className="font-bold text-slate-900 dark:text-[#F8FAFC] block text-xs">3. Governance & Audit</span>
+              <span className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-0.5 block">Full audit trail logging every administrative and data access operation with tenant isolation.</span>
             </div>
           </div>
         </div>
-      )}
+      </Modal>
 
-      {/* Contact Support Modal */}
-      {isSupportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <Mail className="h-5 w-5 text-rose-600" />
-                <h3 className="text-sm font-bold text-slate-900">Enterprise Dedicated Support</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsSupportModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
-              >
-                <X className="h-4 w-4" />
-              </button>
+      {/* Enterprise Support Dialog (Req 11 & Req 4) */}
+      <Modal
+        isOpen={isSupportModalOpen}
+        onClose={() => setIsSupportModalOpen(false)}
+        title="Enterprise Dedicated Support"
+        description="24/7 priority SLA support with a dedicated solutions engineer"
+        icon={Mail}
+        maxWidth="max-w-lg"
+        footer={
+          <div className="flex items-center justify-end gap-2.5 w-full">
+            <Button variant="secondary" size="sm" onClick={() => setIsSupportModalOpen(false)}>
+              Close
+            </Button>
+            <Button variant="primary" size="sm" onClick={() => setIsSupportModalOpen(false)}>
+              Done
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4 text-xs">
+          <p className="text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
+            As an <strong className="text-slate-900 dark:text-[#F8FAFC]">Enterprise Tier</strong> client, your organization has 24/7 priority SLA support with a dedicated solutions engineer.
+          </p>
+          <div className="rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/70 dark:bg-[#172131] p-4 divide-y divide-slate-200/80 dark:divide-[#334155]">
+            <div className="flex items-center justify-between py-2.5 first:pt-0">
+              <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Support Desk</span>
+              <span className="font-mono font-bold text-rose-600 dark:text-[#FB7185] text-xs">support@ricoz.in</span>
             </div>
-            <div className="space-y-3 text-xs text-slate-600">
-              <p>
-                As an <strong>Enterprise Tier</strong> client, your organization has 24/7 priority SLA support with a dedicated solutions engineer.
-              </p>
-              <div className="p-3.5 rounded-xl bg-rose-50/60 border border-rose-100 space-y-1.5">
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-500 font-medium">Support Desk:</span>
-                  <span className="font-mono font-bold text-rose-700">support@ricoz.in</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-500 font-medium">SLA Response:</span>
-                  <span className="font-bold text-emerald-600">&lt; 15 Minutes</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-500 font-medium">Escalation Hub:</span>
-                  <span className="font-bold text-slate-800">Mumbai Operations</span>
-                </div>
-              </div>
+            <div className="flex items-center justify-between py-2.5">
+              <span className="text-slate-500 dark:text-[#94A3B8] font-medium">SLA Response</span>
+              <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs">&lt; 15 Minutes</span>
             </div>
-            <div className="pt-2 flex justify-end">
-              <Button variant="secondary" size="sm" onClick={() => setIsSupportModalOpen(false)}>
-                Done
-              </Button>
+            <div className="flex items-center justify-between py-2.5 last:pb-0">
+              <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Escalation Hub</span>
+              <span className="font-bold text-slate-800 dark:text-[#F8FAFC] text-xs">Mumbai Operations</span>
             </div>
           </div>
         </div>
-      )}
+      </Modal>
 
-      {/* System Status Modal */}
-      {isStatusModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <Radio className="h-5 w-5 text-emerald-600" />
-                <h3 className="text-sm font-bold text-slate-900">Live Gateway & Infrastructure Status</h3>
+      {/* Live Gateway & Infrastructure Status Dialog (Req 12 & Req 4) */}
+      <Modal
+        isOpen={isStatusModalOpen}
+        onClose={() => setIsStatusModalOpen(false)}
+        title="Live Gateway & Infrastructure Status"
+        description="Real-time telemetry and operational health of core services"
+        icon={Radio}
+        maxWidth="max-w-lg"
+        footer={
+          <div className="flex items-center justify-end w-full">
+            <Button variant="secondary" size="sm" onClick={() => setIsStatusModalOpen(false)}>
+              Dismiss
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3.5 text-xs">
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/90 dark:border-[#334155] bg-slate-50/70 dark:bg-[#172131]">
+              <div className="flex items-center gap-2.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="font-bold text-slate-800 dark:text-[#F8FAFC]">API Gateway & Services</span>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsStatusModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                Operational
+              </span>
             </div>
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50/50 border border-emerald-200">
-                <span className="font-bold text-slate-800">API Gateway & Services</span>
-                <span className="font-bold text-emerald-600">Operational</span>
+            <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/90 dark:border-[#334155] bg-slate-50/70 dark:bg-[#172131]">
+              <div className="flex items-center gap-2.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="font-bold text-slate-800 dark:text-[#F8FAFC]">PostgreSQL / Supabase Hub</span>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50/50 border border-emerald-200">
-                <span className="font-bold text-slate-800">PostgreSQL / Supabase Hub</span>
-                <span className="font-bold text-emerald-600">Connected</span>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50/50 border border-emerald-200">
-                <span className="font-bold text-slate-800">AI Intelligence Pipeline</span>
-                <span className="font-bold text-emerald-600">Active</span>
-              </div>
-              {systemUptime && (
-                <div className="text-[11px] text-slate-400 text-center pt-1 font-mono">
-                  Continuous Server Uptime: {Math.floor(systemUptime / 60)} minutes
-                </div>
-              )}
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                Connected
+              </span>
             </div>
-            <div className="pt-2 flex justify-end">
-              <Button variant="secondary" size="sm" onClick={() => setIsStatusModalOpen(false)}>
-                Dismiss
-              </Button>
+            <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/90 dark:border-[#334155] bg-slate-50/70 dark:bg-[#172131]">
+              <div className="flex items-center gap-2.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="font-bold text-slate-800 dark:text-[#F8FAFC]">AI Intelligence Pipeline</span>
+              </div>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                Active
+              </span>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Remove Team Member Professional Confirmation Modal */}
-      {memberToRemove && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-                <AlertTriangle className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">Remove Team Member</h3>
-                <p className="text-xs text-slate-500">Revoke access from this organization workspace</p>
-              </div>
+          {systemUptime && (
+            <div className="p-3 rounded-xl bg-slate-100/70 dark:bg-[#0F172A] border border-slate-200/80 dark:border-[#334155] text-center">
+              <span className="text-[11px] font-mono text-slate-500 dark:text-[#94A3B8]">
+                Continuous Server Uptime: <strong className="text-slate-800 dark:text-[#F8FAFC]">{Math.floor(systemUptime / 60)} minutes</strong>
+              </span>
             </div>
+          )}
+        </div>
+      </Modal>
 
-            <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
+      {/* Remove Team Member Professional Confirmation Modal (Req 4) */}
+      <Modal
+        isOpen={!!memberToRemove}
+        onClose={closeRemoveMemberModal}
+        title="Remove Team Member"
+        description="Revoke access from this organization workspace"
+        icon={AlertTriangle}
+        maxWidth="max-w-md"
+      >
+        {memberToRemove && (
+          <div className="space-y-5 text-xs">
+            <div className="p-3.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50 dark:bg-[#172131] space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-900 text-xs">{memberToRemove.name || 'Team Member'}</span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-200 text-slate-700">
+                <span className="font-bold text-slate-900 dark:text-[#F8FAFC] text-xs">{memberToRemove.name || 'Team Member'}</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-200 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1]">
                   {memberToRemove.role}
                 </span>
               </div>
-              <p className="font-mono text-xs text-slate-600">{memberToRemove.email}</p>
+              <p className="font-mono text-xs text-slate-600 dark:text-[#94A3B8]">{memberToRemove.email}</p>
             </div>
 
-            <div className="text-xs text-slate-600 space-y-2 leading-relaxed">
+            <div className="text-slate-600 dark:text-[#CBD5E1] space-y-2 leading-relaxed">
               <p>
-                Are you sure you want to remove <strong>{memberToRemove.name || memberToRemove.email}</strong>?
+                Are you sure you want to remove <strong className="text-slate-900 dark:text-[#F8FAFC]">{memberToRemove.name || memberToRemove.email}</strong>?
               </p>
-              <p className="text-slate-500">
-                This member will immediately lose access to the <strong>{organization?.name || 'workspace'}</strong> organization, datasets, dashboards, and scheduled reports. Their seat will be freed and returned to the organization pool. All audit records and historical activities will be safely preserved.
+              <p className="text-slate-500 dark:text-[#94A3B8]">
+                This member will immediately lose access to the <strong className="text-slate-900 dark:text-[#F8FAFC]">{organization?.name || 'workspace'}</strong> organization, datasets, dashboards, and scheduled reports. Their seat will be freed and returned to the organization pool. All audit records and historical activities will be safely preserved.
               </p>
             </div>
 
             {removeMemberError && (
-              <div className="p-3.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-xs flex flex-col gap-2.5 animate-in fade-in">
+              <div className="p-3.5 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 text-xs flex flex-col gap-2.5 animate-in fade-in">
                 <div className="flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                  <AlertCircle className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5" />
                   <span className="leading-relaxed font-medium">{removeMemberError}</span>
                 </div>
                 <div className="self-end flex items-center gap-2">
@@ -2435,8 +2406,8 @@ export default function SettingsPage() {
               </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }

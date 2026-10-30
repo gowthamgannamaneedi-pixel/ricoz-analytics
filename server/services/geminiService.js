@@ -1,3 +1,5 @@
+const dns = require('dns');
+try { dns.setDefaultResultOrder('ipv4first'); } catch (_) {}
 const config = require('../config');
 
 /**
@@ -8,8 +10,8 @@ const config = require('../config');
 class GeminiService {
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || config.geminiApiKey || '';
-    this.modelName = process.env.GEMINI_MODEL || config.geminiModel || 'gemini-2.5-flash';
-    this.timeoutMs = 12000;
+    this.modelName = process.env.GEMINI_MODEL || config.geminiModel || 'gemini-3.5-flash';
+    this.timeoutMs = 35000;
   }
 
   /**
@@ -31,8 +33,16 @@ class GeminiService {
     msg = msg.replace(/key=[^&\s]+/gi, 'key=[REDACTED]');
     const safeErr = new Error(msg);
     safeErr.name = err.name;
+    safeErr.code = err.code || 'AI_API_ERROR';
+    safeErr.status = err.status || 500;
     if (err.name === 'AbortError' || err.code === 20) {
       safeErr.message = 'Gemini API request timed out';
+      safeErr.code = 'AI_TIMEOUT';
+      safeErr.status = 504;
+    } else if (err.code === 'ENOTFOUND' || err.code === 'ECONNREFUSED' || err.code === 'ECONNRESET') {
+      safeErr.message = 'Network error while connecting to AI analysis service';
+      safeErr.code = 'AI_NETWORK_ERROR';
+      safeErr.status = 503;
     }
     return safeErr;
   }
@@ -45,7 +55,10 @@ class GeminiService {
    */
   async generateContent(prompt, options = {}) {
     if (!this.isConfigured()) {
-      throw new Error('GEMINI_API_KEY is not configured');
+      const err = new Error('AI analysis is unavailable because the AI provider is not configured.');
+      err.code = 'AI_NOT_CONFIGURED';
+      err.status = 503;
+      throw err;
     }
 
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${this.modelName}:generateContent?key=${this.apiKey}`;
@@ -73,11 +86,37 @@ class GeminiService {
 
       if (!response.ok) {
         const errText = await response.text().catch(() => '');
-        throw new Error(`Gemini API responded with HTTP ${response.status}: ${errText}`);
+        // Auto-recover if a configured model was retired by Google
+        if (response.status === 404 && (errText.includes('no longer available') || errText.includes('gemini-2.5-flash')) && !options._retriedModel) {
+          console.log('[GeminiService] Model retired by provider; switching automatically to gemini-3.5-flash...');
+          this.modelName = 'gemini-3.5-flash';
+          return this.generateContent(prompt, { ...options, _retriedModel: true });
+        }
+
+        let code = 'AI_API_ERROR';
+        let userMsg = `Gemini API responded with HTTP ${response.status}: ${errText}`;
+        if (response.status === 401 || response.status === 403) {
+          code = 'AI_AUTH_FAILED';
+          userMsg = 'AI analysis failed due to invalid credentials. Please check your AI API key configuration.';
+        } else if (response.status === 429) {
+          code = 'AI_QUOTA_EXCEEDED';
+          userMsg = 'AI analysis failed because the provider quota was exceeded. Please try again later.';
+        } else if (response.status >= 500) {
+          code = 'AI_PROVIDER_UNAVAILABLE';
+          userMsg = 'AI provider service is temporarily unavailable. Please try again later.';
+        }
+        const apiErr = new Error(userMsg);
+        apiErr.code = code;
+        apiErr.status = response.status;
+        throw apiErr;
       }
 
       const data = await response.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      const text = parts.map(p => p.text || '').join('');
+      if (data?.candidates?.[0]?.finishReason && data.candidates[0].finishReason !== 'STOP') {
+        console.warn('[GeminiService] Finish reason:', data.candidates[0].finishReason);
+      }
       return text.trim();
     } catch (err) {
       clearTimeout(timeout);
@@ -1367,6 +1406,363 @@ Respond ONLY with valid raw JSON. No markdown code blocks, no backticks, no extr
       recommendedActions: recommendedActions.slice(0, 3),
       aiGenerated: false,
       fallback: true
+    };
+  }
+
+  /**
+   * Complete Business Radar 5-Section Grounded Executive AI Analysis
+   * Invokes Gemini 2.5 Flash to synthesize verified empirical findings into:
+   * A. What changed?
+   * B. What does the data show?
+   * C. Why might it have happened? (Strictly non-causal observational hypotheses)
+   * D. What should the user check next? (Insight-specific actionable next steps)
+   * E. Evidence and limitations (Source dataset, period, records, limitations)
+   *
+   * @param {{ insight: object, attribution: object, context?: object }} params
+   * @param {object} [options]
+   * @returns {Promise<{
+   *   analysis?: object,
+   *   aiGenerated: boolean,
+   *   model: string,
+   *   error?: object
+   * }>}
+   */
+  async generateBusinessRadarAnalysis({ insight, attribution, context = {} }, options = {}) {
+    if (!attribution || !attribution.drivers) {
+      return {
+        error: {
+          code: 'INSUFFICIENT_EVIDENCE',
+          message: 'Attribution telemetry is unavailable for this insight.',
+          retryable: false
+        },
+        aiGenerated: false
+      };
+    }
+
+    if (!this.isConfigured()) {
+      return {
+        error: {
+          code: 'AI_NOT_CONFIGURED',
+          message: 'AI analysis is unavailable because the AI provider is not configured.',
+          retryable: false
+        },
+        aiGenerated: false
+      };
+    }
+
+    const priorPeriodLabel = insight?.evidence?.comparisonPeriod || 'Historical Baseline';
+    const currentPeriodLabel = insight?.evidence?.currentPeriod || 'Current Observation';
+    const metricLabel = (attribution.metric || 'metric').replace(/_/g, ' ');
+
+    const topDrivers = (attribution.drivers || []).slice(0, 5).map(d => ({
+      segment: d.segment,
+      baseline: d.baselineValue,
+      current: d.currentValue,
+      delta: d.segmentDelta,
+      contributionPercent: d.contributionPercent,
+      absoluteMovementShare: d.absoluteMovementShare,
+      role: d.classification || (d.segmentDelta < 0 ? 'detractor' : 'sustainer')
+    }));
+
+    const prompt = `You are RicozAnalytics Executive Decision Intelligence Engine powered by Gemini 2.5 Flash.
+Your sole purpose is to analyze verified business evidence and provide an executive-level Business Radar breakdown.
+Gemini is an interpretation and synthesis layer, NOT the source of truth.
+
+CRITICAL RULES:
+1. STRICT GROUNDING: Use ONLY the provided numbers. NEVER calculate, alter, or invent numbers.
+2. CAUSATION PROHIBITION: Never claim or imply direct causation unless experimentally proven. NEVER say "segment X caused the change", "due to X", or "because of X". Always use strictly observational association language: "associated with", "co-occurred with", "accounted for X% of the observed net change".
+3. HYPOTHESES SEPARATION: Clearly distinguish observed contributor facts from hypotheses or potential reasons.
+4. ACTIONABLE INSIGHTS: Provide practical, insight-specific next steps directly tied to the analyzed metric, dimension, and leading detractor/sustainer segments with clear reasoning.
+5. NO GENERIC PLACEHOLDERS: Do NOT use generic marketing or inventory advice unless it specifically applies to the analyzed dimension and metric.
+
+Verified Evidence:
+- Insight Title: "${insight.title || ''}"
+- Insight Type: "${insight.type || ''}"
+- Metric: "${metricLabel}"
+- Dimension: "${attribution.dimension}"
+- Dataset: "${attribution.datasetName || insight.evidence?.datasetName || 'Primary Telemetry'}"
+- Records Analyzed: ${attribution.recordsAnalyzed}
+- Comparison Period: "${priorPeriodLabel}" (Baseline: ${attribution.totalBaseline})
+- Current Period: "${currentPeriodLabel}" (Current: ${attribution.totalCurrent})
+- Net Delta: ${attribution.totalDelta} (${attribution.totalDeltaPercent}%)
+- Movement Concentration: ${attribution.concentration?.type || 'dispersed'} (HHI: ${attribution.concentration?.hhi || 0})
+- Top Verified Drivers:
+${JSON.stringify(topDrivers, null, 2)}
+- Primary Detractor: ${attribution.primaryDetractor ? JSON.stringify(attribution.primaryDetractor) : 'None'}
+- Primary Sustainer: ${attribution.primarySustainer ? JSON.stringify(attribution.primarySustainer) : 'None'}
+
+Provide your response as a STRICT JSON object with the following exact keys:
+{
+  "whatChanged": {
+    "summary": "1-2 sentence executive finding stating the metric, reporting period, and exact measured change (${attribution.totalDelta > 0 ? '+' : ''}${attribution.totalDelta} / ${attribution.totalDeltaPercent}%)",
+    "metric": "${metricLabel}",
+    "period": "${currentPeriodLabel} vs ${priorPeriodLabel}",
+    "baselineValue": ${attribution.totalBaseline},
+    "currentValue": ${attribution.totalCurrent},
+    "delta": ${attribution.totalDelta},
+    "deltaPercent": ${attribution.totalDeltaPercent}
+  },
+  "whatDataShows": {
+    "summary": "1-2 paragraphs comparing current and previous values, identifying leading contributing segments with exact numbers and contribution percentages",
+    "topDrivers": [
+      {
+        "segment": "string",
+        "delta": 0,
+        "contributionPercent": 0,
+        "role": "detractor" | "sustainer" | "neutral"
+      }
+    ],
+    "concentration": "Concise sentence explaining whether variance is concentrated in specific segments or dispersed"
+  },
+  "whyHappened": {
+    "observedPatterns": "Factual explanation of patterns directly visible in the data",
+    "hypotheses": [
+      "Potential factor 1 (clearly labeled as hypothesis to investigate)",
+      "Potential factor 2 (clearly labeled as hypothesis to investigate)"
+    ],
+    "externalFactorsNeeded": "Identify external data or business context needed to test these hypotheses"
+  },
+  "whatToCheckNext": [
+    {
+      "action": "Practical, specific investigation action addressing the primary detractor or sustainer",
+      "reasoning": "Data-backed reasoning explaining why this step is recommended based on the verified evidence"
+    },
+    {
+      "action": "Second practical investigation action",
+      "reasoning": "Data-backed reasoning"
+    },
+    {
+      "action": "Third practical monitoring or operational action",
+      "reasoning": "Data-backed reasoning"
+    }
+  ],
+  "evidenceAndLimitations": {
+    "sourceDataset": "${attribution.datasetName || 'Primary Telemetry'}",
+    "reportingPeriod": "${priorPeriodLabel} to ${currentPeriodLabel}",
+    "recordsAnalyzed": ${attribution.recordsAnalyzed},
+    "calculations": "((Current - Baseline) / ABS(Baseline)) * 100",
+    "limitations": "Observational variance attribution based on ${attribution.recordsAnalyzed} records. Does not prove causal direction without controlled experimentation."
+  }
+}
+
+Respond ONLY with valid raw JSON. No markdown code blocks, no backticks, no extra text.`;
+
+    try {
+      const rawText = await this.generateContent(prompt, {
+        temperature: 0.1,
+        maxTokens: 4096,
+        timeoutMs: options.timeoutMs || 35000
+      });
+
+      const parsed = this._parseAndValidateBusinessRadarResponse(rawText, attribution, insight);
+      if (parsed) {
+        return {
+          analysis: parsed,
+          aiGenerated: true,
+          model: this.modelName,
+          evidenceValidated: true
+        };
+      }
+      return {
+        error: {
+          code: 'AI_VALIDATION_FAILED',
+          message: 'AI analysis output failed grounding or schema validation.',
+          retryable: true
+        },
+        aiGenerated: false
+      };
+    } catch (err) {
+      const safeMsg = (err.message || '').replace(/key=[^&\s]+/gi, 'key=[REDACTED]');
+      console.warn('[GeminiService] Business Radar AI analysis failed:', safeMsg);
+      return {
+        error: {
+          code: err.code || 'AI_API_ERROR',
+          message: err.message || 'AI analysis request failed.',
+          retryable: ['AI_QUOTA_EXCEEDED', 'AI_TIMEOUT', 'AI_NETWORK_ERROR', 'AI_PROVIDER_UNAVAILABLE'].includes(err.code),
+          status: err.status || 500
+        },
+        aiGenerated: false
+      };
+    }
+  }
+
+  /**
+   * Parse and validate strict JSON response from Gemini for Business Radar
+   */
+  _parseAndValidateBusinessRadarResponse(rawText, attribution, insight) {
+    if (!rawText || typeof rawText !== 'string') return null;
+
+    try {
+      const cleaned = rawText
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/```\s*$/i, '')
+        .trim();
+
+      const parsed = JSON.parse(cleaned);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        console.warn('[GeminiService Validation] Not an object:', cleaned.slice(0, 200));
+        return null;
+      }
+
+      // 1. Validate section objects
+      if (!parsed.whatChanged || typeof parsed.whatChanged !== 'object') {
+        console.warn('[GeminiService Validation] Missing whatChanged:', Object.keys(parsed));
+        return null;
+      }
+      if (!parsed.whatDataShows || typeof parsed.whatDataShows !== 'object') {
+        console.warn('[GeminiService Validation] Missing whatDataShows:', Object.keys(parsed));
+        return null;
+      }
+      if (!parsed.whyHappened || typeof parsed.whyHappened !== 'object') {
+        console.warn('[GeminiService Validation] Missing whyHappened:', Object.keys(parsed));
+        return null;
+      }
+      if (!Array.isArray(parsed.whatToCheckNext) || parsed.whatToCheckNext.length === 0) {
+        console.warn('[GeminiService Validation] whatToCheckNext is not an array or empty:', parsed.whatToCheckNext);
+        return null;
+      }
+      if (!parsed.evidenceAndLimitations || typeof parsed.evidenceAndLimitations !== 'object') {
+        console.warn('[GeminiService Validation] Missing evidenceAndLimitations:', Object.keys(parsed));
+        return null;
+      }
+
+      // 2. Enforce strict numerical truth from verified attribution
+      parsed.whatChanged.baselineValue = attribution.totalBaseline;
+      parsed.whatChanged.currentValue = attribution.totalCurrent;
+      parsed.whatChanged.delta = attribution.totalDelta;
+      parsed.whatChanged.deltaPercent = attribution.totalDeltaPercent;
+      parsed.whatChanged.metric = (attribution.metric || 'metric').replace(/_/g, ' ');
+
+      // 3. Causation guardrail: Replace prohibited causal language
+      const causationRegex = /\b(caused by|is caused by|was caused by|directly caused|leading cause)\b/gi;
+      const sanitizeCausation = (str) => typeof str === 'string' ? str.replace(causationRegex, 'associated with') : str;
+
+      parsed.whatChanged.summary = sanitizeCausation(parsed.whatChanged.summary || '');
+      parsed.whatDataShows.summary = sanitizeCausation(parsed.whatDataShows.summary || '');
+      parsed.whyHappened.observedPatterns = sanitizeCausation(parsed.whyHappened.observedPatterns || '');
+
+      if (Array.isArray(parsed.whyHappened.hypotheses)) {
+        parsed.whyHappened.hypotheses = parsed.whyHappened.hypotheses.map(h => sanitizeCausation(String(h)));
+      } else {
+        parsed.whyHappened.hypotheses = [
+          `Observed movement in ${attribution.primaryDetractor?.segment || 'leading segment'} may correlate with commercial or demand shifts.`,
+          `External market or seasonality factors may have influenced transaction velocity.`
+        ];
+      }
+
+      parsed.whatToCheckNext = parsed.whatToCheckNext.map(item => ({
+        action: sanitizeCausation(item.action || String(item)),
+        reasoning: sanitizeCausation(item.reasoning || 'Based on verified dimensional contributor variance.')
+      }));
+
+      parsed.evidenceAndLimitations = {
+        sourceDataset: attribution.datasetName || insight?.evidence?.datasetName || 'Primary Telemetry',
+        reportingPeriod: parsed.evidenceAndLimitations.reportingPeriod || `${insight?.evidence?.comparisonPeriod || 'Historical Baseline'} vs ${insight?.evidence?.currentPeriod || 'Current Observation'}`,
+        recordsAnalyzed: attribution.recordsAnalyzed || 0,
+        calculations: '((Current - Baseline) / ABS(Baseline)) * 100',
+        limitations: parsed.evidenceAndLimitations.limitations || `Observational variance attribution across ${attribution.recordsAnalyzed || 0} physical records. Does not prove causal direction without controlled experimentation.`
+      };
+
+      return parsed;
+    } catch (err) {
+      console.warn('[GeminiService Validation Notice]', err.message);
+      return null;
+    }
+  }
+
+  /**
+   * Deterministic Analytical Summary for Business Radar
+   * Constructed strictly from verified mathematical evidence without AI synthesis.
+   * Explicitly labeled as isDeterministicSummary: true, aiGenerated: false.
+   */
+  buildDeterministicAnalyticalSummary(attribution, insight = {}) {
+    const metricLabel = (attribution.metric || insight?.evidence?.metric || 'metric').replace(/_/g, ' ');
+    const dimLabel = attribution.dimension || 'category';
+    const totalBaseline = attribution.totalBaseline || 0;
+    const totalCurrent = attribution.totalCurrent || 0;
+    const totalDelta = attribution.totalDelta || 0;
+    const totalDeltaPercent = attribution.totalDeltaPercent || 0;
+    const records = attribution.recordsAnalyzed || insight?.evidence?.recordsAnalyzed || 0;
+    const priorPeriod = insight?.evidence?.comparisonPeriod || 'Historical Baseline';
+    const currentPeriod = insight?.evidence?.currentPeriod || 'Current Observation';
+    const detractor = attribution.primaryDetractor;
+    const sustainer = attribution.primarySustainer;
+    const direction = totalDelta < 0 ? 'contracted' : (totalDelta > 0 ? 'expanded' : 'remained unchanged');
+
+    const whatChanged = {
+      summary: `${metricLabel.charAt(0).toUpperCase() + metricLabel.slice(1)} ${direction} by ${Math.abs(totalDeltaPercent)}% (${totalDelta > 0 ? '+' : ''}${totalDelta.toLocaleString()}) from ${totalBaseline.toLocaleString()} to ${totalCurrent.toLocaleString()} comparing ${priorPeriod} against ${currentPeriod}.`,
+      metric: metricLabel,
+      period: `${currentPeriod} vs ${priorPeriod}`,
+      baselineValue: totalBaseline,
+      currentValue: totalCurrent,
+      delta: totalDelta,
+      deltaPercent: totalDeltaPercent
+    };
+
+    let dataShowsSummary = `Dimensional variance decomposition across ${dimLabel} evaluated ${records} physical records.`;
+    if (detractor && sustainer) {
+      dataShowsSummary += ` The largest downward movement occurred in ${detractor.segment} (-${Math.abs(detractor.delta).toLocaleString()}, accounting for ${Math.abs(detractor.contributionPercent)}% of net change), while ${sustainer.segment} recorded positive movement (+${sustainer.delta.toLocaleString()}).`;
+    } else if (detractor) {
+      dataShowsSummary += ` Downward variance was concentrated in ${detractor.segment} (-${Math.abs(detractor.delta).toLocaleString()}, accounting for ${Math.abs(detractor.contributionPercent)}% of net change).`;
+    } else if (sustainer) {
+      dataShowsSummary += ` Expansion was led by ${sustainer.segment} (+${sustainer.delta.toLocaleString()}, accounting for ${Math.abs(sustainer.contributionPercent)}% of net change).`;
+    } else {
+      dataShowsSummary += ` Variances were distributed across multiple segments without an isolated driver.`;
+    }
+
+    const whatDataShows = {
+      summary: dataShowsSummary,
+      topDrivers: (attribution.drivers || []).slice(0, 5).map(d => ({
+        segment: d.segment,
+        delta: d.segmentDelta,
+        contributionPercent: d.contributionPercent,
+        role: d.classification || (d.segmentDelta < 0 ? 'detractor' : 'sustainer')
+      })),
+      concentration: attribution.concentration?.description || (attribution.concentration?.type === 'concentrated' ? 'Movement is concentrated within primary segments.' : 'Movement is broadly dispersed across segments.')
+    };
+
+    const whyHappened = {
+      observedPatterns: `Empirical telemetry shows segment-level movement in ${dimLabel} aligning with the net ${direction} of ${Math.abs(totalDeltaPercent)}%.`,
+      hypotheses: [
+        `[Hypothesis] Segment-specific demand or transaction volume shifts in ${detractor?.segment || 'primary segments'}.`,
+        `[Hypothesis] Pricing updates, catalog mix, or seasonal transition during ${currentPeriod}.`
+      ],
+      externalFactorsNeeded: 'Operational order logs, pricing change dates, or regional campaign data are required to test these hypotheses.'
+    };
+
+    const whatToCheckNext = [];
+    if (detractor) {
+      whatToCheckNext.push({
+        action: `Audit order logs and volume in ${detractor.segment}`,
+        reasoning: `This segment accounted for ${Math.abs(detractor.contributionPercent)}% of the observed net difference.`
+      });
+    }
+    whatToCheckNext.push({
+      action: `Examine transaction frequency and average order values across ${dimLabel}`,
+      reasoning: `Distinguishes whether the movement was driven by customer count changes or transaction size shifts.`
+    });
+    whatToCheckNext.push({
+      action: `Set up an automated variance alert for ${metricLabel}`,
+      reasoning: `Ensures automatic notification if future observation intervals exceed the expected operational band.`
+    });
+
+    const evidenceAndLimitations = {
+      sourceDataset: attribution.datasetName || insight?.evidence?.datasetName || 'Primary Telemetry',
+      reportingPeriod: `${priorPeriod} to ${currentPeriod}`,
+      recordsAnalyzed: records,
+      calculations: '((Current - Baseline) / ABS(Baseline)) * 100',
+      limitations: `Deterministic mathematical decomposition across ${records} records. Observational findings demonstrate co-occurrence and variance attribution, not experimental causality.`
+    };
+
+    return {
+      whatChanged,
+      whatDataShows,
+      whyHappened,
+      whatToCheckNext,
+      evidenceAndLimitations,
+      isDeterministicSummary: true,
+      aiGenerated: false
     };
   }
 

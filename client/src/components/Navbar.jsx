@@ -229,35 +229,37 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
           <button
             type="button"
             onClick={onOpenSidebar}
-            className="lg:hidden flex items-center justify-center p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition cursor-pointer shrink-0"
-            aria-label="Open sidebar"
-            title="Open sidebar"
+            className="lg:hidden flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition cursor-pointer shrink-0"
+            aria-label="Open navigation"
+            title="Open navigation"
           >
             <Menu className="h-5 w-5" />
           </button>
 
-          {/* Desktop Double-Chevron Expand Toggle (>>) */}
+          {/* Desktop Collapsed Sidebar Toggle (Menu Icon, Comfortable Target, Open navigation Tooltip) */}
           {isSidebarCollapsed && (
             <button
               type="button"
               onClick={onToggleSidebar}
-              className="hidden lg:flex items-center justify-center p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition cursor-pointer shrink-0"
-              aria-label="Expand sidebar"
-              title="Expand sidebar"
+              className="hidden lg:flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition cursor-pointer shrink-0"
+              aria-label="Open navigation"
+              title="Open navigation"
             >
-              <ChevronsRight className="h-4 w-4" />
+              <Menu className="h-5 w-5" />
             </button>
           )}
 
-          {/* Brand Logo */}
-          <Logo size="sm" linkTo="/dashboard" className="shrink-0" />
+          {/* Brand Logo with Reserved Width & No Overlap */}
+          <div className="shrink-0 min-w-max flex items-center">
+            <Logo size="sm" linkTo="/dashboard" className="shrink-0" />
+          </div>
 
           {/* Subtle vertical divider keeping logo/toggle completely separate from search bar */}
           <div className="h-5 w-px bg-slate-200 dark:bg-slate-750 shrink-0 hidden sm:block" />
         </div>
 
-        {/* Global Search Bar */}
-        <div ref={searchContainerRef} className="relative flex-1 max-w-md min-w-[200px]">
+        {/* Global Search Bar with Responsive Sizing */}
+        <div ref={searchContainerRef} className="relative flex-1 max-w-md min-w-[150px] sm:min-w-[200px]">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
           <input
             ref={searchRef}
@@ -340,22 +342,21 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
 
       {/* Right Controls: Organization Selector, Trial Status, Theme Toggle, Notifications, Profile */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        {/* Organization Selector */}
+        {/* Organization / Workspace Indicator (Navigates to Settings) */}
         <button
           type="button"
           onClick={() => {
             handleClosePopovers();
             navigate('/settings');
           }}
-          className="hidden md:flex items-center gap-2 h-9 px-3.5 rounded-xl bg-rose-50/40 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/60 text-xs font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-100/70 hover:border-rose-300 dark:hover:bg-rose-950/60 transition shadow-2xs cursor-pointer select-none"
+          className="hidden md:flex items-center gap-2 h-9 px-3.5 rounded-xl bg-rose-50/40 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/60 text-xs font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-100/70 hover:border-rose-300 dark:hover:bg-rose-950/60 focus:outline-none focus:ring-2 focus:ring-rose-500 transition shadow-2xs cursor-pointer select-none"
           aria-label="Current organization"
-          title="Manage organization & workspace"
+          title="Organization Settings"
         >
-          <Building2 className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
+          <Building2 className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
           <span className="max-w-36 truncate font-medium">
             {user?.organization_name || 'Ricoz Primary Organization'}
           </span>
-          <ChevronDown className="h-3 w-3 text-rose-500/80 dark:text-rose-400" />
         </button>
 
         {/* Enterprise Plan Badge */}

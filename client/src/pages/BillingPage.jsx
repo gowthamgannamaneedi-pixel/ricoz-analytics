@@ -531,197 +531,186 @@ export default function BillingPage() {
       )}
 
       {/* Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 border-b border-slate-200 dark:border-[#334155] pb-6">
-        <div className="space-y-3 flex-1 min-w-0">
-          {/* Breadcrumb Navigation */}
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard')}
-              className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors focus:outline-hidden cursor-pointer"
-            >
-              Workspace
-            </button>
-            <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
-            <button
-              type="button"
-              onClick={() => navigate('/settings')}
-              className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors focus:outline-hidden cursor-pointer"
-            >
-              Settings
-            </button>
-            <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
-            <span className="text-slate-900 dark:text-[#F8FAFC] font-bold">Plans & Billing</span>
-          </nav>
+      <div className="space-y-4 border-b border-slate-200 dark:border-[#334155] pb-6">
+        {/* Breadcrumb Navigation */}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors focus:outline-hidden cursor-pointer"
+          >
+            Workspace
+          </button>
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
+          <button
+            type="button"
+            onClick={() => navigate('/settings')}
+            className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors focus:outline-hidden cursor-pointer"
+          >
+            Settings
+          </button>
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
+          <span className="text-slate-900 dark:text-[#F8FAFC] font-bold">Plans & Billing</span>
+        </nav>
 
-          {/* Section Tag */}
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-rose-900/60 shrink-0">
-              <CreditCard className="h-3.5 w-3.5" />
-            </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8] font-mono">
-              Subscription & Licensing
-            </span>
+        {/* Section Tag */}
+        <div className="flex items-center gap-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-rose-900/60 shrink-0">
+            <CreditCard className="h-3.5 w-3.5" />
           </div>
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8] font-mono">
+            Subscription & Licensing
+          </span>
+        </div>
 
-          {/* Title & Description */}
-          <div>
+        {/* Title, Description & Aligned Workspace Status Card */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pt-1">
+          <div className="max-w-xl">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
               Plans & Billing
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 max-w-xl font-normal leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1.5 font-normal leading-relaxed">
               Scale your business intelligence workspace with enterprise security, relational modeling, and AI copilot compute.
             </p>
           </div>
-        </div>
 
-        {/* Current Subscription Status Card */}
-        <div className="rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-5 sm:p-6 shadow-2xs w-full lg:w-[380px] shrink-0 space-y-3 sm:space-y-3.5">
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] font-medium">Workspace Status</span>
-            {currentSub?.scheduledDowngradePlan ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 whitespace-nowrap shadow-2xs">
-                <ArrowDownRight className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
-                Downgrade Scheduled
-              </span>
-            ) : currentSub?.cancelAtPeriodEnd ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 whitespace-nowrap shadow-2xs">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                Cancellation Pending
-              </span>
-            ) : isActivePaid ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/90 dark:border-emerald-800/60 whitespace-nowrap shadow-2xs">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                Active Paid
-              </span>
-            ) : isExpired ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border border-rose-200/90 dark:border-rose-900/60 whitespace-nowrap shadow-2xs">
-                <Clock className="w-3.5 h-3.5 text-rose-600 dark:text-[#FB7185]" />
-                Trial Expired
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border border-rose-200/90 dark:border-rose-900/60 whitespace-nowrap shadow-2xs">
-                <Clock className="w-3.5 h-3.5 text-rose-600 dark:text-[#FB7185]" />
-                {trialCountdown.trialStatusText}
-              </span>
-            )}
-          </div>
+          {/* Reduced-size, Aligned Workspace Status Card */}
+          <div className="rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-4 sm:p-4.5 shadow-2xs w-full lg:w-[330px] shrink-0 space-y-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs text-slate-500 dark:text-[#94A3B8] font-medium">Workspace Status</span>
+              {currentSub?.scheduledDowngradePlan ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 whitespace-nowrap shadow-2xs">
+                  <ArrowDownRight className="w-3 h-3 text-sky-600 dark:text-sky-400" />
+                  Downgrade Scheduled
+                </span>
+              ) : currentSub?.cancelAtPeriodEnd ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 whitespace-nowrap shadow-2xs">
+                  <AlertTriangle className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                  Cancellation Pending
+                </span>
+              ) : isActivePaid ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/90 dark:border-emerald-800/60 whitespace-nowrap shadow-2xs">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                  Active Paid
+                </span>
+              ) : isExpired ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border border-rose-200/90 dark:border-rose-900/60 whitespace-nowrap shadow-2xs">
+                  <Clock className="w-3 h-3 text-rose-600 dark:text-[#FB7185]" />
+                  Trial Expired
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border border-rose-200/90 dark:border-rose-900/60 whitespace-nowrap shadow-2xs">
+                  <Clock className="w-3 h-3 text-rose-600 dark:text-[#FB7185]" />
+                  {trialCountdown.trialStatusText}
+                </span>
+              )}
+            </div>
 
-          <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC] capitalize leading-snug">
-            {trialCountdown.planName || currentSub?.plan || 'Enterprise'} Plan
-            <span className="text-xs sm:text-sm font-normal text-slate-500 dark:text-[#94A3B8] ml-2">
-              ({currentSub?.billingInterval ? (currentSub.billingInterval.charAt(0).toUpperCase() + currentSub.billingInterval.slice(1)) : (isActivePaid ? 'Monthly' : '14-Day Free Trial')})
-            </span>
-          </div>
-
-          {/* Server-Side Authoritative Dates */}
-          <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 dark:bg-[#0F172A] p-2.5 rounded-xl border border-slate-100 dark:border-[#334155]">
-            <div>
-              <span className="text-slate-400 dark:text-[#94A3B8] block font-medium">Started</span>
-              <span className="text-slate-700 dark:text-[#CBD5E1] font-semibold">
-                {trialCountdown.startDateFormatted || 'Active'}
+            <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-[#F8FAFC] capitalize leading-snug">
+              {trialCountdown.planName || currentSub?.plan || 'Enterprise'} Plan
+              <span className="text-xs font-normal text-slate-500 dark:text-[#94A3B8] ml-1.5">
+                ({currentSub?.billingInterval ? (currentSub.billingInterval.charAt(0).toUpperCase() + currentSub.billingInterval.slice(1)) : (isActivePaid ? 'Monthly' : '14-Day Free Trial')})
               </span>
             </div>
-            <div>
-              <span className="text-slate-400 dark:text-[#94A3B8] block font-medium">
-                {isActivePaid ? (currentSub?.cancelAtPeriodEnd ? 'Ends On' : 'Renews On') : 'Trial Ends'}
-              </span>
-              <span className={`font-semibold ${daysRemaining <= 10 && !isActivePaid ? 'text-rose-600 dark:text-[#FB7185] font-bold' : 'text-slate-700 dark:text-[#CBD5E1]'}`}>
-                {trialCountdown.endDateFormatted || (isActivePaid ? 'Active' : 'Pending')}
-              </span>
-            </div>
-          </div>
 
-          {/* Genuine Backend Financial Fields (Only Rendered When Real Data Exists) */}
-          {(currentSub?.nextInvoiceAmount != null || currentSub?.amountDue != null) && (
-            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-[#94A3B8]">
-              <span>Next Invoice Amount</span>
-              <span className="font-semibold text-slate-800 dark:text-[#F8FAFC]">
-                ₹{Number((currentSub.nextInvoiceAmount ?? currentSub.amountDue) / 100).toLocaleString('en-IN')}
-              </span>
-            </div>
-          )}
-
-          {currentSub?.paymentMethod && (
-            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-[#94A3B8]">
-              <span>Payment Method</span>
-              <span className="font-semibold text-slate-800 dark:text-[#F8FAFC]">
-                {currentSub.paymentMethod}
-              </span>
-            </div>
-          )}
-
-          {currentSub?.outstandingBalance != null && currentSub.outstandingBalance > 0 && (
-            <div className="flex items-center justify-between text-xs text-rose-600 dark:text-rose-400">
-              <span>Outstanding Balance</span>
-              <span className="font-bold">
-                ₹{Number(currentSub.outstandingBalance / 100).toLocaleString('en-IN')}
-              </span>
-            </div>
-          )}
-
-          {/* Scheduled Downgrade Notice */}
-          {currentSub?.scheduledDowngradePlan && (
-            <div className="text-xs bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 p-3 rounded-xl text-sky-800 dark:text-sky-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
-              <div className="flex items-start gap-2.5">
-                <Clock className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-bold">Scheduled Downgrade:</span> Switching to{' '}
-                  <strong className="font-extrabold uppercase">{currentSub.scheduledDowngradePlan}</strong> on{' '}
-                  <span className="underline decoration-sky-400 underline-offset-2">
-                    {currentSub.scheduledDowngradeEffectiveDate
-                      ? new Date(currentSub.scheduledDowngradeEffectiveDate).toLocaleDateString()
-                      : 'billing period end'}
-                  </span>. Your current plan entitlements remain 100% active until then.
-                </div>
+            {/* Server-Side Authoritative Dates */}
+            <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 dark:bg-[#0F172A] p-2 rounded-xl border border-slate-100 dark:border-[#334155]">
+              <div>
+                <span className="text-slate-400 dark:text-[#94A3B8] block font-medium">Started</span>
+                <span className="text-slate-700 dark:text-[#CBD5E1] font-semibold">
+                  {trialCountdown.startDateFormatted || 'Active'}
+                </span>
               </div>
-              <button
-                type="button"
-                disabled={isActionPending}
-                onClick={handleCancelDowngrade}
-                className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-[#1E293B] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-rose-200 dark:border-rose-800/50 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs"
-                title="Cancel pending downgrade and keep current active plan"
-              >
-                {cancellingDowngrade ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Cancelling...</span>
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="w-3.5 h-3.5 text-rose-500" />
-                    <span>Cancel Downgrade</span>
-                  </>
-                )}
-              </button>
+              <div>
+                <span className="text-slate-400 dark:text-[#94A3B8] block font-medium">
+                  {isActivePaid ? (currentSub?.cancelAtPeriodEnd ? 'Ends On' : 'Renews On') : 'Trial Ends'}
+                </span>
+                <span className={`font-semibold ${daysRemaining <= 10 && !isActivePaid ? 'text-rose-600 dark:text-[#FB7185] font-bold' : 'text-slate-700 dark:text-[#CBD5E1]'}`}>
+                  {trialCountdown.endDateFormatted || (isActivePaid ? 'Active' : 'Pending')}
+                </span>
+              </div>
             </div>
-          )}
 
-          {/* Live Usage Telemetry Meters */}
-          <div className="space-y-1.5 pt-1 border-t border-slate-100 dark:border-[#334155]">
-            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-[#94A3B8]">
-              <span className="flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-slate-400 dark:text-[#64748B]" />
-                <span>Datasets</span>
-              </span>
-              <span className="font-semibold text-slate-800 dark:text-[#F8FAFC]">
-                {currentSub?.usage?.datasets?.count || 0} / {currentSub?.usage?.datasets?.limit === -1 ? 'Unlimited' : (currentSub?.usage?.datasets?.limit || 10)}
-              </span>
+            {/* Genuine Backend Financial Fields (Only Rendered When Real Data Exists) */}
+            {(currentSub?.nextInvoiceAmount != null || currentSub?.amountDue != null) && (
+              <div className="flex items-center justify-between text-xs text-slate-600 dark:text-[#94A3B8]">
+                <span>Next Invoice</span>
+                <span className="font-semibold text-slate-800 dark:text-[#F8FAFC]">
+                  ₹{Number((currentSub.nextInvoiceAmount ?? currentSub.amountDue) / 100).toLocaleString('en-IN')}
+                </span>
+              </div>
+            )}
+
+            {currentSub?.paymentMethod && (
+              <div className="flex items-center justify-between text-xs text-slate-600 dark:text-[#94A3B8]">
+                <span>Payment Method</span>
+                <span className="font-semibold text-slate-800 dark:text-[#F8FAFC]">
+                  {currentSub.paymentMethod}
+                </span>
+              </div>
+            )}
+
+            {currentSub?.outstandingBalance != null && currentSub.outstandingBalance > 0 && (
+              <div className="flex items-center justify-between text-xs text-rose-600 dark:text-rose-400">
+                <span>Outstanding Balance</span>
+                <span className="font-bold">
+                  ₹{Number(currentSub.outstandingBalance / 100).toLocaleString('en-IN')}
+                </span>
+              </div>
+            )}
+
+            {/* Scheduled Downgrade Notice */}
+            {currentSub?.scheduledDowngradePlan && (
+              <div className="text-xs bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 p-2.5 rounded-xl text-sky-800 dark:text-sky-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-2xs">
+                <div className="flex items-start gap-2">
+                  <Clock className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold">Scheduled Downgrade:</span> Switching to{' '}
+                    <strong className="font-extrabold uppercase">{currentSub.scheduledDowngradePlan}</strong> on{' '}
+                    <span className="underline decoration-sky-400 underline-offset-2">
+                      {currentSub.scheduledDowngradeEffectiveDate
+                        ? new Date(currentSub.scheduledDowngradeEffectiveDate).toLocaleDateString()
+                        : 'period end'}
+                    </span>.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  disabled={isActionPending}
+                  onClick={handleCancelDowngrade}
+                  className="shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold bg-white dark:bg-[#1E293B] text-rose-600 dark:text-rose-400 hover:bg-rose-50 border border-rose-200 dark:border-rose-800/50 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+
+            {/* Live Usage Telemetry Meters */}
+            <div className="space-y-1 pt-1.5 border-t border-slate-100 dark:border-[#334155]">
+              <div className="flex items-center justify-between text-xs text-slate-600 dark:text-[#94A3B8]">
+                <span className="flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-slate-400 dark:text-[#64748B]" />
+                  <span>Datasets</span>
+                </span>
+                <span className="font-semibold text-slate-800 dark:text-[#F8FAFC]">
+                  {currentSub?.usage?.datasets?.count || 0} / {currentSub?.usage?.datasets?.limit === -1 ? 'Unlimited' : (currentSub?.usage?.datasets?.limit || 10)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-slate-600 dark:text-[#94A3B8]">
+                <span className="flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-slate-400 dark:text-[#64748B]" />
+                  <span>Team Members</span>
+                </span>
+                <span className="font-semibold text-slate-800 dark:text-[#F8FAFC]">
+                  {currentSub?.usage?.users?.count || 0} / {currentSub?.usage?.users?.limit === -1 ? 'Unlimited' : (currentSub?.usage?.users?.limit || 5)}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-[#94A3B8]">
-              <span className="flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-slate-400 dark:text-[#64748B]" />
-                <span>Team Members</span>
-              </span>
-              <span className="font-semibold text-slate-800 dark:text-[#F8FAFC]">
-                {currentSub?.usage?.users?.count || 0} / {currentSub?.usage?.users?.limit === -1 ? 'Unlimited' : (currentSub?.usage?.users?.limit || 5)}
-              </span>
-            </div>
+
+            <p className="text-[11px] text-slate-400 dark:text-[#94A3B8] pt-0.5 truncate" title={user?.organization_name || 'Ricoz Primary Organization'}>
+              Organization: <span className="font-semibold text-slate-600 dark:text-[#CBD5E1]">{user?.organization_name || 'Ricoz Primary Organization'}</span>
+            </p>
           </div>
-
-          <p className="text-[11px] text-slate-400 dark:text-[#94A3B8] pt-1">
-            Organization: <span className="font-semibold text-slate-600 dark:text-[#CBD5E1]">{user?.organization_name || 'Ricoz Primary Organization'}</span>
-          </p>
         </div>
       </div>
 

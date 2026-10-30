@@ -20,9 +20,11 @@ import { Select } from './ui/Select';
 
 const CONDITIONS = [
   { value: 'greater_than', label: 'Greater Than (>)' },
+  { value: 'greater_than_or_equal', label: 'Greater Than or Equal (>=)' },
   { value: 'less_than', label: 'Less Than (<)' },
+  { value: 'less_than_or_equal', label: 'Less Than or Equal (<=)' },
   { value: 'equal', label: 'Equal To (=)' },
-  { value: 'not_equal', label: 'Not Equal To (≠)' },
+  { value: 'not_equal', label: 'Not Equal To (!=)' },
   { value: 'percent_increase', label: 'Percentage Increase (▲ %)' },
   { value: 'percent_decrease', label: 'Percentage Decrease (▼ %)' }
 ];
@@ -201,6 +203,11 @@ export default function AlertModal({
 
     if (cooldownMinutes < 0 || isNaN(Number(cooldownMinutes))) {
       setError('Cooldown duration must be 0 or more minutes.');
+      return;
+    }
+
+    if (notificationChannels.includes('email') && recipients.length === 0) {
+      setError('Please add at least one recipient email address when Email Notification is enabled.');
       return;
     }
 

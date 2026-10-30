@@ -606,15 +606,9 @@ export default function AIInsightsPage() {
     }
   };
 
-  // Secondary middle card action
+  // Secondary middle card action - Open Business Radar for any insight
   const handleMiddleAction = (ins) => {
-    if (ins.type === 'trend' || ins.type === 'growth') {
-      setSimulatorData({ insight: ins, attribution: null });
-    } else if (ins.dataset_id || ins.source_metadata?.dataset_id) {
-      setBusinessRadarInsight(ins);
-    } else {
-      setSelectedInsightForDetails(ins);
-    }
+    setBusinessRadarInsight(ins);
   };
 
   // Secondary right card action
@@ -904,17 +898,17 @@ export default function AIInsightsPage() {
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 4. FILTER / SEARCH TOOLBAR (Row 1: Filters; Row 2: View Switcher)  */}
+      {/* 4. FILTER / SEARCH TOOLBAR & VIEW TOGGLE (Single Desktop Row)      */}
       {/* ------------------------------------------------------------------ */}
-      <div className="space-y-3.5">
-        {/* Row 1: Search -> All Types -> All Impact Levels -> All Statuses (Horizontal desktop row) */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full">
-          {/* Search Input (wider) */}
-          <div className="relative flex-1 sm:w-64 md:w-80 min-w-[200px]">
-            <Search className="w-4 h-4 text-slate-400 dark:text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+      <div className="flex flex-wrap xl:flex-nowrap items-center justify-between gap-3 p-3 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] shadow-2xs">
+        {/* Left: Search & Filter Controls Aligned */}
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 flex-1 min-w-0">
+          {/* Search Input (Reduced width per Req 8) */}
+          <div className="relative w-48 sm:w-56 md:w-64 shrink-0">
+            <Search className="w-4 h-4 text-slate-400 dark:text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search insights by title, description, or tags..."
+              placeholder="Search insights..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-10 pl-9 pr-8 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#0F172A] text-xs text-slate-800 dark:text-[#CBD5E1] placeholder-slate-400 dark:placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs transition"
@@ -930,11 +924,11 @@ export default function AIInsightsPage() {
             )}
           </div>
 
-          {/* Type Filter (compact, equal width and height) */}
+          {/* Type Filter */}
           <Select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="w-36 sm:w-40 shrink-0"
+            className="w-32 sm:w-36 shrink-0"
             size="md"
           >
             <option value="all">All Types</option>
@@ -948,7 +942,7 @@ export default function AIInsightsPage() {
             <option value="relationship">Relationship</option>
           </Select>
 
-          {/* Impact Level Filter (compact, equal width and height) */}
+          {/* Impact Level Filter */}
           <Select
             value={impactFilter}
             onChange={(e) => setImpactFilter(e.target.value)}
@@ -962,7 +956,7 @@ export default function AIInsightsPage() {
             <option value="low">Low</option>
           </Select>
 
-          {/* Status Filter (compact, equal width and height) */}
+          {/* Status Filter */}
           <Select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -983,9 +977,9 @@ export default function AIInsightsPage() {
           )}
         </div>
 
-        {/* Row 2: View Mode Toggle aligned below filter row with deliberate spacing */}
-        <div className="flex items-center">
-          <div className="flex items-center gap-1 border border-slate-200 dark:border-[#334155] rounded-xl p-1 bg-white dark:bg-[#0F172A] shadow-2xs">
+        {/* Right: Card View / Table View Toggle */}
+        <div className="flex items-center shrink-0">
+          <div className="flex items-center gap-1 border border-slate-200 dark:border-[#334155] rounded-xl p-1 bg-slate-100/70 dark:bg-[#0F172A] shadow-2xs">
             <button
               onClick={() => setViewMode('card')}
               className={`h-8 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
@@ -1220,23 +1214,14 @@ export default function AIInsightsPage() {
                     <ArrowRight className="w-3 h-3" />
                   </button>
 
-                  {/* Button 2: Contextual Middle Action */}
+                  {/* Button 2: Contextual Middle Action - Business Radar */}
                   <button
                     onClick={() => handleMiddleAction(ins)}
                     id={`investigate-radar-btn-${ins.id}`}
                     className="h-8 px-2.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] text-xs font-semibold hover:bg-slate-50 dark:hover:bg-[#334155] flex items-center gap-1 transition cursor-pointer"
                   >
-                    {ins.type === 'trend' || ins.type === 'growth' ? (
-                      <>
-                        <Compass className="w-3 h-3 text-purple-600 dark:text-purple-400" />
-                        <span>Explore What-If</span>
-                      </>
-                    ) : (
-                      <>
-                        <Radio className="w-3 h-3 text-rose-600 dark:text-[#FB7185]" />
-                        <span>Business Radar</span>
-                      </>
-                    )}
+                    <Radio className="w-3 h-3 text-rose-600 dark:text-[#FB7185]" />
+                    <span>Business Radar</span>
                   </button>
 
                   {/* Button 3: Contextual Right Action */}

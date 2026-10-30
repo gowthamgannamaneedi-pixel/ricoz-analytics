@@ -23,7 +23,7 @@
   }
 
   html.dark body {
-    background-color: #0B0F19 !important;
+    background-color: #0B1120 !important;
     color: #F8FAFC !important;
   }
 }
@@ -193,9 +193,9 @@ html.dark *:focus-visible {
     @apply border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:border-slate-600 bg-transparent;
   }
 
-  /* Modal overlay backdrop */
+  /* Modal overlay backdrop (Full viewport coverage, eliminates top strip, z-[100]) */
   .rz-modal-backdrop {
-    @apply fixed inset-0 z-50 flex items-start justify-center p-4 pt-16 bg-slate-900/60 dark:bg-black/80 backdrop-blur-xs overflow-y-auto;
+    @apply fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs overflow-y-auto;
   }
 
   /* Modal container */
@@ -413,4 +413,245 @@ html.dark select option:checked {
   color: #F8FAFC !important;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.6) !important;
   border-radius: 0.75rem !important;
+}
+
+/* ─── RicozAnalytics Landing Page Dynamic Graphics & Keyframes ──────────── */
+@keyframes rz-dash-draw {
+  from {
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes rz-flow-stream {
+  from {
+    stroke-dashoffset: 40;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes rz-packet-travel {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes rz-radar-pulse {
+  0% {
+    r: 4;
+    opacity: 0.9;
+    stroke-width: 2;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    r: 16;
+    opacity: 0;
+    stroke-width: 0.5;
+  }
+}
+
+@keyframes rz-bar-grow {
+  from {
+    transform: scaleY(0);
+    opacity: 0.3;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes rz-spark-shimmer {
+  0%, 100% {
+    opacity: 0.75;
+    filter: drop-shadow(0 0 2px rgba(220, 38, 38, 0.4));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 6px rgba(220, 38, 38, 0.8));
+  }
+}
+
+.rz-anim-dash {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: rz-dash-draw 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.rz-anim-flow {
+  stroke-dasharray: 6 6;
+  animation: rz-flow-stream 1.4s linear infinite;
+}
+
+.rz-anim-pulse {
+  animation: rz-radar-pulse 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+.rz-anim-shimmer {
+  animation: rz-spark-shimmer 3s ease-in-out infinite;
+}
+
+@keyframes rz-gentle-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes rz-gentle-float-alt {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+.rz-float {
+  animation: rz-gentle-float 6s ease-in-out infinite;
+}
+
+.rz-float-alt {
+  animation: rz-gentle-float-alt 7s ease-in-out infinite;
+}
+
+/* Scroll-driven Reveal System */
+.rz-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.rz-reveal.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.rz-reveal-scale {
+  opacity: 0;
+  transform: scale(0.96) translateY(20px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.rz-reveal-scale.is-revealed {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.rz-reveal-left {
+  opacity: 0;
+  transform: translateX(-32px);
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.rz-reveal-left.is-revealed {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.rz-reveal-right {
+  opacity: 0;
+  transform: translateX(32px);
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.rz-reveal-right.is-revealed {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.rz-perspective-stage {
+  perspective: 1400px;
+}
+
+.rz-stage-tilted {
+  transform: rotateX(4deg) translateY(0);
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.8s ease;
+}
+
+.rz-stage-tilted:hover {
+  transform: rotateX(0deg) translateY(-4px);
+}
+
+.rz-delay-75 { transition-delay: 75ms; }
+.rz-delay-100 { transition-delay: 100ms; }
+.rz-delay-150 { transition-delay: 150ms; }
+.rz-delay-200 { transition-delay: 200ms; }
+.rz-delay-250 { transition-delay: 250ms; }
+.rz-delay-300 { transition-delay: 300ms; }
+.rz-delay-400 { transition-delay: 400ms; }
+.rz-delay-500 { transition-delay: 500ms; }
+
+/* Accessibility: respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .rz-anim-dash,
+  .rz-anim-flow,
+  .rz-anim-pulse,
+  .rz-anim-shimmer,
+  .rz-float,
+  .rz-float-alt,
+  .animate-pulse,
+  .animate-ping,
+  .animate-bounce {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+    transition: none !important;
+  }
+
+  .rz-reveal,
+  .rz-reveal-scale {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.perspective-1400 {
+  perspective: 1400px;
 }

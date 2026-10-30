@@ -998,6 +998,24 @@ export async function resolveIncident(id, data = {}) {
   });
 }
 
+/**
+ * Fetch real-time notification delivery status & provider events for an incident
+ * @param {string} id
+ */
+export async function getIncidentDeliveryStatus(id) {
+  return apiRequest(`/alerts/incidents/${id}/delivery`);
+}
+
+/**
+ * Safely retry email dispatch for an incident
+ * @param {string} id
+ */
+export async function retryIncidentNotification(id) {
+  return apiRequest(`/alerts/incidents/${id}/retry-email`, {
+    method: 'POST'
+  });
+}
+
 // ==========================================
 // PREDICTIVE FORECASTING & ANOMALY DETECTION
 // ==========================================
@@ -1776,8 +1794,11 @@ export async function submitAIInsightFeedback(id, feedback) {
  * @param {{ dimension?: string, limit?: number }} [params={}]
  */
 export async function getRootCauseAttribution(insightId, params = {}) {
-  const query = new URLSearchParams(params).toString();
-  return apiRequest(`/insights/${insightId}/root-cause${query ? `?${query}` : ''}`);
+  const queryParams = { ...params };
+  const forceFresh = Boolean(queryParams.forceFresh);
+  delete queryParams.forceFresh;
+  const query = new URLSearchParams(queryParams).toString();
+  return apiRequest(`/insights/${insightId}/root-cause${query ? `?${query}` : ''}`, { forceFresh });
 }
 
 /**

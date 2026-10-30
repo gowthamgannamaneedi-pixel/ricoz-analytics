@@ -152,7 +152,7 @@ async function runRegressionTests() {
   try {
     // 1. Valid UUID Investigation
     await test('1. Valid UUID returns 200 with Business Radar structured telemetry', async () => {
-      const res = await apiReq(baseUrl, 'GET', `/api/insights/${testInsight.id}/root-cause?dimension=region`, null, {
+      const res = await apiReq(baseUrl, 'GET', `/api/insights/${testInsight.id}/root-cause?dimension=region&allowFallback=true`, null, {
         Authorization: `Bearer ${tokenAdminA}`
       });
       assert.strictEqual(res.statusCode, 200);

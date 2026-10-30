@@ -85,7 +85,8 @@ class RootCauseAttributionService {
     insight,
     organizationId,
     dimension = null,
-    limit = 10
+    limit = 10,
+    forceFresh = false
   }) {
     if (!insight) {
       throw new Error('Insight object is required for root-cause attribution.');
@@ -95,19 +96,59 @@ class RootCauseAttributionService {
     }
 
     const evidence = insight.evidence || {};
-    const datasetId = insight.dataset_id || evidence.datasetId || evidence.dataset_id || insight.source_metadata?.dataset_id;
+    let datasetId = insight.dataset_id || evidence.datasetId || evidence.dataset_id || insight.source_metadata?.dataset_id;
+
+    if (!datasetId && (insight.metric_id || evidence.metricId || insight.source_metadata?.metric_id)) {
+      const metricId = insight.metric_id || evidence.metricId || insight.source_metadata?.metric_id;
+      const MetricModel = require('../models/metricModel');
+      const metric = await MetricModel.findByIdAndOrgId(metricId, organizationId).catch(() => null);
+      if (metric?.dataset_id) {
+        datasetId = metric.dataset_id;
+        insight.dataset_id = metric.dataset_id;
+      }
+    }
 
     if (!datasetId) {
-      throw new Error('Insight is not linked to a verified dataset ID.');
+      return {
+        insightId: String(insight.id || ''),
+        datasetId: null,
+        datasetName: null,
+        metric: evidence.metric || 'metric',
+        dimension: null,
+        availableDimensions: [],
+        recordsAnalyzed: 0,
+        totalBaseline: this._toNum(evidence.comparisonValue, 0),
+        totalCurrent: this._toNum(evidence.currentValue, 0),
+        totalDelta: Number((this._toNum(evidence.currentValue, 0) - this._toNum(evidence.comparisonValue, 0)).toFixed(2)),
+        totalDeltaPercent: this._toNum(evidence.changePercent, 0),
+        sumOfSegmentDeltas: 0,
+        mathBalanceVerified: true,
+        drivers: [],
+        totalDriversCount: 0,
+        primaryDetractor: null,
+        primarySustainer: null,
+        concentration: {
+          metric: 'movement_concentration',
+          hhi: 0,
+          type: 'dispersed',
+          description: 'No dimensional data available.'
+        },
+        emptyReason: 'Analysis could not be completed because the source dataset is unavailable.',
+        observationalSummary: 'Supporting dataset records are unavailable to decompose variance across dimensional segments.',
+        verified: false,
+        fromCache: false
+      };
     }
 
     const insightId = String(insight.id || insight._id || 'direct');
     const cacheKey = `${organizationId}:${datasetId}:${dimension || 'auto'}:${limit}:${insightId}`;
 
     const cached = this._cache.get(cacheKey);
-    if (cached && (Date.now() - cached.timestamp < this._cacheTtlMs)) {
+    if (!forceFresh && cached && (Date.now() - cached.timestamp < this._cacheTtlMs)) {
       return { ...JSON.parse(JSON.stringify(cached.data)), fromCache: true };
     }
+
+    const candidateMetric = evidence.metric || evidence.sourceFields?.[0] || 'sales_amount';
 
     // Load dataset and verified physical records
     const { dataset, records, schema } = await evidenceBuilderService.loadDatasetAndRecords(
@@ -116,19 +157,134 @@ class RootCauseAttributionService {
     );
 
     if (!dataset) {
-      const err = new Error(`Dataset #${datasetId} not found or access denied.`);
-      err.status = 404;
-      throw err;
+      return {
+        insightId: String(insight.id || ''),
+        datasetId: isNaN(Number(datasetId)) ? String(datasetId) : Number(datasetId),
+        datasetName: null,
+        metric: candidateMetric,
+        dimension: null,
+        availableDimensions: [],
+        recordsAnalyzed: 0,
+        totalBaseline: 0,
+        totalCurrent: 0,
+        totalDelta: 0,
+        totalDeltaPercent: 0,
+        sumOfSegmentDeltas: 0,
+        mathBalanceVerified: true,
+        drivers: [],
+        totalDriversCount: 0,
+        primaryDetractor: null,
+        primarySustainer: null,
+        concentration: {
+          metric: 'movement_concentration',
+          hhi: 0,
+          type: 'dispersed',
+          description: 'Dataset not found.'
+        },
+        emptyReason: 'Analysis could not be completed because the source dataset is unavailable.',
+        observationalSummary: 'Supporting dataset is not available to decompose variance.',
+        verified: false,
+        fromCache: false
+      };
     }
 
     if (!records || records.length === 0) {
-      throw new Error(`Dataset #${datasetId} contains 0 records; cannot compute root-cause attribution.`);
+      return {
+        insightId: String(insight.id || ''),
+        datasetId: isNaN(Number(datasetId)) ? String(datasetId) : Number(datasetId),
+        datasetName: dataset.name,
+        metric: candidateMetric,
+        dimension: null,
+        availableDimensions: [],
+        recordsAnalyzed: 0,
+        totalBaseline: 0,
+        totalCurrent: 0,
+        totalDelta: 0,
+        totalDeltaPercent: 0,
+        sumOfSegmentDeltas: 0,
+        mathBalanceVerified: true,
+        drivers: [],
+        totalDriversCount: 0,
+        primaryDetractor: null,
+        primarySustainer: null,
+        concentration: {
+          metric: 'movement_concentration',
+          hhi: 0,
+          type: 'dispersed',
+          description: 'Dataset contains 0 records.'
+        },
+        emptyReason: 'There is insufficient historical data to explain this change reliably.',
+        observationalSummary: 'Dataset contains no physical records to decompose variance.',
+        verified: false,
+        fromCache: false
+      };
     }
 
     // 1. Detect eligible categorical dimensions
     const availableDimensions = this.getEligibleDimensions(schema);
     if (availableDimensions.length === 0) {
-      throw new Error(`Dataset schema contains no eligible categorical dimensions for variance decomposition.`);
+      return {
+        insightId: String(insight.id || ''),
+        datasetId: isNaN(Number(datasetId)) ? String(datasetId) : Number(datasetId),
+        datasetName: dataset.name,
+        metric: candidateMetric,
+        dimension: null,
+        availableDimensions: [],
+        recordsAnalyzed: records.length,
+        totalBaseline: Number(records.reduce((acc, r) => acc + this._toNum(r[candidateMetric], 0), 0).toFixed(2)),
+        totalCurrent: Number(records.reduce((acc, r) => acc + this._toNum(r[candidateMetric], 0), 0).toFixed(2)),
+        totalDelta: 0,
+        totalDeltaPercent: 0,
+        sumOfSegmentDeltas: 0,
+        mathBalanceVerified: true,
+        drivers: [],
+        totalDriversCount: 0,
+        primaryDetractor: null,
+        primarySustainer: null,
+        concentration: {
+          metric: 'movement_concentration',
+          hhi: 0,
+          type: 'dispersed',
+          description: 'No eligible categorical dimensions found in dataset.'
+        },
+        emptyReason: 'No categorical dimensions (such as region, category, or channel) found in dataset schema for dimensional breakdown.',
+        observationalSummary: `The dataset does not contain categorical dimensions to decompose net change in ${candidateMetric}.`,
+        verified: true,
+        fromCache: false
+      };
+    }
+
+    if (records.length < 2) {
+      const singleVal = this._toNum(records[0][candidateMetric], 0);
+      return {
+        insightId: String(insight.id || ''),
+        datasetId: isNaN(Number(datasetId)) ? String(datasetId) : Number(datasetId),
+        datasetName: dataset.name,
+        metric: candidateMetric,
+        dimension: availableDimensions[0] || null,
+        availableDimensions,
+        recordsAnalyzed: records.length,
+        totalBaseline: singleVal,
+        totalCurrent: singleVal,
+        totalDelta: 0,
+        totalDeltaPercent: 0,
+        sumOfSegmentDeltas: 0,
+        mathBalanceVerified: true,
+        drivers: [],
+        totalDriversCount: 0,
+        primaryDetractor: null,
+        primarySustainer: null,
+        concentration: {
+          metric: 'movement_concentration',
+          hhi: 0,
+          type: 'dispersed',
+          description: 'Insufficient records.'
+        },
+        emptyReason: 'There is insufficient historical data to explain this change reliably.',
+        observationalSummary: `Insufficient records in dataset "${dataset.name}" to perform chronological variance decomposition.`,
+        verified: true,
+        fromCache: false
+      };
     }
 
     // Determine target dimension
@@ -140,7 +296,6 @@ class RootCauseAttributionService {
     }
 
     // 2. Identify the target metric to decompose
-    const candidateMetric = evidence.metric || evidence.sourceFields?.[0] || 'sales_amount';
     const numCol = schema.find(c => {
       const type = String(c.type).toLowerCase();
       const isNum = type === 'number' || type === 'numeric' || type === 'integer' || type === 'float';
@@ -302,11 +457,16 @@ class RootCauseAttributionService {
       const topDriver = drivers.find(d => d.segmentDelta > 0);
       if (topDriver) {
         topDriver.classification = 'primary_driver';
+        primarySustainer = topDriver;
       }
       const topLaggard = drivers.find(d => d.segmentDelta < 0);
       if (topLaggard) {
         topLaggard.classification = 'primary_laggard';
+        primaryDetractor = topLaggard;
       }
+    } else {
+      primaryDetractor = drivers.find(d => d.segmentDelta < 0) || null;
+      primarySustainer = drivers.find(d => d.segmentDelta > 0) || null;
     }
 
     // 7. Calculate HHI from absolute movement shares

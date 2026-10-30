@@ -123,8 +123,8 @@ const AlertModel = {
       FROM alerts a
       JOIN organizations o ON a.organization_id = o.id
       LEFT JOIN metrics m ON a.metric_id = m.id
-      LEFT JOIN datasets d ON a.dataset_id = d.id
-      WHERE a.status = 'active'
+      LEFT JOIN datasets d ON (d.id = a.dataset_id OR (a.dataset_id IS NULL AND d.id = m.dataset_id))
+      WHERE a.status != 'disabled' AND a.status != 'inactive'
       ORDER BY a.organization_id, a.created_at ASC;
     `;
     const result = await db.query(sql);
@@ -379,6 +379,26 @@ const AlertModel = {
       deliveryJson
     ]);
 
+    return result.rows[0];
+  },
+
+  /**
+   * Persist notification delivery status (in-app, email messageId, provider response, errors) to an incident
+   * @param {string} incidentId 
+   * @param {object|string} notificationDelivery 
+   * @returns {Promise<any>}
+   */
+  async updateIncidentNotificationDelivery(incidentId, notificationDelivery) {
+    const sql = `
+      UPDATE alert_incidents
+      SET notification_delivery = $1
+      WHERE id = $2
+      RETURNING *;
+    `;
+    const deliveryJson = typeof notificationDelivery === 'string'
+      ? notificationDelivery
+      : JSON.stringify(notificationDelivery);
+    const result = await db.query(sql, [deliveryJson, incidentId]);
     return result.rows[0];
   },
 

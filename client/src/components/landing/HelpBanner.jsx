@@ -1,21 +1,29 @@
 import React from 'react';
 import { PhoneCall, ArrowRight, ShieldCheck, Mail } from 'lucide-react';
+import { useInView } from './useScrollAnimation';
 
 export default function HelpBanner({ onOpenDemo }) {
+  const [sectionRef, inView] = useInView({ threshold: 0.2 });
+
   return (
-    <section className="py-16 bg-slate-50 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800 transition-colors duration-200">
+    <section 
+      ref={sectionRef}
+      className="py-16 bg-slate-50 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800 transition-colors duration-200 overflow-hidden"
+    >
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 border border-slate-200 dark:border-slate-800 shadow-md flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
+        <div className={`bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 border border-slate-200 dark:border-slate-800 shadow-xl flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left rz-reveal-scale ${
+          inView ? 'is-revealed' : ''
+        }`}>
           <div className="flex flex-col sm:flex-row items-center gap-5">
             {/* 3 Overlapping Avatar Bubbles */}
-            <div className="flex -space-x-3 overflow-hidden p-1">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-red-600 to-rose-400 border-2 border-white dark:border-slate-900 flex items-center justify-center font-bold text-white text-xs shadow-xs">
+            <div className="flex -space-x-3 overflow-hidden p-1 shrink-0">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-red-600 to-rose-400 border-2 border-white dark:border-slate-900 flex items-center justify-center font-bold text-white text-xs shadow-md">
                 AR
               </div>
-              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-slate-700 to-slate-900 border-2 border-white dark:border-slate-900 flex items-center justify-center font-bold text-white text-xs shadow-xs">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-slate-700 to-slate-900 border-2 border-white dark:border-slate-900 flex items-center justify-center font-bold text-white text-xs shadow-md">
                 SK
               </div>
-              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-red-800 to-red-600 border-2 border-white dark:border-slate-900 flex items-center justify-center font-bold text-white text-xs shadow-xs">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-red-800 to-red-600 border-2 border-white dark:border-slate-900 flex items-center justify-center font-bold text-white text-xs shadow-md">
                 VM
               </div>
             </div>
@@ -33,7 +41,7 @@ export default function HelpBanner({ onOpenDemo }) {
           <div className="flex-shrink-0">
             <button
               onClick={onOpenDemo}
-              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition-all shadow-md shadow-red-600/20 hover:shadow-red-600/30 cursor-pointer"
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition-all shadow-lg shadow-red-600/25 hover:shadow-red-600/40 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
             >
               <PhoneCall size={16} />
               <span>Talk to an Analytics Specialist</span>

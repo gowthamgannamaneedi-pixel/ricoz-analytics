@@ -116,7 +116,7 @@ export default function Sidebar({ isOpen, isCollapsed = false, onToggleCollapse,
           <button
             type="button"
             onClick={onToggleCollapse}
-            className="hidden lg:flex items-center justify-center rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-slate-700 dark:hover:text-[#CBD5E1] transition cursor-pointer"
+            className="hidden lg:flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-slate-700 dark:hover:text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-rose-500 transition cursor-pointer"
             aria-label="Collapse sidebar"
             title="Collapse sidebar"
           >

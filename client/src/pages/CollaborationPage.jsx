@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   Users,
@@ -648,84 +649,45 @@ export default function CollaborationPage() {
       {/* ------------------------------------------------------------------ */}
       {/* 3. TABS NAVIGATION & PRIMARY SHARE ACTION                          */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-[#334155] pb-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-[#334155] pb-3.5 sm:pb-4">
         {/* Navigation Tabs */}
-        <div className="flex items-center space-x-2 sm:space-x-4 overflow-x-auto text-xs font-semibold">
-          <button
-            onClick={() => setActiveTab('favorites')}
-            className={`pb-3 px-1 flex items-center gap-2 border-b-2 transition cursor-pointer shrink-0 ${
-              activeTab === 'favorites'
-                ? 'border-rose-600 text-rose-600 font-bold dark:border-[#E11D48] dark:text-[#FB7185]'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC]'
-            }`}
-          >
-            <Star className={`w-4 h-4 ${activeTab === 'favorites' ? 'fill-rose-600 text-rose-600 dark:fill-[#FB7185] dark:text-[#FB7185]' : 'text-slate-400 dark:text-[#94A3B8]'}`} />
-            <span>Favorites</span>
-            <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
-              activeTab === 'favorites' ? 'bg-rose-100 text-rose-800 dark:bg-[#2A1422] dark:text-[#FB7185]' : 'bg-slate-100 text-slate-600 dark:bg-[#1E293B] dark:text-[#CBD5E1]'
-            }`}>
-              {favorites.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('recent')}
-            className={`pb-3 px-1 flex items-center gap-2 border-b-2 transition cursor-pointer shrink-0 ${
-              activeTab === 'recent'
-                ? 'border-rose-600 text-rose-600 font-bold dark:border-[#E11D48] dark:text-[#FB7185]'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC]'
-            }`}
-          >
-            <Clock className="w-4 h-4" />
-            <span>Recently Viewed</span>
-            <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
-              activeTab === 'recent' ? 'bg-rose-100 text-rose-800 dark:bg-[#2A1422] dark:text-[#FB7185]' : 'bg-slate-100 text-slate-600 dark:bg-[#1E293B] dark:text-[#CBD5E1]'
-            }`}>
-              {recentlyViewed.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('shared')}
-            className={`pb-3 px-1 flex items-center gap-2 border-b-2 transition cursor-pointer shrink-0 ${
-              activeTab === 'shared'
-                ? 'border-rose-600 text-rose-600 font-bold dark:border-[#E11D48] dark:text-[#FB7185]'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC]'
-            }`}
-          >
-            <Share2 className="w-4 h-4" />
-            <span>Shared with Me</span>
-            <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
-              activeTab === 'shared' ? 'bg-rose-100 text-rose-800 dark:bg-[#2A1422] dark:text-[#FB7185]' : 'bg-slate-100 text-slate-600 dark:bg-[#1E293B] dark:text-[#CBD5E1]'
-            }`}>
-              {sharedWithMeTotal}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('teams')}
-            className={`pb-3 px-1 flex items-center gap-2 border-b-2 transition cursor-pointer shrink-0 ${
-              activeTab === 'teams'
-                ? 'border-rose-600 text-rose-600 font-bold dark:border-[#E11D48] dark:text-[#FB7185]'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC]'
-            }`}
-          >
-            <Users2 className="w-4 h-4" />
-            <span>Teams &amp; Groups</span>
-            <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${
-              activeTab === 'teams' ? 'bg-rose-100 text-rose-800 dark:bg-[#2A1422] dark:text-[#FB7185]' : 'bg-slate-100 text-slate-600 dark:bg-[#1E293B] dark:text-[#CBD5E1]'
-            }`}>
-              {teams.length}
-            </span>
-          </button>
+        <div className="flex items-center space-x-2 sm:space-x-3 overflow-x-auto text-xs font-semibold">
+          {[
+            { id: 'favorites', label: 'Favorites', icon: Star, count: favorites.length },
+            { id: 'recent', label: 'Recently Viewed', icon: Clock, count: recentlyViewed.length },
+            { id: 'shared', label: 'Shared with Me', icon: Share2, count: sharedWithMeTotal },
+            { id: 'teams', label: 'Teams & Groups', icon: Users2, count: teams.length }
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer shrink-0 ${
+                  isActive
+                    ? 'bg-rose-50 text-rose-700 font-bold dark:bg-[#2A1422] dark:text-[#FB7185] border border-rose-200/80 dark:border-rose-900/60 shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] dark:hover:bg-[#1E293B] border border-transparent'
+                }`}
+              >
+                <Icon className={`w-4 h-4 shrink-0 ${isActive && tab.id === 'favorites' ? 'fill-rose-600 dark:fill-[#FB7185]' : ''}`} />
+                <span>{tab.label}</span>
+                <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                  isActive ? 'bg-white text-rose-700 dark:bg-[#172131] dark:text-[#FB7185] shadow-2xs' : 'bg-slate-100 text-slate-600 dark:bg-[#1E293B] dark:text-[#CBD5E1]'
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Primary Action Button */}
-        <div className="flex items-center gap-2 shrink-0 pb-2 sm:pb-0">
+        <div className="flex items-center shrink-0">
           <button
             onClick={() => setShowSharePickerModal(true)}
             id="share-item-btn"
-            className="h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-semibold text-xs flex items-center gap-2 shadow-2xs transition cursor-pointer"
+            className="h-10 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-semibold text-xs flex items-center gap-2 shadow-xs transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Share Item</span>
@@ -1253,17 +1215,27 @@ export default function CollaborationPage() {
       {/* ------------------------------------------------------------------ */}
       {/* 6. QUICK SHARE ITEM PICKER MODAL                                   */}
       {/* ------------------------------------------------------------------ */}
-      {showSharePickerModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs animate-fade-in">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      {showSharePickerModal && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowSharePickerModal(false);
+          }}
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#111827] text-slate-900 dark:text-[#F8FAFC] p-6 shadow-2xl border border-slate-200 dark:border-[#334155] space-y-4 max-h-[90vh] overflow-y-auto my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#334155]">
               <div>
-                <h3 className="font-bold text-slate-900 text-base">Share Workspace Item</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Select a dashboard, report, or AI insight to share with users or teams.</p>
+                <h3 className="font-bold text-slate-900 dark:text-[#F8FAFC] text-base">Share Workspace Item</h3>
+                <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">Select a dashboard, report, or AI insight to share with users or teams.</p>
               </div>
               <button
                 onClick={() => setShowSharePickerModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-[#F8FAFC] p-1 rounded-lg cursor-pointer transition"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1273,8 +1245,8 @@ export default function CollaborationPage() {
               {/* Dashboards Section */}
               {dashboardsList.length > 0 && (
                 <div className="space-y-2">
-                  <span className="font-bold uppercase tracking-wider text-[10px] text-slate-400 flex items-center gap-1.5">
-                    <LayoutDashboard className="w-3.5 h-3.5 text-rose-600" />
+                  <span className="font-bold uppercase tracking-wider text-[10px] text-slate-400 dark:text-[#94A3B8] flex items-center gap-1.5">
+                    <LayoutDashboard className="w-3.5 h-3.5 text-rose-600 dark:text-[#FB7185]" />
                     Dashboards
                   </span>
                   <div className="space-y-1.5">
@@ -1285,10 +1257,10 @@ export default function CollaborationPage() {
                           setShowSharePickerModal(false);
                           handleOpenShare('dashboard', d.id, d.title);
                         }}
-                        className="p-3 rounded-xl border border-slate-200 hover:border-rose-400 hover:bg-rose-50/40 cursor-pointer transition flex items-center justify-between"
+                        className="p-3 rounded-xl border border-slate-200 dark:border-[#334155] hover:border-rose-400 dark:hover:border-rose-500 hover:bg-rose-50/40 dark:hover:bg-[#172131] cursor-pointer transition flex items-center justify-between"
                       >
-                        <span className="font-bold text-slate-800 text-xs">{d.title}</span>
-                        <Share2 className="w-4 h-4 text-rose-600" />
+                        <span className="font-bold text-slate-800 dark:text-[#F8FAFC] text-xs">{d.title}</span>
+                        <Share2 className="w-4 h-4 text-rose-600 dark:text-[#FB7185]" />
                       </div>
                     ))}
                   </div>
@@ -1298,8 +1270,8 @@ export default function CollaborationPage() {
               {/* Reports Section */}
               {reportsList.length > 0 && (
                 <div className="space-y-2">
-                  <span className="font-bold uppercase tracking-wider text-[10px] text-slate-400 flex items-center gap-1.5">
-                    <FileBarChart className="w-3.5 h-3.5 text-purple-600" />
+                  <span className="font-bold uppercase tracking-wider text-[10px] text-slate-400 dark:text-[#94A3B8] flex items-center gap-1.5">
+                    <FileBarChart className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
                     Reports
                   </span>
                   <div className="space-y-1.5">
@@ -1310,10 +1282,10 @@ export default function CollaborationPage() {
                           setShowSharePickerModal(false);
                           handleOpenShare('report', r.id, r.title);
                         }}
-                        className="p-3 rounded-xl border border-slate-200 hover:border-purple-400 hover:bg-purple-50/40 cursor-pointer transition flex items-center justify-between"
+                        className="p-3 rounded-xl border border-slate-200 dark:border-[#334155] hover:border-purple-400 dark:hover:border-purple-500 hover:bg-purple-50/40 dark:hover:bg-[#172131] cursor-pointer transition flex items-center justify-between"
                       >
-                        <span className="font-bold text-slate-800 text-xs">{r.title}</span>
-                        <Share2 className="w-4 h-4 text-purple-600" />
+                        <span className="font-bold text-slate-800 dark:text-[#F8FAFC] text-xs">{r.title}</span>
+                        <Share2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                       </div>
                     ))}
                   </div>
@@ -1323,8 +1295,8 @@ export default function CollaborationPage() {
               {/* AI Insights Section */}
               {insightsList.length > 0 && (
                 <div className="space-y-2">
-                  <span className="font-bold uppercase tracking-wider text-[10px] text-slate-400 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  <span className="font-bold uppercase tracking-wider text-[10px] text-slate-400 dark:text-[#94A3B8] flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-[#FBBF24]" />
                     AI Insights
                   </span>
                   <div className="space-y-1.5">
@@ -1335,10 +1307,10 @@ export default function CollaborationPage() {
                           setShowSharePickerModal(false);
                           handleOpenShare('insight', i.id, i.title);
                         }}
-                        className="p-3 rounded-xl border border-slate-200 hover:border-amber-400 hover:bg-amber-50/40 cursor-pointer transition flex items-center justify-between"
+                        className="p-3 rounded-xl border border-slate-200 dark:border-[#334155] hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50/40 dark:hover:bg-[#172131] cursor-pointer transition flex items-center justify-between"
                       >
-                        <span className="font-bold text-slate-800 text-xs truncate max-w-[340px]">{i.title}</span>
-                        <Share2 className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span className="font-bold text-slate-800 dark:text-[#F8FAFC] text-xs truncate max-w-[340px]">{i.title}</span>
+                        <Share2 className="w-4 h-4 text-amber-600 dark:text-[#FBBF24] shrink-0" />
                       </div>
                     ))}
                   </div>
@@ -1346,7 +1318,8 @@ export default function CollaborationPage() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ------------------------------------------------------------------ */}
@@ -1363,18 +1336,28 @@ export default function CollaborationPage() {
       {/* ------------------------------------------------------------------ */}
       {/* 8. CREATE TEAM MODAL                                               */}
       {/* ------------------------------------------------------------------ */}
-      {showCreateTeamModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs animate-fade-in">
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 flex flex-col">
-            <div className="flex items-center justify-between p-6 pb-4 border-b border-slate-100">
+      {showCreateTeamModal && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowCreateTeamModal(false);
+          }}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white dark:bg-[#111827] text-slate-900 dark:text-[#F8FAFC] shadow-2xl border border-slate-200 dark:border-[#334155] flex flex-col my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-slate-100 dark:border-[#334155]">
               <div>
-                <h3 className="font-bold text-slate-900 text-base">Create Team</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Add a new workspace collaboration group.</p>
+                <h3 className="font-bold text-slate-900 dark:text-[#F8FAFC] text-base">Create Team</h3>
+                <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">Add a new workspace collaboration group.</p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowCreateTeamModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg transition"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-[#F8FAFC] p-1 rounded-lg transition cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1419,26 +1402,37 @@ export default function CollaborationPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ------------------------------------------------------------------ */}
       {/* 9. ADD MEMBER MODAL                                                */}
       {/* ------------------------------------------------------------------ */}
-      {showAddMemberModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs animate-fade-in">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      {showAddMemberModal && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowAddMemberModal(false);
+          }}
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#111827] text-slate-900 dark:text-[#F8FAFC] p-6 shadow-2xl border border-slate-200 dark:border-[#334155] flex flex-col max-h-[90vh] my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#334155]">
               <div>
-                <h3 className="font-bold text-slate-900 text-base">Add Member</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Add members to team: <span className="font-semibold text-slate-700">{selectedTeam?.name}</span>
+                <h3 className="font-bold text-slate-900 dark:text-[#F8FAFC] text-base">Add Member</h3>
+                <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
+                  Add members to team: <span className="font-semibold text-slate-700 dark:text-[#CBD5E1]">{selectedTeam?.name}</span>
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowAddMemberModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg transition"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-[#F8FAFC] p-1 rounded-lg transition cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1619,7 +1613,8 @@ export default function CollaborationPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

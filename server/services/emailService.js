@@ -375,8 +375,17 @@ class EmailService {
       success: true,
       provider: 'Brevo',
       messageId: msgId,
+      httpStatus: res.status || 201,
+      recipientCount: recipients.length,
       response: `201 Accepted by Brevo API (messageId: ${msgId})`
     };
+  }
+
+  /**
+   * Public wrapper for Brevo API dispatch
+   */
+  async sendViaBrevoApi(options) {
+    return this._sendBrevoEmail(options);
   }
 
   /**
@@ -813,6 +822,7 @@ class EmailService {
   async sendAlertEmail({
     recipients = [],
     alertTitle,
+    alertRule,
     metricName = 'Metric',
     metricValue,
     thresholdValue,
@@ -821,8 +831,15 @@ class EmailService {
     organizationName,
     triggeredAt = new Date()
   }) {
+    if (alertRule) {
+      alertTitle = alertTitle || alertRule.name || 'Operational Alert';
+      thresholdValue = thresholdValue !== undefined ? thresholdValue : alertRule.threshold;
+      condition = condition !== undefined ? condition : alertRule.condition;
+      severity = alertRule.severity || severity || 'medium';
+    }
+
     if (!recipients || recipients.length === 0) {
-      return { attempted: false, success: false, error: 'No recipients provided' };
+      return { attempted: false, success: false, sent: false, status: 'skipped', error: 'No recipients provided' };
     }
 
     const fromEmail = process.env.SMTP_FROM || process.env.ALERT_FROM_EMAIL || process.env.REPORT_FROM_EMAIL || 'care@ricoz.in';
@@ -832,12 +849,17 @@ class EmailService {
       return {
         attempted: false,
         success: false,
+        sent: false,
+        status: 'skipped',
         error: 'Email transport not configured in environment variables.'
       };
     }
 
     const severityColor = severity === 'critical' ? '#dc2626' : severity === 'high' ? '#ea580c' : severity === 'medium' ? '#d97706' : '#2563eb';
-    const conditionReadable = condition.replace(/_/g, ' ');
+    const conditionReadable = String(condition || 'triggered').replace(/_/g, ' ');
+    const orgNameReadable = organizationName || 'Ricoz Primary Organization';
+    const clientBaseUrl = this.getClientBaseUrl();
+    const incidentUrl = this.sanitizeUrlForProduction(`${clientBaseUrl}/alerts?tab=incidents`, '/alerts');
 
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
@@ -877,7 +899,12 @@ class EmailService {
               </tr>
             </table>
           </div>
-          <p style="color: #64748b; font-size: 12px;">Log in to the RicozAnalytics Incident Center to acknowledge or resolve this operational incident.</p>
+          <div style="text-align: center; margin: 24px 0 16px 0;">
+            <a href="${incidentUrl}" style="background-color: #2563eb; color: #ffffff; padding: 11px 22px; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: bold; display: inline-block;">
+              View Incident in RicozAnalytics &rarr;
+            </a>
+          </div>
+          <p style="color: #64748b; font-size: 12px; text-align: center;">Log in to the RicozAnalytics Incident Center to acknowledge or resolve this operational incident.</p>
         </div>
         <div style="border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 11px; color: #94a3b8; text-align: center;">
           Sent by RicozAnalytics Real-Time Alerts Engine. All rights reserved.
@@ -887,27 +914,35 @@ class EmailService {
 
     if (this.isBrevo()) {
       try {
-        const brevoRes = await this._sendBrevoEmail({
+        const brevoRes = await this.sendViaBrevoApi({
           to: recipients,
-          subject: `[${severity.toUpperCase()} ALERT] ${alertTitle} — ${organizationName}`,
+          subject: `[${severity.toUpperCase()} ALERT] ${alertTitle} — ${orgNameReadable}`,
           htmlContent,
           senderName: 'RicozAnalytics Alerts',
-          senderEmail: fromEmail
+          senderEmail: fromEmail,
+          tags: ['real-time-alert', severity]
         });
         console.log(`[EmailService] Alert email sent via Brevo successfully (${brevoRes.messageId}) to: ${recipients.join(', ')}`);
         return {
           attempted: true,
           success: true,
+          sent: true,
+          status: 'accepted',
           provider: 'Brevo',
-          messageId: brevoRes.messageId
+          httpStatus: brevoRes.httpStatus || 201,
+          messageId: brevoRes.messageId,
+          recipientCount: recipients.length
         };
       } catch (err) {
         console.error(`[EmailService] Failed to dispatch alert email via Brevo to ${recipients.join(', ')}:`, err.message);
         return {
           attempted: true,
           success: false,
+          sent: false,
+          status: 'failed',
           provider: 'Brevo',
-          error: err.message
+          error: err.message,
+          recipientCount: recipients.length
         };
       }
     }
@@ -915,7 +950,7 @@ class EmailService {
     const mailOptions = {
       from: `"RicozAnalytics Alerts" <${fromEmail}>`,
       to: recipients.join(', '),
-      subject: `[${severity.toUpperCase()} ALERT] ${alertTitle} — ${organizationName}`,
+      subject: `[${severity.toUpperCase()} ALERT] ${alertTitle} — ${orgNameReadable}`,
       html: htmlContent
     };
 
@@ -925,14 +960,22 @@ class EmailService {
       return {
         attempted: true,
         success: true,
-        messageId: info.messageId
+        sent: true,
+        status: 'accepted',
+        provider: 'SMTP',
+        messageId: info.messageId,
+        recipientCount: recipients.length
       };
     } catch (err) {
       console.error(`[EmailService] Failed to dispatch alert email to ${recipients.join(', ')}:`, err.message);
       return {
         attempted: true,
         success: false,
-        error: err.message
+        sent: false,
+        status: 'failed',
+        provider: 'SMTP',
+        error: err.message,
+        recipientCount: recipients.length
       };
     }
   }

@@ -54,6 +54,7 @@ import { Button } from '../components/ui/Button';
 import { ResetButton } from '../components/ui/ResetButton';
 import { RefreshButton } from '../components/ui/RefreshButton';
 import { Select } from '../components/ui/Select';
+import { Modal } from '../components/ui/Modal';
 
 /**
  * Enterprise Circular Donut Gauge for Overall Dataset Health Score
@@ -579,67 +580,67 @@ export default function DataQualityPage() {
       )}
 
       {/* �      {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 1. BREADCRUMB & HEADER                                              */}
+      {/* 1. BREADCRUMB, HEADER & ACTIONS TOOLBAR                             */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="space-y-2.5">
+      <div className="space-y-4">
         {/* Breadcrumb Navigation matching Wireframe */}
-        <nav className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
-          <span className="hover:text-slate-600 transition cursor-pointer" onClick={() => navigate('/dashboard')}>
+        <nav className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-[#94A3B8]">
+          <span className="hover:text-slate-600 dark:hover:text-[#CBD5E1] transition cursor-pointer" onClick={() => navigate('/dashboard')}>
             Workspace
           </span>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-          <span className="hover:text-slate-600 transition cursor-pointer">
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
+          <span className="hover:text-slate-600 dark:hover:text-[#CBD5E1] transition cursor-pointer">
             Production
           </span>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-          <span className="text-slate-900 font-bold">
+          <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
+          <span className="text-slate-900 dark:text-[#F8FAFC] font-bold">
             Data Quality & Observability
           </span>
         </nav>
 
-        {/* Header Title + Action Controls Toolbar */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pt-1">
-          {/* Left Title and Description */}
+        {/* Heading & Description + Run Quality Audit Button below on left */}
+        <div className="space-y-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
               Data Quality & Observability
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 font-normal leading-relaxed">
               Monitor the accuracy, completeness, and freshness of your business data across datasets.
             </p>
-            {/* Run Quality Audit Button (Primary Action - Left Aligned per Screenshot A12) */}
-            <div className="mt-3">
-              <Button
-                id="run-audit-button"
-                onClick={handleRunAudit}
-                disabled={evaluating || !selectedDatasetId}
-                variant="primary"
-                className="h-10 px-4 rounded-xl font-semibold shadow-xs"
-              >
-                {evaluating ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    <span>Scanning ({activeJob?.progress_percent || 0}%)...</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4 fill-white" />
-                    <span>Run Quality Audit</span>
-                  </>
-                )}
-              </Button>
-            </div>
           </div>
+          <div>
+            <Button
+              id="run-audit-button"
+              onClick={handleRunAudit}
+              disabled={evaluating || !selectedDatasetId}
+              variant="primary"
+              className="h-10 px-4 rounded-xl font-semibold shadow-xs"
+            >
+              {evaluating ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <span>Scanning ({activeJob?.progress_percent || 0}%)...</span>
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4 fill-white" />
+                  <span>Run Quality Audit</span>
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
 
-          {/* Right Action Controls Toolbar (Compact, grouped, and aligned) */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 shrink-0 self-start xl:self-auto">
-            {/* Dataset Selector Dropdown (Compact, usable width with truncation) */}
+        {/* Action Controls Toolbar: Dataset selector & Scan mode aligned on left, Export Report & Refresh grouped on right */}
+        <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 p-3 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] shadow-2xs">
+          {/* Left: Aligned Dataset Selector & Full Scan / Sampled Toggle */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
             <Select
               id="dataset-select"
               value={selectedDatasetId}
               onChange={(e) => setSelectedDatasetId(e.target.value)}
               icon={Database}
-              className="w-56 sm:w-60 lg:w-64 shrink-0"
+              className="w-56 sm:w-64 shrink-0"
               size="md"
             >
               {datasets.map((d) => (
@@ -674,8 +675,10 @@ export default function DataQualityPage() {
                 Sampled (10k)
               </button>
             </div>
+          </div>
 
-            {/* Export Dropdown Button */}
+          {/* Right: Export Report & Refresh Grouped */}
+          <div className="flex items-center gap-2.5">
             <div className="relative" ref={exportRef}>
               <button
                 type="button"
@@ -851,11 +854,11 @@ export default function DataQualityPage() {
           {/* ───────────────────────────────────────────────────────────────── */}
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
             {/* Left Card: Overall Dataset Health */}
-            <div className="lg:col-span-5 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between relative overflow-hidden">
+            <div className="lg:col-span-5 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between relative overflow-hidden">
               <div>
-                {/* Header */}
+                {/* Header: Title and Healthy badge aligned */}
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#334155]">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5">
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
                       <ShieldCheck className="h-4 w-4" />
                     </div>
@@ -864,21 +867,21 @@ export default function DataQualityPage() {
                   <div>{getStatusBadge(qualityProfile?.status)}</div>
                 </div>
 
-                {/* Donut Gauge + Status / Description */}
-                <div className="flex items-center justify-center py-5">
-                  <QualityHealthGauge score={qualityProfile?.quality_score} evaluating={evaluating && !qualityProfile} size={140} strokeWidth={12} />
+                {/* Donut Gauge Centered */}
+                <div className="flex items-center justify-center py-3 sm:py-4">
+                  <QualityHealthGauge score={qualityProfile?.quality_score} evaluating={evaluating && !qualityProfile} size={135} strokeWidth={11} />
                 </div>
               </div>
 
-              {/* Bottom Wireframe Summary: Scan Execution & Evaluated Rows */}
-              <div className="mt-4 pt-3.5 border-t border-slate-100 dark:border-[#334155] space-y-1.5 text-xs text-slate-500 dark:text-[#94A3B8]">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-slate-500 dark:text-[#94A3B8]">Scan Execution:</span>
-                  <span className="font-bold text-slate-800 dark:text-[#F8FAFC] capitalize">{scanMode === 'full' ? 'Full Scan' : 'Sampled (1,000)'}</span>
+              {/* Bottom Balanced Two-Column Footer: Scan Execution & Evaluated Rows */}
+              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-[#334155] grid grid-cols-2 gap-3 text-xs text-slate-500 dark:text-[#94A3B8]">
+                <div className="bg-slate-50/80 dark:bg-[#172131] p-3 rounded-xl border border-slate-100 dark:border-[#334155]/60">
+                  <span className="block font-medium text-slate-400 dark:text-[#94A3B8] text-[11px]">Scan Execution</span>
+                  <span className="font-bold text-slate-800 dark:text-[#F8FAFC] capitalize mt-0.5 block">{scanMode === 'full' ? 'Full Scan' : 'Sampled (10k)'}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-slate-500 dark:text-[#94A3B8]">Evaluated Rows:</span>
-                  <span className="font-bold text-slate-800 dark:text-[#F8FAFC] font-mono">
+                <div className="bg-slate-50/80 dark:bg-[#172131] p-3 rounded-xl border border-slate-100 dark:border-[#334155]/60">
+                  <span className="block font-medium text-slate-400 dark:text-[#94A3B8] text-[11px]">Evaluated Rows</span>
+                  <span className="font-bold text-slate-800 dark:text-[#F8FAFC] font-mono mt-0.5 block truncate">
                     {evaluating
                       ? `${Number(activeJob?.rows_processed || 0).toLocaleString()} / ${Number(activeJob?.total_rows || selectedDataset?.row_count || 0).toLocaleString()} rows`
                       : selectedDataset?.row_count !== undefined
@@ -1135,18 +1138,18 @@ export default function DataQualityPage() {
           {/* 4. TAB 1: COLUMN HEALTH MATRIX                                    */}
           {/* ───────────────────────────────────────────────────────────────── */}
           {activeTab === 'matrix' && (
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+            <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
               {/* Header + Controls Toolbar (Horizontal Desktop Row: Search -> All Columns -> All Data Types -> Reset) */}
-              <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-[#334155]">
                 <div className="flex items-center gap-2.5 shrink-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 shrink-0">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-rose-900/60 shrink-0">
                     <Layers className="h-4 w-4" />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-tight">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-tight">
                       Column Health Matrix
                     </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
                       Detailed quality metrics for each column in your dataset.
                     </p>
                   </div>
@@ -1372,17 +1375,17 @@ export default function DataQualityPage() {
           {/* 5. TAB 2: DETECTED ISSUES                                         */}
           {/* ───────────────────────────────────────────────────────────────── */}
           {activeTab === 'issues' && (
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-[#334155]">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-rose-900/60">
                     <AlertTriangle className="h-4 w-4" />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-tight">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-tight">
                       Detected Quality Issues
                     </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
                       Violations and anomalies captured during automated dimension profiling.
                     </p>
                   </div>
@@ -1408,12 +1411,12 @@ export default function DataQualityPage() {
               </div>
 
               {filteredIssues.length === 0 ? (
-                <div className="bg-white border border-slate-100 rounded-2xl p-14 text-center space-y-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 mx-auto">
+                <div className="bg-white dark:bg-[#111827] border border-slate-100 dark:border-[#334155] rounded-2xl p-14 text-center space-y-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 mx-auto">
                     <CheckCircle2 className="h-6 w-6" />
                   </div>
-                  <p className="text-sm font-bold text-slate-900">No Quality Issues Detected</p>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                  <p className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">No Quality Issues Detected</p>
+                  <p className="text-xs text-slate-500 dark:text-[#94A3B8] max-w-sm mx-auto leading-relaxed">
                     All evaluated columns meet configured validity thresholds and constraints.
                   </p>
                 </div>
@@ -1422,60 +1425,61 @@ export default function DataQualityPage() {
                   {filteredIssues.map((iss, idx) => (
                     <div
                       key={idx}
-                      className={`p-4 rounded-xl border flex items-start justify-between gap-4 transition-all ${
+                      className={`p-4 rounded-xl border flex items-center justify-between gap-4 transition-all ${
                         iss.severity === 'critical'
-                          ? 'bg-rose-50/40 border-rose-200/90 text-slate-900'
+                          ? 'bg-rose-50/50 dark:bg-[#2A1422] border-rose-200/90 dark:border-rose-900/60 text-slate-900 dark:text-[#F8FAFC]'
                           : iss.severity === 'warning'
-                          ? 'bg-amber-50/40 border-amber-200/90 text-slate-900'
-                          : 'bg-blue-50/40 border-blue-200/90 text-slate-900'
+                          ? 'bg-amber-50/50 dark:bg-amber-950/30 border-amber-200/90 dark:border-amber-800/60 text-slate-900 dark:text-[#F8FAFC]'
+                          : 'bg-blue-50/50 dark:bg-blue-950/30 border-blue-200/90 dark:border-blue-800/60 text-slate-900 dark:text-[#F8FAFC]'
                       }`}
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-3 min-w-0">
                         <div className="mt-0.5 shrink-0">
                           {iss.severity === 'critical' ? (
-                            <XCircle className="h-5 w-5 text-rose-600" />
+                            <XCircle className="h-5 w-5 text-rose-600 dark:text-[#FB7185]" />
                           ) : iss.severity === 'warning' ? (
-                            <AlertTriangle className="h-5 w-5 text-amber-600" />
+                            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-[#FBBF24]" />
                           ) : (
-                            <Info className="h-5 w-5 text-blue-600" />
+                            <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                           )}
                         </div>
-                        <div className="space-y-1">
+                        <div className="space-y-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white border border-slate-200 shadow-2xs">
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white dark:bg-[#172131] border border-slate-200 dark:border-[#334155] text-slate-700 dark:text-[#CBD5E1] shadow-2xs">
                               {iss.dimension}
                             </span>
                             {iss.column && (
-                              <span className="text-xs font-mono font-bold text-slate-800">
+                              <span className="text-xs font-mono font-bold text-slate-900 dark:text-[#F8FAFC]">
                                 Column: {iss.column}
                               </span>
                             )}
                             <span
-                              className={`text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                              className={`text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${
                                 iss.severity === 'critical'
-                                  ? 'bg-rose-100 text-rose-700'
-                                  : 'bg-amber-100 text-amber-700'
+                                  ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-[#FB7185] border-rose-200 dark:border-rose-900/60'
+                                  : iss.severity === 'warning'
+                                  ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-[#FBBF24] border-amber-200 dark:border-amber-800/60'
+                                  : 'bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800/60'
                               }`}
                             >
                               {iss.severity}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-700 font-medium leading-relaxed">
+                          <p className="text-xs text-slate-700 dark:text-[#CBD5E1] font-medium leading-relaxed">
                             {iss.message}
                           </p>
                         </div>
                       </div>
 
                       {iss.column && (
-                        <Button
-                          variant="secondary"
-                          size="sm"
+                        <button
+                          type="button"
                           onClick={() => handleOpenRuleForColumn(iss.column)}
-                          className="shrink-0 text-xs font-semibold"
+                          className="shrink-0 h-9 px-3.5 rounded-xl border border-rose-200 dark:border-rose-800/60 bg-white dark:bg-[#172131] hover:bg-rose-50 dark:hover:bg-[#2A1422] text-xs font-semibold text-rose-600 dark:text-[#FB7185] transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
                         >
                           <Plus className="h-3.5 w-3.5" />
                           <span>Add Rule</span>
-                        </Button>
+                        </button>
                       )}
                     </div>
                   ))}
@@ -1488,17 +1492,17 @@ export default function DataQualityPage() {
           {/* 6. TAB 3: QUALITY RULES                                           */}
           {/* ───────────────────────────────────────────────────────────────── */}
           {activeTab === 'rules' && (
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-[#334155]">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-rose-900/60">
                     <Sliders className="h-4 w-4" />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-tight">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-tight">
                       Configured Quality Rules
                     </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
                       Enforce domain-specific constraints (null checks, boundary ranges, regex patterns, allowed sets).
                     </p>
                   </div>
@@ -1519,12 +1523,12 @@ export default function DataQualityPage() {
               </div>
 
               {rules.length === 0 ? (
-                <div className="bg-white border border-slate-100 rounded-2xl p-14 text-center space-y-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 mx-auto">
+                <div className="bg-white dark:bg-[#111827] border border-slate-100 dark:border-[#334155] rounded-2xl p-14 text-center space-y-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-200 dark:border-rose-900/60 mx-auto">
                     <Sliders className="h-6 w-6" />
                   </div>
-                  <p className="text-sm font-bold text-slate-900">No Custom Rules Configured</p>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                  <p className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">No Custom Rules Configured</p>
+                  <p className="text-xs text-slate-500 dark:text-[#94A3B8] max-w-sm mx-auto leading-relaxed">
                     Define custom column constraints to automatically validate future ingested batches.
                   </p>
                   <Button
@@ -1542,28 +1546,28 @@ export default function DataQualityPage() {
                   {rules.map((rule) => (
                     <div
                       key={rule.id}
-                      className="bg-white border border-slate-200/90 rounded-xl p-4.5 flex items-start justify-between gap-3 shadow-2xs hover:border-rose-200 hover:shadow-xs transition-all"
+                      className="bg-white dark:bg-[#172131] border border-slate-200/90 dark:border-[#334155] rounded-xl p-4.5 flex items-start justify-between gap-3 shadow-2xs hover:border-rose-200 dark:hover:border-rose-700 hover:shadow-xs transition-all"
                     >
                       <div className="space-y-2 min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-bold text-slate-900 text-sm">{rule.column_name}</span>
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200/90 uppercase font-mono">
+                          <span className="font-bold text-slate-900 dark:text-[#F8FAFC] text-sm">{rule.column_name}</span>
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FB7185] border border-rose-200/90 dark:border-rose-900/60 uppercase font-mono">
                             {rule.rule_type}
                           </span>
                           <span
                             className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono ${
                               rule.severity === 'critical'
-                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                                : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-[#FB7185] border border-rose-200 dark:border-rose-900/60'
+                                : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-[#FBBF24] border border-amber-200 dark:border-amber-800/60'
                             }`}
                           >
                             {rule.severity}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-500 font-mono truncate max-w-sm">
+                        <p className="text-xs text-slate-500 dark:text-[#94A3B8] font-mono truncate max-w-sm">
                           Config: {JSON.stringify(rule.configuration || {})}
                         </p>
-                        <p className="text-[11px] text-slate-400">
+                        <p className="text-[11px] text-slate-400 dark:text-[#64748B]">
                           Created by: {rule.creator_name || 'Admin'}
                         </p>
                       </div>
@@ -1572,7 +1576,7 @@ export default function DataQualityPage() {
                         type="button"
                         id={`delete-rule-${rule.id}`}
                         onClick={() => handleOpenDeleteRule(rule)}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer shrink-0"
+                        className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-[#FB7185] hover:bg-rose-50 dark:hover:bg-[#2A1422] rounded-lg transition cursor-pointer shrink-0"
                         title="Delete Rule"
                         aria-label={`Delete Rule for ${rule.column_name}`}
                       >
@@ -1589,16 +1593,16 @@ export default function DataQualityPage() {
           {/* 7. TAB 4: EVALUATION HISTORY                                      */}
           {/* ───────────────────────────────────────────────────────────────── */}
           {activeTab === 'history' && (
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-              <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+            <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-[#334155]">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-rose-900/60">
                   <Calendar className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-tight">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-tight">
                     Evaluation Audit History
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
                     Historical audit snapshots with score progression and scan records.
                   </p>
                 </div>
@@ -1670,121 +1674,102 @@ export default function DataQualityPage() {
       {/* ───────────────────────────────────────────────────────────────── */}
       {/* 8. CREATE RULE MODAL                                              */}
       {/* ───────────────────────────────────────────────────────────────── */}
-      {isRuleModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-md rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200 dark:border-[#334155] p-6 animate-in fade-in zoom-in-95 duration-150 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#334155] pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
-                  <Sliders className="h-4.5 w-4.5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Create Quality Rule</h3>
-                  <p className="text-[11px] text-slate-500 dark:text-[#94A3B8]">Define automated validation constraint</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsRuleModalOpen(false)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-slate-700 dark:hover:text-[#F8FAFC] cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {ruleError && (
-              <div className="p-3 rounded-xl bg-rose-50 dark:bg-[#2A1422] border border-rose-200 dark:border-[#FB7185]/40 text-rose-700 dark:text-[#FB7185] text-xs flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                <span>{ruleError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleCreateRule} className="space-y-4 text-xs">
-              <div>
-                <label className="block text-slate-700 dark:text-[#CBD5E1] font-semibold mb-1">Target Column</label>
-                <Select
-                  value={ruleForm.columnName}
-                  onChange={(e) => setRuleForm({ ...ruleForm, columnName: e.target.value })}
-                  className="w-full"
-                  required
-                >
-                  <option value="">Select a column</option>
-                  {columnMetrics.map((c, i) => (
-                    <option key={i} value={c.column_name}>
-                      {c.column_name} ({c.data_type})
-                    </option>
-                  ))}
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-slate-700 dark:text-[#CBD5E1] font-semibold mb-1">Rule Type</label>
-                <Select
-                  value={ruleForm.ruleType}
-                  onChange={(e) => setRuleForm({ ...ruleForm, ruleType: e.target.value })}
-                  className="w-full"
-                >
-                  <option value="not_null">Must Not Be Null / Empty</option>
-                  <option value="unique">Must Be Unique</option>
-                  <option value="min_value">Minimum Value (&gt;= min)</option>
-                  <option value="max_value">Maximum Value (&lt;= max)</option>
-                  <option value="range">Range [min, max]</option>
-                  <option value="regex">Regex Pattern Match</option>
-                  <option value="allowed_values">Allowed Values Set</option>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-slate-700 dark:text-[#CBD5E1] font-semibold mb-1">Severity Level</label>
-                <Select
-                  value={ruleForm.severity}
-                  onChange={(e) => setRuleForm({ ...ruleForm, severity: e.target.value })}
-                  className="w-full"
-                >
-                  <option value="warning">Warning (Non-blocking alert)</option>
-                  <option value="critical">Critical (Fails ingestion quality score)</option>
-                  <option value="info">Info (Informational telemetry)</option>
-                </Select>
-              </div>
-
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-[#334155]">
-                <button
-                  type="button"
-                  onClick={() => setIsRuleModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-[#334155] text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-50 dark:hover:bg-[#1E293B] transition cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <Button
-                  type="submit"
-                  disabled={creatingRule}
-                  variant="primary"
-                  className="h-9 px-4 rounded-xl text-xs font-semibold bg-[#D91542] hover:bg-[#B91238]"
-                >
-                  {creatingRule ? 'Creating...' : 'Save Rule'}
-                </Button>
-              </div>
-            </form>
+      <Modal
+        isOpen={isRuleModalOpen}
+        onClose={() => setIsRuleModalOpen(false)}
+        title="Create Quality Rule"
+        description="Define automated validation constraint"
+        icon={Sliders}
+        maxWidth="max-w-md"
+      >
+        {ruleError && (
+          <div className="p-3 rounded-xl bg-rose-50 dark:bg-[#2A1422] border border-rose-200 dark:border-[#FB7185]/40 text-rose-700 dark:text-[#FB7185] text-xs flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{ruleError}</span>
           </div>
-        </div>
-      )}
+        )}
+
+        <form onSubmit={handleCreateRule} className="space-y-4 text-xs">
+          <div>
+            <label className="block text-slate-700 dark:text-[#CBD5E1] font-semibold mb-1">Target Column</label>
+            <Select
+              value={ruleForm.columnName}
+              onChange={(e) => setRuleForm({ ...ruleForm, columnName: e.target.value })}
+              className="w-full"
+              required
+            >
+              <option value="">Select a column</option>
+              {columnMetrics.map((c, i) => (
+                <option key={i} value={c.column_name}>
+                  {c.column_name} ({c.data_type})
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-slate-700 dark:text-[#CBD5E1] font-semibold mb-1">Rule Type</label>
+            <Select
+              value={ruleForm.ruleType}
+              onChange={(e) => setRuleForm({ ...ruleForm, ruleType: e.target.value })}
+              className="w-full"
+            >
+              <option value="not_null">Must Not Be Null / Empty</option>
+              <option value="unique">Must Be Unique</option>
+              <option value="min_value">Minimum Value (&gt;= min)</option>
+              <option value="max_value">Maximum Value (&lt;= max)</option>
+              <option value="range">Range [min, max]</option>
+              <option value="regex">Regex Pattern Match</option>
+              <option value="allowed_values">Allowed Values Set</option>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-slate-700 dark:text-[#CBD5E1] font-semibold mb-1">Severity Level</label>
+            <Select
+              value={ruleForm.severity}
+              onChange={(e) => setRuleForm({ ...ruleForm, severity: e.target.value })}
+              className="w-full"
+            >
+              <option value="warning">Warning (Non-blocking alert)</option>
+              <option value="critical">Critical (Fails ingestion quality score)</option>
+              <option value="info">Info (Informational telemetry)</option>
+            </Select>
+          </div>
+
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-[#334155]">
+            <button
+              type="button"
+              onClick={() => setIsRuleModalOpen(false)}
+              className="px-4 py-2 rounded-xl border border-slate-300 dark:border-[#334155] text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-50 dark:hover:bg-[#1E293B] transition cursor-pointer"
+            >
+              Cancel
+            </button>
+            <Button
+              type="submit"
+              disabled={creatingRule}
+              variant="primary"
+              className="h-9 px-4 rounded-xl text-xs font-semibold bg-[#D91542] hover:bg-[#B91238]"
+            >
+              {creatingRule ? 'Creating...' : 'Save Rule'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* ───────────────────────────────────────────────────────────────── */}
       {/* 9. DELETE RULE CONFIRMATION MODAL                                 */}
       {/* ───────────────────────────────────────────────────────────────── */}
-      {ruleToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-sm rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200 dark:border-[#334155] p-6 animate-in fade-in zoom-in-95 duration-150 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30 shrink-0">
-                <Trash2 className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Delete Quality Rule</h3>
-                <p className="text-[11px] text-slate-500 dark:text-[#94A3B8]">Remove validation constraint</p>
-              </div>
-            </div>
-
+      <Modal
+        isOpen={Boolean(ruleToDelete)}
+        onClose={() => setRuleToDelete(null)}
+        title="Delete Quality Rule"
+        description="Remove validation constraint"
+        icon={Trash2}
+        maxWidth="max-w-md"
+      >
+        {ruleToDelete && (
+          <div className="space-y-4">
             <p className="text-xs text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
               Are you sure you want to remove the <strong className="text-slate-900 dark:text-[#F8FAFC] font-semibold">{ruleToDelete.rule_type}</strong> constraint on column <code className="bg-slate-100 dark:bg-[#1E293B] px-1.5 py-0.5 rounded text-slate-800 dark:text-[#F8FAFC] font-mono text-[11px] font-semibold">{ruleToDelete.column_name}</code>?
             </p>
@@ -1810,8 +1795,8 @@ export default function DataQualityPage() {
               </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }

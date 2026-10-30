@@ -14,7 +14,9 @@ const {
   getAllIncidents,
   getAlertIncidents,
   acknowledgeIncident,
-  resolveIncident
+  resolveIncident,
+  getIncidentDeliveryStatus,
+  retryIncidentNotification
 } = require('../controllers/alertController');
 
 // All alert endpoints require a valid authentication token and Real-time Anomaly Alerts entitlement
@@ -24,8 +26,10 @@ router.use(requirePlanFeature('alerts'));
 // ----------------- INCIDENT RESOLUTION CENTER -----------------
 // Read-only for all roles (Admin, Manager, Analyst, Viewer)
 router.get('/incidents/all', getAllIncidents);
+router.get('/incidents/:id/delivery', getIncidentDeliveryStatus);
 router.put('/incidents/:id/acknowledge', requireRole('admin', 'manager', 'analyst'), acknowledgeIncident);
 router.put('/incidents/:id/resolve', requireRole('admin', 'manager', 'analyst'), resolveIncident);
+router.post('/incidents/:id/retry-email', requireRole('admin', 'manager', 'analyst'), retryIncidentNotification);
 
 // ----------------- SUMMARY METRICS -----------------
 router.get('/summary', getSummary);

@@ -902,12 +902,26 @@ class InsightService {
             else dbSeverity = 'info';
           }
 
+          const datasetIdToSave = ins.dataset_id || 
+                                  ins.evidence?.datasetId || 
+                                  ins.evidence?.dataset_id || 
+                                  ins.source_metadata?.dataset_id || 
+                                  null;
+          const metricIdToSave = ins.metric_id || 
+                                 ins.evidence?.metricId || 
+                                 ins.evidence?.metric_id || 
+                                 ins.source_metadata?.metric_id || 
+                                 null;
+          const dashboardIdToSave = ins.dashboard_id || 
+                                    ins.source_metadata?.dashboard_id || 
+                                    null;
+
           const saved = await InsightModel.create({
             organizationId,
             userId: options.userId || null,
-            datasetId: ins.source_metadata?.dataset_id || null,
-            metricId: ins.source_metadata?.metric_id || null,
-            dashboardId: ins.source_metadata?.dashboard_id || null,
+            datasetId: datasetIdToSave,
+            metricId: metricIdToSave,
+            dashboardId: dashboardIdToSave,
             type: ins.type,
             title: ins.title,
             summary: ins.summary,

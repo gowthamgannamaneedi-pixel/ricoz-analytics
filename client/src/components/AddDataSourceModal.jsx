@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, FileSpreadsheet, FileCode, Database, CheckCircle2, AlertCircle, Loader2, ArrowRight, Server, Key, ShieldCheck, RefreshCw } from 'lucide-react';
 import FileUpload from './FileUpload';
 import UploadProgress from './UploadProgress';
@@ -76,10 +77,25 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
     dataKey: '',
     headers: ''
   });
-  const [isTestingApi, setIsTestingApi] = useState(false);
-  const [apiTestResult, setApiTestResult] = useState(null);
+  // Lock body scroll and handle Escape key while modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const handleKey = (e) => {
+      if (e.key === 'Escape' && !isProcessing) {
+        handleClose();
+      }
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.body.style.overflow = orig;
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [isOpen, isProcessing]);
 
   if (!isOpen) return null;
+  if (typeof document === 'undefined') return null;
 
   const handleFileSelect = (file) => {
     setSelectedFile(file);
@@ -470,9 +486,21 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
   );
   const isApiValid = Boolean(apiForm.name.trim() && apiForm.url.trim());
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-xs font-sans">
-      <div className="w-full max-w-2xl rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !isProcessing) {
+          handleClose();
+        }
+      }}
+    >
+      <div
+        className="w-full max-w-2xl rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] text-slate-900 dark:text-[#F8FAFC] shadow-2xl overflow-hidden flex flex-col max-h-[92vh] my-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-[#334155] bg-white dark:bg-[#111827] shrink-0">
           <div>
@@ -1448,6 +1476,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

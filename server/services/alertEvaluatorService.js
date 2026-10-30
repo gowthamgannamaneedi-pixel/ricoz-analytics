@@ -101,17 +101,39 @@ class AlertEvaluatorService {
 
     switch (cond) {
       case 'greater_than':
+      case '>':
+      case 'gt':
         return val > target;
 
+      case 'greater_than_or_equal':
+      case 'greater_than_equal':
+      case '>=':
+      case 'gte':
+        return val >= target;
+
       case 'less_than':
+      case '<':
+      case 'lt':
         return val < target;
+
+      case 'less_than_or_equal':
+      case 'less_than_equal':
+      case '<=':
+      case 'lte':
+        return val <= target;
 
       case 'equal':
       case 'equals':
+      case '=':
+      case '==':
+      case 'eq':
         return Math.abs(val - target) < 0.0001;
 
       case 'not_equal':
       case 'not_equals':
+      case '!=':
+      case '<>':
+      case 'neq':
         return Math.abs(val - target) >= 0.0001;
 
       case 'percent_increase':
@@ -206,7 +228,25 @@ class AlertEvaluatorService {
       throw new Error('Alert object is required for evaluation.');
     }
 
-    // 1. Resolve metric value
+    // 1. Guard against inactive/disabled alert rules (unless explicitly overridden for testing)
+    if (alert.status && (alert.status === 'disabled' || alert.status === 'inactive') && !options.dryRun && !options.ignoreStatus) {
+      return {
+        alertId: alert.id,
+        alertName: alert.name,
+        condition: alert.condition,
+        threshold: Number(alert.threshold),
+        metricValue: 0,
+        triggered: false,
+        suppressed: true,
+        skipped: true,
+        reason: 'alert_inactive',
+        incident: null,
+        notificationResult: null,
+        message: `Alert rule "${alert.name}" is currently disabled. Evaluation skipped.`
+      };
+    }
+
+    // 2. Resolve metric value
     let metricValue = options.overrideMetricValue !== undefined 
       ? Number(options.overrideMetricValue) 
       : await this.resolveMetricValue(alert);
@@ -234,8 +274,35 @@ class AlertEvaluatorService {
       };
     }
 
-    // 2. If dry-run (e.g. testing endpoint with mock value or preview), skip incident creation & emails
+    const channels = Array.isArray(alert.notification_channels) 
+      ? alert.notification_channels 
+      : (typeof alert.notification_channels === 'string' ? JSON.parse(alert.notification_channels || '[]') : []);
+
+    const recipients = Array.isArray(alert.recipients)
+      ? alert.recipients
+      : (typeof alert.recipients === 'string' ? JSON.parse(alert.recipients || '[]') : []);
+
+    // 3. Dry-run mode (e.g. testing endpoint with mock value or preview)
     if (options.dryRun) {
+      let testEmailResult = null;
+      if (options.sendEmail && channels.includes('email') && recipients.length > 0) {
+        try {
+          testEmailResult = await emailService.sendAlertEmail({
+            recipients,
+            alertTitle: `[TEST] ${alert.name}`,
+            metricName: alert.metric_name || 'Operational KPI (Test)',
+            metricValue,
+            thresholdValue: threshold,
+            condition: alert.condition,
+            severity: alert.severity || 'medium',
+            organizationName: alert.organization_name || 'Ricoz Primary Organization',
+            triggeredAt: new Date()
+          });
+        } catch (testEmailErr) {
+          testEmailResult = { attempted: true, success: false, error: testEmailErr.message };
+        }
+      }
+
       return {
         alertId: alert.id,
         alertName: alert.name,
@@ -245,14 +312,17 @@ class AlertEvaluatorService {
         triggered: true,
         suppressed: false,
         incident: null,
-        notificationResult: null,
+        notificationResult: testEmailResult ? { email: testEmailResult } : null,
         message: `Condition breached: ${metricValue} ${alert.condition.replace(/_/g, ' ')} ${threshold}. (Dry run test successful)`
       };
     }
 
-    // 3. Anti-flapping Cooldown Check
+    // 4. Anti-flapping Cooldown Check (only active when cooldown_minutes > 0)
     const cooldownMins = Number(alert.cooldown_minutes) >= 0 ? Number(alert.cooldown_minutes) : 60;
-    const recentIncident = await AlertModel.findRecentIncidentForAlert(alert.id, alert.organization_id, cooldownMins);
+    let recentIncident = null;
+    if (cooldownMins > 0) {
+      recentIncident = await AlertModel.findRecentIncidentForAlert(alert.id, alert.organization_id, cooldownMins);
+    }
 
     if (recentIncident) {
       return {
@@ -263,15 +333,20 @@ class AlertEvaluatorService {
         metricValue,
         triggered: true,
         suppressed: true,
+        cooldownActive: true,
         incident: recentIncident,
+        notificationDelivery: null,
         notificationResult: null,
         message: `Alert triggered but suppressed by ${cooldownMins}m cooldown (Incident #${recentIncident.id} already active).`
       };
     }
 
-    // 4. Create Incident Record
+    // 5. Create Incident Record
     let incident = null;
-    let notificationDelivery = { in_app: { created: true, timestamp: new Date() } };
+    let notificationDelivery = {
+      in_app: { created: true, timestamp: new Date() },
+      emailSent: false
+    };
 
     try {
       incident = await AlertModel.createIncident({
@@ -291,15 +366,7 @@ class AlertEvaluatorService {
       throw dbErr;
     }
 
-    // 5. Dispatch Email Notifications if configured
-    const channels = Array.isArray(alert.notification_channels) 
-      ? alert.notification_channels 
-      : (typeof alert.notification_channels === 'string' ? JSON.parse(alert.notification_channels || '[]') : []);
-
-    const recipients = Array.isArray(alert.recipients)
-      ? alert.recipients
-      : (typeof alert.recipients === 'string' ? JSON.parse(alert.recipients || '[]') : []);
-
+    // 6. Dispatch Email Notifications if configured
     let emailResult = null;
     if (channels.includes('email') && recipients.length > 0) {
       try {
@@ -315,10 +382,30 @@ class AlertEvaluatorService {
           triggeredAt: new Date()
         });
         notificationDelivery.email = emailResult;
+        notificationDelivery.emailSent = Boolean(emailResult && emailResult.success);
       } catch (emailErr) {
         // Email failure must NOT crash evaluator or scheduler
         console.error(`[AlertEvaluator] Email dispatch failure for alert "${alert.name}":`, emailErr.message);
-        notificationDelivery.email = { attempted: true, success: false, error: emailErr.message };
+        notificationDelivery.email = { attempted: true, success: false, sent: false, status: 'failed', error: emailErr.message };
+        notificationDelivery.emailSent = false;
+      }
+    } else if (channels.includes('email') && recipients.length === 0) {
+      notificationDelivery.email = { attempted: false, success: false, sent: false, status: 'skipped', error: 'No recipients configured' };
+      notificationDelivery.emailSent = false;
+    } else {
+      notificationDelivery.email = { attempted: false, success: false, sent: false, status: 'disabled' };
+      notificationDelivery.emailSent = false;
+    }
+
+    // 7. Persist complete notification delivery status (including Brevo messageId) to PostgreSQL database
+    if (incident && incident.id) {
+      try {
+        const updatedInc = await AlertModel.updateIncidentNotificationDelivery(incident.id, notificationDelivery);
+        if (updatedInc) {
+          incident.notification_delivery = updatedInc.notification_delivery;
+        }
+      } catch (persistErr) {
+        console.error(`[AlertEvaluator] Failed to persist notification delivery to incident #${incident.id}:`, persistErr.message);
       }
     }
 
@@ -331,8 +418,9 @@ class AlertEvaluatorService {
       triggered: true,
       suppressed: false,
       incident,
+      notificationDelivery,
       notificationResult: notificationDelivery,
-      message: `Operational incident triggered: ${metricValue} ${alert.condition.replace(/_/g, ' ')} ${threshold}.`
+      message: `Operational incident triggered: ${metricValue} ${String(alert.condition || '').replace(/_/g, ' ')} ${threshold}.`
     };
   }
 

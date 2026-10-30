@@ -22,7 +22,7 @@ const decisionIntelligenceController = {
     try {
       const organizationId = req.user.organization_id;
       const { id } = req.params;
-      const { dimension, limit } = req.query;
+      const { dimension, limit, forceFresh } = req.query;
 
       if (!isValidUuid(id)) {
         return res.status(404).json({
@@ -49,11 +49,9 @@ const decisionIntelligenceController = {
         insight,
         organizationId,
         dimension: dimension ? String(dimension).trim() : null,
-        limit: limit ? Math.min(50, Math.max(1, Number(limit))) : 10
+        limit: limit ? Math.min(50, Math.max(1, Number(limit))) : 10,
+        forceFresh: forceFresh === 'true' || forceFresh === true
       });
-
-      // Generate grounded natural-language explanation
-      const aiResult = await geminiService.generateDriverExplanation({ attribution });
 
       // Structured Business Radar telemetry
       const radar = {
@@ -85,26 +83,92 @@ const decisionIntelligenceController = {
         concentration: attribution.concentration,
         observationalSummary: attribution.observationalSummary,
         correlationDisclaimer: 'Observational movement breakdown: segment variances reflect statistical accounting of net change. Telemetry does not establish causal direction without controlled experimentation.',
-        suggestedQuestions: [
+        emptyReason: attribution.emptyReason || null,
+        suggestedQuestions: attribution.drivers && attribution.drivers.length > 0 ? [
           `Did transaction frequency or unit prices shift across the ${attribution.drivers[0]?.segment || 'primary'} segment?`,
           `Are inventory shortages or regional supply dynamics impacting ${attribution.primaryDetractor?.segment || 'lagging'} areas?`,
           `How did channel marketing or seasonality align with observed movement across ${attribution.dimension}?`
-        ],
+        ] : [],
         recommendation: insight.recommendation || {
-          action: `Investigate ${attribution.dimension} performance drivers`,
+          action: attribution.dimension ? `Investigate ${attribution.dimension} performance drivers` : 'Review dataset telemetry',
           target_page: '/datasets'
         }
       };
+
+      // Check if dataset or historical records are insufficient
+      if (attribution.emptyReason || !attribution.drivers || attribution.drivers.length === 0) {
+        return res.status(200).json({
+          success: true,
+          data: {
+            ...attribution,
+            status: 'insufficient_evidence',
+            emptyReason: attribution.emptyReason || 'Insufficient data available to decompose variance.',
+            radar,
+            analysis: null,
+            explanation: attribution.emptyReason || 'No comparative breakdown available.',
+            aiGenerated: false,
+            fallback: false
+          }
+        });
+      }
+
+      // Generate grounded natural-language analysis via real AI model
+      const aiResult = await geminiService.generateBusinessRadarAnalysis({
+        insight,
+        attribution
+      });
+
+      // Check if AI analysis failed or configuration is missing
+      if (aiResult.error) {
+        // If client explicitly permitted deterministic fallback
+        if (req.query.allowFallback === 'true' || req.query.mode === 'deterministic') {
+          const deterministicAnalysis = geminiService.buildDeterministicAnalyticalSummary(attribution, insight);
+          return res.status(200).json({
+            success: true,
+            data: {
+              ...attribution,
+              emptyReason: null,
+              radar,
+              analysis: deterministicAnalysis,
+              explanation: deterministicAnalysis.whatChanged.summary + '\n\n' + deterministicAnalysis.whatDataShows.summary,
+              aiGenerated: false,
+              isDeterministicSummary: true,
+              aiError: aiResult.error
+            }
+          });
+        }
+
+        // Return honest error: DO NOT return HTTP 200 with fake success!
+        const status = aiResult.error.status || (aiResult.error.code === 'AI_NOT_CONFIGURED' ? 503 : (aiResult.error.code === 'AI_QUOTA_EXCEEDED' ? 429 : (aiResult.error.code === 'AI_AUTH_FAILED' ? 401 : 500)));
+        return res.status(status).json({
+          success: false,
+          error: {
+            code: aiResult.error.code,
+            message: aiResult.error.message,
+            retryable: Boolean(aiResult.error.retryable)
+          },
+          data: {
+            ...attribution,
+            radar,
+            canViewDeterministic: true
+          }
+        });
+      }
 
       return res.status(200).json({
         success: true,
         data: {
           ...attribution,
+          emptyReason: null,
           radar,
-          explanation: aiResult.explanation,
-          aiGenerated: aiResult.aiGenerated,
-          fallback: aiResult.fallback,
-          model: geminiService.modelName
+          analysis: aiResult.analysis,
+          explanation: aiResult.analysis?.whatChanged?.summary
+            ? `${aiResult.analysis.whatChanged.summary}\n\n${aiResult.analysis.whatDataShows?.summary || ''}`
+            : 'Verified Business Radar analysis generated.',
+          aiGenerated: true,
+          model: aiResult.model || geminiService.modelName,
+          evidenceValidated: true,
+          fallback: false
         }
       });
     } catch (err) {
@@ -161,7 +225,21 @@ const decisionIntelligenceController = {
         });
       }
 
-      // 1. Calculate baseline attribution for the selected dimension
+      // 1. Resolve datasetId if missing but metricId present
+      const evidence = insight.evidence || {};
+      let datasetId = insight.dataset_id || evidence.datasetId || evidence.dataset_id || insight.source_metadata?.dataset_id;
+
+      if (!datasetId && (insight.metric_id || evidence.metricId || insight.source_metadata?.metric_id)) {
+        const metricId = insight.metric_id || evidence.metricId || insight.source_metadata?.metric_id;
+        const MetricModel = require('../models/metricModel');
+        const metric = await MetricModel.findByIdAndOrgId(metricId, organizationId).catch(() => null);
+        if (metric?.dataset_id) {
+          datasetId = metric.dataset_id;
+          insight.dataset_id = metric.dataset_id;
+        }
+      }
+
+      // 2. Calculate baseline attribution for the selected dimension
       const attribution = await rootCauseAttributionService.calculateAttribution({
         insight,
         organizationId,
@@ -237,19 +315,35 @@ const decisionIntelligenceController = {
       }
 
       const evidence = insight.evidence || {};
-      const datasetId = insight.dataset_id || evidence.datasetId || evidence.dataset_id || insight.source_metadata?.dataset_id;
+      let datasetId = insight.dataset_id || evidence.datasetId || evidence.dataset_id || insight.source_metadata?.dataset_id;
+
+      if (!datasetId && (insight.metric_id || evidence.metricId || insight.source_metadata?.metric_id)) {
+        const metricId = insight.metric_id || evidence.metricId || insight.source_metadata?.metric_id;
+        const MetricModel = require('../models/metricModel');
+        const metric = await MetricModel.findByIdAndOrgId(metricId, organizationId).catch(() => null);
+        if (metric?.dataset_id) {
+          datasetId = metric.dataset_id;
+        }
+      }
 
       if (!datasetId) {
         return res.status(200).json({
           success: true,
           data: {
+            insightId: id,
+            datasetId: null,
             availableDimensions: []
           }
         });
       }
 
-      const { schema } = await evidenceBuilderService.loadDatasetAndRecords(datasetId, organizationId);
-      const availableDimensions = rootCauseAttributionService.getEligibleDimensions(schema);
+      let schema = [];
+      try {
+        const loaded = await evidenceBuilderService.loadDatasetAndRecords(datasetId, organizationId);
+        schema = loaded?.schema || [];
+      } catch (_) {}
+
+      const availableDimensions = rootCauseAttributionService.getEligibleDimensions(schema || []);
 
       return res.status(200).json({
         success: true,

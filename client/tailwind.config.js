@@ -29,7 +29,7 @@ export default {
           borderLight: '#CBD5E1', // Focus/hover border
         },
         darkSurface: {
-          canvas: '#0B0F19',
+          canvas: '#0B1120',
           card: '#111827',
           input: '#0F172A',
           raised: '#1E293B',

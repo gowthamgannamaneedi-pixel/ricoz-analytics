@@ -110,33 +110,75 @@ async function runPhase10Tests() {
   const testOrgAId = '00000000-0000-0000-0000-000000000001';
   const testOrgBId = '00000000-0000-0000-0000-000000000002';
 
-  // Generate tokens for test roles
+  const testStamp = Date.now();
+  const createdUserIds = [];
+
+  const adminUserA = await UserModel.create({
+    name: 'P10 Admin A',
+    email: `p10_admin_${testStamp}@ricoz.test`,
+    password: 'Password123!',
+    role: 'admin',
+    organizationId: testOrgAId
+  });
+  createdUserIds.push(adminUserA.id);
   const adminTokenA = jwt.sign(
-    { id: 1, email: 'admin@org-a.com', role: 'admin', organization_id: testOrgAId },
+    { id: adminUserA.id, email: adminUserA.email, role: 'admin', organization_id: testOrgAId },
     config.jwtSecret,
     { expiresIn: '1h' }
   );
 
+  const managerUserA = await UserModel.create({
+    name: 'P10 Manager A',
+    email: `p10_manager_${testStamp}@ricoz.test`,
+    password: 'Password123!',
+    role: 'manager',
+    organizationId: testOrgAId
+  });
+  createdUserIds.push(managerUserA.id);
   const managerTokenA = jwt.sign(
-    { id: 2, email: 'manager@org-a.com', role: 'manager', organization_id: testOrgAId },
+    { id: managerUserA.id, email: managerUserA.email, role: 'manager', organization_id: testOrgAId },
     config.jwtSecret,
     { expiresIn: '1h' }
   );
 
+  const analystUserA = await UserModel.create({
+    name: 'P10 Analyst A',
+    email: `p10_analyst_${testStamp}@ricoz.test`,
+    password: 'Password123!',
+    role: 'analyst',
+    organizationId: testOrgAId
+  });
+  createdUserIds.push(analystUserA.id);
   const analystTokenA = jwt.sign(
-    { id: 3, email: 'analyst@org-a.com', role: 'analyst', organization_id: testOrgAId },
+    { id: analystUserA.id, email: analystUserA.email, role: 'analyst', organization_id: testOrgAId },
     config.jwtSecret,
     { expiresIn: '1h' }
   );
 
+  const viewerUserA = await UserModel.create({
+    name: 'P10 Viewer A',
+    email: `p10_viewer_${testStamp}@ricoz.test`,
+    password: 'Password123!',
+    role: 'viewer',
+    organizationId: testOrgAId
+  });
+  createdUserIds.push(viewerUserA.id);
   const viewerTokenA = jwt.sign(
-    { id: 4, email: 'viewer@org-a.com', role: 'viewer', organization_id: testOrgAId },
+    { id: viewerUserA.id, email: viewerUserA.email, role: 'viewer', organization_id: testOrgAId },
     config.jwtSecret,
     { expiresIn: '1h' }
   );
 
+  const adminUserB = await UserModel.create({
+    name: 'P10 Admin B',
+    email: `p10_adminb_${testStamp}@ricoz.test`,
+    password: 'Password123!',
+    role: 'admin',
+    organizationId: testOrgBId
+  });
+  createdUserIds.push(adminUserB.id);
   const adminTokenB = jwt.sign(
-    { id: 99, email: 'admin@org-b.com', role: 'admin', organization_id: testOrgBId },
+    { id: adminUserB.id, email: adminUserB.email, role: 'admin', organization_id: testOrgBId },
     config.jwtSecret,
     { expiresIn: '1h' }
   );
@@ -576,6 +618,10 @@ async function runPhase10Tests() {
     console.error('Unexpected test exception:', err);
     failed++;
   } finally {
+    if (createdUserIds.length > 0) {
+      const db = require('./config/database');
+      await db.query('DELETE FROM users WHERE id = ANY($1::int[])', [createdUserIds]).catch(() => {});
+    }
     if (server) {
       server.close();
     }
@@ -587,6 +633,8 @@ async function runPhase10Tests() {
 
   if (failed > 0) {
     process.exit(1);
+  } else {
+    process.exit(0);
   }
 }
 

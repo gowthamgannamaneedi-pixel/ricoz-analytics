@@ -386,12 +386,13 @@ function applyDatasetFilters(records = [], filters = {}, dimensions = {}) {
 
   // 2. Exact match dimension filters
   const reservedParams = new Set([
-    'startDate', 'endDate', 'dateRange', 'search', 'page', 'limit', 'sortKey', 'sortOrder', 'groupBy'
+    'startDate', 'endDate', 'dateRange', 'search', 'page', 'limit', 'sortKey', 'sortOrder', 'groupBy', 'filters'
   ]);
-  const filterKeys = Object.keys(filters).filter(k => !reservedParams.has(k));
+  const activeFilters = (filters.filters && typeof filters.filters === 'object') ? { ...filters, ...filters.filters } : filters;
+  const filterKeys = Object.keys(activeFilters).filter(k => !reservedParams.has(k));
 
   for (const key of filterKeys) {
-    const val = filters[key];
+    const val = activeFilters[key];
     if (val && val !== 'all' && val !== 'ALL') {
       filtered = filtered.filter(r => {
         const rowVal = r[key] !== undefined ? String(r[key]).toLowerCase() : '';
@@ -425,7 +426,10 @@ function applyDatasetFilters(records = [], filters = {}, dimensions = {}) {
 function resolveColumnKey(sampleRecord, requestedCol, semanticFallback = null) {
   if (!sampleRecord || typeof sampleRecord !== 'object') return requestedCol || semanticFallback;
   const keys = Object.keys(sampleRecord);
-  if (!requestedCol) return semanticFallback && sampleRecord[semanticFallback] !== undefined ? semanticFallback : keys[0];
+  if (!requestedCol) {
+    if (semanticFallback && sampleRecord[semanticFallback] !== undefined) return semanticFallback;
+    return null;
+  }
 
   // 1. Exact match
   if (sampleRecord[requestedCol] !== undefined) return requestedCol;
@@ -479,15 +483,55 @@ function resolveColumnKey(sampleRecord, requestedCol, semanticFallback = null) {
     }
   }
 
+  // 7. Semantic synonyms for dates / timestamps
+  if (['date', 'order_date', 'orderdate', 'transaction_date', 'timestamp', 'created_at', 'invoice_date', 'time'].includes(lowerReq)) {
+    if (semanticFallback && sampleRecord[semanticFallback] !== undefined) return semanticFallback;
+    const candidates = ['order_date', 'transaction_date', 'invoice_date', 'date', 'created_at', 'timestamp', 'datetime', 'time'];
+    for (const c of candidates) {
+      const m = keys.find(k => k.toLowerCase() === c || k.toLowerCase().includes(c));
+      if (m) return m;
+    }
+  }
+
+  // 8. Semantic synonyms for quantity / volume
+  if (['quantity', 'units_sold', 'units', 'qty', 'count', 'items', 'volume'].includes(lowerReq)) {
+    if (semanticFallback && sampleRecord[semanticFallback] !== undefined) return semanticFallback;
+    const candidates = ['units_sold', 'quantity', 'units', 'qty', 'items', 'volume', 'count'];
+    for (const c of candidates) {
+      const m = keys.find(k => k.toLowerCase() === c || k.toLowerCase().includes(c));
+      if (m && !isNaN(Number(sampleRecord[m]))) return m;
+    }
+  }
+
+  // 9. Semantic synonyms for channels
+  if (['channel', 'sales_channel', 'saleschannel', 'source', 'platform', 'medium'].includes(lowerReq)) {
+    if (semanticFallback && sampleRecord[semanticFallback] !== undefined) return semanticFallback;
+    const candidates = ['channel', 'sales_channel', 'source', 'platform', 'medium', 'distribution_channel'];
+    for (const c of candidates) {
+      const m = keys.find(k => k.toLowerCase() === c || k.toLowerCase().includes(c));
+      if (m) return m;
+    }
+  }
+
+  // 10. Semantic synonyms for order IDs
+  if (['order_id', 'orderid', 'order_no', 'transaction_id', 'invoice_id', 'id'].includes(lowerReq)) {
+    if (semanticFallback && sampleRecord[semanticFallback] !== undefined) return semanticFallback;
+    const candidates = ['order_id', 'orderid', 'order_no', 'transaction_id', 'invoice_id', 'id'];
+    for (const c of candidates) {
+      const m = keys.find(k => k.toLowerCase() === c || k.toLowerCase().includes(c));
+      if (m) return m;
+    }
+  }
+
   return (semanticFallback && sampleRecord[semanticFallback] !== undefined) ? semanticFallback : requestedCol;
 }
 
 function computeDatasetKpis(allRecords = [], filteredRecords = [], dimensions = {}) {
   const sample = filteredRecords[0] || allRecords[0];
-  const primaryCol = resolveColumnKey(sample, dimensions.primaryMetric, dimensions.primaryMetric);
-  const qtyCol = resolveColumnKey(sample, dimensions.quantityMetric, dimensions.quantityMetric);
-  const idCol = resolveColumnKey(sample, dimensions.orderIdColumn, dimensions.orderIdColumn);
-  const dateCol = resolveColumnKey(sample, dimensions.dateColumn, dimensions.dateColumn);
+  const primaryCol = resolveColumnKey(sample, dimensions.primaryMetric, 'sales_amount') || resolveColumnKey(sample, 'revenue');
+  const qtyCol = resolveColumnKey(sample, dimensions.quantityMetric, 'units_sold') || resolveColumnKey(sample, 'quantity');
+  const idCol = resolveColumnKey(sample, dimensions.orderIdColumn, 'order_id');
+  const dateCol = resolveColumnKey(sample, dimensions.dateColumn, 'order_date') || resolveColumnKey(sample, 'date');
 
   const totalRecordsCount = filteredRecords.length;
 

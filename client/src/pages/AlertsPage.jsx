@@ -36,6 +36,8 @@ import {
   getAllIncidents,
   acknowledgeIncident,
   resolveIncident,
+  getIncidentDeliveryStatus,
+  retryIncidentNotification,
   getMetrics
 } from '../services/api';
 import { useNavigate } from 'react-router-dom';
@@ -82,7 +84,9 @@ const SEVERITY_CONFIG = {
 
 const CONDITION_LABELS = {
   greater_than: '>',
+  greater_than_or_equal: '>=',
   less_than: '<',
+  less_than_or_equal: '<=',
   equal: '=',
   equals: '=',
   not_equal: '≠',
@@ -257,9 +261,23 @@ export default function AlertsPage() {
     setActionLoading(true);
     try {
       const res = await testAlert(alert.id, { dryRun: true });
-      setTestResult(res.data);
+      setTestResult({ ...res.data, alertId: alert.id, alertObj: alert });
     } catch (err) {
       setError(err.message || 'Failed to test alert evaluation.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSendTestEmail = async (alertId) => {
+    if (!canMutate) return;
+    setActionLoading(true);
+    try {
+      const res = await testAlert(alertId, { dryRun: true, sendEmail: true });
+      setTestResult(prev => ({ ...prev, ...res.data }));
+      showToast('Live test email dispatched via Brevo!');
+    } catch (err) {
+      setError(err.message || 'Failed to dispatch test email.');
     } finally {
       setActionLoading(false);
     }
@@ -291,6 +309,33 @@ export default function AlertsPage() {
       setError(err.message || 'Failed to resolve incident.');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleRetryEmail = async (incidentId) => {
+    if (!canMutate) return;
+    try {
+      const res = await retryIncidentNotification(incidentId);
+      showToast(res.message || 'Email re-dispatched successfully.');
+      fetchData(true);
+    } catch (err) {
+      setError(err.message || 'Failed to retry email notification.');
+    }
+  };
+
+  const handleCheckDelivery = async (incidentId) => {
+    try {
+      const res = await getIncidentDeliveryStatus(incidentId);
+      if (res.data?.email?.delivered) {
+        showToast('Delivery verified! Message received by destination mail server.');
+      } else if (res.data?.email?.success) {
+        showToast(`Provider accepted message (ID: ${res.data.email.messageId || 'N/A'}).`);
+      } else {
+        showToast('No active email delivery record.');
+      }
+      fetchData(true);
+    } catch (err) {
+      setError(err.message || 'Could not check live delivery status.');
     }
   };
 
@@ -580,6 +625,15 @@ export default function AlertsPage() {
                             <Clock className="h-3 w-3" />
                             <span>Notify Interval: {alert.cooldown_minutes || 60}m</span>
                           </span>
+                          {Array.isArray(alert.notification_channels) && alert.notification_channels.includes('email') && (
+                            <>
+                              <span className="text-slate-400 dark:text-[#94A3B8]">·</span>
+                              <span className="text-[11px] font-medium text-slate-600 dark:text-[#CBD5E1] flex items-center gap-1 bg-slate-100 dark:bg-[#1E293B] px-1.5 py-0.5 rounded border border-slate-200 dark:border-[#334155]">
+                                <Mail className="h-3 w-3 text-rose-600 dark:text-[#FB7185]" />
+                                <span>Email ({Array.isArray(alert.recipients) ? alert.recipients.length : 0})</span>
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -734,6 +788,54 @@ export default function AlertsPage() {
                             <div className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-0.5">
                               Metric: <span className="font-medium text-slate-700 dark:text-[#CBD5E1]">{inc.metric_name || 'Live Metric'}</span>
                             </div>
+                            {/* Notification Delivery Badges */}
+                            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                              <span className="inline-flex items-center gap-1 rounded bg-slate-100 dark:bg-[#1E293B] px-1.5 py-0.5 text-[10px] text-slate-600 dark:text-[#CBD5E1]">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                <span>In-App</span>
+                              </span>
+                              {inc.notification_delivery?.email ? (
+                                inc.notification_delivery.email.delivered ? (
+                                  <span 
+                                    className="inline-flex items-center gap-1 rounded bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/40 px-1.5 py-0.5 text-[10px] font-medium text-teal-700 dark:text-teal-300"
+                                    title={`Confirmed Delivered via ${inc.notification_delivery.email.provider || 'Brevo'} at ${inc.notification_delivery.email.deliveredAt || 'N/A'}`}
+                                  >
+                                    <CheckCircle2 className="h-2.5 w-2.5 text-teal-600 dark:text-teal-400" />
+                                    <span>Email Delivered</span>
+                                  </span>
+                                ) : inc.notification_delivery.email.success ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCheckDelivery(inc.id)}
+                                    className="inline-flex items-center gap-1 rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 cursor-pointer"
+                                    title={`Provider: ${inc.notification_delivery.email.provider || 'Brevo'} | Message ID: ${inc.notification_delivery.email.messageId || 'N/A'}. Click to refresh live delivery status.`}
+                                  >
+                                    <Mail className="h-2.5 w-2.5 text-emerald-600 dark:text-emerald-400" />
+                                    <span>Email Accepted ({inc.notification_delivery.email.provider || 'Brevo'})</span>
+                                  </button>
+                                ) : (
+                                  <div className="flex items-center gap-1">
+                                    <span 
+                                      className="inline-flex items-center gap-1 rounded bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/40 px-1.5 py-0.5 text-[10px] font-medium text-rose-700 dark:text-rose-300"
+                                      title={inc.notification_delivery.email.error || 'Email dispatch failed'}
+                                    >
+                                      <Mail className="h-2.5 w-2.5 text-rose-600 dark:text-rose-400" />
+                                      <span>Email Failed</span>
+                                    </span>
+                                    {canMutate && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRetryEmail(inc.id)}
+                                        className="text-[10px] font-medium text-rose-600 hover:text-rose-700 underline cursor-pointer"
+                                        title="Retry dispatching email notification"
+                                      >
+                                        Retry
+                                      </button>
+                                    )}
+                                  </div>
+                                )
+                              ) : null}
+                            </div>
                           </td>
 
                           {/* Breach Values */}
@@ -850,9 +952,39 @@ export default function AlertsPage() {
               <div>Threshold: <span className="font-bold text-slate-900 dark:text-[#F8FAFC]">{testResult.threshold}</span></div>
             </div>
 
+            {testResult.notificationResult?.email && (
+              <div className={`p-3 rounded-xl border text-xs ${
+                testResult.notificationResult.email.success
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/40 text-emerald-800 dark:text-emerald-300'
+                  : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/40 text-rose-800 dark:text-rose-300'
+              }`}>
+                <div className="font-semibold flex items-center gap-1.5 mb-1">
+                  <Mail className="h-3.5 w-3.5" />
+                  <span>{testResult.notificationResult.email.success ? 'Email Notification Accepted by Brevo' : 'Email Notification Dispatch Failed'}</span>
+                </div>
+                <div className="text-[11px] font-mono break-all text-slate-600 dark:text-[#CBD5E1]">
+                  {testResult.notificationResult.email.messageId 
+                    ? `Message ID: ${testResult.notificationResult.email.messageId}` 
+                    : (testResult.notificationResult.email.error || 'Failed to dispatch email')}
+                </div>
+              </div>
+            )}
+
+            {canMutate && testResult.alertObj?.notification_channels?.includes('email') && (
+              <button
+                type="button"
+                onClick={() => handleSendTestEmail(testResult.alertId)}
+                disabled={actionLoading}
+                className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-rose-600 dark:border-rose-500 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 py-2 text-xs font-semibold transition cursor-pointer"
+              >
+                {actionLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
+                <span>Dispatch Test Email to Configured Recipients</span>
+              </button>
+            )}
+
             <button
               onClick={() => setTestResult(null)}
-              className="w-full rounded-xl bg-slate-900 dark:bg-[#1E293B] dark:hover:bg-[#334155] py-2 text-xs font-semibold text-white transition"
+              className="w-full rounded-xl bg-slate-900 dark:bg-[#1E293B] dark:hover:bg-[#334155] py-2 text-xs font-semibold text-white transition cursor-pointer"
             >
               Close
             </button>

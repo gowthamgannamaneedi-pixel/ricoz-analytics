@@ -76,13 +76,18 @@ const InsightModel = {
       RETURNING *;
     `;
 
+    const cleanDatasetId = datasetId && !isNaN(Number(datasetId)) ? Number(datasetId) : null;
+    const cleanMetricId = metricId && isValidUuid(metricId) ? String(metricId).trim() : null;
+    const cleanDashboardId = dashboardId && isValidUuid(dashboardId) ? String(dashboardId).trim() : null;
+    const cleanUserId = userId && !isNaN(Number(userId)) ? Number(userId) : null;
+
     const result = await db.query(sql, [
       id,
-      String(organizationId),
-      userId ? Number(userId) : null,
-      datasetId ? (isNaN(Number(datasetId)) ? String(datasetId) : Number(datasetId)) : null,
-      metricId ? String(metricId) : null,
-      dashboardId ? String(dashboardId) : null,
+      String(organizationId).trim(),
+      cleanUserId,
+      cleanDatasetId,
+      cleanMetricId,
+      cleanDashboardId,
       type.toLowerCase(),
       String(title).trim(),
       String(summary).trim(),
@@ -113,17 +118,27 @@ const InsightModel = {
     const sql = `
       SELECT 
         i.*,
-        d.name AS dataset_name,
+        COALESCE(i.dataset_id, m.dataset_id) AS dataset_id,
+        COALESCE(d.name, md.name) AS dataset_name,
         m.name AS metric_name
       FROM ai_insights i
-      LEFT JOIN datasets d ON CAST(d.id AS TEXT) = CAST(i.dataset_id AS TEXT)
       LEFT JOIN metrics m ON m.id = i.metric_id
+      LEFT JOIN datasets d ON CAST(d.id AS TEXT) = CAST(i.dataset_id AS TEXT)
+      LEFT JOIN datasets md ON CAST(md.id AS TEXT) = CAST(m.dataset_id AS TEXT)
       WHERE i.id = $1 AND i.organization_id = $2
       LIMIT 1;
     `;
 
     const result = await db.query(sql, [String(id).trim(), String(organizationId).trim()]);
-    return result.rows[0] || null;
+    if (!result.rows || !result.rows[0]) return null;
+    const row = result.rows[0];
+    if (!row.dataset_id && row.evidence) {
+      const ev = typeof row.evidence === 'string' ? JSON.parse(row.evidence || '{}') : row.evidence;
+      if (ev && (ev.datasetId || ev.dataset_id)) {
+        row.dataset_id = Number(ev.datasetId || ev.dataset_id);
+      }
+    }
+    return row;
   },
 
   /**
@@ -356,11 +371,13 @@ const InsightModel = {
       sql = `
         SELECT 
           i.*,
-          d.name AS dataset_name,
+          COALESCE(i.dataset_id, m.dataset_id) AS dataset_id,
+          COALESCE(d.name, md.name) AS dataset_name,
           m.name AS metric_name
         FROM ai_insights i
-        LEFT JOIN datasets d ON CAST(d.id AS TEXT) = CAST(i.dataset_id AS TEXT)
         LEFT JOIN metrics m ON m.id = i.metric_id
+        LEFT JOIN datasets d ON CAST(d.id AS TEXT) = CAST(i.dataset_id AS TEXT)
+        LEFT JOIN datasets md ON CAST(md.id AS TEXT) = CAST(m.dataset_id AS TEXT)
         WHERE ${conditions.join(' AND ')}
         ORDER BY i.created_at DESC
         LIMIT $${paramIndex++} OFFSET $${paramIndex++};
@@ -369,15 +386,17 @@ const InsightModel = {
       // Deduplicate: return only the latest relevant active insight for the same logical alert/insight
       sql = `
         SELECT * FROM (
-          SELECT DISTINCT ON (i.type, COALESCE(i.dataset_id, 0), i.title)
+          SELECT DISTINCT ON (i.type, COALESCE(i.dataset_id, m.dataset_id, 0), i.title)
             i.*,
-            d.name AS dataset_name,
+            COALESCE(i.dataset_id, m.dataset_id) AS dataset_id,
+            COALESCE(d.name, md.name) AS dataset_name,
             m.name AS metric_name
           FROM ai_insights i
-          LEFT JOIN datasets d ON CAST(d.id AS TEXT) = CAST(i.dataset_id AS TEXT)
           LEFT JOIN metrics m ON m.id = i.metric_id
+          LEFT JOIN datasets d ON CAST(d.id AS TEXT) = CAST(i.dataset_id AS TEXT)
+          LEFT JOIN datasets md ON CAST(md.id AS TEXT) = CAST(m.dataset_id AS TEXT)
           WHERE ${conditions.join(' AND ')}
-          ORDER BY i.type, COALESCE(i.dataset_id, 0), i.title, i.created_at DESC
+          ORDER BY i.type, COALESCE(i.dataset_id, m.dataset_id, 0), i.title, i.created_at DESC
         ) deduplicated
         ORDER BY deduplicated.created_at DESC
         LIMIT $${paramIndex++} OFFSET $${paramIndex++};
@@ -387,7 +406,16 @@ const InsightModel = {
     params.push(limit, offset);
 
     const result = await db.query(sql, params);
-    return result.rows || [];
+    const rows = result.rows || [];
+    for (const row of rows) {
+      if (!row.dataset_id && row.evidence) {
+        const ev = typeof row.evidence === 'string' ? JSON.parse(row.evidence || '{}') : row.evidence;
+        if (ev && (ev.datasetId || ev.dataset_id)) {
+          row.dataset_id = Number(ev.datasetId || ev.dataset_id);
+        }
+      }
+    }
+    return rows;
   },
 
   /**

@@ -533,11 +533,11 @@ export default function ExecutiveDashboard({
           {/* KPI 1: Total Sales */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[190px]">
             <div>
-              <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs">
+              <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300 min-w-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs shrink-0">
                   <BarChart3 className="h-5 w-5" />
                 </div>
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Total Sales</span>
+                <span className="text-base sm:text-[18px] font-semibold text-slate-800 dark:text-slate-100 truncate">Total Sales</span>
               </div>
               <div className="mt-3.5 flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
@@ -592,11 +592,11 @@ export default function ExecutiveDashboard({
           {/* KPI 2: Total Orders */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[190px]">
             <div>
-              <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs">
+              <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300 min-w-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs shrink-0">
                   <ShoppingCart className="h-5 w-5" />
                 </div>
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Total Orders</span>
+                <span className="text-base sm:text-[18px] font-semibold text-slate-800 dark:text-slate-100 truncate">Total Orders</span>
               </div>
               <div className="mt-3.5 flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
@@ -634,11 +634,11 @@ export default function ExecutiveDashboard({
           {/* KPI 3: Total Units Sold */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[190px]">
             <div>
-              <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs">
+              <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300 min-w-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs shrink-0">
                   <Package className="h-5 w-5" />
                 </div>
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Total Units Sold</span>
+                <span className="text-base sm:text-[18px] font-semibold text-slate-800 dark:text-slate-100 truncate">Total Units Sold</span>
               </div>
               <div className="mt-3.5 flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
@@ -668,11 +668,11 @@ export default function ExecutiveDashboard({
           {/* KPI 4: Average Order Value */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[190px]">
             <div>
-              <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs">
+              <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300 min-w-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs shrink-0">
                   <IndianRupee className="h-5 w-5" />
                 </div>
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Average Order Value</span>
+                <span className="text-base sm:text-[18px] font-semibold text-slate-800 dark:text-slate-100 truncate">Average Order Value</span>
               </div>
               <div className="mt-3.5 flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">

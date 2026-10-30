@@ -1,10 +1,13 @@
 const AlertModel = require('../models/alertModel');
 const alertEvaluatorService = require('../services/alertEvaluatorService');
+const emailService = require('../services/emailService');
 const { logAuditEvent, AUDIT_ACTIONS } = require('../services/auditService');
 
 const VALID_CONDITIONS = [
   'greater_than',
   'less_than',
+  'greater_than_or_equal',
+  'less_than_or_equal',
   'equal',
   'equals',
   'not_equal',
@@ -12,8 +15,28 @@ const VALID_CONDITIONS = [
   'percent_increase',
   'percentage_change_increase',
   'percent_decrease',
-  'percentage_change_decrease'
+  'percentage_change_decrease',
+  '>',
+  '<',
+  '>=',
+  '<=',
+  '=',
+  '!='
 ];
+
+function normalizeCondition(cond) {
+  if (!cond || typeof cond !== 'string') return '';
+  const c = cond.trim().toLowerCase();
+  if (c === '>' || c === 'gt') return 'greater_than';
+  if (c === '<' || c === 'lt') return 'less_than';
+  if (c === '>=' || c === 'gte' || c === 'greater_than_equal') return 'greater_than_or_equal';
+  if (c === '<=' || c === 'lte' || c === 'less_than_equal') return 'less_than_or_equal';
+  if (c === '=' || c === '==' || c === 'eq' || c === 'equals') return 'equal';
+  if (c === '!=' || c === '<>' || c === 'neq' || c === 'not_equals') return 'not_equal';
+  if (c === 'percent_increase' || c === 'percentage_change_increase') return 'percent_increase';
+  if (c === 'percent_decrease' || c === 'percentage_change_decrease') return 'percent_decrease';
+  return c;
+}
 
 const VALID_SEVERITIES = ['low', 'medium', 'high', 'critical'];
 const VALID_STATUSES = ['active', 'triggered', 'resolved', 'disabled'];
@@ -116,7 +139,7 @@ const AlertController = {
       }
 
       // 2. Validation: Condition
-      const cleanCondition = (condition || '').trim().toLowerCase();
+      const cleanCondition = normalizeCondition(condition);
       if (!cleanCondition || !VALID_CONDITIONS.includes(cleanCondition)) {
         return res.status(400).json({
           success: false,
@@ -129,7 +152,21 @@ const AlertController = {
         return res.status(400).json({ success: false, message: 'A valid numeric threshold value is required.' });
       }
 
-      // 4. Validation: Severity
+      // 4. Validation: Notification Delay (Cooldown Minutes)
+      const rawCooldown = cooldownMinutes !== undefined ? cooldownMinutes : cooldown_minutes;
+      let cleanCooldown = 60;
+      if (rawCooldown !== undefined && rawCooldown !== null) {
+        const cd = Number(rawCooldown);
+        if (isNaN(cd) || cd < 0 || !Number.isInteger(cd)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Notification delay (cooldown_minutes) must be a non-negative integer (0 or more minutes).'
+          });
+        }
+        cleanCooldown = cd;
+      }
+
+      // 5. Validation: Severity
       const cleanSeverity = (severity || 'medium').trim().toLowerCase();
       if (!VALID_SEVERITIES.includes(cleanSeverity)) {
         return res.status(400).json({
@@ -138,7 +175,7 @@ const AlertController = {
         });
       }
 
-      // 5. Validation: Status
+      // 6. Validation: Status
       const cleanStatus = (status || 'active').trim().toLowerCase();
       if (!VALID_STATUSES.includes(cleanStatus)) {
         return res.status(400).json({
@@ -147,10 +184,24 @@ const AlertController = {
         });
       }
 
-      // 6. Validation: Recipients
-      const cleanRecipients = Array.isArray(recipients) ? recipients : [];
+      // 7. Validation: Channels & Recipients
+      const cleanChannels = Array.isArray(notificationChannels || notification_channels)
+        ? (notificationChannels || notification_channels)
+        : ['in_app'];
+
+      const cleanRecipients = (Array.isArray(recipients) ? recipients : [])
+        .map(r => typeof r === 'string' ? r.trim().toLowerCase() : '')
+        .filter(Boolean);
+
+      if (cleanChannels.includes('email') && cleanRecipients.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'At least one valid recipient email address is required when email notifications are enabled.'
+        });
+      }
+
       for (const email of cleanRecipients) {
-        if (typeof email !== 'string' || !EMAIL_REGEX.test(email.trim())) {
+        if (!EMAIL_REGEX.test(email)) {
           return res.status(400).json({
             success: false,
             message: `Invalid recipient email address: "${email}".`
@@ -158,18 +209,29 @@ const AlertController = {
         }
       }
 
+      // Auto-resolve datasetId from metric if metricId is passed and datasetId is omitted
+      let resolvedDatasetId = datasetId || dataset_id || null;
+      const targetMetricId = metricId || metric_id || null;
+      if (!resolvedDatasetId && targetMetricId) {
+        const MetricModel = require('../models/metricModel');
+        const m = await MetricModel.findByIdAndOrgId(targetMetricId, organizationId).catch(() => null);
+        if (m && m.dataset_id) {
+          resolvedDatasetId = m.dataset_id;
+        }
+      }
+
       const alert = await AlertModel.create({
         organizationId,
         createdBy,
-        metricId: metricId || metric_id || null,
-        datasetId: datasetId || dataset_id || null,
+        metricId: targetMetricId,
+        datasetId: resolvedDatasetId,
         name: name.trim(),
         condition: cleanCondition,
         threshold: Number(threshold),
         severity: cleanSeverity,
         status: cleanStatus,
-        notificationChannels: notificationChannels || notification_channels || ['in_app'],
-        cooldownMinutes: cooldownMinutes !== undefined ? cooldownMinutes : (cooldown_minutes !== undefined ? cooldown_minutes : 60),
+        notificationChannels: cleanChannels,
+        cooldownMinutes: cleanCooldown,
         recipients: cleanRecipients
       });
 
@@ -228,9 +290,10 @@ const AlertController = {
         recipients
       } = req.body;
 
+      let cleanCondition = undefined;
       if (condition !== undefined) {
-        const cleanCondition = condition.trim().toLowerCase();
-        if (!VALID_CONDITIONS.includes(cleanCondition)) {
+        cleanCondition = normalizeCondition(condition);
+        if (!cleanCondition || !VALID_CONDITIONS.includes(cleanCondition)) {
           return res.status(400).json({
             success: false,
             message: `Invalid alert condition "${condition}". Supported conditions: ${VALID_CONDITIONS.join(', ')}.`
@@ -240,6 +303,19 @@ const AlertController = {
 
       if (threshold !== undefined && isNaN(Number(threshold))) {
         return res.status(400).json({ success: false, message: 'Threshold must be a valid numeric value.' });
+      }
+
+      const rawCooldown = cooldownMinutes !== undefined ? cooldownMinutes : cooldown_minutes;
+      let cleanCooldown = undefined;
+      if (rawCooldown !== undefined && rawCooldown !== null) {
+        const cd = Number(rawCooldown);
+        if (isNaN(cd) || cd < 0 || !Number.isInteger(cd)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Notification delay (cooldown_minutes) must be a non-negative integer (0 or more minutes).'
+          });
+        }
+        cleanCooldown = cd;
       }
 
       if (severity !== undefined && !VALID_SEVERITIES.includes(severity.toLowerCase())) {
@@ -256,9 +332,14 @@ const AlertController = {
         });
       }
 
+      let cleanRecipients = undefined;
       if (recipients !== undefined && Array.isArray(recipients)) {
-        for (const email of recipients) {
-          if (typeof email !== 'string' || !EMAIL_REGEX.test(email.trim())) {
+        cleanRecipients = recipients
+          .map(r => typeof r === 'string' ? r.trim().toLowerCase() : '')
+          .filter(Boolean);
+
+        for (const email of cleanRecipients) {
+          if (!EMAIL_REGEX.test(email)) {
             return res.status(400).json({
               success: false,
               message: `Invalid recipient email address: "${email}".`
@@ -267,17 +348,31 @@ const AlertController = {
         }
       }
 
+      const cleanChannels = notificationChannels !== undefined 
+        ? notificationChannels 
+        : (notification_channels !== undefined ? notification_channels : undefined);
+
+      const effectiveChannels = cleanChannels || existing.notification_channels || ['in_app'];
+      const effectiveRecipients = cleanRecipients !== undefined ? cleanRecipients : (existing.recipients || []);
+
+      if (effectiveChannels.includes('email') && effectiveRecipients.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'At least one valid recipient email address is required when email notifications are enabled.'
+        });
+      }
+
       const updated = await AlertModel.update(id, organizationId, {
         name,
         metricId: metricId !== undefined ? metricId : metric_id,
         datasetId: datasetId !== undefined ? datasetId : dataset_id,
-        condition,
+        condition: cleanCondition,
         threshold,
         severity,
         status,
-        notificationChannels: notificationChannels !== undefined ? notificationChannels : notification_channels,
-        cooldownMinutes: cooldownMinutes !== undefined ? cooldownMinutes : cooldown_minutes,
-        recipients
+        notificationChannels: cleanChannels,
+        cooldownMinutes: cleanCooldown,
+        recipients: cleanRecipients
       });
 
       // Safe Audit Log
@@ -354,7 +449,7 @@ const AlertController = {
     try {
       const { id } = req.params;
       const organizationId = req.user.organization_id;
-      const { overrideMetricValue, baselineValue, dryRun = true } = req.body || {};
+      const { overrideMetricValue, baselineValue, dryRun = true, sendEmail = false } = req.body || {};
 
       const alert = await AlertModel.findByIdAndOrgId(id, organizationId);
       if (!alert) {
@@ -364,7 +459,8 @@ const AlertController = {
       const evalResult = await alertEvaluatorService.evaluateAlertRule(alert, {
         overrideMetricValue,
         baselineValue,
-        dryRun: dryRun !== false
+        dryRun: dryRun !== false,
+        sendEmail: Boolean(sendEmail)
       });
 
       res.json({
@@ -522,6 +618,134 @@ const AlertController = {
     } catch (err) {
       console.error('Error resolving incident:', err.message);
       res.status(500).json({ success: false, message: 'Failed to resolve incident.' });
+    }
+  },
+
+  /**
+   * GET /api/alerts/incidents/:id/delivery
+   * Check real-time notification delivery status from provider (e.g. Brevo)
+   */
+  async getIncidentDeliveryStatus(req, res) {
+    try {
+      const { id } = req.params;
+      const organizationId = req.user.organization_id;
+
+      const incident = await AlertModel.findIncidentByIdAndOrgId(id, organizationId);
+      if (!incident) {
+        return res.status(404).json({ success: false, message: 'Incident not found or inaccessible.' });
+      }
+
+      const delivery = typeof incident.notification_delivery === 'string'
+        ? JSON.parse(incident.notification_delivery || '{}')
+        : (incident.notification_delivery || {});
+
+      let liveStatus = {
+        incidentId: id,
+        severity: incident.severity,
+        status: incident.status,
+        inApp: delivery.in_app || { created: true },
+        email: delivery.email || null,
+        providerEvents: []
+      };
+
+      if (delivery.email?.messageId && emailService.isBrevo()) {
+        try {
+          const logs = await emailService.getBrevoTransactionalLogs({ messageId: delivery.email.messageId });
+          liveStatus.providerEvents = logs.events || [];
+          const deliveredEvent = logs.events?.find(e => e.event === 'delivered');
+          if (deliveredEvent && !delivery.email.delivered) {
+            delivery.email.delivered = true;
+            delivery.email.deliveredAt = deliveredEvent.date;
+            await AlertModel.updateIncidentNotificationDelivery(id, delivery);
+          }
+        } catch (logErr) {
+          console.warn(`[AlertController] Could not fetch live Brevo delivery log: ${logErr.message}`);
+        }
+      }
+
+      res.json({
+        success: true,
+        data: liveStatus
+      });
+    } catch (err) {
+      console.error('Error fetching delivery status:', err.message);
+      res.status(500).json({ success: false, message: 'Failed to retrieve delivery status.' });
+    }
+  },
+
+  /**
+   * POST /api/alerts/incidents/:id/retry-email
+   * Retry email notification dispatch for an incident with idempotency safeguard
+   * RBAC: Admin, Manager, Analyst
+   */
+  async retryIncidentNotification(req, res) {
+    try {
+      const { id } = req.params;
+      const organizationId = req.user.organization_id;
+
+      const incident = await AlertModel.findIncidentByIdAndOrgId(id, organizationId);
+      if (!incident) {
+        return res.status(404).json({ success: false, message: 'Incident not found or inaccessible.' });
+      }
+
+      const delivery = typeof incident.notification_delivery === 'string'
+        ? JSON.parse(incident.notification_delivery || '{}')
+        : (incident.notification_delivery || {});
+
+      // Idempotency: Prevent duplicate dispatch if already confirmed delivered
+      if (delivery.email?.delivered) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email notification has already been confirmed delivered. Duplicate dispatch prevented.'
+        });
+      }
+
+      // Fetch the parent alert rule for latest recipients and channels
+      const alert = await AlertModel.findByIdAndOrgId(incident.alert_id, organizationId);
+      if (!alert) {
+        return res.status(404).json({ success: false, message: 'Associated alert rule not found.' });
+      }
+
+      const recipients = Array.isArray(alert.recipients)
+        ? alert.recipients
+        : (typeof alert.recipients === 'string' ? JSON.parse(alert.recipients || '[]') : []);
+
+      if (recipients.length === 0) {
+        return res.status(400).json({ success: false, message: 'No recipients configured on this alert rule.' });
+      }
+
+      let emailResult = null;
+      try {
+        emailResult = await emailService.sendAlertEmail({
+          recipients,
+          alertTitle: `[RETRY] ${alert.name}`,
+          metricName: alert.metric_name || incident.metric_name || 'Operational KPI',
+          metricValue: incident.metric_value,
+          thresholdValue: incident.threshold_value,
+          condition: incident.condition,
+          severity: incident.severity || 'medium',
+          organizationName: req.organization?.name || 'Ricoz Analytics Workspace',
+          triggeredAt: incident.triggered_at || new Date()
+        });
+      } catch (sendErr) {
+        emailResult = { attempted: true, success: false, error: sendErr.message };
+      }
+
+      delivery.email = {
+        ...emailResult,
+        retriedAt: new Date().toISOString()
+      };
+
+      await AlertModel.updateIncidentNotificationDelivery(id, delivery);
+
+      res.json({
+        success: emailResult.success,
+        message: emailResult.success ? 'Email notification re-dispatched successfully.' : `Retry dispatch failed: ${emailResult.error}`,
+        data: delivery
+      });
+    } catch (err) {
+      console.error('Error retrying incident email:', err.message);
+      res.status(500).json({ success: false, message: `Failed to retry email: ${err.message}` });
     }
   }
 };

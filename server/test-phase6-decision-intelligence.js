@@ -650,7 +650,7 @@ async function runPhase6Tests() {
     // Test 21: GET /api/insights/:id/root-cause
     // -------------------------------------------------------------------------
     await test('21. HTTP GET /api/insights/:id/root-cause returns 200 with drivers and explanation', async () => {
-      const res = await apiReq(baseUrl, 'GET', `/api/insights/${persistedInsight.id}/root-cause?dimension=region`, null, {
+      const res = await apiReq(baseUrl, 'GET', `/api/insights/${persistedInsight.id}/root-cause?dimension=region&allowFallback=true`, null, {
         Authorization: `Bearer ${tokenAdminA}`
       });
       assert.strictEqual(res.statusCode, 200);
