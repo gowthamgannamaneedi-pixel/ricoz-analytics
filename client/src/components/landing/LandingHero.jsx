@@ -26,8 +26,7 @@ import {
   Calculator
 } from 'lucide-react';
 import { useCounter } from './useScrollAnimation';
-
-const Hero3DCanvas = React.lazy(() => import('./Hero3DCanvas'));
+import Hero3DCanvas from './Hero3DCanvas';
 
 export default function LandingHero({ onOpenDemo }) {
   const [activeTab, setActiveTab] = useState('executive');
@@ -92,10 +91,8 @@ export default function LandingHero({ onOpenDemo }) {
       onMouseMove={handleMouseMove}
       className="relative pt-10 pb-20 md:pt-16 md:pb-32 overflow-hidden bg-gradient-to-b from-white via-slate-50/70 to-white dark:from-[#0B0F19] dark:via-slate-900/60 dark:to-[#0B0F19] transition-colors duration-200"
     >
-      {/* Three.js Interactive 3D Background Canvas (Lazy-loaded) */}
-      <React.Suspense fallback={null}>
-        <Hero3DCanvas />
-      </React.Suspense>
+      {/* Three.js Interactive 3D Background Canvas (Original Design) */}
+      <Hero3DCanvas />
 
       {/* Architectural Grid */}
       <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">

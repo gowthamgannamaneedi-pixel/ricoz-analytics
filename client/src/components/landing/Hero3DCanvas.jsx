@@ -2,10 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 /**
- * Hero3DCanvas — Architectural 3D Spatial Canvas for RicozAnalytics
- * Renders an enterprise spatial telemetry field with crisp data nodes,
- * connecting constellation vectors, and subtle cursor-responsive depth.
- * Minimal, sophisticated, and zero CPU waste (pauses via IntersectionObserver).
+ * Hero3DCanvas — Original High-Performance Three.js 3D Background Scene
+ * Renders the original 3D particle lattice and floating geometric wireframe data rings
+ * that respond gracefully to cursor movement and continuous rotation.
+ * Automatically pauses when offscreen or tab hidden for zero CPU waste.
  */
 export default function Hero3DCanvas() {
   const containerRef = useRef(null);
@@ -16,20 +16,20 @@ export default function Hero3DCanvas() {
     const container = containerRef.current;
     if (!container) return;
 
-    // Accessibility: respects reduced-motion preference
+    // Check prefers-reduced-motion
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return;
     }
 
-    // 1. Scene, Camera, WebGL Renderer with graceful fallback
+    // 1. Scene, Camera, Renderer
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
-      55,
+      60,
       container.clientWidth / container.clientHeight,
       0.1,
       1000
     );
-    camera.position.z = 80;
+    camera.position.z = 85;
 
     let renderer;
     try {
@@ -39,7 +39,7 @@ export default function Hero3DCanvas() {
         powerPreference: 'high-performance',
       });
     } catch (e) {
-      console.warn('WebGL context not available for 3D background', e);
+      console.warn('WebGL not supported for 3D background', e);
       return;
     }
 
@@ -48,133 +48,119 @@ export default function Hero3DCanvas() {
     renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
-    // Create a smooth circular sprite texture to avoid harsh square fragments
-    const createCircleTexture = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 64;
-      canvas.height = 64;
-      const ctx = canvas.getContext('2d');
-      const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 30);
-      gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-      gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.85)');
-      gradient.addColorStop(0.9, 'rgba(255, 255, 255, 0.2)');
-      gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(32, 32, 30, 0, Math.PI * 2);
-      ctx.fill();
-      return new THREE.CanvasTexture(canvas);
-    };
-    const circleTexture = createCircleTexture();
-
-    // 2. Data Nodes (Precise Vector Points)
-    const nodeCount = isMobile ? 70 : 130;
+    // 2. Interactive 3D Particle Cloud & Data Network
+    const particleCount = isMobile ? 140 : 300;
     const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(nodeCount * 3);
-    const colors = new Float32Array(nodeCount * 3);
+    const positions = new Float32Array(particleCount * 3);
+    const colors = new Float32Array(particleCount * 3);
+    const scales = new Float32Array(particleCount);
 
-    const neutralSlate = new THREE.Color('#94A3B8'); // Subtle slate
-    const accentCrimson = new THREE.Color('#DC2626'); // Refined brand accent
-    const faintSlate = new THREE.Color('#CBD5E1');
+    const brandRed = new THREE.Color('#D91542');
+    const brandRose = new THREE.Color('#FB7185');
+    const brandLight = new THREE.Color('#94A3B8');
 
-    for (let i = 0; i < nodeCount; i++) {
-      const radius = 28 + Math.random() * 45;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = (Math.random() - 0.5) * Math.PI * 0.75;
+    for (let i = 0; i < particleCount; i++) {
+      // Cylindrical / spherical cloud spread
+      const u = Math.random();
+      const v = Math.random();
+      const theta = u * 2.0 * Math.PI;
+      const phi = Math.acos(2.0 * v - 1.0);
+      const r = Math.cbrt(Math.random()) * 65;
 
-      let x = radius * Math.cos(theta) * Math.cos(phi);
-      let y = radius * Math.sin(phi) * 0.65;
-      let z = radius * Math.sin(theta) * Math.cos(phi) * 0.7;
+      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta) * 0.6; // Flatter disk
+      positions[i * 3 + 2] = r * Math.cos(phi) * 0.7;
 
-      // Keep central text corridor clear so headline and subtext are 100% readable
-      if (Math.abs(x) < 32 && Math.abs(y) < 22) {
-        x = (x >= 0 ? 1 : -1) * (34 + Math.random() * 22);
+      // Color distribution: 60% neutral light gray/slate, 40% vibrant crimson/rose
+      const colorChoice = Math.random();
+      let c;
+      if (colorChoice > 0.6) {
+        c = brandRed;
+      } else if (colorChoice > 0.35) {
+        c = brandRose;
+      } else {
+        c = brandLight;
       }
 
-      positions[i * 3] = x;
-      positions[i * 3 + 1] = y;
-      positions[i * 3 + 2] = z;
-
-      // 85% quiet architectural slate, 15% focal crimson
-      const c = Math.random() > 0.85 ? accentCrimson : (Math.random() > 0.5 ? neutralSlate : faintSlate);
       colors[i * 3] = c.r;
       colors[i * 3 + 1] = c.g;
       colors[i * 3 + 2] = c.b;
+
+      scales[i] = Math.random() * 2.5 + 1.2;
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute('scale', new THREE.BufferAttribute(scales, 1));
 
-    // Sharp anti-aliased circular node material
-    const pointMaterial = new THREE.PointsMaterial({
-      size: isMobile ? 3.0 : 4.0,
-      map: circleTexture,
+    // Custom circular soft glow sprite material
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.85)');
+    gradient.addColorStop(0.7, 'rgba(217, 21, 66, 0.45)');
+    gradient.addColorStop(1, 'rgba(217, 21, 66, 0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 64, 64);
+
+    const texture = new THREE.CanvasTexture(canvas);
+
+    const material = new THREE.PointsMaterial({
+      size: 3.2,
       vertexColors: true,
+      map: texture,
       transparent: true,
-      opacity: 0.65,
-      alphaTest: 0.02,
+      opacity: 0.9,
+      blending: THREE.NormalBlending,
       depthWrite: false,
     });
 
-    const nodeCloud = new THREE.Points(geometry, pointMaterial);
-    scene.add(nodeCloud);
+    const particles = new THREE.Points(geometry, material);
+    scene.add(particles);
 
-    // 3. Subtle Architectural Connection Lines (Constellation Network)
-    const lineMaterial = new THREE.LineBasicMaterial({
-      color: 0x94A3B8,
+    // 3. Floating Geometric Wireframe Rings (Original Ingestion Loop)
+    const ringGeo = new THREE.TorusGeometry(38, 0.3, 16, 100);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0xd91542,
+      wireframe: true,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.25,
     });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2.5;
+    scene.add(ring);
 
-    const linePositions = [];
-    const maxDistance = 18;
-    for (let i = 0; i < nodeCount; i++) {
-      for (let j = i + 1; j < nodeCount; j++) {
-        const dx = positions[i * 3] - positions[j * 3];
-        const dy = positions[i * 3 + 1] - positions[j * 3 + 1];
-        const dz = positions[i * 3 + 2] - positions[j * 3 + 2];
-        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        if (dist < maxDistance) {
-          linePositions.push(
-            positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2],
-            positions[j * 3], positions[j * 3 + 1], positions[j * 3 + 2]
-          );
-        }
-      }
-    }
-
-    const lineGeometry = new THREE.BufferGeometry();
-    lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
-    const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
-    scene.add(lines);
-
-    // 4. Subtle Orbital Trajectory Ring
-    const orbitGeo = new THREE.RingGeometry(38, 38.3, 80);
-    const orbitMat = new THREE.MeshBasicMaterial({
-      color: 0xDC2626,
-      side: THREE.DoubleSide,
+    const ringGeo2 = new THREE.TorusGeometry(48, 0.2, 16, 100);
+    const ringMat2 = new THREE.MeshBasicMaterial({
+      color: 0x94a3b8,
+      wireframe: true,
       transparent: true,
-      opacity: 0.15,
+      opacity: 0.18,
     });
-    const orbit = new THREE.Mesh(orbitGeo, orbitMat);
-    orbit.rotation.x = Math.PI / 2.3;
-    scene.add(orbit);
+    const ring2 = new THREE.Mesh(ringGeo2, ringMat2);
+    ring2.rotation.x = -Math.PI / 3;
+    scene.add(ring2);
 
-    // 5. Cursor Parallax
+    // 4. Mouse movement listener for smooth parallax tilt
     const handleMouseMove = (e) => {
       const { innerWidth, innerHeight } = window;
       mouseRef.current.targetX = (e.clientX / innerWidth) * 2 - 1;
       mouseRef.current.targetY = -(e.clientY / innerHeight) * 2 + 1;
     };
+
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
-    // 6. Resize & Visibility
+    // 5. Visibility and resize handlers
     const handleResize = () => {
       if (!container || !renderer) return;
       camera.aspect = container.clientWidth / container.clientHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(container.clientWidth, container.clientHeight);
     };
+
     window.addEventListener('resize', handleResize);
 
     const observer = new IntersectionObserver(([entry]) => {
@@ -187,31 +173,33 @@ export default function Hero3DCanvas() {
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // 7. Render Loop
+    // 6. Animation loop with requestAnimationFrame
     let animId;
     let clock = new THREE.Clock();
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
+
       if (!isVisibleRef.current) return;
 
       const elapsedTime = clock.getElapsedTime();
 
-      // Smooth coordinate interpolation
-      mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.04;
-      mouseRef.current.y += (mouseRef.current.targetY - mouseRef.current.y) * 0.04;
+      // Smooth lerp mouse coordinates
+      mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.05;
+      mouseRef.current.y += (mouseRef.current.targetY - mouseRef.current.y) * 0.05;
 
-      // Restrained architectural rotation
-      nodeCloud.rotation.y = elapsedTime * 0.02 + mouseRef.current.x * 0.15;
-      nodeCloud.rotation.x = Math.sin(elapsedTime * 0.02) * 0.05 + mouseRef.current.y * 0.1;
+      // Gentle continuous rotation
+      particles.rotation.y = elapsedTime * 0.04 + mouseRef.current.x * 0.25;
+      particles.rotation.x = Math.sin(elapsedTime * 0.03) * 0.1 + mouseRef.current.y * 0.2;
 
-      lines.rotation.y = nodeCloud.rotation.y;
-      lines.rotation.x = nodeCloud.rotation.x;
+      ring.rotation.z = elapsedTime * 0.06;
+      ring.rotation.y = elapsedTime * 0.03 + mouseRef.current.x * 0.15;
 
-      orbit.rotation.z = elapsedTime * 0.03;
+      ring2.rotation.z = -elapsedTime * 0.04;
 
-      camera.position.x = mouseRef.current.x * 4;
-      camera.position.y = mouseRef.current.y * 3.5;
+      // Subtle camera tilt
+      camera.position.x = mouseRef.current.x * 6;
+      camera.position.y = mouseRef.current.y * 5;
       camera.lookAt(0, 0, 0);
 
       renderer.render(scene, camera);
@@ -229,12 +217,12 @@ export default function Hero3DCanvas() {
         container.removeChild(renderer.domElement);
       }
       geometry.dispose();
-      pointMaterial.dispose();
-      circleTexture.dispose();
-      lineGeometry.dispose();
-      lineMaterial.dispose();
-      orbitGeo.dispose();
-      orbitMat.dispose();
+      material.dispose();
+      ringGeo.dispose();
+      ringMat.dispose();
+      ringGeo2.dispose();
+      ringMat2.dispose();
+      texture.dispose();
       if (renderer) renderer.dispose();
     };
   }, []);
@@ -242,8 +230,8 @@ export default function Hero3DCanvas() {
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 pointer-events-none -z-10 overflow-hidden"
-      style={{ opacity: 0.7 }}
+      className="absolute inset-0 pointer-events-none z-0 overflow-hidden"
+      style={{ opacity: 0.85 }}
       aria-hidden="true"
     />
   );
