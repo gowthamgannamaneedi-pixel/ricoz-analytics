@@ -63,11 +63,11 @@ export default function StorytellingShowcase({ onOpenDemo }) {
       tag: 'CONNECT',
       title: 'Connect Business Data Sources',
       subtitle: 'Bring together production databases, APIs, and spreadsheet files into one workspace.',
-      description: 'Connect PostgreSQL, MongoDB, REST API webhooks, and CSV/Excel files with direct schema introspection. RicozAnalytics reads tables, infers column datatypes, and prepares your data for analysis without complex pipelines.',
+      description: 'Connect PostgreSQL, MongoDB, REST API endpoints, and CSV/JSON datasets with direct schema introspection. RicozAnalytics reads tables, infers column datatypes, and prepares your data for analysis without complex pipelines.',
       highlights: [
         'Direct PostgreSQL and MongoDB database connectors',
         'REST API JSON payload ingestion with API key and Bearer auth',
-        'Drag-and-drop CSV and Excel spreadsheet parsing'
+        'Drag-and-drop CSV & JSON dataset ingestion (with Excel XLSX export)'
       ],
       badge: 'Data Ingestion'
     },

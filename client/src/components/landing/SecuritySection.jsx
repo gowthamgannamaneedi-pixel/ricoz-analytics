@@ -19,7 +19,6 @@ import {
   Globe
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Interactive3DCard from './Interactive3DCard';
 
 export default function SecuritySection({ onOpenDemo }) {
   const [activeTab, setActiveTab] = useState('security'); // 'security' | 'collaboration'
@@ -73,13 +72,12 @@ export default function SecuritySection({ onOpenDemo }) {
   return (
     <section 
       id="security" 
-      className="py-20 lg:py-28 bg-slate-50/70 dark:bg-[#0B0F19] transition-colors duration-200 border-t border-slate-200/80 dark:border-slate-800"
-      style={{ perspective: '1200px' }}
+      className="py-14 lg:py-20 bg-slate-50/70 dark:bg-[#0B0F19] transition-colors duration-200 border-t border-slate-200/80 dark:border-slate-800"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider mb-4 shadow-2xs">
+        <div className="text-center max-w-3xl mx-auto mb-10 lg:mb-12">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider mb-3 shadow-2xs">
             <ShieldCheck size={14} className="text-red-600 dark:text-red-400" />
             <span>Platform Governance &amp; Security</span>
           </div>
@@ -91,12 +89,12 @@ export default function SecuritySection({ onOpenDemo }) {
             </span>
           </h2>
 
-          <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+          <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto">
             Protect your business analytics with organization-level data tenancy, encrypted credentials at rest, and audit trails.
           </p>
 
           {/* Toggle between Security & Collaboration */}
-          <div className="mt-8 inline-flex p-1.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs">
+          <div className="mt-7 inline-flex p-1.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs">
             <button
               type="button"
               onClick={() => setActiveTab('security')}
@@ -122,47 +120,32 @@ export default function SecuritySection({ onOpenDemo }) {
           </div>
         </div>
 
-        {/* Tab 1: Enterprise Security Grid with 3D Cards */}
+        {/* Tab 1: Enterprise Security Grid */}
         {activeTab === 'security' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {securityCards.map((card, i) => {
               const IconComponent = card.icon;
               return (
-                <Interactive3DCard
+                <div
                   key={i}
-                  maxTilt={12}
-                  scale={1.03}
-                  glare={true}
-                  className="p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-red-400 dark:hover:border-red-800 transition-colors"
+                  className="p-6 sm:p-7 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 flex flex-col justify-between transition-all duration-200"
                 >
                   <div>
-                    <div 
-                      className={`w-12 h-12 rounded-2xl ${card.iconColor} flex items-center justify-center mb-4 shadow-xs`}
-                      style={{ transform: 'translateZ(20px)' }}
-                    >
+                    <div className={`w-12 h-12 rounded-2xl ${card.iconColor} flex items-center justify-center mb-4 shadow-xs`}>
                       <IconComponent size={24} />
                     </div>
-                    <h3 
-                      className="text-lg font-bold text-slate-900 dark:text-white mb-2"
-                      style={{ transform: 'translateZ(15px)' }}
-                    >
+                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-2">
                       {card.title}
                     </h3>
-                    <p 
-                      className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-4"
-                      style={{ transform: 'translateZ(10px)' }}
-                    >
+                    <p className="text-sm sm:text-[15px] text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
                       {card.desc}
                     </p>
                   </div>
-                  <div 
-                    className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
-                    style={{ transform: 'translateZ(15px)' }}
-                  >
-                    <CheckCircle2 size={14} />
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 size={16} />
                     <span>{card.status}</span>
                   </div>
-                </Interactive3DCard>
+                </div>
               );
             })}
           </div>

@@ -12,7 +12,6 @@ import {
   Layers,
   Database
 } from 'lucide-react';
-import Interactive3DCard from './Interactive3DCard';
 
 export default function PricingSection({ onOpenDemo }) {
   const [billingCycle, setBillingCycle] = useState('annual'); // 'monthly' | 'annual'
@@ -97,13 +96,12 @@ export default function PricingSection({ onOpenDemo }) {
   return (
     <section 
       id="pricing" 
-      className="py-20 lg:py-28 bg-slate-50/70 dark:bg-[#0B0F19] border-t border-slate-200/80 dark:border-slate-800 transition-colors duration-200 relative"
-      style={{ perspective: '1400px' }}
+      className="py-14 lg:py-20 bg-slate-50/70 dark:bg-[#0B0F19] border-t border-slate-200/80 dark:border-slate-800 transition-colors duration-200 relative"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider mb-4 shadow-2xs">
+        <div className="text-center max-w-3xl mx-auto mb-10 lg:mb-12">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider mb-3 shadow-2xs">
             <Sparkles size={14} className="text-red-600 dark:text-red-400" />
             <span>Transparent Enterprise Pricing</span>
           </div>
@@ -115,12 +113,12 @@ export default function PricingSection({ onOpenDemo }) {
             </span>
           </h2>
 
-          <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+          <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto">
             Every plan includes our 14-day full-featured trial. Zero setup fees. No credit card required to start.
           </p>
 
-          {/* Billing Cycle Switcher with spring animation */}
-          <div className="mt-8 inline-flex items-center p-1.5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 shadow-xs">
+          {/* Billing Cycle Switcher */}
+          <div className="mt-7 inline-flex items-center p-1.5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 shadow-xs">
             <button
               type="button"
               onClick={() => setBillingCycle('monthly')}
@@ -153,57 +151,50 @@ export default function PricingSection({ onOpenDemo }) {
           </div>
         </div>
 
-        {/* Pricing Cards Grid with Interactive 3D Physics Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+        {/* Pricing Cards Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch">
           {plans.map((plan) => {
             const isCustom = plan.monthlyPrice === 'Custom';
             const price = billingCycle === 'annual' ? plan.annualPrice : plan.monthlyPrice;
             const billingSubtext = billingCycle === 'annual' ? plan.annualBillingNote : plan.monthlyBillingNote;
 
             return (
-              <Interactive3DCard
+              <div
                 key={plan.id}
-                maxTilt={10}
-                scale={plan.popular ? 1.04 : 1.02}
-                glare={true}
-                overflowHidden={false}
-                className={`flex flex-col rounded-3xl transition-all duration-300 ${
+                className={`relative flex flex-col rounded-3xl transition-all duration-200 ${
                   plan.popular
-                    ? 'bg-white dark:bg-slate-900 border-2 border-red-600 dark:border-red-500 shadow-2xl shadow-red-600/15 lg:-translate-y-2'
-                    : 'bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-slate-300 dark:hover:border-slate-700'
+                    ? 'bg-white dark:bg-slate-900 border-2 border-red-600 dark:border-red-500 shadow-xl shadow-red-600/10'
+                    : 'bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md'
                 }`}
               >
                 {/* Popular Pill */}
                 {plan.popular && (
-                  <div 
-                    className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-red-600 text-white text-[11px] font-black uppercase tracking-wider shadow-lg shadow-red-600/40 flex items-center gap-1.5 z-30"
-                    style={{ transform: 'translateZ(30px) translateX(-50%)' }}
-                  >
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-red-600 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-red-600/40 flex items-center gap-1.5 z-30">
                     <Sparkles size={12} />
                     <span>{plan.badge}</span>
                   </div>
                 )}
 
-                <div className="p-7 sm:p-9 flex-1 flex flex-col justify-between" style={{ transformStyle: 'preserve-3d' }}>
+                <div className="p-7 sm:p-8 flex-1 flex flex-col justify-between">
                   <div>
                     {/* Tier Title & Badge */}
-                    <div className="flex items-center justify-between gap-3 mb-2" style={{ transform: 'translateZ(20px)' }}>
-                      <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
                         {plan.name}
                       </h3>
                       {!plan.popular && (
-                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200/60 dark:border-slate-700/60">
+                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200/60 dark:border-slate-700/60">
                           {plan.badge}
                         </span>
                       )}
                     </div>
 
-                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 min-h-[40px] leading-relaxed mb-6" style={{ transform: 'translateZ(10px)' }}>
+                    <p className="text-sm sm:text-[15px] text-slate-600 dark:text-slate-300 min-h-[44px] leading-relaxed mb-6">
                       {plan.description}
                     </p>
 
-                    {/* Price Tag (Layer +25px) */}
-                    <div className="mb-6 pb-6 border-b border-slate-100 dark:border-slate-800" style={{ transform: 'translateZ(25px)' }}>
+                    {/* Price Tag */}
+                    <div className="mb-6 pb-6 border-b border-slate-100 dark:border-slate-800">
                       <div className="flex items-baseline gap-1.5">
                         <span className={`text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight ${isCustom ? 'font-sans' : 'font-mono'}`}>
                           {price}
@@ -214,20 +205,20 @@ export default function PricingSection({ onOpenDemo }) {
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
+                      <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
                         {billingSubtext}
                       </div>
                     </div>
 
-                    {/* CTA Button (Layer +30px) */}
-                    <div className="mb-8" style={{ transform: 'translateZ(30px)' }}>
+                    {/* CTA Button */}
+                    <div className="mb-8">
                       {plan.ctaLink ? (
                         <Link
                           to={plan.ctaLink}
                           className={`w-full py-3.5 px-6 rounded-xl font-bold text-sm inline-flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer ${
                             plan.popular
-                              ? 'bg-red-600 hover:bg-red-700 text-white shadow-xl shadow-red-600/30 hover:shadow-red-600/50 hover:scale-102'
-                              : 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 hover:scale-102'
+                              ? 'bg-red-600 hover:bg-red-700 text-white shadow-xl shadow-red-600/30 hover:shadow-red-600/50'
+                              : 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700'
                           }`}
                         >
                           <span>{plan.ctaText}</span>
@@ -237,7 +228,7 @@ export default function PricingSection({ onOpenDemo }) {
                         <button
                           type="button"
                           onClick={plan.ctaAction}
-                          className="w-full py-3.5 px-6 rounded-xl font-bold text-sm inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 transition-all duration-200 cursor-pointer hover:scale-102"
+                          className="w-full py-3.5 px-6 rounded-xl font-bold text-sm inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 transition-all duration-200 cursor-pointer"
                         >
                           <Building2 size={16} />
                           <span>{plan.ctaText}</span>
@@ -246,11 +237,11 @@ export default function PricingSection({ onOpenDemo }) {
                     </div>
 
                     {/* Feature List */}
-                    <div className="space-y-3.5" style={{ transform: 'translateZ(15px)' }}>
-                      <div className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    <div className="space-y-3.5">
+                      <div className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                         Included Capabilities:
                       </div>
-                      <ul className="space-y-3 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                      <ul className="space-y-3 text-sm sm:text-[15px] text-slate-600 dark:text-slate-300">
                         {plan.features.map((feat, i) => (
                           <li key={i} className="flex items-start gap-2.5">
                             <div className={`mt-0.5 rounded-full p-0.5 shrink-0 ${
@@ -258,7 +249,7 @@ export default function PricingSection({ onOpenDemo }) {
                                 ? 'bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400' 
                                 : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
                             }`}>
-                              <Check size={13} strokeWidth={3} />
+                              <Check size={14} strokeWidth={3} />
                             </div>
                             <span className="leading-snug">{feat}</span>
                           </li>
@@ -267,7 +258,7 @@ export default function PricingSection({ onOpenDemo }) {
                     </div>
                   </div>
                 </div>
-              </Interactive3DCard>
+              </div>
             );
           })}
         </div>

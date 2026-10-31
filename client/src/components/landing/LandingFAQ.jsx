@@ -8,7 +8,7 @@ export default function LandingFAQ() {
   const faqs = [
     {
       q: 'How quickly can our team connect existing databases and see live dashboards?',
-      a: 'Most organizations are fully operational in under 3 minutes. With read-only credentials, you can connect PostgreSQL, Supabase, MongoDB, REST APIs, or upload CSV and Excel (XLSX) datasets. RicozAnalytics automatically scans your schema, infers column datatypes, discovers relationships, and builds starter executive KPI widgets without writing ETL pipelines.'
+      a: 'Most organizations are fully operational in under 3 minutes. With read-only credentials, you can connect PostgreSQL, Supabase, MongoDB, REST APIs, or upload CSV and JSON datasets (with Excel XLSX export). RicozAnalytics automatically scans your schema, infers column datatypes, discovers relationships, and builds starter executive KPI widgets without writing ETL pipelines.'
     },
     {
       q: 'Does RicozAnalytics train public AI models on our proprietary business data?',
@@ -47,12 +47,12 @@ export default function LandingFAQ() {
   return (
     <section 
       id="faq" 
-      className="py-20 lg:py-28 bg-white dark:bg-[#0B0F19] border-t border-slate-200/80 dark:border-slate-800 transition-colors duration-200"
+      className="py-14 lg:py-20 bg-white dark:bg-[#0B0F19] border-t border-slate-200/80 dark:border-slate-800 transition-colors duration-200"
     >
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider mb-4 shadow-2xs">
+        <div className="text-center max-w-3xl mx-auto mb-10">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider mb-3 shadow-2xs">
             <HelpCircle size={14} className="text-red-600 dark:text-red-400" />
             <span>Frequently Asked Questions</span>
           </div>

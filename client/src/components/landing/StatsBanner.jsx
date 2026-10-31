@@ -41,44 +41,28 @@ export default function StatsBanner() {
     <section 
       ref={bannerRef}
       id="stats"
-      className="border-y border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B0F19] py-12 lg:py-16 transition-colors duration-200 overflow-hidden relative"
-      style={{ perspective: '1200px' }}
+      className="border-y border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B0F19] py-10 lg:py-14 transition-colors duration-200 overflow-hidden relative"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {stats.map((stat) => (
-            <Interactive3DCard
+            <div
               key={stat.label}
-              maxTilt={10}
-              scale={1.03}
-              glare={true}
-              className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 flex flex-col items-center text-center shadow-xs hover:border-red-400 dark:hover:border-red-800 transition-colors"
+              className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 flex flex-col items-center text-center shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200"
             >
-              <div 
-                className="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center mb-3 shadow-2xs"
-                style={{ transform: 'translateZ(20px)' }}
-              >
+              <div className="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center mb-3 shadow-2xs">
                 <stat.icon size={22} />
               </div>
-              <div 
-                className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-1"
-                style={{ transform: 'translateZ(25px)' }}
-              >
+              <div className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-1">
                 {stat.displayValue}
               </div>
-              <div 
-                className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1"
-                style={{ transform: 'translateZ(15px)' }}
-              >
+              <div className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1">
                 {stat.label}
               </div>
-              <div 
-                className="text-xs text-slate-500 dark:text-slate-400 max-w-[220px] leading-relaxed"
-                style={{ transform: 'translateZ(10px)' }}
-              >
+              <div className="text-xs text-slate-500 dark:text-slate-400 max-w-[220px] leading-relaxed">
                 {stat.description}
               </div>
-            </Interactive3DCard>
+            </div>
           ))}
         </div>
       </div>

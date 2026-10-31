@@ -18,7 +18,6 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Interactive3DCard from './Interactive3DCard';
 
 export default function DataIntegrationsSection({ onOpenDemo }) {
   const [activeTab, setActiveTab] = useState('cards'); // 'cards' | 'table'
@@ -100,13 +99,12 @@ export default function DataIntegrationsSection({ onOpenDemo }) {
   return (
     <section 
       id="integrations" 
-      className="py-20 lg:py-28 bg-white dark:bg-[#0B0F19] transition-colors duration-200 border-t border-slate-200 dark:border-slate-800"
-      style={{ perspective: '1200px' }}
+      className="py-14 lg:py-20 bg-white dark:bg-[#0B0F19] transition-colors duration-200 border-t border-slate-200 dark:border-slate-800"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider mb-4 shadow-2xs">
+        <div className="text-center max-w-3xl mx-auto mb-10 lg:mb-12">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider mb-3 shadow-2xs">
             <Layers size={14} className="text-red-600 dark:text-red-400" />
             <span>Verified Data Connectors</span>
           </div>
@@ -118,12 +116,12 @@ export default function DataIntegrationsSection({ onOpenDemo }) {
             </span>
           </h2>
 
-          <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-            Connect production databases, REST API endpoints, or spreadsheet exports. RicozAnalytics reads schemas, normalizes column data types, and prepares your data for instant KPI modeling.
+          <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto">
+            Connect production databases, REST API endpoints, or spreadsheet files. RicozAnalytics reads schemas, normalizes column data types, and prepares your data for instant KPI modeling.
           </p>
 
           {/* View Toggle: Visual Cards vs. Transparency Table */}
-          <div className="mt-8 inline-flex p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs">
+          <div className="mt-7 inline-flex p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs">
             <button
               type="button"
               onClick={() => setActiveTab('cards')}
@@ -151,18 +149,18 @@ export default function DataIntegrationsSection({ onOpenDemo }) {
         </div>
 
         {/* 3-Step Ingestion Architecture Workflow */}
-        <div className="mb-14 p-6 sm:p-8 rounded-3xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden relative">
+        <div className="mb-10 lg:mb-12 p-6 sm:p-8 rounded-3xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden relative">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-6 relative">
             {/* Step 1 */}
             <div className="w-full lg:w-1/4 flex flex-col items-center lg:items-start text-center lg:text-left">
-              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-red-600 dark:text-red-400 mb-1">Step 01 • Source Connection</span>
-              <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2">Connect Your Data</h4>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                Connect PostgreSQL, MongoDB, REST endpoints, or drag-and-drop CSV/Excel spreadsheets.
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-red-600 dark:text-red-400 mb-1">Step 01 • Source Connection</span>
+              <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-2">Connect Your Data</h4>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Connect PostgreSQL, MongoDB, REST endpoints, or upload CSV &amp; JSON datasets (with Excel XLSX export).
               </p>
               <div className="mt-3 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-                  <CheckCircle2 size={11} /> Read-only Credentials
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                  <CheckCircle2 size={13} /> Read-only Credentials
                 </span>
               </div>
             </div>
@@ -180,11 +178,11 @@ export default function DataIntegrationsSection({ onOpenDemo }) {
                   <Cpu size={16} />
                 </div>
                 <div>
-                  <h4 className="text-sm font-black text-slate-900 dark:text-white">Ricoz Ingestion Engine</h4>
-                  <div className="text-[10px] text-slate-500 dark:text-slate-400">Schema Introspection &amp; Normalization</div>
+                  <h4 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">Ricoz Ingestion Engine</h4>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Schema Introspection &amp; Normalization</div>
                 </div>
               </div>
-              <ul className="text-xs space-y-1.5 text-slate-600 dark:text-slate-300 pt-2 border-t border-slate-100 dark:border-slate-700 font-mono">
+              <ul className="text-xs sm:text-sm space-y-1.5 text-slate-600 dark:text-slate-300 pt-2 border-t border-slate-100 dark:border-slate-700 font-mono">
                 <li className="flex items-center justify-between">
                   <span className="font-sans">Schema Discovery</span>
                   <span className="text-emerald-600 dark:text-emerald-400 font-bold">Automatic</span>
@@ -208,14 +206,14 @@ export default function DataIntegrationsSection({ onOpenDemo }) {
 
             {/* Step 3 */}
             <div className="w-full lg:w-1/4 flex flex-col items-center lg:items-end text-center lg:text-right">
-              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">Step 03 • Actionable Analytics</span>
-              <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2">Unified Dashboard Views</h4>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">Step 03 • Actionable Analytics</span>
+              <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-2">Unified Dashboard Views</h4>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                 Build executive cockpits, schedule automated PDF digests, and monitor operational KPIs.
               </p>
               <div className="mt-3 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-2xs">
-                  <ShieldCheck size={11} className="text-emerald-500" /> Organization Tenancy
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-2xs">
+                  <ShieldCheck size={13} className="text-emerald-500" /> Organization Tenancy
                 </span>
               </div>
             </div>
@@ -226,49 +224,43 @@ export default function DataIntegrationsSection({ onOpenDemo }) {
         {activeTab === 'cards' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
             {verifiedConnectors.map((c) => (
-              <Interactive3DCard
+              <div
                 key={c.name}
-                maxTilt={12}
-                scale={1.03}
-                glare={true}
-                className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-red-400 dark:hover:border-red-800 shadow-sm transition-all group flex flex-col justify-between"
+                className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs hover:shadow-md transition-all duration-200 group flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-3" style={{ transform: 'translateZ(15px)' }}>
+                  <div className="flex items-center justify-between mb-3">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shadow-xs ${c.iconBg}`}>
                       <Database size={20} />
                     </div>
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    <span className="text-xs font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                       {c.badge}
                     </span>
                   </div>
 
-                  <h3 
-                    className="text-base font-bold text-slate-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors"
-                    style={{ transform: 'translateZ(20px)' }}
-                  >
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
                     {c.name}
                   </h3>
-                  <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                  <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
                     {c.type}
                   </div>
 
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4" style={{ transform: 'translateZ(10px)' }}>
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
                     {c.description}
                   </p>
                 </div>
 
-                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]" style={{ transform: 'translateZ(15px)' }}>
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-1 text-slate-600 dark:text-slate-300 font-medium">
-                    <Clock size={12} className="text-slate-400" />
+                    <Clock size={13} className="text-slate-400" />
                     <span>{c.speed}</span>
                   </div>
                   <div className="flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
-                    <CheckCircle2 size={13} className="text-emerald-500" />
+                    <CheckCircle2 size={14} className="text-emerald-500" />
                     <span>{c.status}</span>
                   </div>
                 </div>
-              </Interactive3DCard>
+              </div>
             ))}
           </div>
         )}

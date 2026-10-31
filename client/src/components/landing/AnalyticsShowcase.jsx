@@ -19,20 +19,6 @@ export default function AnalyticsShowcase() {
   const [activeChart, setActiveChart] = useState('revenue');
   const [selectedTimeframe, setSelectedTimeframe] = useState('H1 FY26');
   const [hoveredIndex, setHoveredIndex] = useState(null);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const containerRef = useRef(null);
-
-  const handleMouseMove = (e) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setTilt({ x: -y * 6, y: x * 6 });
-  };
-
-  const handleMouseLeave = () => {
-    setTilt({ x: 0, y: 0 });
-  };
 
   // Revenue vs Target Data
   const revenuePoints = [
@@ -63,16 +49,12 @@ export default function AnalyticsShowcase() {
   return (
     <section 
       id="analytics" 
-      ref={containerRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="py-20 lg:py-28 bg-slate-50/60 dark:bg-[#0B0F19] transition-colors duration-200 border-t border-slate-200/80 dark:border-slate-800"
-      style={{ perspective: '1400px' }}
+      className="py-14 lg:py-20 bg-slate-50/60 dark:bg-[#0B0F19] transition-colors duration-200 border-t border-slate-200/80 dark:border-slate-800"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider mb-4 shadow-2xs">
+        <div className="text-center max-w-3xl mx-auto mb-10 lg:mb-12">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider mb-3 shadow-2xs">
             <BarChart3 size={14} className="text-red-600 dark:text-red-400" />
             <span>Interactive Data Studio</span>
           </div>
@@ -84,18 +66,18 @@ export default function AnalyticsShowcase() {
             </span>
           </h2>
 
-          <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+          <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto">
             Move beyond static PDF printouts. Interactively explore franchise revenue trajectories, profit variances, and SKU velocity with sub-second recalculation.
           </p>
 
           {/* Visualization Mode Selector */}
-          <div className="mt-8 inline-flex flex-wrap justify-center p-1.5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 shadow-xs gap-1">
+          <div className="mt-7 inline-flex flex-wrap justify-center p-1.5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 shadow-xs gap-1">
             <button
               type="button"
               onClick={() => setActiveChart('revenue')}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer ${
                 activeChart === 'revenue'
-                  ? 'bg-red-600 text-white shadow-lg shadow-red-600/30 scale-105'
+                  ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -107,7 +89,7 @@ export default function AnalyticsShowcase() {
               onClick={() => setActiveChart('regional')}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer ${
                 activeChart === 'regional'
-                  ? 'bg-red-600 text-white shadow-lg shadow-red-600/30 scale-105'
+                  ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -119,7 +101,7 @@ export default function AnalyticsShowcase() {
               onClick={() => setActiveChart('category')}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer ${
                 activeChart === 'category'
-                  ? 'bg-red-600 text-white shadow-lg shadow-red-600/30 scale-105'
+                  ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -131,7 +113,7 @@ export default function AnalyticsShowcase() {
               onClick={() => setActiveChart('telemetry')}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer ${
                 activeChart === 'telemetry'
-                  ? 'bg-red-600 text-white shadow-lg shadow-red-600/30 scale-105'
+                  ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -141,20 +123,10 @@ export default function AnalyticsShowcase() {
           </div>
         </div>
 
-        {/* Visual Showcase Stage Container with 3D Mouse Parallax */}
-        <div 
-          className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-2xl overflow-hidden transition-transform duration-300 ease-out"
-          style={{
-            transform: `rotateX(${tilt.x.toFixed(2)}deg) rotateY(${tilt.y.toFixed(2)}deg)`,
-            transformStyle: 'preserve-3d',
-            willChange: 'transform',
-          }}
-        >
+        {/* Visual Showcase Stage Container */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xl overflow-hidden transition-colors">
           {/* Top Stage Control Header */}
-          <div 
-            className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 bg-slate-50/50 dark:bg-slate-900/50"
-            style={{ transform: 'translateZ(15px)' }}
-          >
+          <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 bg-slate-50/50 dark:bg-slate-900/50">
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
               <div className="text-xs font-mono font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
@@ -182,10 +154,10 @@ export default function AnalyticsShowcase() {
           </div>
 
           {/* Interactive Chart Canvas Body */}
-          <div className="p-6 sm:p-10" style={{ transformStyle: 'preserve-3d' }}>
+          <div className="p-6 sm:p-10">
             {/* View 1: Revenue Trajectory & Target Pacing */}
             {activeChart === 'revenue' && (
-              <div style={{ transform: 'translateZ(25px)' }}>
+              <div>
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                   <div>
                     <h3 className="text-lg font-black text-slate-900 dark:text-white">
@@ -297,7 +269,7 @@ export default function AnalyticsShowcase() {
 
             {/* View 2: Franchise Regional Distribution */}
             {activeChart === 'regional' && (
-              <div style={{ transform: 'translateZ(25px)' }}>
+              <div>
                 <div className="mb-6">
                   <h3 className="text-lg font-black text-slate-900 dark:text-white">
                     Regional Franchise Network Breakdown (48 Enterprise Hubs)
@@ -345,7 +317,7 @@ export default function AnalyticsShowcase() {
 
             {/* View 3: Product & Channel Mix */}
             {activeChart === 'category' && (
-              <div style={{ transform: 'translateZ(25px)' }}>
+              <div>
                 <div className="mb-6">
                   <h3 className="text-lg font-black text-slate-900 dark:text-white">
                     Revenue Contribution by Business Channel
@@ -401,7 +373,7 @@ export default function AnalyticsShowcase() {
 
             {/* View 4: Ingestion Stream Telemetry */}
             {activeChart === 'telemetry' && (
-              <div style={{ transform: 'translateZ(25px)' }}>
+              <div>
                 <div className="mb-6">
                   <h3 className="text-lg font-black text-slate-900 dark:text-white">
                     Live Event Ingestion Waveform &amp; Ingestion Cluster Health

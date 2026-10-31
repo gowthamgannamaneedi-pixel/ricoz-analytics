@@ -91,7 +91,6 @@ export default function LandingHero({ onOpenDemo }) {
       ref={heroRef}
       onMouseMove={handleMouseMove}
       className="relative pt-10 pb-20 md:pt-16 md:pb-32 overflow-hidden bg-gradient-to-b from-white via-slate-50/70 to-white dark:from-[#0B0F19] dark:via-slate-900/60 dark:to-[#0B0F19] transition-colors duration-200"
-      style={{ perspective: '1400px' }}
     >
       {/* Three.js Interactive 3D Background Canvas (Lazy-loaded) */}
       <React.Suspense fallback={null}>
@@ -179,22 +178,10 @@ export default function LandingHero({ onOpenDemo }) {
           </div>
         </div>
 
-        {/* ─── 3D INTERACTIVE DASHBOARD CONTAINER ──────────────── */}
-        <div 
-          className="relative mt-8 max-w-6xl mx-auto transition-transform duration-200 ease-out"
-          style={{
-            transform: `rotateX(${tiltX.toFixed(2)}deg) rotateY(${tiltY.toFixed(2)}deg)`,
-            transformStyle: 'preserve-3d',
-            willChange: 'transform',
-          }}
-        >
-          {/* Floating Element 1: Top Right */}
-          <div 
-            className="hidden lg:flex items-center gap-2.5 absolute -top-7 -right-6 z-40 px-4 py-2.5 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-xl text-xs font-medium text-slate-800 dark:text-slate-200 transition-transform duration-300 ease-out"
-            style={{
-              transform: `translate3d(${mousePos.normX * 24}px, ${mousePos.normY * 18}px, 60px)`,
-            }}
-          >
+        {/* ─── ENTERPRISE DASHBOARD COCKPIT CONTAINER ─────────────── */}
+        <div className="relative mt-8 max-w-6xl mx-auto">
+          {/* Floating Status Badge 1: Top Right */}
+          <div className="hidden lg:flex items-center gap-2.5 absolute -top-4 right-4 z-40 px-4 py-2 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-lg text-xs font-medium text-slate-800 dark:text-slate-200">
             <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 flex items-center justify-center shrink-0">
               <Sparkles size={15} />
             </div>
@@ -207,13 +194,8 @@ export default function LandingHero({ onOpenDemo }) {
             </div>
           </div>
 
-          {/* Floating Element 2: Bottom Left */}
-          <div 
-            className="hidden lg:flex items-center gap-2.5 absolute -bottom-6 -left-6 z-40 px-4 py-2.5 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-xl text-xs text-slate-800 dark:text-slate-200 transition-transform duration-300 ease-out"
-            style={{
-              transform: `translate3d(${-mousePos.normX * 22}px, ${-mousePos.normY * 16}px, 50px)`,
-            }}
-          >
+          {/* Floating Status Badge 2: Bottom Left */}
+          <div className="hidden lg:flex items-center gap-2.5 absolute -bottom-4 left-4 z-40 px-4 py-2 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-lg text-xs text-slate-800 dark:text-slate-200">
             <div className="w-7 h-7 rounded-lg bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400 flex items-center justify-center shrink-0">
               <Activity size={15} />
             </div>
@@ -223,16 +205,10 @@ export default function LandingHero({ onOpenDemo }) {
             </div>
           </div>
 
-          {/* Main 3D Dashboard Chassis */}
-          <div 
-            className="rounded-3xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden transition-colors"
-            style={{ transformStyle: 'preserve-3d' }}
-          >
+          {/* Main Dashboard Chassis */}
+          <div className="rounded-3xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden transition-colors">
             {/* Window Browser Titlebar */}
-            <div 
-              className="px-4 py-3 bg-slate-100 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-4"
-              style={{ transform: 'translateZ(15px)' }}
-            >
+            <div className="px-4 py-3 bg-slate-100 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-[#FF5F56]" />
                 <span className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
@@ -254,10 +230,7 @@ export default function LandingHero({ onOpenDemo }) {
             </div>
 
             {/* Dashboard Sub-Header & Controls */}
-            <div 
-              className="px-5 py-3.5 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800/70 flex flex-wrap items-center justify-between gap-3 text-xs"
-              style={{ transform: 'translateZ(25px)' }}
-            >
+            <div className="px-5 py-3.5 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800/70 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
                   <Building2 size={15} className="text-red-600 dark:text-red-500" />
@@ -305,12 +278,9 @@ export default function LandingHero({ onOpenDemo }) {
             </div>
 
             {/* Main Inside Dashboard View */}
-            <div className="p-5 sm:p-7 space-y-6" style={{ transformStyle: 'preserve-3d' }}>
+            <div className="p-5 sm:p-7 space-y-6">
               {/* 4 Realistic KPI Cards */}
-              <div 
-                className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-                style={{ transform: 'translateZ(35px)' }}
-              >
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* KPI 1: Invoiced Revenue */}
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 flex flex-col justify-between hover:border-red-400 transition-colors shadow-2xs">
                   <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-300 mb-1">
@@ -373,10 +343,7 @@ export default function LandingHero({ onOpenDemo }) {
               </div>
 
               {/* Main Chart Row */}
-              <div 
-                className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch min-h-[340px]"
-                style={{ transform: 'translateZ(30px)' }}
-              >
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch min-h-[340px]">
                 {/* VIEW 1: EXECUTIVE COCKPIT VIEW */}
                 {activeTab === 'executive' && (
                   <>

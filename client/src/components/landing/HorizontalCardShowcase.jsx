@@ -44,13 +44,13 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
       id: 'connectors',
       category: 'Data Integration',
       title: 'Multi-Source Data Connectors',
-      description: 'Connect PostgreSQL, MongoDB, REST APIs, and spreadsheet files (CSV/Excel) into a unified reporting interface without writing complex ETL pipelines.',
+      description: 'Connect PostgreSQL, MongoDB, REST APIs, and dataset files (CSV & JSON) into a unified reporting interface, with Excel XLSX export.',
       icon: Database,
       accent: 'from-blue-600 to-indigo-600',
       stats: [
         { label: 'Databases', value: 'PostgreSQL & Mongo' },
         { label: 'APIs', value: 'REST & Webhooks' },
-        { label: 'Files', value: 'CSV & Excel' }
+        { label: 'Files', value: 'CSV, JSON & XLSX' }
       ],
       features: ['Automated schema discovery', 'Credentials encrypted with AES-256-GCM', 'Multi-tenant organization isolation'],
       mockup: (
@@ -348,10 +348,10 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
             return (
               <div
                 key={card.id}
-                className="w-[85vw] sm:w-[480px] lg:w-[520px] shrink-0 rounded-3xl bg-white dark:bg-slate-900 p-6 sm:p-7 border border-slate-200 dark:border-slate-800 hover:border-red-400 dark:hover:border-slate-700 shadow-xl flex flex-col justify-between transition-transform duration-300 hover:-translate-y-1 relative overflow-hidden group text-slate-900 dark:text-slate-100"
+                className="w-[85vw] sm:w-[480px] lg:w-[520px] shrink-0 rounded-3xl bg-white dark:bg-slate-900 p-6 sm:p-7 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-lg hover:shadow-xl flex flex-col justify-between transition-all duration-200 relative overflow-hidden text-slate-900 dark:text-slate-100"
               >
                 {/* Subtle Ambient Card Gradient */}
-                <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${card.accent} opacity-5 dark:opacity-10 rounded-full blur-3xl pointer-events-none group-hover:opacity-15 transition-opacity`} />
+                <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${card.accent} opacity-5 dark:opacity-10 rounded-full blur-3xl pointer-events-none`} />
 
                 <div>
                   {/* Category Pill & Icon */}
@@ -359,16 +359,16 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
                     <span className="text-xs font-mono font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                       {card.category}
                     </span>
-                    <div className="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-900 dark:text-white shadow-2xs group-hover:scale-110 transition-transform">
+                    <div className="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-900 dark:text-white shadow-2xs">
                       <Icon size={20} className="text-red-600 dark:text-red-400" />
                     </div>
                   </div>
 
                   {/* Title & Description */}
-                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2.5 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2.5">
                     {card.title}
                   </h3>
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-normal mb-5">
+                  <p className="text-sm sm:text-[15px] text-slate-600 dark:text-slate-300 leading-relaxed font-normal mb-5">
                     {card.description}
                   </p>
 
@@ -379,7 +379,7 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
                   <div className="grid grid-cols-3 gap-2 mb-5">
                     {card.stats.map((stat, sIdx) => (
                       <div key={sIdx} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-center">
-                        <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400">{stat.label}</div>
+                        <div className="text-xs font-mono text-slate-500 dark:text-slate-400">{stat.label}</div>
                         <div className="text-xs sm:text-sm font-mono font-bold text-slate-900 dark:text-white mt-0.5">{stat.value}</div>
                       </div>
                     ))}
@@ -388,8 +388,8 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
                   {/* Feature Checkpoints */}
                   <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800/80">
                     {card.features.map((feat, fIdx) => (
-                      <div key={fIdx} className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
-                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                      <div key={fIdx} className="flex items-center gap-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                        <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
                         <span>{feat}</span>
                       </div>
                     ))}
@@ -402,7 +402,7 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
                   <button
                     type="button"
                     onClick={onOpenDemo}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors cursor-pointer group-hover:translate-x-0.5"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors cursor-pointer"
                   >
                     <span>View Module Demo</span>
                     <ArrowRight size={13} />
