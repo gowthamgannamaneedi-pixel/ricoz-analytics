@@ -161,10 +161,10 @@ export default function PricingSection({ onOpenDemo }) {
             return (
               <div
                 key={plan.id}
-                className={`relative flex flex-col rounded-3xl transition-all duration-200 ${
+                className={`relative flex flex-col rounded-3xl transition-colors duration-150 ${
                   plan.popular
-                    ? 'bg-white dark:bg-slate-900 border-2 border-red-600 dark:border-red-500 shadow-xl shadow-red-600/10'
-                    : 'bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md'
+                    ? 'bg-white dark:bg-slate-900 border-2 border-red-600 dark:border-red-500 shadow-lg shadow-red-600/10'
+                    : 'bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-slate-300 dark:hover:border-slate-700'
                 }`}
               >
                 {/* Popular Pill */}
@@ -215,9 +215,9 @@ export default function PricingSection({ onOpenDemo }) {
                       {plan.ctaLink ? (
                         <Link
                           to={plan.ctaLink}
-                          className={`w-full py-3.5 px-6 rounded-xl font-bold text-sm inline-flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer ${
+                          className={`w-full py-3.5 px-6 rounded-xl font-bold text-sm inline-flex items-center justify-center gap-2 transition-colors duration-150 cursor-pointer ${
                             plan.popular
-                              ? 'bg-red-600 hover:bg-red-700 text-white shadow-xl shadow-red-600/30 hover:shadow-red-600/50'
+                              ? 'bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-600/30'
                               : 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700'
                           }`}
                         >
@@ -228,7 +228,7 @@ export default function PricingSection({ onOpenDemo }) {
                         <button
                           type="button"
                           onClick={plan.ctaAction}
-                          className="w-full py-3.5 px-6 rounded-xl font-bold text-sm inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 transition-all duration-200 cursor-pointer"
+                          className="w-full py-3.5 px-6 rounded-xl font-bold text-sm inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors duration-150 cursor-pointer"
                         >
                           <Building2 size={16} />
                           <span>{plan.ctaText}</span>

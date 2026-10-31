@@ -803,7 +803,7 @@ export default function BillingPage() {
           return (
             <div
               key={p.id}
-              className={`relative flex flex-col justify-between rounded-2xl border bg-white dark:bg-[#111827] p-6 sm:p-7 shadow-xs transition hover:shadow-md h-full ${
+              className={`relative flex flex-col justify-between rounded-2xl border bg-white dark:bg-[#111827] p-6 sm:p-7 shadow-xs transition-colors duration-150 h-full ${
                 isPopular
                   ? 'border-rose-500 dark:border-[#E11D48] ring-2 ring-rose-500/20 dark:ring-[#E11D48]/30 shadow-md shadow-rose-100 dark:shadow-none'
                   : 'border-slate-200 dark:border-[#334155] hover:border-slate-300 dark:hover:border-slate-500'
