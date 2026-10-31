@@ -510,7 +510,7 @@ async function runTestSuite() {
       name: 'Alice DataEng',
       organization_name: 'Alice Pipeline Labs',
       email: aliceEmail,
-      password: 'Password123!'
+      password: 'Ricoz#Secure$9842*Eng'
     });
     const aliceOtp = regRes.data._devVerificationOtp;
     const verifyRes = await appRequest('POST', '/api/auth/verify-email', {
@@ -579,7 +579,7 @@ async function runTestSuite() {
       name: 'Bob Spy',
       organization_name: 'Bob Isolation Ltd',
       email: bobEmail,
-      password: 'Password123!'
+      password: 'Ricoz#Secure$9842*Bob'
     });
     const verifyBob = await appRequest('POST', '/api/auth/verify-email', {
       email: bobEmail,

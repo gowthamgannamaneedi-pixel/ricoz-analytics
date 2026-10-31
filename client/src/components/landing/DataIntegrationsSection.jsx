@@ -68,32 +68,32 @@ export default function DataIntegrationsSection({ onOpenDemo }) {
       testing: 'Live HTTP test call with status code & JSON validation'
     },
     {
-      name: 'CSV File Ingestion',
+      name: 'CSV & JSON Datasets',
       category: 'Files',
       type: 'Spreadsheet & Flat Files',
       speed: 'Batch File Parsing',
       status: 'Live & Verified',
       iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400',
       badge: 'File Ingestion',
-      description: 'Upload CSV datasets with automatic delimiter detection, column header normalization, and datatype inference.',
+      description: 'Upload CSV and JSON datasets with automatic delimiter detection, column header normalization, and datatype inference.',
       frontend: 'Drag-and-drop file uploader with chunking progress',
-      backend: 'Streaming CSV parser with schema normalization',
+      backend: 'Streaming CSV & JSON parser with schema normalization',
       credentials: 'Tenant-scoped storage with path traversal protection',
       testing: 'Header validation & row count estimation on upload'
     },
     {
-      name: 'Excel / XLSX Files',
-      category: 'Files',
-      type: 'Spreadsheet Workbooks',
-      speed: 'Multi-Sheet Parsing',
+      name: 'Excel (XLSX) Export Engine',
+      category: 'Reporting',
+      type: 'Executive Spreadsheets',
+      speed: 'Automated Export',
       status: 'Live & Verified',
       iconBg: 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400',
-      badge: 'Spreadsheets',
-      description: 'Import Excel workbooks (.xlsx, .xls) exported from accounting ledgers, ERPs, or Google Sheets with cell type detection.',
-      frontend: 'Spreadsheet file uploader with size validation',
-      backend: 'ExcelJS parser with multi-sheet workbook support',
-      credentials: 'Tenant-scoped storage',
-      testing: 'Workbook structure validation and column extraction'
+      badge: 'Data Delivery',
+      description: 'Export multi-tab executive Excel spreadsheets with corporate styling, data quality rollups, and audit metadata.',
+      frontend: 'One-click XLSX report download & cron scheduler',
+      backend: 'ExcelJS workbook generation with multi-series tables',
+      credentials: 'Tenant authorization on download routes',
+      testing: 'PK Zip workbook structure validation & buffer verification'
     }
   ];
 

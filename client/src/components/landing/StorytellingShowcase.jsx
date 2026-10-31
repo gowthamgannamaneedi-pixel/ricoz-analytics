@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { 
   Database, 
   Layers, 
@@ -17,7 +17,8 @@ import {
   ChevronRight,
   FileText,
   Calculator,
-  Equal
+  Equal,
+  RotateCcw
 } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -39,8 +40,22 @@ export default function StorytellingShowcase({ onOpenDemo }) {
   const [activeStep, setActiveStep] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
 
-  // Programmatic formula calculation using default illustrative parameters
-  const formulaMetrics = DEFAULT_ILLUSTRATIVE_METRICS;
+  // Dynamic formula inputs for interactive testing
+  const [formulaInputs, setFormulaInputs] = useState({
+    revenue: 8.42,
+    cogs: 2.66,
+    hubs: 48
+  });
+
+  // Programmatic formula calculation dynamically computed from live inputs
+  const formulaMetrics = useMemo(() => {
+    return calculateGrossMetrics(
+      Number(formulaInputs.revenue) || 0,
+      Number(formulaInputs.cogs) || 0,
+      Number(formulaInputs.hubs) || 0,
+      { currencySymbol: '₹', unit: 'Cr' }
+    );
+  }, [formulaInputs]);
 
   const steps = [
     {
@@ -318,7 +333,7 @@ export default function StorytellingShowcase({ onOpenDemo }) {
                         </div>
                       </div>
                       <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-red-400 dark:hover:border-slate-700 transition-colors">
-                        <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">CSV &amp; Excel</div>
+                        <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">CSV &amp; JSON</div>
                         <div className="text-sm font-bold text-slate-900 dark:text-white mt-1">Spreadsheets</div>
                         <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5 mt-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -364,40 +379,75 @@ export default function StorytellingShowcase({ onOpenDemo }) {
                   <div className="space-y-4 animate-fadeIn">
                     <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
                       
-                      {/* Header with clear validation and illustrative label */}
+                      {/* Header with clear validation, illustrative label and reset */}
                       <div className="flex flex-wrap items-center justify-between gap-2 text-xs border-b border-slate-200 dark:border-slate-800 pb-2.5">
                         <span className="text-slate-900 dark:text-white font-bold flex items-center gap-2">
                           <Calculator size={15} className="text-red-600 dark:text-red-500" />
                           <span>Standardized KPI Calculation Engine</span>
                         </span>
-                        <span className="text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 px-2.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-[10px] font-mono font-bold">
-                          Illustrative Sample Data
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setFormulaInputs({ revenue: 8.42, cogs: 2.66, hubs: 48 })}
+                            className="inline-flex items-center gap-1 text-[10px] font-mono text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition cursor-pointer"
+                            title="Reset to default values"
+                            id="formula-reset-btn"
+                          >
+                            <RotateCcw size={11} />
+                            <span>Reset Defaults</span>
+                          </button>
+                          <span className="text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-[10px] font-mono font-bold">
+                            Interactive Demo
+                          </span>
+                        </div>
                       </div>
 
                       {/* 1. INPUTS SECTION */}
                       <div>
-                        <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                          1. Input Parameters
+                        <div className="flex items-center justify-between text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                          <span>1. Input Parameters (Editable)</span>
+                          <span className="text-slate-400 font-normal">Type new values to test dynamic math</span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono">
                           <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900 text-blue-900 dark:text-blue-200">
-                            <span className="block text-[10px] text-blue-600 dark:text-blue-400">Invoiced Revenue</span>
-                            <span className="text-sm font-bold font-mono text-blue-950 dark:text-blue-100">
-                              {formulaMetrics.formatted.revenue}
-                            </span>
+                            <label htmlFor="formula-input-revenue" className="block text-[10px] text-blue-600 dark:text-blue-400 font-semibold mb-1">
+                              Invoiced Revenue (₹ Cr)
+                            </label>
+                            <input
+                              id="formula-input-revenue"
+                              type="number"
+                              step="0.01"
+                              value={formulaInputs.revenue}
+                              onChange={(e) => setFormulaInputs(prev => ({ ...prev, revenue: e.target.value }))}
+                              className="w-full bg-white dark:bg-slate-900 border border-blue-300 dark:border-blue-700 rounded px-2 py-1 text-sm font-bold font-mono text-blue-950 dark:text-blue-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            />
                           </div>
                           <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-900 text-amber-900 dark:text-amber-200">
-                            <span className="block text-[10px] text-amber-600 dark:text-amber-400">Supply Chain COGS</span>
-                            <span className="text-sm font-bold font-mono text-amber-950 dark:text-amber-100">
-                              {formulaMetrics.formatted.cogs}
-                            </span>
+                            <label htmlFor="formula-input-cogs" className="block text-[10px] text-amber-600 dark:text-amber-400 font-semibold mb-1">
+                              Supply Chain COGS (₹ Cr)
+                            </label>
+                            <input
+                              id="formula-input-cogs"
+                              type="number"
+                              step="0.01"
+                              value={formulaInputs.cogs}
+                              onChange={(e) => setFormulaInputs(prev => ({ ...prev, cogs: e.target.value }))}
+                              className="w-full bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 rounded px-2 py-1 text-sm font-bold font-mono text-amber-950 dark:text-amber-100 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
                           </div>
                           <div className="p-2.5 rounded-lg bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-900 text-purple-900 dark:text-purple-200">
-                            <span className="block text-[10px] text-purple-600 dark:text-purple-400">Active Store Hubs</span>
-                            <span className="text-sm font-bold font-mono text-purple-950 dark:text-purple-100">
-                              {formulaMetrics.formatted.hubs} Hubs
-                            </span>
+                            <label htmlFor="formula-input-hubs" className="block text-[10px] text-purple-600 dark:text-purple-400 font-semibold mb-1">
+                              Active Store Hubs
+                            </label>
+                            <input
+                              id="formula-input-hubs"
+                              type="number"
+                              step="1"
+                              min="1"
+                              value={formulaInputs.hubs}
+                              onChange={(e) => setFormulaInputs(prev => ({ ...prev, hubs: e.target.value }))}
+                              className="w-full bg-white dark:bg-slate-900 border border-purple-300 dark:border-purple-700 rounded px-2 py-1 text-sm font-bold font-mono text-purple-950 dark:text-purple-100 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                            />
                           </div>
                         </div>
                       </div>
@@ -405,25 +455,25 @@ export default function StorytellingShowcase({ onOpenDemo }) {
                       {/* 2. CALCULATION FORMULAS */}
                       <div className="p-3 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 text-xs font-mono">
                         <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                          2. Mathematical Formulas
+                          2. Mathematical Formulas (Dynamic Proof)
                         </div>
                         <div className="space-y-1.5 text-[11px] text-slate-700 dark:text-slate-300">
                           <div className="flex items-center justify-between p-1.5 rounded bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
                             <span>Gross Profit = Revenue - COGS</span>
-                            <span className="font-bold text-slate-900 dark:text-white">
-                              ₹8.42 Cr - ₹2.66 Cr
+                            <span className="font-bold text-slate-900 dark:text-white" id="formula-step-gross-profit">
+                              {formulaMetrics.formatted.revenue} - {formulaMetrics.formatted.cogs} = {formulaMetrics.formatted.grossProfit}
                             </span>
                           </div>
                           <div className="flex items-center justify-between p-1.5 rounded bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
                             <span>Gross Margin (%) = (Gross Profit / Revenue) × 100</span>
-                            <span className="font-bold text-slate-900 dark:text-white">
-                              (₹5.76 Cr / ₹8.42 Cr) × 100
+                            <span className="font-bold text-slate-900 dark:text-white" id="formula-step-gross-margin">
+                              ({formulaMetrics.formatted.grossProfit} / {formulaMetrics.formatted.revenue}) × 100 = {formulaMetrics.formatted.grossMargin}
                             </span>
                           </div>
                           <div className="flex items-center justify-between p-1.5 rounded bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
                             <span>Gross Profit Per Hub = Gross Profit / Active Hubs</span>
-                            <span className="font-bold text-slate-900 dark:text-white">
-                              ₹5.76 Cr / 48
+                            <span className="font-bold text-slate-900 dark:text-white" id="formula-step-per-hub">
+                              {formulaMetrics.formatted.grossProfit} / {formulaMetrics.inputs.hubs} Hubs = {formulaMetrics.formatted.grossProfitPerHub}
                             </span>
                           </div>
                         </div>
@@ -439,7 +489,7 @@ export default function StorytellingShowcase({ onOpenDemo }) {
                             <span className="block text-[10px] text-emerald-700 dark:text-emerald-400 font-sans font-semibold">
                               Gross Profit
                             </span>
-                            <span className="text-base sm:text-lg font-black text-emerald-800 dark:text-emerald-300">
+                            <span className="text-base sm:text-lg font-black text-emerald-800 dark:text-emerald-300" id="formula-output-gross-profit">
                               {formulaMetrics.formatted.grossProfit}
                             </span>
                           </div>
@@ -447,7 +497,7 @@ export default function StorytellingShowcase({ onOpenDemo }) {
                             <span className="block text-[10px] text-emerald-700 dark:text-emerald-400 font-sans font-semibold">
                               Gross Margin
                             </span>
-                            <span className="text-base sm:text-lg font-black text-emerald-800 dark:text-emerald-300">
+                            <span className="text-base sm:text-lg font-black text-emerald-800 dark:text-emerald-300" id="formula-output-gross-margin">
                               {formulaMetrics.formatted.grossMargin}
                             </span>
                           </div>
@@ -455,7 +505,7 @@ export default function StorytellingShowcase({ onOpenDemo }) {
                             <span className="block text-[10px] text-emerald-700 dark:text-emerald-400 font-sans font-semibold">
                               Gross Profit Per Hub
                             </span>
-                            <span className="text-base sm:text-lg font-black text-emerald-800 dark:text-emerald-300">
+                            <span className="text-base sm:text-lg font-black text-emerald-800 dark:text-emerald-300" id="formula-output-profit-per-hub">
                               {formulaMetrics.formatted.grossProfitPerHub}
                             </span>
                           </div>
