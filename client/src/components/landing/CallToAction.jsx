@@ -25,7 +25,7 @@ export default function CallToAction({ onOpenDemo }) {
               style={{ transform: 'translateZ(20px)' }}
             >
               <Sparkles size={15} className="text-red-400 animate-pulse" />
-              <span>Launch Your Sovereign Analytics Cockpit</span>
+              <span>Unified Business Intelligence</span>
             </div>
 
             <h2 
@@ -78,7 +78,7 @@ export default function CallToAction({ onOpenDemo }) {
                 <CheckCircle2 size={15} className="text-emerald-400" /> No credit card required
               </span>
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 size={15} className="text-emerald-400" /> Instant SQL &amp; Sheet Connectors
+                <CheckCircle2 size={15} className="text-emerald-400" /> PostgreSQL, MongoDB, REST &amp; CSV Connectors
               </span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 size={15} className="text-emerald-400" /> Enterprise RBAC &amp; Governance

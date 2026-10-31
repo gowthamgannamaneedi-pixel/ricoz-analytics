@@ -11,11 +11,10 @@ const TEAM_SIZE_OPTIONS = [
 
 const DATA_SOURCE_OPTIONS = [
   { value: 'PostgreSQL', label: 'PostgreSQL / Supabase' },
-  { value: 'MySQL', label: 'MySQL Enterprise' },
-  { value: 'Snowflake', label: 'Snowflake / BigQuery' },
+  { value: 'MongoDB', label: 'MongoDB' },
   { value: 'REST', label: 'REST API / Webhooks' },
-  { value: 'CSV', label: 'Google Sheets / CSV Uploads' },
-  { value: 'Other', label: 'Multiple / Custom ERP System' }
+  { value: 'CSV', label: 'Excel (XLSX) & CSV Files' },
+  { value: 'Other', label: 'Multiple / Custom Database' }
 ];
 
 function ModalSelect({ label, value, options, onChange }) {

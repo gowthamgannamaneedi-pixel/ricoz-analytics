@@ -127,19 +127,16 @@ export default function LandingFooter() {
                 <a href="#integrations" className="hover:text-white transition">PostgreSQL Ingestion</a>
               </li>
               <li>
-                <a href="#integrations" className="hover:text-white transition">Snowflake &amp; BigQuery</a>
-              </li>
-              <li>
-                <a href="#integrations" className="hover:text-white transition">MySQL Enterprise</a>
-              </li>
-              <li>
-                <a href="#integrations" className="hover:text-white transition">Google Sheets &amp; CSV</a>
+                <a href="#integrations" className="hover:text-white transition">MongoDB Document Ingestion</a>
               </li>
               <li>
                 <a href="#integrations" className="hover:text-white transition">REST APIs &amp; Webhooks</a>
               </li>
               <li>
-                <a href="#security" className="hover:text-white transition">Enterprise RBAC &amp; Sovereign VPC</a>
+                <a href="#integrations" className="hover:text-white transition">CSV &amp; Excel (XLSX) Data</a>
+              </li>
+              <li>
+                <a href="#security" className="hover:text-white transition">Enterprise RBAC &amp; Security</a>
               </li>
               <li>
                 <a href="#pricing" className="hover:text-white transition">Transparent Pricing</a>

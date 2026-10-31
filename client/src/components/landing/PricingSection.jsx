@@ -46,7 +46,7 @@ export default function PricingSection({ onOpenDemo }) {
       id: 'growth',
       name: 'Professional',
       badge: 'MOST POPULAR',
-      description: 'Full-throttle business intelligence with AI Copilot, proactive alerts, and automated PDF delivery.',
+      description: 'Comprehensive business intelligence with AI Copilot, proactive alerts, and automated PDF delivery.',
       monthlyPrice: '₹14,999',
       annualPrice: '₹11,999',
       annualBillingNote: 'Billed annually (₹1,43,988/yr)',
@@ -56,22 +56,22 @@ export default function PricingSection({ onOpenDemo }) {
       ctaLink: '/register',
       ctaAction: null,
       features: [
-        'Unlimited live data connectors (SQL, Snowflake, Sheets)',
+        'Live data connectors (PostgreSQL, MongoDB, REST, CSV/Excel)',
         '25 team member seats with granular RBAC',
         '1,000,000 synchronized records / month',
-        'Autonomous AI Analytics Copilot & query assistant',
-        'Proactive anomaly detection & SLA alerts (Slack, Email)',
-        'Pixel-perfect branded executive PDF reports on cron',
+        'AI Analytics Copilot & natural language query assistant',
+        'Proactive threshold anomaly alerts (Slack, Email)',
+        'Structured executive PDF reports on automated schedule',
         'Cross-metric drilldowns & custom formula builder',
-        'Sub-second query caching & high-speed ETL',
-        'Priority 24/7 technical support & onboarding call'
+        'In-memory query caching & background data refresh',
+        'Priority technical support & onboarding assistance'
       ]
     },
     {
       id: 'enterprise',
-      name: 'Enterprise Sovereign',
+      name: 'Enterprise',
       badge: 'Large Networks & Franchises',
-      description: 'Dedicated cloud infrastructure, sovereign on-prem deployment, and custom SLA guarantees.',
+      description: 'Dedicated cloud infrastructure, custom database integrations, and tailored SLA agreements.',
       monthlyPrice: 'Custom',
       annualPrice: 'Custom',
       annualBillingNote: 'Tailored to your franchise nodes',
@@ -81,13 +81,13 @@ export default function PricingSection({ onOpenDemo }) {
       ctaLink: null,
       ctaAction: onOpenDemo,
       features: [
-        'Dedicated isolated database & ingestion cluster',
+        'Dedicated isolated database & customized ingestion',
         'Unlimited team seats & franchise branch logins',
-        'Unlimited monthly records & streaming telemetry',
-        'Custom ERP & legacy data warehouse connectors',
+        'High-capacity monthly records & scheduled sync',
+        'Custom REST & webhook data connectors',
         'Row-level data governance by region / store code',
-        'Enterprise SSO (SAML 2.0, Okta, Azure AD, Google)',
-        'On-premises or Sovereign VPC deployment option',
+        'Server-enforced role-based access control (RBAC)',
+        'Dedicated virtual private cloud deployment option',
         'Dedicated Support Engineer & Enterprise Uptime SLA',
         'Custom feature development & formal SLA contract'
       ]
@@ -295,7 +295,7 @@ export default function PricingSection({ onOpenDemo }) {
               <ShieldCheck size={20} />
             </div>
             <div className="text-sm font-bold text-slate-900 dark:text-white">Enterprise RBAC &amp; Security</div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Hardware-backed AES-256 &amp; TLS 1.3 protection</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">AES-256 credential encryption &amp; TLS 1.3 transport</div>
           </div>
 
           <div className="flex flex-col items-center">

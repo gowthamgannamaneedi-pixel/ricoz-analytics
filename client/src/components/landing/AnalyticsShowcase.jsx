@@ -192,7 +192,7 @@ export default function AnalyticsShowcase() {
                       Invoiced Revenue vs Target Trajectory (INR in Lakhs)
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      Hover over any month to inspect variance surplus and EBITDA margin %
+                      Hover over any month to inspect variance and gross margin % (Sample Data)
                     </p>
                   </div>
                   <div className="flex items-center gap-4 text-xs font-semibold">
@@ -287,9 +287,9 @@ export default function AnalyticsShowcase() {
                     <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">+29.4% YoY Run-Rate</div>
                   </div>
                   <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 hover:border-red-400/40 transition-colors">
-                    <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">EBITDA Conversion</div>
+                    <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Gross Margin (Sample)</div>
                     <div className="text-xl font-black text-slate-900 dark:text-white font-mono mt-0.5">68.4%</div>
-                    <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">+3.4% vs Benchmark</div>
+                    <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">Gross Profit: ₹5.76 Cr</div>
                   </div>
                 </div>
               </div>

@@ -14,7 +14,9 @@ import {
   Send,
   Building,
   ThumbsUp,
-  Check
+  Check,
+  Server,
+  Globe
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Interactive3DCard from './Interactive3DCard';
@@ -25,46 +27,46 @@ export default function SecuritySection({ onOpenDemo }) {
 
   const securityCards = [
     {
-      icon: FileCheck2,
-      iconColor: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400',
-      title: 'SOC 2 & ISO 27001 Aligned Controls',
-      desc: 'Architected with strict control principles, role-based access management, continuous audit logging, and defensive security baselines.',
-      status: 'Enterprise control framework'
+      icon: Key,
+      iconColor: 'bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400',
+      title: 'Role-Based Access Control (RBAC)',
+      desc: 'Enforce granular user permissions across Admin, Member, and Viewer roles. Server database validation prevents unauthorized API access or payload role escalation.',
+      status: 'Server-Enforced Roles'
     },
     {
       icon: Lock,
       iconColor: 'bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400',
-      title: 'AES-256 & TLS 1.3 Encryption',
-      desc: 'Every data byte is encrypted in flight with TLS 1.3 and at rest with hardware-backed AES-256 keys. Dedicated per-tenant KMS keys for enterprise tiers.',
-      status: 'Zero unencrypted data pathways'
-    },
-    {
-      icon: Key,
-      iconColor: 'bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400',
-      title: 'Row-Level Security (RLS) & RBAC',
-      desc: 'Franchise branch managers can only view rows matching their allocated store IDs, while HQ executives see consolidated network metrics.',
-      status: 'Zero cross-branch data exposure'
+      title: 'AES-256-GCM Credential Encryption',
+      desc: 'All external database passwords and API tokens are encrypted at rest using AES-256-GCM authenticated cipher with unique initialization vectors.',
+      status: 'AES-256 Encryption at Rest'
     },
     {
       icon: Building,
       iconColor: 'bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400',
-      title: 'Sovereign Workspace Isolation',
-      desc: 'Logical database partitioning ensures complete multi-tenant tenant isolation. On-premises and private VPC container deployments available for Enterprise.',
-      status: 'Private VPC deployment ready'
+      title: 'Organization Tenant Isolation',
+      desc: 'All database queries, datasets, and reports are strictly partitioned by organization ID at the SQL layer, preventing cross-tenant data exposure.',
+      status: 'Multi-Tenant Scoping'
+    },
+    {
+      icon: Globe,
+      iconColor: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400',
+      title: 'TLS & HTTP Security Headers',
+      desc: 'All communications are protected in transit with TLS encryption. Defenses include strict CORS policies, X-Content-Type-Options: nosniff, and anti-framing guards.',
+      status: 'Transport & Header Defense'
     },
     {
       icon: Eye,
       iconColor: 'bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400',
-      title: 'Immutable Audit Logging',
-      desc: 'Every query run, report exported, threshold changed, and dashboard shared is immutably logged with timestamp, user ID, IP address, and payload hash.',
-      status: 'Forensic audit compliance'
+      title: 'Activity Audit Logging',
+      desc: 'Mutations, report exports, threshold changes, and authentication events are logged with timestamp, user ID, client IP address, and automatic secret redaction.',
+      status: 'Audit Trail Recording'
     },
     {
-      icon: Users,
+      icon: Server,
       iconColor: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400',
-      title: 'Single Sign-On (SSO / SAML)',
-      desc: 'Seamlessly provision team seats via Okta, Microsoft Entra ID (Azure AD), Google Workspace, or any custom SAML 2.0 / OIDC identity provider.',
-      status: 'Zero-friction IT provisioning'
+      title: 'SSRF & API Input Defense',
+      desc: 'External connector endpoints undergo URL validation and loopback blocking to defend against Server-Side Request Forgery, paired with tiered API rate limiting.',
+      status: 'SSRF & Rate Limiting'
     }
   ];
 
@@ -79,18 +81,18 @@ export default function SecuritySection({ onOpenDemo }) {
         <div className="text-center max-w-3xl mx-auto mb-14">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider mb-4 shadow-2xs">
             <ShieldCheck size={14} className="text-red-600 dark:text-red-400" />
-            <span>Enterprise Trust &amp; Governance</span>
+            <span>Platform Governance &amp; Security</span>
           </div>
 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-            Enterprise Security.{' '}
+            Security Controls &amp;{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-rose-600 to-red-700">
-              Seamless Team Collaboration.
+              Team Workspaces
             </span>
           </h2>
 
           <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-            Protect multi-crore enterprise financial metrics with sovereign data tenancy, granular row-level access, and immutable audit logs.
+            Protect your business analytics with organization-level data tenancy, encrypted credentials at rest, and audit trails.
           </p>
 
           {/* Toggle between Security & Collaboration */}
@@ -100,18 +102,18 @@ export default function SecuritySection({ onOpenDemo }) {
               onClick={() => setActiveTab('security')}
               className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
                 activeTab === 'security'
-                  ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
+                  ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              Enterprise Security Architecture
+              Security Controls
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('collaboration')}
               className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
                 activeTab === 'collaboration'
-                  ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
+                  ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -131,7 +133,7 @@ export default function SecuritySection({ onOpenDemo }) {
                   maxTilt={12}
                   scale={1.03}
                   glare={true}
-                  className="p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-red-400 dark:hover:border-red-800 transition-colors"
+                  className="p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-red-400 dark:hover:border-red-800 transition-colors"
                 >
                   <div>
                     <div 
@@ -168,59 +170,59 @@ export default function SecuritySection({ onOpenDemo }) {
 
         {/* Tab 2: Collaboration & Team Workspaces Mockup */}
         {activeTab === 'collaboration' && (
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-10 shadow-xl">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-10 shadow-xl">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
               {/* Left Info Column */}
               <div className="lg:col-span-5 space-y-4">
                 <div className="inline-block text-[11px] font-mono font-bold uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60 px-3 py-1 rounded-md border border-red-200 dark:border-red-900/60">
-                  Built for Cross-Functional Execution
+                  Team Alignment
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-                  Discuss, Annotate &amp; Decide Right Inside the Dashboard
+                  Discuss, Annotate &amp; Decide Inside the Workspace
                 </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                  Eliminate disjointed email threads and conflicting numbers. Leave contextual comments directly on specific chart points, @mention regional branch leads, and track action items to resolution.
+                  Collaborate directly on analytics dashboards. Leave contextual comments on specific chart trends, coordinate with regional leads, and track operational items to resolution.
                 </p>
 
                 <ul className="space-y-3 pt-2 text-xs sm:text-sm text-slate-700 dark:text-slate-200">
                   <li className="flex items-start gap-2.5">
                     <CheckCircle2 size={16} className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
-                    <span>Threaded dashboard commenting with @mentions and email notification</span>
+                    <span>Threaded dashboard commenting with notification alerts</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <CheckCircle2 size={16} className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
-                    <span>Granular share links with expiration timestamps and watermark protection</span>
+                    <span>Shareable dashboard links with role-based viewing permissions</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <CheckCircle2 size={16} className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
-                    <span>Role-based saved views for Store Managers vs Regional Finance Directors</span>
+                    <span>Role-based views for branch managers vs leadership executives</span>
                   </li>
                 </ul>
               </div>
 
-              {/* Right Mockup: Live Comment Thread UI with 3D Depth */}
+              {/* Right Mockup: Live Comment Thread UI */}
               <div className="lg:col-span-7 bg-slate-50 dark:bg-slate-950 rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-inner space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 text-xs">
                   <div className="flex items-center gap-2">
                     <MessageSquare size={16} className="text-red-600" />
                     <span className="font-bold text-slate-800 dark:text-slate-200">
-                      Thread on "West Region Margin Pacing"
+                      Thread on "West Region Margin Variance"
                     </span>
                   </div>
-                  <span className="text-[10px] text-emerald-600 font-mono font-bold bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded">
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-bold bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
                     2 Comments
                   </span>
                 </div>
 
                 {/* Comment 1 */}
-                <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-xs space-y-1.5 shadow-sm">
+                <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs space-y-1.5 shadow-2xs">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-red-600 text-white font-bold text-[10px] flex items-center justify-center">
                         RK
                       </div>
                       <span className="font-bold text-slate-900 dark:text-white">Rajesh Kumar</span>
-                      <span className="text-[10px] text-slate-400 font-mono">VP Operations</span>
+                      <span className="text-[10px] text-slate-400 font-mono">Operations Lead</span>
                     </div>
                     <span className="text-[10px] text-slate-400">12 mins ago</span>
                   </div>
@@ -230,7 +232,7 @@ export default function SecuritySection({ onOpenDemo }) {
                 </div>
 
                 {/* Comment 2 */}
-                <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-xs space-y-1.5 ml-4 shadow-sm">
+                <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs space-y-1.5 ml-4 shadow-2xs">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center">
@@ -242,7 +244,7 @@ export default function SecuritySection({ onOpenDemo }) {
                     <span className="text-[10px] text-slate-400">4 mins ago</span>
                   </div>
                   <p className="text-slate-600 dark:text-slate-300 pl-8">
-                    Confirmed, credit note #CR-9022 is currently processing in ERP. Margin will reflect back to 68.2% on the 18:00 sync.
+                    Confirmed, vendor credit slip #CR-9022 is currently processing. Margin will reflect back to 68.2% on the next sync.
                   </p>
                   <div className="pl-8 pt-1 flex items-center gap-2">
                     <button
@@ -264,7 +266,7 @@ export default function SecuritySection({ onOpenDemo }) {
                     type="text"
                     disabled
                     placeholder="Reply to thread or @mention team member..."
-                    className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-400"
+                    className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-400 shadow-2xs"
                   />
                   <div className="p-2 rounded-xl bg-red-600 text-white shadow-md shadow-red-600/30">
                     <Send size={14} />

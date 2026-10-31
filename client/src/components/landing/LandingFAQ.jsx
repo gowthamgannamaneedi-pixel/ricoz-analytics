@@ -8,31 +8,31 @@ export default function LandingFAQ() {
   const faqs = [
     {
       q: 'How quickly can our team connect existing databases and see live dashboards?',
-      a: 'Most organizations are fully operational in under 3 minutes. With read-only credentials, you can instantly connect PostgreSQL, MySQL, Supabase, Snowflake, BigQuery, or upload Google Sheets and CSVs. RicozAnalytics automatically scans your schema, infers column datatypes, discovers foreign key relationships, and builds starter executive KPI widgets without writing ETL pipelines.'
+      a: 'Most organizations are fully operational in under 3 minutes. With read-only credentials, you can connect PostgreSQL, Supabase, MongoDB, REST APIs, or upload CSV and Excel (XLSX) datasets. RicozAnalytics automatically scans your schema, infers column datatypes, discovers relationships, and builds starter executive KPI widgets without writing ETL pipelines.'
     },
     {
       q: 'Does RicozAnalytics train public AI models on our proprietary business data?',
-      a: 'Absolutely not. All enterprise analytics, forecasting queries, and anomaly scans execute strictly within your sovereign tenant boundary. We enforce a strict zero-data-retention policy for machine learning training, ensuring your trade secrets, store revenues, and vendor pricing are never exposed to public foundation models.'
+      a: 'No. All analytics queries, forecasting, and anomaly scans execute strictly within your organization boundary. We enforce a strict zero-data-retention policy for machine learning training, ensuring your company revenues and vendor pricing are never exposed to public foundation models.'
     },
     {
       q: 'Can we automate and schedule executive PDF reports to be emailed weekly?',
-      a: 'Yes. The Scheduled Briefing Engine lets you set cron schedules (e.g., Every Monday at 08:00 AM IST). RicozAnalytics compiles high-resolution, pixel-perfect executive PDF briefings with corporate headers and embeds multi-series performance charts, automatically delivering them via email or Slack to your board and regional managers.'
+      a: 'Yes. The Scheduled Briefing Engine lets you set cron schedules (e.g., Every Monday at 08:00 AM IST). RicozAnalytics compiles structured executive PDF briefings with corporate headers and embeds multi-series performance charts, automatically delivering them via email to your management team.'
     },
     {
       q: 'How does multi-branch and franchise data segmentation work?',
-      a: 'Using Granular Role-Based Access Control (RBAC) and Row-Level Security (RLS), branch managers only access data belonging to their specific franchise store ID. Corporate leadership and regional directors see consolidated performance rollups across all 48+ hubs with interactive regional drilldowns.'
+      a: 'Using Granular Role-Based Access Control (RBAC) and Row-Level Security (RLS), branch managers only access data belonging to their specific franchise store ID. Corporate leadership and regional directors see consolidated performance rollups across multiple operational hubs or store branches with interactive regional drilldowns.'
     },
     {
       q: 'What happens after our 14-day free trial ends?',
-      a: 'Your trial includes full access to all Professional features with zero credit card required upfront. When the trial finishes, you can choose the plan that best fits your scale (Starter, Professional, or Enterprise Sovereign), or your workspace will transition to read-only export mode so your historical metrics are never lost.'
+      a: 'Your trial includes full access to all Professional features with zero credit card required upfront. When the trial finishes, you can choose the plan that best fits your scale (Starter, Professional, or Enterprise), or your workspace will transition to read-only export mode so your historical metrics are never lost.'
     },
     {
       q: 'Can RicozAnalytics replace legacy BI tools like Tableau, PowerBI, or Metabase?',
-      a: 'Yes. Unlike legacy BI tools that require dedicated data engineering teams, weeks of complex DAX modeling, and expensive per-viewer licenses, RicozAnalytics is purpose-built for fast-moving business leadership with zero-code formula builders, sub-second query caching, and proactive AI anomaly alerts.'
+      a: 'Yes. Unlike legacy BI tools that require dedicated data engineering teams, weeks of complex DAX modeling, and expensive per-viewer licenses, RicozAnalytics is purpose-built for fast-moving business leadership with zero-code formula builders, in-memory query caching, and proactive anomaly alerts.'
     },
     {
-      q: 'Can we configure custom formula KPIs (e.g. EBITDA, Gross Margin %)?',
-      a: 'Yes! The Dynamic KPI Studio allows you to compose formulaic metrics like [EBITDA] = [Gross Revenue] - [COGS] - [OpEx] using simple drag-and-drop metric tokens. You can set multi-tier status thresholds (Healthy, Warning, Critical) with automated alerts triggered whenever numbers deviate from your operational plan.'
+      q: 'Can we configure custom formula KPIs (e.g. Gross Margin %, EBITDA)?',
+      a: 'Yes! The Dynamic KPI Studio allows you to compose formulaic metrics like Gross Profit = Invoiced Revenue - COGS, Gross Margin % = (Gross Profit / Invoiced Revenue) * 100, Gross Profit Per Hub = Gross Profit / Active Hubs, or calculate EBITDA when operating expense metrics are provided. You can set multi-tier status thresholds (Healthy, Warning, Critical) with automated alerts triggered whenever numbers deviate from your operational plan.'
     }
   ];
 
