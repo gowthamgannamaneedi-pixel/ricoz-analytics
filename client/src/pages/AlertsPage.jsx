@@ -608,7 +608,7 @@ export default function AlertsPage() {
                               ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40'
                               : 'bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1] border-slate-200 dark:border-[#334155]'
                           }`}>
-                            {alert.status.toUpperCase()}
+                            {alert.status === 'active' ? 'Active Rule' : 'Rule Paused'}
                           </span>
                         </div>
 

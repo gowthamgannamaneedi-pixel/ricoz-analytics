@@ -93,24 +93,24 @@ export default function ReportViewerModal({
     switch (st?.toLowerCase()) {
       case 'active':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Active
+            Active Schedule
           </span>
         );
       case 'paused':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">
             <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-            Paused
+            Schedule Paused
           </span>
         );
       case 'draft':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
             <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-            Draft
+            Draft Report
           </span>
         );
     }
@@ -128,13 +128,13 @@ export default function ReportViewerModal({
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h2 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC] truncate">
+                <h2 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC] break-words">
                   {report.title}
                 </h2>
                 {getStatusBadge(report.status)}
                 {getFormatBadge(report.format)}
               </div>
-              <p className="text-xs text-slate-500 dark:text-[#94A3B8] line-clamp-1">
+              <p className="text-xs text-slate-500 dark:text-[#94A3B8] break-words">
                 {report.description || 'Configured enterprise report pipeline.'}
               </p>
             </div>

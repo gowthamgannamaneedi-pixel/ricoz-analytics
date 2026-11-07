@@ -648,8 +648,8 @@ export default function ForecastsPage() {
       {/* ───────────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 lg:gap-6">
         {/* Card 1: Selected Dataset */}
-        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 min-h-[136px] flex flex-col justify-center shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all">
-          <div className="flex items-start gap-4.5 sm:gap-5 w-full min-w-0">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 min-h-[156px] flex flex-col justify-between shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all">
+          <div className="flex items-start gap-4 sm:gap-4.5 w-full min-w-0">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-rose-950/50 text-[#D91542] dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/60 shrink-0 shadow-2xs">
               <Database className="h-6 w-6" />
             </div>
@@ -658,45 +658,51 @@ export default function ForecastsPage() {
                 Selected Dataset
               </p>
               <h3
-                className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-lg leading-snug truncate block cursor-default"
+                className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-lg leading-snug break-words block cursor-default"
                 title={selectedDataset ? selectedDataset.name : 'Select a Dataset'}
                 aria-label={selectedDataset ? `Dataset: ${selectedDataset.name}` : 'No dataset selected'}
               >
                 {selectedDataset ? selectedDataset.name : 'Select a Dataset'}
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate block leading-normal">
-                {selectedDataset ? `${(selectedDataset.row_count || 0).toLocaleString()} observations` : 'Time series data'}
-              </p>
             </div>
+          </div>
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span className="font-medium">Data Volume</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
+              {selectedDataset ? `${(selectedDataset.row_count || 0).toLocaleString()} observations` : 'No data loaded'}
+            </span>
           </div>
         </div>
 
         {/* Card 2: Model */}
-        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 min-h-[136px] flex flex-col justify-center shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all">
-          <div className="flex items-start gap-4.5 sm:gap-5 w-full min-w-0">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 min-h-[156px] flex flex-col justify-between shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all">
+          <div className="flex items-start gap-4 sm:gap-4.5 w-full min-w-0">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-rose-950/50 text-[#D91542] dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/60 shrink-0 shadow-2xs">
               <Target className="h-6 w-6" />
             </div>
             <div className="min-w-0 flex-1 space-y-1.5">
               <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                Model
+                Forecasting Model
               </p>
               <h3
-                className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-lg leading-snug truncate block cursor-default"
+                className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-lg leading-snug break-words block cursor-default"
                 title={MODEL_LABELS[selectedModel] || 'Auto (Best Model)'}
               >
                 {MODEL_LABELS[selectedModel] || 'Auto (Best Model)'}
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate block leading-normal" title={MODEL_DESCRIPTIONS[selectedModel]}>
-                {selectedModel === 'auto' ? 'Automatically selects best ML model' : 'Configured ML algorithm'}
-              </p>
             </div>
+          </div>
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span className="font-medium">Algorithm</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">
+              {selectedModel === 'auto' ? 'Lowest MAPE Selection' : 'Active Algorithm'}
+            </span>
           </div>
         </div>
 
         {/* Card 3: Forecast Horizon */}
-        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 min-h-[136px] flex flex-col justify-center shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all">
-          <div className="flex items-start gap-4.5 sm:gap-5 w-full min-w-0">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 min-h-[156px] flex flex-col justify-between shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all">
+          <div className="flex items-start gap-4 sm:gap-4.5 w-full min-w-0">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-rose-950/50 text-[#D91542] dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/60 shrink-0 shadow-2xs">
               <Calendar className="h-6 w-6" />
             </div>
@@ -704,19 +710,22 @@ export default function ForecastsPage() {
               <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                 Forecast Horizon
               </p>
-              <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-lg leading-snug block">
+              <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-lg leading-snug break-words block">
                 Next {horizonPeriods} periods
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate block leading-normal">
-                {interval.charAt(0).toUpperCase() + interval.slice(1)} intervals
-              </p>
             </div>
+          </div>
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span className="font-medium">Time Step</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200">
+              {interval.charAt(0).toUpperCase() + interval.slice(1)} intervals
+            </span>
           </div>
         </div>
 
         {/* Card 4: Anomalies Detected */}
-        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 min-h-[136px] flex flex-col justify-center shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all">
-          <div className="flex items-start gap-4.5 sm:gap-5 w-full min-w-0">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 min-h-[156px] flex flex-col justify-between shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all">
+          <div className="flex items-start gap-4 sm:gap-4.5 w-full min-w-0">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-rose-950/50 text-[#D91542] dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/60 shrink-0 shadow-2xs">
               <AlertTriangle className="h-6 w-6" />
             </div>
@@ -724,13 +733,16 @@ export default function ForecastsPage() {
               <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                 Anomalies Detected
               </p>
-              <h3 className={`font-bold text-base sm:text-lg leading-snug block ${anomaliesCount > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100'}`}>
+              <h3 className={`font-bold text-base sm:text-lg leading-snug break-words block ${anomaliesCount > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100'}`}>
                 {anomaliesCount} {anomaliesCount === 1 ? 'anomaly' : 'anomalies'}
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate block leading-normal">
-                {anomaliesCount > 0 ? 'Requires operational review' : 'Within normal variance'}
-              </p>
             </div>
+          </div>
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span className="font-medium">Variance State</span>
+            <span className={`font-semibold ${anomaliesCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+              {anomaliesCount > 0 ? 'Action Recommended' : 'Within Normal Range'}
+            </span>
           </div>
         </div>
       </div>
@@ -1295,7 +1307,7 @@ export default function ForecastsPage() {
                       <span>Mean Error (MAE)</span>
                       <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" title="Average absolute difference between actual and predicted values" />
                     </div>
-                    <p className="font-mono text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 truncate">
+                    <p className="font-mono text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">
                       {forecastResult?.metrics?.mae !== undefined ? Number(forecastResult.metrics.mae).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 }) : '—'}
                     </p>
                   </div>
@@ -1311,7 +1323,7 @@ export default function ForecastsPage() {
                       <span>Variance (RMSE)</span>
                       <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" title="Standard deviation of prediction errors" />
                     </div>
-                    <p className="font-mono text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 truncate">
+                    <p className="font-mono text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">
                       {forecastResult?.metrics?.rmse !== undefined ? Number(forecastResult.metrics.rmse).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 }) : '—'}
                     </p>
                   </div>
@@ -1327,7 +1339,7 @@ export default function ForecastsPage() {
                       <span>Error Margin (MAPE)</span>
                       <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" title="Average percentage difference between forecast and actuals" />
                     </div>
-                    <p className="font-mono text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 truncate">
+                    <p className="font-mono text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400">
                       {forecastResult?.metrics?.mape !== undefined ? `${Number(forecastResult.metrics.mape).toFixed(1)}%` : '—'}
                     </p>
                   </div>
@@ -1343,7 +1355,7 @@ export default function ForecastsPage() {
                       <span>Trend Fit (R²)</span>
                       <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" title="How well the trend model explains historical fluctuations (0 to 1)" />
                     </div>
-                    <p className="font-mono text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-400 truncate">
+                    <p className="font-mono text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-400">
                       {forecastResult?.metrics?.r2 !== undefined ? Number(forecastResult.metrics.r2).toFixed(3) : '—'}
                     </p>
                   </div>

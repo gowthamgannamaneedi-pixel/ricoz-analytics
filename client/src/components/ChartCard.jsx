@@ -22,11 +22,11 @@ export default function ChartCard({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 tracking-tight break-words">
             {title}
           </h3>
           {subtitle && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">{subtitle}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5 break-words">{subtitle}</p>
           )}
         </div>
         {action && (

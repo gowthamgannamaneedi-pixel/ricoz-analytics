@@ -1254,10 +1254,10 @@ export default function ReportsPage() {
                           <FileText className="h-4 w-4" />
                         </div>
                         <div className="min-w-0">
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-[#F8FAFC] truncate">
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-[#F8FAFC] break-words leading-snug">
                             {tpl.title}
                           </h4>
-                          <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] truncate mt-0.5">
+                          <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] break-words mt-0.5 leading-normal">
                             {tpl.description}
                           </p>
                         </div>
@@ -1478,10 +1478,10 @@ export default function ReportsPage() {
                             </div>
 
                             <div className="min-w-0">
-                              <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                              <h4 className="text-xs sm:text-sm font-bold text-slate-900 break-words leading-snug">
                                 {sr.title}
                               </h4>
-                              <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                              <p className="text-[11px] text-slate-500 break-words mt-0.5 leading-normal">
                                 {sr.dashboard_title || 'Executive Overview'}
                               </p>
                             </div>

@@ -40,11 +40,11 @@ export default function ActivityList({ activities = [] }) {
                 <span className={`font-mono text-[9px] font-bold px-1.5 py-0.2 rounded border ${badge.color}`}>
                   {badge.label}
                 </span>
-                <span className="font-semibold text-slate-900 truncate">
+                <span className="font-semibold text-slate-900 break-words leading-snug">
                   {item.title}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 line-clamp-1">
+              <p className="text-xs text-slate-500 break-words mt-0.5">
                 {item.description}
               </p>
             </div>

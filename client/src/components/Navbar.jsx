@@ -317,13 +317,13 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
                               {getResultIcon(item.type)}
                             </div>
                             <div className="min-w-0">
-                              <div className="text-xs font-semibold truncate flex items-center gap-2">
+                              <div className="text-xs font-semibold break-words flex items-center gap-2">
                                 <span>{item.title}</span>
                                 <span className="text-[10px] font-normal px-1.5 py-0.2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
                                   {item.category}
                                 </span>
                               </div>
-                              <div className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
+                              <div className="text-[11px] text-slate-400 dark:text-slate-500 break-words">
                                 {item.subtitle}
                               </div>
                             </div>
@@ -354,7 +354,7 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
           title="Organization Settings"
         >
           <Building2 className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
-          <span className="max-w-36 truncate font-medium">
+          <span className="max-w-48 truncate font-medium">
             {user?.organization_name || 'Ricoz Primary Organization'}
           </span>
         </button>

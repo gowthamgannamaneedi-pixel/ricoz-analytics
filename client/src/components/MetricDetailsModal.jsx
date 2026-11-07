@@ -166,7 +166,7 @@ export default function MetricDetailsModal({
 
             <div className="bg-white dark:bg-[#111827] p-3.5 rounded-xl border border-slate-200/80 dark:border-[#334155] shadow-2xs">
               <span className="text-[11px] font-semibold text-slate-500 dark:text-[#94A3B8] block">Calculation Formula</span>
-              <span className="text-xs font-mono font-bold text-rose-600 dark:text-[#FB7185] mt-1 block truncate" title={metric.formula}>
+              <span className="text-xs font-mono font-bold text-rose-600 dark:text-[#FB7185] mt-1 block break-all" title={metric.formula}>
                 {metric.formula || 'SUM'}
               </span>
               <span className="text-[10px] text-slate-400 dark:text-slate-500">Agg: {formatting.aggregation_type || 'SUM'}</span>
@@ -174,7 +174,7 @@ export default function MetricDetailsModal({
 
             <div className="bg-white dark:bg-[#111827] p-3.5 rounded-xl border border-slate-200/80 dark:border-[#334155] shadow-2xs">
               <span className="text-[11px] font-semibold text-slate-500 dark:text-[#94A3B8] block">Linked Dataset</span>
-              <span className="text-xs font-semibold text-slate-800 dark:text-[#CBD5E1] mt-1 block truncate" title={metric.dataset_name || 'Dataset'}>
+              <span className="text-xs font-semibold text-slate-800 dark:text-[#CBD5E1] mt-1 block break-words" title={metric.dataset_name || 'Dataset'}>
                 {metric.dataset_name || (metric.dataset_id ? `Dataset #${metric.dataset_id}` : 'None')}
               </span>
               <span className="text-[10px] text-slate-400 dark:text-slate-500">{metric.record_count ? `${metric.record_count} evaluated rows` : 'Linked'}</span>
@@ -198,7 +198,7 @@ export default function MetricDetailsModal({
 
             <div className="bg-white dark:bg-[#111827] p-3.5 rounded-xl border border-slate-200/80 dark:border-[#334155] shadow-2xs">
               <span className="text-[11px] font-semibold text-slate-500 dark:text-[#94A3B8] block">Defined By</span>
-              <span className="text-xs font-semibold text-slate-800 dark:text-[#CBD5E1] mt-1 block truncate">
+              <span className="text-xs font-semibold text-slate-800 dark:text-[#CBD5E1] mt-1 block break-words">
                 {metric.creator_name || 'Analyst'}
               </span>
               <span className="text-[10px] text-slate-400 dark:text-slate-500">

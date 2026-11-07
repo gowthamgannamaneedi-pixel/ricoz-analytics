@@ -436,12 +436,12 @@ export default function GovernancePage() {
     const s = (status || 'active').toLowerCase();
     switch (s) {
       case 'active':
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Active</span>;
+        return <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/90 dark:border-emerald-800/60"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Active Account</span>;
       case 'inactive':
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200"><span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Inactive</span>;
+        return <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-700"><span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Inactive Account</span>;
       case 'deactivated':
       default:
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200"><span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Deactivated</span>;
+        return <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/90 dark:border-rose-800/60"><span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Deactivated Account</span>;
     }
   };
 
@@ -802,7 +802,7 @@ export default function GovernancePage() {
                 <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 dark:hover:border-rose-500 transition">
                   <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700 dark:text-[#FB7185]">
                     <Crown className="w-4.5 h-4.5 text-rose-600 dark:text-[#FB7185] shrink-0" />
-                    <span className="truncate uppercase tracking-wider">Administrators</span>
+                    <span className="uppercase tracking-wider">Administrators</span>
                   </div>
                   <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight my-2">
                     {roleDistribution.admin || 0}
@@ -816,7 +816,7 @@ export default function GovernancePage() {
                 <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 dark:hover:border-rose-500 transition">
                   <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700 dark:text-[#FB7185]">
                     <Users className="w-4.5 h-4.5 text-rose-600 dark:text-[#FB7185] shrink-0" />
-                    <span className="truncate uppercase tracking-wider">Managers</span>
+                    <span className="uppercase tracking-wider">Managers</span>
                   </div>
                   <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight my-2">
                     {roleDistribution.manager || 0}
@@ -830,7 +830,7 @@ export default function GovernancePage() {
                 <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 dark:hover:border-rose-500 transition">
                   <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700 dark:text-[#FB7185]">
                     <TrendingUp className="w-4.5 h-4.5 text-rose-600 dark:text-[#FB7185] shrink-0" />
-                    <span className="truncate uppercase tracking-wider">Analysts</span>
+                    <span className="uppercase tracking-wider">Analysts</span>
                   </div>
                   <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight my-2">
                     {roleDistribution.analyst || 0}
@@ -844,7 +844,7 @@ export default function GovernancePage() {
                 <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 dark:hover:border-rose-500 transition">
                   <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700 dark:text-[#FB7185]">
                     <Eye className="w-4.5 h-4.5 text-rose-600 dark:text-[#FB7185] shrink-0" />
-                    <span className="truncate uppercase tracking-wider">Viewers</span>
+                    <span className="uppercase tracking-wider">Viewers</span>
                   </div>
                   <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight my-2">
                     {roleDistribution.viewer || 0}
@@ -1152,13 +1152,13 @@ export default function GovernancePage() {
                                   {u.name ? u.name.slice(0, 2).toUpperCase() : 'U'}
                                 </div>
                                 <div className="min-w-0">
-                                  <div className="font-semibold text-slate-900 flex items-center gap-1.5 truncate">
+                                  <div className="font-semibold text-slate-900 flex items-center gap-1.5 break-words">
                                     {u.name}
                                     {isSelf && (
                                       <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">You</span>
                                     )}
                                   </div>
-                                  <div className="text-xs text-slate-400 truncate">{u.email}</div>
+                                  <div className="text-xs text-slate-400 break-all">{u.email}</div>
                                 </div>
                               </div>
                             </td>

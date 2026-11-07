@@ -1291,10 +1291,10 @@ export default function AIInsightsPage() {
                       onClick={() => setSelectedInsightForDetails(ins)}
                     >
                       <td className="py-3 px-4 max-w-sm">
-                        <div className="font-bold text-slate-900 dark:text-[#F8FAFC] leading-snug truncate">
+                        <div className="font-bold text-slate-900 dark:text-[#F8FAFC] leading-snug break-words">
                           {ins.title}
                         </div>
-                        <div className="text-slate-500 dark:text-[#94A3B8] text-[11px] truncate mt-0.5">
+                        <div className="text-slate-500 dark:text-[#94A3B8] text-[11px] break-words mt-0.5 leading-normal">
                           {ins.summary}
                         </div>
                       </td>
@@ -1418,14 +1418,14 @@ export default function AIInsightsPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                   <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
                     <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Dataset</span>
-                    <span className="font-bold text-slate-800 dark:text-[#F8FAFC] truncate block">
+                    <span className="font-bold text-slate-800 dark:text-[#F8FAFC] break-words block leading-snug">
                       {selectedInsightForDetails.dataset_name || selectedInsightForDetails.evidence?.datasetName || 'Primary'}
                     </span>
                   </div>
 
                   <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
                     <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Current Value</span>
-                    <span className="font-bold text-emerald-700 dark:text-[#6EE7B7] font-mono truncate block">
+                    <span className="font-bold text-emerald-700 dark:text-[#6EE7B7] font-mono block">
                       {selectedInsightForDetails.evidence?.currentValue !== undefined
                         ? selectedInsightForDetails.evidence.currentValue.toLocaleString()
                         : 'N/A'}
@@ -1434,7 +1434,7 @@ export default function AIInsightsPage() {
 
                   <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
                     <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Comparison</span>
-                    <span className="font-bold text-slate-700 dark:text-[#CBD5E1] font-mono truncate block">
+                    <span className="font-bold text-slate-700 dark:text-[#CBD5E1] font-mono block">
                       {selectedInsightForDetails.evidence?.comparisonValue !== undefined
                         ? selectedInsightForDetails.evidence.comparisonValue.toLocaleString()
                         : 'N/A'}
@@ -1452,7 +1452,7 @@ export default function AIInsightsPage() {
 
                   <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
                     <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Period</span>
-                    <span className="font-bold text-slate-800 dark:text-[#F8FAFC] truncate block">
+                    <span className="font-bold text-slate-800 dark:text-[#F8FAFC] break-words block leading-snug">
                       {selectedInsightForDetails.evidence?.period || 'Q4 Observation'}
                     </span>
                   </div>

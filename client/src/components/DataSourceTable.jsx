@@ -287,11 +287,11 @@ export default function DataSourceTable({
                       <div className="p-2 rounded-lg bg-slate-50 dark:bg-[#1E293B] border border-slate-100 dark:border-[#334155] shrink-0">
                         {getTypeIcon(source.type)}
                       </div>
-                      <div className="min-w-0 max-w-xs">
-                        <span className="truncate block text-xs font-semibold text-slate-900 dark:text-[#F8FAFC]">
+                      <div className="min-w-0 max-w-sm">
+                        <span className="break-words block text-xs font-semibold text-slate-900 dark:text-[#F8FAFC] leading-snug">
                           {source.name}
                         </span>
-                        <span className="text-[11px] text-slate-500 dark:text-[#94A3B8] font-normal block truncate mt-0.5">
+                        <span className="text-[11px] text-slate-500 dark:text-[#94A3B8] font-normal block break-words mt-0.5 leading-normal">
                           {getOriginSummary(source)}
                         </span>
                       </div>

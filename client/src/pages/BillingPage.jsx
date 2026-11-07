@@ -718,7 +718,7 @@ export default function BillingPage() {
               </div>
             </div>
 
-            <p className="text-[11px] text-slate-400 dark:text-[#94A3B8] pt-0.5 truncate" title={user?.organization_name || 'Ricoz Primary Organization'}>
+            <p className="text-[11px] text-slate-400 dark:text-[#94A3B8] pt-0.5 break-words" title={user?.organization_name || 'Ricoz Primary Organization'}>
               Organization: <span className="font-semibold text-slate-600 dark:text-[#CBD5E1]">{user?.organization_name || 'Ricoz Primary Organization'}</span>
             </p>
           </div>
@@ -953,7 +953,7 @@ export default function BillingPage() {
                   <div className="flex flex-col gap-2 w-full">
                     <div className="w-full h-10 py-2 px-3 rounded-xl text-xs font-bold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 flex items-center justify-center gap-1.5 text-center">
                       <Clock className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" />
-                      <span className="truncate">
+                      <span className="break-words leading-tight">
                         Scheduled Change • Effective {currentSub?.scheduledDowngradeEffectiveDate ? new Date(currentSub.scheduledDowngradeEffectiveDate).toLocaleDateString() : 'Next Cycle'}
                       </span>
                     </div>

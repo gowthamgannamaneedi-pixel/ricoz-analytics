@@ -125,14 +125,14 @@ export default function DatasetDetailsModal({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC]">
+                <h2 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC] break-words">
                   {dataset.name}
                 </h2>
-                <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1] border border-slate-200/80 dark:border-[#334155]">
+                <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1] border border-slate-200/80 dark:border-[#334155] shrink-0">
                   ID: #{dataset.id}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-[#94A3B8] break-words mt-0.5">
                 {dataset.description || 'Structured enterprise telemetry dataset'}
               </p>
             </div>
@@ -171,11 +171,11 @@ export default function DatasetDetailsModal({
               <span className="text-[11px] font-semibold text-slate-500 dark:text-[#94A3B8] block">Source Pipeline</span>
               <div className="flex items-center gap-1.5 mt-1.5">
                 {getSourceIcon(dataset.data_source_type)}
-                <span className="text-xs font-semibold text-slate-800 dark:text-[#CBD5E1] truncate">
+                <span className="text-xs font-semibold text-slate-800 dark:text-[#CBD5E1] break-words">
                   {(dataset.data_source_type || 'CSV').toUpperCase()}
                 </span>
               </div>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate block mt-0.5">
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 break-words block mt-0.5">
                 {dataset.data_source_name || 'Direct Ingestion'}
               </span>
             </div>

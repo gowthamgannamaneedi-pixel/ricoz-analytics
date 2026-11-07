@@ -90,7 +90,7 @@ export default function DataSourceCard({
         </span>
       </div>
 
-      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 truncate">
+      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 break-words leading-normal">
         {subtitle}
       </div>
     </div>

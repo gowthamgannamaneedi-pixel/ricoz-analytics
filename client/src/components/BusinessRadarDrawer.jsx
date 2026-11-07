@@ -421,7 +421,7 @@ export default function BusinessRadarDrawer({
                     <div className="text-xl font-bold text-slate-900 dark:text-[#F8FAFC] mt-1 font-mono">
                       {formatAmount(totalBaseline)}
                     </div>
-                    <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">
+                    <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 break-words">
                       {priorPeriodLabel}
                     </div>
                   </div>
@@ -434,7 +434,7 @@ export default function BusinessRadarDrawer({
                     <div className="text-xl font-bold text-slate-900 dark:text-[#F8FAFC] mt-1 font-mono">
                       {formatAmount(totalCurrent)}
                     </div>
-                    <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">
+                    <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 break-words">
                       {currentPeriodLabel}
                     </div>
                   </div>

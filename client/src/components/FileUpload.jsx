@@ -142,7 +142,7 @@ export default function FileUpload({
               {getFileIcon(selectedFile.name)}
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-900 dark:text-[#F8FAFC] truncate">
+              <p className="text-xs font-semibold text-slate-900 dark:text-[#F8FAFC] break-words leading-snug">
                 {selectedFile.name}
               </p>
               <p className="font-mono text-[11px] text-slate-500 dark:text-[#94A3B8] mt-0.5">

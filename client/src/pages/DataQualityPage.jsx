@@ -886,7 +886,7 @@ export default function DataQualityPage() {
                 </div>
                 <div className="bg-slate-50/80 dark:bg-[#172131] p-3 rounded-xl border border-slate-100 dark:border-[#334155]/60">
                   <span className="block font-medium text-slate-400 dark:text-[#94A3B8] text-[11px]">Evaluated Rows</span>
-                  <span className="font-bold text-slate-800 dark:text-[#F8FAFC] font-mono mt-0.5 block truncate">
+                  <span className="font-bold text-slate-800 dark:text-[#F8FAFC] font-mono mt-0.5 block break-words">
                     {evaluating
                       ? `${Number(activeJob?.rows_processed || 0).toLocaleString()} / ${Number(activeJob?.total_rows || selectedDataset?.row_count || 0).toLocaleString()} rows`
                       : selectedDataset?.row_count !== undefined
@@ -1563,7 +1563,7 @@ export default function DataQualityPage() {
                             {rule.severity}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-[#94A3B8] font-mono truncate max-w-sm">
+                        <p className="text-xs text-slate-500 dark:text-[#94A3B8] font-mono break-all max-w-sm">
                           Config: {JSON.stringify(rule.configuration || {})}
                         </p>
                         <p className="text-[11px] text-slate-400 dark:text-[#64748B]">

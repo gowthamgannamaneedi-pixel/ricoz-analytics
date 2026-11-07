@@ -237,41 +237,41 @@ export default function DatasetTable({
     const t = String(type || 'csv').toLowerCase();
     if (t === 'csv') {
       return (
-        <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 whitespace-nowrap">
-          CSV Upload
+        <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/60 whitespace-nowrap">
+          CSV File
         </span>
       );
     }
     if (t === 'postgresql' || t === 'postgres') {
       return (
-        <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80 whitespace-nowrap">
-          PostgreSQL
+        <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/60 whitespace-nowrap">
+          PostgreSQL Database
         </span>
       );
     }
     if (t === 'mysql') {
       return (
-        <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200/80 whitespace-nowrap">
-          MySQL
+        <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400 border border-sky-200/80 dark:border-sky-800/60 whitespace-nowrap">
+          MySQL Database
         </span>
       );
     }
     if (t === 'json') {
       return (
-        <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/80 whitespace-nowrap">
-          JSON Upload
+        <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/60 whitespace-nowrap">
+          JSON File
         </span>
       );
     }
     if (t === 'rest_api' || t === 'api') {
       return (
-        <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200/80 whitespace-nowrap">
-          REST API
+        <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200/80 dark:border-purple-800/60 whitespace-nowrap">
+          REST API Endpoint
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200/80 whitespace-nowrap">
+      <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700 whitespace-nowrap">
         {String(type || 'Connector').toUpperCase()}
       </span>
     );
@@ -282,31 +282,31 @@ export default function DatasetTable({
     switch (status) {
       case 'ready':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/90 whitespace-nowrap shadow-2xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/90 dark:border-emerald-800/60 whitespace-nowrap shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
-            <span>Ready</span>
+            <span>Ready to Process</span>
           </span>
         );
       case 'processing':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/90 whitespace-nowrap shadow-2xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/90 dark:border-amber-800/60 whitespace-nowrap shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
-            <span>Processing</span>
+            <span>Processing Pipeline</span>
           </span>
         );
       case 'error':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200/90 whitespace-nowrap shadow-2xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/90 dark:border-rose-800/60 whitespace-nowrap shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" />
-            <span>Error</span>
+            <span>Ingestion Error</span>
           </span>
         );
       case 'empty':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200/90 whitespace-nowrap shadow-2xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/90 dark:border-slate-700 whitespace-nowrap shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0" />
-            <span>Empty</span>
+            <span>No Records</span>
           </span>
         );
     }
@@ -491,9 +491,9 @@ export default function DatasetTable({
             size="md"
           >
             <option value="all">All Sources</option>
-            <option value="csv">CSV Upload</option>
-            <option value="postgresql">PostgreSQL</option>
-            <option value="json">JSON Upload</option>
+            <option value="csv">CSV File</option>
+            <option value="postgresql">PostgreSQL Database</option>
+            <option value="json">JSON File</option>
             <option value="rest_api">REST API</option>
           </Select>
 
@@ -631,20 +631,20 @@ export default function DatasetTable({
                     }`}
                   >
                     {/* Dataset Name & Description */}
-                    <td className="py-2.5 pl-4 sm:pl-5 pr-3 min-w-0">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="shrink-0">
+                    <td className="py-3 pl-4 sm:pl-5 pr-3 min-w-[220px] sm:min-w-[280px]">
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <div className="shrink-0 mt-0.5">
                           {getSourceIcon(dataset.data_source_type)}
                         </div>
-                        <div className="min-w-0 flex-1 overflow-hidden">
+                        <div className="min-w-0 flex-1">
                           <button
                             onClick={() => onPreview && onPreview(dataset.id)}
-                            className="text-left font-bold text-slate-900 dark:text-slate-100 hover:text-rose-600 dark:hover:text-rose-400 transition truncate block text-xs sm:text-sm w-full"
+                            className="text-left font-bold text-slate-900 dark:text-slate-100 hover:text-rose-600 dark:hover:text-rose-400 transition break-words block text-xs sm:text-sm w-full leading-snug cursor-pointer"
                             title={dataset.name}
                           >
                             {dataset.name}
                           </button>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5 font-normal w-full" title={dataset.description || 'Enterprise analysis dataset'}>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 break-words mt-1 font-normal w-full leading-relaxed" title={dataset.description || 'Enterprise analysis dataset'}>
                             {dataset.description || 'Enterprise analysis dataset'}
                           </p>
                         </div>
@@ -652,31 +652,31 @@ export default function DatasetTable({
                     </td>
 
                     {/* Source Pipeline */}
-                    <td className="py-2.5 px-2 whitespace-nowrap overflow-hidden text-ellipsis">
+                    <td className="py-3 px-3 whitespace-nowrap">
                       {renderSourceBadge(dataset.data_source_type)}
                     </td>
 
                     {/* Status */}
-                    <td className="py-2.5 px-2 whitespace-nowrap overflow-hidden text-ellipsis">
+                    <td className="py-3 px-3 whitespace-nowrap">
                       {renderStatusBadge(status)}
                     </td>
 
                     {/* Record Count */}
-                    <td className="py-2.5 px-2 whitespace-nowrap font-mono text-xs font-semibold text-slate-800 dark:text-slate-200">
-                      {Number(dataset.row_count || 0).toLocaleString()} rows
+                    <td className="py-3 px-3 whitespace-nowrap font-mono text-xs font-semibold text-slate-800 dark:text-slate-200">
+                      {Number(dataset.row_count || 0).toLocaleString()} records
                     </td>
 
                     {/* Fields */}
-                    <td className="py-2.5 px-2 whitespace-nowrap text-xs text-slate-600 dark:text-slate-400">
+                    <td className="py-3 px-3 whitespace-nowrap text-xs text-slate-600 dark:text-slate-400 font-mono">
                       {dataset.column_count || 0} fields
                     </td>
 
                     {/* Created / Updated */}
-                    <td className="py-2.5 px-2 whitespace-nowrap min-w-0 overflow-hidden">
-                      <span className="block text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                    <td className="py-3 px-3 whitespace-nowrap min-w-0">
+                      <span className="block text-xs font-medium text-slate-800 dark:text-slate-200">
                         {formatDate(dataset.created_at)}
                       </span>
-                      <span className="block text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">
+                      <span className="block text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
                         {formatRelativeTime(dataset.updated_at || dataset.created_at)}
                       </span>
                     </td>

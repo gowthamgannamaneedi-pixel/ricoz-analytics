@@ -707,7 +707,7 @@ export default function SettingsPage() {
                   <Users className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-base sm:text-[17px] font-semibold text-slate-800 dark:text-slate-100 truncate block">Total Users</span>
+                  <span className="text-base sm:text-[17px] font-semibold text-slate-800 dark:text-slate-100 break-words block leading-snug">Total Users</span>
                   <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight mt-1">
                     {stats.membersCount}
                   </div>
@@ -729,7 +729,7 @@ export default function SettingsPage() {
                   <Database className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-base sm:text-[17px] font-semibold text-slate-800 dark:text-slate-100 truncate block">Connected Datasets</span>
+                  <span className="text-base sm:text-[17px] font-semibold text-slate-800 dark:text-slate-100 break-words block leading-snug">Connected Datasets</span>
                   <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight mt-1">
                     {stats.datasetsCount}
                   </div>
@@ -749,7 +749,7 @@ export default function SettingsPage() {
                   <Layers className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-base sm:text-[17px] font-semibold text-slate-800 dark:text-slate-100 truncate block">Dashboards & Reports</span>
+                  <span className="text-base sm:text-[17px] font-semibold text-slate-800 dark:text-slate-100 break-words block leading-snug">Dashboards & Reports</span>
                   <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight mt-1">
                     {stats.dashboardsCount + stats.reportsCount}
                   </div>
@@ -771,7 +771,7 @@ export default function SettingsPage() {
                   <ShieldCheck className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-base sm:text-[17px] font-semibold text-slate-800 dark:text-slate-100 truncate block">Security Status</span>
+                  <span className="text-base sm:text-[17px] font-semibold text-slate-800 dark:text-slate-100 break-words block leading-snug">Security Status</span>
                   <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight mt-1">
                     {healthStatus}
                   </div>
@@ -1099,10 +1099,10 @@ export default function SettingsPage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-slate-900 dark:text-[#F8FAFC] truncate">
+                        <p className="font-bold text-slate-900 dark:text-[#F8FAFC] break-words leading-snug">
                           {formatActivityAction(log.action)}
                         </p>
-                        <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] truncate">
+                        <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] break-words mt-0.5 leading-normal">
                           {log.description || (log.user_name ? `By ${log.user_name}` : 'System operation')}
                         </p>
                       </div>

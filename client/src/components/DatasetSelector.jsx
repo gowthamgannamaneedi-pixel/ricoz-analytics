@@ -92,14 +92,14 @@ export default function DatasetSelector({
         id="dataset-selector-trigger"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        className="flex items-center gap-3 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 text-left text-sm font-semibold text-slate-800 dark:text-slate-100 transition hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 focus:outline-hidden focus:border-[#D91542] focus:ring-2 focus:ring-[#D91542]/20 shadow-2xs min-w-[220px] max-w-[340px] cursor-pointer"
+        className="flex items-center gap-3 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 text-left text-sm font-semibold text-slate-800 dark:text-slate-100 transition hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 focus:outline-hidden focus:border-[#D91542] focus:ring-2 focus:ring-[#D91542]/20 shadow-2xs min-w-[220px] max-w-[440px] cursor-pointer"
       >
         <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#FFF1F3] dark:bg-rose-950/50 border border-rose-200/80 dark:border-rose-900/60 text-[#D91542] shrink-0">
           <Table2 className="h-3.5 w-3.5" />
         </div>
 
         <div className="min-w-0 flex-1 pr-1">
-          <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block text-sm">
+          <span className="font-semibold text-slate-900 dark:text-slate-100 truncate block text-sm" title={selectedDataset ? selectedDataset.name : 'Select Dataset'}>
             {selectedDataset ? selectedDataset.name : 'Select Dataset'}
           </span>
         </div>
@@ -113,7 +113,7 @@ export default function DatasetSelector({
       {isOpen && (
         <div
           role="listbox"
-          className="absolute left-0 mt-2 w-84 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-1.5 shadow-xl z-50 text-xs animate-in fade-in zoom-in-95 duration-100"
+          className="absolute left-0 mt-2 w-96 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-1.5 shadow-xl z-50 text-xs animate-in fade-in zoom-in-95 duration-100"
         >
           {/* Search Header */}
           <div className="relative mb-2 px-1 pt-1">
@@ -154,12 +154,12 @@ export default function DatasetSelector({
                         : 'text-slate-700 dark:text-[#CBD5E1] font-medium hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-[#2A1422]/70 dark:hover:text-[#FB7185]'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       <div className="p-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shrink-0">
                         {getSourceIcon(d.data_source_type)}
                       </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words text-xs font-semibold text-slate-900 dark:text-slate-100 leading-snug">
                           {d.name}
                         </p>
                         <p className="text-[10px] text-slate-400 font-mono mt-0.5">

@@ -235,7 +235,7 @@ export default function CommentsPanel({
           </div>
           <div>
             <h3 className="font-semibold text-slate-900 dark:text-[#F8FAFC] text-xs">Discussion & Annotations</h3>
-            <p className="text-[10px] text-slate-500 dark:text-[#94A3B8] truncate max-w-[240px]">{resourceTitle}</p>
+            <p className="text-[10px] text-slate-500 dark:text-[#94A3B8] break-words max-w-[280px]">{resourceTitle}</p>
           </div>
         </div>
 
@@ -275,7 +275,7 @@ export default function CommentsPanel({
       {/* Reply Banner */}
       {replyingTo && (
         <div className="flex items-center justify-between px-4 py-1.5 bg-rose-50/80 dark:bg-[#2A1422] border-t border-rose-100 dark:border-[#FB7185]/30 text-xs text-rose-700 dark:text-[#FB7185]">
-          <span className="truncate">Replying to <strong>{replyingTo.author_name}</strong></span>
+          <span className="break-words">Replying to <strong>{replyingTo.author_name}</strong></span>
           <button
             onClick={() => setReplyingTo(null)}
             className="p-0.5 hover:text-rose-900 dark:hover:text-rose-300 text-[11px]"

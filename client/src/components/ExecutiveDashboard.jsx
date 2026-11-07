@@ -537,7 +537,7 @@ export default function ExecutiveDashboard({
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs shrink-0">
                   <BarChart3 className="h-5 w-5" />
                 </div>
-                <span className="text-base sm:text-[18px] font-semibold text-slate-800 dark:text-slate-100 truncate">Total Sales</span>
+                <span className="text-base sm:text-[18px] font-semibold text-slate-800 dark:text-slate-100 break-words">Total Sales</span>
               </div>
               <div className="mt-3.5 flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
@@ -596,7 +596,7 @@ export default function ExecutiveDashboard({
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs shrink-0">
                   <ShoppingCart className="h-5 w-5" />
                 </div>
-                <span className="text-base sm:text-[18px] font-semibold text-slate-800 dark:text-slate-100 truncate">Total Orders</span>
+                <span className="text-base sm:text-[18px] font-semibold text-slate-800 dark:text-slate-100 break-words">Total Orders</span>
               </div>
               <div className="mt-3.5 flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
@@ -638,7 +638,7 @@ export default function ExecutiveDashboard({
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs shrink-0">
                   <Package className="h-5 w-5" />
                 </div>
-                <span className="text-base sm:text-[18px] font-semibold text-slate-800 dark:text-slate-100 truncate">Total Units Sold</span>
+                <span className="text-base sm:text-[18px] font-semibold text-slate-800 dark:text-slate-100 break-words">Total Units Sold</span>
               </div>
               <div className="mt-3.5 flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
@@ -672,7 +672,7 @@ export default function ExecutiveDashboard({
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs shrink-0">
                   <IndianRupee className="h-5 w-5" />
                 </div>
-                <span className="text-base sm:text-[18px] font-semibold text-slate-800 dark:text-slate-100 truncate">Average Order Value</span>
+                <span className="text-base sm:text-[18px] font-semibold text-slate-800 dark:text-slate-100 break-words">Average Order Value</span>
               </div>
               <div className="mt-3.5 flex items-baseline justify-between">
                 <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
@@ -1115,7 +1115,7 @@ export default function ExecutiveDashboard({
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {productsData.slice(0, 5).map((row, idx) => (
                       <tr key={row.product || idx} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition">
-                        <td className="py-2.5 font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[110px]" title={row.product}>
+                        <td className="py-2.5 font-semibold text-slate-800 dark:text-slate-200 break-words max-w-[180px] leading-snug" title={row.product}>
                           {row.product}
                         </td>
                         <td className="py-2.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
@@ -1246,7 +1246,7 @@ export default function ExecutiveDashboard({
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
+                          <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 break-words leading-snug">
                             {sig.title}
                           </h4>
                           <span

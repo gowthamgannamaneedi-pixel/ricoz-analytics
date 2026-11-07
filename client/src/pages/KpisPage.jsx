@@ -248,14 +248,14 @@ export default function KpisPage() {
     switch (status) {
       case 'on_track':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/90 whitespace-nowrap shadow-2xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/90 dark:border-emerald-800/60 whitespace-nowrap shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
             <span>On Track</span>
           </span>
         );
       case 'at_risk':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/90 whitespace-nowrap shadow-2xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/90 dark:border-amber-800/60 whitespace-nowrap shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
             <span>At Risk</span>
           </span>
@@ -264,7 +264,7 @@ export default function KpisPage() {
       case 'critical':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/90 whitespace-nowrap shadow-2xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/90 dark:border-rose-800/60 whitespace-nowrap shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" />
             <span>Behind Target</span>
           </span>
@@ -747,12 +747,12 @@ export default function KpisPage() {
                       <div className="min-w-0 flex-1">
                         <button
                           onClick={() => handleOpenDetails(metric)}
-                          className="text-left font-bold text-slate-900 dark:text-slate-100 hover:text-rose-600 dark:hover:text-rose-400 transition truncate block text-sm cursor-pointer"
+                          className="text-left font-bold text-slate-900 dark:text-slate-100 hover:text-rose-600 dark:hover:text-rose-400 transition break-words block text-sm leading-snug cursor-pointer"
                           title={metric.name}
                         >
                           {metric.name}
                         </button>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5 font-normal">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 break-words mt-1 font-normal leading-normal">
                           {metric.description || 'Enterprise metric telemetry'}
                         </p>
                       </div>
@@ -821,21 +821,21 @@ export default function KpisPage() {
                   <div className="min-w-0 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 overflow-hidden">
                     {/* Formula Pill */}
                     <span 
-                      className="inline-flex items-center gap-1 font-mono text-[10px] text-slate-700 dark:text-slate-300 bg-slate-100/90 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700 shrink-0 max-w-[140px] truncate" 
+                      className="inline-flex items-center gap-1 font-mono text-[10px] text-slate-700 dark:text-slate-300 bg-slate-100/90 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700 shrink-0 max-w-[200px]" 
                       title={`Formula: ${metric.formula}`}
                     >
                       <Code2 className="h-3 w-3 text-slate-400 shrink-0" />
-                      <span className="truncate">{metric.formula}</span>
+                      <span className="break-all">{metric.formula}</span>
                     </span>
 
                     {/* Dataset Pill */}
                     {metric.dataset_name && (
                       <span 
-                        className="inline-flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-400 truncate max-w-[120px]" 
+                        className="inline-flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-400 max-w-[180px]" 
                         title={`Dataset: ${metric.dataset_name}`}
                       >
                         <Database className="h-3 w-3 text-slate-400 shrink-0" />
-                        <span className="truncate">{metric.dataset_name}</span>
+                        <span className="break-words">{metric.dataset_name}</span>
                       </span>
                     )}
                   </div>
@@ -948,7 +948,7 @@ export default function KpisPage() {
                         >
                           {metric.name}
                         </button>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate max-w-xs font-normal">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 break-words max-w-sm font-normal">
                           {metric.description || 'Enterprise metric telemetry'}
                         </p>
                       </td>
@@ -974,7 +974,7 @@ export default function KpisPage() {
                           <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold text-[11px]">{progress}%</span>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300 truncate max-w-[140px]">
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300 break-words max-w-[200px]">
                         {metric.dataset_name || '—'}
                       </td>
                       <td className="py-3 px-4 text-right whitespace-nowrap">

@@ -851,8 +851,8 @@ export default function CollaborationPage() {
                   }`}
                 >
                   <div className="min-w-0">
-                    <p className="font-bold text-xs truncate text-slate-900 dark:text-[#F8FAFC]">{t.name}</p>
-                    <p className="text-[11px] text-slate-400 dark:text-[#94A3B8] truncate mt-0.5">{t.member_count || 1} members</p>
+                    <p className="font-bold text-xs break-words text-slate-900 dark:text-[#F8FAFC] leading-snug">{t.name}</p>
+                    <p className="text-[11px] text-slate-400 dark:text-[#94A3B8] mt-0.5">{t.member_count || 1} members</p>
                   </div>
                   <Shield className="h-4 w-4 text-slate-300 dark:text-slate-600" />
                 </div>
@@ -1163,8 +1163,8 @@ export default function CollaborationPage() {
                           {getResourceIcon(item.resource_type)}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-slate-900 dark:text-[#F8FAFC] truncate">{item.title}</p>
-                          <p className="text-[11px] text-slate-400 dark:text-[#94A3B8] truncate">{item.description || 'Enterprise resource'}</p>
+                          <p className="font-bold text-slate-900 dark:text-[#F8FAFC] break-words leading-snug">{item.title}</p>
+                          <p className="text-[11px] text-slate-400 dark:text-[#94A3B8] break-words mt-0.5 leading-normal">{item.description || 'Enterprise resource'}</p>
                         </div>
                       </div>
                     </td>
@@ -1309,7 +1309,7 @@ export default function CollaborationPage() {
                         }}
                         className="p-3 rounded-xl border border-slate-200 dark:border-[#334155] hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50/40 dark:hover:bg-[#172131] cursor-pointer transition flex items-center justify-between"
                       >
-                        <span className="font-bold text-slate-800 dark:text-[#F8FAFC] text-xs truncate max-w-[340px]">{i.title}</span>
+                        <span className="font-bold text-slate-800 dark:text-[#F8FAFC] text-xs break-words max-w-[340px] leading-snug">{i.title}</span>
                         <Share2 className="w-4 h-4 text-amber-600 dark:text-[#FBBF24] shrink-0" />
                       </div>
                     ))}
@@ -1557,8 +1557,8 @@ export default function CollaborationPage() {
                               {u.name ? u.name.slice(0, 2).toUpperCase() : 'U'}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-xs font-bold text-slate-800 truncate">{u.name}</p>
-                              <p className="text-[11px] text-slate-400 truncate">{u.email}</p>
+                              <p className="text-xs font-bold text-slate-800 break-words leading-snug">{u.name}</p>
+                              <p className="text-[11px] text-slate-400 break-all">{u.email}</p>
                             </div>
                           </div>
 

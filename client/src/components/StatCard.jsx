@@ -86,7 +86,7 @@ export default function StatCard({
 
         {/* Title */}
         <div className="mt-3.5 min-w-0">
-          <span className="text-base sm:text-[18px] font-semibold text-slate-800 dark:text-slate-100 truncate block">
+          <span className="text-base sm:text-[18px] font-semibold text-slate-800 dark:text-slate-100 break-words block leading-snug">
             {title}
           </span>
         </div>
