@@ -132,7 +132,7 @@ async function runSubscriptionTestSuite() {
           name: 'Admin User',
           email,
           organization_name: orgName,
-          password: 'Password123!'
+          password: 'W7!vQ2$mX9#pLz9k'
         }
       });
 
@@ -355,7 +355,7 @@ async function runSubscriptionTestSuite() {
       await UserModel.create({
         name: `Team Member ${u}`,
         email: `member${u}_${ts}@starter.com`,
-        password: 'Password123!',
+        password: 'W7!vQ2$mX9#pLz9k',
         role: 'analyst',
         organizationId: starterTenant.organizationId,
         status: 'active'

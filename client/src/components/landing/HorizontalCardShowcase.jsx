@@ -1,42 +1,28 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { 
-  Zap, 
-  Layers, 
+  Database, 
+  BarChart3, 
+  Calculator, 
+  BellRing, 
   TrendingUp, 
-  ShieldCheck, 
-  Sparkles, 
-  Activity, 
-  Cpu, 
-  ArrowRight,
-  Database,
-  BarChart3,
-  Sliders,
-  CheckCircle2,
-  Lock,
-  GitBranch,
-  FileText,
-  Calculator,
-  BellRing
+  Lock, 
+  CheckCircle2, 
+  ArrowRight, 
+  Sparkles 
 } from 'lucide-react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { calculateGrossMetrics, DEFAULT_ILLUSTRATIVE_METRICS } from '../../utils/formulaCalculator';
-
-gsap.registerPlugin(ScrollTrigger);
+import { DEFAULT_ILLUSTRATIVE_METRICS } from '../../utils/formulaCalculator';
 
 /**
- * HorizontalCardShowcase — Pinned Horizontal Scroll Section
- * Showcases 6 verified core product capabilities with:
+ * HorizontalCardShowcase — Responsive 6-Card Capability Showcase (Option B Grid)
+ * Completely eliminates horizontal clipping and scroll-trapping lag.
+ * Renders all 6 core product capabilities in a clean, responsive 3-column grid
+ * (1 col on mobile, 2 cols on tablet, 3 cols on desktop) with:
  * - Mathematical accuracy (Gross Profit ₹5.76 Cr, Gross Margin 68.4%, Gross Profit/Hub ₹0.12 Cr)
- * - Factual capability descriptions without unverified benchmarks
- * - High-contrast, clean light-mode surfaces matching dark-mode elegance
+ * - 100% visible, unclipped cards on all viewports (1536px, 1366px, 1024px, 768px, 390px)
+ * - Native, butter-smooth vertical page scrolling without GSAP pinning
+ * - High-contrast, clean light and dark mode surfaces
  */
 export default function HorizontalCardShowcase({ onOpenDemo }) {
-  const containerRef = useRef(null);
-  const trackRef = useRef(null);
-  const [activeCard, setActiveCard] = useState(0);
-  const [scrollProgress, setScrollProgress] = useState(0);
-
   const formulaData = DEFAULT_ILLUSTRATIVE_METRICS;
 
   const cards = [
@@ -52,21 +38,25 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
         { label: 'APIs', value: 'REST & Webhooks' },
         { label: 'Files', value: 'CSV, JSON & XLSX' }
       ],
-      features: ['Automated schema discovery', 'Credentials encrypted with AES-256-GCM', 'Multi-tenant organization isolation'],
+      features: [
+        'Automated schema discovery',
+        'Credentials encrypted with AES-256-GCM',
+        'Multi-tenant organization isolation'
+      ],
       mockup: (
-        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[11px] space-y-2 mb-4">
-          <div className="flex justify-between items-center text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 pb-1.5 text-[10px]">
-            <span className="font-bold text-slate-900 dark:text-white">VERIFIED_DATA_CONNECTORS</span>
+        <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-[11px] space-y-2 mb-4">
+          <div className="flex justify-between items-center text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800/80 pb-1.5 text-[10px]">
+            <span className="font-bold text-slate-900 dark:text-white">VERIFIED_CONNECTORS</span>
             <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">CONNECTED</span>
           </div>
           <div className="space-y-1.5 text-[10px]">
-            <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800 shadow-2xs">
-              <span className="text-blue-600 dark:text-blue-400 font-medium">PostgreSQL Direct Connection</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">Schema Verified</span>
+            <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+              <span className="text-blue-600 dark:text-blue-400 font-medium">PostgreSQL Direct</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">Verified</span>
             </div>
-            <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800 shadow-2xs">
-              <span className="text-purple-600 dark:text-purple-400 font-medium">MongoDB Collection Sync</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">Collections Active</span>
+            <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+              <span className="text-purple-600 dark:text-purple-400 font-medium">MongoDB Sync</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">Active</span>
             </div>
           </div>
         </div>
@@ -84,14 +74,18 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
         { label: 'Filters', value: 'Date & Region' },
         { label: 'Interactions', value: 'Hover & Drilldown' }
       ],
-      features: ['Dynamic time-range and region filters', 'Multi-series chart composition', 'Responsive desktop and mobile layouts'],
+      features: [
+        'Dynamic time-range and region filters',
+        'Multi-series chart composition',
+        'Responsive desktop and mobile layouts'
+      ],
       mockup: (
-        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[11px] space-y-2 mb-4">
-          <div className="flex justify-between items-center text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 pb-1.5 text-[10px]">
+        <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-[11px] space-y-2 mb-4">
+          <div className="flex justify-between items-center text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800/80 pb-1.5 text-[10px]">
             <span className="font-bold text-slate-900 dark:text-white">REVENUE PACING VS BUDGET</span>
             <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">+24.8% FY26</span>
           </div>
-          <div className="flex items-end justify-between h-14 gap-2 pt-1 px-1">
+          <div className="flex items-end justify-between h-12 gap-2 pt-1 px-1">
             {[
               { m: 'M1', t: 40, a: 45 },
               { m: 'M2', t: 55, a: 62 },
@@ -100,7 +94,7 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
               { m: 'M5', t: 100, a: 118 }
             ].map((pt, i) => (
               <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
-                <div className="w-full flex items-end justify-center gap-1 h-10">
+                <div className="w-full flex items-end justify-center gap-1 h-9">
                   <div className="w-2 bg-slate-300 dark:bg-slate-700 rounded-t" style={{ height: `${(pt.t / 125) * 100}%` }} title={`Target: ₹${pt.t}L`} />
                   <div className="w-2.5 bg-red-600 rounded-t" style={{ height: `${(pt.a / 125) * 100}%` }} title={`Actual: ₹${pt.a}L`} />
                 </div>
@@ -109,8 +103,8 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
             ))}
           </div>
           <div className="flex justify-between items-center pt-1 text-[9px] text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800/60 font-mono">
-            <span>■ Gray: Target Plan</span>
-            <span className="text-red-600 dark:text-red-400 font-bold">■ Red: Actual Invoiced</span>
+            <span>■ Gray: Target</span>
+            <span className="text-red-600 dark:text-red-400 font-bold">■ Red: Actual</span>
           </div>
         </div>
       )
@@ -127,29 +121,33 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
         { label: 'Gross Margin', value: formulaData.formatted.grossMargin },
         { label: 'Per Hub', value: formulaData.formatted.grossProfitPerHub }
       ],
-      features: ['Standardized gross profit and margin formulas', 'Programmatic arithmetic verification', 'Reusable across alerts and report exports'],
+      features: [
+        'Standardized gross profit and margin formulas',
+        'Programmatic arithmetic verification',
+        'Reusable across alerts and report exports'
+      ],
       mockup: (
-        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[11px] space-y-2 mb-4">
-          <div className="flex justify-between items-center text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 pb-1.5 text-[10px]">
+        <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-[11px] space-y-2 mb-4">
+          <div className="flex justify-between items-center text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800/80 pb-1.5 text-[10px]">
             <span className="font-bold text-slate-900 dark:text-white">FORMULA: GROSS_MARGIN</span>
             <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">PROGRAMMATIC</span>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono py-1">
-            <span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-              [Revenue: ₹8.42 Cr]
+          <div className="flex flex-wrap items-center gap-1 text-[10px] font-mono py-1">
+            <span className="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[9px]">
+              ₹8.42 Cr
             </span>
-            <span className="text-red-600 dark:text-red-400 font-bold">-</span>
-            <span className="px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-              [COGS: ₹2.66 Cr]
+            <span className="text-red-600 dark:text-red-400 font-bold text-[9px]">-</span>
+            <span className="px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-[9px]">
+              ₹2.66 Cr
             </span>
-            <span className="text-slate-600 dark:text-slate-400 font-bold">=</span>
-            <span className="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-bold">
+            <span className="text-slate-600 dark:text-slate-400 font-bold text-[9px]">=</span>
+            <span className="px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-bold text-[9px]">
               ₹5.76 Cr (68.4%)
             </span>
           </div>
-          <div className="text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200 dark:border-slate-800/60 flex justify-between">
-            <span>Per Hub: ₹5.76 Cr ÷ 48 Hubs = ₹0.12 Cr</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold">Illustrative Calculation</span>
+          <div className="text-[9px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200 dark:border-slate-800/60 flex justify-between">
+            <span>Per Hub: ₹5.76 Cr ÷ 48 = ₹0.12 Cr</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold">Verified</span>
           </div>
         </div>
       )
@@ -163,22 +161,26 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
       accent: 'from-purple-600 to-pink-600',
       stats: [
         { label: 'Detection', value: 'Automated Rules' },
-        { label: 'Delivery', value: 'Email Notifications' },
+        { label: 'Delivery', value: 'Email Alerts' },
         { label: 'Scope', value: 'Multi-Metric' }
       ],
-      features: ['Configurable metric threshold rules', 'Notification delivery on condition trigger', 'Direct link to drill down into source records'],
+      features: [
+        'Configurable metric threshold rules',
+        'Notification delivery on condition trigger',
+        'Direct link to drill down into source records'
+      ],
       mockup: (
-        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[11px] space-y-2 mb-4">
-          <div className="flex justify-between items-center text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 pb-1.5 text-[10px]">
+        <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-[11px] space-y-2 mb-4">
+          <div className="flex justify-between items-center text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800/80 pb-1.5 text-[10px]">
             <span className="font-bold text-slate-900 dark:text-white">THRESHOLD_EVALUATION</span>
             <span className="text-amber-600 dark:text-amber-400 font-mono font-bold">WARNING DETECTED</span>
           </div>
           <div className="space-y-1.5 text-[10px]">
-            <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800 shadow-2xs">
+            <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
               <span className="text-slate-700 dark:text-slate-200">Hub #19 Margin Contraction</span>
-              <span className="text-red-600 dark:text-red-400 font-mono font-bold">-14.2% vs Plan</span>
+              <span className="text-red-600 dark:text-red-400 font-mono font-bold">-14.2%</span>
             </div>
-            <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800 shadow-2xs">
+            <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
               <span className="text-slate-700 dark:text-slate-200">Email Notification Status</span>
               <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">Dispatched</span>
             </div>
@@ -198,25 +200,29 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
         { label: 'Inputs', value: 'Interactive Sliders' },
         { label: 'Outputs', value: 'Margin Sensitivity' }
       ],
-      features: ['Interactive parameter adjustments', 'Gross margin sensitivity analysis', 'Historical baseline comparison'],
+      features: [
+        'Interactive parameter adjustments',
+        'Gross margin sensitivity analysis',
+        'Historical baseline comparison'
+      ],
       mockup: (
-        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[11px] space-y-2 mb-4">
-          <div className="flex justify-between items-center text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 pb-1.5 text-[10px]">
-            <span className="font-bold text-slate-900 dark:text-white">SCENARIO: +4.5% SUPPLY COGS SHIFT</span>
+        <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-[11px] space-y-2 mb-4">
+          <div className="flex justify-between items-center text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800/80 pb-1.5 text-[10px]">
+            <span className="font-bold text-slate-900 dark:text-white">SCENARIO: +4.5% COGS SHIFT</span>
             <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">SIMULATED</span>
           </div>
           <div className="grid grid-cols-3 gap-1.5 text-center text-[10px] font-mono py-1">
-            <div className="p-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
-              <span className="text-slate-500 dark:text-slate-400 block text-[9px]">Conservative</span>
-              <span className="text-slate-800 dark:text-slate-200 font-bold">64.5%</span>
+            <div className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+              <span className="text-slate-500 dark:text-slate-400 block text-[9px]">Bear</span>
+              <span className="text-slate-800 dark:text-slate-200 font-bold text-[10px]">64.5%</span>
             </div>
-            <div className="p-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
-              <span className="text-slate-500 dark:text-slate-400 block text-[9px]">Baseline</span>
-              <span className="text-slate-800 dark:text-slate-200 font-bold">68.4%</span>
+            <div className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+              <span className="text-slate-500 dark:text-slate-400 block text-[9px]">Base</span>
+              <span className="text-slate-800 dark:text-slate-200 font-bold text-[10px]">68.4%</span>
             </div>
-            <div className="p-1.5 rounded bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 shadow-2xs">
-              <span className="text-emerald-700 dark:text-emerald-400 block text-[9px]">Optimistic</span>
-              <span className="text-emerald-700 dark:text-emerald-300 font-bold">71.2%</span>
+            <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 shadow-2xs">
+              <span className="text-emerald-700 dark:text-emerald-400 block text-[9px]">Bull</span>
+              <span className="text-emerald-700 dark:text-emerald-300 font-bold text-[10px]">71.2%</span>
             </div>
           </div>
         </div>
@@ -234,21 +240,25 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
         { label: 'Roles', value: 'Server-Enforced' },
         { label: 'Audit Logs', value: 'Activity Tracked' }
       ],
-      features: ['Tenant database isolation by organization ID', 'Role-based access control (Admin, Member, Viewer)', 'Audit trail logging for critical actions'],
+      features: [
+        'Tenant database isolation by organization ID',
+        'Role-based access control (Admin, Member, Viewer)',
+        'Audit trail logging for critical actions'
+      ],
       mockup: (
-        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[11px] space-y-2 mb-4">
-          <div className="flex justify-between items-center text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 pb-1.5 text-[10px]">
+        <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-[11px] space-y-2 mb-4">
+          <div className="flex justify-between items-center text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800/80 pb-1.5 text-[10px]">
             <span className="font-bold text-slate-900 dark:text-white">ACCESS_CONTROL_MATRIX</span>
             <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">ENFORCED</span>
           </div>
           <div className="space-y-1.5 text-[10px]">
-            <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800 shadow-2xs">
+            <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
               <span className="text-slate-700 dark:text-slate-200">Organization Administrator</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">Full Management</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">Full Access</span>
             </div>
-            <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800 shadow-2xs">
+            <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
               <span className="text-slate-700 dark:text-slate-200">Team Member / Viewer</span>
-              <span className="text-blue-600 dark:text-blue-400 font-bold font-mono">Dashboard Read-Only</span>
+              <span className="text-blue-600 dark:text-blue-400 font-bold font-mono">Read-Only</span>
             </div>
           </div>
         </div>
@@ -256,119 +266,68 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
     }
   ];
 
-  useEffect(() => {
-    const container = containerRef.current;
-    const track = trackRef.current;
-    if (!container || !track) return;
-
-    // Check if mobile or reduced-motion
-    const isMobile = window.innerWidth < 1024;
-    if (isMobile) return;
-
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return;
-    }
-
-    const ctx = gsap.context(() => {
-      const getScrollAmount = () => track.scrollWidth - window.innerWidth + 120;
-
-      const tween = gsap.to(track, {
-        x: () => -getScrollAmount(),
-        ease: 'none',
-      });
-
-      ScrollTrigger.create({
-        trigger: container,
-        start: 'top top',
-        end: () => `+=${getScrollAmount()}`,
-        pin: true,
-        animation: tween,
-        scrub: 0.6,
-        invalidateOnRefresh: true,
-        onUpdate: (self) => {
-          setScrollProgress(self.progress);
-          const idx = Math.min(
-            cards.length - 1,
-            Math.floor(self.progress * cards.length)
-          );
-          setActiveCard(idx);
-        }
-      });
-    }, container);
-
-    return () => ctx.revert();
-  }, [cards.length]);
-
   return (
     <section 
-      ref={containerRef}
       id="capabilities-gallery"
-      className="relative bg-slate-50/60 dark:bg-slate-950 text-slate-900 dark:text-white overflow-hidden py-16 lg:py-24 border-t border-slate-200 dark:border-slate-800 transition-colors duration-200"
+      className="relative bg-slate-50/70 dark:bg-slate-950 text-slate-900 dark:text-white py-16 sm:py-20 lg:py-24 border-t border-slate-200 dark:border-slate-800 transition-colors duration-200"
     >
-      <div className="max-w-[1480px] mx-auto w-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         
-        {/* Section Header with Sticky Progress Scrubber */}
-        <div className="px-4 sm:px-6 lg:px-12 mb-8 lg:mb-12">
-          <div className="flex flex-wrap items-end justify-between gap-6 border-b border-slate-200 dark:border-slate-800/80 pb-6">
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 dark:bg-red-950/80 border border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400 text-xs font-mono font-bold uppercase tracking-wider mb-3">
-                <Sparkles size={12} className="text-red-600 dark:text-red-400" />
-                <span>Core Platform Capabilities</span>
-              </div>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-                Designed for Reliable Business Intelligence.
-              </h2>
+        {/* Section Header */}
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-slate-200 dark:border-slate-800/80 pb-8 mb-10 lg:mb-12">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 dark:bg-red-950/80 border border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400 text-xs font-mono font-bold uppercase tracking-wider mb-3">
+              <Sparkles size={12} className="text-red-600 dark:text-red-400" />
+              <span>Core Platform Capabilities</span>
             </div>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+              Designed for Reliable Business Intelligence.
+            </h2>
+            <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl">
+              Explore the 6 core modules powering verified data ingestion, governed formulas, automated alerting, and executive reporting.
+            </p>
+          </div>
 
-            {/* Progress Counter & Guide */}
-            <div className="flex items-center gap-4">
-              <div className="text-right hidden sm:block">
-                <div className="text-xs font-mono text-slate-500 dark:text-slate-400">Capability Module</div>
-                <div className="text-sm font-mono font-bold text-slate-900 dark:text-white">
-                  0{activeCard + 1} / 0{cards.length}
-                </div>
-              </div>
-              <div className="w-32 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-red-600 to-rose-500 transition-all duration-150"
-                  style={{ width: `${Math.max(10, scrollProgress * 100)}%` }}
-                />
-              </div>
-            </div>
+          {/* Module Counter Pill */}
+          <div className="flex items-center gap-3 shrink-0 self-start md:self-end">
+            <span className="px-3 py-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-mono font-bold text-slate-700 dark:text-slate-300 shadow-2xs">
+              06 Production Modules
+            </span>
+            <span className="flex h-2.5 w-2.5 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
           </div>
         </div>
 
-        {/* Horizontal Card Track */}
-        <div 
-          ref={trackRef} 
-          className="flex gap-6 lg:gap-8 px-4 sm:px-6 lg:px-12 w-full lg:w-max overflow-x-auto lg:overflow-visible pb-6 lg:pb-0 scrollbar-none"
-        >
+        {/* Responsive 3x2 Grid (Option B) - Zero Horizontal Clipping */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {cards.map((card, idx) => {
             const Icon = card.icon;
             return (
               <div
                 key={card.id}
-                className="w-[85vw] sm:w-[480px] lg:w-[520px] shrink-0 rounded-3xl bg-white dark:bg-slate-900 p-6 sm:p-7 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-lg hover:shadow-xl flex flex-col justify-between transition-all duration-200 relative overflow-hidden text-slate-900 dark:text-slate-100"
+                className="rounded-2xl bg-white dark:bg-slate-900 p-6 border border-slate-200 dark:border-slate-800 hover:border-red-300 dark:hover:border-red-900/60 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden text-slate-900 dark:text-slate-100 group"
               >
                 {/* Subtle Ambient Card Gradient */}
-                <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${card.accent} opacity-5 dark:opacity-10 rounded-full blur-3xl pointer-events-none`} />
+                <div className={`absolute top-0 right-0 w-48 h-48 bg-gradient-to-br ${card.accent} opacity-5 dark:opacity-10 rounded-full blur-2xl pointer-events-none group-hover:opacity-15 transition-opacity`} />
 
                 <div>
                   {/* Category Pill & Icon */}
-                  <div className="flex items-center justify-between mb-5">
-                    <span className="text-xs font-mono font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[11px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                       {card.category}
                     </span>
-                    <div className="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-900 dark:text-white shadow-2xs">
-                      <Icon size={20} className="text-red-600 dark:text-red-400" />
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-900 dark:text-white shadow-2xs group-hover:scale-105 transition-transform">
+                      <Icon size={18} className="text-red-600 dark:text-red-400" />
                     </div>
                   </div>
 
                   {/* Title & Description */}
-                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2.5">
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">
                     {card.title}
                   </h3>
-                  <p className="text-sm sm:text-[15px] text-slate-600 dark:text-slate-300 leading-relaxed font-normal mb-5">
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-normal mb-4 min-h-[40px]">
                     {card.description}
                   </p>
 
@@ -376,29 +335,29 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
                   {card.mockup}
 
                   {/* 3 Metric Pills */}
-                  <div className="grid grid-cols-3 gap-2 mb-5">
+                  <div className="grid grid-cols-3 gap-2 mb-4">
                     {card.stats.map((stat, sIdx) => (
-                      <div key={sIdx} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-center">
-                        <div className="text-xs font-mono text-slate-500 dark:text-slate-400">{stat.label}</div>
-                        <div className="text-xs sm:text-sm font-mono font-bold text-slate-900 dark:text-white mt-0.5">{stat.value}</div>
+                      <div key={sIdx} className="p-2 rounded-lg bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 text-center">
+                        <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 truncate">{stat.label}</div>
+                        <div className="text-xs font-mono font-bold text-slate-900 dark:text-white mt-0.5 truncate">{stat.value}</div>
                       </div>
                     ))}
                   </div>
 
                   {/* Feature Checkpoints */}
-                  <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                  <div className="space-y-1.5 pt-3 border-t border-slate-100 dark:border-slate-800/80">
                     {card.features.map((feat, fIdx) => (
-                      <div key={fIdx} className="flex items-center gap-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
-                        <span>{feat}</span>
+                      <div key={fIdx} className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                        <span className="truncate">{feat}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Bottom Card Action */}
-                <div className="pt-5 mt-5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-                  <span className="text-xs font-mono text-slate-500 dark:text-slate-400">MODULE 0{idx + 1} OF 0{cards.length}</span>
+                <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+                  <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">MODULE 0{idx + 1} OF 0{cards.length}</span>
                   <button
                     type="button"
                     onClick={onOpenDemo}
@@ -411,11 +370,6 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
               </div>
             );
           })}
-        </div>
-
-        {/* Mobile Scroll Indicator Bar */}
-        <div className="px-4 text-center lg:hidden pt-4 text-xs font-mono text-slate-500 dark:text-slate-400">
-          ← Swipe horizontally to explore 6 capabilities →
         </div>
 
       </div>

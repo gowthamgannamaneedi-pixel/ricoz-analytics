@@ -299,9 +299,12 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    fetchDashboardsList();
-    fetchDatasets();
-    fetchSavedMetrics();
+    // Concurrent initial fetch to eliminate sequential network waterfalls
+    Promise.allSettled([
+      fetchDashboardsList(),
+      fetchDatasets(),
+      fetchSavedMetrics()
+    ]);
 
     // Cross-view dataset event synchronization (after upload or delete)
     const handleDatasetUpdate = () => {
