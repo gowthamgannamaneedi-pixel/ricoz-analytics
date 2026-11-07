@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   TrendingUp,
   Sliders,
@@ -302,6 +303,16 @@ export default function ForecastsPage() {
   useEffect(() => {
     loadInitialData();
   }, [loadInitialData]);
+
+  // Lock body scroll when delete confirm modal is open (Req 4)
+  useEffect(() => {
+    if (!forecastToDelete) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = orig;
+    };
+  }, [forecastToDelete]);
 
   const handleDatasetChange = (e) => {
     const dsId = e.target.value;
@@ -1601,11 +1612,21 @@ export default function ForecastsPage() {
       </div>
 
       {/* ───────────────────────────────────────────────────────────────── */}
-      {/* 5. DELETE FORECAST CONFIRMATION MODAL                             */}
+      {/* 5. DELETE FORECAST CONFIRMATION MODAL (Req 4 Full Viewport)        */}
       {/* ───────────────────────────────────────────────────────────────── */}
-      {forecastToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="relative w-full max-w-sm rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200 dark:border-[#334155] p-6 space-y-4 animate-in zoom-in-95 duration-150">
+      {forecastToDelete && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isDeleting) setForecastToDelete(null);
+          }}
+        >
+          <div
+            className="relative w-full max-w-sm my-auto rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200/90 dark:border-[#334155] p-6 space-y-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] shrink-0">
                 <Trash2 className="h-5 w-5" />
@@ -1641,7 +1662,8 @@ export default function ForecastsPage() {
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

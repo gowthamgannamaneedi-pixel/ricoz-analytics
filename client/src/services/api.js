@@ -249,6 +249,24 @@ export async function checkHealth() {
 }
 
 /**
+ * Fetch live status of all enterprise third-party integrations
+ */
+export async function getIntegrationsHealth() {
+  return apiRequest('/health/integrations');
+}
+
+/**
+ * Test an active connection to a specific integration
+ * @param {string} integration 'database' | 'email' | 'export' | 'ai'
+ */
+export async function testIntegrationApi(integration) {
+  return apiRequest('/health/integrations/test', {
+    method: 'POST',
+    body: JSON.stringify({ integration })
+  });
+}
+
+/**
  * Register a new user account
  * @param {{ name: string, email: string, password: string, role?: string }} userData 
  */

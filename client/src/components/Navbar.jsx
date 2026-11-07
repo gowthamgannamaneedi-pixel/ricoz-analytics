@@ -229,19 +229,19 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
           <button
             type="button"
             onClick={onOpenSidebar}
-            className="lg:hidden flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition cursor-pointer shrink-0"
+            className="lg:hidden flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition cursor-pointer shrink-0 shadow-2xs"
             aria-label="Open navigation"
             title="Open navigation"
           >
             <Menu className="h-5 w-5" />
           </button>
 
-          {/* Desktop Collapsed Sidebar Toggle (Menu Icon, Comfortable Target, Open navigation Tooltip) */}
+          {/* Desktop Collapsed Sidebar Toggle (Menu Icon, Comfortable Target, Open navigation Tooltip - Req 02) */}
           {isSidebarCollapsed && (
             <button
               type="button"
               onClick={onToggleSidebar}
-              className="hidden lg:flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition cursor-pointer shrink-0"
+              className="hidden lg:flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition cursor-pointer shrink-0 shadow-2xs"
               aria-label="Open navigation"
               title="Open navigation"
             >

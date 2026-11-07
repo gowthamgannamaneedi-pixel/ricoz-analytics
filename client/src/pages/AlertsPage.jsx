@@ -918,10 +918,20 @@ export default function AlertsPage() {
         </div>
       )}
 
-      {/* Test Evaluation Feedback Modal */}
-      {testResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 shadow-2xl space-y-4">
+      {/* Test Evaluation Feedback Modal (Req 4 Full Viewport Overlay) */}
+      {testResult && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setTestResult(null);
+          }}
+        >
+          <div
+            className="w-full max-w-md my-auto rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] text-slate-900 dark:text-[#F8FAFC] p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Zap className="h-5 w-5 text-rose-600 dark:text-[#FB7185]" />
@@ -929,7 +939,7 @@ export default function AlertsPage() {
               </div>
               <button
                 onClick={() => setTestResult(null)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B]"
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B] cursor-pointer"
               >
                 ✕
               </button>
@@ -989,7 +999,8 @@ export default function AlertsPage() {
               Close
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Incident Resolution Modal - Viewport-level backdrop dims entire application (Sidebar, Navbar, Footer) */}

@@ -63,26 +63,34 @@ export function formatPercentageValue(val, decimals = 1) {
 
 /**
  * Programmatic Calculation of Gross Profit, Gross Margin, and Gross Profit Per Hub
+ * Supports both destructuring object `{ revenue, cogs, hubs }` and positional arguments `(revenue, cogs, hubs, options)`.
  * Formula definitions:
  * - Gross Profit = Revenue - COGS
  * - Gross Margin (%) = (Gross Profit / Revenue) * 100
  * - Gross Profit Per Hub = Gross Profit / Active Hubs
  *
- * @param {object} params
- * @param {number|string} params.revenue Invoiced Revenue (e.g., 8.42)
- * @param {number|string} params.cogs Cost of Goods Sold / Supply Chain COGS (e.g., 2.66)
- * @param {number|string} params.hubs Number of active hubs/branches (e.g., 48)
- * @param {string} [params.currencySymbol='₹']
- * @param {string} [params.unit='Cr']
+ * @param {object|number|string} firstArg Object or revenue parameter
+ * @param {Array} rest Additional positional parameters
  * @returns {object} Calculated metrics, raw numbers, and formatted output strings
  */
-export function calculateGrossMetrics({
-  revenue,
-  cogs,
-  hubs,
-  currencySymbol = '₹',
-  unit = 'Cr'
-} = {}) {
+export function calculateGrossMetrics(firstArg, ...rest) {
+  let revenue, cogs, hubs, currencySymbol, unit;
+
+  if (firstArg && typeof firstArg === 'object' && !Array.isArray(firstArg)) {
+    revenue = firstArg.revenue;
+    cogs = firstArg.cogs;
+    hubs = firstArg.hubs;
+    currencySymbol = firstArg.currencySymbol ?? '₹';
+    unit = firstArg.unit ?? 'Cr';
+  } else {
+    revenue = firstArg;
+    cogs = rest[0];
+    hubs = rest[1];
+    const opts = (rest[2] && typeof rest[2] === 'object') ? rest[2] : {};
+    currencySymbol = opts.currencySymbol ?? '₹';
+    unit = opts.unit ?? 'Cr';
+  }
+
   // Input validation
   const isRevenueProvided = revenue !== undefined && revenue !== null && revenue !== '';
   const isCogsProvided = cogs !== undefined && cogs !== null && cogs !== '';
@@ -123,6 +131,8 @@ export function calculateGrossMetrics({
     grossProfitPerHub = roundTo(grossProfit / hubCount, 4);
   }
 
+  const hasAnyInput = isRevenueProvided || isCogsProvided || isHubsProvided;
+
   return {
     inputs: {
       revenue: rev,
@@ -132,29 +142,30 @@ export function calculateGrossMetrics({
       unit
     },
     raw: {
-      grossProfit,
-      grossMarginPercent,
-      grossProfitPerHub
+      grossProfit: hasAnyInput ? grossProfit : 0,
+      grossMarginPercent: isRevenueZero ? 0 : grossMarginPercent,
+      grossProfitPerHub: isHubsZero ? 0 : grossProfitPerHub
     },
     rounded: {
-      grossProfit: roundTo(grossProfit, 2),
-      grossMarginPercent: roundTo(grossMarginPercent, 1),
-      grossProfitPerHub: roundTo(grossProfitPerHub, 2)
+      grossProfit: hasAnyInput ? roundTo(grossProfit, 2) : 0,
+      grossMarginPercent: isRevenueZero ? 0 : roundTo(grossMarginPercent, 1),
+      grossProfitPerHub: isHubsZero ? 0 : roundTo(grossProfitPerHub, 2)
     },
     formatted: {
-      revenue: formatCurrencyValue(rev, currencySymbol, unit, 2),
-      cogs: formatCurrencyValue(cost, currencySymbol, unit, 2),
-      hubs: `${Math.round(hubCount)}`,
-      grossProfit: formatCurrencyValue(roundTo(grossProfit, 2), currencySymbol, unit, 2),
-      grossMargin: formatPercentageValue(roundTo(grossMarginPercent, 1), 1),
-      grossProfitPerHub: formatCurrencyValue(roundTo(grossProfitPerHub, 2), currencySymbol, unit, 2)
+      revenue: isRevenueProvided ? formatCurrencyValue(rev, currencySymbol, unit, 2) : '—',
+      cogs: isCogsProvided ? formatCurrencyValue(cost, currencySymbol, unit, 2) : '—',
+      hubs: isHubsProvided ? `${Math.round(hubCount)}` : '—',
+      grossProfit: (isRevenueProvided || isCogsProvided) ? formatCurrencyValue(roundTo(grossProfit, 2), currencySymbol, unit, 2) : '—',
+      grossMargin: (isRevenueProvided && rev !== 0) ? formatPercentageValue(roundTo(grossMarginPercent, 1), 1) : '—',
+      grossProfitPerHub: (isHubsProvided && hubCount > 0) ? formatCurrencyValue(roundTo(grossProfitPerHub, 2), currencySymbol, unit, 2) : '—'
     },
     status: {
       isValid: missingFields.length === 0,
       missingFields,
       isRevenueZero,
       isHubsZero,
-      isNegativeProfit: grossProfit < 0
+      isNegativeProfit: grossProfit < 0,
+      isEmpty: !hasAnyInput
     }
   };
 }

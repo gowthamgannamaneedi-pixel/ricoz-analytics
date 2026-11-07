@@ -147,6 +147,16 @@ export default function DataSourcesPage() {
     };
   }, [actionMenuId]);
 
+  // Lock body scroll when any modal is open (Req 4)
+  useEffect(() => {
+    if (!viewingSource && !editingSource && !sourceToDelete) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = orig;
+    };
+  }, [viewingSource, editingSource, sourceToDelete]);
+
   const handleToggleActionMenu = (sourceId, event) => {
     event.stopPropagation();
     if (actionMenuId === sourceId) {
@@ -633,7 +643,7 @@ export default function DataSourcesPage() {
       )}
 
       {/* ───────────────────────────────────────────────────────────────── */}
-      {/* 3. FOUR METRIC SUMMARY CARDS (Wireframe Layout)                    */}
+      {/* 3. FOUR METRIC SUMMARY CARDS (Wireframe Layout - Req 03)           */}
       {/* ───────────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
         {/* Card 1: All Sources */}
@@ -646,7 +656,7 @@ export default function DataSourcesPage() {
           }`}
         >
           <div className="flex items-center justify-between">
-            <p className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] uppercase tracking-wider">
+            <p className="text-base sm:text-[17px] font-semibold text-slate-900 dark:text-[#F8FAFC] tracking-tight uppercase">
               All Sources
             </p>
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-rose-900/60 shrink-0">
@@ -654,10 +664,10 @@ export default function DataSourcesPage() {
             </div>
           </div>
           <div className="mt-3">
-            <p className="font-mono text-3xl font-extrabold tracking-tight text-slate-900">
+            <p className="font-mono text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC]">
               {totalCount}
             </p>
-            <p className="mt-1.5 text-xs text-slate-400 truncate">
+            <p className="mt-1.5 text-xs text-slate-400 dark:text-[#94A3B8] truncate">
               All connected data sources
             </p>
           </div>
@@ -673,7 +683,7 @@ export default function DataSourcesPage() {
           }`}
         >
           <div className="flex items-center justify-between">
-            <p className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] uppercase tracking-wider">
+            <p className="text-base sm:text-[17px] font-semibold text-slate-900 dark:text-[#F8FAFC] tracking-tight uppercase">
               CSV Uploads
             </p>
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/60 shrink-0">
@@ -681,10 +691,10 @@ export default function DataSourcesPage() {
             </div>
           </div>
           <div className="mt-3">
-            <p className="font-mono text-3xl font-extrabold tracking-tight text-slate-900">
+            <p className="font-mono text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC]">
               {csvCount}
             </p>
-            <p className="mt-1.5 text-xs text-slate-400 truncate">
+            <p className="mt-1.5 text-xs text-slate-400 dark:text-[#94A3B8] truncate">
               Structured file uploads ({getPercentage(csvCount)})
             </p>
           </div>
@@ -700,7 +710,7 @@ export default function DataSourcesPage() {
           }`}
         >
           <div className="flex items-center justify-between">
-            <p className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] uppercase tracking-wider">
+            <p className="text-base sm:text-[17px] font-semibold text-slate-900 dark:text-[#F8FAFC] tracking-tight uppercase">
               JSON Datasets
             </p>
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/60 shrink-0">
@@ -727,7 +737,7 @@ export default function DataSourcesPage() {
           }`}
         >
           <div className="flex items-center justify-between">
-            <p className="text-xs font-bold text-slate-700 dark:text-[#CBD5E1] uppercase tracking-wider">
+            <p className="text-base sm:text-[17px] font-semibold text-slate-900 dark:text-[#F8FAFC] tracking-tight uppercase">
               PostgreSQL
             </p>
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/60 shrink-0">
@@ -1460,11 +1470,21 @@ export default function DataSourcesPage() {
       })()}
 
       {/* ───────────────────────────────────────────────────────────────── */}
-      {/* 7. VIEW DETAILS MODAL / DRAWER                                    */}
+      {/* 7. VIEW DETAILS MODAL / DRAWER (Req 4 Full Viewport Overlay)       */}
       {/* ───────────────────────────────────────────────────────────────── */}
-      {viewingSource && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200 dark:border-[#334155] p-6 space-y-5 animate-in zoom-in-95 duration-150">
+      {viewingSource && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setViewingSource(null);
+          }}
+        >
+          <div
+            className="relative w-full max-w-lg my-auto rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200/90 dark:border-[#334155] p-6 space-y-5 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#334155] pb-3.5">
               <div className="flex items-center gap-3">
                 <div className={`p-2.5 rounded-xl ${getTypeBg(viewingSource.type)}`}>
@@ -1567,15 +1587,26 @@ export default function DataSourcesPage() {
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ───────────────────────────────────────────────────────────────── */}
-      {/* 8. EDIT CONNECTION MODAL                                          */}
+      {/* 8. EDIT CONNECTION MODAL (Req 4 Full Viewport Overlay)            */}
       {/* ───────────────────────────────────────────────────────────────── */}
-      {editingSource && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200 dark:border-[#334155] p-6 space-y-4 animate-in zoom-in-95 duration-150">
+      {editingSource && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isSavingEdit) setEditingSource(null);
+          }}
+        >
+          <div
+            className="relative w-full max-w-md my-auto rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200/90 dark:border-[#334155] p-6 space-y-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#334155] pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
@@ -1654,15 +1685,26 @@ export default function DataSourcesPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ───────────────────────────────────────────────────────────────── */}
-      {/* 9. DELETE CONFIRMATION MODAL                                      */}
+      {/* 9. DELETE CONFIRMATION MODAL (Req 4 Full Viewport Overlay)         */}
       {/* ───────────────────────────────────────────────────────────────── */}
-      {sourceToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="relative w-full max-w-sm rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200 dark:border-[#334155] p-6 space-y-4 animate-in zoom-in-95 duration-150">
+      {sourceToDelete && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isDeleting) setSourceToDelete(null);
+          }}
+        >
+          <div
+            className="relative w-full max-w-sm my-auto rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200/90 dark:border-[#334155] p-6 space-y-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30 shrink-0">
                 <Trash2 className="h-5 w-5" />
@@ -1698,7 +1740,8 @@ export default function DataSourcesPage() {
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ───────────────────────────────────────────────────────────────── */}

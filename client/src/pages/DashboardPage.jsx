@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   LineChart,
   Line,
@@ -341,6 +342,16 @@ export default function DashboardPage() {
       setIsFavorite(false);
     }
   }, [activeDashboardId, effectiveDashboardId]);
+
+  // Lock body scroll when saved view modal is open (Req 4)
+  useEffect(() => {
+    if (!isSavedViewModalOpen) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = orig;
+    };
+  }, [isSavedViewModalOpen]);
 
   const handleToggleFavorite = async () => {
     if (!effectiveDashboardId) return;
@@ -1498,42 +1509,53 @@ export default function DashboardPage() {
         resourceTitle={currentDashboard?.title || 'Dashboard'}
       />
 
-      {/* Save View Modal */}
-      {isSavedViewModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl border border-slate-200">
-            <h3 className="font-bold text-slate-900 text-sm mb-3">Save Current Filter View</h3>
+      {/* Save View Modal (Req 4 Full Viewport Overlay) */}
+      {isSavedViewModalOpen && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsSavedViewModalOpen(false);
+          }}
+        >
+          <div
+            className="w-full max-w-sm my-auto rounded-2xl bg-white dark:bg-[#111827] text-slate-900 dark:text-[#F8FAFC] p-5 shadow-2xl border border-slate-200/90 dark:border-[#334155] animate-in fade-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-bold text-slate-900 dark:text-[#F8FAFC] text-sm mb-3">Save Current Filter View</h3>
             <form onSubmit={handleSaveCurrentView} className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">View Name</label>
+                <label className="block text-xs font-medium text-slate-700 dark:text-[#CBD5E1] mb-1">View Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. South Region Q1 Filters"
                   value={newSavedViewName}
                   onChange={(e) => setNewSavedViewName(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 p-2 text-xs focus:outline-none focus:border-blue-600"
+                  className="w-full rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#0F172A] p-2.5 text-xs text-slate-900 dark:text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
                 />
               </div>
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-[#334155]">
                 <button
                   type="button"
                   onClick={() => setIsSavedViewModalOpen(false)}
-                  className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg"
+                  className="px-3 py-1.5 text-xs text-slate-600 dark:text-[#CBD5E1] hover:bg-slate-100 dark:hover:bg-[#1E293B] rounded-lg transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={!newSavedViewName.trim()}
-                  className="px-4 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="px-4 py-1.5 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50 transition cursor-pointer shadow-2xs"
                 >
                   Save Preset
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

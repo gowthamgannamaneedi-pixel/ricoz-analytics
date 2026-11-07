@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   FileBarChart,
@@ -33,6 +34,15 @@ export default function ReportViewerModal({
   downloadingId = null,
   isViewer = false
 }) {
+  useEffect(() => {
+    if (!isOpen || !report) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = orig;
+    };
+  }, [isOpen, report]);
+
   if (!isOpen || !report) return null;
 
   const recipients = Array.isArray(report.recipients)
@@ -106,9 +116,9 @@ export default function ReportViewerModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="relative w-full max-w-3xl rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200 dark:border-[#334155] overflow-hidden my-6 animate-in fade-in zoom-in-95 duration-150">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs p-4 overflow-y-auto font-sans">
+      <div className="relative w-full max-w-3xl rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200/90 dark:border-[#334155] overflow-hidden my-auto max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
         
         {/* Header */}
         <div className="flex items-start justify-between px-6 py-5 border-b border-slate-100 dark:border-[#334155] bg-slate-50/70 dark:bg-[#0F172A]">
@@ -416,6 +426,7 @@ export default function ReportViewerModal({
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

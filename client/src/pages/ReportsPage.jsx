@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   FileBarChart,
   Plus,
@@ -281,6 +282,16 @@ export default function ReportsPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Lock body scroll when delete confirm modal is open (Req 4)
+  useEffect(() => {
+    if (!deleteConfirmTarget) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = orig;
+    };
+  }, [deleteConfirmTarget]);
 
   // Load Reports & Dashboards
   const loadData = useCallback(async () => {
@@ -1776,30 +1787,40 @@ export default function ReportsPage() {
         resourceTitle={shareModalConfig.title}
       />
 
-      {/* Delete Confirmation Modal */}
-      {deleteConfirmTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-xs p-4">
-          <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 p-6 animate-in fade-in zoom-in-95 duration-150">
+      {/* Delete Confirmation Modal (Req 4 Full Viewport Overlay) */}
+      {deleteConfirmTarget && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isDeleting) setDeleteConfirmTarget(null);
+          }}
+        >
+          <div
+            className="relative w-full max-w-md my-auto rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200/90 dark:border-[#334155] p-6 animate-in fade-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-200">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-200 dark:border-rose-900/60">
                 <Trash2 className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Delete Report</h3>
-                <p className="text-xs text-slate-500">This action cannot be undone.</p>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Delete Report</h3>
+                <p className="text-xs text-slate-500 dark:text-[#94A3B8]">This action cannot be undone.</p>
               </div>
             </div>
 
-            <p className="text-xs text-slate-700 leading-relaxed mb-4">
-              Are you sure you want to delete report <strong className="text-slate-900 font-semibold">"{deleteConfirmTarget.title}"</strong>? Any active schedules and delivery subscriptions for this report will be permanently terminated.
+            <p className="text-xs text-slate-700 dark:text-[#CBD5E1] leading-relaxed mb-4">
+              Are you sure you want to delete report <strong className="text-slate-900 dark:text-[#F8FAFC] font-semibold">"{deleteConfirmTarget.title}"</strong>? Any active schedules and delivery subscriptions for this report will be permanently terminated.
             </p>
 
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-[#334155]">
               <button
                 type="button"
                 onClick={() => setDeleteConfirmTarget(null)}
                 disabled={isDeleting}
-                className="px-4 py-2 rounded-lg border border-slate-300 text-xs font-medium text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-slate-300 dark:border-[#334155] text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-50 dark:hover:bg-[#1E293B] transition cursor-pointer"
               >
                 Cancel
               </button>
@@ -1807,7 +1828,7 @@ export default function ReportsPage() {
                 type="button"
                 onClick={confirmDeleteReport}
                 disabled={isDeleting}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-600 text-white text-xs font-semibold hover:bg-rose-700 transition disabled:opacity-50 cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 dark:bg-[#E11D48] text-white text-xs font-semibold hover:bg-rose-700 transition disabled:opacity-50 cursor-pointer shadow-xs"
               >
                 {isDeleting ? (
                   <>
@@ -1820,7 +1841,8 @@ export default function ReportsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

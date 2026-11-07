@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Sliders,
@@ -85,11 +86,20 @@ export default function ScenarioSimulatorModal({
     runSimulation(resetObj);
   };
 
+  useEffect(() => {
+    if (!isOpen || !attribution) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = orig;
+    };
+  }, [isOpen, attribution]);
+
   if (!isOpen || !attribution) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
-      <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#334155] rounded-2xl w-full max-w-4xl shadow-2xl text-slate-900 dark:text-[#F8FAFC] overflow-hidden flex flex-col max-h-[90vh]">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
+      <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl w-full max-w-4xl shadow-2xl text-slate-900 dark:text-[#F8FAFC] overflow-hidden my-auto flex flex-col max-h-[90vh]">
         
         {/* Header */}
         <div className="px-6 py-4.5 border-b border-slate-100 dark:border-[#334155] flex items-center justify-between bg-slate-50/70 dark:bg-[#0F172A]">
@@ -277,6 +287,7 @@ export default function ScenarioSimulatorModal({
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -488,6 +488,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
 
   return createPortal(
     <div
+      data-testid="connect-data-source-modal"
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto"
       role="dialog"
       aria-modal="true"

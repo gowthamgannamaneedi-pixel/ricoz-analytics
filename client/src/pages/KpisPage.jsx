@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   BarChart3, 
@@ -102,6 +103,16 @@ export default function KpisPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Lock body scroll when delete confirm modal is open (Req 4)
+  useEffect(() => {
+    if (!showDeleteConfirm) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = orig;
+    };
+  }, [showDeleteConfirm]);
 
   // Fetch metrics & datasets
   const fetchData = async (showLoading = true) => {
@@ -1028,35 +1039,49 @@ export default function KpisPage() {
         isViewer={isViewer}
       />
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && metricToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs font-sans">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200/90 animate-in fade-in zoom-in-95 duration-150">
+      {/* Delete Confirmation Modal (Req 4 Full Viewport Overlay) */}
+      {showDeleteConfirm && metricToDelete && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && isDeleting === null) {
+              setShowDeleteConfirm(false);
+              setMetricToDelete(null);
+              setDeleteError(null);
+            }
+          }}
+        >
+          <div
+            className="w-full max-w-md my-auto rounded-2xl bg-white dark:bg-[#111827] text-slate-900 dark:text-[#F8FAFC] p-6 shadow-2xl border border-slate-200/90 dark:border-[#334155] animate-in fade-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+              <div className="h-10 w-10 rounded-full bg-rose-50 dark:bg-[#2A1422] border border-rose-100 dark:border-rose-900/60 flex items-center justify-center text-rose-600 dark:text-[#FB7185] shrink-0">
                 <Trash2 className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 text-sm">Delete KPI Metric?</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <h3 className="font-bold text-slate-900 dark:text-[#F8FAFC] text-sm">Delete KPI Metric?</h3>
+                <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
                   This will remove the metric definition and disconnect it from dashboard widgets and reports.
                 </p>
               </div>
             </div>
 
-            <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200/70 mb-4 text-xs space-y-1.5">
+            <div className="p-3.5 bg-slate-50/80 dark:bg-[#0F172A] rounded-xl border border-slate-200/70 dark:border-[#334155] mb-4 text-xs space-y-1.5">
               <div className="flex justify-between items-center">
-                <span className="text-slate-500">Metric Name:</span>
-                <span className="font-semibold text-slate-800">{metricToDelete.name}</span>
+                <span className="text-slate-500 dark:text-[#94A3B8]">Metric Name:</span>
+                <span className="font-semibold text-slate-800 dark:text-[#F8FAFC]">{metricToDelete.name}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-500">Calculation:</span>
-                <span className="font-mono text-slate-700 font-semibold">{metricToDelete.formula}</span>
+                <span className="text-slate-500 dark:text-[#94A3B8]">Calculation:</span>
+                <span className="font-mono text-slate-700 dark:text-[#CBD5E1] font-semibold">{metricToDelete.formula}</span>
               </div>
               {metricToDelete.target_value && (
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Target Value:</span>
-                  <span className="font-mono text-slate-700 font-semibold">
+                  <span className="text-slate-500 dark:text-[#94A3B8]">Target Value:</span>
+                  <span className="font-mono text-slate-700 dark:text-[#CBD5E1] font-semibold">
                     {formatMetricValue(metricToDelete.target_value, metricToDelete.type, metricToDelete.unit)}
                   </span>
                 </div>
@@ -1064,13 +1089,13 @@ export default function KpisPage() {
             </div>
 
             {deleteError && (
-              <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+              <div className="mb-4 p-3 bg-rose-50 dark:bg-[#2A1422] border border-rose-200 dark:border-[#FB7185]/40 rounded-xl text-xs text-rose-700 dark:text-[#FB7185] flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-[#FB7185]" />
                 <span>{deleteError}</span>
               </div>
             )}
 
-            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-[#334155]">
               <button
                 type="button"
                 onClick={() => {
@@ -1079,7 +1104,7 @@ export default function KpisPage() {
                   setDeleteError(null);
                 }}
                 disabled={isDeleting !== null}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-[#CBD5E1] hover:bg-slate-100 dark:hover:bg-[#1E293B] rounded-lg transition cursor-pointer"
               >
                 Cancel
               </button>
@@ -1088,14 +1113,15 @@ export default function KpisPage() {
                 onClick={handleConfirmDelete}
                 disabled={isDeleting !== null}
                 id="confirm-delete-kpi-btn"
-                className="px-4 py-2 text-xs font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50 transition flex items-center gap-1.5 shadow-2xs"
+                className="px-4 py-2 text-xs font-semibold bg-rose-600 dark:bg-[#E11D48] text-white rounded-lg hover:bg-rose-700 disabled:opacity-50 transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
               >
                 {isDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                 <span>{isDeleting ? 'Deleting...' : 'Delete KPI'}</span>
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

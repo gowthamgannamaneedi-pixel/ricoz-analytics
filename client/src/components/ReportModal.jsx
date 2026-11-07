@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   FileBarChart,
@@ -167,9 +168,20 @@ export default function ReportModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 dark:bg-black/80 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
-      <div className="relative w-full max-w-2xl rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200 dark:border-[#334155] overflow-hidden my-auto max-h-[88vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+  useEffect(() => {
+    if (!isOpen) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = orig;
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs p-4 sm:p-6 overflow-y-auto font-sans">
+      <div className="relative w-full max-w-2xl rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200/90 dark:border-[#334155] overflow-hidden my-auto max-h-[88vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-slate-100 dark:border-[#334155] bg-slate-50/70 dark:bg-[#111827] shrink-0">
@@ -408,6 +420,7 @@ export default function ReportModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

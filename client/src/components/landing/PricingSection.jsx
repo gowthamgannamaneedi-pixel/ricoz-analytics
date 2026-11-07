@@ -58,7 +58,7 @@ export default function PricingSection({ onOpenDemo }) {
         'Live data connectors (PostgreSQL, MongoDB, REST, CSV/Excel)',
         '25 team member seats with granular RBAC',
         '1,000,000 synchronized records / month',
-        'AI Analytics Copilot & natural language query assistant',
+        'Interactive Analytics Assistant & natural-language query assistant',
         'Proactive threshold anomaly alerts (Slack, Email)',
         'Structured executive PDF reports on automated schedule',
         'Cross-metric drilldowns & custom formula builder',

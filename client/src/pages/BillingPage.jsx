@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   CreditCard,
@@ -87,8 +88,8 @@ const DEFAULT_LAUNCH_PLANS = [
     hasContactSales: false,
     maxDatasets: 50,
     maxUsers: 25,
-    description: 'High-performance relational modeling, automated anomaly alerts, and executive AI copilot.',
-    features: ['50 Connected Datasets', '25 Team Members', 'Executive AI Insights', 'Real-time Anomaly Alerts', 'Priority SLA Support']
+    description: 'High-performance relational modeling, automated anomaly alerts, and interactive analytics assistant.',
+    features: ['50 Connected Datasets', '25 Team Members', 'Automated Executive Insights', 'Real-time Anomaly Alerts', 'Priority SLA Support']
   },
   {
     id: 'enterprise',
@@ -108,8 +109,8 @@ const DEFAULT_LAUNCH_PLANS = [
     hasContactSales: true,
     maxDatasets: -1,
     maxUsers: -1,
-    description: 'Unlimited compute, customized AI query planner, dedicated infrastructure, and 24/7 support.',
-    features: ['Unlimited Datasets & Warehouses', 'Unlimited Team Members', 'Custom AI Query Planner', 'Dedicated Infrastructure', '24/7 Dedicated Support']
+    description: 'Dedicated compute, tailored query optimization, enterprise infrastructure, and 24/7 dedicated support.',
+    features: ['Unlimited Datasets & Warehouses', 'Unlimited Team Members', 'Tailored Query Optimizer', 'Dedicated Infrastructure', '24/7 Dedicated Support']
   }
 ];
 
@@ -174,6 +175,16 @@ export default function BillingPage() {
     }
   }, [subscription]);
 
+  // Lock body scroll when verification or downgrade modal is open (Req 4)
+  useEffect(() => {
+    if (!verifyingPayment && !downgradeConfirmTarget) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = orig;
+    };
+  }, [verifyingPayment, downgradeConfirmTarget]);
+
   // Load plans & subscription telemetry
   useEffect(() => {
     let isMounted = true;
@@ -224,7 +235,7 @@ export default function BillingPage() {
 
   const daysRemaining = trialCountdown.daysRemaining;
   const isExpired = trialCountdown.isTrialExpired || isTrialExpired;
-  const isActivePaid = trialCountdown.isPaid || currentSub?.status === 'active';
+  const isActivePaid = trialCountdown.isPaid && !isExpired;
 
   // Handle Razorpay checkout & cryptographic verification
   const handleUpgrade = async (planId) => {
@@ -531,7 +542,7 @@ export default function BillingPage() {
       )}
 
       {/* Page Header */}
-      <div className="space-y-4 border-b border-slate-200 dark:border-[#334155] pb-6">
+      <div className="space-y-4 border-b border-slate-200 dark:border-[#334155] pb-5">
         {/* Breadcrumb Navigation */}
         <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
           <button
@@ -564,7 +575,7 @@ export default function BillingPage() {
         </div>
 
         {/* Title, Description & Aligned Workspace Status Card */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pt-1">
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 pt-1">
           <div className="max-w-xl">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
               Plans & Billing
@@ -574,8 +585,8 @@ export default function BillingPage() {
             </p>
           </div>
 
-          {/* Reduced-size, Aligned Workspace Status Card */}
-          <div className="rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-4 sm:p-4.5 shadow-2xs w-full lg:w-[330px] shrink-0 space-y-2.5">
+          {/* Reduced-size, Aligned Workspace Status Card (Req 01) */}
+          <div data-testid="workspace-status-card" className="rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-3.5 sm:p-4 shadow-2xs w-full lg:w-[310px] shrink-0 space-y-2">
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs text-slate-500 dark:text-[#94A3B8] font-medium">Workspace Status</span>
               {currentSub?.scheduledDowngradePlan ? (
@@ -596,7 +607,7 @@ export default function BillingPage() {
               ) : isExpired ? (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border border-rose-200/90 dark:border-rose-900/60 whitespace-nowrap shadow-2xs">
                   <Clock className="w-3 h-3 text-rose-600 dark:text-[#FB7185]" />
-                  Trial Expired
+                  {trialCountdown.status === 'expired' ? 'Subscription Expired' : 'Trial Expired'}
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FDA4AF] border border-rose-200/90 dark:border-rose-900/60 whitespace-nowrap shadow-2xs">
@@ -609,7 +620,7 @@ export default function BillingPage() {
             <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-[#F8FAFC] capitalize leading-snug">
               {trialCountdown.planName || currentSub?.plan || 'Enterprise'} Plan
               <span className="text-xs font-normal text-slate-500 dark:text-[#94A3B8] ml-1.5">
-                ({currentSub?.billingInterval ? (currentSub.billingInterval.charAt(0).toUpperCase() + currentSub.billingInterval.slice(1)) : (isActivePaid ? 'Monthly' : '14-Day Free Trial')})
+                ({currentSub?.billingInterval ? (currentSub.billingInterval.charAt(0).toUpperCase() + currentSub.billingInterval.slice(1)) : (isActivePaid ? 'Monthly' : (isExpired ? 'Expired' : '14-Day Free Trial'))})
               </span>
             </div>
 
@@ -623,9 +634,9 @@ export default function BillingPage() {
               </div>
               <div>
                 <span className="text-slate-400 dark:text-[#94A3B8] block font-medium">
-                  {isActivePaid ? (currentSub?.cancelAtPeriodEnd ? 'Ends On' : 'Renews On') : 'Trial Ends'}
+                  {isActivePaid ? (currentSub?.cancelAtPeriodEnd ? 'Ends On' : 'Renews On') : (isExpired ? 'Ended On' : 'Trial Ends')}
                 </span>
-                <span className={`font-semibold ${daysRemaining <= 10 && !isActivePaid ? 'text-rose-600 dark:text-[#FB7185] font-bold' : 'text-slate-700 dark:text-[#CBD5E1]'}`}>
+                <span className={`font-semibold ${isExpired ? 'text-rose-600 dark:text-[#FB7185] font-bold' : (daysRemaining <= 10 && !isActivePaid ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-700 dark:text-[#CBD5E1]')}`}>
                   {trialCountdown.endDateFormatted || (isActivePaid ? 'Active' : 'Pending')}
                 </span>
               </div>
@@ -1202,10 +1213,17 @@ export default function BillingPage() {
           )}
         </div>
 
-        {/* Cryptographic Payment Verification Modal */}
-        {verifyingPayment && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#334155] rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center space-y-4">
+        {/* Cryptographic Payment Verification Modal (Req 4 Full Viewport Overlay) */}
+        {verifyingPayment && createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto animate-fade-in"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div
+              className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-8 max-w-md w-full my-auto shadow-2xl text-center space-y-4 animate-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="h-14 w-14 rounded-2xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-rose-900/60 mx-auto flex items-center justify-center">
                 <ShieldCheck className="h-7 w-7 animate-pulse" />
               </div>
@@ -1223,13 +1241,24 @@ export default function BillingPage() {
                 Please do not refresh or close this browser tab while your workspace is being provisioned.
               </p>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
-        {/* Scheduled Downgrade Confirmation Modal */}
-        {downgradeConfirmTarget && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-            <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#334155] rounded-2xl p-6 sm:p-7 max-w-lg w-full shadow-2xl space-y-5">
+        {/* Scheduled Downgrade Confirmation Modal (Req 4 Full Viewport Overlay) */}
+        {downgradeConfirmTarget && createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto animate-fade-in"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => {
+              if (e.target === e.currentTarget && !isActionPending) setDowngradeConfirmTarget(null);
+            }}
+          >
+            <div
+              className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 max-w-lg w-full my-auto shadow-2xl space-y-5 animate-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="h-11 w-11 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 flex items-center justify-center shrink-0">
@@ -1309,7 +1338,8 @@ export default function BillingPage() {
                 </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
   );

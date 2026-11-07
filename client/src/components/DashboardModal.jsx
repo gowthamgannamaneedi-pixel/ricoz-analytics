@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, LayoutDashboard, Check, AlertCircle, Loader2, Star, Globe } from 'lucide-react';
 
 /**
@@ -34,6 +35,15 @@ export default function DashboardModal({
     setError('');
   }, [dashboard, isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = orig;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
@@ -64,9 +74,9 @@ export default function DashboardModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm font-sans animate-in fade-in duration-150">
-      <div className="relative w-full max-w-lg rounded-xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200 dark:border-[#334155] overflow-hidden">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto animate-in fade-in duration-150">
+      <div className="relative w-full max-w-lg my-auto rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200/90 dark:border-[#334155] overflow-hidden">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-[#334155] bg-slate-50/50 dark:bg-[#0F172A]">
           <div className="flex items-center gap-3">
@@ -197,6 +207,7 @@ export default function DashboardModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

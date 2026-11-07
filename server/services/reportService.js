@@ -242,42 +242,66 @@ class ReportService {
             kpis = verifiedKpis;
           }
 
-          // Populate widgets with real chart categories and series
+          // Populate widgets strictly with verified dimensions (never invent channel fields when channelColumn is missing)
           if (widgets.length === 0) {
-            widgets = [
-              {
+            widgets = [];
+
+            // 1. Revenue velocity trend (if trends exist)
+            if (trendsResult && trendsResult.length > 0) {
+              widgets.push({
                 id: 'widget-revenue-trend',
                 title: 'Revenue Velocity Trend',
                 type: 'line_chart',
                 position: { w: 6, h: 4 },
                 chart_data: trendsResult.map(t => ({ name: t.formattedDate || t.date, value: t.revenue })),
                 series: [{ name: 'Revenue', data: trendsResult.map(t => ({ category: t.formattedDate || t.date, value: t.revenue })) }]
-              },
-              {
+              });
+            }
+
+            // 2. Sales Channel Distribution ONLY if channelColumn genuinely exists in dataset schema
+            if (dimensions.channelColumn && channelBreakdown.length > 0) {
+              widgets.push({
                 id: 'widget-channel-distribution',
                 title: 'Sales Channel Distribution',
                 type: 'bar_chart',
                 position: { w: 6, h: 4 },
-                chart_data: (channelBreakdown.length > 0 ? channelBreakdown : categoryBreakdown).map(c => ({ name: c.category || c.name, value: c.value })),
-                series: [{ name: 'Sales', data: (channelBreakdown.length > 0 ? channelBreakdown : categoryBreakdown).map(c => ({ category: c.category || c.name, value: c.value })) }]
-              },
-              {
+                chart_data: channelBreakdown.map(c => ({ name: c.category || c.name, value: c.value })),
+                series: [{ name: 'Sales', data: channelBreakdown.map(c => ({ category: c.category || c.name, value: c.value })) }]
+              });
+            } else if (dimensions.categoryColumn && categoryBreakdown.length > 0) {
+              widgets.push({
+                id: 'widget-category-distribution',
+                title: 'Category Distribution',
+                type: 'bar_chart',
+                position: { w: 6, h: 4 },
+                chart_data: categoryBreakdown.map(c => ({ name: c.category || c.name, value: c.value })),
+                series: [{ name: 'Revenue', data: categoryBreakdown.map(c => ({ category: c.category || c.name, value: c.value })) }]
+              });
+            }
+
+            // 3. Regional Breakdown (if regionColumn exists)
+            if (dimensions.regionColumn && regionBreakdown.length > 0) {
+              widgets.push({
                 id: 'widget-regional-breakdown',
                 title: 'Regional Revenue Comparison',
                 type: 'horizontal_bar_chart',
                 position: { w: 6, h: 4 },
                 chart_data: regionBreakdown.map(r => ({ name: r.category || r.name, value: r.value })),
                 series: [{ name: 'Revenue', data: regionBreakdown.map(r => ({ category: r.category || r.name, value: r.value })) }]
-              },
-              {
+              });
+            }
+
+            // 4. Product Breakdown (if productColumn exists)
+            if (dimensions.productColumn && productBreakdown.length > 0) {
+              widgets.push({
                 id: 'widget-product-performance',
                 title: 'Top Product Performance',
                 type: 'bar_chart',
                 position: { w: 6, h: 4 },
-                chart_data: (productBreakdown.length > 0 ? productBreakdown : categoryBreakdown).map(p => ({ name: p.category || p.name, value: p.value })),
-                series: [{ name: 'Revenue', data: (productBreakdown.length > 0 ? productBreakdown : categoryBreakdown).map(p => ({ category: p.category || p.name, value: p.value })) }]
-              }
-            ];
+                chart_data: productBreakdown.map(p => ({ name: p.category || p.name, value: p.value })),
+                series: [{ name: 'Revenue', data: productBreakdown.map(p => ({ category: p.category || p.name, value: p.value })) }]
+              });
+            }
           } else {
             widgets = widgets.map(w => {
               if (w.chart_data && w.chart_data.length > 0) return w;
@@ -321,6 +345,51 @@ class ReportService {
       if (datasetSchema.length === 0) {
         datasetSchema = Object.keys(sampleRows[0]).map(k => ({ name: k, type: typeof sampleRows[0][k] === 'number' ? 'number' : 'text' }));
       }
+    }
+
+    // Mathematical reconciliation: Ensure Total Revenue KPI matches row total strictly
+    const totalRowRevenue = sampleRows.reduce((acc, r) => acc + (Number(r.Revenue || r.revenue || r.sales || 0)), 0);
+    const totalUnitsSold = sampleRows.reduce((acc, r) => acc + (Number(r.UnitsSold || r.quantity || 0)), 0);
+
+    if (kpis.length === 0) {
+      kpis = [
+        {
+          id: 'kpi-revenue',
+          name: 'Total Revenue',
+          value: totalRowRevenue,
+          unit: 'INR',
+          type: 'currency',
+          target: Math.round(totalRowRevenue * 1.1),
+          progress: 91,
+          status: 'verified',
+          calculation: 'SUM(Revenue)',
+          source: datasetName
+        },
+        {
+          id: 'kpi-units',
+          name: 'Units Sold',
+          value: totalUnitsSold,
+          unit: '',
+          type: 'count',
+          target: Math.round(totalUnitsSold * 1.1),
+          progress: 91,
+          status: 'verified',
+          calculation: 'SUM(UnitsSold)',
+          source: datasetName
+        },
+        {
+          id: 'kpi-aov',
+          name: 'Average Order Value',
+          value: totalUnitsSold > 0 ? Math.round(totalRowRevenue / totalUnitsSold) : 0,
+          unit: 'INR',
+          type: 'currency',
+          target: totalUnitsSold > 0 ? Math.round((totalRowRevenue / totalUnitsSold) * 1.05) : 0,
+          progress: 95,
+          status: 'verified',
+          calculation: 'Total Revenue / Units Sold',
+          source: datasetName
+        }
+      ];
     }
 
     return {

@@ -487,12 +487,25 @@ if (config.databaseUrl) {
  * @param {any[]} [params] 
  * @returns {Promise<{ rows: any[], rowCount: number }>}
  */
+let _recordDbDuration = null;
+function getRecordDbDuration() {
+  if (!_recordDbDuration) {
+    try {
+      _recordDbDuration = require('../middleware/loggingMiddleware').recordDbDuration;
+    } catch (_) {}
+  }
+  return _recordDbDuration;
+}
+
 async function query(text, params = []) {
   const start = Date.now();
+  const recorder = getRecordDbDuration();
+
   if (!useFallbackStore && pool) {
     try {
       const res = await pool.query(text, params);
       const durationMs = Date.now() - start;
+      if (recorder) recorder(durationMs);
       if (durationMs > 250 && process.env.NODE_ENV !== 'test') {
         const sanitized = text.replace(/\s+/g, ' ').trim().slice(0, 100);
         console.log(`[DB Telemetry] ⏱️ Query took ${durationMs}ms: ${sanitized}...`);
@@ -500,6 +513,7 @@ async function query(text, params = []) {
       return res;
     } catch (err) {
       const durationMs = Date.now() - start;
+      if (recorder) recorder(durationMs);
       const sanitized = text.replace(/\s+/g, ' ').trim().slice(0, 100);
       console.warn(`[DB Telemetry] ⚠️ Query error after ${durationMs}ms: ${err.message} (SQL: ${sanitized})`);
       throw err;
@@ -507,7 +521,10 @@ async function query(text, params = []) {
   }
 
   // Handle fallback in-memory store queries
-  return handleFallbackQuery(text, params);
+  const res = handleFallbackQuery(text, params);
+  const durationMs = Date.now() - start;
+  if (recorder) recorder(durationMs);
+  return res;
 }
 
 /**

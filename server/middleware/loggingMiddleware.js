@@ -1,10 +1,14 @@
+const { AsyncLocalStorage } = require('async_hooks');
 const metricsCollector = require('../utils/metricsCollector');
 
 /**
- * Enterprise Structured Logging Middleware
+ * Enterprise Structured Logging Middleware & Async Context Tracking
  * Formats request lifecycle metrics into structured JSON or clean log streams.
  * Automatically sanitizes Authorization headers, passwords, secrets, and credentials.
+ * Tracks db_duration_ms and external_duration_ms via Node.js AsyncLocalStorage.
  */
+
+const requestStorage = new AsyncLocalStorage();
 
 const SENSITIVE_FIELDS = [
   'password',
@@ -16,7 +20,9 @@ const SENSITIVE_FIELDS = [
   'api_key',
   'apikey',
   'authorization',
-  'cookie'
+  'cookie',
+  'otp',
+  'verification_otp'
 ];
 
 function sanitizeObject(obj) {
@@ -37,8 +43,35 @@ function sanitizeObject(obj) {
   return clean;
 }
 
+/**
+ * Record database duration for the currently executing asynchronous request context
+ * @param {number} ms 
+ */
+function recordDbDuration(ms) {
+  const store = requestStorage.getStore();
+  if (store && typeof ms === 'number' && !isNaN(ms)) {
+    store.dbDurationMs = (store.dbDurationMs || 0) + ms;
+  }
+}
+
+/**
+ * Record external provider (Brevo, Gemini, Supabase) duration for current request context
+ * @param {number} ms 
+ */
+function recordExternalDuration(ms) {
+  const store = requestStorage.getStore();
+  if (store && typeof ms === 'number' && !isNaN(ms)) {
+    store.externalDurationMs = (store.externalDurationMs || 0) + ms;
+  }
+}
+
 function structuredLogging(req, res, next) {
   const startTime = Date.now();
+  const contextStore = {
+    requestId: req.id || 'unknown',
+    dbDurationMs: 0,
+    externalDurationMs: 0
+  };
 
   res.on('finish', () => {
     const durationMs = Date.now() - startTime;
@@ -49,11 +82,13 @@ function structuredLogging(req, res, next) {
     const logEntry = {
       timestamp: new Date().toISOString(),
       level: statusCode >= 500 ? 'ERROR' : statusCode >= 400 ? 'WARN' : 'INFO',
-      request_id: req.id || 'unknown',
+      request_id: req.id || contextStore.requestId,
       method: req.method,
       path: req.originalUrl || req.url,
       status_code: statusCode,
       duration_ms: durationMs,
+      db_duration_ms: Math.round(contextStore.dbDurationMs * 10) / 10,
+      external_duration_ms: Math.round(contextStore.externalDurationMs * 10) / 10,
       organization_id: req.user?.organization_id || null,
       user_id: req.user?.id || null,
       ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '127.0.0.1'
@@ -64,14 +99,19 @@ function structuredLogging(req, res, next) {
       console.log(JSON.stringify(logEntry));
     } else if (process.env.NODE_ENV !== 'test') {
       const color = statusCode >= 500 ? '\x1b[31m' : statusCode >= 400 ? '\x1b[33m' : '\x1b[32m';
-      console.log(`${color}[${logEntry.level}]\x1b[0m ${logEntry.method} ${logEntry.path} -> ${logEntry.status_code} (${durationMs}ms) [${logEntry.request_id}]`);
+      console.log(`${color}[${logEntry.level}]\x1b[0m ${logEntry.method} ${logEntry.path} -> ${logEntry.status_code} (${durationMs}ms | db:${logEntry.db_duration_ms}ms | ext:${logEntry.external_duration_ms}ms) [${logEntry.request_id}]`);
     }
   });
 
-  next();
+  requestStorage.run(contextStore, () => {
+    next();
+  });
 }
 
 module.exports = {
   structuredLogging,
-  sanitizeObject
+  sanitizeObject,
+  recordDbDuration,
+  recordExternalDuration,
+  requestStorage
 };

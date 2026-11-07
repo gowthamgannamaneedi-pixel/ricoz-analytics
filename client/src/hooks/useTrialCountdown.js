@@ -24,11 +24,18 @@ import { useState, useEffect, useMemo } from 'react';
  * }}
  */
 export function useTrialCountdown(subscription) {
-  // Extract authoritative timestamps from camelCase or snake_case
-  const rawStartDate = subscription?.trialStartedAt || subscription?.trial_started_at || subscription?.subscriptionStartDate;
-  const rawEndDate = subscription?.relevantEndDate || subscription?.trialEndsAt || subscription?.trial_ends_at || subscription?.currentPeriodEnd;
   const rawStatus = (subscription?.status || subscription?.subscriptionStatus || subscription?.subscription_status || '').toLowerCase();
-  const isPaid = rawStatus === 'active';
+  const isLikelyPaid = rawStatus === 'active';
+
+  // Extract authoritative timestamps with strict prioritization:
+  // For paid accounts, current_period takes precedence over legacy trial dates to prevent trial masking
+  const rawStartDate = isLikelyPaid
+    ? (subscription?.currentPeriodStart || subscription?.current_period_start || subscription?.subscriptionStartDate || subscription?.trialStartedAt || subscription?.trial_started_at)
+    : (subscription?.trialStartedAt || subscription?.trial_started_at || subscription?.subscriptionStartDate || subscription?.currentPeriodStart);
+
+  const rawEndDate = isLikelyPaid
+    ? (subscription?.relevantEndDate || subscription?.currentPeriodEnd || subscription?.current_period_end || subscription?.nextBillingDate || subscription?.next_billing_date || subscription?.trialEndsAt || subscription?.trial_ends_at)
+    : (subscription?.relevantEndDate || subscription?.trialEndsAt || subscription?.trial_ends_at || subscription?.currentPeriodEnd || subscription?.current_period_end);
 
   // Tick state to force re-render every 10 seconds for real-time accuracy
   const [now, setNow] = useState(Date.now());
@@ -63,22 +70,50 @@ export function useTrialCountdown(subscription) {
       };
     }
 
-    if (isPaid) {
+    if (isLikelyPaid) {
       const endD = rawEndDate ? new Date(rawEndDate) : null;
       const startD = rawStartDate ? new Date(rawStartDate) : null;
+      const hasEndTimestamp = endD && !isNaN(endD.getTime());
+      const isPastDue = hasEndTimestamp && now > endD.getTime();
+
+      // If the active plan's billing period has passed, enforce expiration
+      if (isPastDue) {
+        return {
+          isPaid: false,
+          isTrial: false,
+          isTrialExpired: true,
+          isExpiringSoon: false,
+          daysRemaining: 0,
+          hoursRemaining: 0,
+          startDateFormatted: startD && !isNaN(startD.getTime()) ? startD.toLocaleDateString() : 'Active',
+          endDateFormatted: endD.toLocaleDateString(),
+          trialStatusText: 'Subscription Expired',
+          sidebarBadgeText: 'Expired',
+          progressPercent: 100,
+          hasValidDates: true,
+          planName,
+          status: 'expired'
+        };
+      }
+
+      const ms = hasEndTimestamp ? endD.getTime() - now : 30 * 86400000;
+      const daysRemaining = Math.max(0, Math.ceil(ms / 86400000));
+      const hoursRemaining = Math.max(0, Math.ceil(ms / 3600000));
+      const isExpiringSoon = daysRemaining <= 10 && daysRemaining > 0;
+
       return {
         isPaid: true,
         isTrial: false,
         isTrialExpired: false,
-        isExpiringSoon: false,
-        daysRemaining: endD && !isNaN(endD.getTime()) ? Math.max(0, Math.ceil((endD.getTime() - now) / 86400000)) : 30,
-        hoursRemaining: endD && !isNaN(endD.getTime()) ? Math.max(0, Math.ceil((endD.getTime() - now) / 3600000)) : 720,
+        isExpiringSoon,
+        daysRemaining,
+        hoursRemaining,
         startDateFormatted: startD && !isNaN(startD.getTime()) ? startD.toLocaleDateString() : 'Active',
-        endDateFormatted: endD && !isNaN(endD.getTime()) ? endD.toLocaleDateString() : null,
-        trialStatusText: 'Paid Plan Active',
-        sidebarBadgeText: 'Active',
+        endDateFormatted: hasEndTimestamp ? endD.toLocaleDateString() : null,
+        trialStatusText: isExpiringSoon ? `Renewal Approaching (${daysRemaining}d left)` : 'Paid Plan Active',
+        sidebarBadgeText: isExpiringSoon ? `${daysRemaining}d left` : 'Active',
         progressPercent: 100,
-        hasValidDates: Boolean(endD),
+        hasValidDates: hasEndTimestamp,
         planName,
         status: 'active'
       };
@@ -141,5 +176,5 @@ export function useTrialCountdown(subscription) {
       planName,
       status: isTrialExpired ? 'trial_expired' : 'trial'
     };
-  }, [subscription, rawStartDate, rawEndDate, rawStatus, isPaid, now]);
+  }, [subscription, rawStartDate, rawEndDate, rawStatus, isLikelyPaid, now]);
 }

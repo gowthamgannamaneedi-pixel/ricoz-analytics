@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Sparkles,
@@ -350,6 +351,16 @@ export default function AIInsightsPage() {
     document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
+
+  // Lock body scroll when modal is open (Req 4)
+  useEffect(() => {
+    if (!selectedInsightForDetails && !isLearnMoreOpen) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = orig;
+    };
+  }, [selectedInsightForDetails, isLearnMoreOpen]);
 
   // Initial Data Loading
   useEffect(() => {
@@ -900,11 +911,11 @@ export default function AIInsightsPage() {
       {/* ------------------------------------------------------------------ */}
       {/* 4. FILTER / SEARCH TOOLBAR & VIEW TOGGLE (Single Desktop Row)      */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex flex-wrap xl:flex-nowrap items-center justify-between gap-3 p-3 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] shadow-2xs">
+      <div className="flex flex-wrap lg:flex-nowrap items-center justify-between gap-3 p-3 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] shadow-2xs">
         {/* Left: Search & Filter Controls Aligned */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 flex-1 min-w-0">
+        <div className="flex flex-wrap lg:flex-nowrap items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
           {/* Search Input (Reduced width per Req 8) */}
-          <div className="relative w-48 sm:w-56 md:w-64 shrink-0">
+          <div className="relative w-full sm:w-44 md:w-48 lg:w-52 shrink-0">
             <Search className="w-4 h-4 text-slate-400 dark:text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
@@ -928,7 +939,7 @@ export default function AIInsightsPage() {
           <Select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="w-32 sm:w-36 shrink-0"
+            className="w-full sm:w-32 lg:w-32 shrink-0"
             size="md"
           >
             <option value="all">All Types</option>
@@ -946,7 +957,7 @@ export default function AIInsightsPage() {
           <Select
             value={impactFilter}
             onChange={(e) => setImpactFilter(e.target.value)}
-            className="w-36 sm:w-40 shrink-0"
+            className="w-full sm:w-36 lg:w-36 shrink-0"
             size="md"
           >
             <option value="all">All Impact Levels</option>
@@ -960,7 +971,7 @@ export default function AIInsightsPage() {
           <Select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-36 sm:w-40 shrink-0"
+            className="w-full sm:w-38 lg:w-40 shrink-0"
             size="md"
           >
             <option value="active">All Statuses (Active)</option>
@@ -1348,33 +1359,44 @@ export default function AIInsightsPage() {
       )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* 6. INSIGHT DETAILS MODAL                                           */}
+      {/* 6. INSIGHT DETAILS MODAL (Req 4 Full Viewport Overlay)             */}
       {/* ------------------------------------------------------------------ */}
-      {selectedInsightForDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 flex flex-col justify-between">
+      {selectedInsightForDetails && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedInsightForDetails(null);
+          }}
+        >
+          <div
+            className="bg-white dark:bg-[#111827] rounded-2xl max-w-2xl w-full max-h-[90vh] my-auto overflow-y-auto shadow-2xl border border-slate-200/90 dark:border-[#334155] flex flex-col justify-between"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
-            <div className="p-6 border-b border-slate-200 space-y-3">
+            <div className="p-6 border-b border-slate-200 dark:border-[#334155] space-y-3 shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {renderSeverityPill(selectedInsightForDetails.severity)}
-                  <span className="text-[11px] font-mono uppercase font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                  <span className="text-[11px] font-mono uppercase font-bold text-slate-500 dark:text-[#94A3B8] bg-slate-100 dark:bg-[#1E293B] px-2 py-0.5 rounded">
                     {selectedInsightForDetails.type}
                   </span>
                 </div>
                 <button
                   onClick={() => setSelectedInsightForDetails(null)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1E293B] transition cursor-pointer"
+                  title="Close modal"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <h2 className="text-xl font-bold text-slate-900 leading-snug">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-[#F8FAFC] leading-snug">
                 {selectedInsightForDetails.title}
               </h2>
 
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
                 {selectedInsightForDetails.summary}
               </p>
             </div>
@@ -1382,62 +1404,62 @@ export default function AIInsightsPage() {
             {/* Modal Body */}
             <div className="p-6 space-y-5 text-xs">
               {/* Telemetry & Ground-Truth Verification */}
-              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
+              <div className="rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/70 dark:bg-[#172131] p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-700 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span className="font-bold text-slate-700 dark:text-[#CBD5E1] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-[#6EE7B7]" />
                     Ground-Truth Physical Telemetry
                   </span>
-                  <span className="text-[10px] font-mono text-slate-500">
+                  <span className="text-[10px] font-mono text-slate-500 dark:text-[#94A3B8]">
                     {selectedInsightForDetails.evidence?.recordsAnalyzed || selectedInsightForDetails.evidence?.records_analyzed || 0} rows analyzed
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Dataset</span>
-                    <span className="font-bold text-slate-800 truncate block">
+                  <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
+                    <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Dataset</span>
+                    <span className="font-bold text-slate-800 dark:text-[#F8FAFC] truncate block">
                       {selectedInsightForDetails.dataset_name || selectedInsightForDetails.evidence?.datasetName || 'Primary'}
                     </span>
                   </div>
 
-                  <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Current Value</span>
-                    <span className="font-bold text-emerald-700 font-mono truncate block">
+                  <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
+                    <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Current Value</span>
+                    <span className="font-bold text-emerald-700 dark:text-[#6EE7B7] font-mono truncate block">
                       {selectedInsightForDetails.evidence?.currentValue !== undefined
                         ? selectedInsightForDetails.evidence.currentValue.toLocaleString()
                         : 'N/A'}
                     </span>
                   </div>
 
-                  <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Comparison</span>
-                    <span className="font-bold text-slate-700 font-mono truncate block">
+                  <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
+                    <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Comparison</span>
+                    <span className="font-bold text-slate-700 dark:text-[#CBD5E1] font-mono truncate block">
                       {selectedInsightForDetails.evidence?.comparisonValue !== undefined
                         ? selectedInsightForDetails.evidence.comparisonValue.toLocaleString()
                         : 'N/A'}
                     </span>
                   </div>
 
-                  <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Change %</span>
-                    <span className="font-bold text-rose-700 font-mono block">
+                  <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
+                    <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Change %</span>
+                    <span className="font-bold text-rose-700 dark:text-[#FB7185] font-mono block">
                       {selectedInsightForDetails.evidence?.changePercent !== undefined
                         ? `${selectedInsightForDetails.evidence.changePercent}%`
                         : 'Verified'}
                     </span>
                   </div>
 
-                  <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Period</span>
-                    <span className="font-bold text-slate-800 truncate block">
+                  <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
+                    <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Period</span>
+                    <span className="font-bold text-slate-800 dark:text-[#F8FAFC] truncate block">
                       {selectedInsightForDetails.evidence?.period || 'Q4 Observation'}
                     </span>
                   </div>
 
-                  <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Impact Score</span>
-                    <span className="font-bold text-purple-700 font-mono block">
+                  <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
+                    <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Impact Score</span>
+                    <span className="font-bold text-purple-700 dark:text-purple-400 font-mono block">
                       {selectedInsightForDetails.impactScore || selectedInsightForDetails.impact_score || 50}/100
                     </span>
                   </div>
@@ -1445,9 +1467,9 @@ export default function AIInsightsPage() {
 
                 {/* Calculation formula */}
                 {selectedInsightForDetails.evidence?.calculation && (
-                  <div className="pt-2 border-t border-slate-200">
-                    <span className="text-[10px] text-slate-400 font-semibold block mb-1 uppercase">Evidence Formula</span>
-                    <code className="text-[10px] font-mono bg-white p-2 rounded block border border-slate-200 text-slate-700 overflow-x-auto">
+                  <div className="pt-2 border-t border-slate-200 dark:border-[#334155]">
+                    <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] font-semibold block mb-1 uppercase">Evidence Formula</span>
+                    <code className="text-[10px] font-mono bg-white dark:bg-[#0F172A] p-2 rounded block border border-slate-200 dark:border-[#334155] text-slate-700 dark:text-[#CBD5E1] overflow-x-auto">
                       {selectedInsightForDetails.evidence.calculation}
                     </code>
                   </div>
@@ -1456,12 +1478,12 @@ export default function AIInsightsPage() {
 
               {/* Recommended Action */}
               {selectedInsightForDetails.recommendation?.action && (
-                <div className="rounded-xl border border-rose-200 bg-rose-50/40 p-4 space-y-1.5">
-                  <div className="font-bold text-rose-900 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-                    <Compass className="w-4 h-4 text-rose-600" />
+                <div className="rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/40 dark:bg-[#2A1422] p-4 space-y-1.5">
+                  <div className="font-bold text-rose-900 dark:text-[#FB7185] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                    <Compass className="w-4 h-4 text-rose-600 dark:text-[#FB7185]" />
                     Recommended Action
                   </div>
-                  <p className="text-slate-700 text-xs leading-relaxed">
+                  <p className="text-slate-700 dark:text-[#CBD5E1] text-xs leading-relaxed">
                     {selectedInsightForDetails.recommendation.action}
                   </p>
                   {selectedInsightForDetails.recommendation.target_page && (
@@ -1471,7 +1493,7 @@ export default function AIInsightsPage() {
                         setSelectedInsightForDetails(null);
                         navigate(target);
                       }}
-                      className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-rose-700 hover:text-rose-900"
+                      className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-rose-700 dark:text-[#FB7185] hover:text-rose-900 dark:hover:text-rose-300 cursor-pointer"
                     >
                       <span>Navigate to {selectedInsightForDetails.recommendation.target_page}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -1482,16 +1504,16 @@ export default function AIInsightsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-200 bg-slate-50/80 rounded-b-2xl flex flex-wrap items-center justify-between gap-3">
+            <div className="p-4 border-t border-slate-200 dark:border-[#334155] bg-slate-50/80 dark:bg-[#0F172A] rounded-b-2xl flex flex-wrap items-center justify-between gap-3 shrink-0">
               {/* Feedback Buttons */}
-              <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-[#94A3B8]">
                 <span>Useful?</span>
                 <button
                   onClick={() => handleFeedback(selectedInsightForDetails.id, 'useful')}
-                  className={`p-1.5 rounded-lg border transition ${
+                  className={`p-1.5 rounded-lg border transition cursor-pointer ${
                     feedbackState[selectedInsightForDetails.id] === 'useful'
-                      ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                      : 'border-slate-200 bg-white hover:bg-slate-100 text-slate-400'
+                      ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/60 dark:text-[#6EE7B7] dark:border-emerald-800'
+                      : 'border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-[#94A3B8]'
                   }`}
                   title="Thumbs Up"
                 >
@@ -1499,10 +1521,10 @@ export default function AIInsightsPage() {
                 </button>
                 <button
                   onClick={() => handleFeedback(selectedInsightForDetails.id, 'not_useful')}
-                  className={`p-1.5 rounded-lg border transition ${
+                  className={`p-1.5 rounded-lg border transition cursor-pointer ${
                     feedbackState[selectedInsightForDetails.id] === 'not_useful'
-                      ? 'bg-rose-50 text-rose-600 border-rose-200'
-                      : 'border-slate-200 bg-white hover:bg-slate-100 text-slate-400'
+                      ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/60 dark:text-[#FB7185] dark:border-rose-800'
+                      : 'border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-[#94A3B8]'
                   }`}
                   title="Thumbs Down"
                 >
@@ -1518,7 +1540,7 @@ export default function AIInsightsPage() {
                     setSelectedInsightForDetails(null);
                     handleMiddleAction(ins);
                   }}
-                  className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
                 >
                   Investigate Drivers
                 </button>
@@ -1528,22 +1550,33 @@ export default function AIInsightsPage() {
                     setSelectedInsightForDetails(null);
                     handleRightAction(ins);
                   }}
-                  className="px-3.5 py-1.5 rounded-xl bg-rose-600 text-white text-xs font-semibold hover:bg-rose-700 transition cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl bg-rose-600 dark:bg-[#E11D48] text-white text-xs font-semibold hover:bg-rose-700 transition cursor-pointer shadow-xs"
                 >
                   Take Action
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ------------------------------------------------------------------ */}
       {/* 7. EDUCATIONAL "WHAT ARE AI INSIGHTS?" MODAL                       */}
       {/* ------------------------------------------------------------------ */}
-      {isLearnMoreOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white dark:bg-[#111827] rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-[#334155] space-y-4">
+      {isLearnMoreOpen && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsLearnMoreOpen(false);
+          }}
+        >
+          <div
+            className="bg-white dark:bg-[#111827] rounded-2xl max-w-xl w-full my-auto p-6 shadow-2xl border border-slate-200/90 dark:border-[#334155] space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="h-10 w-10 rounded-xl bg-rose-100 dark:bg-[#2A1422] text-rose-700 dark:text-[#FB7185] flex items-center justify-center">
@@ -1557,6 +1590,7 @@ export default function AIInsightsPage() {
               <button
                 onClick={() => setIsLearnMoreOpen(false)}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-[#F8FAFC] transition cursor-pointer"
+                title="Close modal"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1588,13 +1622,14 @@ export default function AIInsightsPage() {
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setIsLearnMoreOpen(false)}
-                className="px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-semibold hover:bg-rose-700 transition cursor-pointer"
+                className="px-4 py-2 bg-rose-600 dark:bg-[#E11D48] text-white rounded-xl text-xs font-semibold hover:bg-rose-700 transition cursor-pointer shadow-xs"
               >
                 Got It
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ------------------------------------------------------------------ */}

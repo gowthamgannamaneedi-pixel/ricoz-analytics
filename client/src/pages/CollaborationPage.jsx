@@ -649,9 +649,9 @@ export default function CollaborationPage() {
       {/* ------------------------------------------------------------------ */}
       {/* 3. TABS NAVIGATION & PRIMARY SHARE ACTION                          */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-[#334155] pb-3.5 sm:pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-[#334155] pb-4 sm:pb-5">
         {/* Navigation Tabs */}
-        <div className="flex items-center space-x-2 sm:space-x-3 overflow-x-auto text-xs font-semibold">
+        <div className="flex items-center space-x-2 sm:space-x-3 overflow-x-auto text-xs font-semibold py-0.5">
           {[
             { id: 'favorites', label: 'Favorites', icon: Star, count: favorites.length },
             { id: 'recent', label: 'Recently Viewed', icon: Clock, count: recentlyViewed.length },
@@ -664,7 +664,7 @@ export default function CollaborationPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer shrink-0 ${
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/40 ${
                   isActive
                     ? 'bg-rose-50 text-rose-700 font-bold dark:bg-[#2A1422] dark:text-[#FB7185] border border-rose-200/80 dark:border-rose-900/60 shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] dark:hover:bg-[#1E293B] border border-transparent'
@@ -687,7 +687,7 @@ export default function CollaborationPage() {
           <button
             onClick={() => setShowSharePickerModal(true)}
             id="share-item-btn"
-            className="h-10 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-semibold text-xs flex items-center gap-2 shadow-xs transition cursor-pointer"
+            className="h-10 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-semibold text-xs flex items-center gap-2 shadow-xs transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/40"
           >
             <Plus className="w-4 h-4" />
             <span>Share Item</span>

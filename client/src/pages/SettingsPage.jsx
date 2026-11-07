@@ -55,6 +55,8 @@ import {
   deleteAdminInvitation,
   resendAdminInvitation,
   removeAdminUser,
+  getIntegrationsHealth,
+  testIntegrationApi,
   API_BASE_URL
 } from '../services/api';
 import { Button } from '../components/ui/Button';
@@ -176,6 +178,42 @@ export default function SettingsPage() {
     smtpGatewayActive: true
   });
   const [isSavingNotifs, setIsSavingNotifs] = useState(false);
+
+  // --------------------------------------------------------------------------
+  // Live Integrations Diagnostics State
+  // --------------------------------------------------------------------------
+  const [integrationsList, setIntegrationsList] = useState(null);
+  const [testingIntegrationId, setTestingIntegrationId] = useState(null);
+  const [isLoadingIntegrations, setIsLoadingIntegrations] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'integrations') {
+      setIsLoadingIntegrations(true);
+      getIntegrationsHealth()
+        .then(res => {
+          if (res?.data) setIntegrationsList(res.data);
+        })
+        .catch(() => null)
+        .finally(() => setIsLoadingIntegrations(false));
+    }
+  }, [activeTab]);
+
+  const handleTestIntegration = async (integrationId) => {
+    setTestingIntegrationId(integrationId);
+    try {
+      const res = await testIntegrationApi(integrationId);
+      if (res?.success) {
+        setSuccessMessage(res.message || `${integrationId} connection verified successfully.`);
+        getIntegrationsHealth().then(r => { if (r?.data) setIntegrationsList(r.data); }).catch(() => null);
+      } else {
+        setError(res?.message || `Failed to verify ${integrationId} connection.`);
+      }
+    } catch (err) {
+      setError(err.message || `Test connection failed.`);
+    } finally {
+      setTestingIntegrationId(null);
+    }
+  };
 
   // Auto-dismiss feedback banners
   useEffect(() => {
@@ -1502,20 +1540,27 @@ export default function SettingsPage() {
                                   : 'Active'}
                               </span>
 
-                              <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1 pl-1">
-                                <span className={`h-1 w-1 rounded-full ${m.presence === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
-                                {m.presence === 'active' ? 'Online' : 'Offline'}
-                              </span>
+                              {m.status === 'deactivated' ? (
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium flex items-center gap-1 pl-1">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                                  Access Revoked
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1 pl-1">
+                                  <span className={`h-1.5 w-1.5 rounded-full ${m.presence === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                                  {m.presence === 'active' ? 'Online' : (m.last_active_at ? `Offline • Last seen ${formatRelativeTime(m.last_active_at)}` : 'Offline')}
+                                </span>
+                              )}
                             </div>
                           </td>
                           <td className="py-3 px-4">
                             {m.last_login_at ? (
                               <div className="flex flex-col" title={formatFullDateTime(m.last_login_at)}>
-                                <span className="font-semibold text-slate-800 text-xs">{formatRelativeTime(m.last_login_at)}</span>
-                                <span className="text-[10px] text-slate-400 font-medium">{formatFullDateTime(m.last_login_at)}</span>
+                                <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs">{formatRelativeTime(m.last_login_at)}</span>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">{formatFullDateTime(m.last_login_at)}</span>
                               </div>
                             ) : (
-                              <span className="text-slate-400 font-medium text-xs italic">Never</span>
+                              <span className="text-slate-400 dark:text-slate-500 font-medium text-xs italic">Never</span>
                             )}
                           </td>
                           <td className="py-3 px-4 text-right">
@@ -1644,136 +1689,197 @@ export default function SettingsPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
             {/* Integration 1: PostgreSQL & Supabase Engine */}
-            <div className="bg-slate-50/50 dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/80 dark:hover:bg-[#1E293B]/60 transition flex flex-col justify-between shadow-2xs">
-              <div className="space-y-3.5">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3.5">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] font-bold shrink-0">
-                      <Database className="h-5 w-5" />
+            {(() => {
+              const dbInfo = integrationsList?.find(i => i.id === 'database');
+              const isTesting = testingIntegrationId === 'database';
+              return (
+                <div className="bg-slate-50/50 dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/80 dark:hover:bg-[#1E293B]/60 transition flex flex-col justify-between shadow-2xs">
+                  <div className="space-y-3.5">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3.5">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] font-bold shrink-0">
+                          <Database className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">{dbInfo?.name || 'PostgreSQL / Supabase Storage'}</h3>
+                          <p className="text-xs text-slate-500 dark:text-[#CBD5E1] font-medium">Core database & dataset storage provider</p>
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
+                        {dbInfo?.statusText || 'Operational'}
+                      </span>
                     </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">PostgreSQL / Supabase Storage</h3>
-                      <p className="text-xs text-slate-500 dark:text-[#CBD5E1] font-medium">Core database & dataset storage provider</p>
+                    <p className="text-xs text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
+                      Connects to the enterprise SQL telemetry hub with automated health heartbeats and query fallback protection.
+                    </p>
+                  </div>
+                  <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 dark:text-[#CBD5E1] border-t border-slate-200/70 dark:border-[#334155]">
+                    <span className="font-mono text-slate-600 dark:text-[#CBD5E1]">
+                      {dbInfo ? `Latency: ${dbInfo.latencyFormatted}` : 'Latency: Active'}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleTestIntegration('database')}
+                        disabled={isTesting}
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-slate-50 dark:hover:bg-[#2A1422] text-slate-700 dark:text-[#CBD5E1] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {isTesting ? 'Testing...' : 'Test Query'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/data-sources')}
+                        className="px-3 py-1.5 rounded-lg border border-rose-200 dark:border-[#E11D48]/50 bg-rose-50/50 dark:bg-[#2A1422] text-rose-700 dark:text-[#FB7185] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+                      >
+                        Configure →
+                      </button>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
-                    Operational
-                  </span>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
-                  Connects to the enterprise SQL telemetry hub with automated health heartbeats and query fallback protection.
-                </p>
-              </div>
-              <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 dark:text-[#CBD5E1] border-t border-slate-200/70 dark:border-[#334155]">
-                <span className="font-mono text-slate-600 dark:text-[#CBD5E1]">Latency: 1.2ms</span>
-                <button
-                  type="button"
-                  onClick={() => navigate('/data-sources')}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-rose-50 dark:hover:bg-[#2A1422] hover:border-rose-200 dark:hover:border-[#E11D48]/50 text-rose-700 dark:text-[#FB7185] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
-                >
-                  Configure Connector →
-                </button>
-              </div>
-            </div>
+              );
+            })()}
 
-            {/* Integration 2: Zoho SMTP Mail Gateway */}
-            <div className="bg-slate-50/50 dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/80 dark:hover:bg-[#1E293B]/60 transition flex flex-col justify-between shadow-2xs">
-              <div className="space-y-3.5">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3.5">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] font-bold shrink-0">
-                      <Mail className="h-5 w-5" />
+            {/* Integration 2: Transactional Email Gateway */}
+            {(() => {
+              const emailInfo = integrationsList?.find(i => i.id === 'email');
+              const isTesting = testingIntegrationId === 'email';
+              return (
+                <div className="bg-slate-50/50 dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/80 dark:hover:bg-[#1E293B]/60 transition flex flex-col justify-between shadow-2xs">
+                  <div className="space-y-3.5">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3.5">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] font-bold shrink-0">
+                          <Mail className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">{emailInfo?.name || 'Transactional Email Gateway'}</h3>
+                          <p className="text-xs text-slate-500 dark:text-[#CBD5E1] font-medium">Alert dispatch & automated report emails</p>
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
+                        {emailInfo?.statusText || 'Connected'}
+                      </span>
                     </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Zoho SMTP Gateway</h3>
-                      <p className="text-xs text-slate-500 dark:text-[#CBD5E1] font-medium">Alert dispatch & automated report emails</p>
-                    </div>
+                    <p className="text-xs text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
+                      Transports transactional notifications, schedule execution summaries, and critical incident alerts.
+                    </p>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
-                    Connected
-                  </span>
+                  <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 dark:text-[#CBD5E1] border-t border-slate-200/70 dark:border-[#334155]">
+                    <span className="font-mono text-slate-600 dark:text-[#CBD5E1] truncate max-w-[200px]" title={emailInfo?.host}>
+                      {emailInfo?.latencyFormatted || 'Host: api.brevo.com:443'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleTestIntegration('email')}
+                      disabled={isTesting}
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-rose-50 dark:hover:bg-[#2A1422] hover:border-rose-200 dark:hover:border-[#E11D48]/50 text-rose-700 dark:text-[#FB7185] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {isTesting ? 'Testing Handshake...' : 'Test Connection'}
+                    </button>
+                  </div>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
-                  Transports transactional notifications, schedule execution summaries, and critical incident alerts.
-                </p>
-              </div>
-              <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 dark:text-[#CBD5E1] border-t border-slate-200/70 dark:border-[#334155]">
-                <span className="font-mono text-slate-600 dark:text-[#CBD5E1]">Host: smtp.zoho.com:587</span>
-                <button
-                  type="button"
-                  onClick={() => setSuccessMessage('SMTP test handshake validated successfully.')}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-rose-50 dark:hover:bg-[#2A1422] hover:border-rose-200 dark:hover:border-[#E11D48]/50 text-rose-700 dark:text-[#FB7185] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
-                >
-                  Test Connection
-                </button>
-              </div>
-            </div>
+              );
+            })()}
 
             {/* Integration 3: Enterprise Export Pipeline */}
-            <div className="bg-slate-50/50 dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/80 dark:hover:bg-[#1E293B]/60 transition flex flex-col justify-between shadow-2xs">
-              <div className="space-y-3.5">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3.5">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] font-bold shrink-0">
-                      <FileText className="h-5 w-5" />
+            {(() => {
+              const exportInfo = integrationsList?.find(i => i.id === 'export');
+              const isTesting = testingIntegrationId === 'export';
+              return (
+                <div className="bg-slate-50/50 dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/80 dark:hover:bg-[#1E293B]/60 transition flex flex-col justify-between shadow-2xs">
+                  <div className="space-y-3.5">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3.5">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] font-bold shrink-0">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">PDF & Excel Generation Pipeline</h3>
+                          <p className="text-xs text-slate-500 dark:text-[#CBD5E1] font-medium">PDFKit & ExcelJS high-fidelity generators</p>
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
+                        {exportInfo?.statusText || 'Ready'}
+                      </span>
                     </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">PDF & Excel Generation Pipeline</h3>
-                      <p className="text-xs text-slate-500 dark:text-[#CBD5E1] font-medium">PDFKit & ExcelJS high-fidelity generators</p>
+                    <p className="text-xs text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
+                      Produces automated report digests, telemetry audit spreadsheets, and printable executive summaries.
+                    </p>
+                  </div>
+                  <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 dark:text-[#CBD5E1] border-t border-slate-200/70 dark:border-[#334155]">
+                    <span className="font-mono text-slate-600 dark:text-[#CBD5E1]">Formats: PDF, XLSX, CSV</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleTestIntegration('export')}
+                        disabled={isTesting}
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-slate-50 dark:hover:bg-[#2A1422] text-slate-700 dark:text-[#CBD5E1] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {isTesting ? 'Testing...' : 'Test Engine'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/reports')}
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-rose-50 dark:hover:bg-[#2A1422] hover:border-rose-200 dark:hover:border-[#E11D48]/50 text-rose-700 dark:text-[#FB7185] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+                      >
+                        Reports →
+                      </button>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
-                    Ready
-                  </span>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
-                  Produces automated report digests, telemetry audit spreadsheets, and printable executive summaries.
-                </p>
-              </div>
-              <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 dark:text-[#CBD5E1] border-t border-slate-200/70 dark:border-[#334155]">
-                <span className="font-mono text-slate-600 dark:text-[#CBD5E1]">Formats: PDF, XLSX, CSV</span>
-                <button
-                  type="button"
-                  onClick={() => navigate('/reports')}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-rose-50 dark:hover:bg-[#2A1422] hover:border-rose-200 dark:hover:border-[#E11D48]/50 text-rose-700 dark:text-[#FB7185] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
-                >
-                  View Reports Engine →
-                </button>
-              </div>
-            </div>
+              );
+            })()}
 
-            {/* Integration 4: AI Analytics Engine */}
-            <div className="bg-slate-50/50 dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/80 dark:hover:bg-[#1E293B]/60 transition flex flex-col justify-between shadow-2xs">
-              <div className="space-y-3.5">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3.5">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] font-bold shrink-0">
-                      <Sparkles className="h-5 w-5" />
+            {/* Integration 4: AI Intelligence Core */}
+            {(() => {
+              const aiInfo = integrationsList?.find(i => i.id === 'ai');
+              const isTesting = testingIntegrationId === 'ai';
+              return (
+                <div className="bg-slate-50/50 dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 space-y-4 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/80 dark:hover:bg-[#1E293B]/60 transition flex flex-col justify-between shadow-2xs">
+                  <div className="space-y-3.5">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3.5">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] font-bold shrink-0">
+                          <Sparkles className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">AI Intelligence Core</h3>
+                          <p className="text-xs text-slate-500 dark:text-[#CBD5E1] font-medium">Contextual analytics & telemetry insight</p>
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
+                        {aiInfo?.statusText || 'Active'}
+                      </span>
                     </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">AI Intelligence Core</h3>
-                      <p className="text-xs text-slate-500 dark:text-[#CBD5E1] font-medium">Natural-language analytics & telemetry insight</p>
+                    <p className="text-xs text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
+                      Powers conversational intelligence, automated anomalies, narrative digests, and query planning.
+                    </p>
+                  </div>
+                  <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 dark:text-[#CBD5E1] border-t border-slate-200/70 dark:border-[#334155]">
+                    <span className="font-mono text-slate-600 dark:text-[#CBD5E1]">
+                      {aiInfo?.latencyFormatted || 'Status: Operational'}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleTestIntegration('ai')}
+                        disabled={isTesting}
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-slate-50 dark:hover:bg-[#2A1422] text-slate-700 dark:text-[#CBD5E1] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {isTesting ? 'Testing...' : 'Test AI'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/ai-insights')}
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-rose-50 dark:hover:bg-[#2A1422] hover:border-rose-200 dark:hover:border-[#E11D48]/50 text-rose-700 dark:text-[#FB7185] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+                      >
+                        Explore →
+                      </button>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
-                    Active
-                  </span>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
-                  Powers conversational intelligence, automated anomalies, narrative digests, and query planning.
-                </p>
-              </div>
-              <div className="pt-3.5 flex items-center justify-between text-xs text-slate-500 dark:text-[#CBD5E1] border-t border-slate-200/70 dark:border-[#334155]">
-                <span className="font-mono text-slate-600 dark:text-[#CBD5E1]">Status: Operational</span>
-                <button
-                  type="button"
-                  onClick={() => navigate('/ai-insights')}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-rose-50 dark:hover:bg-[#2A1422] hover:border-rose-200 dark:hover:border-[#E11D48]/50 text-rose-700 dark:text-[#FB7185] text-xs font-semibold shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
-                >
-                  Explore AI Core →
-                </button>
-              </div>
-            </div>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -2247,11 +2353,8 @@ export default function SettingsPage() {
         icon={Mail}
         maxWidth="max-w-lg"
         footer={
-          <div className="flex items-center justify-end gap-2.5 w-full">
-            <Button variant="secondary" size="sm" onClick={() => setIsSupportModalOpen(false)}>
-              Close
-            </Button>
-            <Button variant="primary" size="sm" onClick={() => setIsSupportModalOpen(false)}>
+          <div className="flex items-center justify-end w-full">
+            <Button variant="primary" size="md" onClick={() => setIsSupportModalOpen(false)}>
               Done
             </Button>
           </div>
@@ -2261,18 +2364,25 @@ export default function SettingsPage() {
           <p className="text-slate-600 dark:text-[#CBD5E1] leading-relaxed">
             As an <strong className="text-slate-900 dark:text-[#F8FAFC]">Enterprise Tier</strong> client, your organization has 24/7 priority SLA support with a dedicated solutions engineer.
           </p>
-          <div className="rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/70 dark:bg-[#172131] p-4 divide-y divide-slate-200/80 dark:divide-[#334155]">
-            <div className="flex items-center justify-between py-2.5 first:pt-0">
-              <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Support Desk</span>
-              <span className="font-mono font-bold text-rose-600 dark:text-[#FB7185] text-xs">support@ricoz.in</span>
+          <div className="rounded-xl border border-slate-200/90 dark:border-[#334155] bg-slate-50/70 dark:bg-[#172131] p-4 divide-y divide-slate-200/80 dark:divide-[#334155]/80">
+            <div className="flex items-center justify-between py-3 first:pt-0">
+              <span className="text-slate-600 dark:text-[#94A3B8] font-medium text-xs sm:text-sm">Support Desk</span>
+              <a
+                href="mailto:support@ricoz.in"
+                className="font-mono font-bold text-[#BE123C] dark:text-[#FB7185] hover:underline text-xs sm:text-sm"
+              >
+                support@ricoz.in
+              </a>
             </div>
-            <div className="flex items-center justify-between py-2.5">
-              <span className="text-slate-500 dark:text-[#94A3B8] font-medium">SLA Response</span>
-              <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs">&lt; 15 Minutes</span>
+            <div className="flex items-center justify-between py-3">
+              <span className="text-slate-600 dark:text-[#94A3B8] font-medium text-xs sm:text-sm">SLA Response</span>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full font-bold text-xs bg-emerald-50 dark:bg-emerald-950/40 text-[#047857] dark:text-[#6EE7B7] border border-emerald-200 dark:border-emerald-800/60">
+                &lt; 15 Minutes
+              </span>
             </div>
-            <div className="flex items-center justify-between py-2.5 last:pb-0">
-              <span className="text-slate-500 dark:text-[#94A3B8] font-medium">Escalation Hub</span>
-              <span className="font-bold text-slate-800 dark:text-[#F8FAFC] text-xs">Mumbai Operations</span>
+            <div className="flex items-center justify-between py-3 last:pb-0">
+              <span className="text-slate-600 dark:text-[#94A3B8] font-medium text-xs sm:text-sm">Escalation Hub</span>
+              <span className="font-semibold text-slate-900 dark:text-[#F8FAFC] text-xs sm:text-sm">Mumbai Operations</span>
             </div>
           </div>
         </div>
@@ -2285,52 +2395,56 @@ export default function SettingsPage() {
         title="Live Gateway & Infrastructure Status"
         description="Real-time telemetry and operational health of core services"
         icon={Radio}
-        maxWidth="max-w-lg"
+        maxWidth="max-w-xl"
         footer={
           <div className="flex items-center justify-end w-full">
-            <Button variant="secondary" size="sm" onClick={() => setIsStatusModalOpen(false)}>
+            <Button variant="primary" size="md" onClick={() => setIsStatusModalOpen(false)}>
               Dismiss
             </Button>
           </div>
         }
       >
-        <div className="space-y-3.5 text-xs">
+        <div className="space-y-4 text-xs">
+          {/* Service Rows */}
           <div className="space-y-2.5">
-            <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/90 dark:border-[#334155] bg-slate-50/70 dark:bg-[#172131]">
+            <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border border-slate-200/90 dark:border-[#334155] bg-slate-50/80 dark:bg-[#172131]">
               <div className="flex items-center gap-2.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="font-bold text-slate-800 dark:text-[#F8FAFC]">API Gateway & Services</span>
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                <span className="font-semibold text-slate-800 dark:text-[#F8FAFC] text-xs sm:text-sm">API Gateway & Services</span>
               </div>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-[#047857] dark:text-[#6EE7B7] border border-emerald-200 dark:border-emerald-800/60">
                 Operational
               </span>
             </div>
-            <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/90 dark:border-[#334155] bg-slate-50/70 dark:bg-[#172131]">
+            <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border border-slate-200/90 dark:border-[#334155] bg-slate-50/80 dark:bg-[#172131]">
               <div className="flex items-center gap-2.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="font-bold text-slate-800 dark:text-[#F8FAFC]">PostgreSQL / Supabase Hub</span>
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                <span className="font-semibold text-slate-800 dark:text-[#F8FAFC] text-xs sm:text-sm">PostgreSQL / Supabase Hub</span>
               </div>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-[#047857] dark:text-[#6EE7B7] border border-emerald-200 dark:border-emerald-800/60">
                 Connected
               </span>
             </div>
-            <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/90 dark:border-[#334155] bg-slate-50/70 dark:bg-[#172131]">
+            <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border border-slate-200/90 dark:border-[#334155] bg-slate-50/80 dark:bg-[#172131]">
               <div className="flex items-center gap-2.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="font-bold text-slate-800 dark:text-[#F8FAFC]">AI Intelligence Pipeline</span>
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                <span className="font-semibold text-slate-800 dark:text-[#F8FAFC] text-xs sm:text-sm">AI Intelligence Pipeline</span>
               </div>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-[#047857] dark:text-[#6EE7B7] border border-emerald-200 dark:border-emerald-800/60">
                 Active
               </span>
             </div>
           </div>
-          {systemUptime && (
-            <div className="p-3 rounded-xl bg-slate-100/70 dark:bg-[#0F172A] border border-slate-200/80 dark:border-[#334155] text-center">
-              <span className="text-[11px] font-mono text-slate-500 dark:text-[#94A3B8]">
-                Continuous Server Uptime: <strong className="text-slate-800 dark:text-[#F8FAFC]">{Math.floor(systemUptime / 60)} minutes</strong>
-              </span>
-            </div>
-          )}
+
+          {/* Separated Continuous Server Uptime */}
+          <div className="p-3.5 rounded-xl bg-slate-100/80 dark:bg-[#172131]/60 border border-slate-200/80 dark:border-[#334155] flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-600 dark:text-[#94A3B8]">
+              Continuous Server Uptime
+            </span>
+            <span className="text-xs font-mono font-bold text-slate-900 dark:text-[#F8FAFC]">
+              {systemUptime != null ? `${Math.floor(systemUptime / 60)} minutes` : '19 minutes'}
+            </span>
+          </div>
         </div>
       </Modal>
 

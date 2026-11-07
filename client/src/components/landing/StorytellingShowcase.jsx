@@ -49,12 +49,13 @@ export default function StorytellingShowcase({ onOpenDemo }) {
 
   // Programmatic formula calculation dynamically computed from live inputs
   const formulaMetrics = useMemo(() => {
-    return calculateGrossMetrics(
-      Number(formulaInputs.revenue) || 0,
-      Number(formulaInputs.cogs) || 0,
-      Number(formulaInputs.hubs) || 0,
-      { currencySymbol: '₹', unit: 'Cr' }
-    );
+    return calculateGrossMetrics({
+      revenue: Number(formulaInputs.revenue) || 0,
+      cogs: Number(formulaInputs.cogs) || 0,
+      hubs: Number(formulaInputs.hubs) || 0,
+      currencySymbol: '₹',
+      unit: 'Cr'
+    });
   }, [formulaInputs]);
 
   const steps = [

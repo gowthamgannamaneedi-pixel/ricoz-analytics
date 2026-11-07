@@ -74,7 +74,7 @@ async function runAuthTests() {
       name: 'Standard Admin',
       email: testEmail,
       organization_name: 'Test Enterprise Org',
-      password: 'testPassword123',
+      password: 'K9#mX$7vQ2!pLz9w',
       role: 'superadmin' // Attempted escalation should be ignored
     });
 
@@ -100,7 +100,7 @@ async function runAuthTests() {
       name: 'Duplicate User',
       organization_name: 'Another Org',
       email: testEmail,
-      password: 'anotherPassword123'
+      password: 'W7!vQ2$mX9#pLz9k'
     });
 
     assert(
@@ -111,7 +111,7 @@ async function runAuthTests() {
     // 4. Login with correct credentials
     const loginRes = await makeRequest(TEST_PORT, { path: '/api/auth/login', method: 'POST' }, {
       email: testEmail,
-      password: 'testPassword123'
+      password: 'K9#mX$7vQ2!pLz9w'
     });
 
     assert(

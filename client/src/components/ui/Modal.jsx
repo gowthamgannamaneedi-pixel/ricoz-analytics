@@ -52,6 +52,7 @@ export function Modal({
 
   const content = (
     <div
+      data-testid="shared-modal-overlay"
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs overflow-y-auto"
       role="dialog"
       aria-modal="true"

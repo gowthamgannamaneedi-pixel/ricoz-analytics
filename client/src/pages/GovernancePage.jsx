@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   Shield,
@@ -144,6 +145,16 @@ export default function GovernancePage() {
       return () => clearTimeout(timer);
     }
   }, [error]);
+
+  // Lock body scroll when any modal is open (Req 4)
+  useEffect(() => {
+    if (!roleModalOpen && !statusModalOpen && !inspectMetadata && !isInviteModalOpen) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = orig;
+    };
+  }, [roleModalOpen, statusModalOpen, inspectMetadata, isInviteModalOpen]);
 
   // Load Organization & Overview Data
   const loadOverview = useCallback(async () => {
@@ -1325,7 +1336,8 @@ export default function GovernancePage() {
                 </div>
               )}
             </div>
-          </div>
+          </div>,
+          document.body
         );
       })()}
 
@@ -1670,27 +1682,37 @@ export default function GovernancePage() {
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL: CHANGE USER ROLE                                                   */}
+      {/* MODAL: CHANGE USER ROLE (Req 4 Full Viewport Overlay)                      */}
       {/* ========================================================================= */}
-      {roleModalOpen && selectedUserForRole && (
-        <div className="fixed inset-0 z-50 bg-slate-900/30 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 max-w-md w-full p-6 shadow-xl space-y-4">
+      {roleModalOpen && selectedUserForRole && createPortal(
+        <div
+          className="fixed inset-0 z-[100] bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 font-sans overflow-y-auto animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !roleUpdating) setRoleModalOpen(false);
+          }}
+        >
+          <div
+            className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/90 dark:border-[#334155] text-slate-900 dark:text-[#F8FAFC] max-w-md w-full my-auto p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Edit3 className="w-5 h-5 text-rose-600" />
+              <h3 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC] flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-rose-600 dark:text-[#FB7185]" />
                 Update Team Role
               </h3>
-              <button onClick={() => setRoleModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1">
+              <button onClick={() => setRoleModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-[#F8FAFC] p-1 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-sm text-slate-600">
-              Change role for <strong className="text-slate-900 font-semibold">{selectedUserForRole.name}</strong> ({selectedUserForRole.email})
+            <p className="text-sm text-slate-600 dark:text-[#CBD5E1]">
+              Change role for <strong className="text-slate-900 dark:text-[#F8FAFC] font-semibold">{selectedUserForRole.name}</strong> ({selectedUserForRole.email})
             </p>
 
             <div className="space-y-2">
-              <label className="block text-xs font-semibold uppercase text-slate-500">
+              <label className="block text-xs font-semibold uppercase text-slate-500 dark:text-[#94A3B8]">
                 Select Assigned Role
               </label>
               <Select
@@ -1704,18 +1726,18 @@ export default function GovernancePage() {
               </Select>
             </div>
 
-            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
               <span>
                 Role changes take effect immediately on next API request and will generate a high-priority audit event.
               </span>
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 pt-2">
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-[#334155]">
               <button
                 type="button"
                 onClick={() => setRoleModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
+                className="px-4 py-2 text-sm font-medium rounded-xl border border-slate-200 dark:border-[#334155] hover:bg-slate-50 dark:hover:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -1723,48 +1745,59 @@ export default function GovernancePage() {
                 type="button"
                 onClick={handleRoleUpdate}
                 disabled={roleUpdating}
-                className="px-4 py-2 text-sm font-semibold rounded-xl bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50 flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+                className="px-4 py-2 text-sm font-semibold rounded-xl bg-rose-600 hover:bg-rose-700 dark:bg-[#E11D48] text-white disabled:opacity-50 flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
               >
                 {roleUpdating && <RefreshCw className="w-4 h-4 animate-spin" />}
                 Confirm Role Change
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL: CHANGE USER STATUS                                                 */}
+      {/* MODAL: CHANGE USER STATUS (Req 4 Full Viewport Overlay)                    */}
       {/* ========================================================================= */}
-      {statusModalOpen && selectedUserForStatus && (
-        <div className="fixed inset-0 z-50 bg-slate-900/30 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 max-w-md w-full p-6 shadow-xl space-y-4">
+      {statusModalOpen && selectedUserForStatus && createPortal(
+        <div
+          className="fixed inset-0 z-[100] bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 font-sans overflow-y-auto animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !statusUpdating) setStatusModalOpen(false);
+          }}
+        >
+          <div
+            className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/90 dark:border-[#334155] text-slate-900 dark:text-[#F8FAFC] max-w-md w-full my-auto p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                {newStatus === 'active' ? <UserCheck className="w-5 h-5 text-emerald-600" /> : <UserX className="w-5 h-5 text-rose-600" />}
+              <h3 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC] flex items-center gap-2">
+                {newStatus === 'active' ? <UserCheck className="w-5 h-5 text-emerald-600 dark:text-[#6EE7B7]" /> : <UserX className="w-5 h-5 text-rose-600 dark:text-[#FB7185]" />}
                 {newStatus === 'active' ? 'Activate Account' : 'Deactivate Account'}
               </h3>
-              <button onClick={() => setStatusModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1">
+              <button onClick={() => setStatusModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-[#F8FAFC] p-1 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-slate-600 dark:text-[#CBD5E1]">
               Are you sure you want to {newStatus === 'active' ? 'activate' : 'deactivate'} access for{' '}
-              <strong className="text-slate-900 font-semibold">{selectedUserForStatus.name}</strong> ({selectedUserForStatus.email})?
+              <strong className="text-slate-900 dark:text-[#F8FAFC] font-semibold">{selectedUserForStatus.name}</strong> ({selectedUserForStatus.email})?
             </p>
 
             {newStatus !== 'active' && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800">
+              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-[#FB7185]">
                 The user will be immediately barred from logging in or performing any workspace API actions until re-activated.
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-2.5 pt-2">
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-[#334155]">
               <button
                 type="button"
                 onClick={() => setStatusModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
+                className="px-4 py-2 text-sm font-medium rounded-xl border border-slate-200 dark:border-[#334155] hover:bg-slate-50 dark:hover:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -1773,7 +1806,7 @@ export default function GovernancePage() {
                 onClick={handleStatusUpdate}
                 disabled={statusUpdating}
                 className={`px-4 py-2 text-sm font-semibold rounded-xl text-white disabled:opacity-50 flex items-center gap-2 shadow-xs transition-colors cursor-pointer ${
-                  newStatus === 'active' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'
+                  newStatus === 'active' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700 dark:bg-[#E11D48]'
                 }`}
               >
                 {statusUpdating && <RefreshCw className="w-4 h-4 animate-spin" />}
@@ -1781,62 +1814,74 @@ export default function GovernancePage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL: INSPECT AUDIT METADATA                                             */}
+      {/* MODAL: INSPECT AUDIT METADATA (Req 4 Full Viewport Overlay)                */}
       {/* ========================================================================= */}
-      {inspectMetadata && (
-        <div className="fixed inset-0 z-50 bg-slate-900/30 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 max-w-lg w-full p-6 shadow-xl space-y-4">
+      {inspectMetadata && createPortal(
+        <div
+          className="fixed inset-0 z-[100] bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 font-sans overflow-y-auto animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setInspectMetadata(null);
+          }}
+        >
+          <div
+            className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/90 dark:border-[#334155] text-slate-900 dark:text-[#F8FAFC] max-w-lg w-full my-auto p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Info className="w-5 h-5 text-rose-600" />
+              <h3 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC] flex items-center gap-2">
+                <Info className="w-5 h-5 text-rose-600 dark:text-[#FB7185]" />
                 Audit Metadata Details
               </h3>
-              <button onClick={() => setInspectMetadata(null)} className="text-slate-400 hover:text-slate-600 p-1">
+              <button onClick={() => setInspectMetadata(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-[#F8FAFC] p-1 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-2 text-xs">
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="text-slate-400 font-medium">Action</span>
-                <span className="font-semibold text-slate-800">{inspectMetadata.action}</span>
+              <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-[#334155]">
+                <span className="text-slate-400 dark:text-[#94A3B8] font-medium">Action</span>
+                <span className="font-semibold text-slate-800 dark:text-[#F8FAFC]">{inspectMetadata.action}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="text-slate-400 font-medium">Actor</span>
-                <span className="text-slate-800 font-medium">{inspectMetadata.user_email || 'System'}</span>
+              <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-[#334155]">
+                <span className="text-slate-400 dark:text-[#94A3B8] font-medium">Actor</span>
+                <span className="text-slate-800 dark:text-[#F8FAFC] font-medium">{inspectMetadata.user_email || 'System'}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="text-slate-400 font-medium">Client IP</span>
-                <span className="font-mono text-slate-600">{inspectMetadata.ip_address || 'N/A'}</span>
+              <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-[#334155]">
+                <span className="text-slate-400 dark:text-[#94A3B8] font-medium">Client IP</span>
+                <span className="font-mono text-slate-600 dark:text-[#CBD5E1]">{inspectMetadata.ip_address || 'N/A'}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="text-slate-400 font-medium">User Agent</span>
-                <span className="text-slate-600 max-w-xs truncate">{inspectMetadata.user_agent || 'N/A'}</span>
+              <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-[#334155]">
+                <span className="text-slate-400 dark:text-[#94A3B8] font-medium">User Agent</span>
+                <span className="text-slate-600 dark:text-[#CBD5E1] max-w-xs truncate">{inspectMetadata.user_agent || 'N/A'}</span>
               </div>
             </div>
 
             <div>
-              <div className="text-xs font-semibold text-slate-400 uppercase mb-1">Sanitized Payload</div>
-              <pre className="p-3 rounded-xl bg-slate-900 text-slate-100 text-xs font-mono overflow-x-auto max-h-48">
+              <div className="text-xs font-semibold text-slate-400 dark:text-[#94A3B8] uppercase mb-1">Sanitized Payload</div>
+              <pre className="p-3 rounded-xl bg-slate-900 text-slate-100 text-xs font-mono overflow-x-auto max-h-48 border border-slate-800">
                 {JSON.stringify(inspectMetadata.metadata || {}, null, 2)}
               </pre>
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-end pt-2 border-t border-slate-100 dark:border-[#334155]">
               <button
                 type="button"
                 onClick={() => setInspectMetadata(null)}
-                className="px-4 py-2 text-sm font-medium rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                className="px-4 py-2 text-sm font-medium rounded-xl bg-slate-100 dark:bg-[#1E293B] hover:bg-slate-200 dark:hover:bg-[#334155] text-slate-700 dark:text-[#CBD5E1] transition-colors cursor-pointer"
               >
                 Close
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ========================================================================= */}
@@ -1852,9 +1897,19 @@ export default function GovernancePage() {
         const currentSeatsUsed = userUsage?.count ?? (activeMembersCount + pendingCount);
         const isAtSeatLimit = userUsage?.isAtLimit ?? (seatLimit !== -1 && currentSeatsUsed >= seatLimit);
 
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+        return createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs font-sans overflow-y-auto animate-fade-in"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => {
+              if (e.target === e.currentTarget && !isSendingInvite) setIsInviteModalOpen(false);
+            }}
+          >
+            <div
+              className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/90 dark:border-[#334155] text-slate-900 dark:text-[#F8FAFC] shadow-2xl max-w-md w-full my-auto p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <UserPlus className="w-5 h-5 text-rose-600" />
@@ -1993,7 +2048,8 @@ export default function GovernancePage() {
                 </form>
               )}
             </div>
-          </div>
+          </div>,
+          document.body
         );
       })()}
     </div>
