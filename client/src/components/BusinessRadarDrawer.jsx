@@ -316,7 +316,7 @@ export default function BusinessRadarDrawer({
                      error?.code === 'INSUFFICIENT_EVIDENCE' ? 'Insufficient Data' :
                      error?.code === 'AI_AUTH_FAILED' ? 'AI Authentication Failed' :
                      error?.code === 'AI_TIMEOUT' ? 'Analysis Service Timeout' :
-                     'Analysis Unavailable'}
+                     'Analysis Could Not Be Completed'}
                   </h4>
                   <p className="text-xs text-rose-700 dark:text-rose-300">
                     {error?.message || 'We could not compute the comparative breakdown for this insight.'}
@@ -342,7 +342,7 @@ export default function BusinessRadarDrawer({
                     className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                    <span>{loading ? 'Retrying...' : 'Try again'}</span>
+                    <span>{loading ? 'Retrying...' : 'Retry Analysis'}</span>
                   </button>
                 )}
               </div>

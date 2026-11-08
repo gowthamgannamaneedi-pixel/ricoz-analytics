@@ -192,17 +192,7 @@ const decisionIntelligenceController = {
     try {
       const organizationId = req.user.organization_id;
       const { id } = req.params;
-      const { dimension, adjustments } = req.body;
-
-      if (!Array.isArray(adjustments)) {
-        return res.status(400).json({
-          success: false,
-          error: {
-            code: 'INVALID_PAYLOAD',
-            message: 'Body field "adjustments" must be an array of { segment, deltaPercent } objects.'
-          }
-        });
-      }
+      const { dimension, adjustments, levers, scenarioType } = req.body;
 
       if (!isValidUuid(id)) {
         return res.status(404).json({
@@ -221,6 +211,58 @@ const decisionIntelligenceController = {
           error: {
             code: 'NOT_FOUND',
             message: `Insight #${id} not found or access denied.`
+          }
+        });
+      }
+
+      // Check for financial levers scenario
+      const isFinancial = scenarioType === 'financial' || levers || req.body.priceChangePct !== undefined;
+      if (isFinancial) {
+        const evidence = insight.evidence || {};
+        const baseRev = Number(evidence.currentValue || evidence.current_value || evidence.baselineValue || 1000000);
+        const baseCost = Number(evidence.costValue || (baseRev * 0.65));
+        const activeLevers = levers || {
+          priceChangePct: Number(req.body.priceChangePct || 0),
+          volumeChangePct: Number(req.body.volumeChangePct || 0),
+          conversionChangePct: Number(req.body.conversionChangePct || 0),
+          cogsChangePct: Number(req.body.cogsChangePct || 0),
+          opexChangePct: Number(req.body.opexChangePct || 0)
+        };
+
+        const simulation = scenarioSimulationService.simulateFinancialLevers({
+          baselineRevenue: baseRev,
+          baselineCost: baseCost,
+          baselineUnits: Number(evidence.recordsAnalyzed || evidence.records_analyzed || 100),
+          hasCostColumn: Boolean(evidence.costValue),
+          levers: activeLevers,
+          context: {
+            datasetId: insight.dataset_id || evidence.datasetId || evidence.dataset_id,
+            datasetName: insight.source_metadata?.dataset_name || evidence.datasetName || 'Dataset',
+            insightId: id
+          }
+        });
+
+        const aiResult = await geminiService.generateScenarioExplanation({ simulation });
+
+        return res.status(200).json({
+          success: true,
+          data: {
+            ...simulation,
+            explanation: aiResult.explanation,
+            aiGenerated: aiResult.aiGenerated,
+            fallback: aiResult.fallback,
+            model: geminiService.modelName
+          }
+        });
+      }
+
+      // Fallback: Dimensional segment adjustments
+      if (!Array.isArray(adjustments)) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PAYLOAD',
+            message: 'Body must contain "adjustments" array or financial "levers" object.'
           }
         });
       }
@@ -247,7 +289,7 @@ const decisionIntelligenceController = {
         limit: 50
       });
 
-      // 2. Run deterministic counterfactual simulation
+      // 3. Run deterministic counterfactual simulation
       const simulation = scenarioSimulationService.simulate({
         baselineDrivers: attribution.drivers,
         adjustments,
@@ -258,7 +300,7 @@ const decisionIntelligenceController = {
         }
       });
 
-      // 3. Grounded explanation layer
+      // 4. Grounded explanation layer
       const aiResult = await geminiService.generateScenarioExplanation({ simulation });
 
       return res.status(200).json({

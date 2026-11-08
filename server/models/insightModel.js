@@ -118,7 +118,7 @@ const InsightModel = {
     const sql = `
       SELECT 
         i.*,
-        COALESCE(i.dataset_id, m.dataset_id) AS dataset_id,
+        COALESCE(i.dataset_id, CASE WHEN m.dataset_id::text ~ '^[0-9]+$' THEN m.dataset_id::text::integer ELSE NULL END) AS dataset_id,
         COALESCE(d.name, md.name) AS dataset_name,
         m.name AS metric_name
       FROM ai_insights i
@@ -371,7 +371,7 @@ const InsightModel = {
       sql = `
         SELECT 
           i.*,
-          COALESCE(i.dataset_id, m.dataset_id) AS dataset_id,
+          COALESCE(i.dataset_id, CASE WHEN m.dataset_id::text ~ '^[0-9]+$' THEN m.dataset_id::text::integer ELSE NULL END) AS dataset_id,
           COALESCE(d.name, md.name) AS dataset_name,
           m.name AS metric_name
         FROM ai_insights i
@@ -386,9 +386,9 @@ const InsightModel = {
       // Deduplicate: return only the latest relevant active insight for the same logical alert/insight
       sql = `
         SELECT * FROM (
-          SELECT DISTINCT ON (i.type, COALESCE(i.dataset_id, m.dataset_id, 0), i.title)
+          SELECT DISTINCT ON (i.type, COALESCE(i.dataset_id, CASE WHEN m.dataset_id::text ~ '^[0-9]+$' THEN m.dataset_id::text::integer ELSE NULL END, 0), i.title)
             i.*,
-            COALESCE(i.dataset_id, m.dataset_id) AS dataset_id,
+            COALESCE(i.dataset_id, CASE WHEN m.dataset_id::text ~ '^[0-9]+$' THEN m.dataset_id::text::integer ELSE NULL END) AS dataset_id,
             COALESCE(d.name, md.name) AS dataset_name,
             m.name AS metric_name
           FROM ai_insights i
@@ -396,7 +396,7 @@ const InsightModel = {
           LEFT JOIN datasets d ON CAST(d.id AS TEXT) = CAST(i.dataset_id AS TEXT)
           LEFT JOIN datasets md ON CAST(md.id AS TEXT) = CAST(m.dataset_id AS TEXT)
           WHERE ${conditions.join(' AND ')}
-          ORDER BY i.type, COALESCE(i.dataset_id, m.dataset_id, 0), i.title, i.created_at DESC
+          ORDER BY i.type, COALESCE(i.dataset_id, CASE WHEN m.dataset_id::text ~ '^[0-9]+$' THEN m.dataset_id::text::integer ELSE NULL END, 0), i.title, i.created_at DESC
         ) deduplicated
         ORDER BY deduplicated.created_at DESC
         LIMIT $${paramIndex++} OFFSET $${paramIndex++};

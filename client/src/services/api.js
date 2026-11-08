@@ -1763,7 +1763,8 @@ export async function exportDataQuality(datasetId, format = 'json') {
 export async function generateAIInsights(options = {}) {
   return apiRequest('/insights/generate', {
     method: 'POST',
-    body: JSON.stringify(options)
+    body: JSON.stringify(options),
+    timeout: 90000
   });
 }
 
@@ -1847,12 +1848,26 @@ export async function getBusinessRadar(insightId, params = {}) {
 /**
  * Phase 6: Run What-If Counterfactual Scenario Simulation
  * @param {string} insightId
- * @param {{ dimension?: string, adjustments: Array<{ segment: string, deltaPercent?: number, deltaAbsolute?: number }> }} body
+ * @param {{ dimension?: string, adjustments?: Array<{ segment: string, deltaPercent?: number, deltaAbsolute?: number }>, levers?: object, scenarioType?: string }} body
  */
 export async function simulateWhatIfScenario(insightId, body = {}) {
   return apiRequest(`/insights/${insightId}/simulate-scenario`, {
     method: 'POST',
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    timeout: 45000
+  });
+}
+
+/**
+ * Run deterministic What-If simulation on a dataset's baseline financial levers
+ * @param {string|number} datasetId
+ * @param {object} levers - { priceChangePct, volumeChangePct, cogsChangePct, opexChangePct }
+ */
+export async function simulateDatasetWhatIf(datasetId, levers = {}) {
+  return apiRequest(`/datasets/${datasetId}/what-if`, {
+    method: 'POST',
+    body: JSON.stringify(levers),
+    timeout: 45000
   });
 }
 

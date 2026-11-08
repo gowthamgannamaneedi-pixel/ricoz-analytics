@@ -11,7 +11,8 @@ const {
   refreshDataset,
   deleteDataset,
   devCreateDataset,
-  rehydrateDataset
+  rehydrateDataset,
+  simulateDatasetWhatIf
 } = require('../controllers/datasetController');
 
 // All dataset routes require JWT authentication
@@ -23,6 +24,7 @@ router.get('/', requirePermission('datasets.view'), getDatasets);
 router.post('/dev-create', requireActiveSubscription, requireUsageLimit('datasets'), devCreateDataset);
 router.get('/:id', requirePermission('datasets.view'), getDatasetById);
 router.get('/:id/preview', requirePermission('datasets.view'), getDatasetPreview);
+router.post('/:id/what-if', requirePermission('datasets.view'), simulateDatasetWhatIf);
 router.post('/:id/refresh', requireActiveSubscription, requirePermission('datasets.create'), refreshDataset);
 router.post('/:id/rehydrate', requireActiveSubscription, requirePermission('datasets.create'), handleUpload('file'), rehydrateDataset);
 router.delete('/:id', requirePermission('datasets.delete'), deleteDataset);

@@ -13,6 +13,7 @@ from app.tools.kpi_calculator import KPICalculatorTool
 from app.tools.statistical_analysis import StatisticalAnalysisTool
 from app.tools.forecasting import ForecastingTool
 from app.tools.recommendation_engine import BusinessRecommendationEngine
+from app.tools.scenario_simulator import ScenarioSimulatorTool
 from app.config import settings
 
 logger = logging.getLogger("ai_service.orchestrator")
@@ -35,6 +36,7 @@ class AgentOrchestrator:
         self.stats_tool = StatisticalAnalysisTool()
         self.forecast_tool = ForecastingTool()
         self.recommendation_tool = BusinessRecommendationEngine()
+        self.scenario_tool = ScenarioSimulatorTool()
 
     def process_query(self, req: QueryRequest, tenant_context: Dict[str, Any]) -> QueryResponse:
         total_start = time.perf_counter()
@@ -295,6 +297,7 @@ class AgentOrchestrator:
 
         # Step 4: Determine query intent and execute analytical tools
         query_lower = query_text.lower()
+        is_scenario = any(w in query_lower for w in ["what if", "scenario", "simulate", "if price", "if cost", "if volume", "price increase", "cost increase"])
         is_breakdown = any(w in query_lower for w in ["region", "channel", "category", "product", "breakdown", "which", "top", "rank", "by "])
         is_forecast = any(w in query_lower for w in ["forecast", "predict", "future", "project"])
         is_stats = any(w in query_lower for w in ["variance", "standard deviation", "outlier", "distribution", "spread"])
@@ -328,9 +331,68 @@ class AgentOrchestrator:
         )
 
         # -------------------------------------------------------------
-        # Tool D/E Execution: Breakdown vs Single Metric vs Forecast
+        # Tool Execution: Scenario vs Forecast vs Breakdown vs Single Metric
         # -------------------------------------------------------------
-        if is_forecast:
+        if is_scenario:
+            import re
+            pct_matches = re.findall(r"([+-]?\d+(?:\.\d+)?)\s*%", query_text)
+            p_pct = float(pct_matches[0]) if pct_matches else (5.0 if "increase" in query_lower else -5.0)
+            c_pct = 0.0
+            v_pct = 0.0
+            if "cost" in query_lower or "cogs" in query_lower:
+                c_pct = p_pct
+                p_pct = 0.0
+            elif "volume" in query_lower or "units" in query_lower or "demand" in query_lower:
+                v_pct = p_pct
+                p_pct = 0.0
+
+            s_res, s_time, s_ok = self.scenario_tool.run_safe(
+                organization_id=org_id,
+                dataset_id=active_dataset_id,
+                price_change_pct=p_pct,
+                volume_change_pct=v_pct,
+                cogs_change_pct=c_pct
+            )
+            tool_logs.append(ToolCallLog(
+                tool_name=self.scenario_tool.name,
+                arguments={"dataset_id": active_dataset_id, "price_change_pct": p_pct, "volume_change_pct": v_pct, "cogs_change_pct": c_pct},
+                success=s_ok,
+                execution_time_ms=s_time,
+                output_summary=f"Projected revenue ₹{s_res.get('simulated_revenue', 0):,}, margin {s_res.get('simulated_margin_pct', 0)}%"
+            ))
+
+            sim_items = [
+                {"Metric": "Gross Revenue", "Baseline": f"₹{s_res.get('baseline_revenue', 0):,}", "Simulated": f"₹{s_res.get('simulated_revenue', 0):,}", "Variance": f"{s_res.get('rev_delta_pct', 0):+}%"},
+                {"Metric": "Operating & Direct Cost", "Baseline": f"₹{s_res.get('baseline_cost', 0):,}", "Simulated": f"₹{s_res.get('simulated_cost', 0):,}", "Variance": f"₹{s_res.get('simulated_cost', 0) - s_res.get('baseline_cost', 0):+,}"},
+                {"Metric": "Gross Profit", "Baseline": f"₹{s_res.get('baseline_profit', 0):,}", "Simulated": f"₹{s_res.get('simulated_profit', 0):,}", "Variance": f"{s_res.get('profit_delta_pct', 0):+}%"},
+                {"Metric": "Gross Margin %", "Baseline": f"{s_res.get('baseline_margin_pct', 0)}%", "Simulated": f"{s_res.get('simulated_margin_pct', 0)}%", "Variance": f"{s_res.get('margin_delta_pct', 0):+} pp"}
+            ]
+
+            viz_payload = {
+                "type": "bar",
+                "title": f"What-If Projection vs Baseline ({active_dataset_name})",
+                "data": [
+                    {"category": "Revenue", "Baseline": s_res.get("baseline_revenue", 0), "Simulated": s_res.get("simulated_revenue", 0)},
+                    {"category": "Cost", "Baseline": s_res.get("baseline_cost", 0), "Simulated": s_res.get("simulated_cost", 0)},
+                    {"category": "Gross Profit", "Baseline": s_res.get("baseline_profit", 0), "Simulated": s_res.get("simulated_profit", 0)}
+                ],
+                "xAxis": "category",
+                "yAxis": "value"
+            }
+            table_payload = sim_items
+            data_payload = s_res
+
+            answer_text = (
+                f"### What-If Counterfactual Scenario Simulation\n\n"
+                f"Simulating adjustments on verified baseline across **{active_row_count:,} records** in `{active_dataset_name}`:\n\n"
+                f"• **Levers Applied:** Price: `{p_pct:+}%`, Volume: `{v_pct:+}%`, Cost: `{c_pct:+}%`\n"
+                f"• **Simulated Revenue:** ₹{s_res.get('simulated_revenue', 0):,} ({s_res.get('rev_delta_pct', 0):+}% vs baseline ₹{s_res.get('baseline_revenue', 0):,})\n"
+                f"• **Simulated Gross Profit:** ₹{s_res.get('simulated_profit', 0):,} ({s_res.get('profit_delta_pct', 0):+}% vs baseline ₹{s_res.get('baseline_profit', 0):,})\n"
+                f"• **Gross Margin:** Shifted to **{s_res.get('simulated_margin_pct', 0)}%** ({s_res.get('margin_delta_pct', 0):+} pp change over baseline {s_res.get('baseline_margin_pct', 0)}%).\n\n"
+                f"*Strict Counterfactual Invariant: Underlying dataset remains completely unchanged.*"
+            )
+
+        elif is_forecast:
             f_res, f_time, f_ok = self.forecast_tool.run_safe(
                 organization_id=org_id,
                 dataset_id=active_dataset_id,

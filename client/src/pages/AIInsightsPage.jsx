@@ -788,7 +788,7 @@ export default function AIInsightsPage() {
             </div>
             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/80">
               <TrendingUp className="w-3 h-3" />
-              {totalCount > 0 ? 'Live Telemetry' : 'Zero State'}
+              {totalCount > 0 ? 'Live Telemetry' : 'No Insights Yet'}
             </span>
           </div>
           <div className="mt-4">
@@ -957,7 +957,7 @@ export default function AIInsightsPage() {
           <Select
             value={impactFilter}
             onChange={(e) => setImpactFilter(e.target.value)}
-            className="w-full sm:w-36 lg:w-36 shrink-0"
+            className="w-full sm:w-44 lg:w-48 shrink-0"
             size="md"
           >
             <option value="all">All Impact Levels</option>
@@ -971,10 +971,10 @@ export default function AIInsightsPage() {
           <Select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full sm:w-38 lg:w-40 shrink-0"
+            className="w-full sm:w-48 lg:w-52 shrink-0"
             size="md"
           >
-            <option value="active">All Statuses (Active)</option>
+            <option value="active">All Insight Statuses</option>
             <option value="dismissed">Dismissed</option>
           </Select>
 

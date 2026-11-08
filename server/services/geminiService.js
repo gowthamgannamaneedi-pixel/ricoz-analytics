@@ -61,6 +61,14 @@ class GeminiService {
       throw err;
     }
 
+    // Rate limit / Quota circuit breaker: avoid repeatedly stalling on 429
+    if (this._quotaCooldownUntil && Date.now() < this._quotaCooldownUntil) {
+      const quotaErr = new Error('AI analysis failed because the provider quota was exceeded. Please try again later.');
+      quotaErr.code = 'AI_QUOTA_EXCEEDED';
+      quotaErr.status = 429;
+      throw quotaErr;
+    }
+
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${this.modelName}:generateContent?key=${this.apiKey}`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), options.timeoutMs || this.timeoutMs);
@@ -76,7 +84,7 @@ class GeminiService {
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: options.temperature !== undefined ? options.temperature : 0.2,
-            maxOutputTokens: options.maxTokens || 1024,
+            maxOutputTokens: options.maxTokens || 2048,
             topP: 0.95
           }
         }),
@@ -101,6 +109,7 @@ class GeminiService {
         } else if (response.status === 429) {
           code = 'AI_QUOTA_EXCEEDED';
           userMsg = 'AI analysis failed because the provider quota was exceeded. Please try again later.';
+          this._quotaCooldownUntil = Date.now() + 60000; // 60s cooldown
         } else if (response.status >= 500) {
           code = 'AI_PROVIDER_UNAVAILABLE';
           userMsg = 'AI provider service is temporarily unavailable. Please try again later.';
@@ -155,8 +164,8 @@ class GeminiService {
       return this._buildDeterministicInsightExplanation({ type, title, summary, evidence, recommendation });
     }
 
-    // 2. Strict pre-condition: Gemini API key must be configured
-    if (!this.isConfigured()) {
+    // 2. Strict pre-condition: Gemini API key must be configured and not in quota cooldown
+    if (!this.isConfigured() || (this._quotaCooldownUntil && Date.now() < this._quotaCooldownUntil)) {
       return this._buildDeterministicInsightExplanation({ type, title, summary, evidence, recommendation });
     }
 
@@ -166,8 +175,8 @@ class GeminiService {
     try {
       const rawResponse = await this.generateContent(prompt, {
         temperature: 0.1,
-        maxTokens: 800,
-        timeoutMs: options.timeoutMs || 10000
+        maxTokens: 2048,
+        timeoutMs: options.timeoutMs || 8000
       });
 
       // 4. Validate strict JSON response schema
@@ -1891,7 +1900,7 @@ Provide a structured, factual explanation of these pre-calculated drivers:`;
    * @returns {Promise<{ explanation: string, aiGenerated: boolean, fallback: boolean }>}
    */
   async generateScenarioExplanation({ simulation, context = {} }, options = {}) {
-    if (!simulation || !simulation.segmentBreakdown) {
+    if (!simulation) {
       return {
         explanation: 'Counterfactual simulation data is unavailable.',
         aiGenerated: false,
@@ -1899,9 +1908,64 @@ Provide a structured, factual explanation of these pre-calculated drivers:`;
       };
     }
 
+    if (simulation.classification === 'COUNTERFACTUAL_FINANCIAL_SIMULATION' || simulation.baseline) {
+      const deterministicText = simulation.observationalSummary || simulation.explanation || 'Financial counterfactual simulation completed.';
+      if (!this.isConfigured() || (this._quotaCooldownUntil && Date.now() < this._quotaCooldownUntil)) {
+        return {
+          explanation: deterministicText,
+          aiGenerated: false,
+          fallback: true
+        };
+      }
+
+      const prompt = `You are RicozAnalytics Decision Intelligence Engine.
+Your task is to provide a concise executive summary of a COUNTERFACTUAL WHAT-IF FINANCIAL SIMULATION.
+
+CRITICAL RULES:
+1. Clearly state that this is a COUNTERFACTUAL / PROJECTED scenario, NOT a historical fact.
+2. Ground every figure strictly in the pre-calculated numbers. Do NOT calculate or invent numbers.
+3. Be concise and professional (1-2 short paragraphs).
+
+Pre-Calculated Financial Simulation Numbers:
+- Dataset: ${simulation.datasetName || 'Dataset'}
+- Levers Applied: Price ${simulation.levers?.priceChangePct || 0}%, Volume ${simulation.levers?.volumeChangePct || 0}%, COGS ${simulation.levers?.cogsChangePct || 0}%, Opex ${simulation.levers?.opexChangePct || 0}%
+- Baseline: Revenue ₹${simulation.baseline?.revenue?.toLocaleString() || 0}, Cost ₹${simulation.baseline?.cost?.toLocaleString() || 0}, Profit ₹${simulation.baseline?.grossProfit?.toLocaleString() || 0}, Margin ${simulation.baseline?.grossMarginPct || 0}%
+- Simulated: Revenue ₹${simulation.simulated?.revenue?.toLocaleString() || 0}, Cost ₹${simulation.simulated?.cost?.toLocaleString() || 0}, Profit ₹${simulation.simulated?.grossProfit?.toLocaleString() || 0}, Margin ${simulation.simulated?.grossMarginPct || 0}%
+- Net Variance: Revenue Delta ${simulation.variance?.revenueDeltaPct || 0}%, Profit Delta ${simulation.variance?.profitDeltaPct || 0}%, Margin Shift ${simulation.variance?.marginDeltaPct || 0} pp
+
+Synthesize the counterfactual scenario:`;
+
+      try {
+        const rawText = await this.generateContent(prompt, {
+          temperature: 0.1,
+          maxTokens: 400,
+          timeoutMs: options.timeoutMs || 8000
+        });
+        return {
+          explanation: rawText.trim() || deterministicText,
+          aiGenerated: true,
+          fallback: false
+        };
+      } catch (err) {
+        return {
+          explanation: deterministicText,
+          aiGenerated: false,
+          fallback: true
+        };
+      }
+    }
+
+    if (!simulation.segmentBreakdown) {
+      return {
+        explanation: simulation.observationalSummary || 'Counterfactual simulation data is unavailable.',
+        aiGenerated: false,
+        fallback: true
+      };
+    }
+
     const deterministicText = this._buildDeterministicScenarioExplanation(simulation);
 
-    if (!this.isConfigured()) {
+    if (!this.isConfigured() || (this._quotaCooldownUntil && Date.now() < this._quotaCooldownUntil)) {
       return {
         explanation: deterministicText,
         aiGenerated: false,

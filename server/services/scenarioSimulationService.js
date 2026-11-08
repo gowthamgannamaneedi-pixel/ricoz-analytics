@@ -147,6 +147,139 @@ class ScenarioSimulationService {
       generatedAt: new Date().toISOString()
     };
   }
+
+  /**
+   * Run deterministic financial counterfactual simulation on revenue and cost levers
+   * 
+   * @param {object} params
+   * @param {number} params.baselineRevenue - Baseline revenue amount
+   * @param {number} [params.baselineCost] - Baseline cost (COGS + Opex)
+   * @param {number} [params.baselineUnits] - Baseline volume/units
+   * @param {boolean} [params.hasCostColumn] - Whether cost was directly derived from a dataset column
+   * @param {object} [params.levers] - { priceChangePct, volumeChangePct, cogsChangePct, opexChangePct, conversionChangePct }
+   * @param {object} [params.context] - Metadata { datasetId, datasetName, insightId }
+   * @returns {object} Deterministic financial simulation result
+   */
+  simulateFinancialLevers({
+    baselineRevenue = 0,
+    baselineCost = 0,
+    baselineUnits = 0,
+    hasCostColumn = true,
+    levers = {},
+    context = {}
+  }) {
+    const baseRev = Math.max(0, this._toNum(baselineRevenue, 0));
+    let baseCost = this._toNum(baselineCost, 0);
+    if (baseCost <= 0) {
+      // Default to conservative 65% COGS baseline if cost is unknown
+      baseCost = Number((baseRev * 0.65).toFixed(2));
+    }
+    const baseUnits = Math.max(0, this._toNum(baselineUnits, 1));
+
+    const priceChangePct = this._toNum(levers.priceChangePct ?? levers.price_change_pct, 0);
+    const volumeChangePct = this._toNum(levers.volumeChangePct ?? levers.volume_change_pct, 0);
+    const conversionChangePct = this._toNum(levers.conversionChangePct ?? levers.conversion_change_pct, 0);
+    const cogsChangePct = this._toNum(levers.cogsChangePct ?? levers.cogs_change_pct, 0);
+    const opexChangePct = this._toNum(levers.opexChangePct ?? levers.opex_change_pct, 0);
+
+    const priceFactor = 1.0 + (priceChangePct / 100.0);
+    const effVolumeFactor = (1.0 + (volumeChangePct / 100.0)) * (1.0 + (conversionChangePct / 100.0));
+    const cogsFactor = 1.0 + (cogsChangePct / 100.0);
+    const opexFactor = 1.0 + (opexChangePct / 100.0);
+
+    // Baseline profitability
+    const baseProfit = Number((baseRev - baseCost).toFixed(2));
+    const baseMarginPct = baseRev > 0 ? Number(((baseProfit / baseRev) * 100).toFixed(2)) : 0;
+
+    // Simulated revenue = Baseline Revenue * (1 + Price%) * (1 + Volume%)
+    const simulatedRevenue = Number(Math.max(0, baseRev * priceFactor * effVolumeFactor).toFixed(2));
+
+    // Split baseline cost into variable (COGS ~ 80%) and fixed (Opex ~ 20%)
+    const baseCOGS = Number((baseCost * 0.80).toFixed(2));
+    const baseOpex = Number((baseCost * 0.20).toFixed(2));
+
+    // Variable costs scale with volume and COGS factor
+    const simulatedCOGS = Number(Math.max(0, baseCOGS * cogsFactor * effVolumeFactor).toFixed(2));
+    // Operating expenses scale with Opex factor (overhead, largely independent of volume)
+    const simulatedOpex = Number(Math.max(0, baseOpex * opexFactor).toFixed(2));
+    const simulatedCost = Number((simulatedCOGS + simulatedOpex).toFixed(2));
+
+    const simulatedProfit = Number((simulatedRevenue - simulatedCost).toFixed(2));
+    const simulatedMarginPct = simulatedRevenue > 0
+      ? Number(((simulatedProfit / simulatedRevenue) * 100).toFixed(2))
+      : 0;
+    const simulatedUnits = Math.max(0, Math.round(baseUnits * effVolumeFactor));
+
+    // Deltas
+    const revenueDelta = Number((simulatedRevenue - baseRev).toFixed(2));
+    const revenueDeltaPct = baseRev > 0 ? Number(((revenueDelta / baseRev) * 100).toFixed(2)) : 0;
+
+    const costDelta = Number((simulatedCost - baseCost).toFixed(2));
+    const costDeltaPct = baseCost > 0 ? Number(((costDelta / baseCost) * 100).toFixed(2)) : 0;
+
+    const profitDelta = Number((simulatedProfit - baseProfit).toFixed(2));
+    const profitDeltaPct = baseProfit !== 0 ? Number(((profitDelta / Math.abs(baseProfit)) * 100).toFixed(2)) : 0;
+
+    const marginDeltaPct = Number((simulatedMarginPct - baseMarginPct).toFixed(2));
+
+    const sign = (n) => (n >= 0 ? `+${n}` : `${n}`);
+
+    let narrative = `Under the simulated scenario (Price: ${sign(priceChangePct)}%, Volume: ${sign(volumeChangePct)}%, COGS: ${sign(cogsChangePct)}%, Opex: ${sign(opexChangePct)}%), `;
+    narrative += `projected revenue shifts to ₹${simulatedRevenue.toLocaleString()} (${sign(revenueDeltaPct)}%), `;
+    narrative += `resulting in gross profit of ₹${simulatedProfit.toLocaleString()} (${sign(profitDeltaPct)}%) `;
+    narrative += `and an adjusted gross margin of ${simulatedMarginPct}% (${sign(marginDeltaPct)} pp variance over baseline).`;
+
+    return {
+      simulationId: `sim_fin_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      classification: 'COUNTERFACTUAL_FINANCIAL_SIMULATION',
+      isCounterfactual: true,
+      immutableDatasetPreserved: true,
+      datasetId: context.datasetId || null,
+      datasetName: context.datasetName || 'Dataset',
+      insightId: context.insightId ? String(context.insightId) : null,
+      levers: {
+        priceChangePct,
+        volumeChangePct,
+        conversionChangePct,
+        cogsChangePct,
+        opexChangePct
+      },
+      baseline: {
+        revenue: baseRev,
+        cost: baseCost,
+        grossProfit: baseProfit,
+        grossMarginPct: baseMarginPct,
+        units: baseUnits,
+        hasCostColumn
+      },
+      simulated: {
+        revenue: simulatedRevenue,
+        cost: simulatedCost,
+        grossProfit: simulatedProfit,
+        grossMarginPct: simulatedMarginPct,
+        units: simulatedUnits
+      },
+      variance: {
+        revenueDelta,
+        revenueDeltaPct,
+        costDelta,
+        costDeltaPct,
+        profitDelta,
+        profitDeltaPct,
+        marginDeltaPct
+      },
+      // Backwards-compatible aliases for UI components
+      metric: 'Revenue & Gross Profit',
+      dimension: 'Financial Levers',
+      baselineTotal: baseRev,
+      simulatedTotal: simulatedRevenue,
+      netProjectedDelta: revenueDelta,
+      netProjectedPercent: revenueDeltaPct,
+      observationalSummary: narrative,
+      explanation: narrative,
+      generatedAt: new Date().toISOString()
+    };
+  }
 }
 
 module.exports = new ScenarioSimulationService();

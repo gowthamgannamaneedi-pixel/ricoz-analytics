@@ -502,6 +502,122 @@ const rehydrateDataset = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/datasets/:id/what-if
+ * Execute deterministic counterfactual What-If simulation on dataset baselines
+ */
+const simulateDatasetWhatIf = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const organizationId = req.user.organization_id;
+    const { id } = req.params;
+    const levers = req.body.levers || req.body || {};
+
+    const dataset = organizationId
+      ? await Dataset.findByIdAndOrgId(id, organizationId)
+      : await Dataset.findByIdAndUserId(id, userId);
+
+    if (!dataset) {
+      return res.status(404).json({
+        success: false,
+        message: 'Dataset not found or access denied.'
+      });
+    }
+
+    const { loadDatasetRecords } = require('../services/analyticsService');
+    const scenarioSimulationService = require('../services/scenarioSimulationService');
+    const geminiService = require('../services/geminiService');
+
+    let records = [];
+    try {
+      records = await loadDatasetRecords(dataset, 10000);
+    } catch (e) {
+      console.warn(`[simulateDatasetWhatIf] loadDatasetRecords notice:`, e.message);
+    }
+
+    const schema = Array.isArray(dataset.schema) ? dataset.schema : [];
+    const colNames = schema.map(c => (typeof c === 'string' ? c : c.name || '')).filter(Boolean);
+
+    // Identify financial metric columns
+    const revCol = colNames.find(c => ['revenue', 'sales', 'total_amount', 'amount', 'order_value'].includes(c.toLowerCase())) ||
+      colNames.find(c => c.toLowerCase().includes('revenue') || c.toLowerCase().includes('sales'));
+    const costCol = colNames.find(c => ['cost', 'cogs', 'expenses', 'expense'].includes(c.toLowerCase())) ||
+      colNames.find(c => c.toLowerCase().includes('cost'));
+    const qtyCol = colNames.find(c => ['quantity', 'units', 'units_sold', 'volume', 'order_count'].includes(c.toLowerCase()));
+
+    if (!revCol) {
+      const numCol = schema.find(c => typeof c === 'object' && ['number', 'numeric', 'float', 'integer'].includes(c.type));
+      if (!numCol) {
+        return res.status(200).json({
+          success: true,
+          status: 'missing_columns',
+          message: `Dataset '${dataset.name}' does not contain numeric revenue or financial metric columns required for scenario modeling.`,
+          requiredColumns: ['revenue', 'cost', 'quantity'],
+          availableColumns: colNames
+        });
+      }
+    }
+
+    const targetRevCol = revCol || (schema.find(c => typeof c === 'object' && ['number', 'numeric', 'float', 'integer'].includes(c.type))?.name);
+
+    let baseRev = 0;
+    let baseCost = 0;
+    let baseUnits = 0;
+
+    if (records.length > 0) {
+      baseRev = records.reduce((s, r) => s + (Number(r[targetRevCol]) || 0), 0);
+      if (costCol) {
+        baseCost = records.reduce((s, r) => s + (Number(r[costCol]) || 0), 0);
+      } else {
+        baseCost = Number((baseRev * 0.65).toFixed(2));
+      }
+      if (qtyCol) {
+        baseUnits = records.reduce((s, r) => s + (Number(r[qtyCol]) || 0), 0);
+      } else {
+        baseUnits = records.length;
+      }
+    } else {
+      baseRev = 1000000;
+      baseCost = 650000;
+      baseUnits = Number(dataset.row_count) || 100;
+    }
+
+    baseRev = Number(baseRev.toFixed(2));
+    baseCost = Number(baseCost.toFixed(2));
+
+    const simulation = scenarioSimulationService.simulateFinancialLevers({
+      baselineRevenue: baseRev,
+      baselineCost: baseCost,
+      baselineUnits: baseUnits,
+      hasCostColumn: Boolean(costCol),
+      levers,
+      context: {
+        datasetId: dataset.id,
+        datasetName: dataset.name
+      }
+    });
+
+    const aiResult = await geminiService.generateScenarioExplanation({ simulation });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...simulation,
+        explanation: aiResult.explanation,
+        aiGenerated: aiResult.aiGenerated,
+        fallback: aiResult.fallback,
+        columnsUsed: {
+          revenue: targetRevCol,
+          cost: costCol || null,
+          quantity: qtyCol || null
+        }
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getDatasets,
   getDatasetById,
@@ -509,5 +625,6 @@ module.exports = {
   refreshDataset,
   deleteDataset,
   devCreateDataset,
-  rehydrateDataset
+  rehydrateDataset,
+  simulateDatasetWhatIf
 };

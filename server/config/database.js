@@ -4752,6 +4752,20 @@ async function initDb() {
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
 
+    DO $migration$
+    BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'metrics' AND column_name = 'dataset_id' AND data_type = 'uuid'
+      ) THEN
+        ALTER TABLE metrics DROP CONSTRAINT IF EXISTS metrics_dataset_id_fkey;
+        ALTER TABLE metrics ALTER COLUMN dataset_id TYPE integer USING (
+          CASE WHEN dataset_id::text ~ '^[0-9]+$' THEN dataset_id::text::integer ELSE NULL END
+        );
+        ALTER TABLE metrics ADD CONSTRAINT metrics_dataset_id_fkey FOREIGN KEY (dataset_id) REFERENCES datasets(id) ON DELETE CASCADE;
+      END IF;
+    END $migration$;
+
     CREATE TABLE IF NOT EXISTS dashboards (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
