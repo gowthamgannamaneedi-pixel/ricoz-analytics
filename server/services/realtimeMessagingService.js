@@ -248,3 +248,4 @@ class RealtimeMessagingService extends EventEmitter {
 // Export singleton instance
 const realtimeMessagingService = new RealtimeMessagingService();
 module.exports = realtimeMessagingService;
+

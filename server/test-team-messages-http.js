@@ -227,3 +227,4 @@ runHttpTests().catch(async (e) => {
   await closeDb();
   process.exit(1);
 });
+

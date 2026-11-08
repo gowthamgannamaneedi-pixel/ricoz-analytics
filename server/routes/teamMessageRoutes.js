@@ -29,3 +29,4 @@ router.post('/conversations/:conversationId/read', teamMessageController.markAsR
 router.post('/conversations/:conversationId/typing', teamMessageController.sendTypingIndicator);
 
 module.exports = router;
+

@@ -69,3 +69,4 @@ const handleAttachmentUpload = (fieldName = 'file') => {
 module.exports = {
   handleAttachmentUpload
 };
+
