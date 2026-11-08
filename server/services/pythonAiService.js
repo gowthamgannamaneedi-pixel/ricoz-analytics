@@ -51,7 +51,7 @@ class PythonAiService {
     conversationHistory = []
   }) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+    const timeout = setTimeout(() => controller.abort(), 15000);
 
     try {
       const res = await fetch(`${AI_SERVICE_URL}/api/v1/ai/query`, {

@@ -289,7 +289,7 @@ class LangGraphAssistantService {
       resolvedIntent = 'knowledge_retrieval';
       requiresRetrieval = true;
       requiresAnalytics = false;
-    } else if ((isAnalyticsMatch || ['ranking', 'breakdown', 'kpi', 'trend', 'comparison'].includes(String(resolvedIntent).toLowerCase())) &&
+    } else if ((isAnalyticsMatch || ['ranking', 'breakdown', 'kpi', 'trend', 'comparison', 'sales_growth_analysis', 'revenue_decline_analysis', 'dataset_exploration', 'profitability_analysis', 'scenario_simulation'].includes(String(resolvedIntent).toLowerCase())) &&
         (isExplanatoryMatch || isRetrievalMatch)) {
       resolvedIntent = 'hybrid';
       requiresRetrieval = true;
@@ -999,6 +999,20 @@ ${comparison}
   _generateFollowUpQuestions(query, intent, analyticsResult, retrievedDocs) {
     const q = (query || '').toLowerCase();
 
+    if (q.includes('increase') || q.includes('increse') || q.includes('boost') || q.includes('sales growth') || intent === 'sales_growth_analysis') {
+      return [
+        'Which product generates the highest margin?',
+        'What happens if operating costs increase by 10%?',
+        'What information is missing from my dataset?'
+      ];
+    }
+    if (q.includes('why did') || q.includes('decrease') || q.includes('drop') || intent === 'revenue_decline_analysis') {
+      return [
+        'Identify unusual sales patterns',
+        'How can I increase my sales?',
+        'Compare the last two quarters'
+      ];
+    }
     if (q.includes('origination') || q.includes('organization') || q.includes('organisation') || q.includes('workspace') || q.includes('company')) {
       return [
         'What datasets are available in this organization?',

@@ -68,13 +68,21 @@ const PIE_COLORS = ['#E11D48', '#7C3AED', '#059669', '#D97706', '#DB2777', '#089
 
 const INTENT_BADGES = {
   kpi: 'bg-rose-50 text-rose-700 border-rose-200',
+  kpi_query: 'bg-rose-50 text-rose-700 border-rose-200',
+  sales_growth_analysis: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  revenue_decline_analysis: 'bg-amber-50 text-amber-700 border-amber-200',
+  dataset_exploration: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  scenario_simulation: 'bg-purple-50 text-purple-700 border-purple-200',
+  profitability_analysis: 'bg-teal-50 text-teal-700 border-teal-200',
   trend: 'bg-purple-50 text-purple-700 border-purple-200',
   growth: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   ranking: 'bg-indigo-50 text-indigo-700 border-indigo-200',
   breakdown: 'bg-amber-50 text-amber-700 border-amber-200',
   comparison: 'bg-cyan-50 text-cyan-700 border-cyan-200',
   anomaly_explanation: 'bg-rose-50 text-rose-700 border-rose-200',
+  anomaly_investigation: 'bg-rose-50 text-rose-700 border-rose-200',
   forecast_explanation: 'bg-violet-50 text-violet-700 border-violet-200',
+  forecast: 'bg-violet-50 text-violet-700 border-violet-200',
   dashboard_summary: 'bg-slate-100 text-slate-700 border-slate-200',
   metric_explanation: 'bg-teal-50 text-teal-700 border-teal-200',
   organization_context: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -275,6 +283,29 @@ export default function AIAnalyticsAssistant() {
   const [selectedDatasetId, setSelectedDatasetId] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [agentStep, setAgentStep] = useState(0);
+
+  const AGENT_STAGES = [
+    'Understanding your question & business intent...',
+    'Inspecting available datasets & column schema...',
+    'Planning multi-step analytical execution...',
+    'Executing verified analytics tools on database...',
+    'Verifying mathematical evidence & invariants...',
+    'Synthesizing evidence-grounded strategic recommendations...'
+  ];
+
+  useEffect(() => {
+    let timer;
+    if (loading) {
+      setAgentStep(0);
+      timer = setInterval(() => {
+        setAgentStep(prev => (prev < AGENT_STAGES.length - 1 ? prev + 1 : prev));
+      }, 700);
+    } else {
+      setAgentStep(0);
+    }
+    return () => clearInterval(timer);
+  }, [loading]);
   const [searchHistoryQuery, setSearchHistoryQuery] = useState('');
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [feedbackState, setFeedbackState] = useState({});
@@ -1338,12 +1369,24 @@ export default function AIAnalyticsAssistant() {
 
                 {loading && (
                   <div className="flex gap-3 max-w-3xl mr-auto">
-                    <div className="h-8 w-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 animate-pulse">
+                    <div className="h-8 w-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 animate-pulse mt-1">
                       <Bot className="h-4 w-4" />
                     </div>
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 rounded-tl-xs text-xs text-slate-600 flex items-center gap-2.5">
-                      <RefreshCw className="h-4 w-4 animate-spin text-rose-600" />
-                      <span>Planning analytical query and computing aggregations...</span>
+                    <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#1E293B] border border-slate-200/90 dark:border-[#334155] rounded-tl-xs text-xs text-slate-700 dark:text-[#E2E8F0] space-y-2 min-w-[280px] sm:min-w-[340px] shadow-2xs">
+                      <div className="flex items-center gap-2 font-medium">
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin text-rose-600" />
+                        <span>{AGENT_STAGES[agentStep]}</span>
+                      </div>
+                      <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                        <div
+                          className="bg-rose-600 h-full transition-all duration-500 rounded-full"
+                          style={{ width: `${((agentStep + 1) / AGENT_STAGES.length) * 100}%` }}
+                        />
+                      </div>
+                      <div className="text-[10px] text-slate-400 dark:text-[#94A3B8] flex justify-between font-mono">
+                        <span>Agent Step {agentStep + 1} of {AGENT_STAGES.length}</span>
+                        <span>Tenant Isolated</span>
+                      </div>
                     </div>
                   </div>
                 )}

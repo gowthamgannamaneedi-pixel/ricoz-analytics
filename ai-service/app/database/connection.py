@@ -13,17 +13,14 @@ def init_connection_pool():
     global _connection_pool
     if _connection_pool is None:
         try:
+            dsn = settings.get_db_dsn()
             _connection_pool = psycopg2.pool.SimpleConnectionPool(
                 minconn=1,
                 maxconn=20,
-                host=settings.DB_HOST,
-                port=settings.DB_PORT,
-                dbname=settings.DB_NAME,
-                user=settings.DB_USER,
-                password=settings.DB_PASSWORD,
+                dsn=dsn,
                 connect_timeout=5
             )
-            logger.info("PostgreSQL connection pool initialized successfully.")
+            logger.info("PostgreSQL connection pool initialized successfully with DSN.")
         except Exception as e:
             logger.error(f"Failed to initialize PostgreSQL connection pool: {e}")
             raise
