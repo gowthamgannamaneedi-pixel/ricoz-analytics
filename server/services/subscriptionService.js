@@ -18,10 +18,14 @@ const {
 
 const SUBSCRIPTION_STATUSES = {
   TRIAL: 'trial',
+  TRIALING: 'trialing',
   TRIAL_EXPIRING: 'trial_expiring',
   TRIAL_EXPIRED: 'trial_expired',
   PAYMENT_PENDING: 'payment_pending',
+  PENDING: 'pending',
   ACTIVE: 'active',
+  PAST_DUE: 'past_due',
+  ON_HOLD: 'on_hold',
   PAYMENT_FAILED: 'payment_failed',
   CANCELLED: 'cancelled',
   EXPIRED: 'expired',
@@ -135,7 +139,12 @@ class SubscriptionService {
     const currentPeriodStart = org.current_period_start ? new Date(org.current_period_start) : null;
     const currentPeriodEnd = org.current_period_end ? new Date(org.current_period_end) : null;
 
-    let effectiveStatus = org.subscription_status || SUBSCRIPTION_STATUSES.TRIAL;
+    let rawStatus = String(org.subscription_status || 'trial').trim().toLowerCase();
+    // Normalize synonyms
+    if (rawStatus === 'trialing') rawStatus = SUBSCRIPTION_STATUSES.TRIAL;
+    if (rawStatus === 'pending') rawStatus = SUBSCRIPTION_STATUSES.PAYMENT_PENDING;
+
+    let effectiveStatus = rawStatus;
 
     // 2. Evaluate active paid vs trial state
     if (effectiveStatus === SUBSCRIPTION_STATUSES.ACTIVE) {
@@ -148,11 +157,8 @@ class SubscriptionService {
         }
       }
     } else if (
-      effectiveStatus !== SUBSCRIPTION_STATUSES.CANCELLED &&
-      effectiveStatus !== SUBSCRIPTION_STATUSES.SUSPENDED &&
-      effectiveStatus !== SUBSCRIPTION_STATUSES.PAYMENT_FAILED &&
-      effectiveStatus !== SUBSCRIPTION_STATUSES.TRIAL_EXPIRED &&
-      effectiveStatus !== SUBSCRIPTION_STATUSES.EXPIRED
+      effectiveStatus === SUBSCRIPTION_STATUSES.TRIAL ||
+      effectiveStatus === SUBSCRIPTION_STATUSES.TRIAL_EXPIRING
     ) {
       // In trial lifecycle
       if (now > trialEndsAt) {
@@ -206,11 +212,50 @@ class SubscriptionService {
     );
 
     const planConfig = getPlan(org.plan || 'starter');
-    const canAccessApp = [
-      SUBSCRIPTION_STATUSES.ACTIVE,
-      SUBSCRIPTION_STATUSES.TRIAL,
-      SUBSCRIPTION_STATUSES.TRIAL_EXPIRING
-    ].includes(effectiveStatus);
+
+    // Authoritative Mutation & Access Rights:
+    // Mutations (uploads, AI execution, creation, deletion) require active paid or active trial.
+    // Expired / past_due / payment_pending / on_hold have read-only access to preserve customer data.
+    // Suspended accounts have zero access.
+    const isPaidActive = effectiveStatus === SUBSCRIPTION_STATUSES.ACTIVE && (!currentPeriodEnd || now <= currentPeriodEnd);
+    const isTrialActive = [SUBSCRIPTION_STATUSES.TRIAL, SUBSCRIPTION_STATUSES.TRIAL_EXPIRING].includes(effectiveStatus) && (now <= trialEndsAt);
+    const canMutate = isPaidActive || isTrialActive;
+    const isSuspended = effectiveStatus === SUBSCRIPTION_STATUSES.SUSPENDED;
+    const canAccessApp = !isSuspended;
+
+    const isExpired = [
+      SUBSCRIPTION_STATUSES.TRIAL_EXPIRED,
+      SUBSCRIPTION_STATUSES.EXPIRED,
+      SUBSCRIPTION_STATUSES.PAST_DUE,
+      SUBSCRIPTION_STATUSES.PAYMENT_FAILED
+    ].includes(effectiveStatus) || (!isPaidActive && !isTrialActive);
+
+    // Global Consistent Plan & Status Display String (Priority 4)
+    const planName = planConfig.name;
+    let displayPlanStatus = `${planName} — Active`;
+    if (isPaidActive) {
+      displayPlanStatus = `${planName} — Active`;
+    } else if (isTrialActive) {
+      displayPlanStatus = `${planName} — Trial (${daysRemaining > 0 ? `${daysRemaining} days left` : 'Ends today'})`;
+    } else if (effectiveStatus === SUBSCRIPTION_STATUSES.TRIAL_EXPIRED) {
+      displayPlanStatus = `${planName} — Trial Expired`;
+    } else if (effectiveStatus === SUBSCRIPTION_STATUSES.EXPIRED) {
+      displayPlanStatus = `${planName} — Expired`;
+    } else if (effectiveStatus === SUBSCRIPTION_STATUSES.PAYMENT_PENDING) {
+      displayPlanStatus = `${planName} — Payment Pending`;
+    } else if (effectiveStatus === SUBSCRIPTION_STATUSES.PAST_DUE) {
+      displayPlanStatus = `${planName} — Past Due`;
+    } else if (effectiveStatus === SUBSCRIPTION_STATUSES.ON_HOLD) {
+      displayPlanStatus = `${planName} — On Hold`;
+    } else if (effectiveStatus === SUBSCRIPTION_STATUSES.CANCELLED) {
+      displayPlanStatus = `${planName} — Cancelled`;
+    } else if (effectiveStatus === SUBSCRIPTION_STATUSES.SUSPENDED) {
+      displayPlanStatus = `${planName} — Suspended`;
+    } else if (effectiveStatus === SUBSCRIPTION_STATUSES.PAYMENT_FAILED) {
+      displayPlanStatus = `${planName} — Payment Failed`;
+    } else {
+      displayPlanStatus = `${planName} — Expired`;
+    }
 
     // 4. Fetch actual server-side usage telemetry ONLY when needed (e.g. billing page or quota checks)
     let usage = null;
@@ -230,11 +275,16 @@ class SubscriptionService {
       subscriptionStatus: effectiveStatus,
       subscription_status: effectiveStatus,
       paymentStatus: org.payment_status || 'unpaid',
+      displayPlanStatus,
       hasWorkspaceAccess: canAccessApp,
       canAccessApp,
+      canMutate,
+      isSuspended,
+      isPaidActive,
+      isTrialActive,
       isTrial: [SUBSCRIPTION_STATUSES.TRIAL, SUBSCRIPTION_STATUSES.TRIAL_EXPIRING].includes(effectiveStatus),
-      isExpired: [SUBSCRIPTION_STATUSES.TRIAL_EXPIRED, SUBSCRIPTION_STATUSES.EXPIRED].includes(effectiveStatus),
-      isActive: effectiveStatus === SUBSCRIPTION_STATUSES.ACTIVE,
+      isExpired,
+      isActive: isPaidActive,
       isExpiringSoon,
       daysRemaining,
       hoursRemaining,
@@ -329,8 +379,8 @@ class SubscriptionService {
   }
 
   /**
-   * Check if organization has active access rights (Trial or Paid)
-   * Highly optimized: checks in-memory cache first, skips 3 count queries
+   * Check if organization has workspace read access (non-suspended)
+   * Preserves customer read-only data access for expired/trial_expired organizations.
    * @param {string} organizationId 
    * @returns {Promise<{ allowed: boolean, code?: string, message?: string, subscription?: any }>}
    */
@@ -343,33 +393,6 @@ class SubscriptionService {
       };
     }
 
-    // 1. In-memory cache hit check
-    const cached = orgSubscriptionCache.get(String(organizationId));
-    if (cached && (Date.now() - cached.cachedAt < ORG_CACHE_TTL_MS)) {
-      const sub = cached.data;
-      // Real-time expiry check: If organization is on trial and now > trialEndsAt, cache is stale!
-      if (sub.isTrial && sub.trialEndsAt && new Date() > new Date(sub.trialEndsAt)) {
-        orgSubscriptionCache.delete(String(organizationId));
-      } else {
-        if (!sub.canAccessApp) {
-          const isTrialExp = sub.status === SUBSCRIPTION_STATUSES.TRIAL_EXPIRED;
-          return {
-            allowed: false,
-            code: isTrialExp ? 'TRIAL_EXPIRED' : 'SUBSCRIPTION_REQUIRED',
-            message: isTrialExp
-              ? 'Your 14-day free trial has expired. Select a plan to continue accessing your workspace.'
-              : 'An active paid subscription is required to access workspace data.',
-            subscription: sub
-          };
-        }
-        return {
-          allowed: true,
-          subscription: sub
-        };
-      }
-    }
-
-    // 2. Fetch subscription status without running 3 usage count queries
     const sub = await this.getOrganizationSubscription(organizationId, { includeUsage: false });
     if (!sub) {
       return {
@@ -379,14 +402,64 @@ class SubscriptionService {
       };
     }
 
-    if (!sub.canAccessApp) {
-      const isTrialExp = sub.status === SUBSCRIPTION_STATUSES.TRIAL_EXPIRED;
+    if (sub.isSuspended) {
       return {
         allowed: false,
-        code: isTrialExp ? 'TRIAL_EXPIRED' : 'SUBSCRIPTION_REQUIRED',
+        code: 'ACCOUNT_SUSPENDED',
+        message: 'This workspace is suspended. Please contact support.',
+        subscription: sub
+      };
+    }
+
+    return {
+      allowed: true,
+      subscription: sub
+    };
+  }
+
+  /**
+   * Check if organization has active write / mutation rights (Active Paid or Active Trial)
+   * Strictly blocks mutations, file uploads, AI execution, and member invitations for expired/past_due/suspended/pending subscriptions.
+   * Admin and manager roles cannot bypass this check.
+   * @param {string} organizationId 
+   * @returns {Promise<{ allowed: boolean, code?: string, message?: string, subscription?: any }>}
+   */
+  async checkWriteAccess(organizationId) {
+    if (!organizationId) {
+      return {
+        allowed: false,
+        code: 'ORG_NOT_FOUND',
+        message: 'Organization not found.'
+      };
+    }
+
+    const sub = await this.getOrganizationSubscription(organizationId, { includeUsage: false });
+    if (!sub) {
+      return {
+        allowed: false,
+        code: 'ORG_NOT_FOUND',
+        message: 'Organization not found.'
+      };
+    }
+
+    if (sub.isSuspended) {
+      return {
+        allowed: false,
+        code: 'ACCOUNT_SUSPENDED',
+        message: 'This workspace is suspended. Please contact support.',
+        subscription: sub
+      };
+    }
+
+    if (!sub.canMutate) {
+      const isTrialExp = sub.status === SUBSCRIPTION_STATUSES.TRIAL_EXPIRED || (sub.isTrial && sub.isExpired);
+      const isPastDue = sub.status === SUBSCRIPTION_STATUSES.PAST_DUE || sub.status === SUBSCRIPTION_STATUSES.PAYMENT_FAILED;
+      return {
+        allowed: false,
+        code: isTrialExp ? 'TRIAL_EXPIRED' : (isPastDue ? 'PAYMENT_PAST_DUE' : 'SUBSCRIPTION_EXPIRED'),
         message: isTrialExp
-          ? 'Your 14-day free trial has expired. Select a plan to continue accessing your workspace.'
-          : 'An active paid subscription is required to access workspace data.',
+          ? 'Your 14-day free trial has expired. Upgrade your plan to restore full workspace write access, data uploads, and AI analysis.'
+          : 'An active paid subscription is required to perform this action. Upgrade or renew your subscription.',
         subscription: sub
       };
     }
@@ -445,14 +518,14 @@ class SubscriptionService {
       };
     }
 
-    if (!sub.canAccessApp) {
-      const isTrialExp = sub.status === SUBSCRIPTION_STATUSES.TRIAL_EXPIRED;
+    if (!sub.canMutate) {
+      const isTrialExp = sub.status === SUBSCRIPTION_STATUSES.TRIAL_EXPIRED || (sub.isTrial && sub.isExpired);
       return {
         allowed: false,
-        code: isTrialExp ? 'TRIAL_EXPIRED' : 'SUBSCRIPTION_REQUIRED',
+        code: isTrialExp ? 'TRIAL_EXPIRED' : 'SUBSCRIPTION_EXPIRED',
         message: isTrialExp
           ? 'Your 14-day free trial has expired. Select a plan to continue accessing your workspace.'
-          : 'An active paid subscription is required to access workspace data.',
+          : 'An active paid subscription is required to add resources.',
         subscription: sub
       };
     }

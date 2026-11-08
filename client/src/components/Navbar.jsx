@@ -377,17 +377,17 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
             title="Subscription expired — Click to choose plan"
           >
             <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
-            <span>Trial Expired</span>
+            <span>{trialCountdown.displayPlanStatus || `${planName} — Expired`}</span>
           </button>
         ) : isPaid ? (
           <button
             type="button"
             onClick={() => navigate('/billing')}
-            className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-xs font-semibold transition cursor-pointer shadow-2xs capitalize"
+            className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-xs font-semibold transition cursor-pointer shadow-2xs"
             title="Subscription active"
           >
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            <span>{planName} Plan</span>
+            <span>{trialCountdown.displayPlanStatus || `${planName} — Active`}</span>
           </button>
         ) : (
           <button
@@ -397,7 +397,7 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
             title="Active Free Trial"
           >
             <span className="h-2 w-2 rounded-full bg-blue-500" />
-            <span>Free Trial ({trialCountdown.sidebarBadgeText || `${trialDaysRemaining}d left`})</span>
+            <span>{trialCountdown.displayPlanStatus || `${planName} — Trial (${trialCountdown.sidebarBadgeText})`}</span>
           </button>
         )}
 

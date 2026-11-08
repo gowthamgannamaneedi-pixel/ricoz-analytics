@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/authMiddleware');
 const { requireRole } = require('../middleware/roleMiddleware');
+const { requireActiveSubscription } = require('../middleware/subscriptionMiddleware');
 const {
   getDashboards,
   getDashboardById,
@@ -20,24 +21,25 @@ const collaborationController = require('../controllers/collaborationController'
 // All dashboard endpoints require valid authentication
 router.use(authenticateToken);
 
-// Dashboard CRUD
+// Dashboard CRUD (Read-only endpoints accessible to all authenticated organization members)
 router.get('/', getDashboards);
 router.get('/:id', getDashboardById);
 
-router.post('/', requireRole('admin', 'manager', 'analyst'), createDashboard);
-router.post('/:id/duplicate', requireRole('admin', 'manager', 'analyst'), duplicateDashboard);
-router.put('/:id', requireRole('admin', 'manager', 'analyst'), updateDashboard);
-router.put('/:id/layout', requireRole('admin', 'manager', 'analyst'), updateLayout);
-router.delete('/:id', requireRole('admin', 'manager', 'analyst'), deleteDashboard);
+// Dashboard Mutations require active subscription
+router.post('/', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), createDashboard);
+router.post('/:id/duplicate', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), duplicateDashboard);
+router.put('/:id', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), updateDashboard);
+router.put('/:id/layout', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), updateLayout);
+router.delete('/:id', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), deleteDashboard);
 
 // Dashboard Widgets Management
-router.post('/:id/widgets', requireRole('admin', 'manager', 'analyst'), addWidget);
-router.put('/:id/widgets/:widgetId', requireRole('admin', 'manager', 'analyst'), updateWidget);
-router.delete('/:id/widgets/:widgetId', requireRole('admin', 'manager', 'analyst'), deleteWidget);
+router.post('/:id/widgets', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), addWidget);
+router.put('/:id/widgets/:widgetId', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), updateWidget);
+router.delete('/:id/widgets/:widgetId', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), deleteWidget);
 
 // Direct Dashboard Sharing Aliases
-router.post('/:id/share', requireRole('admin', 'manager', 'analyst'), collaborationController.shareDashboard);
+router.post('/:id/share', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), collaborationController.shareDashboard);
 router.get('/:id/shares', collaborationController.getDashboardShares);
-router.delete('/:id/shares/:shareId', requireRole('admin', 'manager'), collaborationController.revokeDashboardShare);
+router.delete('/:id/shares/:shareId', requireActiveSubscription, requireRole('admin', 'manager'), collaborationController.revokeDashboardShare);
 
 module.exports = router;

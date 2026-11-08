@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/authMiddleware');
 const { requireRole } = require('../middleware/roleMiddleware');
-const { requirePlanFeature } = require('../middleware/subscriptionMiddleware');
+const { requirePlanFeature, requireActiveSubscription } = require('../middleware/subscriptionMiddleware');
 const {
   getAlerts,
   getSummary,
@@ -27,9 +27,9 @@ router.use(requirePlanFeature('alerts'));
 // Read-only for all roles (Admin, Manager, Analyst, Viewer)
 router.get('/incidents/all', getAllIncidents);
 router.get('/incidents/:id/delivery', getIncidentDeliveryStatus);
-router.put('/incidents/:id/acknowledge', requireRole('admin', 'manager', 'analyst'), acknowledgeIncident);
-router.put('/incidents/:id/resolve', requireRole('admin', 'manager', 'analyst'), resolveIncident);
-router.post('/incidents/:id/retry-email', requireRole('admin', 'manager', 'analyst'), retryIncidentNotification);
+router.put('/incidents/:id/acknowledge', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), acknowledgeIncident);
+router.put('/incidents/:id/resolve', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), resolveIncident);
+router.post('/incidents/:id/retry-email', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), retryIncidentNotification);
 
 // ----------------- SUMMARY METRICS -----------------
 router.get('/summary', getSummary);
@@ -41,11 +41,11 @@ router.get('/:id', getAlertById);
 router.get('/:id/incidents', getAlertIncidents);
 
 // Mutations (Admin, Manager, Analyst)
-router.post('/', requireRole('admin', 'manager', 'analyst'), createAlert);
-router.put('/:id', requireRole('admin', 'manager', 'analyst'), updateAlert);
-router.post('/:id/test', requireRole('admin', 'manager', 'analyst'), testAlert);
+router.post('/', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), createAlert);
+router.put('/:id', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), updateAlert);
+router.post('/:id/test', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), testAlert);
 
 // Deletions (Admin, Manager only - Analyst is restricted)
-router.delete('/:id', requireRole('admin', 'manager'), deleteAlert);
+router.delete('/:id', requireActiveSubscription, requireRole('admin', 'manager'), deleteAlert);
 
 module.exports = router;

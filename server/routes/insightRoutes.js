@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/authMiddleware');
 const { requirePermission } = require('../middleware/roleMiddleware');
-const { requirePlanFeature } = require('../middleware/subscriptionMiddleware');
+const { requirePlanFeature, requireActiveSubscription } = require('../middleware/subscriptionMiddleware');
 const insightController = require('../controllers/insightController');
 
 // All insight endpoints require JWT authentication and Executive AI Insights entitlement
@@ -12,6 +12,7 @@ router.use(requirePlanFeature('insights'));
 // Executive insights generation & listing
 router.post(
   '/generate',
+  requireActiveSubscription,
   requirePermission('insights.generate'),
   insightController.generateInsights
 );
@@ -42,12 +43,14 @@ router.get(
 
 router.post(
   '/:id/dismiss',
+  requireActiveSubscription,
   requirePermission('insights.manage'),
   insightController.dismissInsight
 );
 
 router.post(
   '/:id/feedback',
+  requireActiveSubscription,
   requirePermission('insights.manage'),
   insightController.submitFeedback
 );
@@ -63,6 +66,7 @@ router.get(
 
 router.post(
   '/:id/simulate-scenario',
+  requireActiveSubscription,
   requirePermission('insights.view'),
   decisionIntelligenceController.simulateScenario
 );

@@ -19,9 +19,10 @@ async function resolveOrganizationForRequest(req) {
 }
 
 /**
- * Subscription & 14-Day Free Trial Verification Middleware
- * Guarantees that users cannot access protected workspace APIs if their 14-day trial has expired
- * without an active paid subscription.
+ * Subscription & Free Trial Verification Middleware
+ * Guarantees that users cannot perform mutations, file uploads, AI execution, or add members
+ * if their trial or paid subscription has expired.
+ * Admin and Manager roles CANNOT bypass this check.
  */
 const requireActiveSubscription = async (req, res, next) => {
   if (!req.user) {
@@ -49,17 +50,19 @@ const requireActiveSubscription = async (req, res, next) => {
   }
 
   try {
-    const access = await subscriptionService.checkWorkspaceAccess(organizationId);
+    const access = await subscriptionService.checkWriteAccess(organizationId);
 
     if (!access.allowed) {
-      return res.status(402).json({
+      const statusCode = access.code === 'ACCOUNT_SUSPENDED' ? 403 : 402;
+      return res.status(statusCode).json({
         success: false,
+        code: access.code || 'SUBSCRIPTION_EXPIRED',
         error: {
-          code: access.code,
+          code: access.code || 'SUBSCRIPTION_EXPIRED',
           message: access.message
         },
         message: access.message,
-        requiresSubscription: true,
+        requiresSubscription: statusCode === 402,
         subscription: access.subscription,
         trialDetails: access.subscription
       });
@@ -78,7 +81,8 @@ const requireActiveSubscription = async (req, res, next) => {
  * Plan Feature Entitlement Middleware
  * Enforces tier restrictions (e.g. Starter cannot access Executive Insights or Anomaly Alerts;
  * Growth cannot access Custom AI Query Planner; Enterprise can access all features).
- * Returns HTTP 403 with upgrade guidance.
+ * Mutations additionally require an active subscription.
+ * Returns HTTP 403 with upgrade guidance for tier limits; HTTP 402 for expired subscriptions.
  * 
  * @param {'insights'|'alerts'|'aiQueryPlanner'|'reports'|'automatedReports'} featureKey 
  */
@@ -102,6 +106,26 @@ const requirePlanFeature = (featureKey) => {
     }
 
     try {
+      // 1. If this is a mutation request (POST, PUT, DELETE, PATCH), verify active subscription first
+      if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+        const writeCheck = await subscriptionService.checkWriteAccess(organizationId);
+        if (!writeCheck.allowed) {
+          const statusCode = writeCheck.code === 'ACCOUNT_SUSPENDED' ? 403 : 402;
+          return res.status(statusCode).json({
+            success: false,
+            code: writeCheck.code || 'SUBSCRIPTION_EXPIRED',
+            error: {
+              code: writeCheck.code || 'SUBSCRIPTION_EXPIRED',
+              message: writeCheck.message
+            },
+            message: writeCheck.message,
+            requiresSubscription: statusCode === 402,
+            subscription: writeCheck.subscription
+          });
+        }
+      }
+
+      // 2. Verify tier entitlement for this feature
       const check = await subscriptionService.checkFeatureEntitlement(organizationId, featureKey);
 
       if (!check.allowed) {
@@ -161,14 +185,18 @@ const requireUsageLimit = (resourceType) => {
       const check = await subscriptionService.checkUsageLimit(organizationId, resourceType);
 
       if (!check.allowed) {
-        return res.status(403).json({
+        const isExpired = check.code === 'TRIAL_EXPIRED' || check.code === 'SUBSCRIPTION_EXPIRED';
+        const statusCode = isExpired ? 402 : 403;
+        return res.status(statusCode).json({
           success: false,
+          code: check.code,
           error: {
             code: check.code,
             message: check.message
           },
           message: check.message,
-          requiresUpgrade: true,
+          requiresUpgrade: !isExpired,
+          requiresSubscription: isExpired,
           limit: check.limit,
           currentCount: check.currentCount,
           upgradeGuidance: check.upgradeGuidance,

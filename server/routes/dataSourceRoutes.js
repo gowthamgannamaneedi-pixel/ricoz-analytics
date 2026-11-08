@@ -35,6 +35,6 @@ router.post('/upload', requireActiveSubscription, requireUsageLimit('datasets'),
 router.get('/:id', getDataSourceById);
 router.put('/:id', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), updateDataSource);
 router.post('/:id/sync', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), syncDataSource);
-router.delete('/:id', deleteDataSource);
+router.delete('/:id', requireActiveSubscription, requireRole('admin', 'manager'), deleteDataSource);
 
 module.exports = router;

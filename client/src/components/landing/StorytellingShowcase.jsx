@@ -37,6 +37,8 @@ gsap.registerPlugin(ScrollTrigger);
 export default function StorytellingShowcase({ onOpenDemo }) {
   const containerRef = useRef(null);
   const pinSectionRef = useRef(null);
+  const isManualNavRef = useRef(false);
+  const scrollTimeoutRef = useRef(null);
   const [activeStep, setActiveStep] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -132,6 +134,7 @@ export default function StorytellingShowcase({ onOpenDemo }) {
         pin: pinSection,
         scrub: 0.6,
         onUpdate: (self) => {
+          if (isManualNavRef.current) return;
           setScrollProgress(self.progress);
           const rawIdx = Math.floor(self.progress * steps.length);
           const clampedIdx = Math.min(rawIdx, steps.length - 1);
@@ -140,18 +143,33 @@ export default function StorytellingShowcase({ onOpenDemo }) {
       });
     });
 
-    return () => mm.revert();
+    return () => {
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+      mm.revert();
+    };
   }, [steps.length]);
 
   const handleStepClick = (idx) => {
+    // 1. Immediately switch the active step and progress indicator directly without sequential replay
     setActiveStep(idx);
+    setScrollProgress(idx / (steps.length - 1));
+
+    // 2. Suppress ScrollTrigger onUpdate scrub during programmatic scroll repositioning
+    isManualNavRef.current = true;
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+
     const isMobile = window.innerWidth < 1024;
     if (!isMobile && containerRef.current) {
       const containerTop = containerRef.current.offsetTop;
       const containerHeight = containerRef.current.offsetHeight;
       const targetScroll = containerTop + (idx / (steps.length - 1)) * (containerHeight - window.innerHeight);
-      window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+      window.scrollTo({ top: targetScroll, behavior: 'auto' });
     }
+
+    // Release lock once scroll position is settled
+    scrollTimeoutRef.current = setTimeout(() => {
+      isManualNavRef.current = false;
+    }, 200);
   };
 
   return (

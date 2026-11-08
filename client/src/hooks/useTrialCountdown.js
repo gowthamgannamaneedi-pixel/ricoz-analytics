@@ -49,7 +49,8 @@ export function useTrialCountdown(subscription) {
   }, []);
 
   return useMemo(() => {
-    const planName = subscription?.planDetails?.name || subscription?.planName || subscription?.plan || 'Enterprise';
+    const rawPlan = subscription?.planDetails?.name || subscription?.planName || subscription?.plan || 'Enterprise';
+    const planName = rawPlan.charAt(0).toUpperCase() + rawPlan.slice(1).toLowerCase();
 
     if (!subscription) {
       return {
@@ -63,6 +64,7 @@ export function useTrialCountdown(subscription) {
         endDateFormatted: null,
         trialStatusText: 'Loading status...',
         sidebarBadgeText: '...',
+        displayPlanStatus: `${planName} — Loading`,
         progressPercent: 0,
         hasValidDates: false,
         planName,
@@ -89,6 +91,7 @@ export function useTrialCountdown(subscription) {
           endDateFormatted: endD.toLocaleDateString(),
           trialStatusText: 'Subscription Expired',
           sidebarBadgeText: 'Expired',
+          displayPlanStatus: subscription?.displayPlanStatus || `${planName} — Expired`,
           progressPercent: 100,
           hasValidDates: true,
           planName,
@@ -112,6 +115,7 @@ export function useTrialCountdown(subscription) {
         endDateFormatted: hasEndTimestamp ? endD.toLocaleDateString() : null,
         trialStatusText: isExpiringSoon ? `Renewal Approaching (${daysRemaining}d left)` : 'Paid Plan Active',
         sidebarBadgeText: isExpiringSoon ? `${daysRemaining}d left` : 'Active',
+        displayPlanStatus: subscription?.displayPlanStatus || `${planName} — Active`,
         progressPercent: 100,
         hasValidDates: hasEndTimestamp,
         planName,
@@ -134,19 +138,39 @@ export function useTrialCountdown(subscription) {
 
     let trialStatusText = 'Trial Active';
     let sidebarBadgeText = `${daysRemaining}d left`;
+    let displayPlanStatus = subscription?.displayPlanStatus || `${planName} — Active`;
 
-    if (isTrialExpired) {
+    if (rawStatus === 'pending' || rawStatus === 'payment_pending') {
+      displayPlanStatus = `${planName} — Payment Pending`;
+      sidebarBadgeText = 'Payment Pending';
+    } else if (rawStatus === 'past_due') {
+      displayPlanStatus = `${planName} — Past Due`;
+      sidebarBadgeText = 'Past Due';
+    } else if (rawStatus === 'on_hold') {
+      displayPlanStatus = `${planName} — On Hold`;
+      sidebarBadgeText = 'On Hold';
+    } else if (rawStatus === 'suspended') {
+      displayPlanStatus = `${planName} — Suspended`;
+      sidebarBadgeText = 'Suspended';
+    } else if (rawStatus === 'payment_failed') {
+      displayPlanStatus = `${planName} — Payment Failed`;
+      sidebarBadgeText = 'Payment Failed';
+    } else if (isTrialExpired) {
       trialStatusText = 'Trial Expired';
-      sidebarBadgeText = 'Expired';
+      sidebarBadgeText = 'Trial Expired';
+      displayPlanStatus = subscription?.displayPlanStatus || `${planName} — Trial Expired`;
     } else if (daysRemaining === 0 || hoursRemaining <= 24) {
       trialStatusText = 'Trial ends today';
       sidebarBadgeText = 'Ends today';
+      displayPlanStatus = `${planName} — Trial (Ends today)`;
     } else if (daysRemaining === 1) {
       trialStatusText = 'Trial Active — 1 day remaining';
       sidebarBadgeText = '1d left';
+      displayPlanStatus = `${planName} — Trial (1 day left)`;
     } else {
       trialStatusText = `Trial Active — ${daysRemaining} days remaining`;
       sidebarBadgeText = `${daysRemaining}d left`;
+      displayPlanStatus = `${planName} — Trial (${daysRemaining} days left)`;
     }
 
     const startDateFormatted = startTimestamp && !isNaN(startTimestamp)
@@ -171,10 +195,11 @@ export function useTrialCountdown(subscription) {
       endDateFormatted,
       trialStatusText,
       sidebarBadgeText,
+      displayPlanStatus,
       progressPercent,
       hasValidDates: hasValidEnd,
       planName,
-      status: isTrialExpired ? 'trial_expired' : 'trial'
+      status: isTrialExpired ? 'trial_expired' : (rawStatus || 'trial')
     };
   }, [subscription, rawStartDate, rawEndDate, rawStatus, isLikelyPaid, now]);
 }

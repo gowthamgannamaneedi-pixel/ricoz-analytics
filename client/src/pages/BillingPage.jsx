@@ -56,10 +56,11 @@ const DEFAULT_LAUNCH_PLANS = [
     regularPriceMonthly: 999,
     priceMonthly: 699,
     discountPercentMonthly: 30,
-    regularPriceYearly: 11988,
-    priceYearly: 6999,
-    priceAnnual: 6999,
-    discountPercentYearly: 42,
+    regularPriceYearly: 8388,
+    priceYearly: 4697,
+    priceAnnual: 4697,
+    annualSavings: 3691,
+    discountPercentYearly: 44,
     currency: 'inr',
     currencySymbol: '₹',
     priceSuffix: '',
@@ -77,9 +78,10 @@ const DEFAULT_LAUNCH_PLANS = [
     regularPriceMonthly: 2999,
     priceMonthly: 1999,
     discountPercentMonthly: 33,
-    regularPriceYearly: 35988,
-    priceYearly: 19999,
-    priceAnnual: 19999,
+    regularPriceYearly: 23988,
+    priceYearly: 13433,
+    priceAnnual: 13433,
+    annualSavings: 10555,
     discountPercentYearly: 44,
     currency: 'inr',
     currencySymbol: '₹',
@@ -98,10 +100,11 @@ const DEFAULT_LAUNCH_PLANS = [
     regularPriceMonthly: 9999,
     priceMonthly: 6999,
     discountPercentMonthly: 30,
-    regularPriceYearly: 119988,
-    priceYearly: 69999,
-    priceAnnual: 69999,
-    discountPercentYearly: 42,
+    regularPriceYearly: 83988,
+    priceYearly: 47033,
+    priceAnnual: 47033,
+    annualSavings: 36955,
+    discountPercentYearly: 44,
     currency: 'inr',
     currencySymbol: '₹',
     priceSuffix: ' onwards',
@@ -798,13 +801,13 @@ export default function BillingPage() {
           // Prices
           const isYearly = billingInterval === 'yearly';
           const launchPrice = isYearly ? (p.priceAnnual || p.priceYearly) : p.priceMonthly;
-          const regularPrice = isYearly ? (p.regularPriceYearly || (p.regularPriceMonthly * 12)) : p.regularPriceMonthly;
-          const discountPct = isYearly ? (p.discountPercentYearly || 42) : p.discountPercentMonthly;
+          const regularPrice = isYearly ? (p.regularPriceYearly || (p.priceMonthly * 12)) : p.regularPriceMonthly;
+          const discountPct = isYearly ? (p.discountPercentYearly || 44) : p.discountPercentMonthly;
           const priceSuffix = p.priceSuffix || '';
 
           // Monthly equivalent & annual savings
           const monthlyEquivalent = isYearly ? Math.round(launchPrice / 12) : launchPrice;
-          const annualSavings = isYearly ? Math.max(0, regularPrice - launchPrice) : 0;
+          const annualSavings = isYearly ? (p.annualSavings || Math.max(0, regularPrice - launchPrice)) : 0;
 
           const currentPlanId = currentSub?.plan || 'starter';
           const planComparison = comparePlanIds(p.id, currentPlanId);
