@@ -333,18 +333,9 @@ class ReportService {
       }
     }
 
-    // Fallback sample rows if none found
+    // If no records found, keep empty array without injecting fabricated data
     if (sampleRows.length === 0) {
-      sampleRows = [
-        { Region: 'North India', Segment: 'Enterprise', UnitsSold: 450, Revenue: 1125000, ProfitMargin: 24.5, Quarter: 'Q4 2025' },
-        { Region: 'South India', Segment: 'Mid-Market', UnitsSold: 380, Revenue: 760000, ProfitMargin: 21.0, Quarter: 'Q4 2025' },
-        { Region: 'West India', Segment: 'Enterprise', UnitsSold: 290, Revenue: 870000, ProfitMargin: 28.2, Quarter: 'Q4 2025' },
-        { Region: 'East India', Segment: 'SMB', UnitsSold: 510, Revenue: 510000, ProfitMargin: 18.4, Quarter: 'Q4 2025' },
-        { Region: 'Central India', Segment: 'Government', UnitsSold: 120, Revenue: 480000, ProfitMargin: 31.0, Quarter: 'Q4 2025' }
-      ];
-      if (datasetSchema.length === 0) {
-        datasetSchema = Object.keys(sampleRows[0]).map(k => ({ name: k, type: typeof sampleRows[0][k] === 'number' ? 'number' : 'text' }));
-      }
+      sampleRows = [];
     }
 
     // Mathematical reconciliation: Ensure Total Revenue KPI matches row total strictly

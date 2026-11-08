@@ -104,15 +104,15 @@ async function runAcceptanceTests() {
 
   try {
     // -------------------------------------------------------------
-    // PART 1: PRICING CONFIGURATION & MATHEMATICAL 44% DISCOUNT MATH
+    // PART 1: PRICING CONFIGURATION & MATHEMATICAL 20% DISCOUNT MATH
     // -------------------------------------------------------------
     console.log('\n--- PART 1: PRICING MATHEMATICAL DISCOUNT VERIFICATION ---');
 
     const tiers = ['starter', 'growth', 'enterprise'];
     const expectedMath = {
-      starter: { monthly: 699, annual: 4697, savings: 3691, discount: 44 },
-      growth: { monthly: 1999, annual: 13433, savings: 10555, discount: 44 },
-      enterprise: { monthly: 6999, annual: 47033, savings: 36955, discount: 44 }
+      starter: { monthly: 699, annual: 6710, savings: 1678, discount: 20 },
+      growth: { monthly: 1999, annual: 19190, savings: 4798, discount: 20 },
+      enterprise: { monthly: 6999, annual: 67190, savings: 16798, discount: 20 }
     };
 
     for (const tierKey of tiers) {
@@ -128,8 +128,8 @@ async function runAcceptanceTests() {
       const computedDiscount = Math.round((computedSavings / fullAnnualMonthly) * 100);
 
       assert(computedSavings === exp.savings, `${plan.name} annual savings is exactly ₹${exp.savings}`);
-      assert(computedDiscount === 44, `${plan.name} annual discount evaluates to exactly 44% (got ${computedDiscount}%)`);
-      assert(plan.discountPercentYearly === 44, `${plan.name} discountPercentYearly config is 44%`);
+      assert(computedDiscount === 20, `${plan.name} annual discount evaluates to exactly 20% (got ${computedDiscount}%)`);
+      assert(plan.discountPercentYearly === 20, `${plan.name} discountPercentYearly config is 20%`);
     }
 
     // Verify GET /api/billing/plans API endpoint returns authoritative plans
@@ -137,8 +137,8 @@ async function runAcceptanceTests() {
     assert(plansRes.status === 200, 'GET /api/billing/plans returns HTTP 200');
     const returnedPlans = plansRes.body.plans || [];
     const returnedGrowth = returnedPlans.find(p => p.id === 'growth');
-    assert(returnedGrowth && returnedGrowth.priceYearly === 13433, 'API returns Growth annual price as ₹13,433');
-    assert(returnedGrowth && returnedGrowth.discountPercentYearly === 44, 'API returns Growth annual discount as 44%');
+    assert(returnedGrowth && returnedGrowth.priceYearly === 19190, 'API returns Growth annual price as ₹19,190');
+    assert(returnedGrowth && returnedGrowth.discountPercentYearly === 20, 'API returns Growth annual discount as 20%');
 
     // -------------------------------------------------------------
     // PART 2: TEST TENANT PROVISIONING ACROSS ALL SUBSCRIPTION STATES

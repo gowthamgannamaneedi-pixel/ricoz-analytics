@@ -960,6 +960,15 @@ ${comparison}
             b.percentage ? `${b.percentage}%` : '—'
           ])
         };
+      } else if (data.comparison_type === 'month_over_month' && Array.isArray(data.chartData)) {
+        tableData = {
+          headers: ['Period', 'Metric Value', 'Records Evaluated'],
+          rows: data.chartData.map(c => [
+            c.period,
+            fmt(c.value),
+            String(c.records || 0)
+          ])
+        };
       }
     }
 

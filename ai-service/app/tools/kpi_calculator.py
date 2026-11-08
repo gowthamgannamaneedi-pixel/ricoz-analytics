@@ -30,19 +30,58 @@ class KPICalculatorTool(BaseTool):
         col_names = [col.get("name").lower() for col in schema if isinstance(col, dict) and col.get("name")]
 
         # Match relevant metric column
-        if "revenue" in clean_kpi or "sales" in clean_kpi:
-            metric_col = next((c for c in col_names if c in ["revenue", "sales", "total_amount", "amount", "order_value"]), "revenue")
+        if "aov" in clean_kpi or "average order" in clean_kpi or "avg order" in clean_kpi:
+            metric_col = next(
+                (c for c in col_names if any(m in c for m in ["sales_amount", "revenue", "sales", "total_amount", "amount", "order_value"])),
+                "sales_amount" if "sales_amount" in col_names else "revenue"
+            )
+            rev_res = self.executor.execute(organization_id, dataset_id, metric_column=metric_col, aggregation="SUM")
+            cnt_res = self.executor.execute(organization_id, dataset_id, metric_column="*", aggregation="COUNT")
+            tot_sales = float(rev_res.get("value", 0.0))
+            tot_cnt = int(cnt_res.get("value", 0))
+            aov_val = round((tot_sales / tot_cnt), 2) if tot_cnt > 0 else 0.0
+            return {
+                "success": True,
+                "dataset_id": dataset_id,
+                "dataset_name": ds_name,
+                "kpi": "AVERAGE ORDER VALUE (AOV)",
+                "value": aov_val,
+                "total_sales": tot_sales,
+                "total_orders": tot_cnt,
+                "unit": "₹",
+                "formula": f"SUM({metric_col}) / COUNT(*)",
+                "provenance": {
+                    "dataset_id": dataset_id,
+                    "dataset_name": ds_name,
+                    "row_count": ds["row_count"],
+                    "columns": [metric_col]
+                }
+            }
+        elif "revenue" in clean_kpi or "sales" in clean_kpi:
+            metric_col = next(
+                (c for c in col_names if any(m in c for m in ["sales_amount", "revenue", "sales", "total_amount", "amount", "order_value"])),
+                "sales_amount" if "sales_amount" in col_names else "revenue"
+            )
             formula = f"SUM({metric_col})"
             result = self.executor.execute(organization_id, dataset_id, metric_column=metric_col, aggregation="SUM")
             unit = "₹"
         elif "unit" in clean_kpi or "quantity" in clean_kpi or "volume" in clean_kpi:
-            metric_col = next((c for c in col_names if c in ["units", "quantity", "volume", "order_count"]), "units")
+            metric_col = next(
+                (c for c in col_names if any(m in c for m in ["units_sold", "units", "quantity", "volume", "order_count"])),
+                "units_sold" if "units_sold" in col_names else "units"
+            )
             formula = f"SUM({metric_col})"
             result = self.executor.execute(organization_id, dataset_id, metric_column=metric_col, aggregation="SUM")
             unit = ""
         elif "margin" in clean_kpi or "profit" in clean_kpi:
-            rev_col = next((c for c in col_names if c in ["revenue", "sales", "amount"]), "revenue")
-            cost_col = next((c for c in col_names if c in ["cost", "cogs", "expenses", "expense"]), None)
+            rev_col = next(
+                (c for c in col_names if any(m in c for m in ["sales_amount", "revenue", "sales", "amount"])),
+                "sales_amount" if "sales_amount" in col_names else "revenue"
+            )
+            cost_col = next(
+                (c for c in col_names if any(m in c for m in ["cost", "cogs", "expenses", "expense"])),
+                None
+            )
             if cost_col:
                 rev_res = self.executor.execute(organization_id, dataset_id, metric_column=rev_col, aggregation="SUM")
                 cost_res = self.executor.execute(organization_id, dataset_id, metric_column=cost_col, aggregation="SUM")

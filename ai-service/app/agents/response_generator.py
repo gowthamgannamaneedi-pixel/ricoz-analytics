@@ -150,3 +150,70 @@ class ResponseGenerator:
             f"#### Recommendation:\n"
             f"To enable complete margin modeling, customer retention tracking, and regional cohort analysis, consider uploading a supplementary dataset or joining with your CRM/Billing tables."
         )
+
+    @classmethod
+    def generate_month_over_month_response(
+        cls,
+        dataset_name: str,
+        dataset_id: int,
+        row_count: int,
+        result: Dict[str, Any]
+    ) -> str:
+        cur = result["current_period"]
+        prev = result["previous_period"]
+        metric_col = result["metric_column"]
+        date_col = result["date_column"]
+        unit = "₹" if any(w in metric_col.lower() for w in ["sales", "rev", "profit", "amount"]) else ""
+
+        cur_total = cur["total"]
+        cur_count = cur["record_count"]
+        prev_total = prev["total"]
+        prev_count = prev["record_count"]
+        abs_diff = result["absolute_difference"]
+        pct_change = result["percentage_change"]
+
+        has_hist = result.get("has_historical_comparison")
+        hist = result.get("historical_data")
+
+        sign = "+" if abs_diff > 0 else ""
+
+        lines = [
+            f"### Month-over-Month Performance Comparison",
+            f"",
+            f"Grounded analysis for **{metric_col}** using date column **`{date_col}`** across **{row_count:,} records** in `{dataset_name}` (ID: {dataset_id}):",
+            f"",
+            f"#### Calendar Month-to-Date Performance",
+            f"• **Current Period ({cur['label']}):** **{unit}{cur_total:,.2f}** ({cur_count:,} records)",
+            f"• **Previous Period ({prev['label']}):** **{unit}{prev_total:,.2f}** ({prev_count:,} records)",
+            f"• **Absolute Difference:** **{sign}{unit}{abs_diff:,.2f}**",
+            f"• **Percentage Change:** **{sign}{pct_change:.1f}%**",
+            f"• **Calculation Formula:** `((Current Total - Previous Total) / Previous Total) * 100`"
+        ]
+
+        if cur_count == 0 and prev_count == 0:
+            lines.append("")
+            lines.append(f"> ℹ️ **Notice:** There are no records in either current period ({cur['label']}) or previous period ({prev['label']}) in `{dataset_name}`.")
+            bounds = result.get("dataset_date_range", {})
+            if bounds.get("min_date") and bounds.get("max_date"):
+                lines.append(f"> Dataset records span from **{bounds['min_date']}** to **{bounds['max_date']}**.")
+
+            if has_hist and hist:
+                h_sign = "+" if hist["absolute_difference"] > 0 else ""
+                lines.append("")
+                lines.append("#### Most Recent Recorded Months in Dataset")
+                lines.append(f"• **Latest Recorded Month ({hist['latest_month']}):** **{unit}{hist['latest_total']:,.2f}** ({hist['latest_count']:,} records)")
+                lines.append(f"• **Prior Recorded Month ({hist['prior_month']}):** **{unit}{hist['prior_total']:,.2f}** ({hist['prior_count']:,} records)")
+                lines.append(f"• **Recorded Variance:** **{h_sign}{unit}{hist['absolute_difference']:,.2f}** (**{h_sign}{hist['percentage_change']:.1f}%**)")
+
+        lines.append("")
+        lines.append(f"---\n*Analysis grounded strictly in verified dataset records. No regional comparison substituted for temporal comparison.*")
+
+        return "\n".join(lines)
+
+    @classmethod
+    def generate_no_date_column_response(cls, dataset_name: str, dataset_id: int) -> str:
+        return (
+            f"I cannot compare this month's performance with last month's because the selected dataset "
+            f"`{dataset_name}` does not contain a usable date column.\n\n"
+            f"To enable month-over-month comparisons, please ensure your dataset includes a date or timestamp column (e.g. `date`, `order_date`, or `created_at`)."
+        )

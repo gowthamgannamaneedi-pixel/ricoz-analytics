@@ -14,6 +14,16 @@ export default defineConfig({
       }
     }
   },
+  preview: {
+    port: 4174,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
+  },
   build: {
     chunkSizeWarningLimit: 600,
     rollupOptions: {

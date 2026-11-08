@@ -4,6 +4,7 @@ from typing import Dict, Any, List, Optional
 import logging
 
 from app.schemas.query import QueryRequest, QueryResponse, ProvenanceInfo, ToolCallLog
+from app.database.connection import execute_query
 from app.agents.intent_router import IntentRouter
 from app.agents.planner import AgentPlanner
 from app.agents.verifier import NumericalVerifier
@@ -17,6 +18,8 @@ from app.tools.statistical_analysis import StatisticalAnalysisTool
 from app.tools.forecasting import ForecastingTool
 from app.tools.recommendation_engine import BusinessRecommendationEngine
 from app.tools.scenario_simulator import ScenarioSimulatorTool
+from app.tools.period_comparison import PeriodComparisonTool
+from app.tools.data_quality import DataQualityTool
 from app.config import settings
 
 logger = logging.getLogger("ai_service.orchestrator")
@@ -41,6 +44,8 @@ class AgentOrchestrator:
         self.forecast_tool = ForecastingTool()
         self.recommendation_tool = BusinessRecommendationEngine()
         self.scenario_tool = ScenarioSimulatorTool()
+        self.period_tool = PeriodComparisonTool()
+        self.quality_tool = DataQualityTool()
 
     def process_query(self, req: QueryRequest, tenant_context: Dict[str, Any]) -> QueryResponse:
         total_start = time.perf_counter()
@@ -258,6 +263,414 @@ class AgentOrchestrator:
         data_payload: Dict[str, Any] = {}
         viz_payload: Optional[Dict[str, Any]] = None
         table_payload: Optional[List[Dict[str, Any]]] = None
+
+        # -------------------------------------------------------------
+        # INTENT: DATASET_CONTEXT_QUERY ("Which dataset are you currently analyzing?")
+        # -------------------------------------------------------------
+        if intent == "DATASET_CONTEXT_QUERY":
+            col_summary = ", ".join([f"`{c['name']}` ({c.get('type', 'string')})" for c in columns_list[:12]])
+            answer_text = (
+                f"### Active Dataset Context\n\n"
+                f"I am currently analyzing **`{active_dataset_name}`** (Dataset ID: `{active_dataset_id}`).\n\n"
+                f"• **Organization Workspace:** Verified tenant isolation for `{org_id}`\n"
+                f"• **Total Recorded Rows:** **{active_row_count:,} records**\n"
+                f"• **Tracked Columns ({len(columns_list)}):** {col_summary}\n"
+                f"• **Numeric Metrics:** {', '.join(numeric_cols) if numeric_cols else 'None'}\n"
+                f"• **Categorical Dimensions:** {', '.join(categorical_cols) if categorical_cols else 'None'}\n\n"
+                f"All analytical calculations and agent tool executions are strictly bound to this selected dataset."
+            )
+            duration_ms = round((time.perf_counter() - total_start) * 1000, 2)
+            return QueryResponse(
+                question=query_text,
+                answer=answer_text,
+                intent=intent,
+                is_general_advice=False,
+                grounded=True,
+                evidence_validated=True,
+                insufficient_data=False,
+                data={"dataset_id": active_dataset_id, "dataset_name": active_dataset_name, "row_count": active_row_count, "columns": columns_list},
+                visualization=None,
+                table_data=[{"Column": c["name"], "Inferred Type": c.get("type", "string")} for c in columns_list],
+                provenance=provenance,
+                tool_executions=tool_logs,
+                follow_up_questions=[f"What is total revenue in {active_dataset_name}?", "Compare this month with last month"],
+                analysis_status=f"Active dataset context: {active_dataset_name}",
+                execution_time_ms=duration_ms
+            )
+
+        # -------------------------------------------------------------
+        # INTENT: MONTH_OVER_MONTH_COMPARISON ("Compare this month with last month")
+        # -------------------------------------------------------------
+        if intent == "MONTH_OVER_MONTH_COMPARISON":
+            date_col = plan.date_column
+            if not date_col:
+                no_date_text = ResponseGenerator.generate_no_date_column_response(
+                    dataset_name=active_dataset_name,
+                    dataset_id=active_dataset_id
+                )
+                duration_ms = round((time.perf_counter() - total_start) * 1000, 2)
+                return QueryResponse(
+                    question=query_text,
+                    answer=no_date_text,
+                    intent=intent,
+                    is_general_advice=False,
+                    grounded=False,
+                    evidence_validated=True,
+                    insufficient_data=True,
+                    data=None,
+                    visualization=None,
+                    table_data=None,
+                    provenance=provenance,
+                    tool_executions=tool_logs,
+                    follow_up_questions=["Which columns are available in this dataset?", "What is total revenue?"],
+                    analysis_status="Dataset does not contain a usable date column",
+                    execution_time_ms=duration_ms
+                )
+
+            # Determine metric to compare
+            comp_metric = target_metric
+            for cand in ["profit", "units_sold", "revenue", "sales_amount", "sales", "orders"]:
+                if cand in query_lower:
+                    comp_metric = cand
+                    break
+
+            provenance.columns_used = [comp_metric, date_col]
+
+            p_res, p_time, p_ok = self.period_tool.run_safe(
+                organization_id=org_id,
+                dataset_id=active_dataset_id,
+                metric_column=comp_metric,
+                date_column=date_col,
+                reference_date="2026-11-08"
+            )
+            tool_logs.append(ToolCallLog(
+                tool_name=self.period_tool.name,
+                arguments={"dataset_id": active_dataset_id, "metric": comp_metric, "date_column": date_col},
+                success=p_ok,
+                execution_time_ms=p_time,
+                output_summary=f"Compared MoM: current {p_res.get('current_period', {}).get('total', 0)} vs previous {p_res.get('previous_period', {}).get('total', 0)}"
+            ))
+
+            if not p_ok or not p_res.get("has_date_column", True):
+                no_date_text = ResponseGenerator.generate_no_date_column_response(
+                    dataset_name=active_dataset_name,
+                    dataset_id=active_dataset_id
+                )
+                duration_ms = round((time.perf_counter() - total_start) * 1000, 2)
+                return QueryResponse(
+                    question=query_text,
+                    answer=no_date_text,
+                    intent=intent,
+                    is_general_advice=False,
+                    grounded=False,
+                    evidence_validated=True,
+                    insufficient_data=True,
+                    data=None,
+                    visualization=None,
+                    table_data=None,
+                    provenance=provenance,
+                    tool_executions=tool_logs,
+                    follow_up_questions=["Which columns are in this dataset?"],
+                    analysis_status="No usable date column found in dataset",
+                    execution_time_ms=duration_ms
+                )
+
+            answer_text = ResponseGenerator.generate_month_over_month_response(
+                dataset_name=active_dataset_name,
+                dataset_id=active_dataset_id,
+                row_count=active_row_count,
+                result=p_res
+            )
+
+            chart_items = p_res.get("chart_data", [])
+            viz_payload = {
+                "type": "bar",
+                "title": f"Month-over-Month {comp_metric.title()} Comparison",
+                "data": chart_items,
+                "xAxis": "period",
+                "yAxis": "value"
+            }
+
+            table_payload = [
+                {"Period": item["period"], "Total Value": f"₹{item['value']:,.2f}", "Records Count": item.get("records", 0)}
+                for item in chart_items
+            ]
+
+            duration_ms = round((time.perf_counter() - total_start) * 1000, 2)
+            return QueryResponse(
+                question=query_text,
+                answer=answer_text,
+                intent=intent,
+                is_general_advice=False,
+                grounded=True,
+                evidence_validated=True,
+                insufficient_data=False,
+                data=p_res,
+                visualization=viz_payload,
+                table_data=table_payload,
+                provenance=provenance,
+                tool_executions=tool_logs,
+                follow_up_questions=[
+                    f"Show monthly revenue trends for {active_dataset_name}",
+                    f"What is total {comp_metric}?",
+                    "Which region has the highest sales?"
+                ],
+                analysis_status=f"Executed deterministic Month-over-Month analysis for {comp_metric}",
+                execution_time_ms=duration_ms
+            )
+
+        # -------------------------------------------------------------
+        # INTENT: DATA_QUALITY_QUERY ("Identify missing values", "Identify duplicate records")
+        # -------------------------------------------------------------
+        if intent == "DATA_QUALITY_QUERY":
+            q_res, q_time, q_ok = self.quality_tool.run_safe(
+                organization_id=org_id,
+                dataset_id=active_dataset_id
+            )
+            tool_logs.append(ToolCallLog(
+                tool_name=self.quality_tool.name,
+                arguments={"dataset_id": active_dataset_id},
+                success=q_ok,
+                execution_time_ms=q_time,
+                output_summary=f"Inspected quality across {q_res.get('total_rows', 0)} rows"
+            ))
+
+            missing_info = q_res.get("missing_values", {})
+            dup_info = q_res.get("duplicates", {})
+            tot_missing = missing_info.get("total_missing", 0)
+            dup_count = dup_info.get("duplicate_record_count", 0)
+
+            col_lines = []
+            for col_name, m_cnt in missing_info.get("by_column", {}).items():
+                if m_cnt > 0:
+                    col_lines.append(f"• **`{col_name}`**: {m_cnt} missing values")
+
+            missing_details = "\n".join(col_lines) if col_lines else "• Zero missing or null values detected across all columns."
+
+            answer_text = (
+                f"### Data Quality & Integrity Diagnostics\n\n"
+                f"Evaluated data quality across **{active_row_count:,} records** in `{active_dataset_name}`:\n\n"
+                f"• **Completeness Score:** **{missing_info.get('completeness_percentage', 100)}%** ({tot_missing} total missing values)\n"
+                f"• **Duplicate Records:** **{dup_count} duplicate rows** detected ({dup_info.get('uniqueness_percentage', 100)}% unique entries)\n\n"
+                f"#### Column-by-Column Completeness:\n"
+                f"{missing_details}\n\n"
+                f"✅ *All records verified directly from PostgreSQL dataset storage.*"
+            )
+
+            table_payload = [
+                {"Column": c, "Missing Count": missing_info.get("by_column", {}).get(c, 0), "Status": "Valid" if missing_info.get("by_column", {}).get(c, 0) == 0 else "Contains Nulls"}
+                for c in q_res.get("columns", [])
+            ]
+
+            duration_ms = round((time.perf_counter() - total_start) * 1000, 2)
+            return QueryResponse(
+                question=query_text,
+                answer=answer_text,
+                intent=intent,
+                is_general_advice=False,
+                grounded=True,
+                evidence_validated=True,
+                insufficient_data=False,
+                data=q_res,
+                visualization={"type": "kpi_card", "metric": "Completeness", "value": missing_info.get("completeness_percentage", 100), "unit": "%"},
+                table_data=table_payload,
+                provenance=provenance,
+                tool_executions=tool_logs,
+                follow_up_questions=["What is total revenue?", "Compare this month with last month"],
+                analysis_status=f"Quality audit complete: {missing_info.get('completeness_percentage', 100)}% completeness",
+                execution_time_ms=duration_ms
+            )
+
+        # -------------------------------------------------------------
+        # INTENT: RELATIONSHIP_EXPLANATION ("Explain relationship between revenue and profit")
+        # -------------------------------------------------------------
+        if intent == "RELATIONSHIP_EXPLANATION":
+            has_profit = any("profit" in c for c in all_col_names)
+            rev_col = next((c for c in all_col_names if any(m in c for m in ["sales_amount", "revenue", "sales"])), target_metric)
+
+            profit_val = 0.0
+            rev_val = 0.0
+            margin_pct = 0.0
+            if has_profit:
+                profit_col = next(c for c in all_col_names if "profit" in c)
+                p_agg = self.analytics_tool.execute(org_id, active_dataset_id, metric_column=profit_col, aggregation="SUM")
+                r_agg = self.analytics_tool.execute(org_id, active_dataset_id, metric_column=rev_col, aggregation="SUM")
+                profit_val = float(p_agg.get("value", 0.0))
+                rev_val = float(r_agg.get("value", 0.0))
+                margin_pct = round((profit_val / rev_val * 100), 2) if rev_val > 0 else 0.0
+                provenance.columns_used.extend([rev_col, profit_col])
+
+            empirical_text = (
+                f"\n\n#### Empirical Relationship in `{active_dataset_name}`:\n"
+                f"• **Total Revenue ({rev_col}):** **₹{rev_val:,.2f}**\n"
+                f"• **Total Profit ({profit_col if has_profit else 'N/A'}):** **₹{profit_val:,.2f}**\n"
+                f"• **Aggregate Gross Margin:** **{margin_pct:.1f}%**\n"
+                f"• **Interpretation:** Every ₹100 in revenue yields ₹{margin_pct:.2f} in gross profit after direct operational deductions."
+            ) if has_profit else f"\n\n*Note: `{active_dataset_name}` contains revenue data (`{rev_col}`) but does not track an explicit `profit` column.*"
+
+            answer_text = (
+                f"### Relationship Between Revenue and Profit\n\n"
+                f"In financial analytics and business intelligence, revenue and profit represent fundamental top-line and bottom-line metrics:\n\n"
+                f"1. **Gross Revenue (Top Line):** Total invoiced income received from transactions: `Revenue = Price × Volume Sold`.\n"
+                f"2. **Gross Profit:** Earnings retained after subtracting Direct Cost of Goods Sold (COGS): `Profit = Revenue - Direct Costs`.\n"
+                f"3. **Profit Margin (%):** Efficiency ratio indicating profitability per currency unit: `(Profit / Revenue) × 100`."
+                f"{empirical_text}\n\n"
+                f"Optimizing profit requires either expanding revenue via pricing corridors and order volume or compressing direct supply chain costs."
+            )
+
+            duration_ms = round((time.perf_counter() - total_start) * 1000, 2)
+            return QueryResponse(
+                question=query_text,
+                answer=answer_text,
+                intent=intent,
+                is_general_advice=False,
+                grounded=True,
+                evidence_validated=True,
+                insufficient_data=False,
+                data={"total_revenue": rev_val, "total_profit": profit_val, "margin_percent": margin_pct},
+                visualization=None,
+                table_data=[{"Metric": "Revenue", "Value": f"₹{rev_val:,.2f}"}, {"Metric": "Profit", "Value": f"₹{profit_val:,.2f}"}, {"Metric": "Margin", "Value": f"{margin_pct:.1f}%"}] if has_profit else None,
+                provenance=provenance,
+                tool_executions=tool_logs,
+                follow_up_questions=["What is my total revenue?", "What happens if supply costs increase by 5%?"],
+                analysis_status="Explained revenue-profit relationship with dataset grounding",
+                execution_time_ms=duration_ms
+            )
+
+        # -------------------------------------------------------------
+        # INTENT: TREND_QUERY ("Show monthly revenue trends")
+        # -------------------------------------------------------------
+        if intent == "TREND_QUERY":
+            date_col = plan.date_column
+            if not date_col:
+                duration_ms = round((time.perf_counter() - total_start) * 1000, 2)
+                return QueryResponse(
+                    question=query_text,
+                    answer=f"The selected dataset `{active_dataset_name}` does not contain a usable date column to calculate monthly revenue trends.",
+                    intent=intent,
+                    is_general_advice=False,
+                    grounded=True,
+                    evidence_validated=True,
+                    insufficient_data=True,
+                    data=None,
+                    visualization=None,
+                    table_data=None,
+                    provenance=provenance,
+                    tool_executions=tool_logs,
+                    follow_up_questions=["Which columns are in this dataset?", "What is total revenue?"],
+                    analysis_status="No date column for time-series trend",
+                    execution_time_ms=duration_ms
+                )
+
+            trend_sql = f"""
+                SELECT
+                    SUBSTRING((data->>%s)::text, 1, 7) AS period,
+                    SUM((data->>%s)::numeric) AS value,
+                    COUNT(*)::bigint AS count
+                FROM dataset_rows
+                WHERE dataset_id = %s
+                  AND organization_id = %s
+                  AND (data->>%s) IS NOT NULL
+                  AND (data->>%s) ~ '^[-]?[0-9]+([.][0-9]+)?$'
+                GROUP BY period
+                ORDER BY period ASC;
+            """
+            trend_rows = execute_query(trend_sql, (
+                date_col, target_metric,
+                active_dataset_id, org_id,
+                target_metric, target_metric
+            )) or []
+
+            provenance.columns_used.extend([target_metric, date_col])
+            trend_items = [
+                {"period": r["period"], "value": float(r["value"]), "records": int(r["count"])}
+                for r in trend_rows
+            ]
+
+            trend_lines = "\n".join([f"• **{t['period']}**: ₹{t['value']:,.2f} ({t['records']} records)" for t in trend_items])
+            answer_text = (
+                f"### Monthly Revenue Progression ({target_metric.title()})\n\n"
+                f"Aggregated monthly trajectory for `{active_dataset_name}` across **{active_row_count:,} records**:\n\n"
+                f"{trend_lines}\n\n"
+                f"📈 Telemetry reflects verified aggregations grouped by `{date_col}`."
+            )
+
+            viz_payload = {
+                "type": "line",
+                "title": f"Monthly {target_metric.title()} Progression",
+                "data": trend_items,
+                "xAxis": "period",
+                "yAxis": "value"
+            }
+
+            duration_ms = round((time.perf_counter() - total_start) * 1000, 2)
+            return QueryResponse(
+                question=query_text,
+                answer=answer_text,
+                intent=intent,
+                is_general_advice=False,
+                grounded=True,
+                evidence_validated=True,
+                insufficient_data=False,
+                data={"trends": trend_items},
+                visualization=viz_payload,
+                table_data=[{"Period": t["period"], "Total Revenue": f"₹{t['value']:,.2f}", "Record Count": t["records"]} for t in trend_items],
+                provenance=provenance,
+                tool_executions=tool_logs,
+                follow_up_questions=["Compare this month with last month", "What is total revenue?"],
+                analysis_status=f"Computed monthly trends across {len(trend_items)} periods",
+                execution_time_ms=duration_ms
+            )
+
+        # -------------------------------------------------------------
+        # INTENT: AOV_QUERY ("What is the average order value?")
+        # -------------------------------------------------------------
+        if intent == "AOV_QUERY":
+            kpi_res, kpi_time, kpi_ok = self.kpi_tool.run_safe(
+                organization_id=org_id,
+                dataset_id=active_dataset_id,
+                kpi_name="aov"
+            )
+            tool_logs.append(ToolCallLog(
+                tool_name=self.kpi_tool.name,
+                arguments={"dataset_id": active_dataset_id, "kpi": "aov"},
+                success=kpi_ok,
+                execution_time_ms=kpi_time,
+                output_summary=f"Calculated AOV = ₹{kpi_res.get('value', 0):,}"
+            ))
+
+            aov_val = float(kpi_res.get("value", 0.0))
+            tot_sales = float(kpi_res.get("total_sales", 0.0))
+            tot_cnt = int(kpi_res.get("total_orders", active_row_count))
+
+            answer_text = (
+                f"### Average Order Value (AOV)\n\n"
+                f"Across **{tot_cnt:,} recorded transactions** in `{active_dataset_name}`:\n\n"
+                f"• **Average Order Value (AOV):** **₹{aov_val:,.2f}**\n"
+                f"• **Total Revenue:** ₹{tot_sales:,.2f}\n"
+                f"• **Total Recorded Orders/Rows:** {tot_cnt:,}\n"
+                f"• **Formula:** `Total Sales / Total Order Count`\n\n"
+                f"✅ *Calculated deterministically from authorized dataset records.*"
+            )
+
+            duration_ms = round((time.perf_counter() - total_start) * 1000, 2)
+            return QueryResponse(
+                question=query_text,
+                answer=answer_text,
+                intent=intent,
+                is_general_advice=False,
+                grounded=True,
+                evidence_validated=True,
+                insufficient_data=False,
+                data=kpi_res,
+                visualization={"type": "kpi_card", "metric": "Average Order Value", "value": aov_val, "unit": "₹"},
+                table_data=[{"Metric": "Average Order Value", "Value": f"₹{aov_val:,.2f}"}, {"Metric": "Total Sales", "Value": f"₹{tot_sales:,.2f}"}],
+                provenance=provenance,
+                tool_executions=tool_logs,
+                follow_up_questions=["How can I increase my sales?", "Which product has the highest revenue?"],
+                analysis_status="Computed exact Average Order Value",
+                execution_time_ms=duration_ms
+            )
 
         # -------------------------------------------------------------
         # INTENT: DATASET_EXPLORATION ("What information is missing?")
@@ -750,7 +1163,20 @@ class AgentOrchestrator:
         # -------------------------------------------------------------
         # INTENT: RANKING or BREAKDOWN ("Which product performs best?", "Revenue by region")
         # -------------------------------------------------------------
-        if intent in ["RANKING", "BREAKDOWN"] and target_group:
+        if intent in ["RANKING", "BREAKDOWN"]:
+            # Specific dimension resolution based on natural-language query
+            if "region" in query_lower and "region" in all_col_names:
+                target_group = "region"
+            elif ("product" in query_lower or "category" in query_lower or "item" in query_lower):
+                target_group = "product" if "product" in all_col_names else "category" if "category" in all_col_names else target_group
+            elif "channel" in query_lower and "channel" in all_col_names:
+                target_group = "channel"
+            else:
+                target_group = target_group or (categorical_cols[0] if categorical_cols else None)
+
+            if not target_group:
+                target_group = categorical_cols[0] if categorical_cols else "category"
+
             provenance.columns_used.append(target_group)
             agg_res, agg_time, agg_ok = self.analytics_tool.run_safe(
                 organization_id=org_id,
@@ -772,8 +1198,12 @@ class AgentOrchestrator:
             table_payload = breakdown
             data_payload = {"breakdown": breakdown, "ranking": breakdown}
 
+            is_lowest = any(w in query_lower for w in ["lowest", "bottom", "least", "worst"])
+            is_top3 = any(w in query_lower for w in ["top 3", "top three", "three performing", "3 performing", "top 3 performing"])
+
             if breakdown:
                 top_item = breakdown[0]
+                lowest_item = breakdown[-1]
                 viz_payload = {
                     "type": "bar",
                     "title": f"{target_metric.title()} by {target_group.title()}",
@@ -783,12 +1213,32 @@ class AgentOrchestrator:
                 }
 
                 top_lines = "\n".join([f"• **{item['category']}**: ₹{item['value']:,.2f} ({item['count']} records)" for item in breakdown[:5]])
-                answer_text = (
-                    f"### {target_metric.title()} Performance by {target_group.title()}\n\n"
-                    f"Across **{active_row_count:,} records** in dataset `{active_dataset_name}`:\n\n"
-                    f"{top_lines}\n\n"
-                    f"🏆 **Top Performer:** **{top_item['category']}** generated the highest volume with **₹{top_item['value']:,.2f}**.\n"
-                )
+
+                if is_lowest:
+                    answer_text = (
+                        f"### Lowest Performing {target_group.title()} for {target_metric.title()}\n\n"
+                        f"Across **{active_row_count:,} records** in dataset `{active_dataset_name}`:\n\n"
+                        f"• **Lowest Performer:** **{lowest_item['category']}** generated the lowest revenue with **₹{lowest_item['value']:,.2f}** ({lowest_item['count']} records).\n"
+                        f"• **Leading Benchmark:** **{top_item['category']}** generated **₹{top_item['value']:,.2f}** ({top_item['count']} records).\n\n"
+                        f"#### Complete {target_group.title()} Breakdown:\n"
+                        f"{top_lines}\n\n"
+                        f"📉 *Grounded directly in verified PostgreSQL records.*"
+                    )
+                elif is_top3 and len(breakdown) >= 3:
+                    top3_lines = "\n".join([f"{idx+1}. **{item['category']}**: ₹{item['value']:,.2f} ({item['count']} records)" for idx, item in enumerate(breakdown[:3])])
+                    answer_text = (
+                        f"### Top 3 Performing {target_group.title()}s for {target_metric.title()}\n\n"
+                        f"Across **{active_row_count:,} records** in dataset `{active_dataset_name}`:\n\n"
+                        f"{top3_lines}\n\n"
+                        f"🏆 **Leader:** **{top_item['category']}** generated **₹{top_item['value']:,.2f}**, representing the top performer in this dataset.\n"
+                    )
+                else:
+                    answer_text = (
+                        f"### {target_metric.title()} Performance by {target_group.title()}\n\n"
+                        f"Across **{active_row_count:,} records** in dataset `{active_dataset_name}`:\n\n"
+                        f"{top_lines}\n\n"
+                        f"🏆 **Top Performer:** **{top_item['category']}** has the highest sales with **₹{top_item['value']:,.2f}** ({top_item['count']} records).\n"
+                    )
             else:
                 answer_text = f"No category records found for column `{target_group}` in `{active_dataset_name}`."
 

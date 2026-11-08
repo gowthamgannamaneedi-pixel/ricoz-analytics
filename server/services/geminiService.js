@@ -1255,6 +1255,22 @@ Ask me a question about your data to get started!`;
       }
 
       case 'COMPARISON': {
+        if (structuredData?.comparison_type === 'month_over_month' || structuredData?.current_period) {
+          const cur = structuredData.current_period || {};
+          const prev = structuredData.previous_period || {};
+          const hist = structuredData.historical;
+          const metricFormatted = metricName;
+
+          let resp = `### Month-over-Month ${metricFormatted.toUpperCase()} Comparison\n\n` +
+            `• **Current Period (${cur.label || 'This Month'}):** ₹${Number(cur.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} across ${cur.count || 0} recorded entries.\n` +
+            `• **Prior Period (${prev.label || 'Prior Month'}):** ₹${Number(prev.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} across ${prev.count || 0} recorded entries.\n` +
+            `• **Period-over-Period Delta:** ${Number(structuredData.absolute_difference || 0) >= 0 ? '+' : ''}₹${Number(structuredData.absolute_difference || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${Number(structuredData.percentage_change || 0).toFixed(1)}%)\n\n`;
+
+          if (hist) {
+            resp += `*Historical Dataset Context:* In recorded monthly intervals (${hist.priorMonth} vs ${hist.latestMonth}), ${metricFormatted} moved from ₹${Number(hist.priorTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${hist.priorCount} records) to ₹${Number(hist.latestTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${hist.latestCount} records), representing a variance of ${hist.pctChange >= 0 ? '+' : ''}${Number(hist.pctChange || 0).toFixed(1)}%.\n`;
+          }
+          return resp;
+        }
         return `Comparison analysis computed for **${metricName}**. The comparative delta and distribution across target entities have been evaluated.`;
       }
 

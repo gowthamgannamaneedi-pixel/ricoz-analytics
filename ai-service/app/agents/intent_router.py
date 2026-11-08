@@ -65,15 +65,56 @@ class IntentRouter:
         r"\b(?:forecast|predict|project|future\s+trajectory|next\s+month|next\s+quarter)\b"
     ]
 
+    MONTH_OVER_MONTH_PATTERNS = [
+        r"\bcompare\s+(?:this\s+month|current\s+month)\s+(?:with|to|vs|against)\s+(?:last\s+month|previous\s+month)\b",
+        r"\bcompare\s+(?:last\s+month|previous\s+month)\s+(?:with|to|vs|against)\s+(?:this\s+month|current\s+month)\b",
+        r"\b(?:month[- ]over[- ]month|mom|monthly)\s+(?:comparison|change|growth|performance|variance|difference)\b",
+        r"\bcompare\s+(?:the\s+)?(?:last|past)\s+(?:two|2)\s+months\b",
+        r"\bcompare\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+(?:with|to|and|vs)\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)\b",
+        r"\bhow\s+(?:does|is)\s+(?:this\s+month|current\s+month)\s+(?:compare|performing\s+compared)\s+(?:to|with)\s+(?:last\s+month|previous\s+month)\b",
+        r"\bcompare\s+this\s+month\b",
+        r"\bcompare.*?\b(?:month|mom)\b"
+    ]
+
+    DATASET_CONTEXT_PATTERNS = [
+        r"\b(?:which|what)\s+dataset\s+(?:are\s+you\s+(?:currently\s+)?analyzing|is\s+selected|are\s+we\s+looking\s+at|is\s+in\s+use|is\s+active)\b",
+        r"\bwhich\s+dataset\s+are\s+you\s+analyzing\b",
+        r"\bcurrent\s+dataset\b"
+    ]
+
+    TREND_PATTERNS = [
+        r"\b(?:show|display|plot|view)?\s*(?:monthly|daily|weekly|quarterly)?\s*(?:revenue|sales)\s+trends?\b",
+        r"\btrends?\s+(?:in|of|for)\s+(?:revenue|sales)\b"
+    ]
+
+    DATA_QUALITY_PATTERNS = [
+        r"\b(?:are\s+there\s+any\s+)?(?:missing\s+values?|duplicate\s+records?|nulls?|duplicates?)\b",
+        r"\bidentify\s+(?:missing|null|empty)\s+(?:values?|data|fields?|records?)\b",
+        r"\bidentify\s+duplicate\s+(?:records?|rows?|entries|data)\b",
+        r"\b(?:missing\s+values?|duplicate\s+records?|data\s+quality|data\s+cleanliness)\b"
+    ]
+
+    RELATIONSHIP_PATTERNS = [
+        r"\b(?:what\s+is|explain)\s+(?:the\s+)?relationship\s+between\s+(?:revenue|sales)\s+and\s+(?:profit|margin|cost|cogs)\b",
+        r"\bhow\s+(?:does|do)\s+(?:revenue|sales)\s+(?:relate|impact|affect)\s+(?:to\s+)?(?:profit|margin)\b"
+    ]
+
+    AOV_PATTERNS = [
+        r"\b(?:average|avg)\s+order\s+value\b",
+        r"\bwhat\s+is\s+(?:the\s+)?aov\b",
+        r"\baov\b"
+    ]
+
     RANKING_PATTERNS = [
+        r"\bwhich\s+(?:product|region|channel|category|item|branch)\s+(?:has|had|generate[ds]?|records?|shows?)\s+(?:the\s+)?(?:highest|lowest|most|least)\s+(?:sales|revenue|profit|turnover|units)\b",
         r"\bwhich\s+(?:product|region|channel|category|item|branch)\s+(?:performs?\s+best|performs?\s+worst|is\s+the\s+top|contributes?\s+the\s+most|generates?\s+the\s+most)\b",
-        r"\b(?:top|bottom|highest|lowest|best|worst|rank|ranking)\s+(?:products?|regions?|channels?|categories?|customers?|items?)\b"
+        r"\b(?:top|bottom|highest|lowest|best|worst|rank|ranking)\s+(?:three|3|five|5|ten|10)?\s*(?:performing\s+)?(?:products?|regions?|channels?|categories?|customers?|items?)\b"
     ]
 
     BREAKDOWN_PATTERNS = [
         r"\b(?:breakdown|distribution|split|share|contribution)\s+by\s+(?:region|channel|product|category)\b",
         r"\b(?:sales|revenue)\s+by\s+(?:region|channel|product|category)\b",
-        r"\bcompare\s+(?:the\s+last\s+two\s+quarters|regions|channels|periods|products)\b"
+        r"\bcompare\s+(?:the\s+last\s+two\s+quarters|regions|channels|products)\b"
     ]
 
     FACTORS_PATTERNS = [
@@ -94,7 +135,63 @@ class IntentRouter:
                     "is_general_advice": False
                 }
 
-        # 2. Dataset Exploration (e.g. "what information is missing from my dataset")
+        # 2. Dataset Context Query (e.g. "which dataset are you currently analyzing")
+        for pat in cls.DATASET_CONTEXT_PATTERNS:
+            if re.search(pat, text):
+                return {
+                    "intent": "DATASET_CONTEXT_QUERY",
+                    "requires_database": True,
+                    "is_general_advice": False
+                }
+
+        # 3. Month-over-Month / Period Comparison (CRITICAL: Checked before general breakdown)
+        for pat in cls.MONTH_OVER_MONTH_PATTERNS:
+            if re.search(pat, text):
+                return {
+                    "intent": "MONTH_OVER_MONTH_COMPARISON",
+                    "requires_database": True,
+                    "is_general_advice": False
+                }
+
+        # 4. Data Quality Query (missing values, duplicate records)
+        for pat in cls.DATA_QUALITY_PATTERNS:
+            if re.search(pat, text):
+                sub = "missing_values" if "missing" in text or "null" in text else "duplicates"
+                return {
+                    "intent": "DATA_QUALITY_QUERY",
+                    "requires_database": True,
+                    "is_general_advice": False,
+                    "subtype": sub
+                }
+
+        # 5. Relationship Explanation (e.g. relationship between revenue and profit)
+        for pat in cls.RELATIONSHIP_PATTERNS:
+            if re.search(pat, text):
+                return {
+                    "intent": "RELATIONSHIP_EXPLANATION",
+                    "requires_database": True,
+                    "is_general_advice": False
+                }
+
+        # 6. Trend Query (e.g. show monthly revenue trends)
+        for pat in cls.TREND_PATTERNS:
+            if re.search(pat, text):
+                return {
+                    "intent": "TREND_QUERY",
+                    "requires_database": True,
+                    "is_general_advice": False
+                }
+
+        # 7. Average Order Value (AOV)
+        for pat in cls.AOV_PATTERNS:
+            if re.search(pat, text):
+                return {
+                    "intent": "AOV_QUERY",
+                    "requires_database": True,
+                    "is_general_advice": False
+                }
+
+        # 8. Dataset Exploration (e.g. "what information is missing from my dataset")
         for pat in cls.DATASET_EXPLORATION_PATTERNS:
             if re.search(pat, text):
                 return {

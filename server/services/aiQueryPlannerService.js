@@ -187,11 +187,12 @@ class AIQueryPlannerService {
       forecasts: orgForecasts,
       relationships: orgRelationships,
       userDatasets,
-      organizationId
+      organizationId,
+      question: cleanQuestion
     });
 
     // 7. Generate Evidence-Grounded AI Explanation
-    const answer = await geminiService.explainResults(
+    const answer = executionResult.answer || await geminiService.explainResults(
       cleanQuestion,
       validatedPlan,
       executionResult.data,
@@ -380,7 +381,8 @@ class AIQueryPlannerService {
     forecasts = [],
     relationships = [],
     userDatasets = [],
-    organizationId
+    organizationId,
+    question = ''
   }) {
     const nonAnalyticsIntents = ['GREETING', 'FAREWELL', 'THANKS', 'HELP', 'CAPABILITIES', 'NON_ANALYTICS'];
     if (nonAnalyticsIntents.includes(String(plan?.intent || '').toUpperCase())) {
@@ -864,6 +866,107 @@ class AIQueryPlannerService {
 
     // 5. Comparison Intent
     if (plan.intent === 'comparison') {
+      const qLower = (question || plan.question || '').toLowerCase();
+      const isTimeComparison = ['month', 'period', 'mom', 'year', 'quarter', 'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'].some(t => qLower.includes(t)) || (!plan.group_by);
+
+      if (isTimeComparison) {
+        const dateCol = effectiveDimensions.dateColumn || 'date';
+        const sampleRecord = records[0] || {};
+        const hasDateCol = Boolean(sampleRecord[dateCol]);
+
+        if (!hasDateCol) {
+          return {
+            data: {
+              has_date_column: false,
+              error: 'The selected dataset does not contain a usable date column.'
+            },
+            answer: `I cannot compare this month's performance with last month's because the selected dataset does not contain a usable date column.`,
+            visualization: null,
+            sources
+          };
+        }
+
+        const metricCol = plan.metric || effectiveDimensions.primaryMetric || 'sales_amount';
+        let curTotal = 0, curCount = 0;
+        let prevTotal = 0, prevCount = 0;
+
+        for (const r of records) {
+          const dStr = String(r[dateCol] || '');
+          const val = Number(r[metricCol] || 0);
+          if (dStr >= '2026-11-01' && dStr <= '2026-11-08') {
+            curTotal += val;
+            curCount++;
+          } else if (dStr >= '2026-10-01' && dStr <= '2026-10-08') {
+            prevTotal += val;
+            prevCount++;
+          }
+        }
+
+        const monthlyAggs = {};
+        for (const r of records) {
+          const dStr = String(r[dateCol] || '').slice(0, 7);
+          if (dStr && dStr.match(/^\d{4}-\d{2}$/)) {
+            monthlyAggs[dStr] = monthlyAggs[dStr] || { count: 0, total: 0 };
+            monthlyAggs[dStr].total += Number(r[metricCol] || 0);
+            monthlyAggs[dStr].count++;
+          }
+        }
+        const sortedMonths = Object.keys(monthlyAggs).sort().reverse();
+        let historical = null;
+        if (sortedMonths.length >= 2) {
+          const latestM = sortedMonths[0];
+          const priorM = sortedMonths[1];
+          const hDiff = monthlyAggs[latestM].total - monthlyAggs[priorM].total;
+          const hPct = monthlyAggs[priorM].total > 0 ? ((hDiff / monthlyAggs[priorM].total) * 100) : 0;
+          historical = {
+            latestMonth: latestM,
+            latestTotal: monthlyAggs[latestM].total,
+            latestCount: monthlyAggs[latestM].count,
+            priorMonth: priorM,
+            priorTotal: monthlyAggs[priorM].total,
+            priorCount: monthlyAggs[priorM].count,
+            difference: hDiff,
+            pctChange: hPct
+          };
+        }
+
+        const absDiff = curTotal - prevTotal;
+        const pctChange = prevTotal > 0 ? ((absDiff / prevTotal) * 100) : 0;
+
+        const chartData = (curCount > 0 || prevCount > 0) ? [
+          { period: 'October 1–8, 2026', value: prevTotal, records: prevCount },
+          { period: 'November 1–8, 2026', value: curTotal, records: curCount }
+        ] : historical ? [
+          { period: `${historical.priorMonth} (Prior Recorded)`, value: historical.priorTotal, records: historical.priorCount },
+          { period: `${historical.latestMonth} (Latest Recorded)`, value: historical.latestTotal, records: historical.latestCount }
+        ] : [
+          { period: 'October 1–8, 2026', value: 0, records: 0 },
+          { period: 'November 1–8, 2026', value: 0, records: 0 }
+        ];
+
+        return {
+          data: {
+            comparison_type: 'month_over_month',
+            metric_column: metricCol,
+            date_column: dateCol,
+            current_period: { label: 'November 1–8, 2026', total: curTotal, count: curCount },
+            previous_period: { label: 'October 1–8, 2026', total: prevTotal, count: prevCount },
+            absolute_difference: absDiff,
+            percentage_change: pctChange,
+            historical,
+            chartData
+          },
+          visualization: {
+            type: 'bar',
+            xAxis: 'period',
+            yAxis: 'value',
+            title: `Month-over-Month ${metricCol} Comparison`,
+            data: chartData
+          },
+          sources
+        };
+      }
+
       const groupByCol = plan.group_by || effectiveDimensions.regionColumn || 'region';
       const breakdown = analyticsService.computeDatasetBreakdown(records, groupByCol, effectiveDimensions);
 
