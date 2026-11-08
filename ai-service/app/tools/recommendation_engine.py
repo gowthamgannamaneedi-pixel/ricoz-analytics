@@ -66,3 +66,4 @@ class BusinessRecommendationEngine(BaseTool):
             "strategic_recommendations": recommendations,
             "provenance_note": "Facts are derived directly from verified database records. Recommendations are strategic business suggestions."
         }
+

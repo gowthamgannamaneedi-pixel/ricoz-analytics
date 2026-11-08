@@ -100,3 +100,4 @@ class KPICalculatorTool(BaseTool):
                 "columns": [result.get("metric_column", "")]
             }
         }
+

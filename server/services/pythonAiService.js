@@ -106,3 +106,4 @@ class PythonAiService {
 }
 
 module.exports = new PythonAiService();
+

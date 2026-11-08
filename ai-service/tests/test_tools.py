@@ -29,3 +29,4 @@ def test_schema_inspector_tool():
         schema = tool.execute("00000000-0000-0000-0000-000000000001", dataset_id=ds_id)
         assert schema["success"] is True
         assert "columns" in schema
+

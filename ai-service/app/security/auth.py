@@ -33,3 +33,4 @@ def verify_service_token(
         "user_id": x_user_id.strip() if x_user_id else None,
         "role": x_user_role.strip().lower()
     }
+

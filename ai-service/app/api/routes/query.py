@@ -26,3 +26,4 @@ def execute_ai_query(
     except Exception as e:
         logger.error(f"Error in execute_ai_query: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+

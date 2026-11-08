@@ -32,3 +32,4 @@ def test_intent_dataset_forecast():
     res = IntentRouter.classify("forecast next quarter sales")
     assert res["intent"] == "DATASET_ANALYTICS"
     assert res["requires_database"] is True
+

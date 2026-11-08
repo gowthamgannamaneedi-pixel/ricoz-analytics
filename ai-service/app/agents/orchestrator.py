@@ -1,4 +1,5 @@
 import time
+import re
 from typing import Dict, Any, List, Optional
 import logging
 
@@ -193,12 +194,36 @@ class AgentOrchestrator:
             output_summary=f"Found {schema_res.get('column_count', 0)} columns ({len(schema_res.get('numeric_columns', []))} numeric)"
         ))
 
+        if not schema_ok or not schema_res.get("success"):
+            duration_ms = round((time.perf_counter() - total_start) * 1000, 2)
+            return QueryResponse(
+                question=query_text,
+                answer=(
+                    f"Dataset #{active_dataset_id} was not found or is not accessible within your organization workspace. "
+                    "Cross-tenant dataset access is strictly prevented by security policy."
+                ),
+                intent=intent,
+                is_general_advice=False,
+                grounded=False,
+                evidence_validated=False,
+                insufficient_data=True,
+                data=None,
+                visualization=None,
+                table_data=None,
+                provenance=None,
+                tool_executions=tool_logs,
+                follow_up_questions=["Which datasets are available in my organization?"],
+                analysis_status="Dataset not found or cross-tenant access denied",
+                execution_time_ms=duration_ms
+            )
+
         if schema_ok and schema_res.get("dataset_name"):
             active_dataset_name = schema_res["dataset_name"]
             active_row_count = schema_res.get("row_count", active_row_count)
 
         numeric_cols = schema_res.get("numeric_columns", [])
         categorical_cols = schema_res.get("categorical_columns", [])
+        all_cols = [c["name"].lower() for c in schema_res.get("columns", [])]
 
         # Step 3: Tool C - Semantic Retriever for context & metric formulas
         sem_res, sem_time, sem_ok = self.semantic_tool.run_safe(
@@ -213,6 +238,60 @@ class AgentOrchestrator:
             execution_time_ms=sem_time,
             output_summary=f"Retrieved {sem_res.get('count', 0)} context documents"
         ))
+
+        # Check if the query explicitly asks for a metric/attribute not tracked in this dataset
+        query_lower = query_text.lower()
+        missing_metric = None
+        missing_candidates = [
+            "turnover", "employee turnover", "attrition", "churn rate", "headcount", "salary", 
+            "employee", "attendance", "satisfaction", "nps", "bounce rate", "conversion rate",
+            "cpc", "roas", "ltv", "ebitda"
+        ]
+        for mc in missing_candidates:
+            if mc in query_lower and not any(mc in col for col in all_cols):
+                missing_metric = mc
+                break
+
+        if not missing_metric:
+            match = re.search(r"\b(?:what is|show me|calculate|what's)\s+(?:the\s+)?([a-z\s]+?)\s+(?:rate|metric|ratio|level|score)\b", query_lower)
+            if match:
+                phrase = match.group(1).strip()
+                if phrase and not any(phrase in col or col in phrase for col in all_cols):
+                    missing_metric = f"{phrase} rate"
+
+        if missing_metric:
+            duration_ms = round((time.perf_counter() - total_start) * 1000, 2)
+            avail_cols = ", ".join(all_cols[:8])
+            return QueryResponse(
+                question=query_text,
+                answer=(
+                    f"The dataset `{active_dataset_name}` does not contain a column or metric for **{missing_metric}**. "
+                    f"Available tracked columns are: {avail_cols}. "
+                    f"To analyze {missing_metric}, please connect a data source containing {missing_metric} records."
+                ),
+                intent=intent,
+                is_general_advice=False,
+                grounded=True,
+                evidence_validated=True,
+                insufficient_data=True,
+                data=None,
+                visualization=None,
+                table_data=None,
+                provenance=ProvenanceInfo(
+                    dataset_id=active_dataset_id,
+                    dataset_name=active_dataset_name,
+                    row_count=active_row_count,
+                    columns_used=[]
+                ),
+                tool_executions=tool_logs,
+                follow_up_questions=[
+                    f"What is total revenue for {active_dataset_name}?",
+                    "Show sales breakdown by region",
+                    f"What columns are tracked in {active_dataset_name}?"
+                ],
+                analysis_status=f"Requested metric '{missing_metric}' not tracked in dataset",
+                execution_time_ms=duration_ms
+            )
 
         # Step 4: Determine query intent and execute analytical tools
         query_lower = query_text.lower()
@@ -410,3 +489,4 @@ class AgentOrchestrator:
             analysis_status="Computed verified analytics across dataset records",
             execution_time_ms=duration_ms
         )
+

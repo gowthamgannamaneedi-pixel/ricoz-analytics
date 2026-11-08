@@ -39,3 +39,4 @@ def sanitize_user_input(text: str) -> str:
     # Normalize excessive newlines
     clean = re.sub(r"\n{4,}", "\n\n", clean)
     return clean[:2000]
+

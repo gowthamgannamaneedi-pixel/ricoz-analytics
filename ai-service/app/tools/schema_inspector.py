@@ -65,3 +65,4 @@ class SchemaInspectorTool(BaseTool):
             "categorical_columns": categorical_cols,
             "sample_rows": sample_records
         }
+

@@ -40,3 +40,4 @@ class QueryResponse(BaseModel):
     follow_up_questions: List[str] = Field(default_factory=list)
     analysis_status: str
     execution_time_ms: float
+

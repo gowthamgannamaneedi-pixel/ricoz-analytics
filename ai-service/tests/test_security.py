@@ -24,3 +24,4 @@ def test_sanitize_user_input_removes_null_bytes():
     dirty = "how to increase sales\x00; DROP TABLE datasets;"
     clean = sanitize_user_input(dirty)
     assert "\x00" not in clean
+

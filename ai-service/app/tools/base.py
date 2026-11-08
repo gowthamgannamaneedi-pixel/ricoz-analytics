@@ -31,3 +31,4 @@ class BaseTool(ABC):
             duration_ms = round((time.perf_counter() - start) * 1000, 2)
             logger.error(f"Error executing tool {self.name}: {e}")
             return {"error": str(e), "success": False}, duration_ms, False
+
