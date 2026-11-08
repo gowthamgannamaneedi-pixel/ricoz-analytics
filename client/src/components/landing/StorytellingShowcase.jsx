@@ -118,16 +118,13 @@ export default function StorytellingShowcase({ onOpenDemo }) {
     const pinSection = pinSectionRef.current;
     if (!container || !pinSection) return;
 
-    // Check if screen is mobile / tablet
-    const isMobile = window.innerWidth < 1024;
-    if (isMobile) return; // On mobile, we use tab buttons rather than sticky pin
-
-    // Check prefers-reduced-motion
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return;
     }
 
-    const ctx = gsap.context(() => {
+    const mm = gsap.matchMedia();
+
+    mm.add('(min-width: 1024px)', () => {
       ScrollTrigger.create({
         trigger: container,
         start: 'top top',
@@ -141,9 +138,9 @@ export default function StorytellingShowcase({ onOpenDemo }) {
           setActiveStep(clampedIdx);
         }
       });
-    }, container);
+    });
 
-    return () => ctx.revert();
+    return () => mm.revert();
   }, [steps.length]);
 
   const handleStepClick = (idx) => {
@@ -161,12 +158,12 @@ export default function StorytellingShowcase({ onOpenDemo }) {
     <section 
       ref={containerRef} 
       id="storytelling" 
-      className="relative bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-white lg:h-[350vh] transition-colors duration-200"
+      className="relative bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-white py-14 sm:py-20 lg:py-0 lg:h-[350vh] transition-colors duration-200 overflow-x-clip"
     >
       {/* Pinned Viewport Container */}
       <div 
         ref={pinSectionRef} 
-        className="w-full lg:h-screen flex flex-col justify-center py-16 lg:py-0 overflow-hidden relative border-t border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0B0F19]"
+        className="w-full lg:h-screen flex flex-col justify-center py-6 lg:py-0 overflow-hidden relative border-t border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0B0F19]"
       >
         {/* Architectural Grid & Ambient Gradient */}
         <div className="absolute inset-0 pointer-events-none opacity-20 dark:opacity-20">
@@ -203,56 +200,61 @@ export default function StorytellingShowcase({ onOpenDemo }) {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             
             {/* ─── LEFT COLUMN: PROGRESS STEPPER & COPY (5 COLS) ─── */}
-            <div className="lg:col-span-5 flex flex-col justify-between space-y-6">
+            <div className="lg:col-span-5 flex flex-col justify-between space-y-4">
               
-              {/* Stepper Navigation Pills */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-                {steps.map((s, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleStepClick(idx)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all duration-300 cursor-pointer flex items-center gap-1.5 ${
-                      activeStep === idx
-                        ? 'bg-red-600 text-white shadow-md shadow-red-600/30 scale-102'
-                        : 'bg-white dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/60'
-                    }`}
-                  >
-                    <span>{s.step}</span>
-                    <span className="hidden sm:inline opacity-80">{s.tag}</span>
-                  </button>
-                ))}
-              </div>
+              {/* Linear-Style Vertical Interactive Timeline Stepper */}
+              <div className="space-y-3">
+                {steps.map((s, idx) => {
+                  const isActive = activeStep === idx;
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => handleStepClick(idx)}
+                      className={`group p-4 rounded-2xl transition-all duration-300 cursor-pointer border ${
+                        isActive
+                          ? 'bg-white dark:bg-slate-900 border-red-500/40 shadow-lg shadow-red-500/5'
+                          : 'bg-transparent border-transparent hover:bg-white/60 dark:hover:bg-slate-900/40 hover:border-slate-200 dark:hover:border-slate-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-8 h-8 rounded-xl font-mono text-xs font-bold flex items-center justify-center transition-all ${
+                            isActive
+                              ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white'
+                          }`}
+                        >
+                          {s.step}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className={`text-[10px] font-mono font-bold uppercase tracking-wider ${isActive ? 'text-red-600 dark:text-red-400' : 'text-slate-400'}`}>
+                            {s.tag}
+                          </div>
+                          <div className={`text-sm sm:text-base font-bold transition-colors truncate ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
+                            {s.title}
+                          </div>
+                        </div>
+                        <ChevronRight size={15} className={`text-slate-400 transition-transform ${isActive ? 'rotate-90 text-red-500' : 'group-hover:translate-x-0.5'}`} />
+                      </div>
 
-              {/* Active Step Content */}
-              <div className="space-y-4 min-h-[260px] flex flex-col justify-center">
-                <div className="text-xs font-mono font-bold text-red-600 dark:text-red-400 uppercase tracking-wider flex items-center gap-2">
-                  <span>STAGE {steps[activeStep].step}</span>
-                  <span>•</span>
-                  <span>{steps[activeStep].tag}</span>
-                </div>
-
-                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight transition-all duration-300">
-                  {steps[activeStep].title}
-                </h3>
-
-                <p className="text-sm font-semibold text-rose-600 dark:text-rose-300/90 leading-snug">
-                  {steps[activeStep].subtitle}
-                </p>
-
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
-                  {steps[activeStep].description}
-                </p>
-
-                {/* Key Capability Bullet Points */}
-                <div className="space-y-2 pt-2">
-                  {steps[activeStep].highlights.map((h, i) => (
-                    <div key={i} className="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-200">
-                      <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
-                      <span>{h}</span>
+                      {isActive && (
+                        <div className="mt-3 pl-11 space-y-2.5 animate-fadeIn">
+                          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+                            {s.description}
+                          </p>
+                          <div className="space-y-1.5 pt-1">
+                            {s.highlights.map((h, i) => (
+                              <div key={i} className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-200">
+                                <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                                <span>{h}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
 
               {/* Interactive Step CTA */}

@@ -145,7 +145,7 @@ export default function PricingSection({ onOpenDemo }) {
                   ? 'bg-white/20 text-white' 
                   : 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
               }`}>
-                Save 20%
+                Save 17%
               </span>
             </button>
           </div>

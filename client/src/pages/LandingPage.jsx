@@ -47,7 +47,7 @@ export default function LandingPage() {
       {/* 1. Professional Navigation Bar */}
       <LandingNavbar onOpenDemo={handleOpenDemo} />
 
-      <main id="overview">
+      <main id="overview" className="overflow-x-clip">
         {/* 2. Hero Section with Headline, CTAs, and Realistic Dashboard Visual */}
         <LandingHero onOpenDemo={handleOpenDemo} />
 

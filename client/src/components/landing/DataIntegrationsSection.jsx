@@ -148,74 +148,122 @@ export default function DataIntegrationsSection({ onOpenDemo }) {
           </div>
         </div>
 
-        {/* 3-Step Ingestion Architecture Workflow */}
-        <div className="mb-10 lg:mb-12 p-6 sm:p-8 rounded-3xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden relative">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 relative">
-            {/* Step 1 */}
-            <div className="w-full lg:w-1/4 flex flex-col items-center lg:items-start text-center lg:text-left">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-red-600 dark:text-red-400 mb-1">Step 01 • Source Connection</span>
-              <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-2">Connect Your Data</h4>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Connect PostgreSQL, MongoDB, REST endpoints, or upload CSV &amp; JSON datasets (with Excel XLSX export).
-              </p>
-              <div className="mt-3 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-                  <CheckCircle2 size={13} /> Read-only Credentials
+        {/* Linear-Style Animated Interactive Data-Flow Pipeline */}
+        <div className="mb-10 lg:mb-12 p-6 sm:p-8 rounded-3xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden relative">
+          
+          {/* Subtle Ambient Radial Glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-red-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
+
+          <div className="text-center max-w-xl mx-auto mb-6">
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-red-600 dark:text-red-400">
+              Live Data-Flow Architecture
+            </span>
+            <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-1">
+              Zero-ETL Streaming Pipeline
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Data streams directly from production stores into the governed metrics engine without manual export scripts.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
+            {/* Left Column: 4 Ingestion Sources */}
+            <div className="lg:col-span-4 space-y-2.5">
+              <div className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                1. Production Data Sources
+              </div>
+
+              {[
+                { name: 'PostgreSQL Database', type: 'Direct SSL (pg client)', icon: Database, color: 'text-blue-500' },
+                { name: 'MongoDB Cluster', type: 'Replica Sync & Collections', icon: Server, color: 'text-emerald-500' },
+                { name: 'REST API & Webhooks', type: 'Bearer & Key Ingestion', icon: ArrowRightLeft, color: 'text-red-500' },
+                { name: 'CSV & JSON Files', type: 'Flat Files & Streaming Parser', icon: FileSpreadsheet, color: 'text-amber-500' },
+              ].map((src, i) => {
+                const Icon = src.icon;
+                return (
+                  <div 
+                    key={i} 
+                    className="p-3 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-2xs hover:border-red-300 dark:hover:border-slate-700 transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-900 flex items-center justify-center shrink-0 ${src.color}`}>
+                        <Icon size={16} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-slate-900 dark:text-white truncate">{src.name}</div>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono truncate">{src.type}</div>
+                      </div>
+                    </div>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0 ml-2" />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Middle Column: Central Engine with Flow Lines */}
+            <div className="lg:col-span-4 flex flex-col items-center justify-center text-center p-6 rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-md relative overflow-hidden group">
+              <div className="relative">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-600 to-rose-600 text-white flex items-center justify-center shadow-lg shadow-red-600/30 group-hover:scale-105 transition-transform duration-300">
+                  <Cpu size={28} />
+                </div>
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                 </span>
               </div>
-            </div>
 
-            {/* Arrow 1 */}
-            <div className="hidden lg:flex items-center text-red-400 dark:text-red-500">
-              <div className="w-12 border-t-2 border-dashed border-red-300 dark:border-red-800" />
-              <ArrowRight size={18} className="-ml-1" />
-            </div>
-
-            {/* Step 2 */}
-            <div className="w-full lg:w-1/3 p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md relative overflow-hidden group">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-red-600 text-white flex items-center justify-center shadow-md shadow-red-600/30">
-                  <Cpu size={16} />
-                </div>
-                <div>
-                  <h4 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">Ricoz Ingestion Engine</h4>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Schema Introspection &amp; Normalization</div>
-                </div>
-              </div>
-              <ul className="text-xs sm:text-sm space-y-1.5 text-slate-600 dark:text-slate-300 pt-2 border-t border-slate-100 dark:border-slate-700 font-mono">
-                <li className="flex items-center justify-between">
-                  <span className="font-sans">Schema Discovery</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">Automatic</span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span className="font-sans">Credential Security</span>
-                  <span className="text-slate-900 dark:text-white font-bold">AES-256-GCM</span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span className="font-sans">Data Validation</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">Strict Typing</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Arrow 2 */}
-            <div className="hidden lg:flex items-center text-red-400 dark:text-red-500">
-              <div className="w-12 border-t-2 border-dashed border-red-300 dark:border-red-800" />
-              <ArrowRight size={18} className="-ml-1" />
-            </div>
-
-            {/* Step 3 */}
-            <div className="w-full lg:w-1/4 flex flex-col items-center lg:items-end text-center lg:text-right">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">Step 03 • Actionable Analytics</span>
-              <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-2">Unified Dashboard Views</h4>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Build executive cockpits, schedule automated PDF digests, and monitor operational KPIs.
+              <h4 className="text-base font-black text-slate-900 dark:text-white mt-3">
+                Ricoz Ingestion &amp; Metric Core
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs">
+                Real-time schema introspection, AES-256 cipher encryption, and multi-tenant SQL scoping.
               </p>
-              <div className="mt-3 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-2xs">
-                  <ShieldCheck size={13} className="text-emerald-500" /> Organization Tenancy
-                </span>
+
+              <div className="w-full mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 grid grid-cols-2 gap-2 text-[10px] font-mono">
+                <div className="p-1.5 rounded bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300">
+                  <span className="text-slate-400 block">Security</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">AES-256-GCM</span>
+                </div>
+                <div className="p-1.5 rounded bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300">
+                  <span className="text-slate-400 block">Latency</span>
+                  <span className="font-bold text-blue-600 dark:text-blue-400">&lt; 15ms Query</span>
+                </div>
               </div>
+            </div>
+
+            {/* Right Column: 4 Outputs & Destinations */}
+            <div className="lg:col-span-4 space-y-2.5">
+              <div className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                2. Live Analytics Destinations
+              </div>
+
+              {[
+                { name: 'Executive Cockpit', type: 'Real-time KPIs & Rollups', icon: Sparkles, color: 'text-red-500' },
+                { name: 'Variance Diagnostics', type: 'Regional Deviation Sentinel', icon: AlertCircle, color: 'text-amber-500' },
+                { name: 'Scheduled PDF Digests', type: 'Automated Executive Briefings', icon: Clock, color: 'text-purple-500' },
+                { name: 'Excel XLSX Reports', type: 'Multi-series Data Workbooks', icon: FileSpreadsheet, color: 'text-emerald-500' },
+              ].map((dest, i) => {
+                const Icon = dest.icon;
+                return (
+                  <div 
+                    key={i} 
+                    className="p-3 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-2xs hover:border-red-300 dark:hover:border-slate-700 transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-900 flex items-center justify-center shrink-0 ${dest.color}`}>
+                        <Icon size={16} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-slate-900 dark:text-white truncate">{dest.name}</div>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono truncate">{dest.type}</div>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60 shrink-0 ml-2">
+                      Synced
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

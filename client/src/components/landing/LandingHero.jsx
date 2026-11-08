@@ -70,10 +70,10 @@ export default function LandingHero({ onOpenDemo }) {
 
   const currentHovered = monthlyData.find(m => m.month === hoveredMonth) || monthlyData[5];
 
-  // Calculate 3D perspective tilt angles
-  const scrollFlattenFactor = Math.max(0, 1 - scrollY / 600);
-  const tiltX = -mousePos.normY * 9 * scrollFlattenFactor;
-  const tiltY = mousePos.normX * 9 * scrollFlattenFactor;
+  // Calculate 3D perspective tilt angles with smooth limits
+  const scrollFlattenFactor = Math.max(0, 1 - scrollY / 500);
+  const tiltX = (-mousePos.normY * 7 * scrollFlattenFactor).toFixed(2);
+  const tiltY = (mousePos.normX * 7 * scrollFlattenFactor).toFixed(2);
 
   const headlineWords = [
     { text: 'Turn', highlight: false },
@@ -94,6 +94,9 @@ export default function LandingHero({ onOpenDemo }) {
       {/* Three.js Interactive 3D Background Canvas (Original Design) */}
       <Hero3DCanvas />
 
+      {/* Linear-Style Radial Ambient Spotlight Beam */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] sm:w-[900px] h-[360px] sm:h-[480px] bg-gradient-to-b from-red-600/15 via-rose-500/8 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
+
       {/* Architectural Grid */}
       <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:28px_28px] opacity-70 dark:opacity-25" />
@@ -112,7 +115,10 @@ export default function LandingHero({ onOpenDemo }) {
 
         {/* Hero Headline */}
         <div className="max-w-4xl mx-auto text-center space-y-5 mb-10">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.18] flex flex-wrap justify-center gap-x-3 gap-y-1">
+          <h1 
+            aria-label="Turn Business Data Into Clear Operational Decisions"
+            className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.18] flex flex-wrap justify-center gap-x-3 gap-y-1"
+          >
             {headlineWords.map((word, idx) => (
               <span key={idx} className="overflow-hidden inline-block align-bottom py-0.5">
                 <span
@@ -126,7 +132,7 @@ export default function LandingHero({ onOpenDemo }) {
                   }}
                 >
                   {word.text}
-                </span>
+                </span>{' '}
               </span>
             ))}
           </h1>
@@ -176,7 +182,10 @@ export default function LandingHero({ onOpenDemo }) {
         </div>
 
         {/* ─── ENTERPRISE DASHBOARD COCKPIT CONTAINER ─────────────── */}
-        <div className="relative mt-8 max-w-6xl mx-auto">
+        <div 
+          className="relative mt-8 sm:mt-12 max-w-6xl mx-auto will-change-transform"
+          style={{ perspective: '1400px' }}
+        >
           {/* Floating Status Badge 1: Top Right */}
           <div className="hidden lg:flex items-center gap-2.5 absolute -top-4 right-4 z-40 px-4 py-2 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-lg text-xs font-medium text-slate-800 dark:text-slate-200">
             <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 flex items-center justify-center shrink-0">
@@ -202,8 +211,15 @@ export default function LandingHero({ onOpenDemo }) {
             </div>
           </div>
 
-          {/* Main Dashboard Chassis */}
-          <div className="rounded-3xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden transition-colors">
+          {/* Main Dashboard Chassis with 3D Tilt */}
+          <div 
+            style={{
+              transform: `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`,
+              transformStyle: 'preserve-3d',
+              transition: 'transform 0.15s ease-out'
+            }}
+            className="rounded-3xl bg-white dark:bg-slate-950 border border-slate-200/90 dark:border-slate-800 shadow-2xl overflow-hidden transition-colors relative group"
+          >
             {/* Window Browser Titlebar */}
             <div className="px-4 py-3 bg-slate-100 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
