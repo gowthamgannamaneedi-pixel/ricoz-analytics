@@ -13,7 +13,7 @@ import { MAX_UPLOAD_SIZE_MB } from '../services/api';
  * }} props
  */
 export default function FileUpload({
-  accept = '.csv, .json',
+  accept = '.csv, .json, .xlsx, .xls',
   maxSizeMb = MAX_UPLOAD_SIZE_MB,
   selectedFile,
   onFileSelect,
@@ -44,8 +44,8 @@ export default function FileUpload({
 
     // Extension check
     const ext = file.name.split('.').pop().toLowerCase();
-    if (ext !== 'csv' && ext !== 'json') {
-      setLocalError('Invalid file format. Please upload a .csv or .json file.');
+    if (ext !== 'csv' && ext !== 'json' && ext !== 'xlsx' && ext !== 'xls') {
+      setLocalError('Invalid file format. Please upload a .csv, .json, or .xlsx file.');
       return;
     }
 
@@ -86,6 +86,7 @@ export default function FileUpload({
   const getFileIcon = (filename) => {
     const ext = (filename || '').split('.').pop().toLowerCase();
     if (ext === 'csv') return <FileSpreadsheet className="h-6 w-6 text-emerald-600" />;
+    if (ext === 'xlsx' || ext === 'xls') return <FileSpreadsheet className="h-6 w-6 text-blue-600" />;
     if (ext === 'json') return <FileCode className="h-6 w-6 text-amber-600" />;
     return <File className="h-6 w-6 text-blue-600" />;
   };
@@ -123,7 +124,7 @@ export default function FileUpload({
             Click to browse or drag and drop your data file
           </p>
           <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-1">
-            Supports CSV and JSON files up to {maxSizeMb}MB
+            Supports CSV, JSON, and Excel (.xlsx) files up to {maxSizeMb}MB
           </p>
 
           <div className="flex items-center gap-2 mt-3.5">
@@ -132,6 +133,9 @@ export default function FileUpload({
             </span>
             <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-white dark:bg-[#1E293B] text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/80 shadow-2xs">
               .JSON
+            </span>
+            <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-white dark:bg-[#1E293B] text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/80 shadow-2xs">
+              .XLSX
             </span>
           </div>
         </div>

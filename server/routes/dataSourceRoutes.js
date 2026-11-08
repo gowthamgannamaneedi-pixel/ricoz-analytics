@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/authMiddleware');
 const { requireRole } = require('../middleware/roleMiddleware');
-const { requireUsageLimit } = require('../middleware/subscriptionMiddleware');
+const { requireActiveSubscription, requireUsageLimit } = require('../middleware/subscriptionMiddleware');
 const { handleUpload } = require('../middleware/uploadMiddleware');
 const {
   getDataSources,
@@ -22,16 +22,17 @@ const {
 router.use(authenticateToken);
 
 // Standard CRUD endpoints
+// GET endpoints are permitted for expired accounts to preserve customer data source visibility
 router.get('/', getDataSources);
-router.post('/', requireUsageLimit('datasets'), createDataSource);
-router.post('/test-connection', testConnection);
-router.post('/test-mongodb', requireRole('admin', 'manager', 'analyst'), testMongoConnectionHandler);
-router.post('/preview-mongodb', requireRole('admin', 'manager', 'analyst'), previewMongoCollectionHandler);
-router.post('/test-api', requireRole('admin', 'manager', 'analyst'), testApiConnection);
-router.post('/upload', requireUsageLimit('datasets'), handleUpload('file'), uploadDataSource);
+router.post('/', requireActiveSubscription, requireUsageLimit('datasets'), createDataSource);
+router.post('/test-connection', requireActiveSubscription, testConnection);
+router.post('/test-mongodb', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), testMongoConnectionHandler);
+router.post('/preview-mongodb', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), previewMongoCollectionHandler);
+router.post('/test-api', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), testApiConnection);
+router.post('/upload', requireActiveSubscription, requireUsageLimit('datasets'), handleUpload('file'), uploadDataSource);
 router.get('/:id', getDataSourceById);
-router.put('/:id', requireRole('admin', 'manager', 'analyst'), updateDataSource);
-router.post('/:id/sync', requireRole('admin', 'manager', 'analyst'), syncDataSource);
+router.put('/:id', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), updateDataSource);
+router.post('/:id/sync', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), syncDataSource);
 router.delete('/:id', deleteDataSource);
 
 module.exports = router;

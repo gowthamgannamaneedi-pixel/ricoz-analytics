@@ -11,7 +11,8 @@ import {
   Trash2,
   ArrowRight,
   LayoutGrid,
-  ChevronRight
+  ChevronRight,
+  ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import DatasetTable from '../components/DatasetTable';
@@ -41,7 +42,7 @@ function formatNumberAbbreviated(num) {
  * Enterprise Datasets Explorer & Preview Page
  */
 export default function DatasetsPage() {
-  const { token, isViewer, currentRole } = useAuth();
+  const { token, isViewer, currentRole, isTrialExpired } = useAuth();
   const navigate = useNavigate();
 
   const [datasets, setDatasets] = useState([]);
@@ -272,6 +273,29 @@ export default function DatasetsPage() {
           />
         </div>
       </div>
+
+      {/* Preserved Data Notice for Expired Subscriptions */}
+      {isTrialExpired && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border border-amber-300 dark:border-amber-800 bg-amber-50/90 dark:bg-[#2A1E14] text-xs text-amber-900 dark:text-amber-200 shadow-2xs">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 shrink-0">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-bold text-sm">Customer Data Safely Preserved</p>
+              <p className="text-xs text-amber-800/90 dark:text-amber-300/90 mt-0.5">
+                Existing datasets and telemetry records are securely retained in read-only mode. Renew or upgrade your subscription to connect new data sources or trigger syncs.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/billing"
+            className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition whitespace-nowrap shadow-xs self-start sm:self-auto"
+          >
+            Choose Plan →
+          </Link>
+        </div>
+      )}
 
       {/* Viewer Mode Notice */}
       {isViewer && (

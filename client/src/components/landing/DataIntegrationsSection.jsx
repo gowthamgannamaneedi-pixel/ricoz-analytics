@@ -67,16 +67,16 @@ export default function DataIntegrationsSection({ onOpenDemo }) {
       testing: 'Live HTTP test call with status code & JSON validation'
     },
     {
-      name: 'CSV & JSON Datasets',
+      name: 'CSV, JSON & Excel (.xlsx)',
       category: 'Files',
       type: 'Spreadsheet & Flat Files',
       speed: 'Batch File Parsing',
       status: 'Live & Verified',
       iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400',
       badge: 'File Ingestion',
-      description: 'Upload CSV and JSON datasets with automatic delimiter detection, column header normalization, and datatype inference.',
-      frontend: 'Drag-and-drop file uploader with chunking progress',
-      backend: 'Streaming CSV & JSON parser with schema normalization',
+      description: 'Upload CSV, JSON, and Excel (.xlsx, .xls) datasets with automatic delimiter detection, column header normalization, and datatype inference.',
+      frontend: 'Drag-and-drop file uploader with chunking progress, supporting CSV, JSON, and XLSX',
+      backend: 'Streaming CSV parser, JSON parser, and ExcelJS workbook extractor',
       credentials: 'Tenant-scoped storage with path traversal protection',
       testing: 'Header validation & row count estimation on upload'
     },

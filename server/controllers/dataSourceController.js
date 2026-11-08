@@ -218,7 +218,7 @@ const createDataSource = async (req, res, next) => {
       });
     }
 
-    const validTypes = ['csv', 'json', 'postgresql', 'mysql', 'mongodb', 'rest_api', 'api'];
+    const validTypes = ['csv', 'json', 'excel', 'xlsx', 'postgresql', 'mysql', 'mongodb', 'rest_api', 'api'];
     const normalizedType = type ? type.toLowerCase() : '';
     if (!type || !validTypes.includes(normalizedType)) {
       return res.status(400).json({
@@ -652,7 +652,7 @@ const uploadDataSource = async (req, res, next) => {
     if (!file) {
       return res.status(400).json({
         success: false,
-        message: 'No file uploaded. Please provide a CSV or JSON file.'
+        message: 'No file uploaded. Please provide a CSV, JSON, or Excel (.xlsx) file.'
       });
     }
 
@@ -694,7 +694,7 @@ const uploadDataSource = async (req, res, next) => {
     const ext = path.extname(originalName).toLowerCase();
     const sourceName = req.body.name?.trim() || path.basename(originalName, ext);
     const description = req.body.description?.trim() || `Imported from ${originalName}`;
-    const fileType = ext === '.json' ? 'json' : 'csv';
+    const fileType = ext === '.json' ? 'json' : (ext === '.xlsx' || ext === '.xls') ? 'excel' : 'csv';
 
     const fileInput = file.path || file.buffer;
 

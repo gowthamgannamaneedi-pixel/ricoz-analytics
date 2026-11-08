@@ -89,6 +89,7 @@ export default function DataSourcesPage() {
   const [syncingId, setSyncingId] = useState(null);
   const [actionMenuId, setActionMenuId] = useState(null);
   const [actionMenuPosition, setActionMenuPosition] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
 
 
   // Refs for outside click & focus restoration

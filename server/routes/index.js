@@ -36,9 +36,9 @@ router.get('/test-email/brevo-logs', (req, res) => require('../controllers/demoR
 // Protected Workspace routes with 14-day trial & active subscription gating
 const protectedWorkspace = [authenticateToken, requireActiveSubscription];
 
-router.use('/data-sources', ...protectedWorkspace, dataSourceRoutes);
-router.use('/datasources', ...protectedWorkspace, dataSourceRoutes);
-router.use('/datasets', ...protectedWorkspace, datasetRoutes);
+router.use('/data-sources', authenticateToken, dataSourceRoutes);
+router.use('/datasources', authenticateToken, dataSourceRoutes);
+router.use('/datasets', authenticateToken, datasetRoutes);
 router.use('/analytics', ...protectedWorkspace, analyticsRoutes);
 router.use('/dataset-relationships', ...protectedWorkspace, relationshipRoutes);
 router.use('/relationships', ...protectedWorkspace, relationshipRoutes);

@@ -37,14 +37,14 @@ const storage = multer.diskStorage({
 });
 
 /**
- * File filter to accept only CSV and JSON files
+ * File filter to accept CSV, JSON, and Excel (.xlsx, .xls) files
  */
 const fileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
-  const allowedExts = ['.csv', '.json'];
+  const allowedExts = ['.csv', '.json', '.xlsx', '.xls'];
 
   if (!allowedExts.includes(ext)) {
-    const error = new Error('Invalid file type. Only CSV (.csv) and JSON (.json) files are permitted.');
+    const error = new Error('Invalid file type. Only CSV (.csv), JSON (.json), and Excel (.xlsx, .xls) files are permitted.');
     error.code = 'INVALID_FILE_TYPE';
     return cb(error, false);
   }

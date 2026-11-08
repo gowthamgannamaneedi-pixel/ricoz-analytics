@@ -32,11 +32,8 @@ export default function ProtectedRoute() {
     return <Navigate to="/auth/verify-email" state={{ email: user.email }} replace />;
   }
 
-  // If 14-day trial has expired and user is not already on the billing page, redirect to billing
-  const isBillingPath = location.pathname.startsWith('/billing');
-  if (isTrialExpired && !isBillingPath) {
-    return <Navigate to="/billing" state={{ trialExpired: true, from: location }} replace />;
-  }
+  // Note: Expired subscriptions are permitted in read-only preserved mode across the app.
+  // Ingestion and write actions are strictly gated via HTTP 402 and modal banners.
 
   return <Outlet />;
 }

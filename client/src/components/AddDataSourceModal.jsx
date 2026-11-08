@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, FileSpreadsheet, FileCode, Database, CheckCircle2, AlertCircle, Loader2, ArrowRight, Server, Key, ShieldCheck, RefreshCw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, FileSpreadsheet, FileCode, Database, CheckCircle2, AlertCircle, AlertTriangle, Loader2, ArrowRight, Server, Key, ShieldCheck, RefreshCw } from 'lucide-react';
 import FileUpload from './FileUpload';
 import UploadProgress from './UploadProgress';
 import { API_BASE_URL, testApiDataSource, testMongoDataSource, createDataSource, uploadDataSourceFile, MAX_UPLOAD_SIZE_MB, getActiveOrganizationId } from '../services/api';
@@ -9,17 +10,19 @@ import { Select } from './ui/Select';
 
 /**
  * Enterprise Add Data Source Modal
- * Supports CSV/JSON file ingestion, PostgreSQL databases, MongoDB, and REST API connectors
+ * Supports CSV/JSON/Excel file ingestion, PostgreSQL databases, MongoDB, and REST API connectors
  */
 export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: propToken }) {
+  const navigate = useNavigate();
   const auth = useAuth();
   const user = auth?.user || null;
   const isAuthLoading = Boolean(auth?.isLoading);
   const activeOrgId = auth?.activeOrganizationId || user?.organization_id || getActiveOrganizationId();
   const isOrgReady = Boolean(!isAuthLoading && activeOrgId);
   const token = propToken || auth?.token;
+  const isTrialExpired = Boolean(auth?.isTrialExpired);
 
-  const [activeTab, setActiveTab] = useState('csv'); // 'csv' | 'json' | 'postgresql' | 'mongodb' | 'rest_api'
+  const [activeTab, setActiveTab] = useState('csv'); // 'csv' | 'json' | 'excel' | 'postgresql' | 'mongodb' | 'rest_api'
 
   // File Upload State
   const [selectedFile, setSelectedFile] = useState(null);
@@ -77,6 +80,8 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
     dataKey: '',
     headers: ''
   });
+  const [isTestingApi, setIsTestingApi] = useState(false);
+  const [apiTestResult, setApiTestResult] = useState(null);
   // Lock body scroll and handle Escape key while modal is open
   useEffect(() => {
     if (!isOpen) return;
@@ -539,6 +544,21 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
 
           <button
             type="button"
+            id="modal-tab-excel"
+            onClick={() => { setActiveTab('excel'); setError(''); }}
+            disabled={isProcessing}
+            className={`flex items-center gap-2 py-3 px-1 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'excel'
+                ? 'border-[#E11D48] text-[#FB7185] dark:border-[#E11D48] dark:text-[#FB7185] bg-transparent font-bold'
+                : 'border-transparent text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#CBD5E1] bg-transparent'
+            }`}
+          >
+            <FileSpreadsheet className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <span>Excel (.xlsx)</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => { setActiveTab('json'); setError(''); }}
             disabled={isProcessing}
             className={`flex items-center gap-2 py-3 px-1 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
@@ -618,6 +638,30 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
             </div>
           )}
 
+          {isTrialExpired && (
+            <div className="flex items-center justify-between p-3.5 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 text-xs">
+              <div className="flex items-center gap-2.5">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                <div>
+                  <p className="font-bold">14-Day Free Trial Expired</p>
+                  <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90 mt-0.5">
+                    Data ingestion and connection creation are locked on expired accounts. Upgrade to restore full connectivity.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  handleClose();
+                  navigate('/billing');
+                }}
+                className="ml-3 shrink-0 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition cursor-pointer shadow-xs"
+              >
+                Choose Plan →
+              </button>
+            </div>
+          )}
+
           {error && (
             <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50/80 p-3.5 text-xs text-rose-700">
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600" />
@@ -625,12 +669,12 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
             </div>
           )}
 
-          {/* 1. CSV or JSON File Upload */}
-          {(activeTab === 'csv' || activeTab === 'json') && (
+          {/* 1. CSV, JSON, or Excel File Upload */}
+          {(activeTab === 'csv' || activeTab === 'json' || activeTab === 'excel') && (
             <form onSubmit={handleFileUploadSubmit} noValidate className="space-y-4">
               <div>
                 <FileUpload
-                  accept={activeTab === 'csv' ? '.csv' : '.json'}
+                  accept={activeTab === 'csv' ? '.csv' : activeTab === 'excel' ? '.xlsx, .xls' : '.json'}
                   maxSizeMb={MAX_UPLOAD_SIZE_MB}
                   selectedFile={selectedFile}
                   onFileSelect={handleFileSelect}
@@ -700,7 +744,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
                 </button>
                 <button
                   type="submit"
-                  disabled={isProcessing || !isOrgReady || !selectedFile || !sourceName.trim()}
+                  disabled={isProcessing || !isOrgReady || !selectedFile || !sourceName.trim() || isTrialExpired}
                   id="submit-file-source-btn"
                   className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs cursor-pointer"
                 >
@@ -709,6 +753,8 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       <span>Ingesting Dataset...</span>
                     </>
+                  ) : isTrialExpired ? (
+                    <span>Subscription Required</span>
                   ) : (
                     <>
                       <span>Upload & Process</span>
@@ -899,7 +945,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
                   </button>
                   <button
                     type="submit"
-                    disabled={isProcessing || !isOrgReady || !isPgValid}
+                    disabled={isProcessing || !isOrgReady || !isPgValid || isTrialExpired}
                     id="submit-pg-source-btn"
                     className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs cursor-pointer"
                   >
@@ -908,6 +954,8 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         <span>Connecting...</span>
                       </>
+                    ) : isTrialExpired ? (
+                      <span>Subscription Required</span>
                     ) : (
                       <>
                         <span>Connect Source</span>
@@ -1194,7 +1242,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
                   </button>
                   <button
                     type="submit"
-                    disabled={isProcessing || !isOrgReady || !isMongoValid}
+                    disabled={isProcessing || !isOrgReady || !isMongoValid || isTrialExpired}
                     id="submit-mongo-source-btn"
                     className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs cursor-pointer"
                   >
@@ -1203,6 +1251,8 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         <span>Connecting...</span>
                       </>
+                    ) : isTrialExpired ? (
+                      <span>Subscription Required</span>
                     ) : (
                       <>
                         <span>Connect Source</span>
@@ -1455,7 +1505,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
                   </button>
                   <button
                     type="submit"
-                    disabled={isProcessing || !isOrgReady || !isApiValid}
+                    disabled={isProcessing || !isOrgReady || !isApiValid || isTrialExpired}
                     id="submit-api-source-btn"
                     className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50 shadow-2xs cursor-pointer"
                   >
@@ -1464,6 +1514,8 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         <span>Connecting & Ingesting...</span>
                       </>
+                    ) : isTrialExpired ? (
+                      <span>Subscription Required</span>
                     ) : (
                       <>
                         <span>Connect & Ingest</span>
