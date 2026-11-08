@@ -71,6 +71,7 @@ import ShareModal from '../components/ShareModal';
 import AlertModal from '../components/AlertModal';
 import MetricModal from '../components/MetricModal';
 import ReportModal from '../components/ReportModal';
+import AddToReportModal from '../components/AddToReportModal';
 import { Button } from '../components/ui/Button';
 import { ResetButton } from '../components/ui/ResetButton';
 import { RefreshButton } from '../components/ui/RefreshButton';
@@ -326,7 +327,7 @@ export default function AIInsightsPage() {
   // Creation Modals
   const [alertModalConfig, setAlertModalConfig] = useState({ isOpen: false, prefilled: null });
   const [metricModalConfig, setMetricModalConfig] = useState({ isOpen: false, prefilled: null });
-  const [reportModalConfig, setReportModalConfig] = useState({ isOpen: false, prefilled: null });
+  const [addToReportModalConfig, setAddToReportModalConfig] = useState({ isOpen: false, insight: null });
 
   const exportMenuRef = useRef(null);
 
@@ -644,12 +645,9 @@ export default function AIInsightsPage() {
         }
       });
     } else {
-      setReportModalConfig({
+      setAddToReportModalConfig({
         isOpen: true,
-        prefilled: {
-          title: `Report: ${ins.title}`,
-          description: ins.summary
-        }
+        insight: ins
       });
     }
   };
@@ -1423,39 +1421,73 @@ export default function AIInsightsPage() {
                     </span>
                   </div>
 
-                  <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
-                    <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Current Value</span>
-                    <span className="font-bold text-emerald-700 dark:text-[#6EE7B7] font-mono block">
-                      {selectedInsightForDetails.evidence?.currentValue !== undefined
-                        ? selectedInsightForDetails.evidence.currentValue.toLocaleString()
-                        : 'N/A'}
-                    </span>
-                  </div>
+                  {selectedInsightForDetails.type === 'anomaly' ? (
+                    <>
+                      <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
+                        <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Target Metric</span>
+                        <span className="font-bold text-emerald-700 dark:text-[#6EE7B7] font-mono block">
+                          {selectedInsightForDetails.evidence?.targetColumn || selectedInsightForDetails.evidence?.metric || 'revenue'}
+                        </span>
+                      </div>
 
-                  <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
-                    <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Comparison</span>
-                    <span className="font-bold text-slate-700 dark:text-[#CBD5E1] font-mono block">
-                      {selectedInsightForDetails.evidence?.comparisonValue !== undefined
-                        ? selectedInsightForDetails.evidence.comparisonValue.toLocaleString()
-                        : 'N/A'}
-                    </span>
-                  </div>
+                      <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
+                        <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Outliers Detected</span>
+                        <span className="font-bold text-rose-700 dark:text-[#FB7185] font-mono block">
+                          {selectedInsightForDetails.evidence?.recordsAnalyzed || selectedInsightForDetails.evidence?.anomalies?.length || 'Flagged'}
+                        </span>
+                      </div>
 
-                  <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
-                    <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Change %</span>
-                    <span className="font-bold text-rose-700 dark:text-[#FB7185] font-mono block">
-                      {selectedInsightForDetails.evidence?.changePercent !== undefined
-                        ? `${selectedInsightForDetails.evidence.changePercent}%`
-                        : 'Verified'}
-                    </span>
-                  </div>
+                      <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
+                        <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Model</span>
+                        <span className="font-bold text-slate-800 dark:text-[#F8FAFC] break-words block leading-snug">
+                          {selectedInsightForDetails.evidence?.modelName || 'Statistical Dispersion'}
+                        </span>
+                      </div>
 
-                  <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
-                    <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Period</span>
-                    <span className="font-bold text-slate-800 dark:text-[#F8FAFC] break-words block leading-snug">
-                      {selectedInsightForDetails.evidence?.period || 'Q4 Observation'}
-                    </span>
-                  </div>
+                      <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
+                        <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Threshold</span>
+                        <span className="font-bold text-amber-700 dark:text-amber-400 font-mono block">
+                          &gt; 2.5 σ Dispersion
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
+                        <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Current Value</span>
+                        <span className="font-bold text-emerald-700 dark:text-[#6EE7B7] font-mono block">
+                          {selectedInsightForDetails.evidence?.currentValue !== undefined
+                            ? selectedInsightForDetails.evidence.currentValue.toLocaleString()
+                            : (selectedInsightForDetails.evidence?.current_value !== undefined ? selectedInsightForDetails.evidence.current_value.toLocaleString() : 'Verified')}
+                        </span>
+                      </div>
+
+                      <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
+                        <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Comparison</span>
+                        <span className="font-bold text-slate-700 dark:text-[#CBD5E1] font-mono block">
+                          {selectedInsightForDetails.evidence?.comparisonValue !== undefined
+                            ? selectedInsightForDetails.evidence.comparisonValue.toLocaleString()
+                            : (selectedInsightForDetails.evidence?.previous_value !== undefined ? selectedInsightForDetails.evidence.previous_value.toLocaleString() : 'Baseline')}
+                        </span>
+                      </div>
+
+                      <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
+                        <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Change %</span>
+                        <span className="font-bold text-rose-700 dark:text-[#FB7185] font-mono block">
+                          {selectedInsightForDetails.evidence?.changePercent !== undefined
+                            ? `${selectedInsightForDetails.evidence.changePercent}%`
+                            : 'Verified'}
+                        </span>
+                      </div>
+
+                      <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
+                        <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Period</span>
+                        <span className="font-bold text-slate-800 dark:text-[#F8FAFC] break-words block leading-snug">
+                          {selectedInsightForDetails.evidence?.period || 'Q4 Observation'}
+                        </span>
+                      </div>
+                    </>
+                  )}
 
                   <div className="bg-white dark:bg-[#0F172A] p-2.5 rounded-lg border border-slate-200 dark:border-[#334155]">
                     <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] uppercase font-semibold block">Impact Score</span>
@@ -1550,9 +1582,24 @@ export default function AIInsightsPage() {
                     setSelectedInsightForDetails(null);
                     handleRightAction(ins);
                   }}
-                  className="px-3.5 py-1.5 rounded-xl bg-rose-600 dark:bg-[#E11D48] text-white text-xs font-semibold hover:bg-rose-700 transition cursor-pointer shadow-xs"
+                  className="px-3.5 py-1.5 rounded-xl bg-rose-600 dark:bg-[#E11D48] text-white text-xs font-semibold hover:bg-rose-700 transition cursor-pointer shadow-xs flex items-center gap-1.5"
                 >
-                  Take Action
+                  {selectedInsightForDetails.severity === 'critical' || selectedInsightForDetails.type === 'operational' ? (
+                    <>
+                      <Bell className="w-3.5 h-3.5" />
+                      <span>Create Alert</span>
+                    </>
+                  ) : selectedInsightForDetails.type === 'growth' || selectedInsightForDetails.type === 'trend' ? (
+                    <>
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Create KPI</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Add to Report</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -1690,23 +1737,11 @@ export default function AIInsightsPage() {
         }}
       />
 
-      <ReportModal
-        isOpen={reportModalConfig.isOpen}
-        onClose={() => setReportModalConfig({ isOpen: false, prefilled: null })}
-        dashboards={dashboards}
-        report={reportModalConfig.prefilled}
-        onSave={async (payload) => {
-          try {
-            if (createReport) {
-              await createReport(payload);
-            }
-            setReportModalConfig({ isOpen: false, prefilled: null });
-            showToast('Report created successfully.');
-          } catch (err) {
-            console.error('Create report failed:', err);
-            showToast('Failed to create report.');
-          }
-        }}
+      <AddToReportModal
+        isOpen={addToReportModalConfig.isOpen}
+        onClose={() => setAddToReportModalConfig({ isOpen: false, insight: null })}
+        insight={addToReportModalConfig.insight}
+        onSuccess={(msg) => showToast(msg)}
       />
     </div>
   );

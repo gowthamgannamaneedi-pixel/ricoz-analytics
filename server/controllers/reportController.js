@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const ReportModel = require('../models/reportModel');
 const DashboardModel = require('../models/dashboardModel');
+const InsightModel = require('../models/insightModel');
 const reportService = require('../services/reportService');
 const schedulerService = require('../services/schedulerService');
 const { logAuditEvent, AUDIT_ACTIONS } = require('../services/auditService');
@@ -578,6 +579,132 @@ const reportController = {
       return res.status(500).json({
         success: false,
         message: 'Failed to export dashboard data',
+        error: err.message
+      });
+    }
+  },
+
+  /**
+   * Associate an AI Insight with a Report
+   * POST /api/reports/:id/insights
+   */
+  async addInsightToReport(req, res) {
+    try {
+      const { id: reportId } = req.params;
+      const organizationId = req.user.organization_id;
+      const { insightId } = req.body;
+
+      if (!insightId) {
+        return res.status(400).json({
+          success: false,
+          message: 'insightId is required.'
+        });
+      }
+
+      // 1. Verify report belongs to tenant
+      const report = await ReportModel.findByIdAndOrgId(reportId, organizationId);
+      if (!report) {
+        return res.status(404).json({
+          success: false,
+          message: `Report #${reportId} not found or access denied.`
+        });
+      }
+
+      // 2. Verify insight belongs to tenant
+      let insight = await InsightModel.findByIdAndOrgId(insightId, organizationId);
+      if (!insight) {
+        // Fallback check with user permissions
+        insight = await InsightModel.findById(insightId);
+        if (!insight || (insight.organization_id !== organizationId && req.user.role !== 'admin' && req.user.role !== 'superadmin')) {
+          return res.status(404).json({
+            success: false,
+            message: `Insight #${insightId} not found or access denied.`
+          });
+        }
+      }
+
+      // 3. Link insight to report
+      const updatedReport = await ReportModel.addInsight(reportId, organizationId, insightId);
+
+      return res.status(200).json({
+        success: true,
+        message: `Insight "${insight.title}" successfully added to report "${report.title}".`,
+        report: updatedReport,
+        insight
+      });
+    } catch (err) {
+      console.error('[reportController.addInsightToReport] Error:', err);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to attach insight to report.',
+        error: err.message
+      });
+    }
+  },
+
+  /**
+   * Get all insights associated with a report
+   * GET /api/reports/:id/insights
+   */
+  async getReportInsights(req, res) {
+    try {
+      const { id: reportId } = req.params;
+      const organizationId = req.user.organization_id;
+
+      const report = await ReportModel.findByIdAndOrgId(reportId, organizationId);
+      if (!report) {
+        return res.status(404).json({
+          success: false,
+          message: `Report #${reportId} not found or access denied.`
+        });
+      }
+
+      const insights = await ReportModel.getReportInsights(reportId, organizationId);
+
+      return res.status(200).json({
+        success: true,
+        count: insights.length,
+        insights
+      });
+    } catch (err) {
+      console.error('[reportController.getReportInsights] Error:', err);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to retrieve report insights.',
+        error: err.message
+      });
+    }
+  },
+
+  /**
+   * Remove an insight from a report
+   * DELETE /api/reports/:id/insights/:insightId
+   */
+  async removeInsightFromReport(req, res) {
+    try {
+      const { id: reportId, insightId } = req.params;
+      const organizationId = req.user.organization_id;
+
+      const report = await ReportModel.findByIdAndOrgId(reportId, organizationId);
+      if (!report) {
+        return res.status(404).json({
+          success: false,
+          message: `Report #${reportId} not found or access denied.`
+        });
+      }
+
+      const updatedReport = await ReportModel.removeInsight(reportId, organizationId, insightId);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Insight removed from report.',
+        report: updatedReport
+      });
+    } catch (err) {
+      console.error('[reportController.removeInsightFromReport] Error:', err);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to remove insight from report.',
         error: err.message
       });
     }

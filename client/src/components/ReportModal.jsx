@@ -40,6 +40,7 @@ export default function ReportModal({
   report = null,
   dashboards = []
 }) {
+  const safeDashboards = Array.isArray(dashboards) ? dashboards : [];
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dashboardId, setDashboardId] = useState('');
@@ -94,7 +95,7 @@ export default function ReportModal({
     } else {
       setTitle('');
       setDescription('');
-      setDashboardId(dashboards.length > 0 ? dashboards[0].id : '');
+      setDashboardId(safeDashboards.length > 0 ? safeDashboards[0].id : '');
       setFormat('pdf');
       setSchedulePreset('weekly');
       setCustomCron('');
@@ -257,7 +258,7 @@ export default function ReportModal({
                 placeholder="Executive Organization KPIs (All)"
               >
                 <option value="">Executive Organization KPIs (All)</option>
-                {dashboards.map((dash) => (
+                {safeDashboards.map((dash) => (
                   <option key={dash.id} value={dash.id}>
                     {dash.title} {dash.is_default ? '(Default)' : ''}
                   </option>

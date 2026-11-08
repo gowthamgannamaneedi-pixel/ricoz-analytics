@@ -4809,6 +4809,17 @@ async function initDb() {
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
 
+    ALTER TABLE reports ADD COLUMN IF NOT EXISTS insights JSONB DEFAULT '[]'::jsonb;
+
+    CREATE TABLE IF NOT EXISTS report_insights (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      report_id UUID NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+      insight_id UUID NOT NULL REFERENCES ai_insights(id) ON DELETE CASCADE,
+      organization_id UUID NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(report_id, insight_id)
+    );
+
     CREATE TABLE IF NOT EXISTS report_executions (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       report_id UUID NOT NULL REFERENCES reports(id) ON DELETE CASCADE,

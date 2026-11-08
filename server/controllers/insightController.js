@@ -178,7 +178,7 @@ const insightController = {
         });
       }
 
-      const insight = await insightService.getInsightById(id, organizationId);
+      const insight = await insightService.getInsightById(id, organizationId, req.user);
       if (!insight) {
         return res.status(404).json({
           success: false,

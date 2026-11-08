@@ -579,7 +579,17 @@ class InsightService {
     }
 
     // 3. Evaluate Machine Learning Forecasts & Anomalies (Phase 11)
-    for (const fc of targetForecasts.slice(0, 5)) {
+    // Eliminate duplicate evaluations across historical forecast runs by grouping by (dataset_id, target_column)
+    const latestForecastsMap = new Map();
+    for (const fc of targetForecasts) {
+      const key = `${fc.dataset_id || 'null'}:${String(fc.target_column || 'metric').trim().toLowerCase()}`;
+      if (!latestForecastsMap.has(key)) {
+        latestForecastsMap.set(key, fc);
+      }
+    }
+    const deduplicatedTargetForecasts = Array.from(latestForecastsMap.values()).slice(0, 5);
+
+    for (const fc of deduplicatedTargetForecasts) {
       try {
         const predictions = Array.isArray(fc.predictions) ? fc.predictions : [];
         const anomalies = Array.isArray(fc.anomalies) ? fc.anomalies : [];
@@ -787,7 +797,20 @@ class InsightService {
     const processedInsights = [];
     let hasNewAIGeneration = Boolean(options.forceFresh);
 
-    for (const rawIns of detectedInsights) {
+    // In-memory deduplication of detected candidates before DB persistence
+    const uniqueDetected = [];
+    const seenDetectedKeys = new Set();
+    for (const item of detectedInsights) {
+      const normTitle = String(item.title || '').trim().toLowerCase();
+      const dsKey = String(item.source_metadata?.dataset_id || item.evidence?.datasetId || '');
+      const key = `${item.type}:${dsKey}:${normTitle}`;
+      if (!seenDetectedKeys.has(key)) {
+        seenDetectedKeys.add(key);
+        uniqueDetected.push(item);
+      }
+    }
+
+    for (const rawIns of uniqueDetected) {
       const ins = insightPrioritizationService.enrichInsight(rawIns);
 
       try {
@@ -916,36 +939,78 @@ class InsightService {
                                     ins.source_metadata?.dashboard_id || 
                                     null;
 
-          const saved = await InsightModel.create({
-            organizationId,
-            userId: options.userId || null,
-            datasetId: datasetIdToSave,
-            metricId: metricIdToSave,
-            dashboardId: dashboardIdToSave,
-            type: ins.type,
-            title: ins.title,
-            summary: ins.summary,
-            severity: dbSeverity,
-            confidence: ins.confidence || 0.95,
-            evidence: ins.evidence || {},
-            sourceMetadata: ins.source_metadata || {},
-            recommendation: ins.recommendation || {},
-            status: 'active'
-          });
-          processedInsights.push(insightPrioritizationService.enrichInsight(saved));
+          let saved = null;
+          try {
+            saved = await InsightModel.create({
+              organizationId,
+              userId: options.userId || null,
+              datasetId: datasetIdToSave,
+              metricId: metricIdToSave,
+              dashboardId: dashboardIdToSave,
+              type: ins.type,
+              title: ins.title,
+              summary: ins.summary,
+              severity: dbSeverity,
+              confidence: ins.confidence || 0.95,
+              evidence: ins.evidence || {},
+              sourceMetadata: ins.source_metadata || {},
+              recommendation: ins.recommendation || {},
+              status: 'active'
+            });
+          } catch (createErr) {
+            console.error('[InsightService] First insert failed, attempting fallback with sanitized FKs:', createErr.message);
+            saved = await InsightModel.create({
+              organizationId,
+              userId: null,
+              datasetId: null,
+              metricId: null,
+              dashboardId: null,
+              type: ins.type,
+              title: ins.title,
+              summary: ins.summary,
+              severity: dbSeverity,
+              confidence: ins.confidence || 0.90,
+              evidence: ins.evidence || {},
+              sourceMetadata: ins.source_metadata || {},
+              recommendation: ins.recommendation || {},
+              status: 'active'
+            }).catch(fatalErr => {
+              console.error('[InsightService] Fatal persist failure:', fatalErr.message);
+              return null;
+            });
+          }
+
+          if (saved) {
+            processedInsights.push(insightPrioritizationService.enrichInsight(saved));
+          } else if (existing) {
+            processedInsights.push(insightPrioritizationService.enrichInsight(existing));
+          }
         } else {
-          processedInsights.push(insightPrioritizationService.enrichInsight({ id: crypto.randomUUID(), ...ins }));
+          processedInsights.push(insightPrioritizationService.enrichInsight(ins));
         }
       } catch (insErr) {
         console.warn('[InsightService] Insight processing notice:', insErr.message);
-        processedInsights.push(insightPrioritizationService.enrichInsight({ id: crypto.randomUUID(), ...ins }));
       }
     }
 
-    // 7. Deterministic Insight Ranking & Grounded Executive AI Briefing
-    const rawList = processedInsights.length > 0 ? processedInsights : detectedInsights;
+    // 7. Deterministic Insight Ranking & Deduplication
+    const rawList = processedInsights.length > 0 ? processedInsights : uniqueDetected;
+    
+    // Deduplicate rawList before ranking so no identical insight is displayed
+    const deduplicatedRaw = [];
+    const seenFinalKeys = new Set();
+    for (const item of rawList) {
+      const normTitle = String(item.title || '').trim().toLowerCase();
+      const dsKey = String(item.dataset_id || item.source_metadata?.dataset_id || item.evidence?.datasetId || '');
+      const key = `${item.type}:${dsKey}:${normTitle}`;
+      if (!seenFinalKeys.has(key)) {
+        seenFinalKeys.add(key);
+        deduplicatedRaw.push(item);
+      }
+    }
+
     const rankedInsights = insightPrioritizationService.rankInsights(
-      rawList.map(i => {
+      deduplicatedRaw.map(i => {
         const enriched = insightPrioritizationService.enrichInsight(i);
         if (!enriched.chart_recommendation) {
           const ev = enriched.evidence || {};
@@ -1120,11 +1185,31 @@ class InsightService {
   }
 
   /**
-   * Fetch single insight by ID
+   * Fetch single insight by ID with tenant resolution and cross-workspace access validation
    */
-  async getInsightById(id, organizationId) {
-    if (!id || !organizationId) throw new Error('ID and Organization ID are required.');
-    const insight = await InsightModel.findByIdAndOrgId(id, organizationId);
+  async getInsightById(id, organizationId, user = null) {
+    if (!id) throw new Error('ID is required.');
+    let insight = organizationId ? await InsightModel.findByIdAndOrgId(id, organizationId) : null;
+    if (!insight) {
+      const candidate = await InsightModel.findById(id);
+      if (candidate) {
+        if (candidate.organization_id === organizationId) {
+          insight = candidate;
+        } else if (user) {
+          try {
+            const tenantService = require('./tenantService');
+            const isMember = await tenantService.isUserMemberOfOrg(user.id, candidate.organization_id);
+            if (isMember || user.role === 'admin' || user.role === 'superadmin') {
+              insight = candidate;
+            }
+          } catch (_) {
+            if (user.role === 'admin' || user.role === 'superadmin') {
+              insight = candidate;
+            }
+          }
+        }
+      }
+    }
     return insight ? insightPrioritizationService.enrichInsight(insight) : null;
   }
 

@@ -24,6 +24,7 @@ const ReportModel = {
         r.recipients,
         r.last_generated_at,
         r.status,
+        COALESCE(r.insights, '[]'::jsonb) as insights,
         r.created_at,
         r.updated_at,
         u.name as creator_name,
@@ -61,6 +62,7 @@ const ReportModel = {
         r.recipients,
         r.last_generated_at,
         r.status,
+        COALESCE(r.insights, '[]'::jsonb) as insights,
         r.created_at,
         r.updated_at,
         u.name as creator_name,
@@ -440,6 +442,113 @@ const ReportModel = {
     `;
     const result = await db.query(sql, [organizationId, limit]);
     return result.rows || [];
+  },
+
+  /**
+   * Associate an AI Insight with a Report
+   * @param {string} reportId 
+   * @param {string} organizationId 
+   * @param {string} insightId 
+   * @returns {Promise<any>}
+   */
+  async addInsight(reportId, organizationId, insightId) {
+    // 1. Insert into report_insights junction table
+    const junctionSql = `
+      INSERT INTO report_insights (report_id, insight_id, organization_id)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (report_id, insight_id) DO NOTHING;
+    `;
+    await db.query(junctionSql, [reportId, insightId, organizationId]);
+
+    // 2. Fetch insight snapshot to embed in reports.insights JSONB
+    const insSql = `SELECT id, title, type, severity, summary, confidence, evidence FROM ai_insights WHERE id = $1;`;
+    const insRes = await db.query(insSql, [insightId]);
+    const insightRow = insRes.rows?.[0];
+
+    if (insightRow) {
+      const insightSnapshot = {
+        id: insightRow.id,
+        title: insightRow.title,
+        type: insightRow.type,
+        severity: insightRow.severity,
+        summary: insightRow.summary,
+        confidence: Number(insightRow.confidence || 0.95),
+        added_at: new Date().toISOString()
+      };
+
+      // Append snapshot to reports.insights if not already present
+      const updateReportSql = `
+        UPDATE reports
+        SET insights = (
+          CASE 
+            WHEN NOT (COALESCE(insights, '[]'::jsonb) @> jsonb_build_array(jsonb_build_object('id', $3::text)))
+            THEN COALESCE(insights, '[]'::jsonb) || jsonb_build_array($4::jsonb)
+            ELSE insights
+          END
+        ),
+        updated_at = NOW()
+        WHERE id = $1 AND organization_id = $2
+        RETURNING *;
+      `;
+      const updateRes = await db.query(updateReportSql, [
+        reportId,
+        organizationId,
+        insightId,
+        JSON.stringify(insightSnapshot)
+      ]);
+      return updateRes.rows?.[0] || null;
+    }
+
+    return this.findByIdAndOrgId(reportId, organizationId);
+  },
+
+  /**
+   * Get all insights associated with a report
+   * @param {string} reportId 
+   * @param {string} organizationId 
+   * @returns {Promise<Array<any>>}
+   */
+  async getReportInsights(reportId, organizationId) {
+    const sql = `
+      SELECT 
+        i.*,
+        ri.created_at as linked_to_report_at
+      FROM report_insights ri
+      JOIN ai_insights i ON i.id = ri.insight_id
+      WHERE ri.report_id = $1 AND ri.organization_id = $2
+      ORDER BY ri.created_at DESC;
+    `;
+    const result = await db.query(sql, [reportId, organizationId]);
+    return result.rows || [];
+  },
+
+  /**
+   * Remove an AI Insight association from a report
+   * @param {string} reportId 
+   * @param {string} organizationId 
+   * @param {string} insightId 
+   * @returns {Promise<any>}
+   */
+  async removeInsight(reportId, organizationId, insightId) {
+    const deleteSql = `
+      DELETE FROM report_insights
+      WHERE report_id = $1 AND organization_id = $2 AND insight_id = $3;
+    `;
+    await db.query(deleteSql, [reportId, organizationId, insightId]);
+
+    const updateSql = `
+      UPDATE reports
+      SET insights = (
+        SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb)
+        FROM jsonb_array_elements(COALESCE(insights, '[]'::jsonb)) elem
+        WHERE elem->>'id' <> $3
+      ),
+      updated_at = NOW()
+      WHERE id = $1 AND organization_id = $2
+      RETURNING *;
+    `;
+    const res = await db.query(updateSql, [reportId, organizationId, insightId]);
+    return res.rows?.[0] || null;
   }
 };
 

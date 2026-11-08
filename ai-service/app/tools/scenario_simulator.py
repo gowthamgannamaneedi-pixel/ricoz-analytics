@@ -166,3 +166,4 @@ class ScenarioSimulatorTool(BaseTool):
             "is_counterfactual_simulation": True,
             "deterministic": True
         }
+

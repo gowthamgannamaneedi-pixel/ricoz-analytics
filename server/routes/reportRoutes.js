@@ -12,7 +12,10 @@ const {
   getReportExecutions,
   getAllExecutions,
   downloadExecutionArtifact,
-  exportDashboardDirect
+  exportDashboardDirect,
+  addInsightToReport,
+  getReportInsights,
+  removeInsightFromReport
 } = require('../controllers/reportController');
 
 const collaborationController = require('../controllers/collaborationController');
@@ -26,6 +29,11 @@ router.get('/executions/all', getAllExecutions);
 router.get('/executions/:executionId/download', downloadExecutionArtifact);
 router.get('/:id', getReportById);
 router.get('/:id/executions', getReportExecutions);
+
+// Report AI Insights Association
+router.post('/:id/insights', requireRole('admin', 'manager', 'analyst'), addInsightToReport);
+router.get('/:id/insights', getReportInsights);
+router.delete('/:id/insights/:insightId', requireRole('admin', 'manager'), removeInsightFromReport);
 
 // Report Mutations (Admin, Manager, Analyst)
 router.post('/', requireRole('admin', 'manager', 'analyst'), createReport);

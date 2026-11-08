@@ -80,28 +80,95 @@ const InsightModel = {
     const cleanMetricId = metricId && isValidUuid(metricId) ? String(metricId).trim() : null;
     const cleanDashboardId = dashboardId && isValidUuid(dashboardId) ? String(dashboardId).trim() : null;
     const cleanUserId = userId && !isNaN(Number(userId)) ? Number(userId) : null;
+    const safeTitle = String(title || 'Insight').trim().slice(0, 255);
+    const safeConfidence = Math.min(1.0, Math.max(0.1, Number(confidence) || 0.95));
 
-    const result = await db.query(sql, [
-      id,
-      String(organizationId).trim(),
-      cleanUserId,
-      cleanDatasetId,
-      cleanMetricId,
-      cleanDashboardId,
-      type.toLowerCase(),
-      String(title).trim(),
-      String(summary).trim(),
-      severity.toLowerCase(),
-      Number(confidence),
-      typeof evidence === 'string' ? evidence : JSON.stringify(evidence || {}),
-      typeof sourceMetadata === 'string' ? sourceMetadata : JSON.stringify(sourceMetadata || {}),
-      typeof recommendation === 'string' ? recommendation : JSON.stringify(recommendation || {}),
-      status.toLowerCase(),
-      feedback || null,
-      expiresAt ? new Date(expiresAt) : null
-    ]);
+    try {
+      const result = await db.query(sql, [
+        id,
+        String(organizationId).trim(),
+        cleanUserId,
+        cleanDatasetId,
+        cleanMetricId,
+        cleanDashboardId,
+        type.toLowerCase(),
+        safeTitle,
+        String(summary || '').trim(),
+        severity.toLowerCase(),
+        safeConfidence,
+        typeof evidence === 'string' ? evidence : JSON.stringify(evidence || {}),
+        typeof sourceMetadata === 'string' ? sourceMetadata : JSON.stringify(sourceMetadata || {}),
+        typeof recommendation === 'string' ? recommendation : JSON.stringify(recommendation || {}),
+        status.toLowerCase(),
+        feedback || null,
+        expiresAt ? new Date(expiresAt) : null
+      ]);
 
-    return result.rows[0];
+      return result.rows[0];
+    } catch (insertErr) {
+      // If foreign key constraint fails (e.g. dataset, metric, dashboard, user doesn't exist),
+      // retry with nullable foreign keys sanitized to NULL while keeping full metadata in JSONB
+      if (insertErr.code === '23503' || String(insertErr.message).includes('foreign key constraint')) {
+        console.warn('[InsightModel.create] Retrying insert with sanitized null foreign keys:', insertErr.message);
+        const retryResult = await db.query(sql, [
+          id,
+          String(organizationId).trim(),
+          null, // user_id
+          null, // dataset_id
+          null, // metric_id
+          null, // dashboard_id
+          type.toLowerCase(),
+          safeTitle,
+          String(summary || '').trim(),
+          severity.toLowerCase(),
+          safeConfidence,
+          typeof evidence === 'string' ? evidence : JSON.stringify(evidence || {}),
+          typeof sourceMetadata === 'string' ? sourceMetadata : JSON.stringify(sourceMetadata || {}),
+          typeof recommendation === 'string' ? recommendation : JSON.stringify(recommendation || {}),
+          status.toLowerCase(),
+          feedback || null,
+          expiresAt ? new Date(expiresAt) : null
+        ]);
+        return retryResult.rows[0];
+      }
+      throw insertErr;
+    }
+  },
+
+  /**
+   * Find single insight by ID across tenants (for authorization validation)
+   * @param {string} id 
+   * @returns {Promise<any|null>}
+   */
+  async findById(id) {
+    if (!isValidUuid(id)) {
+      return null;
+    }
+
+    const sql = `
+      SELECT 
+        i.*,
+        COALESCE(i.dataset_id, CASE WHEN m.dataset_id::text ~ '^[0-9]+$' THEN m.dataset_id::text::integer ELSE NULL END) AS dataset_id,
+        COALESCE(d.name, md.name) AS dataset_name,
+        m.name AS metric_name
+      FROM ai_insights i
+      LEFT JOIN metrics m ON m.id = i.metric_id
+      LEFT JOIN datasets d ON CAST(d.id AS TEXT) = CAST(i.dataset_id AS TEXT)
+      LEFT JOIN datasets md ON CAST(md.id AS TEXT) = CAST(m.dataset_id AS TEXT)
+      WHERE i.id = $1
+      LIMIT 1;
+    `;
+
+    const result = await db.query(sql, [String(id).trim()]);
+    if (!result.rows || !result.rows[0]) return null;
+    const row = result.rows[0];
+    if (!row.dataset_id && row.evidence) {
+      const ev = typeof row.evidence === 'string' ? JSON.parse(row.evidence || '{}') : row.evidence;
+      if (ev && (ev.datasetId || ev.dataset_id)) {
+        row.dataset_id = Number(ev.datasetId || ev.dataset_id);
+      }
+    }
+    return row;
   },
 
   /**

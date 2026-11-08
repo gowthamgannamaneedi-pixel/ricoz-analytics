@@ -760,6 +760,37 @@ export async function createReport(reportData) {
 }
 
 /**
+ * Associate an AI Insight with a Report
+ * @param {string} reportId 
+ * @param {string} insightId 
+ */
+export async function addInsightToReport(reportId, insightId) {
+  return apiRequest(`/reports/${reportId}/insights`, {
+    method: 'POST',
+    body: JSON.stringify({ insightId })
+  });
+}
+
+/**
+ * Get all insights associated with a report
+ * @param {string} reportId 
+ */
+export async function getReportInsights(reportId) {
+  return apiRequest(`/reports/${reportId}/insights`);
+}
+
+/**
+ * Remove an insight from a report
+ * @param {string} reportId 
+ * @param {string} insightId 
+ */
+export async function removeInsightFromReport(reportId, insightId) {
+  return apiRequest(`/reports/${reportId}/insights/${insightId}`, {
+    method: 'DELETE'
+  });
+}
+
+/**
  * Update report configuration
  * @param {string} id 
  * @param {object} reportData 
