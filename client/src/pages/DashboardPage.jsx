@@ -188,13 +188,26 @@ export default function DashboardPage() {
   const [tableSortKey, setTableSortKey] = useState('');
   const [tableSortOrder, setTableSortOrder] = useState('desc');
   const [tableSearch, setTableSearch] = useState('');
+  const [debouncedTableSearch, setDebouncedTableSearch] = useState('');
 
   // Loading & Error States
-  const [isDatasetsLoading, setIsDatasetsLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isDatasetsLoading, setIsDatasetsLoading] = useState(true);
   const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState('');
   const activeReqIdRef = useRef(0);
+  const activeTableReqIdRef = useRef(0);
+  const analyticsAbortRef = useRef(null);
+  const tableAbortRef = useRef(null);
+
+  // Debounce tableSearch to prevent rapid HTTP floods on keystrokes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTableSearch(tableSearch);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [tableSearch]);
 
   // --------------------------------------------------------------------------
   // 1. Fetch Dashboards List
@@ -257,7 +270,11 @@ export default function DashboardPage() {
   // 4. Fetch Datasets for Overview & Widget Binding
   // --------------------------------------------------------------------------
   const fetchDatasets = async () => {
-    if (!effectiveToken) return;
+    if (!effectiveToken) {
+      setIsDatasetsLoading(false);
+      setIsInitialLoad(false);
+      return;
+    }
     try {
       setIsDatasetsLoading(true);
       const res = await fetch(`${API_BASE_URL}/datasets`, {
@@ -295,6 +312,7 @@ export default function DashboardPage() {
       // Preserve existing datasets during transient network errors
     } finally {
       setIsDatasetsLoading(false);
+      setIsInitialLoad(false);
     }
   };
 
@@ -398,6 +416,10 @@ export default function DashboardPage() {
   };
 
   const handleSelectDataset = (id) => {
+    if (String(id) === String(selectedDatasetId)) return;
+    if (analyticsAbortRef.current) analyticsAbortRef.current.abort();
+    if (tableAbortRef.current) tableAbortRef.current.abort();
+    setIsAnalyticsLoading(true);
     setSelectedDatasetId(id);
     if (id) {
       localStorage.setItem('ricoz_active_dataset_id', String(id));
@@ -407,6 +429,7 @@ export default function DashboardPage() {
     setFilters({ dateRange: 'all' });
     setTablePage(1);
     setTableSearch('');
+    setDebouncedTableSearch('');
   };
 
   const buildQueryParams = useCallback((additionalParams = {}) => {
@@ -439,22 +462,35 @@ export default function DashboardPage() {
 
   const fetchTableRows = async (id) => {
     if (!id || !effectiveToken) return;
+    if (tableAbortRef.current) tableAbortRef.current.abort();
+    const abortCtrl = new AbortController();
+    tableAbortRef.current = abortCtrl;
+    const reqId = ++activeTableReqIdRef.current;
+
     try {
       const rowsRes = await fetch(`${API_BASE_URL}/analytics/datasets/${id}/rows?${buildQueryParams({
         page: tablePage,
         limit: tableLimit,
         sortKey: tableSortKey,
         sortOrder: tableSortOrder,
-        search: tableSearch
-      })}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } });
+        search: debouncedTableSearch
+      })}`, { 
+        headers: { 'Authorization': `Bearer ${effectiveToken}` },
+        signal: abortCtrl.signal
+      });
+      if (reqId !== activeTableReqIdRef.current) return;
       if (rowsRes.ok) {
         const rowsJson = await rowsRes.json();
-        setTableData({
-          rows: rowsJson?.data?.rows || [],
-          totalCount: rowsJson?.data?.totalCount || 0
-        });
+        if (reqId === activeTableReqIdRef.current) {
+          setTableData({
+            rows: rowsJson?.data?.rows || [],
+            totalCount: rowsJson?.data?.totalCount || 0
+          });
+        }
       }
-    } catch (_) {}
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+    }
   };
 
   const fetchAnalytics = async (id, showLoading = true) => {
@@ -472,6 +508,10 @@ export default function DashboardPage() {
       return;
     }
 
+    if (analyticsAbortRef.current) analyticsAbortRef.current.abort();
+    const abortCtrl = new AbortController();
+    analyticsAbortRef.current = abortCtrl;
+
     const currentReqId = ++activeReqIdRef.current;
     if (showLoading) setIsAnalyticsLoading(true);
     setError('');
@@ -482,16 +522,18 @@ export default function DashboardPage() {
         limit: tableLimit,
         sortKey: tableSortKey,
         sortOrder: tableSortOrder,
-        search: tableSearch
+        search: debouncedTableSearch
       });
 
       // 1. High-speed unified overview endpoint (single pass)
       const [overviewRes, insightsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/analytics/datasets/${id}/overview?${queryStr}`, {
-          headers: { 'Authorization': `Bearer ${effectiveToken}` }
+          headers: { 'Authorization': `Bearer ${effectiveToken}` },
+          signal: abortCtrl.signal
         }),
         fetch(`${API_BASE_URL}/insights?datasetId=${id}`, {
-          headers: { 'Authorization': `Bearer ${effectiveToken}` }
+          headers: { 'Authorization': `Bearer ${effectiveToken}` },
+          signal: abortCtrl.signal
         }).catch(() => null)
       ]);
 
@@ -523,18 +565,18 @@ export default function DashboardPage() {
 
       // 2. Resilient fallback to individual parallel endpoints
       const [kpisRes, trendsRes, regionRes, channelRes, productRes, rowsRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/analytics/datasets/${id}/kpis?${queryStr}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } }),
-        fetch(`${API_BASE_URL}/analytics/datasets/${id}/trends?${queryStr}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } }),
-        fetch(`${API_BASE_URL}/analytics/datasets/${id}/breakdowns?${buildQueryParams({ groupBy: 'region' })}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } }),
-        fetch(`${API_BASE_URL}/analytics/datasets/${id}/breakdowns?${buildQueryParams({ groupBy: 'channel' })}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } }),
-        fetch(`${API_BASE_URL}/analytics/datasets/${id}/breakdowns?${buildQueryParams({ groupBy: 'product' })}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } }),
+        fetch(`${API_BASE_URL}/analytics/datasets/${id}/kpis?${queryStr}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` }, signal: abortCtrl.signal }),
+        fetch(`${API_BASE_URL}/analytics/datasets/${id}/trends?${queryStr}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` }, signal: abortCtrl.signal }),
+        fetch(`${API_BASE_URL}/analytics/datasets/${id}/breakdowns?${buildQueryParams({ groupBy: 'region' })}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` }, signal: abortCtrl.signal }),
+        fetch(`${API_BASE_URL}/analytics/datasets/${id}/breakdowns?${buildQueryParams({ groupBy: 'channel' })}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` }, signal: abortCtrl.signal }),
+        fetch(`${API_BASE_URL}/analytics/datasets/${id}/breakdowns?${buildQueryParams({ groupBy: 'product' })}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` }, signal: abortCtrl.signal }),
         fetch(`${API_BASE_URL}/analytics/datasets/${id}/rows?${buildQueryParams({
           page: tablePage,
           limit: tableLimit,
           sortKey: tableSortKey,
           sortOrder: tableSortOrder,
-          search: tableSearch
-        })}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` } })
+          search: debouncedTableSearch
+        })}`, { headers: { 'Authorization': `Bearer ${effectiveToken}` }, signal: abortCtrl.signal })
       ]);
 
       if (currentReqId !== activeReqIdRef.current) return;
@@ -578,7 +620,8 @@ export default function DashboardPage() {
           setError('Failed to load dataset telemetry analytics.');
         }
       }
-    } catch (_) {
+    } catch (err) {
+      if (err.name === 'AbortError') return;
       setKpiData(null);
       setTrendsData([]);
       setRegionBreakdown([]);
@@ -587,8 +630,10 @@ export default function DashboardPage() {
       setTableData({ rows: [], totalCount: 0 });
       setDecisionSignals([]);
     } finally {
-      setIsAnalyticsLoading(false);
-      setIsRefreshing(false);
+      if (currentReqId === activeReqIdRef.current) {
+        setIsAnalyticsLoading(false);
+        setIsRefreshing(false);
+      }
     }
   };
 
@@ -624,7 +669,7 @@ export default function DashboardPage() {
 
       if (datasetChanged || filtersChanged || isFirstLoadRef.current) {
         isFirstLoadRef.current = false;
-        fetchAnalytics(selectedDatasetId, false);
+        fetchAnalytics(selectedDatasetId, datasetChanged);
       } else {
         fetchTableRows(selectedDatasetId);
       }
@@ -636,7 +681,7 @@ export default function DashboardPage() {
       setProductBreakdown([]);
       setTableData({ rows: [], totalCount: 0 });
     }
-  }, [activeDashboardId, selectedDatasetId, filters, tablePage, tableLimit, tableSortKey, tableSortOrder, tableSearch]);
+  }, [activeDashboardId, selectedDatasetId, filters, tablePage, tableLimit, tableSortKey, tableSortOrder, debouncedTableSearch]);
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -1465,6 +1510,8 @@ export default function DashboardPage() {
           onTableSortChange={(key, order) => { setTableSortKey(key); setTableSortOrder(order); }}
           onTableSearchChange={(query) => { setTableSearch(query); setTablePage(1); }}
           isAnalyticsLoading={isAnalyticsLoading}
+          isDatasetsLoading={isDatasetsLoading}
+          isInitialLoad={isInitialLoad}
           navigate={navigate}
         />
       )}

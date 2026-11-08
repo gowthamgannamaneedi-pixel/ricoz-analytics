@@ -1091,6 +1091,12 @@ async function queryDatasetFilterOptions(dataset, dimensions, user = null) {
     };
   }
 
+  // Fast-path in-memory aggregation for standard datasets (eliminates disk streaming)
+  if (dataset.row_count && dataset.row_count <= 5000) {
+    const records = await loadDatasetRecords(dataset);
+    return getDatasetFilterOptions(records, dimensions);
+  }
+
   if (await hasPostgresDatasetRows(dataset.id)) {
     return await queryPostgresFilterOptions(dataset, dimensions, user);
   }

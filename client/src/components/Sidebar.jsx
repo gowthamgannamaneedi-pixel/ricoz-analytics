@@ -62,7 +62,7 @@ const navigation = [
  * @param {{ isOpen: boolean, isCollapsed: boolean, onToggleCollapse?: () => void, onCloseMobile?: () => void, onClose?: () => void }} props
  */
 export default function Sidebar({ isOpen, isCollapsed = false, onToggleCollapse, onCloseMobile, onClose }) {
-  const { user, logout, subscription, isTrialExpired, trialDaysRemaining } = useAuth();
+  const { user, logout, subscription, isTrialExpired, trialDaysRemaining, isLoading: authLoading } = useAuth();
   const trialCountdown = useTrialCountdown(subscription);
   const navigate = useNavigate();
 
@@ -88,6 +88,7 @@ export default function Sidebar({ isOpen, isCollapsed = false, onToggleCollapse,
   };
 
   const isExpired = isTrialExpired || trialCountdown.isTrialExpired;
+  const isLoadingSubscription = authLoading || trialCountdown.status === 'loading';
 
   return (
     <>
@@ -193,7 +194,16 @@ export default function Sidebar({ isOpen, isCollapsed = false, onToggleCollapse,
 
         {/* 14-Day Free Trial / License Upgrade Status Widget */}
         <div className="p-3 border-t border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827]">
-          {isExpired ? (
+          {isLoadingSubscription ? (
+            <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 space-y-2 animate-pulse">
+              <div className="flex items-center justify-between">
+                <div className="h-3.5 w-24 bg-slate-200 dark:bg-slate-800 rounded" />
+                <div className="h-3.5 w-12 bg-slate-200 dark:bg-slate-800 rounded" />
+              </div>
+              <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full" />
+              <div className="h-7 w-full bg-slate-200 dark:bg-slate-800 rounded-lg" />
+            </div>
+          ) : isExpired ? (
             <div className="p-3 rounded-xl border border-rose-200 dark:border-rose-900/80 bg-rose-50/80 dark:bg-[#2A1422] shadow-2xs space-y-2">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0" />

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTrialCountdown } from '../hooks/useTrialCountdown';
 import Notification from './ui/Notification';
 import Profile from './ui/Profile';
 import ThemeToggle from './ui/ThemeToggle';
@@ -54,7 +55,13 @@ const routeTitleMap = {
 export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onToggleSidebar }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, token, subscription, isTrialExpired, trialDaysRemaining } = useAuth();
+  const { user, token, subscription, isTrialExpired, trialDaysRemaining, isLoading: authLoading } = useAuth();
+  const trialCountdown = useTrialCountdown(subscription);
+
+  const isExpired = isTrialExpired || trialCountdown.isTrialExpired;
+  const isPaid = subscription?.status === 'active' || trialCountdown.isPaid;
+  const isSubscriptionLoading = authLoading || trialCountdown.status === 'loading';
+  const planName = trialCountdown.planName || subscription?.plan || user?.organization?.plan || 'Enterprise';
 
   const [activePopover, setActivePopover] = useState(null); // 'notifications' | 'profile' | null
   const [searchQuery, setSearchQuery] = useState('');
@@ -359,16 +366,40 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
           </span>
         </button>
 
-        {/* Enterprise Plan Badge */}
-        <button
-          type="button"
-          onClick={() => navigate('/billing')}
-          className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300 hover:bg-rose-50/90 hover:border-rose-300 hover:text-rose-700 dark:hover:bg-rose-950/50 dark:hover:text-rose-300 text-xs font-semibold transition cursor-pointer shadow-2xs"
-          title="Subscription active"
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          <span>Enterprise Plan</span>
-        </button>
+        {/* Dynamic Authoritative Plan & Subscription Status Badge */}
+        {isSubscriptionLoading ? (
+          <div className="hidden sm:flex items-center h-8 w-28 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+        ) : isExpired ? (
+          <button
+            type="button"
+            onClick={() => navigate('/billing')}
+            className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl bg-rose-50 dark:bg-rose-950/70 border border-rose-200 dark:border-rose-900/80 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900 text-xs font-bold transition cursor-pointer shadow-2xs"
+            title="Subscription expired — Click to choose plan"
+          >
+            <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+            <span>Trial Expired</span>
+          </button>
+        ) : isPaid ? (
+          <button
+            type="button"
+            onClick={() => navigate('/billing')}
+            className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-xs font-semibold transition cursor-pointer shadow-2xs capitalize"
+            title="Subscription active"
+          >
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            <span>{planName} Plan</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => navigate('/billing')}
+            className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl bg-blue-50/90 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-xs font-semibold transition cursor-pointer shadow-2xs"
+            title="Active Free Trial"
+          >
+            <span className="h-2 w-2 rounded-full bg-blue-500" />
+            <span>Free Trial ({trialCountdown.sidebarBadgeText || `${trialDaysRemaining}d left`})</span>
+          </button>
+        )}
 
         {/* Global Dark / Light Mode Switcher */}
         <ThemeToggle size="md" />

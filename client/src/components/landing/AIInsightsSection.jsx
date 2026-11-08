@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Sparkles, 
   Bot, 
@@ -8,12 +8,41 @@ import {
   Zap, 
   ShieldCheck,
   ChevronRight,
-  BellRing
+  BellRing,
+  Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function AIInsightsSection({ onOpenDemo }) {
   const [activeQueryIndex, setActiveQueryIndex] = useState(0);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const answerRef = useRef(null);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const handleSelectQuery = (idx) => {
+    if (isGenerating || activeQueryIndex === idx) return;
+    setIsGenerating(true);
+    setActiveQueryIndex(idx);
+
+    // Immediately ensure answer section stays within viewport
+    setTimeout(() => {
+      answerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 60);
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setIsGenerating(false);
+      setTimeout(() => {
+        answerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
+    }, 320);
+  };
 
   const queryDemos = [
     {
@@ -127,88 +156,119 @@ export default function AIInsightsSection({ onOpenDemo }) {
               </div>
 
               {/* Suggested Business Questions */}
-              <div className="mb-5 space-y-2.5">
-                <div className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-                  Select a business question:
+              <div className="mb-4 space-y-2">
+                <div className="flex items-center justify-between text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                  <span>Select a business question:</span>
+                  {isGenerating && (
+                    <span className="text-xs font-mono font-bold text-red-600 dark:text-red-400 flex items-center gap-1 normal-case">
+                      <Loader2 size={12} className="animate-spin" />
+                      <span>Synthesizing...</span>
+                    </span>
+                  )}
                 </div>
                 <div className="flex flex-col gap-2">
-                  {queryDemos.map((q, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setActiveQueryIndex(idx)}
-                      className={`w-full text-left p-3.5 rounded-xl text-sm sm:text-[15px] font-medium transition-all duration-150 flex items-center justify-between cursor-pointer ${
-                        activeQueryIndex === idx
-                          ? 'bg-red-600 text-white shadow-md shadow-red-600/25 font-semibold'
-                          : 'bg-white dark:bg-slate-800/90 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-red-300 dark:hover:border-slate-600 shadow-2xs'
-                      }`}
-                    >
-                      <span className="truncate pr-2">"{q.prompt}"</span>
-                      <span className={`text-xs font-mono uppercase px-2.5 py-0.5 rounded font-bold shrink-0 ${
-                        activeQueryIndex === idx
-                          ? 'bg-white/20 text-white'
-                          : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                      }`}>
-                        {q.category}
-                      </span>
-                    </button>
-                  ))}
+                  {queryDemos.map((q, idx) => {
+                    const isSelected = activeQueryIndex === idx;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        disabled={isGenerating}
+                        onClick={() => handleSelectQuery(idx)}
+                        className={`w-full text-left p-3 sm:p-3.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 flex items-center justify-between cursor-pointer ${
+                          isGenerating ? 'cursor-not-allowed opacity-90' : ''
+                        } ${
+                          isSelected
+                            ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md shadow-red-600/30 font-bold ring-2 ring-red-400/50'
+                            : 'bg-white dark:bg-slate-800/90 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-red-300 dark:hover:border-slate-600 shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-800'
+                        }`}
+                      >
+                        <span className="truncate pr-2 font-medium">"{q.prompt}"</span>
+                        <span className={`text-[11px] font-mono uppercase px-2 py-0.5 rounded font-bold shrink-0 ${
+                          isSelected
+                            ? 'bg-white/20 text-white'
+                            : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                        }`}>
+                          {q.category}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Synthesized Answer Card */}
-              <div className="bg-white dark:bg-slate-950 rounded-2xl p-5 sm:p-6 border border-slate-200/90 dark:border-slate-800 shadow-xs text-slate-800 dark:text-slate-200">
-                <div className="flex items-center justify-between text-xs sm:text-sm font-bold mb-3.5">
-                  <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm sm:text-base font-bold">
-                    <Sparkles size={17} />
+              <div 
+                ref={answerRef}
+                className="bg-white dark:bg-slate-950 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm text-slate-800 dark:text-slate-200 transition-all duration-200"
+              >
+                <div className="flex items-center justify-between text-xs sm:text-sm font-bold mb-3">
+                  <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm font-bold">
+                    <Sparkles size={16} />
                     <span>Synthesized Business Summary</span>
                   </div>
-                  <span className="font-mono text-xs font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-800">
+                  <span className="font-mono text-[11px] font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-800">
                     {currentQuery.correlation}
                   </span>
                 </div>
 
-                <p className="text-[15px] sm:text-base text-slate-800 dark:text-slate-200 leading-relaxed font-normal mb-4">
-                  {currentQuery.executiveSummary}
-                </p>
-
-                {/* Contributing Factor Rows */}
-                <div className="mb-4 space-y-2">
-                  <div className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                    Contributing Factors:
-                  </div>
-                  {currentQuery.drivers.map((d, i) => (
-                    <div
-                      key={i}
-                      className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between text-sm sm:text-[15px]"
-                    >
-                      <span className="text-slate-700 dark:text-slate-300 font-medium">{d.name}</span>
-                      <span className={`font-mono font-bold text-sm sm:text-base ${
-                        d.positive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-                      }`}>
-                        {d.impact}
-                      </span>
+                {isGenerating ? (
+                  <div className="py-8 flex flex-col items-center justify-center space-y-3 animate-in fade-in duration-150">
+                    <div className="flex items-center gap-2.5 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      <Loader2 className="h-4 w-4 animate-spin text-red-600" />
+                      <span>Synthesizing multi-metric business telemetry...</span>
                     </div>
-                  ))}
-                </div>
-
-                {/* Recommended Operational Action */}
-                <div className="p-4 rounded-xl bg-red-50/70 dark:bg-red-950/40 border border-red-200/80 dark:border-red-900/50">
-                  <div className="text-xs sm:text-sm font-bold uppercase tracking-wider text-red-600 dark:text-red-400 mb-1.5 flex items-center gap-1.5">
-                    <Zap size={15} />
-                    <span>Operational Recommendation:</span>
+                    <div className="w-52 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-red-600 to-rose-500 rounded-full animate-pulse w-3/4" />
+                    </div>
                   </div>
-                  <p className="text-sm sm:text-[15px] text-slate-800 dark:text-slate-100 leading-relaxed font-medium">
-                    {currentQuery.recommendedAction}
-                  </p>
-                </div>
+                ) : (
+                  <div className="animate-in fade-in duration-200 space-y-3.5">
+                    <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-normal">
+                      {currentQuery.executiveSummary}
+                    </p>
 
-                {/* Evaluation Metadata Footnote */}
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm font-mono text-slate-500 dark:text-slate-400">
-                  <span>{currentQuery.metrics.latency}</span>
-                  <span>{currentQuery.metrics.scannedRows}</span>
-                  <span>{currentQuery.metrics.model}</span>
-                </div>
+                    {/* Contributing Factor Rows */}
+                    <div className="space-y-1.5">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        Contributing Factors:
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {currentQuery.drivers.map((d, i) => (
+                          <div
+                            key={i}
+                            className="p-2 sm:p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between text-xs"
+                          >
+                            <span className="text-slate-600 dark:text-slate-400 font-medium text-[11px] truncate mb-1">{d.name}</span>
+                            <span className={`font-mono font-bold text-xs sm:text-sm ${
+                              d.positive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+                            }`}>
+                              {d.impact}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Recommended Operational Action */}
+                    <div className="p-3 sm:p-3.5 rounded-xl bg-red-50/70 dark:bg-red-950/40 border border-red-200/80 dark:border-red-900/50">
+                      <div className="text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400 mb-1 flex items-center gap-1.5">
+                        <Zap size={14} />
+                        <span>Operational Recommendation:</span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-100 leading-relaxed font-medium">
+                        {currentQuery.recommendedAction}
+                      </p>
+                    </div>
+
+                    {/* Evaluation Metadata Footnote */}
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                      <span>{currentQuery.metrics.latency}</span>
+                      <span>{currentQuery.metrics.scannedRows}</span>
+                      <span>{currentQuery.metrics.model}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
