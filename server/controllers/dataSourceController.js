@@ -8,7 +8,7 @@ const OrganizationModel = require('../models/organizationModel');
 const storage = require('../storage');
 const db = require('../config/database');
 const { parseDatasetFile, parseDatasetFileStream } = require('../services/fileParserService');
-const { testPostgresConnection } = require('../services/postgresSourceService');
+const { testPostgresConnection, previewPostgresTable, ingestPostgresTable } = require('../services/postgresSourceService');
 const { testMongoConnection, previewMongoCollection, ingestMongoCollection } = require('../services/mongoSourceService');
 const { testRestApiConnection, ingestRestApiData } = require('../services/restSourceService');
 const { encryptConfig, decryptConfig, sanitizeDataSourceConfig } = require('../services/encryptionService');
@@ -235,7 +235,7 @@ const createDataSource = async (req, res, next) => {
 
     // 1. PostgreSQL Connector
     if (effectiveType === 'postgresql') {
-      const { host, port, database, user, password, ssl } = config;
+      const { host, port, database, user, password, ssl, table } = config;
       if (!host || !database || !user) {
         return res.status(400).json({
           success: false,
@@ -251,6 +251,19 @@ const createDataSource = async (req, res, next) => {
             success: false,
             message: `PostgreSQL connection failed: ${testResult.message}`
           });
+        }
+
+        // If table specified, ingest initial records from table
+        const targetTable = table || config.tableName || (testResult.tables && testResult.tables.length === 1 ? testResult.tables[0] : null);
+        if (targetTable) {
+          config.table = targetTable;
+          try {
+            const ingestRes = await ingestPostgresTable({ host, port, database, user, password, ssl, table: targetTable, maxRecords: 10000 });
+            initialRecords = ingestRes.records;
+            initialSchema = ingestRes.schema;
+          } catch (ingestErr) {
+            console.warn('[DataSourceController] PostgreSQL initial ingestion notice:', ingestErr.message);
+          }
         }
       } catch (err) {
         return res.status(400).json({
@@ -337,7 +350,11 @@ const createDataSource = async (req, res, next) => {
     let createdDataset = null;
     if (initialRecords && Array.isArray(initialRecords) && initialRecords.length > 0) {
       try {
-        const safeSuffix = effectiveType === 'mongodb' ? `_mongo_${initialCollection || 'data'}.json` : '_api.json';
+        const safeSuffix = effectiveType === 'mongodb'
+          ? `_mongo_${initialCollection || 'data'}.json`
+          : effectiveType === 'postgresql'
+            ? `_pg_${config.table || 'data'}.json`
+            : '_api.json';
         const filename = `${name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_')}${safeSuffix}`;
         const buffer = Buffer.from(JSON.stringify(initialRecords, null, 2));
         const saved = await storage.saveFile(userId, filename, buffer);
@@ -355,7 +372,9 @@ const createDataSource = async (req, res, next) => {
 
         const dsDesc = effectiveType === 'mongodb'
           ? `Auto-ingested from MongoDB collection '${initialCollection}'`
-          : `Auto-ingested from REST API (${config.url || ''})`;
+          : effectiveType === 'postgresql'
+            ? `Auto-ingested from PostgreSQL table '${config.table}'`
+            : `Auto-ingested from REST API (${config.url || ''})`;
 
         createdDataset = await Dataset.create({
           userId,
@@ -612,6 +631,59 @@ const syncDataSource = async (req, res, next) => {
 
     // 3. PostgreSQL Refresh
     if (source.type === 'postgresql') {
+      const table = config.table || config.tableName;
+      if (table) {
+        try {
+          const ingestRes = await ingestPostgresTable({ ...config, table, maxRecords: 20000 });
+          const records = ingestRes.records;
+
+          const filename = `${source.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_pg_${table}_sync.json`;
+          const fileBuffer = Buffer.from(JSON.stringify(records, null, 2));
+          const saved = await storage.saveFile(userId, filename, fileBuffer);
+
+          const datasets = await Dataset.findByDataSourceId(id, userId, organizationId);
+          if (datasets && datasets.length > 0) {
+            for (const ds of datasets) {
+              await Dataset.update(ds.id, {
+                filePath: saved.filePath,
+                rowCount: ingestRes.rowCount,
+                columnCount: ingestRes.columnCount,
+                schema: ingestRes.schema
+              });
+              await populateDatasetRows(ds.id, organizationId, records);
+            }
+          } else {
+            const createdDs = await Dataset.create({
+              userId,
+              organizationId,
+              dataSourceId: id,
+              name: `${source.name} (${table})`,
+              description: `Synced from PostgreSQL table '${table}'`,
+              filePath: saved.filePath,
+              rowCount: ingestRes.rowCount,
+              columnCount: ingestRes.columnCount,
+              schema: ingestRes.schema
+            });
+            await populateDatasetRows(createdDs.id, organizationId, records);
+          }
+
+          await DataSource.updateStatus(id, 'connected');
+          return res.status(200).json({
+            success: true,
+            message: `PostgreSQL table '${table}' synchronized (${records.length} records ingested).`,
+            rowCount: records.length,
+            status: 'connected',
+            syncedAt: new Date().toISOString()
+          });
+        } catch (syncErr) {
+          await DataSource.updateStatus(id, 'error');
+          return res.status(400).json({
+            success: false,
+            message: `PostgreSQL synchronization failed: ${syncErr.message}`
+          });
+        }
+      }
+
       const testRes = await testPostgresConnection(config);
       await DataSource.updateStatus(id, testRes.success ? 'connected' : 'error');
       return res.status(200).json({
@@ -891,12 +963,40 @@ const updateDataSource = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/data-sources/preview-postgres
+ * Preview sample rows and schema for a specific PostgreSQL table
+ */
+const previewPostgresTableHandler = async (req, res, next) => {
+  try {
+    const config = req.body.config || req.body;
+    const table = req.body.table || req.body.tableName;
+    const limit = Number(req.body.limit) || 10;
+
+    if (!table) {
+      return res.status(400).json({
+        success: false,
+        message: 'Table name is required for preview.'
+      });
+    }
+
+    const result = await previewPostgresTable({ ...config, table, limit });
+    return res.status(200).json(result);
+  } catch (err) {
+    return res.status(400).json({
+      success: false,
+      message: err.message || 'PostgreSQL table preview failed.'
+    });
+  }
+};
+
 module.exports = {
   getDataSources,
   getDataSourceById,
   createDataSource,
   updateDataSource,
   testConnection,
+  previewPostgresTableHandler,
   testMongoConnectionHandler,
   previewMongoCollectionHandler,
   testApiConnection,

@@ -454,73 +454,66 @@ async function parseJson(content, maxPreviewRows = 50) {
 }
 
 /**
- * High-performance Excel (.xlsx, .xls) parser powered by ExcelJS
- * Extracts sheets, auto-detects headers, infers data types, and normalizes duplicates
- * @param {Buffer|string|import('stream').Readable} source
+ * Legacy Excel 97-2003 (.xls binary BIFF8 / OLE2) parser powered by SheetJS
+ * Handles OLE2 binary structure, formulas, dates, and data types
+ * @param {Buffer|string} source
  * @param {number} maxPreviewRows
  */
-async function parseExcel(source, maxPreviewRows = 50) {
-  const ExcelJS = require('exceljs');
-  const workbook = new ExcelJS.Workbook();
-
+function parseLegacyXls(source, maxPreviewRows = 50) {
+  const XLSX = require('xlsx');
+  let buf;
   if (typeof source === 'string' && fs.existsSync(source)) {
-    await workbook.xlsx.readFile(source);
+    buf = fs.readFileSync(source);
   } else if (Buffer.isBuffer(source)) {
-    await workbook.xlsx.load(source);
-  } else if (source && typeof source.pipe === 'function') {
-    await workbook.xlsx.read(source);
+    buf = source;
   } else {
-    throw new Error('Invalid Excel source: expected valid file path, buffer, or readable stream.');
+    throw new Error('Unsupported source format for legacy XLS parsing.');
   }
 
-  const worksheet = workbook.worksheets[0];
-  if (!worksheet || worksheet.rowCount === 0) {
-    throw new Error('Excel workbook contains no sheets or data rows.');
+  const workbook = XLSX.read(buf, { type: 'buffer', cellDates: true, cellFormula: true });
+  const sheetName = workbook.SheetNames[0];
+  if (!sheetName) throw new Error('Legacy Excel workbook contains no sheets.');
+
+  const sheet = workbook.Sheets[sheetName];
+  const rawRows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, dateNF: 'YYYY-MM-DD' });
+
+  if (!rawRows || rawRows.length === 0) {
+    throw new Error('Legacy Excel sheet contains no rows.');
   }
 
-  // Row 1 is headers
-  const headerRow = worksheet.getRow(1);
-  const headers = [];
-  headerRow.eachCell({ includeEmpty: false }, (cell, colNumber) => {
-    let val = cell.value !== null && cell.value !== undefined ? String(cell.value).trim() : '';
-    if (typeof cell.value === 'object' && cell.value !== null) {
-      if (cell.value.text) val = cell.value.text;
-      else if (cell.value.result !== undefined) val = String(cell.value.result);
-    }
-    headers.push({ name: val || `column_${colNumber}`, colNumber });
-  });
-
-  if (headers.length === 0) {
-    throw new Error('Excel worksheet contains no valid column headers in row 1.');
+  const rawHeaders = rawRows[0] || [];
+  if (rawHeaders.length === 0) {
+    throw new Error('Legacy Excel sheet contains no header row.');
   }
 
-  // Deduplicate column names
   const colCounts = {};
-  headers.forEach(h => {
-    colCounts[h.name] = (colCounts[h.name] || 0) + 1;
-    if (colCounts[h.name] > 1) {
-      h.name = `${h.name}_${colCounts[h.name]}`;
+  const headers = rawHeaders.map((h, idx) => {
+    let name = String(h || `column_${idx + 1}`).trim() || `column_${idx + 1}`;
+    colCounts[name] = (colCounts[name] || 0) + 1;
+    if (colCounts[name] > 1) {
+      name = `${name}_${colCounts[name]}`;
     }
+    return name;
   });
 
   const records = [];
-  for (let r = 2; r <= worksheet.rowCount; r++) {
-    const row = worksheet.getRow(r);
+  for (let r = 1; r < rawRows.length; r++) {
+    const row = rawRows[r];
+    if (!row || row.length === 0) continue;
     let hasVal = false;
     const rowObj = {};
-    headers.forEach(h => {
-      let cellVal = row.getCell(h.colNumber).value;
-      if (cellVal && typeof cellVal === 'object') {
-        if (cellVal.result !== undefined) cellVal = cellVal.result;
-        else if (cellVal.text !== undefined) cellVal = cellVal.text;
-      }
-      if (cellVal instanceof Date) {
-        cellVal = cellVal.toISOString().split('T')[0];
-      }
-      if (cellVal !== undefined && cellVal !== null && cellVal !== '') {
+    headers.forEach((h, colIdx) => {
+      let val = row[colIdx];
+      if (val !== undefined && val !== null && String(val).trim() !== '') {
         hasVal = true;
+        const trimmed = String(val).trim();
+        if (trimmed.toUpperCase() === 'TRUE') val = true;
+        else if (trimmed.toUpperCase() === 'FALSE') val = false;
+        else if (!isNaN(trimmed) && !isNaN(parseFloat(trimmed))) val = Number(trimmed);
+      } else {
+        val = '';
       }
-      rowObj[h.name] = cellVal !== undefined && cellVal !== null ? cellVal : '';
+      rowObj[h] = val;
     });
     if (hasVal) {
       records.push(rowObj);
@@ -528,13 +521,13 @@ async function parseExcel(source, maxPreviewRows = 50) {
   }
 
   if (records.length === 0) {
-    throw new Error('Excel sheet contains headers but no data records.');
+    throw new Error('Legacy Excel sheet contains headers but no data rows.');
   }
 
   const sampleLimit = Math.min(records.length, 100);
-  const schema = headers.map(h => {
+  const schema = headers.map(header => {
     let dominantType = 'string';
-    const samples = records.slice(0, sampleLimit).map(r => r[h.name]).filter(v => v !== undefined && v !== null && v !== '');
+    const samples = records.slice(0, sampleLimit).map(r => r[header]).filter(v => v !== undefined && v !== null && v !== '');
     if (samples.length > 0) {
       const typeCounts = { number: 0, boolean: 0, date: 0, string: 0 };
       samples.forEach(s => {
@@ -546,9 +539,9 @@ async function parseExcel(source, maxPreviewRows = 50) {
       else if (typeCounts.boolean / samples.length >= 0.7) dominantType = 'boolean';
     }
     return {
-      name: h.name,
+      name: header,
       type: dominantType,
-      sample: records.length > 0 ? records[0][h.name] : null
+      sample: records.length > 0 ? records[0][header] : null
     };
   });
 
@@ -558,6 +551,147 @@ async function parseExcel(source, maxPreviewRows = 50) {
     schema,
     preview: records.slice(0, maxPreviewRows)
   };
+}
+
+/**
+ * High-performance Excel (.xlsx, .xls) parser powered by ExcelJS and SheetJS
+ * Extracts sheets, auto-detects headers, infers data types, and normalizes duplicates
+ * Supports both modern OpenXML (.xlsx) and legacy BIFF8 (.xls) formats
+ * @param {Buffer|string|import('stream').Readable} source
+ * @param {number} maxPreviewRows
+ */
+async function parseExcel(source, maxPreviewRows = 50) {
+  // Check for legacy OLE2 binary header (D0 CF 11 E0)
+  let isOleBinary = false;
+  let bufferToCheck = null;
+  if (Buffer.isBuffer(source)) {
+    bufferToCheck = source;
+  } else if (typeof source === 'string' && fs.existsSync(source)) {
+    try {
+      const fd = fs.openSync(source, 'r');
+      const b = Buffer.alloc(4);
+      fs.readSync(fd, b, 0, 4, 0);
+      fs.closeSync(fd);
+      bufferToCheck = b;
+    } catch (_) {}
+  }
+  if (bufferToCheck && bufferToCheck.length >= 4 &&
+      bufferToCheck[0] === 0xD0 && bufferToCheck[1] === 0xCF && bufferToCheck[2] === 0x11 && bufferToCheck[3] === 0xE0) {
+    isOleBinary = true;
+  }
+
+  if (isOleBinary) {
+    return parseLegacyXls(source, maxPreviewRows);
+  }
+
+  try {
+    const ExcelJS = require('exceljs');
+    const workbook = new ExcelJS.Workbook();
+
+    if (typeof source === 'string' && fs.existsSync(source)) {
+      await workbook.xlsx.readFile(source);
+    } else if (Buffer.isBuffer(source)) {
+      await workbook.xlsx.load(source);
+    } else if (source && typeof source.pipe === 'function') {
+      await workbook.xlsx.read(source);
+    } else {
+      throw new Error('Invalid Excel source: expected valid file path, buffer, or readable stream.');
+    }
+
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet || worksheet.rowCount === 0) {
+      throw new Error('Excel workbook contains no sheets or data rows.');
+    }
+
+    // Row 1 is headers
+    const headerRow = worksheet.getRow(1);
+    const headers = [];
+    headerRow.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+      let val = cell.value !== null && cell.value !== undefined ? String(cell.value).trim() : '';
+      if (typeof cell.value === 'object' && cell.value !== null) {
+        if (cell.value.text) val = cell.value.text;
+        else if (cell.value.result !== undefined) val = String(cell.value.result);
+      }
+      headers.push({ name: val || `column_${colNumber}`, colNumber });
+    });
+
+    if (headers.length === 0) {
+      throw new Error('Excel worksheet contains no valid column headers in row 1.');
+    }
+
+    // Deduplicate column names
+    const colCounts = {};
+    headers.forEach(h => {
+      colCounts[h.name] = (colCounts[h.name] || 0) + 1;
+      if (colCounts[h.name] > 1) {
+        h.name = `${h.name}_${colCounts[h.name]}`;
+      }
+    });
+
+    const records = [];
+    for (let r = 2; r <= worksheet.rowCount; r++) {
+      const row = worksheet.getRow(r);
+      let hasVal = false;
+      const rowObj = {};
+      headers.forEach(h => {
+        let cellVal = row.getCell(h.colNumber).value;
+        if (cellVal && typeof cellVal === 'object') {
+          if (cellVal.result !== undefined) cellVal = cellVal.result;
+          else if (cellVal.text !== undefined) cellVal = cellVal.text;
+        }
+        if (cellVal instanceof Date) {
+          cellVal = cellVal.toISOString().split('T')[0];
+        }
+        if (cellVal !== undefined && cellVal !== null && cellVal !== '') {
+          hasVal = true;
+        }
+        rowObj[h.name] = cellVal !== undefined && cellVal !== null ? cellVal : '';
+      });
+      if (hasVal) {
+        records.push(rowObj);
+      }
+    }
+
+    if (records.length === 0) {
+      throw new Error('Excel sheet contains headers but no data records.');
+    }
+
+    const sampleLimit = Math.min(records.length, 100);
+    const schema = headers.map(h => {
+      let dominantType = 'string';
+      const samples = records.slice(0, sampleLimit).map(r => r[h.name]).filter(v => v !== undefined && v !== null && v !== '');
+      if (samples.length > 0) {
+        const typeCounts = { number: 0, boolean: 0, date: 0, string: 0 };
+        samples.forEach(s => {
+          const t = typeof s === 'number' ? 'number' : typeof s === 'boolean' ? 'boolean' : inferValueType(s);
+          typeCounts[t] = (typeCounts[t] || 0) + 1;
+        });
+        if (typeCounts.number / samples.length >= 0.7) dominantType = 'number';
+        else if (typeCounts.date / samples.length >= 0.7) dominantType = 'date';
+        else if (typeCounts.boolean / samples.length >= 0.7) dominantType = 'boolean';
+      }
+      return {
+        name: h.name,
+        type: dominantType,
+        sample: records.length > 0 ? records[0][h.name] : null
+      };
+    });
+
+    return {
+      rowCount: records.length,
+      columnCount: headers.length,
+      schema,
+      preview: records.slice(0, maxPreviewRows)
+    };
+  } catch (err) {
+    // Graceful fallback to legacy XLS parser if file format is binary or non-zip
+    if (typeof source === 'string' || Buffer.isBuffer(source)) {
+      try {
+        return parseLegacyXls(source, maxPreviewRows);
+      } catch (_) {}
+    }
+    throw err;
+  }
 }
 
 /**

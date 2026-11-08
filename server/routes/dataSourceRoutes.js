@@ -9,6 +9,7 @@ const {
   getDataSourceById,
   createDataSource,
   testConnection,
+  previewPostgresTableHandler,
   testMongoConnectionHandler,
   previewMongoCollectionHandler,
   testApiConnection,
@@ -26,6 +27,7 @@ router.use(authenticateToken);
 router.get('/', getDataSources);
 router.post('/', requireActiveSubscription, requireUsageLimit('datasets'), createDataSource);
 router.post('/test-connection', requireActiveSubscription, testConnection);
+router.post('/preview-postgres', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), previewPostgresTableHandler);
 router.post('/test-mongodb', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), testMongoConnectionHandler);
 router.post('/preview-mongodb', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), previewMongoCollectionHandler);
 router.post('/test-api', requireActiveSubscription, requireRole('admin', 'manager', 'analyst'), testApiConnection);
