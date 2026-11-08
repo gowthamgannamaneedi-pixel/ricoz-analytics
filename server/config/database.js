@@ -454,6 +454,13 @@ let nextDemoRequestId = 1;
 const fallbackDemoEmailJobs = [];
 let nextDemoEmailJobId = 1;
 
+const fallbackConversations = [];
+const fallbackConversationParticipants = [];
+const fallbackMessages = [];
+const fallbackMessageAttachments = [];
+const fallbackMessageReactions = [];
+const fallbackMessageReadReceipts = [];
+
 const fallbackDatasetStorageFiles = new Map();
 
 
@@ -5133,6 +5140,99 @@ async function initDb() {
     ALTER TABLE notifications ADD COLUMN IF NOT EXISTS resource_type VARCHAR(50);
     ALTER TABLE notifications ADD COLUMN IF NOT EXISTS resource_id VARCHAR(255);
 
+    CREATE TABLE IF NOT EXISTS conversations (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      type VARCHAR(20) NOT NULL CHECK (type IN ('direct', 'group')),
+      title VARCHAR(255),
+      team_id UUID REFERENCES teams(id) ON DELETE SET NULL,
+      created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      last_message_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      last_message_preview TEXT,
+      metadata JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_conversations_org ON conversations(organization_id);
+    CREATE INDEX IF NOT EXISTS idx_conversations_team ON conversations(team_id);
+    CREATE INDEX IF NOT EXISTS idx_conversations_last_msg ON conversations(organization_id, last_message_at DESC);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_conversations_unique_group_team ON conversations(organization_id, team_id) WHERE type = 'group' AND team_id IS NOT NULL;
+
+    CREATE TABLE IF NOT EXISTS conversation_participants (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      role VARCHAR(20) DEFAULT 'member' CHECK (role IN ('admin', 'member')),
+      joined_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      last_read_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      last_read_message_id UUID,
+      is_muted BOOLEAN DEFAULT false,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (conversation_id, user_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_conv_part_user ON conversation_participants(user_id, organization_id);
+    CREATE INDEX IF NOT EXISTS idx_conv_part_conv ON conversation_participants(conversation_id);
+
+    CREATE TABLE IF NOT EXISTS messages (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      parent_message_id UUID REFERENCES messages(id) ON DELETE SET NULL,
+      content TEXT NOT NULL,
+      is_edited BOOLEAN DEFAULT false,
+      edited_at TIMESTAMPTZ,
+      is_deleted BOOLEAN DEFAULT false,
+      deleted_at TIMESTAMPTZ,
+      mentions JSONB DEFAULT '[]'::jsonb,
+      shared_analytics JSONB DEFAULT NULL,
+      metadata JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_messages_conv_created ON messages(conversation_id, created_at ASC);
+    CREATE INDEX IF NOT EXISTS idx_messages_parent ON messages(parent_message_id);
+    CREATE INDEX IF NOT EXISTS idx_messages_org ON messages(organization_id);
+
+    CREATE TABLE IF NOT EXISTS message_attachments (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      file_name VARCHAR(255) NOT NULL,
+      file_type VARCHAR(100) NOT NULL,
+      file_size BIGINT NOT NULL,
+      file_path TEXT NOT NULL,
+      uploaded_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_msg_attachments_msg ON message_attachments(message_id);
+
+    CREATE TABLE IF NOT EXISTS message_reactions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+      conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      emoji VARCHAR(32) NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (message_id, user_id, emoji)
+    );
+    CREATE INDEX IF NOT EXISTS idx_msg_reactions_msg ON message_reactions(message_id);
+    CREATE INDEX IF NOT EXISTS idx_msg_reactions_user ON message_reactions(user_id);
+
+    CREATE TABLE IF NOT EXISTS message_read_receipts (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+      conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      read_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (message_id, user_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_msg_receipts_msg ON message_read_receipts(message_id);
+    CREATE INDEX IF NOT EXISTS idx_msg_receipts_user ON message_read_receipts(user_id);
+
     CREATE TABLE IF NOT EXISTS dataset_rows (
       id BIGSERIAL PRIMARY KEY,
       dataset_id UUID NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
@@ -6035,6 +6135,12 @@ module.exports = {
   fallbackSubscriptionReminders,
   fallbackRazorpayOrders,
   fallbackRazorpayWebhookEvents,
+  fallbackConversations,
+  fallbackConversationParticipants,
+  fallbackMessages,
+  fallbackMessageAttachments,
+  fallbackMessageReactions,
+  fallbackMessageReadReceipts,
   closeDb: async () => {
     if (pool) {
       try {
@@ -6141,6 +6247,12 @@ module.exports = {
     fallbackRecentlyViewed.length = 0;
     fallbackSavedViews.length = 0;
     fallbackNotifications.length = 0;
+    fallbackConversations.length = 0;
+    fallbackConversationParticipants.length = 0;
+    fallbackMessages.length = 0;
+    fallbackMessageAttachments.length = 0;
+    fallbackMessageReactions.length = 0;
+    fallbackMessageReadReceipts.length = 0;
     nextUserId = 1;
     nextDataSourceId = 1;
     nextDatasetId = 1;

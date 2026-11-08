@@ -2339,3 +2339,118 @@ export function uploadDataSourceFile(formData, onProgress, options = {}) {
     xhr.send(formData);
   });
 }
+
+// ----------------- TEAM MESSAGES & COLLABORATION -----------------
+export async function getConversationsApi() {
+  return apiRequest('/collaboration/conversations');
+}
+
+export async function createDirectConversationApi(recipientId) {
+  return apiRequest('/collaboration/conversations/direct', {
+    method: 'POST',
+    body: JSON.stringify({ recipientId })
+  });
+}
+
+export async function createGroupConversationApi({ title, teamId, memberUserIds = [] }) {
+  return apiRequest('/collaboration/conversations/group', {
+    method: 'POST',
+    body: JSON.stringify({ title, teamId, memberUserIds })
+  });
+}
+
+export async function getConversationDetailsApi(conversationId) {
+  return apiRequest(`/collaboration/conversations/${conversationId}`);
+}
+
+export async function getMessagesApi(conversationId, { limit = 50, before = null, parentMessageId = null } = {}) {
+  const params = new URLSearchParams();
+  if (limit) params.append('limit', limit);
+  if (before) params.append('before', before);
+  if (parentMessageId) params.append('parentMessageId', parentMessageId);
+  const q = params.toString() ? `?${params.toString()}` : '';
+  return apiRequest(`/collaboration/conversations/${conversationId}/messages${q}`);
+}
+
+export async function sendMessageApi(conversationId, { content, parentMessageId = null, mentions = [], sharedAnalytics = null, metadata = {}, attachmentIds = [] }) {
+  return apiRequest(`/collaboration/conversations/${conversationId}/messages`, {
+    method: 'POST',
+    body: JSON.stringify({ content, parentMessageId, mentions, sharedAnalytics, metadata, attachmentIds })
+  });
+}
+
+export async function editMessageApi(messageId, content) {
+  return apiRequest(`/collaboration/messages/${messageId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ content })
+  });
+}
+
+export async function deleteMessageApi(messageId) {
+  return apiRequest(`/collaboration/messages/${messageId}`, {
+    method: 'DELETE'
+  });
+}
+
+export async function toggleReactionApi(messageId, { emoji, conversationId }) {
+  return apiRequest(`/collaboration/messages/${messageId}/reactions`, {
+    method: 'POST',
+    body: JSON.stringify({ emoji, conversationId })
+  });
+}
+
+export async function markConversationReadApi(conversationId, messageId = null) {
+  return apiRequest(`/collaboration/conversations/${conversationId}/read`, {
+    method: 'POST',
+    body: JSON.stringify({ messageId })
+  });
+}
+
+export async function sendTypingIndicatorApi(conversationId, isTyping) {
+  return apiRequest(`/collaboration/conversations/${conversationId}/typing`, {
+    method: 'POST',
+    body: JSON.stringify({ isTyping })
+  });
+}
+
+export async function searchMessagesApi(queryText, conversationId = null) {
+  const params = new URLSearchParams();
+  params.append('q', queryText);
+  if (conversationId) params.append('conversationId', conversationId);
+  return apiRequest(`/collaboration/messages/search?${params.toString()}`);
+}
+
+export async function getPresenceApi() {
+  return apiRequest('/collaboration/messages/presence');
+}
+
+export async function verifySharedResourceApi(resourceType, resourceId) {
+  return apiRequest('/collaboration/messages/verify-shared-resource', {
+    method: 'POST',
+    body: JSON.stringify({ resourceType, resourceId })
+  });
+}
+
+export async function uploadMessageAttachmentApi(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const token = getAuthToken();
+  const orgId = getActiveOrganizationId();
+  const headers = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  if (orgId) headers['x-organization-id'] = orgId;
+
+  const res = await fetch(`${API_BASE_URL}/collaboration/messages/upload`, {
+    method: 'POST',
+    headers,
+    body: formData
+  });
+
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || 'File upload failed');
+  }
+  return json;
+}
+

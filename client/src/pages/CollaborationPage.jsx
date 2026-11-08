@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Users,
   Users2,
@@ -33,7 +33,8 @@ import {
   Tag,
   Filter,
   CheckCheck,
-  ChevronRight
+  ChevronRight,
+  MessageSquare
 } from 'lucide-react';
 import {
   getFavoritesApi,
@@ -49,10 +50,12 @@ import {
   getDashboards,
   getReports,
   getAIInsights,
-  recordRecentlyViewedApi
+  recordRecentlyViewedApi,
+  createGroupConversationApi
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ShareModal from '../components/ShareModal';
+import TeamMessagesContainer from '../components/collaboration/TeamMessagesContainer';
 import { Button } from '../components/ui/Button';
 import { RefreshButton } from '../components/ui/RefreshButton';
 import { ResetButton } from '../components/ui/ResetButton';
@@ -61,9 +64,28 @@ import { Select } from '../components/ui/Select';
 export default function CollaborationPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Active Tab: 'favorites' | 'recent' | 'shared' | 'teams'
-  const [activeTab, setActiveTab] = useState('favorites');
+  // Read URL query parameters (?tab=messages&conv=...)
+  const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const urlTab = queryParams.get('tab');
+  const urlConv = queryParams.get('conv');
+
+  // Top navigation: 'groups' | 'messages' | 'shared_analytics'
+  const [activeTab, setActiveTab] = useState(() => {
+    if (urlTab === 'messages') return 'messages';
+    if (urlTab === 'groups' || urlTab === 'teams') return 'groups';
+    if (['shared_analytics', 'shared', 'favorites', 'recent'].includes(urlTab)) return 'shared_analytics';
+    return 'groups';
+  });
+
+  // Sub-tab for Shared Analytics: 'shared' | 'favorites' | 'recent'
+  const [sharedSubTab, setSharedSubTab] = useState(() => {
+    if (['favorites', 'recent'].includes(urlTab)) return urlTab;
+    return 'shared';
+  });
+
+  const [activeConvId, setActiveConvId] = useState(urlConv || null);
   const [viewMode, setViewMode] = useState('card'); // 'card' | 'table'
 
   // Data State
@@ -139,7 +161,7 @@ export default function CollaborationPage() {
   // Reload tab specific data when tab changes
   useEffect(() => {
     loadTabContent();
-  }, [activeTab]);
+  }, [activeTab, sharedSubTab]);
 
   const loadAllData = async () => {
     try {
@@ -182,25 +204,44 @@ export default function CollaborationPage() {
 
   const loadTabContent = async () => {
     try {
-      if (activeTab === 'favorites') {
-        const res = await getFavoritesApi().catch(() => ({ data: [] }));
-        setFavorites(Array.isArray(res?.data) ? res.data : []);
-      } else if (activeTab === 'recent') {
-        const res = await getRecentlyViewedApi(50).catch(() => ({ data: [] }));
-        setRecentlyViewed(Array.isArray(res?.data) ? res.data : []);
-      } else if (activeTab === 'shared') {
-        const res = await getSharedWithMeApi().catch(() => ({ data: { dashboards: [], reports: [], insights: [] } }));
-        setSharedWithMe(res?.data || { dashboards: [], reports: [], insights: [] });
-      } else if (activeTab === 'teams') {
+      if (activeTab === 'groups' || activeTab === 'teams') {
         const res = await getTeamsApi().catch(() => ({ data: [] }));
         const teamList = Array.isArray(res?.data) ? res.data : [];
         setTeams(teamList);
         if (teamList.length > 0) {
           loadTeamDetails(selectedTeam?.id || teamList[0].id);
         }
+      } else if (activeTab === 'shared_analytics') {
+        if (sharedSubTab === 'favorites') {
+          const res = await getFavoritesApi().catch(() => ({ data: [] }));
+          setFavorites(Array.isArray(res?.data) ? res.data : []);
+        } else if (sharedSubTab === 'recent') {
+          const res = await getRecentlyViewedApi(50).catch(() => ({ data: [] }));
+          setRecentlyViewed(Array.isArray(res?.data) ? res.data : []);
+        } else {
+          const res = await getSharedWithMeApi().catch(() => ({ data: { dashboards: [], reports: [], insights: [] } }));
+          setSharedWithMe(res?.data || { dashboards: [], reports: [], insights: [] });
+        }
       }
     } catch (err) {
       console.error('[CollaborationPage] Tab load error:', err);
+    }
+  };
+
+  const handleOpenTeamChat = async (team) => {
+    if (!team) return;
+    try {
+      const res = await createGroupConversationApi({
+        teamId: team.id,
+        title: team.name
+      });
+      if (res?.data?.id) {
+        setActiveConvId(res.data.id);
+        setActiveTab('messages');
+      }
+    } catch (err) {
+      console.error('Failed to open team chat:', err);
+      showToast('Could not open team chat');
     }
   };
 
@@ -403,7 +444,8 @@ export default function CollaborationPage() {
   // Filter Active Tab Resources
   const currentTabItems = useMemo(() => {
     let items = [];
-    if (activeTab === 'favorites') {
+    const activeSubKey = activeTab === 'shared_analytics' ? sharedSubTab : activeTab;
+    if (activeSubKey === 'favorites') {
       items = favorites.map(f => ({
         id: f.id,
         resource_id: f.resource_id,
@@ -415,7 +457,7 @@ export default function CollaborationPage() {
         permission: 'Owner',
         is_favorite: true
       }));
-    } else if (activeTab === 'recent') {
+    } else if (activeSubKey === 'recent') {
       items = recentlyViewed.map(r => ({
         id: r.id,
         resource_id: r.resource_id,
@@ -427,7 +469,7 @@ export default function CollaborationPage() {
         permission: 'Viewer',
         is_favorite: favorites.some(fav => fav.resource_type === r.resource_type && String(fav.resource_id) === String(r.resource_id))
       }));
-    } else if (activeTab === 'shared') {
+    } else if (activeSubKey === 'shared') {
       const dashes = (sharedWithMe.dashboards || []).map(d => ({
         id: d.share_id,
         resource_id: d.resource_id,
@@ -487,7 +529,7 @@ export default function CollaborationPage() {
 
       return true;
     });
-  }, [activeTab, favorites, recentlyViewed, sharedWithMe, searchQuery, typeFilter, accessFilter]);
+  }, [activeTab, sharedSubTab, favorites, recentlyViewed, sharedWithMe, searchQuery, typeFilter, accessFilter]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans">
@@ -650,13 +692,12 @@ export default function CollaborationPage() {
       {/* 3. TABS NAVIGATION & PRIMARY SHARE ACTION                          */}
       {/* ------------------------------------------------------------------ */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-[#334155] pb-4 sm:pb-5">
-        {/* Navigation Tabs */}
+        {/* Navigation Tabs: Groups | Team Messages | Shared Analytics */}
         <div className="flex items-center space-x-2 sm:space-x-3 overflow-x-auto text-xs font-semibold py-0.5">
           {[
-            { id: 'favorites', label: 'Favorites', icon: Star, count: favorites.length },
-            { id: 'recent', label: 'Recently Viewed', icon: Clock, count: recentlyViewed.length },
-            { id: 'shared', label: 'Shared with Me', icon: Share2, count: sharedWithMeTotal },
-            { id: 'teams', label: 'Teams & Groups', icon: Users2, count: teams.length }
+            { id: 'groups', label: 'Groups', icon: Users2, count: teams.length },
+            { id: 'messages', label: 'Team Messages', icon: MessageSquare, count: null },
+            { id: 'shared_analytics', label: 'Shared Analytics', icon: Share2, count: totalItemsShared }
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -664,26 +705,38 @@ export default function CollaborationPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/40 ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/40 ${
                   isActive
                     ? 'bg-rose-50 text-rose-700 font-bold dark:bg-[#2A1422] dark:text-[#FB7185] border border-rose-200/80 dark:border-rose-900/60 shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] dark:hover:bg-[#1E293B] border border-transparent'
                 }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive && tab.id === 'favorites' ? 'fill-rose-600 dark:fill-[#FB7185]' : ''}`} />
+                <Icon className="w-4 h-4 shrink-0" />
                 <span>{tab.label}</span>
-                <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-full ${
-                  isActive ? 'bg-white text-rose-700 dark:bg-[#172131] dark:text-[#FB7185] shadow-2xs' : 'bg-slate-100 text-slate-600 dark:bg-[#1E293B] dark:text-[#CBD5E1]'
-                }`}>
-                  {tab.count}
-                </span>
+                {tab.count !== null && (
+                  <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                    isActive ? 'bg-white text-rose-700 dark:bg-[#172131] dark:text-[#FB7185] shadow-2xs' : 'bg-slate-100 text-slate-600 dark:bg-[#1E293B] dark:text-[#CBD5E1]'
+                  }`}>
+                    {tab.count}
+                  </span>
+                )}
               </button>
             );
           })}
         </div>
 
         {/* Primary Action Button */}
-        <div className="flex items-center shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
+          {activeTab === 'groups' && (user?.role === 'admin' || user?.role === 'manager') && (
+            <button
+              onClick={() => setShowCreateTeamModal(true)}
+              className="h-10 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>New Group</span>
+            </button>
+          )}
+
           <button
             onClick={() => setShowSharePickerModal(true)}
             id="share-item-btn"
@@ -695,13 +748,41 @@ export default function CollaborationPage() {
         </div>
       </div>
 
+      {/* Sub-Tabs for Shared Analytics (Shared with Me | Favorites | Recently Viewed) */}
+      {activeTab === 'shared_analytics' && (
+        <div className="flex items-center space-x-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+          {[
+            { id: 'shared', label: 'Shared with Me', count: sharedWithMeTotal, icon: Share2 },
+            { id: 'favorites', label: 'Favorites', count: favorites.length, icon: Star },
+            { id: 'recent', label: 'Recently Viewed', count: recentlyViewed.length, icon: Clock }
+          ].map(sub => {
+            const SubIcon = sub.icon;
+            const isSubActive = sharedSubTab === sub.id;
+            return (
+              <button
+                key={sub.id}
+                onClick={() => setSharedSubTab(sub.id)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                  isSubActive
+                    ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 font-bold border border-rose-200 dark:border-rose-900/60 shadow-2xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <SubIcon className={`w-3.5 h-3.5 ${isSubActive && sub.id === 'favorites' ? 'fill-rose-600 dark:fill-rose-400' : ''}`} />
+                <span>{sub.label}</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                  {sub.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* ------------------------------------------------------------------ */}
       {/* 4. FILTER / SEARCH TOOLBAR (FOR RESOURCE TABS)                     */}
       {/* ------------------------------------------------------------------ */}
-      {/* ------------------------------------------------------------------ */}
-      {/* 4. FILTER / SEARCH TOOLBAR (FOR RESOURCE TABS)                     */}
-      {/* ------------------------------------------------------------------ */}
-      {activeTab !== 'teams' && (
+      {activeTab === 'shared_analytics' && (
         <div className="space-y-3.5 bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200 dark:border-[#334155] shadow-2xs">
           {/* Row 1: Search -> All Types -> All Access Levels (Horizontal desktop row) */}
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full">
@@ -813,14 +894,27 @@ export default function CollaborationPage() {
             </div>
           ))}
         </div>
-      ) : activeTab === 'teams' ? (
+      ) : activeTab === 'messages' ? (
+        /* TEAM MESSAGES TAB */
+        <TeamMessagesContainer
+          currentUserId={user?.id}
+          userRole={user?.role}
+          allUsers={allUsers}
+          teams={teams}
+          initialConversationId={activeConvId}
+          onNavigateToGroup={(teamId) => {
+            setActiveTab('groups');
+            loadTeamDetails(teamId);
+          }}
+        />
+      ) : (activeTab === 'groups' || activeTab === 'teams') ? (
         /* TEAMS & GROUPS TAB */
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Teams List (Left Column) */}
           <div className="rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#334155] p-5 shadow-2xs space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#334155]">
               <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-[#94A3B8]">
-                Workspace Teams ({teams.length})
+                Workspace Groups &amp; Teams ({teams.length})
               </h3>
               {(user?.role === 'admin' || user?.role === 'manager') && (
                 <button
@@ -828,7 +922,7 @@ export default function CollaborationPage() {
                   className="px-2.5 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:bg-[#1E293B] dark:border dark:border-[#334155] dark:text-[#CBD5E1] dark:hover:bg-[#334155] dark:hover:text-[#F8FAFC] font-semibold rounded-lg text-xs flex items-center gap-1 transition cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5 text-rose-600 dark:text-[#FB7185]" />
-                  <span>New Team</span>
+                  <span>New Group</span>
                 </button>
               )}
             </div>
@@ -836,8 +930,8 @@ export default function CollaborationPage() {
             {teams.length === 0 ? (
               <div className="py-12 text-center text-xs text-slate-400 dark:text-[#94A3B8] space-y-2">
                 <Users2 className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" />
-                <p className="font-semibold text-slate-600 dark:text-[#CBD5E1]">No teams created yet.</p>
-                <p className="text-[11px] text-slate-400 dark:text-[#94A3B8]">Create a team to organize shared access by department.</p>
+                <p className="font-semibold text-slate-600 dark:text-[#CBD5E1]">No groups created yet.</p>
+                <p className="text-[11px] text-slate-400 dark:text-[#94A3B8]">Create a group to organize shared access and team messaging.</p>
               </div>
             ) : (
               teams.map(t => (
@@ -850,11 +944,24 @@ export default function CollaborationPage() {
                       : 'bg-white dark:bg-[#0F172A] border-slate-200/80 dark:border-[#334155] hover:bg-slate-50 dark:hover:bg-[#1E293B] text-slate-800 dark:text-[#CBD5E1]'
                   }`}
                 >
-                  <div className="min-w-0">
+                  <div className="min-w-0 pr-2">
                     <p className="font-bold text-xs break-words text-slate-900 dark:text-[#F8FAFC] leading-snug">{t.name}</p>
                     <p className="text-[11px] text-slate-400 dark:text-[#94A3B8] mt-0.5">{t.member_count || 1} members</p>
                   </div>
-                  <Shield className="h-4 w-4 text-slate-300 dark:text-slate-600" />
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenTeamChat(t);
+                      }}
+                      className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-100 dark:text-rose-400 dark:hover:bg-rose-950/60 transition cursor-pointer"
+                      title="Open Team Chat"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                    </button>
+                    <Shield className="h-4 w-4 text-slate-300 dark:text-slate-600" />
+                  </div>
                 </div>
               ))
             )}
@@ -877,15 +984,26 @@ export default function CollaborationPage() {
                     </p>
                   </div>
 
-                  {(user?.role === 'admin' || user?.role === 'manager') && (
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={handleOpenAddMemberModal}
-                      className="flex items-center gap-1.5 rounded-xl bg-rose-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-rose-700 transition shadow-2xs cursor-pointer self-start sm:self-auto"
+                      onClick={() => handleOpenTeamChat(selectedTeam)}
+                      className="flex items-center gap-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 dark:bg-rose-950/60 dark:text-rose-300 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900 px-3 py-2 text-xs font-bold transition shadow-2xs cursor-pointer"
+                      title="Open Team Chat"
                     >
-                      <UserPlus className="h-3.5 w-3.5" />
-                      <span>Add Member</span>
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      <span>Open Team Chat</span>
                     </button>
-                  )}
+
+                    {(user?.role === 'admin' || user?.role === 'manager') && (
+                      <button
+                        onClick={handleOpenAddMemberModal}
+                        className="flex items-center gap-1.5 rounded-xl bg-rose-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-rose-700 transition shadow-2xs cursor-pointer self-start sm:self-auto"
+                      >
+                        <UserPlus className="h-3.5 w-3.5" />
+                        <span>Add Member</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -940,7 +1058,7 @@ export default function CollaborationPage() {
       ) : currentTabItems.length === 0 ? (
         /* TAB EMPTY STATE */
         <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] p-12 text-center shadow-2xs w-full">
-          {activeTab === 'favorites' ? (
+          {sharedSubTab === 'favorites' ? (
             <>
               <div className="h-12 w-12 rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] flex items-center justify-center mx-auto mb-3 shadow-2xs">
                 <Star className="h-6 w-6 text-rose-600 dark:text-[#FB7185]" />
@@ -950,7 +1068,7 @@ export default function CollaborationPage() {
                 Favorite dashboards, reports, and AI insights to keep your most important resources within easy reach.
               </p>
             </>
-          ) : activeTab === 'recent' ? (
+          ) : sharedSubTab === 'recent' ? (
             <>
               <div className="h-12 w-12 rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] flex items-center justify-center mx-auto mb-3 shadow-2xs">
                 <Clock className="h-6 w-6 text-rose-600 dark:text-[#FB7185]" />

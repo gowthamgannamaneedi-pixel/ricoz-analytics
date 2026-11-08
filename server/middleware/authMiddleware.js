@@ -32,7 +32,11 @@ function primeUserAuthCache(user) {
  * Attaches fully resolved { id, email, name, role, organization_id } to req.user.
  */
 const authenticateToken = async (req, res, next) => {
-  const authHeader = req.headers['authorization'];
+  let authHeader = req.headers['authorization'];
+  if (!authHeader && req.query && req.query.token) {
+    authHeader = `Bearer ${req.query.token}`;
+    req.headers['authorization'] = authHeader;
+  }
   
   if (!authHeader) {
     return res.status(401).json({
@@ -217,7 +221,20 @@ const authenticateToken = async (req, res, next) => {
         });
       }
 
+      if (tenantRes.code === 'ORGANIZATION_NOT_FOUND') {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'ORGANIZATION_NOT_FOUND',
+            message: tenantRes.error
+          },
+          message: tenantRes.error,
+          request_id: req.id
+        });
+      }
+
       if (tenantRes.organizationId) {
+        req.organizationId = tenantRes.organizationId;
         req.user.organization_id = tenantRes.organizationId;
         req.user.role = tenantRes.role || userRole;
         req.organization = tenantRes.organization;
@@ -287,7 +304,20 @@ const authenticateToken = async (req, res, next) => {
             });
           }
 
+          if (sbTenantRes.code === 'ORGANIZATION_NOT_FOUND') {
+            return res.status(404).json({
+              success: false,
+              error: {
+                code: 'ORGANIZATION_NOT_FOUND',
+                message: sbTenantRes.error
+              },
+              message: sbTenantRes.error,
+              request_id: req.id
+            });
+          }
+
           if (sbTenantRes.organizationId) {
+            req.organizationId = sbTenantRes.organizationId;
             req.user.organization_id = sbTenantRes.organizationId;
             req.user.role = sbTenantRes.role || req.user.role;
             req.organization = sbTenantRes.organization;

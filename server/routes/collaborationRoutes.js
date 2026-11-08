@@ -195,4 +195,8 @@ router.get(
   collaborationController.getOrganizationUsers
 );
 
+// ----------------- TEAM MESSAGES & REAL-TIME CONVERSATIONS -----------------
+const teamMessageRoutes = require('./teamMessageRoutes');
+router.use('/', teamMessageRoutes);
+
 module.exports = router;
