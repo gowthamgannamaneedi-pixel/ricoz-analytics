@@ -34,7 +34,7 @@ export function useTrialCountdown(subscription) {
     : (subscription?.trialStartedAt || subscription?.trial_started_at || subscription?.subscriptionStartDate || subscription?.currentPeriodStart);
 
   const rawEndDate = isLikelyPaid
-    ? (subscription?.relevantEndDate || subscription?.currentPeriodEnd || subscription?.current_period_end || subscription?.nextBillingDate || subscription?.next_billing_date || subscription?.trialEndsAt || subscription?.trial_ends_at)
+    ? (subscription?.relevantEndDate || subscription?.currentPeriodEnd || subscription?.current_period_end || subscription?.nextBillingDate || subscription?.next_billing_date || null)
     : (subscription?.relevantEndDate || subscription?.trialEndsAt || subscription?.trial_ends_at || subscription?.currentPeriodEnd || subscription?.current_period_end);
 
   // Tick state to force re-render every 10 seconds for real-time accuracy

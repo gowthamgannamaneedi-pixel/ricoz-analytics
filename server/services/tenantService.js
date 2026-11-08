@@ -51,8 +51,8 @@ class TenantService {
 
     // 3. Handle explicit organization request (e.g. workspace switching or client-specified target)
     if (rawRequestedOrgId) {
-      // Validate organization existence in database
-      const targetOrg = await OrganizationModel.findById(rawRequestedOrgId).catch(() => null);
+      // Validate organization existence in database (supports UUID, slug, or exact name)
+      const targetOrg = await OrganizationModel.findByIdOrSlug(rawRequestedOrgId).catch(() => null);
       if (!targetOrg) {
         return {
           organizationId: null,
@@ -64,11 +64,18 @@ class TenantService {
       }
 
       // Authorize membership: User MUST be a verified member of the requested organization
-      const matchedMembership = memberships.find(m => String(m.organization_id) === String(rawRequestedOrgId));
-      if (!matchedMembership) {
+      // Match against the resolved organization's canonical UUID
+      const matchedMembership = memberships.find(m => String(m.organization_id) === String(targetOrg.id));
+      
+      // Distinguish platform superadmin from organization-level admin
+      const isSuperAdmin = user.role === 'superadmin' || Boolean(user.is_superadmin);
+
+      if (!matchedMembership && !isSuperAdmin) {
+        const authoritativeOrgId = user.organization_id || memberships[0]?.organization_id || null;
         return {
           organizationId: null,
           organization: null,
+          authoritativeOrgId,
           role: user.role || 'viewer',
           code: 'FORBIDDEN_ORGANIZATION',
           error: 'Access denied: You are not an authorized member of the requested organization workspace.'
@@ -78,7 +85,7 @@ class TenantService {
       return {
         organizationId: targetOrg.id,
         organization: targetOrg,
-        role: matchedMembership.role || user.role || 'viewer'
+        role: isSuperAdmin ? 'admin' : (matchedMembership?.role || user.role || 'viewer')
       };
     }
 

@@ -1,5 +1,6 @@
 const aiQueryPlannerService = require('../services/aiQueryPlannerService');
 const langGraphAssistantService = require('../services/langGraphAssistantService');
+const pythonAiService = require('../services/pythonAiService');
 const aiConversationModel = require('../models/aiConversationModel');
 const Dashboard = require('../models/dashboardModel');
 const geminiService = require('../services/geminiService');
@@ -54,17 +55,32 @@ const AIController = {
         }
       }
 
-      // 2. Process Analytical Query via LangGraph StateGraph (Intent -> RAG -> Analytics -> Synthesis)
-      const result = await langGraphAssistantService.processQuery({
-        message,
-        organizationId,
-        userId,
-        userRole,
-        datasetId: effectiveDatasetId,
-        dashboardId: effectiveDashboardId,
-        metricId: effectiveMetricId,
-        conversationHistory
-      });
+      // 2. Process Analytical Query: Attempt genuine Python Agentic RAG service first; fall back gracefully to local pipeline
+      let result = null;
+      try {
+        result = await pythonAiService.query({
+          message,
+          organizationId,
+          userId,
+          userRole,
+          datasetId: effectiveDatasetId,
+          dashboardId: effectiveDashboardId,
+          metricId: effectiveMetricId,
+          conversationHistory
+        });
+      } catch (pyErr) {
+        console.warn('[AIController] Python Agentic RAG unavailable or failed, executing local fallback pipeline:', pyErr.message);
+        result = await langGraphAssistantService.processQuery({
+          message,
+          organizationId,
+          userId,
+          userRole,
+          datasetId: effectiveDatasetId,
+          dashboardId: effectiveDashboardId,
+          metricId: effectiveMetricId,
+          conversationHistory
+        });
+      }
 
       // 2. Persist in conversation thread if active or auto-create thread
       if (!effectiveConvId) {

@@ -212,6 +212,7 @@ const authenticateToken = async (req, res, next) => {
             message: tenantRes.error
           },
           message: tenantRes.error,
+          authoritativeOrgId: tenantRes.authoritativeOrgId || null,
           request_id: req.id
         });
       }
@@ -281,6 +282,7 @@ const authenticateToken = async (req, res, next) => {
                 message: sbTenantRes.error
               },
               message: sbTenantRes.error,
+              authoritativeOrgId: sbTenantRes.authoritativeOrgId || null,
               request_id: req.id
             });
           }

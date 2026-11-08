@@ -6,18 +6,31 @@ const { calculateTrialEndDate } = require('../utils/billingDateUtils');
  */
 const OrganizationModel = {
   /**
+   * Helper to check if string is a valid UUID
+   * @param {string} id 
+   * @returns {boolean}
+   */
+  isValidUuid(id) {
+    if (!id || typeof id !== 'string') return false;
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id.trim());
+  },
+
+  /**
    * Find organization by ID
    * @param {string} id 
    * @returns {Promise<any | null>}
    */
   async findById(id) {
+    if (!id || typeof id !== 'string' || !this.isValidUuid(id)) {
+      return null;
+    }
     const sql = `
       SELECT id, name, slug, plan, trial_started_at, trial_ends_at, subscription_status, payment_status, stripe_customer_id, stripe_subscription_id, settings, created_at, updated_at
       FROM organizations
       WHERE id = $1
       LIMIT 1;
     `;
-    const result = await db.query(sql, [id]);
+    const result = await db.query(sql, [id.trim()]);
     return result.rows[0] || null;
   },
 
@@ -27,6 +40,7 @@ const OrganizationModel = {
    * @returns {Promise<any | null>}
    */
   async findBySlug(slug) {
+    if (!slug || typeof slug !== 'string') return null;
     const sql = `
       SELECT id, name, slug, plan, trial_started_at, trial_ends_at, subscription_status, payment_status, stripe_customer_id, stripe_subscription_id, settings, created_at, updated_at
       FROM organizations
@@ -34,6 +48,32 @@ const OrganizationModel = {
       LIMIT 1;
     `;
     const result = await db.query(sql, [slug.trim()]);
+    return result.rows[0] || null;
+  },
+
+  /**
+   * Find organization by either UUID, slug, or name (case-insensitive safe lookup)
+   * @param {string} identifier 
+   * @returns {Promise<any | null>}
+   */
+  async findByIdOrSlug(identifier) {
+    if (!identifier || typeof identifier !== 'string') return null;
+    const clean = identifier.trim();
+    if (this.isValidUuid(clean)) {
+      return this.findById(clean);
+    }
+    // Try lookup by slug
+    const bySlug = await this.findBySlug(clean);
+    if (bySlug) return bySlug;
+
+    // Try lookup by name
+    const sql = `
+      SELECT id, name, slug, plan, trial_started_at, trial_ends_at, subscription_status, payment_status, stripe_customer_id, stripe_subscription_id, settings, created_at, updated_at
+      FROM organizations
+      WHERE LOWER(name) = LOWER($1)
+      LIMIT 1;
+    `;
+    const result = await db.query(sql, [clean]);
     return result.rows[0] || null;
   },
 

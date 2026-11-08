@@ -158,6 +158,8 @@ export default function FileUpload({
           <button
             type="button"
             onClick={handleRemove}
+            data-testid="remove-file-btn"
+            aria-label="Remove selected file"
             className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-slate-700 dark:hover:text-[#F8FAFC] transition cursor-pointer"
             title="Remove file"
           >

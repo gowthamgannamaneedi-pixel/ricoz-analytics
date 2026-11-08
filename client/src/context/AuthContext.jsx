@@ -48,10 +48,18 @@ export function AuthProvider({ children }) {
           setUser(data.user);
           setToken(storedToken);
           const currentStoredOrg = getActiveOrganizationId();
-          const targetOrgId = currentStoredOrg || data.user.organization_id;
+          const orgList = Array.isArray(data.user.organizations) ? data.user.organizations : [];
+          const isStoredOrgAuthorized = currentStoredOrg && (
+            String(currentStoredOrg) === String(data.user.organization_id) ||
+            orgList.some(o => String(o.id) === String(currentStoredOrg))
+          );
+          const targetOrgId = isStoredOrgAuthorized ? currentStoredOrg : data.user.organization_id;
           if (targetOrgId) {
             setActiveOrganizationId(targetOrgId);
             setActiveOrganizationIdState(targetOrgId);
+          } else {
+            removeActiveOrganizationId();
+            setActiveOrganizationIdState(null);
           }
           if (data.subscription) {
             setSubscription(data.subscription);
@@ -128,6 +136,25 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  // Listen for 403 organization mismatch events dispatched by apiRequest / upload
+  useEffect(() => {
+    const handleOrgMismatch = (e) => {
+      const fallbackOrg = e.detail?.authoritativeOrgId || user?.organization_id;
+      if (fallbackOrg) {
+        setActiveOrganizationId(fallbackOrg);
+        setActiveOrganizationIdState(fallbackOrg);
+      } else {
+        removeActiveOrganizationId();
+        setActiveOrganizationIdState(null);
+      }
+    };
+
+    window.addEventListener('auth:organization_mismatch', handleOrgMismatch);
+    return () => {
+      window.removeEventListener('auth:organization_mismatch', handleOrgMismatch);
+    };
+  }, [user?.organization_id]);
+
   // Lightweight authenticated presence heartbeat (every 2 minutes)
   useEffect(() => {
     if (!token || !user?.id) return;
@@ -151,6 +178,7 @@ export function AuthProvider({ children }) {
    */
   const login = async (credentials) => {
     setError(null);
+    removeActiveOrganizationId();
     const data = await loginUser(credentials);
     if (!data || !data.token || !data.user) {
       throw new Error(data?.message || 'Login failed. Invalid response from server.');
@@ -162,6 +190,9 @@ export function AuthProvider({ children }) {
     if (orgId) {
       setActiveOrganizationId(orgId);
       setActiveOrganizationIdState(orgId);
+    } else {
+      removeActiveOrganizationId();
+      setActiveOrganizationIdState(null);
     }
     if (data.subscription) {
       setSubscription(data.subscription);

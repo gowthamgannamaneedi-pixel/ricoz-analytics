@@ -536,8 +536,17 @@ export default function AIAnalyticsAssistant() {
       try { data = JSON.parse(data); } catch (_) { data = null; }
     }
 
-    // Auto-infer visualization if missing or incomplete
-    if (!viz && data) {
+    // Auto-infer visualization ONLY for validated, grounded analytical results (never on clarification or general advice)
+    const isClarificationOrGeneral = Boolean(
+      msg.is_general_advice ||
+      msg.isGeneralAdvice ||
+      String(msg.intent).toUpperCase() === 'AMBIGUOUS' ||
+      String(msg.intent).toUpperCase() === 'NON_ANALYTICS' ||
+      String(msg.intent).toUpperCase() === 'GENERAL_BUSINESS_ADVICE' ||
+      String(msg.intent).toUpperCase() === 'CONVERSATIONAL'
+    );
+
+    if (!viz && data && !isClarificationOrGeneral && msg.grounded) {
       if (Array.isArray(data.trends) && data.trends.length > 0) {
         viz = { type: 'line', data: data.trends, xAxis: 'date', yAxis: 'revenue', title: 'Observed Time-Series Trend' };
       } else if (Array.isArray(data.ranking) && data.ranking.length > 0) {

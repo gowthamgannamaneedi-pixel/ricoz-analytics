@@ -1111,14 +1111,25 @@ ${comparison}
       confidence: finalState.confidence || 'high'
     };
 
+    const isClarificationOrConversational = [
+      'AMBIGUOUS',
+      'NON_ANALYTICS',
+      'GREETING',
+      'FAREWELL',
+      'THANKS',
+      'HELP',
+      'CAPABILITIES',
+      'GENERAL_BUSINESS_ADVICE'
+    ].includes(String(resolvedIntent).toUpperCase());
+
     return {
       question: message.trim(),
       answer: finalState.finalAnswer,
       intent: resolvedIntent,
       plan: resolvedPlan,
-      data: finalState.analyticsResult?.data || {},
-      visualization: finalState.visualization,
-      tableData: finalState.tableData,
+      data: isClarificationOrConversational ? null : (finalState.analyticsResult?.data || null),
+      visualization: isClarificationOrConversational ? null : finalState.visualization,
+      tableData: isClarificationOrConversational ? null : finalState.tableData,
       sources: finalState.sources,
       followUpQuestions: finalState.followUpQuestions,
       analysisStatus: finalState.analysisStatus,

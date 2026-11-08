@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { X, FileSpreadsheet, FileCode, Database, CheckCircle2, AlertCircle, AlertTriangle, Loader2, ArrowRight, Server, Key, ShieldCheck, RefreshCw } from 'lucide-react';
@@ -7,6 +7,44 @@ import UploadProgress from './UploadProgress';
 import { API_BASE_URL, testApiDataSource, testMongoDataSource, createDataSource, uploadDataSourceFile, MAX_UPLOAD_SIZE_MB, getActiveOrganizationId } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Select } from './ui/Select';
+
+const INITIAL_PG_FORM = {
+  name: '',
+  host: '',
+  port: '5432',
+  database: '',
+  user: '',
+  password: '',
+  ssl: false
+};
+
+const INITIAL_MONGO_FORM = {
+  name: '',
+  mode: 'uri',
+  uri: '',
+  host: '',
+  port: '27017',
+  database: '',
+  user: '',
+  password: '',
+  authSource: 'admin',
+  ssl: true,
+  collection: ''
+};
+
+const INITIAL_API_FORM = {
+  name: '',
+  url: '',
+  method: 'GET',
+  authType: 'none',
+  token: '',
+  apiKey: '',
+  apiKeyHeader: 'X-API-Key',
+  username: '',
+  password: '',
+  dataKey: '',
+  headers: ''
+};
 
 /**
  * Enterprise Add Data Source Modal
@@ -24,6 +62,10 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
 
   const [activeTab, setActiveTab] = useState('csv'); // 'csv' | 'json' | 'excel' | 'postgresql' | 'mongodb' | 'rest_api'
 
+  // Network request refs for aborting in-flight requests on modal close
+  const uploadXhrRef = useRef(null);
+  const abortControllerRef = useRef(null);
+
   // File Upload State
   const [selectedFile, setSelectedFile] = useState(null);
   const [sourceName, setSourceName] = useState('');
@@ -36,59 +78,68 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
   const [fieldErrors, setFieldErrors] = useState({ name: '', file: '' });
 
   // PostgreSQL Connection State
-  const [pgForm, setPgForm] = useState({
-    name: '',
-    host: '',
-    port: '5432',
-    database: '',
-    user: '',
-    password: '',
-    ssl: false
-  });
+  const [pgForm, setPgForm] = useState(INITIAL_PG_FORM);
   const [isTestingPg, setIsTestingPg] = useState(false);
   const [pgTestResult, setPgTestResult] = useState(null);
 
   // MongoDB Connection State
-  const [mongoForm, setMongoForm] = useState({
-    name: '',
-    mode: 'uri', // 'uri' | 'fields'
-    uri: '',
-    host: '',
-    port: '27017',
-    database: '',
-    user: '',
-    password: '',
-    authSource: 'admin',
-    ssl: true,
-    collection: ''
-  });
+  const [mongoForm, setMongoForm] = useState(INITIAL_MONGO_FORM);
   const [isTestingMongo, setIsTestingMongo] = useState(false);
   const [mongoTestResult, setMongoTestResult] = useState(null);
   const [mongoCollections, setMongoCollections] = useState([]);
 
   // REST API Connector State
-  const [apiForm, setApiForm] = useState({
-    name: '',
-    url: '',
-    method: 'GET',
-    authType: 'none', // 'none' | 'bearer' | 'api_key' | 'basic'
-    token: '',
-    apiKey: '',
-    apiKeyHeader: 'X-API-Key',
-    username: '',
-    password: '',
-    dataKey: '',
-    headers: ''
-  });
+  const [apiForm, setApiForm] = useState(INITIAL_API_FORM);
   const [isTestingApi, setIsTestingApi] = useState(false);
   const [apiTestResult, setApiTestResult] = useState(null);
+
+  // Reliable Universal Modal Close Handler
+  const handleClose = useCallback(() => {
+    // 1. Abort any running file upload or connection test cleanly
+    if (uploadXhrRef.current) {
+      try { uploadXhrRef.current.abort(); } catch (_) {}
+      uploadXhrRef.current = null;
+    }
+    if (abortControllerRef.current) {
+      try { abortControllerRef.current.abort(); } catch (_) {}
+      abortControllerRef.current = null;
+    }
+
+    // 2. Safely reset all form, upload, and test states
+    setIsProcessing(false);
+    setIsTestingPg(false);
+    setIsTestingMongo(false);
+    setIsTestingApi(false);
+    setSelectedFile(null);
+    setSourceName('');
+    setDescription('');
+    setError('');
+    setFieldErrors({ name: '', file: '' });
+    setPgForm(INITIAL_PG_FORM);
+    setPgTestResult(null);
+    setMongoForm(INITIAL_MONGO_FORM);
+    setMongoTestResult(null);
+    setMongoCollections([]);
+    setApiForm(INITIAL_API_FORM);
+    setApiTestResult(null);
+    setUploadProgress(0);
+    setUploadStage('uploading');
+    setStageMessage('');
+    setActiveTab('csv');
+
+    // 3. Notify parent component to close
+    if (typeof onClose === 'function') {
+      onClose();
+    }
+  }, [onClose]);
+
   // Lock body scroll and handle Escape key while modal is open
   useEffect(() => {
     if (!isOpen) return;
     const orig = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const handleKey = (e) => {
-      if (e.key === 'Escape' && !isProcessing) {
+      if (e.key === 'Escape') {
         handleClose();
       }
     };
@@ -97,7 +148,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
       document.body.style.overflow = orig;
       document.removeEventListener('keydown', handleKey);
     };
-  }, [isOpen, isProcessing]);
+  }, [isOpen, handleClose]);
 
   if (!isOpen) return null;
   if (typeof document === 'undefined') return null;
@@ -456,7 +507,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
         setUploadProgress(progressEvent.percentage);
         setUploadStage(progressEvent.stage);
         setStageMessage(progressEvent.message);
-      }, { organizationId: activeOrgId });
+      }, { organizationId: activeOrgId, xhrRef: uploadXhrRef });
 
       if (res && res.success) {
         onSuccess(res.data);
@@ -465,23 +516,13 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
         setError(res?.message || 'Failed to upload and ingest file.');
       }
     } catch (err) {
-      setError(err.message || 'File upload failed.');
+      if (!err?.isAborted) {
+        setError(err.message || 'File upload failed.');
+      }
     } finally {
       setIsProcessing(false);
+      uploadXhrRef.current = null;
     }
-  };
-
-  const handleClose = () => {
-    if (isProcessing) return;
-    setSelectedFile(null);
-    setSourceName('');
-    setDescription('');
-    setError('');
-    setFieldErrors({ name: '', file: '' });
-    setPgTestResult(null);
-    setMongoTestResult(null);
-    setApiTestResult(null);
-    onClose();
   };
 
   const isPgValid = Boolean(pgForm.name.trim() && pgForm.host.trim() && pgForm.database.trim() && pgForm.user.trim());
@@ -498,7 +539,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
       role="dialog"
       aria-modal="true"
       onClick={(e) => {
-        if (e.target === e.currentTarget && !isProcessing) {
+        if (e.target === e.currentTarget) {
           handleClose();
         }
       }}
@@ -518,9 +559,11 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
             </p>
           </div>
           <button
+            type="button"
             onClick={handleClose}
-            disabled={isProcessing}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-slate-700 dark:hover:text-[#F8FAFC] transition disabled:opacity-40 cursor-pointer"
+            data-testid="close-modal-btn"
+            aria-label="Close modal"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-slate-700 dark:hover:text-[#F8FAFC] transition cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
@@ -530,6 +573,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
         <div className="flex overflow-x-auto border-b border-slate-200/80 dark:border-[#334155] bg-slate-50/60 dark:bg-[#0F172A] px-6 shrink-0 gap-6 scrollbar-none">
           <button
             type="button"
+            id="modal-tab-csv"
             onClick={() => { setActiveTab('csv'); setError(''); }}
             disabled={isProcessing}
             className={`flex items-center gap-2 py-3 px-1 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
@@ -559,6 +603,7 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
 
           <button
             type="button"
+            id="modal-tab-json"
             onClick={() => { setActiveTab('json'); setError(''); }}
             disabled={isProcessing}
             className={`flex items-center gap-2 py-3 px-1 text-xs font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
@@ -737,8 +782,8 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
                 <button
                   type="button"
                   onClick={handleClose}
-                  disabled={isProcessing}
-                  className="rounded-lg border border-slate-200/90 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
+                  data-testid="cancel-modal-btn"
+                  className="rounded-lg border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -938,8 +983,8 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
                   <button
                     type="button"
                     onClick={handleClose}
-                    disabled={isProcessing}
-                    className="rounded-lg border border-slate-200/90 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
+                    data-testid="cancel-modal-btn"
+                    className="rounded-lg border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -1235,8 +1280,8 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
                   <button
                     type="button"
                     onClick={handleClose}
-                    disabled={isProcessing}
-                    className="rounded-lg border border-slate-200/90 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
+                    data-testid="cancel-modal-btn"
+                    className="rounded-lg border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -1498,8 +1543,8 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
                   <button
                     type="button"
                     onClick={handleClose}
-                    disabled={isProcessing}
-                    className="rounded-lg border border-slate-200/90 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
+                    data-testid="cancel-modal-btn"
+                    className="rounded-lg border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
                   >
                     Cancel
                   </button>

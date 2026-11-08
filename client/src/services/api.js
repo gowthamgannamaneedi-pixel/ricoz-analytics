@@ -177,6 +177,22 @@ export async function apiRequest(endpoint, options = {}) {
           }
         }
 
+        if (response.status === 403 && (data?.error?.code === 'FORBIDDEN_ORGANIZATION' || data?.code === 'FORBIDDEN_ORGANIZATION')) {
+          if (data.authoritativeOrgId) {
+            setActiveOrganizationId(data.authoritativeOrgId);
+          } else {
+            removeActiveOrganizationId();
+          }
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth:organization_mismatch', {
+              detail: {
+                message: data?.message || 'Organization context synchronized.',
+                authoritativeOrgId: data?.authoritativeOrgId
+              }
+            }));
+          }
+        }
+
         if (response.status === 401 && 
             endpoint !== '/auth/login' && 
             endpoint !== '/auth/register' && 
@@ -2189,6 +2205,10 @@ export function uploadDataSourceFile(formData, onProgress, options = {}) {
       }
     }
 
+    if (options.xhrRef) {
+      options.xhrRef.current = xhr;
+    }
+
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable && onProgress) {
         // Map upload byte transfer to 0-80% progress
@@ -2223,12 +2243,43 @@ export function uploadDataSourceFile(formData, onProgress, options = {}) {
         }
         resolve(data || { success: true });
       } else {
+        if (xhr.status === 402) {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth:trial_expired', {
+              detail: {
+                message: data?.message || 'Your 14-day free trial has expired.',
+                subscription: data?.subscription
+              }
+            }));
+          }
+        }
+        if (xhr.status === 403 && (data?.error?.code === 'FORBIDDEN_ORGANIZATION' || data?.code === 'FORBIDDEN_ORGANIZATION')) {
+          if (data.authoritativeOrgId) {
+            setActiveOrganizationId(data.authoritativeOrgId);
+          } else {
+            removeActiveOrganizationId();
+          }
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth:organization_mismatch', {
+              detail: {
+                message: data?.message || 'Organization context synchronized.',
+                authoritativeOrgId: data?.authoritativeOrgId
+              }
+            }));
+          }
+        }
         const errorMsg = data?.message || data?.error?.message || `Upload failed with status HTTP ${xhr.status}`;
         const err = new Error(errorMsg);
         err.status = xhr.status;
         err.data = data;
         reject(err);
       }
+    };
+
+    xhr.onabort = () => {
+      const abortErr = new Error('Upload aborted by user.');
+      abortErr.isAborted = true;
+      reject(abortErr);
     };
 
     xhr.onerror = () => {
