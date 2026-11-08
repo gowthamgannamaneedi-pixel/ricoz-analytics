@@ -49,7 +49,7 @@ export default function AnalyticsShowcase() {
   return (
     <section 
       id="analytics" 
-      className="py-14 lg:py-20 bg-slate-50/60 dark:bg-[#0B0F19] transition-colors duration-200 border-t border-slate-200/80 dark:border-slate-800"
+      className="py-20 lg:py-28 bg-slate-50/60 dark:bg-[#0B0F19] transition-colors duration-200 border-t border-slate-200/80 dark:border-slate-800"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}

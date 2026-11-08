@@ -18,6 +18,10 @@ import { DEFAULT_ILLUSTRATIVE_METRICS } from '../../utils/formulaCalculator';
 
 gsap.registerPlugin(ScrollTrigger);
 
+if (typeof window !== 'undefined') {
+  window.ScrollTrigger = ScrollTrigger;
+}
+
 /**
  * HorizontalCardShowcase — Linear-Grade GSAP Horizontal Capability Showcase
  * Features:
@@ -321,7 +325,7 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
           trigger: section,
           pin: pinContainer,
           start: 'top top',
-          end: () => `+=${window.innerHeight * 2.2}`,
+          end: 'bottom bottom',
           scrub: 0.6,
           snap: {
             snapTo: (progress) => {
