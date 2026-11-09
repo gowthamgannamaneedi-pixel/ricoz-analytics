@@ -3,13 +3,15 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('../config');
 const db = require('../config/database');
-const { supabase, isConfigured } = require('../config/supabase');
+const { supabase, supabaseAdmin, isConfigured } = require('../config/supabase');
 const UserModel = require('../models/userModel');
 const OrganizationModel = require('../models/organizationModel');
 const InvitationModel = require('../models/invitationModel');
 const subscriptionService = require('../services/subscriptionService');
 const plansConfig = require('../config/plans');
 const emailService = require('../services/emailService');
+const emailSuppressionService = require('../services/emailSuppressionService');
+const emailValidator = require('../utils/emailValidator');
 const tenantService = require('../services/tenantService');
 const { logAuditEvent, AUDIT_ACTIONS } = require('../services/auditService');
 const tokenBlacklist = require('../utils/tokenBlacklist');
@@ -20,6 +22,10 @@ const resendRateLimits = new Map();
 // In-flight concurrency set to eliminate double-send race conditions
 const inFlightResends = new Set();
 const RESEND_COOLDOWN_MS = 60 * 1000; // 60s cooldown
+
+// Hourly rate limiter: email -> Array<timestamp>
+const resendHourlyTracker = new Map();
+const MAX_RESENDS_PER_HOUR = 5;
 
 // In-memory verification attempts tracker: email -> { attempts: number, lockedUntil: number | null }
 const verificationAttemptLimits = new Map();
@@ -133,10 +139,62 @@ const register = async (req, res, next) => {
       });
     }
 
-    if (!email || !isValidEmail(email)) {
+    if (!email) {
       return res.status(400).json({
         success: false,
         message: 'A valid email address is required.'
+      });
+    }
+
+    const allowTest = process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_REGISTRATION === 'true';
+    const emailValidation = await emailValidator.validateEmail(email, {
+      checkMx: process.env.NODE_ENV === 'production',
+      allowTestDomains: allowTest
+    });
+
+    if (!emailValidation.isValid) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: emailValidation.code || 'INVALID_EMAIL',
+          message: emailValidation.error || 'A valid email address is required.'
+        },
+        message: emailValidation.error || 'A valid email address is required.'
+      });
+    }
+
+    const cleanEmail = emailValidation.normalized;
+
+    // Check persistent email suppression to prevent bounce penalties
+    const suppression = await emailSuppressionService.isSuppressed(cleanEmail);
+    if (suppression && suppression.isSuppressed) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'EMAIL_ADDRESS_SUPPRESSED',
+          message: `This email address cannot be registered because it previously failed delivery or hard-bounced (${suppression.reason}). Please provide an active, deliverable email address.`
+        },
+        message: `This email address cannot be registered because it previously failed delivery or hard-bounced (${suppression.reason}). Please provide an active, deliverable email address.`
+      });
+    }
+
+    // 2. Check for duplicate email in database
+    let existingUser = await UserModel.findByEmail(cleanEmail);
+    if (existingUser && (existingUser.status === 'deactivated' || cleanEmail === 'gowthamgannamaneedi01@gmail.com')) {
+      // Allow deactivated or reset accounts to register completely fresh as a new account
+      console.log(`[AuthController] Purging account "${cleanEmail}" to enable fresh registration`);
+      await db.query('DELETE FROM invitations WHERE LOWER(email) = LOWER($1)', [cleanEmail]).catch(() => null);
+      await db.query('DELETE FROM audit_logs WHERE user_id = $1', [existingUser.id]).catch(() => null);
+      await db.query('DELETE FROM users WHERE id = $1', [existingUser.id]).catch(() => null);
+      existingUser = null;
+    }
+
+    if (existingUser && existingUser.status !== 'pending_verification') {
+      return res.status(409).json({
+        success: false,
+        code: 'EMAIL_ALREADY_VERIFIED',
+        isVerified: true,
+        message: 'An account with this email address already exists and is active. Please log in or reset your password.'
       });
     }
 
@@ -159,19 +217,6 @@ const register = async (req, res, next) => {
         success: false,
         message: 'Organization or company name is required to create your workspace.'
       });
-    }
-
-    const cleanEmail = email.trim().toLowerCase();
-
-    // 2. Check for duplicate email in database
-    let existingUser = await UserModel.findByEmail(cleanEmail);
-    if (existingUser && (existingUser.status === 'deactivated' || cleanEmail === 'gowthamgannamaneedi01@gmail.com')) {
-      // Allow deactivated or reset accounts to register completely fresh as a new account
-      console.log(`[AuthController] Purging account "${cleanEmail}" to enable fresh registration`);
-      await db.query('DELETE FROM invitations WHERE LOWER(email) = LOWER($1)', [cleanEmail]).catch(() => null);
-      await db.query('DELETE FROM audit_logs WHERE user_id = $1', [existingUser.id]).catch(() => null);
-      await db.query('DELETE FROM users WHERE id = $1', [existingUser.id]).catch(() => null);
-      existingUser = null;
     }
 
     if (existingUser) {
@@ -312,19 +357,23 @@ const register = async (req, res, next) => {
     const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     // 5. Supabase Auth registration (asynchronous, non-blocking background sync)
-    if (isConfigured && supabase) {
-      supabase.auth.signUp({
+    // CRITICAL DELIVERABILITY FIX:
+    // Calling supabase.auth.signUp() causes Supabase's default mailer to send confirmation emails,
+    // which bounced on test accounts and unverified domains, generating Supabase bounce penalties.
+    // RicozAnalytics handles verification exclusively via its custom 6-digit OTP and Brevo API.
+    // We only sync using supabaseAdmin.auth.admin.createUser with email_confirm: true so NO Supabase confirmation email is sent!
+    if (isConfigured && supabaseAdmin && supabaseAdmin.auth && supabaseAdmin.auth.admin && typeof supabaseAdmin.auth.admin.createUser === 'function' && !emailValidator.isTestOrPlaceholderEmail(cleanEmail)) {
+      supabaseAdmin.auth.admin.createUser({
         email: cleanEmail,
         password,
-        options: {
-          data: {
-            name: name.trim(),
-            role: initialRole,
-            organization_id: organizationId
-          }
+        email_confirm: true,
+        user_metadata: {
+          name: name.trim(),
+          role: initialRole,
+          organization_id: organizationId
         }
       }).catch((err) => {
-        console.warn('[AuthController] Background Supabase auth sync warning:', err.message);
+        console.warn('[AuthController] Background Supabase admin sync notice:', err.message);
       });
     }
 
@@ -711,7 +760,20 @@ const resendOtp = async (req, res, next) => {
       });
     }
 
-    // 2. Check rate limit: 60s cooldown for unverified resends
+    // 2. Check suppression list to prevent sending to known bouncing addresses
+    const suppression = await emailSuppressionService.isSuppressed(cleanEmail);
+    if (suppression && suppression.isSuppressed) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'EMAIL_ADDRESS_SUPPRESSED',
+          message: `Cannot resend verification code: Address "${cleanEmail}" is suppressed due to previous delivery failure (${suppression.reason}).`
+        },
+        message: `Cannot resend verification code: Address "${cleanEmail}" is suppressed due to previous delivery failure (${suppression.reason}).`
+      });
+    }
+
+    // 3. Check rate limit: 60s cooldown for unverified resends
     const lastSent = resendRateLimits.get(cleanEmail);
     const now = Date.now();
     if (lastSent && now - lastSent < RESEND_COOLDOWN_MS) {
@@ -724,6 +786,20 @@ const resendOtp = async (req, res, next) => {
         },
         message: `Please wait ${waitSeconds} seconds before requesting another verification email.`,
         retryAfter: waitSeconds
+      });
+    }
+
+    // 4. Check hourly volume limit (max 5 resends per hour)
+    const hourAgo = now - 60 * 60 * 1000;
+    const history = (resendHourlyTracker.get(cleanEmail) || []).filter(t => t > hourAgo);
+    if (history.length >= MAX_RESENDS_PER_HOUR) {
+      return res.status(429).json({
+        success: false,
+        error: {
+          code: 'TOO_MANY_RESENDS',
+          message: 'Maximum verification resend limit reached (5 attempts per hour). Please try again later.'
+        },
+        message: 'Maximum verification resend limit reached (5 attempts per hour). Please try again later.'
       });
     }
 
@@ -774,9 +850,9 @@ const resendOtp = async (req, res, next) => {
       await UserModel.setVerificationDetails(cleanEmail, verificationToken, verificationOtp, tokenExpiresAt);
       verificationAttemptLimits.delete(cleanEmail);
 
-      if (isConfigured && supabase) {
-        await supabase.auth.resend({ type: 'signup', email: cleanEmail }).catch(() => null);
-      }
+      // Track hourly count
+      history.push(Date.now());
+      resendHourlyTracker.set(cleanEmail, history);
 
       // ONLY enforce cooldown when the email provider actually accepts the dispatch!
       resendRateLimits.set(cleanEmail, Date.now());
@@ -1319,7 +1395,7 @@ const heartbeat = async (req, res, next) => {
 const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
-    if (!email || !isValidEmail(email)) {
+    if (!email) {
       return res.status(400).json({
         success: false,
         message: 'A valid email address is required.'
@@ -1327,6 +1403,24 @@ const forgotPassword = async (req, res, next) => {
     }
 
     const cleanEmail = email.trim().toLowerCase();
+    if (!emailValidator.isValidSyntax(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: 'A valid email address is required.'
+      });
+    }
+
+    // Check suppression list to protect deliverability
+    const suppression = await emailSuppressionService.isSuppressed(cleanEmail);
+    if (suppression && suppression.isSuppressed) {
+      console.warn(`[AuthController] Password reset skipped for suppressed email: ${cleanEmail}`);
+      // Return 200 to prevent user enumeration while safely aborting dispatch
+      return res.status(200).json({
+        success: true,
+        message: 'If an account exists with this email, password reset instructions have been sent.'
+      });
+    }
+
     const user = await UserModel.findByEmail(cleanEmail);
 
     let devResetToken = null;

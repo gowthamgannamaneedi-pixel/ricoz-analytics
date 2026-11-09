@@ -8,6 +8,8 @@ if (dns && dns.setDefaultResultOrder) {
   } catch (_) {}
 }
 const nodemailer = require('nodemailer');
+const emailSuppressionService = require('./emailSuppressionService');
+const emailValidator = require('../utils/emailValidator');
 
 /**
  * Enterprise Email Dispatch Service for Scheduled Reports, Alerts & Inbound Demo Inquiries
@@ -311,12 +313,35 @@ class EmailService {
       throw new Error('No valid recipients provided for Brevo email dispatch');
     }
 
+    // Filter out suppressed recipients to prevent bounce penalties
+    const eligibleRecipients = [];
+    for (const r of recipients) {
+      const isSupp = await emailSuppressionService.isSuppressed(r.email);
+      if (isSupp && isSupp.isSuppressed) {
+        console.warn(`[EmailService] 🛑 Brevo dispatch filtered suppressed recipient "${r.email}" (Reason: ${isSupp.reason})`);
+      } else {
+        eligibleRecipients.push(r);
+      }
+    }
+
+    if (eligibleRecipients.length === 0) {
+      console.warn('[EmailService] 🛑 All recipients were suppressed. Aborting Brevo call.');
+      return {
+        success: false,
+        suppressed: true,
+        provider: 'Brevo',
+        recipientCount: 0,
+        messageId: `<suppressed-${Date.now()}@ricozanalytics.test>`,
+        response: 'All recipients suppressed'
+      };
+    }
+
     const payload = {
       sender: {
         name: resolvedSenderName,
         email: verifiedSender
       },
-      to: recipients,
+      to: eligibleRecipients,
       subject: subject || 'RicozAnalytics Notification',
       htmlContent: htmlContent || '<p>No content</p>'
     };
@@ -354,10 +379,27 @@ class EmailService {
       });
     }
 
-    const res = await this._callBrevoApi('/smtp/email', {
-      method: 'POST',
-      body: payload
-    });
+    let res;
+    try {
+      res = await this._callBrevoApi('/smtp/email', {
+        method: 'POST',
+        body: payload
+      });
+    } catch (err) {
+      const errMsg = (err.message || '').toLowerCase();
+      if (errMsg.includes('blacklisted') || errMsg.includes('blocked') || errMsg.includes('invalid') || err.statusCode === 400 || err.statusCode === 422) {
+        for (const r of eligibleRecipients) {
+          await emailSuppressionService.addSuppression({
+            email: r.email,
+            reason: 'hard_bounce',
+            bounceType: 'brevo_rejected',
+            provider: 'Brevo',
+            errorDetail: err.message
+          }).catch(() => null);
+        }
+      }
+      throw err;
+    }
 
     const msgId = res.data?.messageId || `<brevo-${Date.now()}@smtp-relay.brevo.com>`;
     
@@ -367,7 +409,7 @@ class EmailService {
       provider: 'Brevo',
       httpStatus: res.status,
       messageId: msgId,
-      recipientCount: recipients.length,
+      recipientCount: eligibleRecipients.length,
       tags: payload.tags || []
     }));
 
@@ -376,7 +418,7 @@ class EmailService {
       provider: 'Brevo',
       messageId: msgId,
       httpStatus: res.status || 201,
-      recipientCount: recipients.length,
+      recipientCount: eligibleRecipients.length,
       response: `201 Accepted by Brevo API (messageId: ${msgId})`
     };
   }
@@ -1494,36 +1536,10 @@ class EmailService {
    * @returns {boolean}
    */
   isTestOrPlaceholderRecipient(email) {
-    if (!email || typeof email !== 'string') return false;
-    const lower = email.toLowerCase().trim();
-    const parts = lower.split('@');
-    if (parts.length !== 2) return false;
-    const [user, domain] = parts;
-
-    // RFC 2606 & RFC 6761 reserved test and documentation domains
-    const testDomains = [
-      'example.com',
-      'example.org',
-      'example.net',
-      'example.edu',
-      'test',
-      'test.com',
-      'ricoz.test',
-      'other.test',
-      'foreign.test',
-      'invalid',
-      'localhost'
-    ];
-
-    if (testDomains.includes(domain) || domain.endsWith('.test') || domain.endsWith('.invalid') || domain.endsWith('.localhost')) {
-      return true;
-    }
-
-    if (user.startsWith('testuser_verif') || user.startsWith('testuser') || user.startsWith('test_registrant') || user.startsWith('enterprise_tester')) {
-      return true;
-    }
-
-    return false;
+    if (!email || typeof email !== 'string') return true;
+    const clean = this._extractEmail(email);
+    if (!clean) return true;
+    return emailValidator.isTestOrPlaceholderEmail(clean);
   }
 
   /**
@@ -1537,6 +1553,21 @@ class EmailService {
     }
 
     const provider = this.getProvider();
+
+    // Check persistent suppression list first
+    const suppression = await emailSuppressionService.isSuppressed(email);
+    if (suppression && suppression.isSuppressed) {
+      console.warn(`[EmailService] 🛑 Verification email dispatch aborted: Recipient "${email}" is suppressed (${suppression.reason}).`);
+      return {
+        attempted: false,
+        suppressed: true,
+        success: false,
+        recipient: email,
+        provider,
+        error: `Recipient address is suppressed due to previous ${suppression.reason || 'delivery failure'}`
+      };
+    }
+
     const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'ricozanalytics@gmail.com';
     const defaultVerifyPath = `/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
     const link = this.sanitizeUrlForProduction(verifyUrl, defaultVerifyPath);
@@ -1830,6 +1861,33 @@ class EmailService {
 
     console.log(`[EmailService] ✉️ Team Invitation generated for: ${email} -> ${orgName} (${role})`);
 
+    // Check suppression list
+    const suppression = await emailSuppressionService.isSuppressed(email);
+    if (suppression && suppression.isSuppressed) {
+      console.warn(`[EmailService] 🛑 Invitation dispatch aborted: Recipient "${email}" is suppressed (${suppression.reason}).`);
+      return {
+        attempted: false,
+        suppressed: true,
+        success: false,
+        recipient: email,
+        error: `Recipient address is suppressed due to previous ${suppression.reason || 'delivery failure'}`
+      };
+    }
+
+    // Check if test or placeholder recipient
+    if (this.isTestOrPlaceholderRecipient(email)) {
+      console.log(`[EmailService] 🧪 Safe Mock: Skipping invitation email delivery for test address "${email}"`);
+      return {
+        attempted: true,
+        mocked: true,
+        success: true,
+        recipient: email,
+        provider: 'MockTestService',
+        inviteUrl: link,
+        messageId: `<mock-invite-${Date.now()}@ricozanalytics.test>`
+      };
+    }
+
     if (!this.isConfigured()) {
       return {
         attempted: false,
@@ -1930,6 +1988,34 @@ class EmailService {
     `;
 
     console.log(`[EmailService] ✉️ Password Reset Email generated for: ${email}`);
+
+    // Check suppression list
+    const suppression = await emailSuppressionService.isSuppressed(email);
+    if (suppression && suppression.isSuppressed) {
+      console.warn(`[EmailService] 🛑 Password reset dispatch aborted: Recipient "${email}" is suppressed (${suppression.reason}).`);
+      return {
+        attempted: false,
+        suppressed: true,
+        success: false,
+        recipient: email,
+        error: `Recipient address is suppressed due to previous ${suppression.reason || 'delivery failure'}`
+      };
+    }
+
+    // Check if test or placeholder recipient
+    if (this.isTestOrPlaceholderRecipient(email)) {
+      console.log(`[EmailService] 🧪 Safe Mock: Skipping password reset email delivery for test address "${email}"`);
+      return {
+        attempted: true,
+        mocked: true,
+        success: true,
+        recipient: email,
+        provider: 'MockTestService',
+        token,
+        resetUrl: link,
+        messageId: `<mock-reset-${Date.now()}@ricozanalytics.test>`
+      };
+    }
 
     if (!this.isConfigured()) {
       return {
@@ -2096,6 +2182,20 @@ class EmailService {
     console.log(`[EmailService] ✉️ 10-day subscription expiry reminder prepared for: ${email} (Org: ${orgName}, Plan: ${planName}, Expiry: ${expiryDate})`);
 
     const cleanRecipient = (email || '').trim().toLowerCase();
+
+    // Check suppression list
+    const suppression = await emailSuppressionService.isSuppressed(cleanRecipient);
+    if (suppression && suppression.isSuppressed) {
+      console.warn(`[EmailService] 🛑 Expiry reminder dispatch aborted: Recipient "${cleanRecipient}" is suppressed (${suppression.reason}).`);
+      return {
+        attempted: false,
+        suppressed: true,
+        success: false,
+        recipient: cleanRecipient,
+        error: `Recipient address is suppressed due to previous ${suppression.reason || 'delivery failure'}`
+      };
+    }
+
     if (
       process.env.MOCK_EMAIL_SEND === 'true' ||
       cleanRecipient.endsWith('.test') ||

@@ -20,6 +20,12 @@ router.get('/verify-reset-url', (req, res) => demoRequestController.verifyResetU
 // GET /api/demo-request/brevo-logs (Brevo Transactional Email Event Diagnostics)
 router.get('/brevo-logs', (req, res) => demoRequestController.getBrevoLogs(req, res));
 
+// GET /api/demo-request/suppressions (Email Suppression & Bounce Diagnostics)
+router.get('/suppressions', (req, res) => demoRequestController.getSuppressions(req, res));
+
+// POST /api/demo-request/brevo-webhook (Brevo deliverability and bounce event webhook)
+router.post('/brevo-webhook', (req, res) => demoRequestController.handleBrevoWebhook(req, res));
+
 // GET /api/demo-request/queue-status (Background Email Queue Diagnostics)
 router.get('/queue-status', (req, res) => demoRequestController.getQueueStatus(req, res));
 

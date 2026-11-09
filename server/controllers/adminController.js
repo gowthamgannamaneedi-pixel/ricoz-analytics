@@ -4,6 +4,8 @@ const UserModel = require('../models/userModel');
 const AuditLogModel = require('../models/auditLogModel');
 const InvitationModel = require('../models/invitationModel');
 const emailService = require('../services/emailService');
+const emailSuppressionService = require('../services/emailSuppressionService');
+const emailValidator = require('../utils/emailValidator');
 const subscriptionService = require('../services/subscriptionService');
 const { logAuditEvent, AUDIT_ACTIONS } = require('../services/auditService');
 const { getFullPermissionMatrix, getPermissionsForRole } = require('../utils/permissions');
@@ -562,10 +564,42 @@ const adminController = {
 
       const { email, role = 'viewer' } = req.body;
 
-      if (!email || !email.includes('@')) {
+      if (!email) {
         return res.status(400).json({
           success: false,
           message: 'A valid email address is required.'
+        });
+      }
+
+      const allowTest = process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_REGISTRATION === 'true';
+      const emailValidation = await emailValidator.validateEmail(email, {
+        checkMx: process.env.NODE_ENV === 'production',
+        allowTestDomains: allowTest
+      });
+
+      if (!emailValidation.isValid) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: emailValidation.code || 'INVALID_EMAIL',
+            message: emailValidation.error || 'A valid email address is required.'
+          },
+          message: emailValidation.error || 'A valid email address is required.'
+        });
+      }
+
+      const cleanEmail = emailValidation.normalized;
+
+      // Check suppression list to prevent invitations to bouncing addresses
+      const suppression = await emailSuppressionService.isSuppressed(cleanEmail);
+      if (suppression && suppression.isSuppressed) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'EMAIL_ADDRESS_SUPPRESSED',
+            message: `Cannot invite ${cleanEmail}: This address is suppressed due to previous delivery failure (${suppression.reason}).`
+          },
+          message: `Cannot invite ${cleanEmail}: This address is suppressed due to previous delivery failure (${suppression.reason}).`
         });
       }
 
@@ -587,7 +621,6 @@ const adminController = {
       }
 
       // Check if user already in organization
-      const cleanEmail = email.trim().toLowerCase();
       const existingUser = await UserModel.findByEmail(cleanEmail);
       if (existingUser && String(existingUser.organization_id) === String(orgId) && existingUser.status !== 'deactivated') {
         return res.status(400).json({
@@ -735,6 +768,19 @@ const adminController = {
       const result = await InvitationModel.resend(id, orgId);
       const invitation = result.invitation;
       const rawToken = result.rawToken;
+
+      // Check suppression list to prevent sending to bouncing addresses
+      const suppression = await emailSuppressionService.isSuppressed(invitation.email);
+      if (suppression && suppression.isSuppressed) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'EMAIL_ADDRESS_SUPPRESSED',
+            message: `Cannot resend invitation: Address "${invitation.email}" is suppressed due to previous delivery failure (${suppression.reason}).`
+          },
+          message: `Cannot resend invitation: Address "${invitation.email}" is suppressed due to previous delivery failure (${suppression.reason}).`
+        });
+      }
 
       const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
       let frontendBase = config.clientUrl || (isProd ? 'https://ricoz-analytics.vercel.app' : 'http://localhost:5173');

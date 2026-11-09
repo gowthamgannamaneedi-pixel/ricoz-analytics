@@ -231,6 +231,15 @@ if (require.main === module) {
       demoEmailQueueService.init().catch(err => {
         console.warn(' Demo email queue worker init warning:', err.message);
       });
+
+      // Initialize persistent email suppression and bounce protection
+      const emailSuppressionService = require('./services/emailSuppressionService');
+      const emailService = require('./services/emailService');
+      emailSuppressionService.init().then(() => {
+        emailSuppressionService.syncFromBrevo(emailService).catch(() => null);
+      }).catch(err => {
+        console.warn(' Email suppression service init warning:', err.message);
+      });
     });
 
     // Configure enterprise upload timeouts (5 minutes request timeout for large 250MB+ datasets)

@@ -695,6 +695,58 @@ class DemoRequestController {
       return res.status(500).json({ success: false, error: err.message });
     }
   }
+
+  /**
+   * GET /api/demo-request/suppressions
+   * Retrieve active email deliverability suppression list and statistics
+   */
+  async getSuppressions(req, res) {
+    try {
+      const emailSuppressionService = require('../services/emailSuppressionService');
+      const limit = parseInt(req.query.limit, 10) || 50;
+      const offset = parseInt(req.query.offset, 10) || 0;
+      const search = req.query.search || '';
+
+      const data = await emailSuppressionService.getSuppressionList({ limit, offset, search });
+      return res.status(200).json({
+        success: true,
+        data
+      });
+    } catch (err) {
+      console.error('[DemoRequestController] ❌ Error fetching suppression list:', err.message);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
+  /**
+   * POST /api/demo-request/brevo-webhook
+   * Ingest transactional email deliverability and bounce webhooks from Brevo
+   */
+  async handleBrevoWebhook(req, res) {
+    try {
+      const emailSuppressionService = require('../services/emailSuppressionService');
+      const eventData = req.body || {};
+      const email = eventData.email;
+      const event = eventData.event; // 'hard_bounce', 'soft_bounce', 'blocked', 'spam', 'unsubscribed'
+
+      if (email && (event === 'hard_bounce' || event === 'blocked' || event === 'spam' || event === 'invalid_email')) {
+        await emailSuppressionService.addSuppression({
+          email,
+          reason: event === 'hard_bounce' ? 'hard_bounce' : 'blocked',
+          bounceType: event,
+          provider: 'Brevo (Webhook)',
+          errorDetail: eventData.reason || eventData.description || 'Brevo webhook event',
+          metadata: eventData
+        });
+        console.log(`[DemoRequestController] 🛑 Recorded Brevo webhook suppression for "${email}" (${event})`);
+      }
+
+      return res.status(200).json({ success: true, received: true });
+    } catch (err) {
+      console.error('[DemoRequestController] ❌ Brevo webhook handler error:', err.message);
+      return res.status(200).json({ success: false, error: err.message });
+    }
+  }
 }
 
 module.exports = new DemoRequestController();
