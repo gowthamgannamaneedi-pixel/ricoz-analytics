@@ -116,20 +116,70 @@ const TeamMessageController = {
     try {
       const organizationId = getOrgId(req);
       const userId = req.user.id;
-      const recipientId = Number(req.body.recipientId || req.body.userBId);
+      const rawRecipient = req.body.recipientId || req.body.userBId || req.body.userId;
 
-      if (!recipientId || isNaN(recipientId)) {
+      if (!rawRecipient) {
         return res.status(400).json({ success: false, message: 'Valid recipientId is required.' });
       }
 
-      // Verify recipient belongs to the same organization
-      const checkUser = await query(
-        'SELECT id, name, email FROM users WHERE id = $1 AND organization_id = $2',
-        [recipientId, organizationId]
-      );
+      // Resolve recipient user cleanly across numeric integer ID, UUID, team_member ID, or email
+      let recipientUser = null;
 
-      if (!checkUser.rows[0]) {
+      // 1. Check if rawRecipient is numeric ID
+      if (!isNaN(Number(rawRecipient)) && Number(rawRecipient) > 0) {
+        const checkUser = await query(
+          'SELECT id, name, email FROM users WHERE id = $1 AND organization_id = $2',
+          [Number(rawRecipient), organizationId]
+        );
+        if (checkUser.rows[0]) {
+          recipientUser = checkUser.rows[0];
+        }
+      }
+
+      // 2. If not found and rawRecipient looks like UUID
+      if (!recipientUser && typeof rawRecipient === 'string' && /^[0-9a-fA-F-]{36}$/.test(rawRecipient)) {
+        // Check if it's a team_member record id
+        const tmCheck = await query(
+          `SELECT tm.user_id, u.id, u.name, u.email 
+           FROM team_members tm 
+           JOIN users u ON u.id = tm.user_id 
+           WHERE tm.id = $1 AND u.organization_id = $2`,
+          [rawRecipient, organizationId]
+        ).catch(() => ({ rows: [] }));
+
+        if (tmCheck.rows[0]) {
+          recipientUser = tmCheck.rows[0];
+        } else {
+          // Check if users.id is text/uuid or matches string representation
+          const uCheck = await query(
+            'SELECT id, name, email FROM users WHERE id::text = $1 AND organization_id = $2',
+            [rawRecipient, organizationId]
+          ).catch(() => ({ rows: [] }));
+          if (uCheck.rows[0]) {
+            recipientUser = uCheck.rows[0];
+          }
+        }
+      }
+
+      // 3. If rawRecipient is email
+      if (!recipientUser && typeof rawRecipient === 'string' && rawRecipient.includes('@')) {
+        const emailCheck = await query(
+          'SELECT id, name, email FROM users WHERE LOWER(email) = LOWER($1) AND organization_id = $2',
+          [rawRecipient.trim(), organizationId]
+        );
+        if (emailCheck.rows[0]) {
+          recipientUser = emailCheck.rows[0];
+        }
+      }
+
+      if (!recipientUser) {
         return res.status(404).json({ success: false, message: 'Recipient not found in your organization workspace.' });
+      }
+
+      const recipientId = recipientUser.id;
+
+      if (String(recipientId) === String(userId)) {
+        return res.status(400).json({ success: false, message: 'Cannot start a direct conversation with yourself.' });
       }
 
       const conversation = await TeamMessageModel.createDirectConversation({
@@ -316,13 +366,13 @@ const TeamMessageController = {
             [conversationId, senderId]
           );
 
-          const otherUserIds = partsRes.rows.map(r => Number(r.user_id));
+          const otherUserIds = partsRes.rows.map(r => String(r.user_id));
 
           // A. Mentions notifications
           if (Array.isArray(mentions) && mentions.length > 0) {
             for (const mentionedUid of mentions) {
-              const uid = Number(mentionedUid);
-              if (uid && uid !== Number(senderId) && otherUserIds.includes(uid)) {
+              const uid = String(mentionedUid).trim();
+              if (uid && uid !== String(senderId) && otherUserIds.includes(uid)) {
                 await NotificationModel.create({
                   organizationId,
                   userId: uid,
@@ -341,8 +391,8 @@ const TeamMessageController = {
           // B. Thread reply notification
           if (parentMessageId) {
             const parentRes = await query('SELECT sender_id FROM messages WHERE id = $1', [parentMessageId]);
-            const parentSenderId = Number(parentRes.rows[0]?.sender_id);
-            if (parentSenderId && parentSenderId !== Number(senderId)) {
+            const parentSenderId = parentRes.rows[0]?.sender_id ? String(parentRes.rows[0].sender_id) : null;
+            if (parentSenderId && parentSenderId !== String(senderId)) {
               await NotificationModel.create({
                 organizationId,
                 userId: parentSenderId,

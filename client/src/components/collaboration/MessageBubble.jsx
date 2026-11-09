@@ -36,7 +36,7 @@ export default function MessageBubble({
   const [isEditingInline, setIsEditingInline] = useState(false);
   const [editContent, setEditContent] = useState(message.content || '');
 
-  const isCurrentUser = Number(message.sender_id) === Number(currentUserId);
+  const isCurrentUser = String(message.sender_id) === String(currentUserId);
   const isAdmin = ['admin', 'manager', 'owner'].includes(String(userRole).toLowerCase());
   const isDeleted = Boolean(message.is_deleted);
 
@@ -101,7 +101,7 @@ export default function MessageBubble({
   };
 
   // Read status: check if other participants have read
-  const isReadByOthers = Array.isArray(message.read_receipts) && message.read_receipts.some(r => Number(r.user_id) !== Number(currentUserId));
+  const isReadByOthers = Array.isArray(message.read_receipts) && message.read_receipts.some(r => String(r.user_id) !== String(currentUserId));
 
   return (
     <div className={`group relative flex gap-3 my-3 px-2 sm:px-4 ${isCurrentUser ? 'flex-row-reverse' : 'flex-row'}`}>

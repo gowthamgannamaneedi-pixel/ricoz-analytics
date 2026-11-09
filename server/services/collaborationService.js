@@ -37,13 +37,13 @@ class CollaborationService {
       const dashboard = await DashboardModel.findByIdAndOrgId(resourceId, organizationId);
       if (!dashboard) return { hasAccess: false, permission: null, isOwner: false };
 
-      if (cleanRole === 'admin' || Number(dashboard.created_by) === Number(userId)) {
+      if (cleanRole === 'admin' || String(dashboard.created_by) === String(userId)) {
         return { hasAccess: true, permission: 'owner', isOwner: true };
       }
 
       // Check direct user share
       const shares = await ShareModel.getDashboardShares(resourceId, organizationId);
-      const userShare = shares.find(s => s.user_id && Number(s.user_id) === Number(userId));
+      const userShare = shares.find(s => s.user_id && String(s.user_id) === String(userId));
       if (userShare) {
         return { hasAccess: true, permission: userShare.permission, isOwner: false };
       }
@@ -70,12 +70,12 @@ class CollaborationService {
       const report = await ReportModel.findByIdAndOrgId(resourceId, organizationId);
       if (!report) return { hasAccess: false, permission: null, isOwner: false };
 
-      if (cleanRole === 'admin' || Number(report.created_by) === Number(userId)) {
+      if (cleanRole === 'admin' || String(report.created_by) === String(userId)) {
         return { hasAccess: true, permission: 'owner', isOwner: true };
       }
 
       const shares = await ShareModel.getReportShares(resourceId, organizationId);
-      const userShare = shares.find(s => s.user_id && Number(s.user_id) === Number(userId));
+      const userShare = shares.find(s => s.user_id && String(s.user_id) === String(userId));
       if (userShare) {
         return { hasAccess: true, permission: userShare.permission, isOwner: false };
       }
@@ -100,7 +100,7 @@ class CollaborationService {
       const insight = await InsightModel.findByIdAndOrgId(resourceId, organizationId);
       if (!insight) return { hasAccess: false, permission: null, isOwner: false };
 
-      return { hasAccess: true, permission: 'viewer', isOwner: Number(insight.user_id) === Number(userId) };
+      return { hasAccess: true, permission: 'viewer', isOwner: String(insight.user_id) === String(userId) };
     }
 
     return { hasAccess: true, permission: 'viewer', isOwner: false };
@@ -176,7 +176,7 @@ class CollaborationService {
     } else if (targetTeamId) {
       const members = await TeamModel.getMembers(targetTeamId);
       for (const m of members) {
-        if (Number(m.user_id) !== Number(userId)) {
+        if (String(m.user_id) !== String(userId)) {
           await NotificationModel.create({
             organizationId,
             userId: m.user_id,
@@ -513,7 +513,7 @@ class CollaborationService {
 
     // 4. Send Notifications for Mentions
     for (const mention of validatedMentions) {
-      if (Number(mention.user_id) !== Number(userId)) {
+      if (String(mention.user_id) !== String(userId)) {
         await NotificationModel.create({
           organizationId,
           userId: mention.user_id,
@@ -542,7 +542,7 @@ class CollaborationService {
         return null;
       };
       const parent = findParent(comments);
-      if (parent && Number(parent.user_id) !== Number(userId)) {
+      if (parent && String(parent.user_id) !== String(userId)) {
         await NotificationModel.create({
           organizationId,
           userId: parent.user_id,

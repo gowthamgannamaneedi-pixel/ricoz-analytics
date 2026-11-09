@@ -29,6 +29,7 @@ import {
   markConversationReadApi,
   searchMessagesApi,
   getPresenceApi,
+  getOrganizationUsersApi,
   getAuthToken,
   API_BASE_URL
 } from '../../services/api';
@@ -173,7 +174,7 @@ export default function TeamMessagesContainer({
         if (String(conversationId) === String(activeConversationId)) {
           setMessages(prev => prev.map(m => {
             const receipts = m.read_receipts || [];
-            if (!receipts.some(r => Number(r.user_id) === Number(userId))) {
+            if (!receipts.some(r => String(r.user_id) === String(userId))) {
               return {
                 ...m,
                 read_receipts: [...receipts, { user_id: userId, user_name: userName, read_at: new Date() }]
@@ -202,7 +203,7 @@ export default function TeamMessagesContainer({
     eventSource.addEventListener('typing:update', (e) => {
       try {
         const { conversationId, userId, userName, isTyping } = JSON.parse(e.data);
-        if (String(conversationId) === String(activeConversationId) && Number(userId) !== Number(currentUserId)) {
+        if (String(conversationId) === String(activeConversationId) && String(userId) !== String(currentUserId)) {
           setTypingUsers(prev => {
             if (isTyping) {
               return { ...prev, [userId]: userName };
@@ -217,6 +218,10 @@ export default function TeamMessagesContainer({
         console.warn('Error handling typing:update event:', err);
       }
     });
+
+    eventSource.onerror = (err) => {
+      console.warn('[SSE] EventSource connection notice, browser will auto-reconnect:', err?.message || 'reconnecting');
+    };
 
     return () => {
       eventSource.close();
@@ -300,17 +305,47 @@ export default function TeamMessagesContainer({
 
   const handleSendMessage = async (payload) => {
     if (!activeConversationId) return;
+
+    // Instant optimistic rendering for 0ms visual latency
+    const tempId = `optimistic-${Date.now()}`;
+    const cleanContent = payload.content || (payload.sharedAnalytics ? `📊 Shared: ${payload.sharedAnalytics.title || 'Analytics'}` : 'Attachment');
+    const optimisticMsg = {
+      id: tempId,
+      conversation_id: activeConversationId,
+      sender_id: currentUserId,
+      sender_name: 'You',
+      content: cleanContent,
+      shared_analytics: payload.sharedAnalytics || null,
+      created_at: new Date().toISOString(),
+      reply_count: 0,
+      attachments: [],
+      reactions: [],
+      read_receipts: [{ user_id: currentUserId, read_at: new Date() }],
+      is_optimistic: true
+    };
+
+    setMessages(prev => [...prev, optimisticMsg]);
+
+    // Optimistically update conversation preview in sidebar
+    setConversations(prev => prev.map(c => {
+      if (String(c.id) === String(activeConversationId)) {
+        return {
+          ...c,
+          last_message_at: optimisticMsg.created_at,
+          last_message_preview: optimisticMsg.content
+        };
+      }
+      return c;
+    }).sort((a, b) => new Date(b.last_message_at || b.created_at) - new Date(a.last_message_at || a.created_at)));
+
     try {
       const res = await sendMessageApi(activeConversationId, payload);
-      if (res.data) {
-        setMessages(prev => {
-          if (prev.some(m => m.id === res.data.id)) return prev;
-          return [...prev, res.data];
-        });
+      if (res?.data) {
+        setMessages(prev => prev.map(m => (m.id === tempId ? res.data : m)));
 
-        // Update last message in sidebar
+        // Update real timestamp & preview in sidebar
         setConversations(prev => prev.map(c => {
-          if (c.id === activeConversationId) {
+          if (String(c.id) === String(activeConversationId)) {
             return {
               ...c,
               last_message_at: res.data.created_at,
@@ -318,10 +353,12 @@ export default function TeamMessagesContainer({
             };
           }
           return c;
-        }));
+        }).sort((a, b) => new Date(b.last_message_at || b.created_at) - new Date(a.last_message_at || a.created_at)));
       }
     } catch (err) {
       console.error('Failed to send message:', err);
+      // Mark temporary message as failed so user knows
+      setMessages(prev => prev.map(m => (m.id === tempId ? { ...m, is_failed: true } : m)));
     }
   };
 

@@ -168,25 +168,28 @@ export default function CollaborationPage() {
       setLoading(true);
       setError(null);
 
-      const [favsRes, recentRes, sharedRes, teamsRes, dashRes, repRes, insRes] = await Promise.all([
+      const [favsRes, recentRes, sharedRes, teamsRes, dashRes, repRes, insRes, usersRes] = await Promise.all([
         getFavoritesApi().catch(() => ({ data: [] })),
         getRecentlyViewedApi(50).catch(() => ({ data: [] })),
         getSharedWithMeApi().catch(() => ({ data: { dashboards: [], reports: [], insights: [] } })),
         getTeamsApi().catch(() => ({ data: [] })),
         getDashboards ? getDashboards().catch(() => ({ dashboards: [] })) : Promise.resolve({ dashboards: [] }),
         getReports ? getReports().catch(() => ({ reports: [] })) : Promise.resolve({ reports: [] }),
-        getAIInsights ? getAIInsights().catch(() => ({ insights: [] })) : Promise.resolve({ insights: [] })
+        getAIInsights ? getAIInsights().catch(() => ({ insights: [] })) : Promise.resolve({ insights: [] }),
+        getOrganizationUsersApi().catch(() => ({ data: [] }))
       ]);
 
       const favList = Array.isArray(favsRes?.data) ? favsRes.data : [];
       const recList = Array.isArray(recentRes?.data) ? recentRes.data : [];
       const sharedData = sharedRes?.data || { dashboards: [], reports: [], insights: [] };
       const teamList = Array.isArray(teamsRes?.data) ? teamsRes.data : [];
+      const rawUsers = Array.isArray(usersRes?.data) ? usersRes.data : (Array.isArray(usersRes?.data?.users) ? usersRes.data.users : []);
 
       setFavorites(favList);
       setRecentlyViewed(recList);
       setSharedWithMe(sharedData);
       setTeams(teamList);
+      setAllUsers(rawUsers);
       setDashboardsList(dashRes.dashboards || dashRes.data || []);
       setReportsList(repRes.reports || repRes.data || []);
       setInsightsList(insRes.insights || insRes.data || []);
@@ -238,10 +241,14 @@ export default function CollaborationPage() {
       if (res?.data?.id) {
         setActiveConvId(res.data.id);
         setActiveTab('messages');
+        showToast(`Opened ${team.name} chat`);
+      } else {
+        setActiveTab('messages');
       }
     } catch (err) {
       console.error('Failed to open team chat:', err);
       showToast('Could not open team chat');
+      setActiveTab('messages');
     }
   };
 

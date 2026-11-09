@@ -1143,7 +1143,7 @@ export default function GovernancePage() {
                       </tr>
                     ) : (
                       users.map((u) => {
-                        const isSelf = Number(u.id) === Number(user?.id);
+                        const isSelf = String(u.id) === String(user?.id);
                         return (
                           <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
                             <td className="px-4 py-3.5">

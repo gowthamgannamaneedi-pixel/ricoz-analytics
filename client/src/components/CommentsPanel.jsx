@@ -107,7 +107,7 @@ export default function CommentsPanel({
 
   const renderCommentThread = (comment, isReply = false) => {
     const isEditing = editingCommentId === comment.id;
-    const isAuthor = Number(comment.user_id) === Number(user?.id);
+    const isAuthor = String(comment.user_id) === String(user?.id);
     const canDelete = isAuthor || user?.role === 'admin' || user?.role === 'manager';
 
     return (

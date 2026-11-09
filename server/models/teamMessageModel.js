@@ -62,7 +62,7 @@ const TeamMessageModel = {
       // For direct conversations, calculate the "other" user
       let directOtherUser = null;
       if (conv.type === 'direct' && Array.isArray(conv.participants)) {
-        directOtherUser = conv.participants.find(p => Number(p.user_id) !== Number(userId)) || conv.participants[0] || null;
+        directOtherUser = conv.participants.find(p => String(p.user_id) !== String(userId)) || conv.participants[0] || null;
       }
 
       return {
@@ -140,20 +140,38 @@ const TeamMessageModel = {
   async createGroupConversation({ organizationId, teamId = null, title, createdBy, memberUserIds = [] }) {
     // 1. If teamId is supplied, check for existing team conversation
     if (teamId) {
-      const existing = await this.findTeamConversation(organizationId, teamId);
+      let existing = await this.findTeamConversation(organizationId, teamId);
+      if (!existing) {
+        // Fallback: check by team_id directly
+        const fbRes = await query('SELECT * FROM conversations WHERE team_id = $1 LIMIT 1', [teamId]);
+        if (fbRes.rows[0]) existing = fbRes.rows[0];
+      }
+
       if (existing) {
+        // Ensure createdBy is enrolled as participant
+        if (createdBy) {
+          await query(
+            `INSERT INTO conversation_participants (conversation_id, organization_id, user_id, role)
+             VALUES ($1, $2, $3, 'admin')
+             ON CONFLICT (conversation_id, user_id) DO NOTHING`,
+            [existing.id, organizationId, createdBy]
+          ).catch(() => null);
+        }
+
         // Sync team members into conversation participants just in case new members joined
         const teamMembersRes = await query(
           'SELECT user_id FROM team_members WHERE team_id = $1',
           [teamId]
         );
         for (const tm of teamMembersRes.rows) {
-          await query(
-            `INSERT INTO conversation_participants (conversation_id, organization_id, user_id, role)
-             VALUES ($1, $2, $3, 'member')
-             ON CONFLICT (conversation_id, user_id) DO NOTHING`,
-            [existing.id, organizationId, tm.user_id]
-          );
+          if (tm.user_id) {
+            await query(
+              `INSERT INTO conversation_participants (conversation_id, organization_id, user_id, role)
+               VALUES ($1, $2, $3, 'member')
+               ON CONFLICT (conversation_id, user_id) DO NOTHING`,
+              [existing.id, organizationId, tm.user_id]
+            ).catch(() => null);
+          }
         }
         return this.getConversationDetails(existing.id, organizationId, createdBy);
       }
@@ -171,19 +189,37 @@ const TeamMessageModel = {
       groupTitle = 'Group Conversation';
     }
 
-    // 3. Insert conversation
+    // 3. Insert conversation (with unique constraint recovery)
+    let conversation = null;
     const insertConvSql = `
       INSERT INTO conversations (organization_id, type, title, team_id, created_by, last_message_at)
       VALUES ($1, 'group', $2, $3, $4, CURRENT_TIMESTAMP)
       RETURNING *;
     `;
-    const convRes = await query(insertConvSql, [organizationId, groupTitle, teamId, createdBy]);
-    const conversation = convRes.rows[0];
+    try {
+      const convRes = await query(insertConvSql, [organizationId, groupTitle, teamId, createdBy]);
+      conversation = convRes.rows[0];
+    } catch (insertErr) {
+      if ((insertErr.code === '23505' || insertErr.message?.includes('unique constraint')) && teamId) {
+        const recoverRes = await query(
+          'SELECT * FROM conversations WHERE team_id = $1 LIMIT 1',
+          [teamId]
+        );
+        if (recoverRes.rows[0]) {
+          conversation = recoverRes.rows[0];
+        } else {
+          throw insertErr;
+        }
+      } else {
+        throw insertErr;
+      }
+    }
 
-    // 4. Collect all participant user IDs
-    const participantsSet = new Set([Number(createdBy)]);
+    // 4. Collect all participant user IDs cleanly
+    const participantsSet = new Set();
+    if (createdBy) participantsSet.add(String(createdBy));
     if (Array.isArray(memberUserIds)) {
-      memberUserIds.forEach(id => participantsSet.add(Number(id)));
+      memberUserIds.forEach(id => { if (id) participantsSet.add(String(id)); });
     }
 
     // If linked to team, automatically add all team members
@@ -192,19 +228,19 @@ const TeamMessageModel = {
         'SELECT user_id FROM team_members WHERE team_id = $1',
         [teamId]
       );
-      teamMembersRes.rows.forEach(tm => participantsSet.add(Number(tm.user_id)));
+      teamMembersRes.rows.forEach(tm => { if (tm.user_id) participantsSet.add(String(tm.user_id)); });
     }
 
     // 5. Insert all participants
     for (const uid of participantsSet) {
       if (uid) {
-        const role = Number(uid) === Number(createdBy) ? 'admin' : 'member';
+        const role = String(uid) === String(createdBy) ? 'admin' : 'member';
         await query(
           `INSERT INTO conversation_participants (conversation_id, organization_id, user_id, role)
            VALUES ($1, $2, $3, $4)
            ON CONFLICT (conversation_id, user_id) DO NOTHING`,
           [conversation.id, organizationId, uid, role]
-        );
+        ).catch(() => null);
       }
     }
 
@@ -262,13 +298,31 @@ const TeamMessageModel = {
       WHERE c.id = $1 AND c.organization_id = $2;
     `;
 
-    const res = await query(sql, [conversationId, organizationId, userId]);
+    let res = await query(sql, [conversationId, organizationId, userId]);
+
+    // Fallback: if not enrolled as participant, check if conversation belongs to org and auto-enroll
+    if (!res.rows[0]) {
+      const convCheck = await query(
+        `SELECT id, organization_id FROM conversations WHERE id = $1 AND organization_id = $2`,
+        [conversationId, organizationId]
+      );
+      if (convCheck.rows[0] && userId) {
+        await query(
+          `INSERT INTO conversation_participants (conversation_id, organization_id, user_id, role)
+           VALUES ($1, $2, $3, 'member')
+           ON CONFLICT (conversation_id, user_id) DO NOTHING`,
+          [conversationId, organizationId, userId]
+        ).catch(() => null);
+        res = await query(sql, [conversationId, organizationId, userId]);
+      }
+    }
+
     if (!res.rows[0]) return null;
 
     const conv = res.rows[0];
     let directOtherUser = null;
     if (conv.type === 'direct' && Array.isArray(conv.participants)) {
-      directOtherUser = conv.participants.find(p => Number(p.user_id) !== Number(userId)) || conv.participants[0] || null;
+      directOtherUser = conv.participants.find(p => String(p.user_id) !== String(userId)) || conv.participants[0] || null;
     }
 
     return {
@@ -291,7 +345,29 @@ const TeamMessageModel = {
         AND cp.user_id = $3;
     `;
     const res = await query(sql, [conversationId, organizationId, userId]);
-    return res.rowCount > 0;
+    if (res.rowCount > 0) return true;
+
+    // Check if user is in the same organization for an authorized group conversation
+    const fallbackSql = `
+      SELECT 1 FROM conversations c
+      WHERE c.id = $1 AND c.organization_id = $2
+        AND (
+          c.created_by = $3 
+          OR c.type = 'group'
+        );
+    `;
+    const fb = await query(fallbackSql, [conversationId, organizationId, userId]);
+    if (fb.rowCount > 0 && userId) {
+      await query(
+        `INSERT INTO conversation_participants (conversation_id, organization_id, user_id, role)
+         VALUES ($1, $2, $3, 'member')
+         ON CONFLICT (conversation_id, user_id) DO NOTHING`,
+        [conversationId, organizationId, userId]
+      ).catch(() => null);
+      return true;
+    }
+
+    return false;
   },
 
   /**
@@ -401,7 +477,7 @@ const TeamMessageModel = {
       }
       reactionsByMsg[r.message_id][r.emoji].count += 1;
       reactionsByMsg[r.message_id][r.emoji].users.push({ id: r.user_id, name: r.user_name });
-      if (Number(r.user_id) === Number(userId)) {
+      if (String(r.user_id) === String(userId)) {
         reactionsByMsg[r.message_id][r.emoji].has_reacted = true;
       }
     });
@@ -540,7 +616,7 @@ const TeamMessageModel = {
       throw new Error('Message not found.');
     }
     const msg = checkRes.rows[0];
-    if (Number(msg.sender_id) !== Number(senderId)) {
+    if (String(msg.sender_id) !== String(senderId)) {
       throw new Error('Access denied: You can only edit your own messages.');
     }
     if (msg.is_deleted) {
@@ -573,7 +649,7 @@ const TeamMessageModel = {
       throw new Error('Message not found.');
     }
     const msg = checkRes.rows[0];
-    const isOwner = Number(msg.sender_id) === Number(senderId);
+    const isOwner = String(msg.sender_id) === String(senderId);
     const isAdmin = ['admin', 'manager', 'owner'].includes(String(userRole).toLowerCase());
 
     if (!isOwner && !isAdmin) {
@@ -644,7 +720,7 @@ const TeamMessageModel = {
       }
       reactionsMap[r.emoji].count += 1;
       reactionsMap[r.emoji].users.push({ id: r.user_id, name: r.user_name });
-      if (Number(r.user_id) === Number(userId)) {
+      if (String(r.user_id) === String(userId)) {
         reactionsMap[r.emoji].has_reacted = true;
       }
     });

@@ -38,7 +38,7 @@ class RealtimeMessagingService extends EventEmitter {
     const client = {
       id: connectionId,
       res,
-      userId: Number(userId),
+      userId: String(userId),
       organizationId,
       connectedAt: new Date(),
       lastPingAt: new Date()
@@ -61,10 +61,10 @@ class RealtimeMessagingService extends EventEmitter {
     // Notify organization if user just came online
     if (wasOffline) {
       this.broadcastToOrg(organizationId, 'presence:update', {
-        userId: Number(userId),
+        userId: String(userId),
         status: 'online',
         lastActiveAt: new Date()
-      }, Number(userId));
+      }, String(userId));
     }
 
     // Handle connection closure
@@ -80,7 +80,7 @@ class RealtimeMessagingService extends EventEmitter {
     // Send initial connected event
     this.sendToClient(client, 'connected', {
       connectionId,
-      userId: Number(userId),
+      userId: String(userId),
       organizationId,
       timestamp: new Date().toISOString()
     });
@@ -111,10 +111,10 @@ class RealtimeMessagingService extends EventEmitter {
 
         // Broadcast offline status
         this.broadcastToOrg(client.organizationId, 'presence:update', {
-          userId: Number(client.userId),
+          userId: String(client.userId),
           status: 'offline',
           lastActiveAt: lastActive
-        }, Number(client.userId));
+        }, String(client.userId));
 
         // Update last_active_at in database asynchronously
         query('UPDATE users SET last_active_at = CURRENT_TIMESTAMP WHERE id = $1', [client.userId])
@@ -188,10 +188,10 @@ class RealtimeMessagingService extends EventEmitter {
         [conversationId, organizationId]
       );
 
-      const participantIds = res.rows.map(r => Number(r.user_id));
+      const participantIds = res.rows.map(r => String(r.user_id));
 
       for (const uid of participantIds) {
-        if (excludeUserId && Number(uid) === Number(excludeUserId)) {
+        if (excludeUserId && String(uid) === String(excludeUserId)) {
           continue;
         }
 
@@ -217,7 +217,7 @@ class RealtimeMessagingService extends EventEmitter {
   broadcastToOrg(organizationId, eventType, payload, excludeUserId = null) {
     for (const client of this.connections.values()) {
       if (client.organizationId === organizationId) {
-        if (excludeUserId && Number(client.userId) === Number(excludeUserId)) {
+        if (excludeUserId && String(client.userId) === String(excludeUserId)) {
           continue;
         }
         this.sendToClient(client, eventType, payload);
@@ -235,7 +235,7 @@ class RealtimeMessagingService extends EventEmitter {
       'typing:update',
       {
         conversationId,
-        userId: Number(userId),
+        userId: String(userId),
         userName,
         isTyping: Boolean(isTyping),
         timestamp: new Date().toISOString()

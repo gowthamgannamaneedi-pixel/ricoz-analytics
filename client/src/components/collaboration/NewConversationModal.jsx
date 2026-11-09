@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Search,
@@ -9,7 +9,7 @@ import {
   Loader2,
   MessageSquare
 } from 'lucide-react';
-import { createDirectConversationApi, createGroupConversationApi } from '../../services/api';
+import { createDirectConversationApi, createGroupConversationApi, getOrganizationUsersApi } from '../../services/api';
 
 export default function NewConversationModal({
   isOpen,
@@ -22,6 +22,8 @@ export default function NewConversationModal({
 }) {
   const [tab, setTab] = useState('direct'); // 'direct' | 'group'
   const [searchQuery, setSearchQuery] = useState('');
+  const [localUsers, setLocalUsers] = useState(users || []);
+  const [fetchingUsers, setFetchingUsers] = useState(false);
 
   // Group creation state
   const [groupTitle, setGroupTitle] = useState('');
@@ -30,11 +32,40 @@ export default function NewConversationModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Sync users prop when passed or changed
+  useEffect(() => {
+    if (Array.isArray(users) && users.length > 0) {
+      setLocalUsers(users);
+    }
+  }, [users]);
+
+  // If opened and users list is empty, fetch organization members automatically
+  useEffect(() => {
+    if (isOpen && (!localUsers || localUsers.length === 0)) {
+      setFetchingUsers(true);
+      getOrganizationUsersApi()
+        .then(res => {
+          const raw = Array.isArray(res?.data) ? res.data : (Array.isArray(res?.data?.users) ? res.data.users : []);
+          setLocalUsers(raw);
+        })
+        .catch(err => {
+          console.warn('Could not auto-load users for new conversation modal:', err);
+        })
+        .finally(() => {
+          setFetchingUsers(false);
+        });
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  // Filter other users
-  const filteredUsers = (users || [])
-    .filter(u => Number(u.id) !== Number(currentUserId))
+  // Filter other users: strictly exclude oneself and match search query
+  const effectiveUserList = (localUsers && localUsers.length > 0) ? localUsers : (users || []);
+  const filteredUsers = effectiveUserList
+    .filter(u => {
+      const uid = u.user_id || u.id || u.userId;
+      return uid && String(uid) !== String(currentUserId);
+    })
     .filter(u => {
       const q = searchQuery.toLowerCase();
       return (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q);
@@ -44,8 +75,13 @@ export default function NewConversationModal({
     try {
       setLoading(true);
       setError(null);
-      const res = await createDirectConversationApi(targetUser.id);
-      if (res.data) {
+      const recipientId = targetUser.user_id || targetUser.userId || targetUser.id;
+      if (!recipientId) {
+        setError('Valid recipientId is required.');
+        return;
+      }
+      const res = await createDirectConversationApi(recipientId);
+      if (res?.data) {
         onConversationCreated(res.data);
         onClose();
       }
@@ -73,7 +109,7 @@ export default function NewConversationModal({
         memberUserIds: selectedUserIds
       });
 
-      if (res.data) {
+      if (res?.data) {
         onConversationCreated(res.data);
         onClose();
       }
@@ -87,7 +123,9 @@ export default function NewConversationModal({
 
   const toggleUserSelection = (userId) => {
     setSelectedUserIds(prev => 
-      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+      prev.some(id => String(id) === String(userId))
+        ? prev.filter(id => String(id) !== String(userId))
+        : [...prev, userId]
     );
   };
 
@@ -181,10 +219,11 @@ export default function NewConversationModal({
                 </div>
               ) : (
                 filteredUsers.map(u => {
-                  const isOnline = Boolean(presence[String(u.id)]?.status === 'online');
+                  const uid = u.user_id || u.id;
+                  const isOnline = Boolean(presence[String(uid)]?.status === 'online');
                   return (
                     <button
-                      key={u.id}
+                      key={uid}
                       onClick={() => handleStartDirectChat(u)}
                       disabled={loading}
                       className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800/70 transition cursor-pointer text-left border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
@@ -274,11 +313,12 @@ export default function NewConversationModal({
               </label>
               <div className="flex-1 overflow-y-auto space-y-1 border border-slate-200 dark:border-slate-800 rounded-xl p-2 min-h-[140px]">
                 {filteredUsers.map(u => {
-                  const isSelected = selectedUserIds.includes(u.id);
+                  const uid = u.user_id || u.id;
+                  const isSelected = selectedUserIds.some(id => String(id) === String(uid));
                   return (
                     <div
-                      key={u.id}
-                      onClick={() => toggleUserSelection(u.id)}
+                      key={uid}
+                      onClick={() => toggleUserSelection(uid)}
                       className={`flex items-center justify-between p-2 rounded-xl transition cursor-pointer ${
                         isSelected
                           ? 'bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50'
