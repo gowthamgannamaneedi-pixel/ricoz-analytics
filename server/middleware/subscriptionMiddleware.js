@@ -5,14 +5,18 @@ const tenantService = require('../services/tenantService');
  * Authoritatively resolve and verify tenant organization for subscription middleware
  */
 async function resolveOrganizationForRequest(req) {
-  if (req.user?.organization_id && req.organization) {
-    return req.user.organization_id;
+  if (req.organizationId) {
+    return req.organizationId;
+  }
+  if (req.organization?.id) {
+    req.organizationId = req.organization.id;
+    return req.organization.id;
   }
   const tenantRes = await tenantService.resolveAndAuthorizeOrganization(req, req.user);
   if (tenantRes.organizationId) {
-    req.user.organization_id = tenantRes.organizationId;
-    req.user.role = tenantRes.role || req.user.role;
+    req.organizationId = tenantRes.organizationId;
     req.organization = tenantRes.organization;
+    req.userOrganizationRole = tenantRes.role || req.user?.role || 'viewer';
     return tenantRes.organizationId;
   }
   return req.user?.organization_id || null;

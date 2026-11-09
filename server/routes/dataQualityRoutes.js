@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/authMiddleware');
 const { requirePermission } = require('../middleware/roleMiddleware');
+const { requireActiveSubscription } = require('../middleware/subscriptionMiddleware');
 const dataQualityController = require('../controllers/dataQualityController');
 
 // All data quality endpoints require JWT authentication
@@ -16,12 +17,14 @@ router.get(
 
 router.post(
   '/datasets/:datasetId/evaluate',
+  requireActiveSubscription,
   requirePermission('quality.evaluate'),
   dataQualityController.evaluateDatasetQuality
 );
 
 router.post(
   '/datasets/:datasetId/audit',
+  requireActiveSubscription,
   requirePermission('quality.evaluate'),
   dataQualityController.startAuditJob
 );
@@ -40,12 +43,14 @@ router.get(
 
 router.post(
   '/jobs/:jobId/cancel',
+  requireActiveSubscription,
   requirePermission('quality.evaluate'),
   dataQualityController.cancelJob
 );
 
 router.post(
   '/jobs/:jobId/retry',
+  requireActiveSubscription,
   requirePermission('quality.evaluate'),
   dataQualityController.retryJob
 );
@@ -71,6 +76,7 @@ router.get(
 // Custom Quality Rules Management
 router.post(
   '/rules',
+  requireActiveSubscription,
   requirePermission('quality.manage_rules'),
   dataQualityController.createRule
 );
@@ -89,12 +95,14 @@ router.get(
 
 router.put(
   '/rules/:id',
+  requireActiveSubscription,
   requirePermission('quality.manage_rules'),
   dataQualityController.updateRule
 );
 
 router.delete(
   '/rules/:id',
+  requireActiveSubscription,
   requirePermission('quality.manage_rules'),
   dataQualityController.deleteRule
 );

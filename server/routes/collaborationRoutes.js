@@ -3,6 +3,7 @@ const router = express.Router();
 const collaborationController = require('../controllers/collaborationController');
 const authenticateToken = require('../middleware/authMiddleware');
 const { requirePermission } = require('../middleware/roleMiddleware');
+const { requireActiveSubscription } = require('../middleware/subscriptionMiddleware');
 
 // All collaboration routes require authentication
 router.use(authenticateToken);
@@ -10,6 +11,7 @@ router.use(authenticateToken);
 // ----------------- SHARING -----------------
 router.post(
   '/dashboards/:id/share',
+  requireActiveSubscription,
   requirePermission('collaboration.share'),
   collaborationController.shareDashboard
 );
@@ -22,12 +24,14 @@ router.get(
 
 router.delete(
   '/dashboards/:id/shares/:shareId',
+  requireActiveSubscription,
   requirePermission('collaboration.manage'),
   collaborationController.revokeDashboardShare
 );
 
 router.post(
   '/reports/:id/share',
+  requireActiveSubscription,
   requirePermission('collaboration.share'),
   collaborationController.shareReport
 );
@@ -40,12 +44,14 @@ router.get(
 
 router.delete(
   '/reports/:id/shares/:shareId',
+  requireActiveSubscription,
   requirePermission('collaboration.manage'),
   collaborationController.revokeReportShare
 );
 
 router.post(
   '/insights/:id/share',
+  requireActiveSubscription,
   requirePermission('collaboration.share'),
   collaborationController.shareInsight
 );
@@ -58,6 +64,7 @@ router.get(
 
 router.delete(
   '/insights/:id/shares/:shareId',
+  requireActiveSubscription,
   requirePermission('collaboration.manage'),
   collaborationController.revokeInsightShare
 );
@@ -71,6 +78,7 @@ router.get(
 // ----------------- COMMENTS -----------------
 router.post(
   '/comments',
+  requireActiveSubscription,
   requirePermission('collaboration.comment'),
   collaborationController.postComment
 );
@@ -83,12 +91,14 @@ router.get(
 
 router.put(
   '/comments/:id',
+  requireActiveSubscription,
   requirePermission('collaboration.comment'),
   collaborationController.updateComment
 );
 
 router.delete(
   '/comments/:id',
+  requireActiveSubscription,
   requirePermission('collaboration.comment'),
   collaborationController.deleteComment
 );
@@ -96,6 +106,7 @@ router.delete(
 // ----------------- FAVORITES -----------------
 router.post(
   '/favorites/toggle',
+  requireActiveSubscription,
   requirePermission('collaboration.view'),
   collaborationController.toggleFavorite
 );
@@ -122,6 +133,7 @@ router.get(
 // ----------------- SAVED VIEWS -----------------
 router.post(
   '/saved-views',
+  requireActiveSubscription,
   requirePermission('collaboration.manage_saved_views'),
   collaborationController.createSavedView
 );
@@ -134,6 +146,7 @@ router.get(
 
 router.delete(
   '/saved-views/:id',
+  requireActiveSubscription,
   requirePermission('collaboration.manage_saved_views'),
   collaborationController.deleteSavedView
 );
@@ -141,6 +154,7 @@ router.delete(
 // ----------------- TEAMS -----------------
 router.post(
   '/teams',
+  requireActiveSubscription,
   requirePermission('collaboration.manage_teams'),
   collaborationController.createTeam
 );
@@ -159,12 +173,14 @@ router.get(
 
 router.post(
   '/teams/:id/members',
+  requireActiveSubscription,
   requirePermission('collaboration.manage_teams'),
   collaborationController.addTeamMember
 );
 
 router.delete(
   '/teams/:id/members/:userId',
+  requireActiveSubscription,
   requirePermission('collaboration.manage_teams'),
   collaborationController.removeTeamMember
 );

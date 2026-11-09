@@ -70,9 +70,17 @@ import { Modal } from '../components/ui/Modal';
  * Organization configuration, team access, integrations, notifications, and platform preferences.
  */
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, subscription, isTrialExpired } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const isExpired = Boolean(
+    isTrialExpired ||
+    subscription?.canMutate === false ||
+    subscription?.isExpired === true ||
+    subscription?.status === 'trial_expired' ||
+    subscription?.status === 'expired'
+  );
 
   const isAdmin = user?.role === 'admin';
   const initialTab = searchParams.get('tab') || 'overview';
@@ -411,6 +419,10 @@ export default function SettingsPage() {
   const handleSendInvite = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     if (!inviteEmail.trim() || isSendingInvite) return;
+    if (isExpired) {
+      setInviteError('Active workspace subscription required to invite new members. Please renew your plan.');
+      return;
+    }
     try {
       setIsSendingInvite(true);
       setInviteError(null);
@@ -2190,7 +2202,42 @@ export default function SettingsPage() {
                 </span>
               </div>
 
-              {isAtSeatLimit ? (
+              {isExpired ? (
+                <div className="p-4 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/80 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 space-y-3">
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="h-5 w-5 text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-bold text-rose-900 dark:text-rose-200">Subscription Expired</h4>
+                      <p className="text-xs text-rose-700 dark:text-rose-300 mt-1">
+                        Your workspace subscription or free trial has expired. An active subscription is required to invite new team members or manage seats.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="pt-2 flex items-center justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setIsInviteModalOpen(false)}
+                    >
+                      Close
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        setIsInviteModalOpen(false);
+                        navigate('/billing');
+                      }}
+                      className="bg-rose-600 hover:bg-rose-700 text-white font-bold"
+                    >
+                      <span>Renew Subscription</span>
+                      <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              ) : isAtSeatLimit ? (
                 <div className="p-4 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/80 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 space-y-3">
                   <div className="flex items-start gap-2.5">
                     <AlertTriangle className="h-5 w-5 text-rose-600 dark:text-[#FB7185] shrink-0 mt-0.5" />

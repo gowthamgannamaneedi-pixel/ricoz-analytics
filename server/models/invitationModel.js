@@ -54,6 +54,16 @@ const InvitationModel = {
         throw err;
       }
 
+      // 1b. Verify active subscription / write access
+      const subscriptionService = require('../services/subscriptionService');
+      const writeAccess = await subscriptionService.checkWriteAccess(organizationId);
+      if (!writeAccess.allowed) {
+        const err = new Error(writeAccess.message || 'Workspace subscription or trial is expired. Active subscription required to invite new team members.');
+        err.statusCode = writeAccess.code === 'ACCOUNT_SUSPENDED' ? 403 : 402;
+        err.code = writeAccess.code;
+        throw err;
+      }
+
       // 2. Authoritative plan limit
       const plan = plansConfig.getPlan(org.plan || 'starter');
       const maxUsers = plan.maxUsers;
@@ -445,6 +455,16 @@ const InvitationModel = {
         const err = new Error('This invitation has expired. Please ask your administrator to send a new invite.');
         err.statusCode = 400;
         err.code = 'INVITATION_EXPIRED';
+        throw err;
+      }
+
+      // Check destination organization subscription status
+      const subscriptionService = require('../services/subscriptionService');
+      const writeAccess = await subscriptionService.checkWriteAccess(invitation.organization_id);
+      if (!writeAccess.allowed) {
+        const err = new Error(writeAccess.message || 'The organization subscription is expired. Please contact your workspace administrator to renew the subscription.');
+        err.statusCode = writeAccess.code === 'ACCOUNT_SUSPENDED' ? 403 : 402;
+        err.code = writeAccess.code;
         throw err;
       }
 

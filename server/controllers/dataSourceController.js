@@ -201,6 +201,20 @@ const createDataSource = async (req, res, next) => {
       });
     }
 
+    // Verify active subscription / write access (Defense-in-depth)
+    const writeAccess = await subscriptionService.checkWriteAccess(organizationId);
+    if (!writeAccess.allowed) {
+      const statusCode = writeAccess.code === 'ACCOUNT_SUSPENDED' ? 403 : 402;
+      return res.status(statusCode).json({
+        success: false,
+        code: writeAccess.code,
+        error: { code: writeAccess.code, message: writeAccess.message },
+        message: writeAccess.message,
+        requiresSubscription: statusCode === 402,
+        subscription: writeAccess.subscription
+      });
+    }
+
     // Check subscription dataset limit
     const limitCheck = await subscriptionService.checkUsageLimit(organizationId, 'datasets');
     if (!limitCheck.allowed) {
@@ -507,8 +521,24 @@ const testApiConnection = async (req, res, next) => {
 const syncDataSource = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const organizationId = await resolveTrustedOrganizationId(req.user);
+    const organizationId = await resolveTrustedOrganizationId(req, req.user);
     const { id } = req.params;
+
+    // Verify active subscription / write access (Defense-in-depth)
+    if (organizationId) {
+      const writeAccess = await subscriptionService.checkWriteAccess(organizationId);
+      if (!writeAccess.allowed) {
+        const statusCode = writeAccess.code === 'ACCOUNT_SUSPENDED' ? 403 : 402;
+        return res.status(statusCode).json({
+          success: false,
+          code: writeAccess.code,
+          error: { code: writeAccess.code, message: writeAccess.message },
+          message: writeAccess.message,
+          requiresSubscription: statusCode === 402,
+          subscription: writeAccess.subscription
+        });
+      }
+    }
 
     const source = organizationId
       ? await DataSource.findByIdAndOrgId(id, organizationId)
@@ -743,6 +773,23 @@ const uploadDataSource = async (req, res, next) => {
       });
     }
 
+    // Verify active subscription / write access (Defense-in-depth)
+    const writeAccess = await subscriptionService.checkWriteAccess(organizationId);
+    if (!writeAccess.allowed) {
+      if (file.path && fs.existsSync(file.path)) {
+        fs.unlink(file.path, () => {});
+      }
+      const statusCode = writeAccess.code === 'ACCOUNT_SUSPENDED' ? 403 : 402;
+      return res.status(statusCode).json({
+        success: false,
+        code: writeAccess.code,
+        error: { code: writeAccess.code, message: writeAccess.message },
+        message: writeAccess.message,
+        requiresSubscription: statusCode === 402,
+        subscription: writeAccess.subscription
+      });
+    }
+
     const limitCheck = await subscriptionService.checkUsageLimit(organizationId, 'datasets');
     if (!limitCheck.allowed) {
       if (file.path && fs.existsSync(file.path)) {
@@ -874,8 +921,24 @@ const uploadDataSource = async (req, res, next) => {
 const deleteDataSource = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const organizationId = await resolveTrustedOrganizationId(req.user);
+    const organizationId = await resolveTrustedOrganizationId(req, req.user);
     const { id } = req.params;
+
+    // Verify active subscription / write access (Defense-in-depth)
+    if (organizationId) {
+      const writeAccess = await subscriptionService.checkWriteAccess(organizationId);
+      if (!writeAccess.allowed) {
+        const statusCode = writeAccess.code === 'ACCOUNT_SUSPENDED' ? 403 : 402;
+        return res.status(statusCode).json({
+          success: false,
+          code: writeAccess.code,
+          error: { code: writeAccess.code, message: writeAccess.message },
+          message: writeAccess.message,
+          requiresSubscription: statusCode === 402,
+          subscription: writeAccess.subscription
+        });
+      }
+    }
 
     const source = organizationId
       ? await DataSource.findByIdAndOrgId(id, organizationId)
@@ -926,8 +989,24 @@ const deleteDataSource = async (req, res, next) => {
 const updateDataSource = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const organizationId = await resolveTrustedOrganizationId(req.user);
+    const organizationId = await resolveTrustedOrganizationId(req, req.user);
     const { id } = req.params;
+
+    // Verify active subscription / write access (Defense-in-depth)
+    if (organizationId) {
+      const writeAccess = await subscriptionService.checkWriteAccess(organizationId);
+      if (!writeAccess.allowed) {
+        const statusCode = writeAccess.code === 'ACCOUNT_SUSPENDED' ? 403 : 402;
+        return res.status(statusCode).json({
+          success: false,
+          code: writeAccess.code,
+          error: { code: writeAccess.code, message: writeAccess.message },
+          message: writeAccess.message,
+          requiresSubscription: statusCode === 402,
+          subscription: writeAccess.subscription
+        });
+      }
+    }
     const { name, config, status } = req.body;
 
     const source = organizationId

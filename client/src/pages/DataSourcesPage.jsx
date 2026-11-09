@@ -33,7 +33,9 @@ import {
   Edit2,
   Eye,
   ArrowRight,
-  FolderOpen
+  FolderOpen,
+  AlertTriangle,
+  Lock
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
@@ -54,8 +56,16 @@ import {
  * Powered exclusively by real API/database data
  */
 export default function DataSourcesPage() {
-  const { user, token, isViewer, currentRole } = useAuth();
+  const { user, token, isViewer, currentRole, subscription, isTrialExpired } = useAuth();
   const navigate = useNavigate();
+
+  const isExpired = Boolean(
+    isTrialExpired ||
+    subscription?.canMutate === false ||
+    subscription?.isExpired === true ||
+    subscription?.status === 'trial_expired' ||
+    subscription?.status === 'expired'
+  );
 
   // Data State
   const [sources, setSources] = useState([]);
@@ -584,18 +594,48 @@ export default function DataSourcesPage() {
             </p>
           </div>
 
+          {/* Expired State Notice */}
+          {isExpired && (
+            <div className="flex items-center justify-between p-3.5 rounded-xl border border-rose-200 dark:border-rose-900/80 bg-rose-50/80 dark:bg-[#2A1422] text-rose-900 dark:text-[#FDA4AF] text-xs">
+              <div className="flex items-center gap-2.5">
+                <AlertTriangle className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
+                <span>
+                  <strong>Workspace Subscription Expired</strong> &mdash; Your connected data sources and datasets are safely preserved in read-only mode. Renew or upgrade to connect new sources.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/billing')}
+                className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shrink-0 cursor-pointer shadow-xs"
+              >
+                Choose Plan &rarr;
+              </button>
+            </div>
+          )}
+
           {/* Action Row below description: Add Data Sources on left, Refresh on right */}
           <div className="flex items-center justify-between gap-4 pt-0.5">
             <div>
               {!isViewer && (
                 <Button
                   id="connect-source-btn"
-                  onClick={() => setIsAddModalOpen(true)}
-                  variant="primary"
-                  className="h-10 px-4 rounded-xl font-semibold shadow-xs text-xs gap-2"
+                  onClick={() => {
+                    if (isExpired) {
+                      navigate('/billing');
+                    } else {
+                      setIsAddModalOpen(true);
+                    }
+                  }}
+                  variant={isExpired ? 'outline' : 'primary'}
+                  className={`h-10 px-4 rounded-xl font-semibold shadow-xs text-xs gap-2 ${
+                    isExpired
+                      ? 'border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40'
+                      : ''
+                  }`}
+                  title={isExpired ? 'Active subscription required to connect new data sources' : 'Connect new data source'}
                 >
-                  <Plus className="h-4 w-4" />
-                  <span>Add Data Sources</span>
+                  {isExpired ? <Lock className="h-4 w-4 text-rose-600" /> : <Plus className="h-4 w-4" />}
+                  <span>{isExpired ? 'Subscribe to Add Sources' : 'Add Data Sources'}</span>
                 </Button>
               )}
             </div>

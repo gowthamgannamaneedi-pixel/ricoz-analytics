@@ -87,7 +87,14 @@ export default function Sidebar({ isOpen, isCollapsed = false, onToggleCollapse,
     else if (onClose) onClose();
   };
 
-  const isExpired = isTrialExpired || trialCountdown.isTrialExpired;
+  const isExpired = Boolean(
+    isTrialExpired ||
+    trialCountdown.isTrialExpired ||
+    subscription?.canMutate === false ||
+    subscription?.isExpired === true ||
+    subscription?.status === 'trial_expired' ||
+    subscription?.status === 'expired'
+  );
   const isLoadingSubscription = authLoading || trialCountdown.status === 'loading';
 
   return (
@@ -207,7 +214,7 @@ export default function Sidebar({ isOpen, isCollapsed = false, onToggleCollapse,
             <div className="p-3 rounded-xl border border-rose-200 dark:border-rose-900/80 bg-rose-50/80 dark:bg-[#2A1422] shadow-2xs space-y-2">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
-                <span className="text-xs font-bold text-rose-900 dark:text-[#FDA4AF]">{trialCountdown.displayPlanStatus || 'Trial Expired'}</span>
+                <span className="text-xs font-bold text-rose-900 dark:text-[#FDA4AF]">{trialCountdown.displayPlanStatus && !trialCountdown.displayPlanStatus.toLowerCase().includes('active') ? trialCountdown.displayPlanStatus : `${trialCountdown.planName || 'Enterprise'} — Expired`}</span>
               </div>
               <p className="text-[11px] text-rose-700 dark:text-[#FDA4AF] leading-snug">
                 Data safely preserved. Choose a plan to restore workspace analytics.
@@ -223,7 +230,7 @@ export default function Sidebar({ isOpen, isCollapsed = false, onToggleCollapse,
                 Choose Plan &rarr;
               </button>
             </div>
-          ) : trialCountdown.isPaid || subscription?.status === 'active' ? (
+          ) : (trialCountdown.isPaid || subscription?.isPaidActive === true) && !isExpired ? (
             <div className="p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/60 dark:bg-emerald-950/40 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />

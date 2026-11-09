@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/authMiddleware');
 const { requirePermission } = require('../middleware/roleMiddleware');
+const { requireActiveSubscription } = require('../middleware/subscriptionMiddleware');
 const decisionIntelligenceController = require('../controllers/decisionIntelligenceController');
 
 // All decision intelligence endpoints require JWT authentication
@@ -23,6 +24,7 @@ router.get(
  */
 router.post(
   '/:id/simulate-scenario',
+  requireActiveSubscription,
   requirePermission('insights.view'),
   decisionIntelligenceController.simulateScenario
 );

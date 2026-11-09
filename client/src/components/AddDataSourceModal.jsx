@@ -58,7 +58,14 @@ export default function AddDataSourceModal({ isOpen, onClose, onSuccess, token: 
   const activeOrgId = auth?.activeOrganizationId || user?.organization_id || getActiveOrganizationId();
   const isOrgReady = Boolean(!isAuthLoading && activeOrgId);
   const token = propToken || auth?.token;
-  const isTrialExpired = Boolean(auth?.isTrialExpired);
+  const isTrialExpired = Boolean(
+    auth?.isTrialExpired ||
+    auth?.subscription?.isExpired ||
+    auth?.subscription?.canMutate === false ||
+    auth?.subscription?.status === 'trial_expired' ||
+    auth?.subscription?.status === 'expired' ||
+    (auth?.subscription?.isPaidActive === false && !['trial', 'trialing', 'trial_expiring'].includes(auth?.subscription?.status))
+  );
 
   const [activeTab, setActiveTab] = useState('csv'); // 'csv' | 'json' | 'excel' | 'postgresql' | 'mongodb' | 'rest_api'
 

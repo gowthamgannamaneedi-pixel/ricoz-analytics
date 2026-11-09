@@ -133,11 +133,43 @@ class SubscriptionService {
       ).catch(err => console.warn('[SubscriptionService] Backfill trial dates warning:', err.message));
     }
 
-    const trialStartedAt = new Date(org.trial_started_at);
-    const trialEndsAt = new Date(org.trial_ends_at);
+    const planConfig = getPlan(org.plan || 'starter');
+    let usage = null;
+    if (includeUsage) {
+      usage = await this.getOrganizationUsage(org.id, planConfig);
+    }
 
-    const currentPeriodStart = org.current_period_start ? new Date(org.current_period_start) : null;
-    const currentPeriodEnd = org.current_period_end ? new Date(org.current_period_end) : null;
+    const result = this.calculateLifecycleAndAccess(org, org.id, { usage, planConfig });
+
+    // Cache computed subscription
+    orgSubscriptionCache.set(String(org.id), {
+      data: result,
+      cachedAt: Date.now()
+    });
+
+    return result;
+  }
+
+  /**
+   * Pure calculation of subscription lifecycle, dates, mutation permissions, and display strings.
+   * Single source of truth for subscription status evaluation across the entire platform.
+   * @param {object} org Organization database record
+   * @param {string} [organizationId]
+   * @param {object} [options]
+   */
+  calculateLifecycleAndAccess(org, organizationId, options = {}) {
+    const now = new Date();
+    const trialStartedAt = org.trial_started_at ? new Date(org.trial_started_at) : (org.created_at ? new Date(org.created_at) : now);
+    const trialEndsAt = org.trial_ends_at ? new Date(org.trial_ends_at) : calculateTrialEndDate(trialStartedAt, 14);
+
+    let currentPeriodStart = org.current_period_start ? new Date(org.current_period_start) : (org.subscription_start_date ? new Date(org.subscription_start_date) : null);
+    let currentPeriodEnd = org.current_period_end ? new Date(org.current_period_end) : null;
+
+    // Calculate effective billing period boundaries if period end is not explicitly stored
+    const isAnnual = org.billing_interval === 'yearly' || org.billing_interval === 'annual';
+    if (!currentPeriodEnd && currentPeriodStart && !isNaN(currentPeriodStart.getTime())) {
+      currentPeriodEnd = new Date(currentPeriodStart.getTime() + (isAnnual ? 365 : 30) * 86400000);
+    }
 
     let rawStatus = String(org.subscription_status || 'trial').trim().toLowerCase();
     // Normalize synonyms
@@ -146,31 +178,48 @@ class SubscriptionService {
 
     let effectiveStatus = rawStatus;
 
-    // 2. Evaluate active paid vs trial state
-    if (effectiveStatus === SUBSCRIPTION_STATUSES.ACTIVE) {
-      if (currentPeriodEnd && now > currentPeriodEnd) {
-        // Paid period has lapsed
+    // 2. Authoritative Lifecycle Resolution across ALL 8 states
+    if (rawStatus === SUBSCRIPTION_STATUSES.SUSPENDED) {
+      effectiveStatus = SUBSCRIPTION_STATUSES.SUSPENDED;
+    } else if (rawStatus === SUBSCRIPTION_STATUSES.ON_HOLD) {
+      effectiveStatus = SUBSCRIPTION_STATUSES.ON_HOLD;
+    } else if (rawStatus === SUBSCRIPTION_STATUSES.PAYMENT_PENDING) {
+      effectiveStatus = SUBSCRIPTION_STATUSES.PAYMENT_PENDING;
+    } else if (rawStatus === SUBSCRIPTION_STATUSES.PAST_DUE || rawStatus === SUBSCRIPTION_STATUSES.PAYMENT_FAILED) {
+      effectiveStatus = SUBSCRIPTION_STATUSES.PAST_DUE;
+    } else if (rawStatus === SUBSCRIPTION_STATUSES.CANCELLED) {
+      effectiveStatus = SUBSCRIPTION_STATUSES.CANCELLED;
+    } else if (rawStatus === SUBSCRIPTION_STATUSES.EXPIRED || rawStatus === SUBSCRIPTION_STATUSES.TRIAL_EXPIRED) {
+      effectiveStatus = rawStatus;
+    } else if (rawStatus === SUBSCRIPTION_STATUSES.ACTIVE) {
+      // An account marked active is only genuinely active if payment is verified and billing period is current
+      const isPaymentVerified = org.payment_status === 'paid';
+      const hasCurrentPeriod = Boolean(currentPeriodEnd) && now <= currentPeriodEnd;
+
+      if (!isPaymentVerified) {
+        // Unverified payment: cannot claim active paid subscription
+        if (now <= trialEndsAt) {
+          effectiveStatus = SUBSCRIPTION_STATUSES.TRIAL;
+        } else {
+          effectiveStatus = SUBSCRIPTION_STATUSES.TRIAL_EXPIRED;
+        }
+      } else if (!hasCurrentPeriod) {
+        // Paid period has ended
         if (org.cancel_at_period_end) {
           effectiveStatus = SUBSCRIPTION_STATUSES.CANCELLED;
         } else {
           effectiveStatus = SUBSCRIPTION_STATUSES.EXPIRED;
         }
+      } else {
+        effectiveStatus = SUBSCRIPTION_STATUSES.ACTIVE;
       }
     } else if (
-      effectiveStatus === SUBSCRIPTION_STATUSES.TRIAL ||
-      effectiveStatus === SUBSCRIPTION_STATUSES.TRIAL_EXPIRING
+      rawStatus === SUBSCRIPTION_STATUSES.TRIAL ||
+      rawStatus === SUBSCRIPTION_STATUSES.TRIAL_EXPIRING
     ) {
       // In trial lifecycle
       if (now > trialEndsAt) {
         effectiveStatus = SUBSCRIPTION_STATUSES.TRIAL_EXPIRED;
-        // Persist expiry to DB safely without destroying any customer workspace data
-        if (org.subscription_status !== SUBSCRIPTION_STATUSES.TRIAL_EXPIRED) {
-          db.query(
-            `UPDATE organizations SET subscription_status = 'trial_expired' WHERE id = $1 AND subscription_status != 'active'`,
-            [org.id]
-          ).catch(() => null);
-          org.subscription_status = SUBSCRIPTION_STATUSES.TRIAL_EXPIRED;
-        }
       } else {
         const msRemaining = trialEndsAt.getTime() - now.getTime();
         const daysToTrialEnd = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
@@ -180,15 +229,31 @@ class SubscriptionService {
           effectiveStatus = SUBSCRIPTION_STATUSES.TRIAL;
         }
       }
+    } else {
+      // Unknown or unhandled status: if trial is expired, treat as expired
+      if (now > trialEndsAt) {
+        effectiveStatus = SUBSCRIPTION_STATUSES.EXPIRED;
+      } else {
+        effectiveStatus = SUBSCRIPTION_STATUSES.TRIAL;
+      }
     }
 
-    // 3. Calculate reliable server-side days remaining
+    // Persist status change to database if effective status transitioned from stored status
+    if (effectiveStatus !== org.subscription_status && org.id) {
+      db.query(
+        `UPDATE organizations SET subscription_status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+        [effectiveStatus, org.id]
+      ).catch(err => console.warn('[SubscriptionService] Auto-update status error:', err.message));
+      org.subscription_status = effectiveStatus;
+    }
+
+    // 3. Calculate reliable server-side days remaining & relevantEndDate
     let daysRemaining = 0;
     let hoursRemaining = 0;
     let relevantEndDate = null;
 
     if (effectiveStatus === SUBSCRIPTION_STATUSES.ACTIVE) {
-      relevantEndDate = currentPeriodEnd || org.next_billing_date || trialEndsAt;
+      relevantEndDate = currentPeriodEnd || org.next_billing_date;
       if (relevantEndDate) {
         const ms = new Date(relevantEndDate).getTime() - now.getTime();
         daysRemaining = Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
@@ -199,8 +264,8 @@ class SubscriptionService {
       const ms = trialEndsAt.getTime() - now.getTime();
       daysRemaining = Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
       hoursRemaining = Math.max(0, Math.ceil(ms / (1000 * 60 * 60)));
-    } else if (effectiveStatus === SUBSCRIPTION_STATUSES.TRIAL_EXPIRED) {
-      relevantEndDate = trialEndsAt;
+    } else {
+      relevantEndDate = currentPeriodEnd || trialEndsAt;
       daysRemaining = 0;
       hoursRemaining = 0;
     }
@@ -211,28 +276,33 @@ class SubscriptionService {
       effectiveStatus === SUBSCRIPTION_STATUSES.TRIAL_EXPIRING
     );
 
-    const planConfig = getPlan(org.plan || 'starter');
+    const planConfig = options.planConfig || getPlan(org.plan || 'starter');
 
     // Authoritative Mutation & Access Rights:
     // Mutations (uploads, AI execution, creation, deletion) require active paid or active trial.
     // Expired / past_due / payment_pending / on_hold have read-only access to preserve customer data.
     // Suspended accounts have zero access.
-    const isPaidActive = effectiveStatus === SUBSCRIPTION_STATUSES.ACTIVE && (!currentPeriodEnd || now <= currentPeriodEnd);
-    const isTrialActive = [SUBSCRIPTION_STATUSES.TRIAL, SUBSCRIPTION_STATUSES.TRIAL_EXPIRING].includes(effectiveStatus) && (now <= trialEndsAt);
+    const isPaidActive = (
+      effectiveStatus === SUBSCRIPTION_STATUSES.ACTIVE &&
+      org.payment_status === 'paid' &&
+      Boolean(currentPeriodEnd) &&
+      now <= currentPeriodEnd
+    );
+    const isTrialActive = (
+      [SUBSCRIPTION_STATUSES.TRIAL, SUBSCRIPTION_STATUSES.TRIAL_EXPIRING].includes(effectiveStatus) &&
+      Boolean(trialEndsAt) &&
+      now <= trialEndsAt
+    );
     const canMutate = isPaidActive || isTrialActive;
     const isSuspended = effectiveStatus === SUBSCRIPTION_STATUSES.SUSPENDED;
     const canAccessApp = !isSuspended;
 
-    const isExpired = [
-      SUBSCRIPTION_STATUSES.TRIAL_EXPIRED,
-      SUBSCRIPTION_STATUSES.EXPIRED,
-      SUBSCRIPTION_STATUSES.PAST_DUE,
-      SUBSCRIPTION_STATUSES.PAYMENT_FAILED
-    ].includes(effectiveStatus) || (!isPaidActive && !isTrialActive);
+    const isExpired = !canMutate;
 
-    // Global Consistent Plan & Status Display String (Priority 4)
+    // Global Consistent Plan & Status Display String (Authoritative & Unambiguous)
     const planName = planConfig.name;
-    let displayPlanStatus = `${planName} — Active`;
+    let displayPlanStatus = `${planName} — Expired`;
+
     if (isPaidActive) {
       displayPlanStatus = `${planName} — Active`;
     } else if (isTrialActive) {
@@ -257,14 +327,12 @@ class SubscriptionService {
       displayPlanStatus = `${planName} — Expired`;
     }
 
-    // 4. Fetch actual server-side usage telemetry ONLY when needed (e.g. billing page or quota checks)
-    let usage = null;
-    if (includeUsage) {
-      usage = await this.getOrganizationUsage(org.id, planConfig);
+    if (isExpired && displayPlanStatus.includes('Active')) {
+      displayPlanStatus = `${planName} — Expired`;
     }
 
-    const result = {
-      organizationId: org.id,
+    return {
+      organizationId: organizationId || org.id,
       organizationName: org.name,
       slug: org.slug,
       plan: planConfig.id,
@@ -306,16 +374,8 @@ class SubscriptionService {
       stripeCustomerId: org.stripe_customer_id || null,
       stripeSubscriptionId: org.stripe_subscription_id || null,
       entitlements: planConfig.entitlements,
-      usage
+      usage: options.usage || null
     };
-
-    // Cache computed subscription
-    orgSubscriptionCache.set(String(org.id), {
-      data: result,
-      cachedAt: Date.now()
-    });
-
-    return result;
   }
 
   /**

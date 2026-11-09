@@ -4623,21 +4623,21 @@ async function initDb() {
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       name VARCHAR(255) NOT NULL,
       slug VARCHAR(255) UNIQUE NOT NULL,
-      plan VARCHAR(50) NOT NULL DEFAULT 'enterprise',
-      trial_started_at TIMESTAMPTZ,
-      trial_ends_at TIMESTAMPTZ,
-      subscription_status VARCHAR(50) DEFAULT 'active',
-      payment_status VARCHAR(50) DEFAULT 'paid',
+      plan VARCHAR(50) NOT NULL DEFAULT 'starter',
+      trial_started_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      trial_ends_at TIMESTAMPTZ DEFAULT (CURRENT_TIMESTAMP + INTERVAL '14 days'),
+      subscription_status VARCHAR(50) DEFAULT 'trial',
+      payment_status VARCHAR(50) DEFAULT 'unpaid',
       settings JSONB DEFAULT '{}'::jsonb,
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
 
-    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS plan VARCHAR(50) DEFAULT 'enterprise';
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS plan VARCHAR(50) DEFAULT 'starter';
     ALTER TABLE organizations ADD COLUMN IF NOT EXISTS trial_started_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
     ALTER TABLE organizations ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ DEFAULT (CURRENT_TIMESTAMP + INTERVAL '14 days');
-    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(50) DEFAULT 'active';
-    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50) DEFAULT 'paid';
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(50) DEFAULT 'trial';
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50) DEFAULT 'unpaid';
     ALTER TABLE organizations ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255);
     ALTER TABLE organizations ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255);
     ALTER TABLE organizations ADD COLUMN IF NOT EXISTS stripe_price_id VARCHAR(255);
@@ -5533,6 +5533,40 @@ async function initDb() {
     }
   }
   console.log(` PostgreSQL Database schema initialized: ${successCount} statements applied (${noticeCount} notices)`);
+
+  // Authoritative Subscription Expiration & Synchronization on Startup
+  try {
+    // A. Expire trials that passed trial_ends_at
+    await pool.query(`
+      UPDATE organizations
+      SET subscription_status = 'trial_expired', updated_at = CURRENT_TIMESTAMP
+      WHERE subscription_status IN ('trial', 'trialing', 'trial_expiring')
+        AND trial_ends_at IS NOT NULL
+        AND trial_ends_at < CURRENT_TIMESTAMP
+    `);
+
+    // B. Expire paid subscriptions that passed current_period_end
+    await pool.query(`
+      UPDATE organizations
+      SET subscription_status = CASE WHEN cancel_at_period_end = true THEN 'cancelled' ELSE 'expired' END,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE subscription_status = 'active'
+        AND current_period_end IS NOT NULL
+        AND current_period_end < CURRENT_TIMESTAMP
+    `);
+
+    // C. Expire unverified active subscriptions with expired trials and unpaid status
+    await pool.query(`
+      UPDATE organizations
+      SET subscription_status = 'trial_expired', updated_at = CURRENT_TIMESTAMP
+      WHERE subscription_status = 'active'
+        AND payment_status != 'paid'
+        AND trial_ends_at IS NOT NULL
+        AND trial_ends_at < CURRENT_TIMESTAMP
+    `);
+  } catch (expireErr) {
+    console.warn('[initDb subscription cleanup notice]', expireErr.message);
+  }
 
   // 0. Drop FK from users.id to auth.users if it exists so application users can be saved in public.users
   try {

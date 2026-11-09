@@ -55,12 +55,34 @@ const adminController = {
   },
 
   /**
+   * Internal helper to verify subscription write access for administrative mutations
+   */
+  async checkWriteAccessOrReject(orgId, res) {
+    if (!orgId) return true;
+    const writeAccess = await subscriptionService.checkWriteAccess(orgId);
+    if (!writeAccess.allowed) {
+      const statusCode = writeAccess.code === 'ACCOUNT_SUSPENDED' ? 403 : 402;
+      res.status(statusCode).json({
+        success: false,
+        code: writeAccess.code,
+        error: { code: writeAccess.code, message: writeAccess.message },
+        message: writeAccess.message,
+        requiresSubscription: statusCode === 402,
+        subscription: writeAccess.subscription
+      });
+      return false;
+    }
+    return true;
+  },
+
+  /**
    * PUT /api/admin/organization
    * Update organization settings (admin only)
    */
   async updateOrganization(req, res) {
     try {
       const orgId = req.user.organization_id;
+      if (!(await adminController.checkWriteAccessOrReject(orgId, res))) return;
       const { name, settings, plan } = req.body;
 
       if (!name || !name.trim()) {
@@ -262,6 +284,7 @@ const adminController = {
   async updateUserRole(req, res) {
     try {
       const orgId = req.user.organization_id;
+      if (!(await adminController.checkWriteAccessOrReject(orgId, res))) return;
       const targetUserId = req.params.id;
       const { role } = req.body;
 
@@ -357,6 +380,7 @@ const adminController = {
   async updateUserStatus(req, res) {
     try {
       const orgId = req.user.organization_id;
+      if (!(await adminController.checkWriteAccessOrReject(orgId, res))) return;
       const targetUserId = req.params.id;
       const { status } = req.body;
 
@@ -527,6 +551,7 @@ const adminController = {
     const orgId = req.user.organization_id;
 
     try {
+      if (!(await adminController.checkWriteAccessOrReject(orgId, res))) return;
       const callerRole = (req.user.role || 'viewer').toLowerCase();
       if (callerRole !== 'admin' && callerRole !== 'owner' && callerRole !== 'manager') {
         return res.status(403).json({
@@ -704,6 +729,7 @@ const adminController = {
   async resendInvitation(req, res) {
     try {
       const orgId = req.user.organization_id;
+      if (!(await adminController.checkWriteAccessOrReject(orgId, res))) return;
       const { id } = req.params;
 
       const result = await InvitationModel.resend(id, orgId);
@@ -812,6 +838,7 @@ const adminController = {
   async deleteInvitation(req, res) {
     try {
       const orgId = req.user.organization_id;
+      if (!(await adminController.checkWriteAccessOrReject(orgId, res))) return;
       const { id } = req.params;
 
       const revoked = await InvitationModel.revoke(id, orgId);
@@ -856,6 +883,7 @@ const adminController = {
   async removeUser(req, res) {
     try {
       const orgId = req.user.organization_id;
+      if (!(await adminController.checkWriteAccessOrReject(orgId, res))) return;
       const targetUserId = req.params.id;
 
       // Backend role authorization check: only admin or owner can remove team members

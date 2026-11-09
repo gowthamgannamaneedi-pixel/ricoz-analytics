@@ -52,6 +52,18 @@ async function ingestDatasetFileStream({
     throw new Error('Dataset file path is required for ingestion.');
   }
 
+  // Fail-safe subscription check
+  if (organizationId) {
+    const subscriptionService = require('./subscriptionService');
+    const writeAccess = await subscriptionService.checkWriteAccess(organizationId);
+    if (!writeAccess.allowed) {
+      const err = new Error(`Dataset ingestion blocked: ${writeAccess.message}`);
+      err.code = writeAccess.code;
+      err.statusCode = 402;
+      throw err;
+    }
+  }
+
   // Verify file existence
   let inputStream = null;
   if (pathIsAbsolute(filePath) && fs.existsSync(filePath)) {

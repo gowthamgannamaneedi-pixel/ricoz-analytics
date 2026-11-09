@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/authMiddleware');
 const { requirePermission } = require('../middleware/roleMiddleware');
+const { requireActiveSubscription } = require('../middleware/subscriptionMiddleware');
 const relationshipController = require('../controllers/relationshipController');
 
 // All dataset relationship routes require JWT authentication
@@ -24,6 +25,7 @@ router.get(
 // Create new dataset relationship
 router.post(
   '/',
+  requireActiveSubscription,
   requirePermission('relationships:create'),
   relationshipController.createRelationship
 );
@@ -31,6 +33,7 @@ router.post(
 // Update dataset relationship
 router.put(
   '/:id',
+  requireActiveSubscription,
   requirePermission('relationships:update'),
   relationshipController.updateRelationship
 );
@@ -38,6 +41,7 @@ router.put(
 // Delete dataset relationship
 router.delete(
   '/:id',
+  requireActiveSubscription,
   requirePermission('relationships:delete'),
   relationshipController.deleteRelationship
 );
@@ -45,6 +49,7 @@ router.delete(
 // Execute relational query across datasets
 router.post(
   '/query',
+  requireActiveSubscription,
   requirePermission('relationships:query'),
   relationshipController.executeRelationalQuery
 );

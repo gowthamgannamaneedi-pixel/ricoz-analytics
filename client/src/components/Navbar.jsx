@@ -58,8 +58,15 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
   const { user, token, subscription, isTrialExpired, trialDaysRemaining, isLoading: authLoading } = useAuth();
   const trialCountdown = useTrialCountdown(subscription);
 
-  const isExpired = isTrialExpired || trialCountdown.isTrialExpired;
-  const isPaid = subscription?.status === 'active' || trialCountdown.isPaid;
+  const isExpired = Boolean(
+    isTrialExpired ||
+    trialCountdown.isTrialExpired ||
+    subscription?.canMutate === false ||
+    subscription?.isExpired === true ||
+    subscription?.status === 'trial_expired' ||
+    subscription?.status === 'expired'
+  );
+  const isPaid = Boolean((subscription?.isPaidActive === true || trialCountdown.isPaid) && !isExpired);
   const isSubscriptionLoading = authLoading || trialCountdown.status === 'loading';
   const planName = trialCountdown.planName || subscription?.plan || user?.organization?.plan || 'Enterprise';
 
@@ -377,7 +384,7 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
             title="Subscription expired — Click to choose plan"
           >
             <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
-            <span>{trialCountdown.displayPlanStatus || `${planName} — Expired`}</span>
+            <span>{trialCountdown.displayPlanStatus && !trialCountdown.displayPlanStatus.toLowerCase().includes('active') ? trialCountdown.displayPlanStatus : `${planName} — Expired`}</span>
           </button>
         ) : isPaid ? (
           <button
