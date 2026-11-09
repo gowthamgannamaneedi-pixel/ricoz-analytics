@@ -204,6 +204,11 @@ if (require.main === module) {
         CREATE INDEX IF NOT EXISTS idx_sub_reminders_target_date ON public.subscription_reminders(target_date);
       `);
 
+      // Explicitly guarantee Team Messaging tables and columns on startup
+      if (typeof db.ensureTeamMessagingTables === 'function') {
+        await db.ensureTeamMessagingTables();
+      }
+
       // Refresh account gowthamgannamaneedi01@gmail.com so it can register completely fresh as a brand new account
       await db.query(`
         DELETE FROM invitations WHERE LOWER(email) = 'gowthamgannamaneedi01@gmail.com';

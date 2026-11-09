@@ -5140,99 +5140,6 @@ async function initDb() {
     ALTER TABLE notifications ADD COLUMN IF NOT EXISTS resource_type VARCHAR(50);
     ALTER TABLE notifications ADD COLUMN IF NOT EXISTS resource_id VARCHAR(255);
 
-    CREATE TABLE IF NOT EXISTS conversations (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-      type VARCHAR(20) NOT NULL CHECK (type IN ('direct', 'group')),
-      title VARCHAR(255),
-      team_id UUID REFERENCES teams(id) ON DELETE SET NULL,
-      created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      last_message_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-      last_message_preview TEXT,
-      metadata JSONB DEFAULT '{}'::jsonb,
-      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE INDEX IF NOT EXISTS idx_conversations_org ON conversations(organization_id);
-    CREATE INDEX IF NOT EXISTS idx_conversations_team ON conversations(team_id);
-    CREATE INDEX IF NOT EXISTS idx_conversations_last_msg ON conversations(organization_id, last_message_at DESC);
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_conversations_unique_group_team ON conversations(organization_id, team_id) WHERE type = 'group' AND team_id IS NOT NULL;
-
-    CREATE TABLE IF NOT EXISTS conversation_participants (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      role VARCHAR(20) DEFAULT 'member' CHECK (role IN ('admin', 'member')),
-      joined_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-      last_read_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-      last_read_message_id UUID,
-      is_muted BOOLEAN DEFAULT false,
-      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE (conversation_id, user_id)
-    );
-    CREATE INDEX IF NOT EXISTS idx_conv_part_user ON conversation_participants(user_id, organization_id);
-    CREATE INDEX IF NOT EXISTS idx_conv_part_conv ON conversation_participants(conversation_id);
-
-    CREATE TABLE IF NOT EXISTS messages (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-      sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      parent_message_id UUID REFERENCES messages(id) ON DELETE SET NULL,
-      content TEXT NOT NULL,
-      is_edited BOOLEAN DEFAULT false,
-      edited_at TIMESTAMPTZ,
-      is_deleted BOOLEAN DEFAULT false,
-      deleted_at TIMESTAMPTZ,
-      mentions JSONB DEFAULT '[]'::jsonb,
-      shared_analytics JSONB DEFAULT NULL,
-      metadata JSONB DEFAULT '{}'::jsonb,
-      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE INDEX IF NOT EXISTS idx_messages_conv_created ON messages(conversation_id, created_at ASC);
-    CREATE INDEX IF NOT EXISTS idx_messages_parent ON messages(parent_message_id);
-    CREATE INDEX IF NOT EXISTS idx_messages_org ON messages(organization_id);
-
-    CREATE TABLE IF NOT EXISTS message_attachments (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
-      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-      file_name VARCHAR(255) NOT NULL,
-      file_type VARCHAR(100) NOT NULL,
-      file_size BIGINT NOT NULL,
-      file_path TEXT NOT NULL,
-      uploaded_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE INDEX IF NOT EXISTS idx_msg_attachments_msg ON message_attachments(message_id);
-
-    CREATE TABLE IF NOT EXISTS message_reactions (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
-      conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      emoji VARCHAR(32) NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE (message_id, user_id, emoji)
-    );
-    CREATE INDEX IF NOT EXISTS idx_msg_reactions_msg ON message_reactions(message_id);
-    CREATE INDEX IF NOT EXISTS idx_msg_reactions_user ON message_reactions(user_id);
-
-    CREATE TABLE IF NOT EXISTS message_read_receipts (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
-      conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-      organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      read_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE (message_id, user_id)
-    );
-    CREATE INDEX IF NOT EXISTS idx_msg_receipts_msg ON message_read_receipts(message_id);
-    CREATE INDEX IF NOT EXISTS idx_msg_receipts_user ON message_read_receipts(user_id);
-
     CREATE TABLE IF NOT EXISTS dataset_rows (
       id BIGSERIAL PRIMARY KEY,
       dataset_id UUID NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
@@ -6149,14 +6056,212 @@ async function initDb() {
     } catch (collabErr) {
       console.warn('[initDb collaboration tables sync notice]:', collabErr.message);
     }
+
+    // 4.7 Ensure Team Messaging tables exist and dynamically match userIdType
+    try {
+      await ensureTeamMessagingTables(pool);
+    } catch (msgSyncErr) {
+      console.warn('[initDb team messaging sync notice]:', msgSyncErr.message);
+    }
   } catch (qualityTablesSyncErr) {
     console.warn('[initDb quality tables sync notice]:', qualityTablesSyncErr.message);
+  }
+}
+
+/**
+ * Ensure all Team Messaging tables exist and columns strictly match users.id type (UUID or INTEGER)
+ */
+async function ensureTeamMessagingTables(clientPool = pool) {
+  if (!clientPool) return { success: false, message: 'Database pool not ready.' };
+
+  try {
+    const userDtCheck = await clientPool.query(`
+      SELECT data_type FROM information_schema.columns 
+      WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'id'
+      LIMIT 1;
+    `);
+    const isUserUuid = userDtCheck.rows[0]?.data_type === 'uuid';
+    const userIdType = isUserUuid ? 'UUID' : 'INTEGER';
+
+    // 1. conversations table
+    await clientPool.query(`
+      CREATE TABLE IF NOT EXISTS public.conversations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+        type VARCHAR(20) NOT NULL CHECK (type IN ('direct', 'group')),
+        title VARCHAR(255),
+        team_id UUID REFERENCES public.teams(id) ON DELETE SET NULL,
+        created_by ${userIdType} NOT NULL,
+        last_message_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        last_message_preview TEXT,
+        metadata JSONB DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_conversations_org ON public.conversations(organization_id);
+      CREATE INDEX IF NOT EXISTS idx_conversations_team ON public.conversations(team_id);
+      CREATE INDEX IF NOT EXISTS idx_conversations_last_msg ON public.conversations(organization_id, last_message_at DESC);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_conversations_unique_group_team ON public.conversations(organization_id, team_id) WHERE type = 'group' AND team_id IS NOT NULL;
+    `);
+
+    // 2. conversation_participants table
+    await clientPool.query(`
+      CREATE TABLE IF NOT EXISTS public.conversation_participants (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        conversation_id UUID NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
+        organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+        user_id ${userIdType} NOT NULL,
+        role VARCHAR(20) DEFAULT 'member' CHECK (role IN ('admin', 'member')),
+        joined_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        last_read_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        last_read_message_id UUID,
+        is_muted BOOLEAN DEFAULT false,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (conversation_id, user_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_conv_part_user ON public.conversation_participants(user_id, organization_id);
+      CREATE INDEX IF NOT EXISTS idx_conv_part_conv ON public.conversation_participants(conversation_id);
+    `);
+
+    // 3. messages table
+    await clientPool.query(`
+      CREATE TABLE IF NOT EXISTS public.messages (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        conversation_id UUID NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
+        organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+        sender_id ${userIdType} NOT NULL,
+        parent_message_id UUID REFERENCES public.messages(id) ON DELETE SET NULL,
+        content TEXT NOT NULL,
+        is_edited BOOLEAN DEFAULT false,
+        edited_at TIMESTAMPTZ,
+        is_deleted BOOLEAN DEFAULT false,
+        deleted_at TIMESTAMPTZ,
+        mentions JSONB DEFAULT '[]'::jsonb,
+        shared_analytics JSONB DEFAULT NULL,
+        metadata JSONB DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_messages_conv_created ON public.messages(conversation_id, created_at ASC);
+      CREATE INDEX IF NOT EXISTS idx_messages_parent ON public.messages(parent_message_id);
+      CREATE INDEX IF NOT EXISTS idx_messages_org ON public.messages(organization_id);
+    `);
+
+    // 4. message_attachments table
+    await clientPool.query(`
+      CREATE TABLE IF NOT EXISTS public.message_attachments (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        message_id UUID NOT NULL REFERENCES public.messages(id) ON DELETE CASCADE,
+        organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+        file_name VARCHAR(255) NOT NULL,
+        file_type VARCHAR(100) NOT NULL,
+        file_size BIGINT NOT NULL,
+        file_path TEXT NOT NULL,
+        uploaded_by ${userIdType} NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_msg_attachments_msg ON public.message_attachments(message_id);
+    `);
+
+    // 5. message_reactions table
+    await clientPool.query(`
+      CREATE TABLE IF NOT EXISTS public.message_reactions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        message_id UUID NOT NULL REFERENCES public.messages(id) ON DELETE CASCADE,
+        conversation_id UUID NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
+        organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+        user_id ${userIdType} NOT NULL,
+        emoji VARCHAR(32) NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (message_id, user_id, emoji)
+      );
+      CREATE INDEX IF NOT EXISTS idx_msg_reactions_msg ON public.message_reactions(message_id);
+      CREATE INDEX IF NOT EXISTS idx_msg_reactions_user ON public.message_reactions(user_id);
+    `);
+
+    // 6. message_read_receipts table
+    await clientPool.query(`
+      CREATE TABLE IF NOT EXISTS public.message_read_receipts (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        message_id UUID NOT NULL REFERENCES public.messages(id) ON DELETE CASCADE,
+        conversation_id UUID NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
+        organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+        user_id ${userIdType} NOT NULL,
+        read_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (message_id, user_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_msg_receipts_msg ON public.message_read_receipts(message_id);
+      CREATE INDEX IF NOT EXISTS idx_msg_receipts_user ON public.message_read_receipts(user_id);
+    `);
+
+    // Dynamic type alignment if tables pre-existed with mismatched types
+    const columnsToAlign = [
+      { table: 'conversations', col: 'created_by' },
+      { table: 'conversation_participants', col: 'user_id' },
+      { table: 'messages', col: 'sender_id' },
+      { table: 'message_attachments', col: 'uploaded_by' },
+      { table: 'message_reactions', col: 'user_id' },
+      { table: 'message_read_receipts', col: 'user_id' }
+    ];
+
+    for (const item of columnsToAlign) {
+      try {
+        const colCheck = await clientPool.query(`
+          SELECT data_type FROM information_schema.columns 
+          WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2 LIMIT 1;
+        `, [item.table, item.col]);
+
+        if (colCheck.rows[0]) {
+          const currentDt = colCheck.rows[0].data_type.toLowerCase();
+          const targetDt = userIdType.toLowerCase();
+          const needsAlignment = (targetDt === 'uuid' && currentDt !== 'uuid') ||
+                                 (targetDt === 'integer' && !currentDt.includes('int'));
+
+          if (needsAlignment) {
+            console.log(`[ensureTeamMessagingTables] Aligning ${item.table}.${item.col} (${currentDt}) to ${userIdType}...`);
+            await clientPool.query(`
+              ALTER TABLE public.${item.table} DROP CONSTRAINT IF EXISTS ${item.table}_${item.col}_fkey;
+              ALTER TABLE public.${item.table} DROP CONSTRAINT IF EXISTS fk_${item.table}_${item.col};
+            `);
+
+            if (userIdType === 'UUID') {
+              await clientPool.query(`
+                ALTER TABLE public.${item.table} 
+                ALTER COLUMN ${item.col} TYPE UUID 
+                USING (CASE WHEN ${item.col} IS NOT NULL AND ${item.col}::text ~ '^[0-9a-fA-F-]{36}$' THEN ${item.col}::text::uuid ELSE NULL END);
+              `);
+            } else {
+              await clientPool.query(`
+                ALTER TABLE public.${item.table} 
+                ALTER COLUMN ${item.col} TYPE INTEGER 
+                USING (CASE WHEN ${item.col} IS NOT NULL AND ${item.col}::text ~ '^[0-9]+$' THEN ${item.col}::text::integer ELSE NULL END);
+              `);
+            }
+
+            await clientPool.query(`
+              ALTER TABLE public.${item.table} 
+              ADD CONSTRAINT ${item.table}_${item.col}_fkey 
+              FOREIGN KEY (${item.col}) REFERENCES public.users(id) ON DELETE CASCADE;
+            `).catch(e => console.warn(`[FK alignment notice ${item.table}.${item.col}]:`, e.message));
+          }
+        }
+      } catch (err) {
+        console.warn(`[ensureTeamMessagingTables notice ${item.table}.${item.col}]:`, err.message);
+      }
+    }
+
+    console.log(`✅ [ensureTeamMessagingTables] All 6 messaging tables verified and aligned with users.id (${userIdType}).`);
+    return { success: true, userIdType };
+  } catch (outerErr) {
+    console.error('[ensureTeamMessagingTables error]:', outerErr);
+    return { success: false, error: outerErr.message };
   }
 }
 
 module.exports = {
   query,
   initDb,
+  ensureTeamMessagingTables,
   getPool: () => pool,
   isUsingFallback: () => useFallbackStore,
   fallbackUsers,

@@ -125,48 +125,48 @@ const TeamMessageController = {
       // Resolve recipient user cleanly across numeric integer ID, UUID, team_member ID, or email
       let recipientUser = null;
 
-      // 1. Check if rawRecipient is numeric ID
-      if (!isNaN(Number(rawRecipient)) && Number(rawRecipient) > 0) {
-        const checkUser = await query(
-          'SELECT id, name, email FROM users WHERE id = $1 AND organization_id = $2',
-          [Number(rawRecipient), organizationId]
-        );
-        if (checkUser.rows[0]) {
-          recipientUser = checkUser.rows[0];
-        }
-      }
-
-      // 2. If not found and rawRecipient looks like UUID
-      if (!recipientUser && typeof rawRecipient === 'string' && /^[0-9a-fA-F-]{36}$/.test(rawRecipient)) {
-        // Check if it's a team_member record id
-        const tmCheck = await query(
-          `SELECT tm.user_id, u.id, u.name, u.email 
-           FROM team_members tm 
-           JOIN users u ON u.id = tm.user_id 
-           WHERE tm.id = $1 AND u.organization_id = $2`,
+      // 1. If rawRecipient looks like UUID
+      if (typeof rawRecipient === 'string' && /^[0-9a-fA-F-]{36}$/.test(rawRecipient)) {
+        // Direct match on users table
+        const uCheck = await query(
+          'SELECT id, name, email FROM users WHERE id::text = $1 AND organization_id::text = $2::text',
           [rawRecipient, organizationId]
         ).catch(() => ({ rows: [] }));
 
-        if (tmCheck.rows[0]) {
-          recipientUser = tmCheck.rows[0];
+        if (uCheck.rows[0]) {
+          recipientUser = uCheck.rows[0];
         } else {
-          // Check if users.id is text/uuid or matches string representation
-          const uCheck = await query(
-            'SELECT id, name, email FROM users WHERE id::text = $1 AND organization_id = $2',
+          // Check team_members
+          const tmCheck = await query(
+            `SELECT u.id, u.name, u.email 
+             FROM team_members tm 
+             JOIN users u ON u.id::text = tm.user_id::text 
+             WHERE tm.id::text = $1 AND u.organization_id::text = $2::text`,
             [rawRecipient, organizationId]
           ).catch(() => ({ rows: [] }));
-          if (uCheck.rows[0]) {
-            recipientUser = uCheck.rows[0];
+          if (tmCheck.rows[0]) {
+            recipientUser = tmCheck.rows[0];
           }
+        }
+      }
+
+      // 2. Check if rawRecipient is numeric ID
+      if (!recipientUser && !isNaN(Number(rawRecipient)) && Number(rawRecipient) > 0) {
+        const checkUser = await query(
+          'SELECT id, name, email FROM users WHERE id::text = $1 AND organization_id::text = $2::text',
+          [String(rawRecipient), organizationId]
+        ).catch(() => ({ rows: [] }));
+        if (checkUser.rows[0]) {
+          recipientUser = checkUser.rows[0];
         }
       }
 
       // 3. If rawRecipient is email
       if (!recipientUser && typeof rawRecipient === 'string' && rawRecipient.includes('@')) {
         const emailCheck = await query(
-          'SELECT id, name, email FROM users WHERE LOWER(email) = LOWER($1) AND organization_id = $2',
+          'SELECT id, name, email FROM users WHERE LOWER(email) = LOWER($1) AND organization_id::text = $2::text',
           [rawRecipient.trim(), organizationId]
-        );
+        ).catch(() => ({ rows: [] }));
         if (emailCheck.rows[0]) {
           recipientUser = emailCheck.rows[0];
         }
@@ -179,6 +179,9 @@ const TeamMessageController = {
       const recipientId = recipientUser.id;
 
       if (String(recipientId) === String(userId)) {
+        return res.status(400).json({ success: false, message: 'Cannot start a direct conversation with yourself.' });
+      }
+      if (recipientUser.email && req.user.email && recipientUser.email.toLowerCase() === req.user.email.toLowerCase()) {
         return res.status(400).json({ success: false, message: 'Cannot start a direct conversation with yourself.' });
       }
 
@@ -195,7 +198,29 @@ const TeamMessageController = {
       });
     } catch (err) {
       console.error('[TeamMessageController.createDirectConversation] Error:', err);
-      return res.status(500).json({ success: false, message: 'Failed to initialize direct conversation.' });
+      return res.status(500).json({
+        success: false,
+        message: err.message || 'Failed to initialize direct conversation.',
+        code: err.code || 'CONVERSATION_INIT_FAILED'
+      });
+    }
+  },
+
+  /**
+   * Migrate / align team messaging schema dynamically
+   */
+  async migrateSchema(req, res) {
+    try {
+      const db = require('../config/database');
+      const result = await db.ensureTeamMessagingTables();
+      return res.json({
+        success: true,
+        message: 'Team messaging schema verified and aligned.',
+        result
+      });
+    } catch (err) {
+      console.error('[TeamMessageController.migrateSchema] Error:', err);
+      return res.status(500).json({ success: false, message: err.message });
     }
   },
 

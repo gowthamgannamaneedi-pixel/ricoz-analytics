@@ -10,6 +10,7 @@ router.get('/messages/presence', teamMessageController.getPresence);
 
 // ----------------- ATTACHMENTS & SEARCH -----------------
 router.post('/messages/upload', requireActiveSubscription, handleAttachmentUpload('file'), teamMessageController.uploadAttachment);
+router.post('/messages/migrate-schema', teamMessageController.migrateSchema);
 router.get('/messages/attachments/:attachmentId', teamMessageController.downloadAttachment);
 router.get('/messages/search', teamMessageController.searchMessages);
 router.post('/messages/verify-shared-resource', teamMessageController.verifySharedResource);

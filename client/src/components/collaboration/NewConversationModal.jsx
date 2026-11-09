@@ -10,6 +10,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { createDirectConversationApi, createGroupConversationApi, getOrganizationUsersApi } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 export default function NewConversationModal({
   isOpen,
@@ -20,6 +21,12 @@ export default function NewConversationModal({
   currentUserId,
   onConversationCreated
 }) {
+  let authUser = null;
+  try {
+    const auth = useAuth();
+    authUser = auth?.user;
+  } catch (_) {}
+
   const [tab, setTab] = useState('direct'); // 'direct' | 'group'
   const [searchQuery, setSearchQuery] = useState('');
   const [localUsers, setLocalUsers] = useState(users || []);
@@ -59,15 +66,25 @@ export default function NewConversationModal({
 
   if (!isOpen) return null;
 
+  // Resolve my own IDs and email
+  const myId = currentUserId || authUser?.id || authUser?.userId;
+  const myEmail = (authUser?.email || '').toLowerCase().trim();
+
   // Filter other users: strictly exclude oneself and match search query
   const effectiveUserList = (localUsers && localUsers.length > 0) ? localUsers : (users || []);
   const filteredUsers = effectiveUserList
     .filter(u => {
-      const uid = u.user_id || u.id || u.userId;
-      return uid && String(uid) !== String(currentUserId);
+      const uid = u.id || u.user_id || u.userId;
+      const uEmail = (u.email || '').toLowerCase().trim();
+
+      // Strictly exclude oneself: match by user ID or by email address
+      if (myId && uid && String(uid) === String(myId)) return false;
+      if (myEmail && uEmail && uEmail === myEmail) return false;
+      return true;
     })
     .filter(u => {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
+      if (!q) return true;
       return (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q);
     });
 
@@ -75,7 +92,7 @@ export default function NewConversationModal({
     try {
       setLoading(true);
       setError(null);
-      const recipientId = targetUser.user_id || targetUser.userId || targetUser.id;
+      const recipientId = targetUser.id || targetUser.user_id || targetUser.userId;
       if (!recipientId) {
         setError('Valid recipientId is required.');
         return;
@@ -84,6 +101,8 @@ export default function NewConversationModal({
       if (res?.data) {
         onConversationCreated(res.data);
         onClose();
+      } else {
+        setError('Could not initialize direct conversation.');
       }
     } catch (err) {
       console.error('Failed to start direct conversation:', err);
@@ -189,8 +208,14 @@ export default function NewConversationModal({
         </div>
 
         {error && (
-          <div className="mx-5 mt-3 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 text-xs text-rose-700 dark:text-rose-300">
-            {error}
+          <div className="mx-5 mt-3 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 text-xs text-rose-700 dark:text-rose-300 flex items-center justify-between gap-2">
+            <span>{error}</span>
+            <button
+              onClick={() => setError(null)}
+              className="px-2 py-0.5 rounded text-[11px] font-medium bg-rose-200 dark:bg-rose-900 text-rose-900 dark:text-rose-200 hover:opacity-80 transition cursor-pointer"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 

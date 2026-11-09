@@ -30,9 +30,9 @@ const TeamMessageModel = {
           SELECT COUNT(*)::int
           FROM messages m
           WHERE m.conversation_id = c.id
-            AND m.sender_id != $1
+            AND m.sender_id::text != $1::text
             AND m.is_deleted = false
-            AND m.created_at > cp.last_read_at
+            AND (cp.last_read_at IS NULL OR m.created_at > cp.last_read_at)
         ) AS unread_count,
         (
           SELECT json_agg(
@@ -47,13 +47,13 @@ const TeamMessageModel = {
             )
           )
           FROM conversation_participants part
-          JOIN users u ON part.user_id = u.id
+          JOIN users u ON part.user_id::text = u.id::text
           WHERE part.conversation_id = c.id
         ) AS participants
       FROM conversations c
-      JOIN conversation_participants cp ON c.id = cp.conversation_id AND cp.user_id = $1
+      JOIN conversation_participants cp ON c.id = cp.conversation_id AND cp.user_id::text = $1::text
       LEFT JOIN teams t ON c.team_id = t.id
-      WHERE c.organization_id = $2
+      WHERE c.organization_id::text = $2::text
       ORDER BY c.last_message_at DESC NULLS LAST, c.created_at DESC;
     `;
 
@@ -81,9 +81,9 @@ const TeamMessageModel = {
     const sql = `
       SELECT c.*
       FROM conversations c
-      JOIN conversation_participants p1 ON c.id = p1.conversation_id AND p1.user_id = $2
-      JOIN conversation_participants p2 ON c.id = p2.conversation_id AND p2.user_id = $3
-      WHERE c.organization_id = $1 AND c.type = 'direct'
+      JOIN conversation_participants p1 ON c.id = p1.conversation_id AND p1.user_id::text = $2::text
+      JOIN conversation_participants p2 ON c.id = p2.conversation_id AND p2.user_id::text = $3::text
+      WHERE c.organization_id::text = $1::text AND c.type = 'direct'
       LIMIT 1;
     `;
     const res = await query(sql, [organizationId, userAId, userBId]);
@@ -97,7 +97,7 @@ const TeamMessageModel = {
     const sql = `
       SELECT *
       FROM conversations
-      WHERE organization_id = $1 AND team_id = $2 AND type = 'group'
+      WHERE organization_id::text = $1::text AND team_id::text = $2::text AND type = 'group'
       LIMIT 1;
     `;
     const res = await query(sql, [organizationId, teamId]);
@@ -108,10 +108,12 @@ const TeamMessageModel = {
    * Create or return existing direct conversation between two users
    */
   async createDirectConversation({ organizationId, userAId, userBId, createdBy }) {
-    // 1. Check existing
+    // 1. Check existing (idempotent lookup)
     const existing = await this.findDirectConversation(organizationId, userAId, userBId);
     if (existing) {
-      return this.getConversationDetails(existing.id, organizationId, userAId);
+      const details = await this.getConversationDetails(existing.id, organizationId, userAId);
+      if (details) return details;
+      return existing;
     }
 
     // 2. Insert conversation
@@ -126,12 +128,24 @@ const TeamMessageModel = {
     // 3. Insert participants
     const insertPartSql = `
       INSERT INTO conversation_participants (conversation_id, organization_id, user_id, role)
-      VALUES ($1, $2, $3, 'member'), ($1, $2, $4, 'member')
-      ON CONFLICT DO NOTHING;
+      VALUES ($1, $2, $3, 'member')
+      ON CONFLICT (conversation_id, user_id) DO NOTHING;
     `;
-    await query(insertPartSql, [conversation.id, organizationId, userAId, userBId]);
+    await query(insertPartSql, [conversation.id, organizationId, userAId]);
+    await query(insertPartSql, [conversation.id, organizationId, userBId]);
 
-    return this.getConversationDetails(conversation.id, organizationId, userAId);
+    const details = await this.getConversationDetails(conversation.id, organizationId, userAId);
+    if (details) return details;
+
+    return {
+      ...conversation,
+      unread_count: 0,
+      participants: [
+        { user_id: userAId, participant_role: 'member' },
+        { user_id: userBId, participant_role: 'member' }
+      ],
+      direct_other_user: { user_id: userBId, participant_role: 'member' }
+    };
   },
 
   /**
@@ -272,9 +286,9 @@ const TeamMessageModel = {
           SELECT COUNT(*)::int
           FROM messages m
           WHERE m.conversation_id = c.id
-            AND m.sender_id != $3
+            AND m.sender_id::text != $3::text
             AND m.is_deleted = false
-            AND m.created_at > cp.last_read_at
+            AND (cp.last_read_at IS NULL OR m.created_at > cp.last_read_at)
         ) AS unread_count,
         (
           SELECT json_agg(
@@ -289,13 +303,13 @@ const TeamMessageModel = {
             )
           )
           FROM conversation_participants part
-          JOIN users u ON part.user_id = u.id
+          JOIN users u ON part.user_id::text = u.id::text
           WHERE part.conversation_id = c.id
         ) AS participants
       FROM conversations c
-      JOIN conversation_participants cp ON c.id = cp.conversation_id AND cp.user_id = $3
+      JOIN conversation_participants cp ON c.id = cp.conversation_id AND cp.user_id::text = $3::text
       LEFT JOIN teams t ON c.team_id = t.id
-      WHERE c.id = $1 AND c.organization_id = $2;
+      WHERE c.id = $1 AND c.organization_id::text = $2::text;
     `;
 
     let res = await query(sql, [conversationId, organizationId, userId]);
@@ -303,7 +317,7 @@ const TeamMessageModel = {
     // Fallback: if not enrolled as participant, check if conversation belongs to org and auto-enroll
     if (!res.rows[0]) {
       const convCheck = await query(
-        `SELECT id, organization_id FROM conversations WHERE id = $1 AND organization_id = $2`,
+        `SELECT id, organization_id FROM conversations WHERE id = $1 AND organization_id::text = $2::text`,
         [conversationId, organizationId]
       );
       if (convCheck.rows[0] && userId) {
@@ -341,8 +355,8 @@ const TeamMessageModel = {
       SELECT 1 FROM conversation_participants cp
       JOIN conversations c ON cp.conversation_id = c.id
       WHERE cp.conversation_id = $1 
-        AND c.organization_id = $2 
-        AND cp.user_id = $3;
+        AND c.organization_id::text = $2::text 
+        AND cp.user_id::text = $3::text;
     `;
     const res = await query(sql, [conversationId, organizationId, userId]);
     if (res.rowCount > 0) return true;
@@ -350,9 +364,9 @@ const TeamMessageModel = {
     // Check if user is in the same organization for an authorized group conversation
     const fallbackSql = `
       SELECT 1 FROM conversations c
-      WHERE c.id = $1 AND c.organization_id = $2
+      WHERE c.id = $1 AND c.organization_id::text = $2::text
         AND (
-          c.created_by = $3 
+          c.created_by::text = $3::text 
           OR c.type = 'group'
         );
     `;
@@ -382,7 +396,7 @@ const TeamMessageModel = {
 
     // 2. Fetch messages
     const params = [conversationId, organizationId];
-    let whereClause = 'm.conversation_id = $1 AND m.organization_id = $2';
+    let whereClause = 'm.conversation_id = $1 AND m.organization_id::text = $2::text';
 
     if (parentMessageId) {
       params.push(parentMessageId);
@@ -426,7 +440,7 @@ const TeamMessageModel = {
           WHERE replies.parent_message_id = m.id AND replies.is_deleted = false
         ) AS reply_count
       FROM messages m
-      JOIN users u ON m.sender_id = u.id
+      JOIN users u ON m.sender_id::text = u.id::text
       WHERE ${whereClause}
       ORDER BY m.created_at ASC
       LIMIT $${limitIndex};
@@ -459,7 +473,7 @@ const TeamMessageModel = {
     const reactSql = `
       SELECT mr.id, mr.message_id, mr.user_id, mr.emoji, mr.created_at, u.name AS user_name
       FROM message_reactions mr
-      JOIN users u ON mr.user_id = u.id
+      JOIN users u ON mr.user_id::text = u.id::text
       WHERE mr.message_id = ANY($1::uuid[])
       ORDER BY mr.created_at ASC;
     `;
@@ -486,7 +500,7 @@ const TeamMessageModel = {
     const receiptSql = `
       SELECT mrr.message_id, mrr.user_id, u.name AS user_name, mrr.read_at
       FROM message_read_receipts mrr
-      JOIN users u ON mrr.user_id = u.id
+      JOIN users u ON mrr.user_id::text = u.id::text
       WHERE mrr.message_id = ANY($1::uuid[])
       ORDER BY mrr.read_at ASC;
     `;
@@ -574,7 +588,7 @@ const TeamMessageModel = {
       `UPDATE conversation_participants
        SET last_read_at = CURRENT_TIMESTAMP,
            last_read_message_id = $2
-       WHERE conversation_id = $1 AND user_id = $3`,
+       WHERE conversation_id = $1 AND user_id::text = $3::text`,
       [conversationId, message.id, senderId]
     );
 
@@ -587,7 +601,7 @@ const TeamMessageModel = {
     );
 
     // 5. Fetch sender details
-    const userRes = await query('SELECT name, email, role, avatar_url FROM users WHERE id = $1', [senderId]);
+    const userRes = await query('SELECT name, email, role, avatar_url FROM users WHERE id::text = $1::text', [senderId]);
     const sender = userRes.rows[0] || {};
 
     return {
@@ -609,7 +623,7 @@ const TeamMessageModel = {
   async editMessage(messageId, senderId, organizationId, newContent) {
     const checkSql = `
       SELECT * FROM messages
-      WHERE id = $1 AND organization_id = $2;
+      WHERE id = $1 AND organization_id::text = $2::text;
     `;
     const checkRes = await query(checkSql, [messageId, organizationId]);
     if (!checkRes.rows[0]) {
@@ -629,7 +643,7 @@ const TeamMessageModel = {
           is_edited = true,
           edited_at = CURRENT_TIMESTAMP,
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = $2 AND organization_id = $3
+      WHERE id = $2 AND organization_id::text = $3::text
       RETURNING *;
     `;
     const res = await query(updateSql, [newContent, messageId, organizationId]);
@@ -642,7 +656,7 @@ const TeamMessageModel = {
   async deleteMessage(messageId, senderId, organizationId, userRole = 'member') {
     const checkSql = `
       SELECT * FROM messages
-      WHERE id = $1 AND organization_id = $2;
+      WHERE id = $1 AND organization_id::text = $2::text;
     `;
     const checkRes = await query(checkSql, [messageId, organizationId]);
     if (!checkRes.rows[0]) {
@@ -663,7 +677,7 @@ const TeamMessageModel = {
           content = 'This message was deleted.',
           shared_analytics = NULL,
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1 AND organization_id = $2
+      WHERE id = $1 AND organization_id::text = $2::text
       RETURNING *;
     `;
     const res = await query(deleteSql, [messageId, organizationId]);
@@ -683,7 +697,7 @@ const TeamMessageModel = {
     // 2. Check existing
     const findSql = `
       SELECT id FROM message_reactions
-      WHERE message_id = $1 AND user_id = $2 AND emoji = $3;
+      WHERE message_id = $1 AND user_id::text = $2::text AND emoji = $3;
     `;
     const existing = await query(findSql, [messageId, userId, emoji]);
 
@@ -704,7 +718,7 @@ const TeamMessageModel = {
     const summarySql = `
       SELECT mr.emoji, mr.user_id, u.name AS user_name
       FROM message_reactions mr
-      JOIN users u ON mr.user_id = u.id
+      JOIN users u ON mr.user_id::text = u.id::text
       WHERE mr.message_id = $1;
     `;
     const summaryRes = await query(summarySql, [messageId]);
@@ -742,7 +756,7 @@ const TeamMessageModel = {
       `UPDATE conversation_participants
        SET last_read_at = CURRENT_TIMESTAMP,
            last_read_message_id = COALESCE($3, last_read_message_id)
-       WHERE conversation_id = $1 AND user_id = $2`,
+       WHERE conversation_id = $1 AND user_id::text = $2::text`,
       [conversationId, userId, messageId]
     );
 
@@ -750,10 +764,10 @@ const TeamMessageModel = {
     const unreadMsgsSql = `
       SELECT id FROM messages
       WHERE conversation_id = $1
-        AND organization_id = $2
-        AND sender_id != $3
+        AND organization_id::text = $2::text
+        AND sender_id::text != $3::text
         AND id NOT IN (
-          SELECT message_id FROM message_read_receipts WHERE user_id = $3
+          SELECT message_id FROM message_read_receipts WHERE user_id::text = $3::text
         )
       ORDER BY created_at ASC;
     `;
@@ -797,9 +811,9 @@ const TeamMessageModel = {
         u.avatar_url AS sender_avatar
       FROM messages m
       JOIN conversations c ON m.conversation_id = c.id
-      JOIN conversation_participants cp ON c.id = cp.conversation_id AND cp.user_id = $2
-      JOIN users u ON m.sender_id = u.id
-      WHERE m.organization_id = $1
+      JOIN conversation_participants cp ON c.id = cp.conversation_id AND cp.user_id::text = $2::text
+      JOIN users u ON m.sender_id::text = u.id::text
+      WHERE m.organization_id::text = $1::text
         AND m.is_deleted = false
         AND (m.content ILIKE $3 OR (m.shared_analytics IS NOT NULL AND m.shared_analytics::text ILIKE $3))
         ${convFilter}
@@ -832,8 +846,8 @@ const TeamMessageModel = {
       SELECT ma.*, m.conversation_id
       FROM message_attachments ma
       JOIN messages m ON ma.message_id = m.id
-      JOIN conversation_participants cp ON m.conversation_id = cp.conversation_id AND cp.user_id = $3
-      WHERE ma.id = $1 AND ma.organization_id = $2;
+      JOIN conversation_participants cp ON m.conversation_id = cp.conversation_id AND cp.user_id::text = $3::text
+      WHERE ma.id = $1 AND ma.organization_id::text = $2::text;
     `;
     const res = await query(sql, [attachmentId, organizationId, userId]);
     return res.rows[0] || null;
