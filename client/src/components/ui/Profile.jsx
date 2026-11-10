@@ -109,7 +109,7 @@ export default function Profile({
           role="menu"
           aria-orientation="vertical"
           aria-labelledby="top-profile-menu-button"
-          className="absolute right-0 mt-2 w-72 rounded-2xl border border-slate-200 dark:border-slate-755 bg-white dark:bg-slate-850 p-2 shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-slate-800 dark:text-slate-100"
+          className="absolute -right-2 sm:right-0 mt-2 w-[calc(100vw-2rem)] sm:w-72 max-w-xs rounded-2xl border border-slate-200 dark:border-slate-755 bg-white dark:bg-slate-850 p-2 shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-slate-800 dark:text-slate-100"
         >
           {/* User Account Context Header */}
           <div className="p-3 border-b border-slate-100 dark:border-slate-750 bg-slate-50/70 dark:bg-slate-800/80 rounded-xl mb-1.5">

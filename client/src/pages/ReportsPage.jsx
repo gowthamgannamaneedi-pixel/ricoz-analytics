@@ -646,7 +646,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Action Row below description: Create Report on left, Refresh on right */}
-        <div className="flex items-center justify-between gap-4 pt-0.5">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-0.5">
           <div>
             {!isViewer ? (
               <Button

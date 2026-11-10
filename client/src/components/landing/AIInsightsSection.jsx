@@ -183,7 +183,7 @@ export default function AIInsightsSection({ onOpenDemo }) {
                             : 'bg-white dark:bg-slate-800/90 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-red-300 dark:hover:border-slate-600 shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-800'
                         }`}
                       >
-                        <span className="truncate pr-2 font-medium">"{q.prompt}"</span>
+                        <span className="break-words whitespace-normal text-left pr-2 font-medium">"{q.prompt}"</span>
                         <span className={`text-[11px] font-mono uppercase px-2 py-0.5 rounded font-bold shrink-0 ${
                           isSelected
                             ? 'bg-white/20 text-white'

@@ -242,7 +242,7 @@ export default function BusinessRadarDrawer({
       className="fixed inset-0 z-50 overflow-hidden bg-slate-900/50 backdrop-blur-xs transition-opacity flex justify-end"
       id="business-radar-modal"
     >
-      <div className="w-screen max-w-2xl bg-white dark:bg-[#111827] border-l border-slate-200 dark:border-[#334155] shadow-2xl flex flex-col text-slate-900 dark:text-[#F8FAFC]">
+      <div className="w-full max-w-2xl bg-white dark:bg-[#111827] border-l border-slate-200 dark:border-[#334155] shadow-2xl flex flex-col text-slate-900 dark:text-[#F8FAFC]">
 
         {/* ----------------------------------------------------------------- */}
         {/* 1. HEADER: TITLE, BADGE & CLOSE BUTTON                            */}

@@ -184,7 +184,7 @@ export default function StorytellingShowcase({ onOpenDemo }) {
         className="w-full lg:h-screen flex flex-col justify-center py-6 lg:py-0 overflow-hidden relative border-t border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0B0F19]"
       >
         {/* Architectural Grid & Ambient Gradient */}
-        <div className="absolute inset-0 pointer-events-none opacity-20 dark:opacity-20">
+        <div className="absolute inset-0 pointer-events-none opacity-20 dark:opacity-20 overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(#ef4444_1px,transparent_1px)] [background-size:32px_32px]" />
           <div className="absolute -top-40 -left-40 w-96 h-96 bg-red-600/10 dark:bg-red-600/20 rounded-full blur-3xl" />
           <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-rose-600/10 dark:bg-rose-600/15 rounded-full blur-3xl" />

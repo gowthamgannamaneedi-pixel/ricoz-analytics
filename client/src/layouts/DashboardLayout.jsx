@@ -37,7 +37,7 @@ export default function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1120] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col font-sans transition-colors duration-200">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#F8FAFC] dark:bg-[#0B1120] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col font-sans transition-colors duration-200">
       {/* Sidebar Navigation */}
       <Sidebar
         isOpen={sidebarOpen}
@@ -48,7 +48,7 @@ export default function DashboardLayout() {
       />
 
       {/* Main Workspace Frame */}
-      <div className={`flex-1 flex flex-col min-w-0 transition-[padding] duration-200 ease-in-out ${
+      <div className={`flex-1 flex flex-col min-w-0 w-full max-w-full overflow-x-hidden transition-[padding] duration-200 ease-in-out ${
         isCollapsed ? 'lg:pl-0' : 'lg:pl-64'
       }`}>
         {/* Top Navbar */}
@@ -59,7 +59,7 @@ export default function DashboardLayout() {
         />
 
         {/* Dynamic Route Container */}
-        <main className="flex-1 p-4 sm:p-6 lg:px-8 lg:py-7 space-y-6 max-w-[1536px] w-full mx-auto">
+        <main className="flex-1 min-w-0 w-full max-w-[1536px] p-3.5 sm:p-6 lg:px-8 lg:py-7 space-y-5 sm:space-y-6 mx-auto overflow-x-hidden">
           <Outlet />
         </main>
 

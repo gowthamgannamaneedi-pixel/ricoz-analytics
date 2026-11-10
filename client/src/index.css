@@ -5,6 +5,9 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
   }
   
   body {
@@ -14,7 +17,17 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-width: 320px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
     transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  #root {
+    width: 100%;
+    max-width: 100%;
+    min-width: 320px;
+    overflow-x: hidden;
   }
 
   /* Dark mode root styles */
@@ -91,14 +104,21 @@ html.dark *:focus-visible {
 
 @layer components {
 
-  /* Standard card surface (24px padding = p-6, 8-16px radius, subtle border) */
+  /* Standard card surface (responsive 16-24px padding = p-4 sm:p-6, 8-16px radius, subtle border) */
   .rz-card {
-    @apply bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 shadow-2xs transition-colors;
+    @apply bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-4 sm:p-6 shadow-2xs transition-colors min-w-0 max-w-full;
   }
 
   /* Compact card — tighter padding contexts */
   .rz-card-sm {
-    @apply bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-xl p-4 shadow-2xs transition-colors;
+    @apply bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-xl p-3.5 sm:p-4 shadow-2xs transition-colors min-w-0 max-w-full;
+  }
+
+  /* Safe text wrapping utility to eliminate text extending outside containers */
+  .safe-wrap {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    min-width: 0;
   }
 
   /* Page-section header row */
@@ -205,24 +225,36 @@ html.dark *:focus-visible {
 
   /* Modal header */
   .rz-modal-header {
-    @apply flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100 dark:border-[#334155];
+    @apply flex items-center justify-between px-4 sm:px-6 pt-5 sm:pt-6 pb-4 border-b border-slate-100 dark:border-[#334155];
   }
 
   /* Modal body */
   .rz-modal-body {
-    @apply px-6 py-5 space-y-4 text-slate-800 dark:text-[#CBD5E1];
+    @apply px-4 sm:px-6 py-4 sm:py-5 space-y-4 text-slate-800 dark:text-[#CBD5E1];
   }
 
   /* Modal footer */
   .rz-modal-footer {
-    @apply flex items-center justify-end gap-2.5 px-6 py-4 border-t border-slate-100 dark:border-[#334155] bg-slate-50/70 dark:bg-[#0F172A] rounded-b-2xl;
+    @apply flex flex-wrap items-center justify-end gap-2.5 px-4 sm:px-6 py-3.5 sm:py-4 border-t border-slate-100 dark:border-[#334155] bg-slate-50/70 dark:bg-[#0F172A] rounded-b-2xl;
   }
 
 }
 
 /* Tables remain contained on small canvases without sacrificing column context. */
-.rz-table-wrap { overflow-x: auto; overscroll-behavior-x: contain; }
-.rz-table-wrap table { min-width: 680px; width: 100%; }
+.rz-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.rz-table-wrap table { min-width: 640px; width: 100%; }
+
+/* Global Recharts responsive constraints */
+.recharts-responsive-container {
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
 
 /* ─── Global Dark Mode Container & Surface Consistency Rules ─────────────── */
 html.dark .bg-white:not([class*="dark:bg-"]):not([class*="text-white"]):not(button.bg-rose-600):not(button.bg-\[\#D91542\]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-amber-"]):not([class*="bg-blue-"]):not([class*="bg-purple-"]),

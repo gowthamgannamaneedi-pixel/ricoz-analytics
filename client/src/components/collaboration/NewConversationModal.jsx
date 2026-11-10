@@ -253,8 +253,8 @@ export default function NewConversationModal({
                       disabled={loading}
                       className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800/70 transition cursor-pointer text-left border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="relative">
+                      <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
+                        <div className="relative shrink-0">
                           <div className="w-9 h-9 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300 text-xs font-bold flex items-center justify-center">
                             {(u.name || 'U').slice(0, 2).toUpperCase()}
                           </div>
@@ -262,22 +262,22 @@ export default function NewConversationModal({
                             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
                           )}
                         </div>
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                            <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
                               {u.name}
                             </span>
-                            <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                            <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 shrink-0">
                               {u.role}
                             </span>
                           </div>
-                          <span className="text-xs text-slate-400 block mt-0.5">
+                          <span className="text-xs text-slate-400 block mt-0.5 truncate">
                             {u.email}
                           </span>
                         </div>
                       </div>
 
-                      <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                      <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 shrink-0 whitespace-nowrap">
                         Chat →
                       </span>
                     </button>

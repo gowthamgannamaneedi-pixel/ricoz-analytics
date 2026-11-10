@@ -163,7 +163,7 @@ export default function Notification({
         <div
           role="region"
           aria-label="Notifications panel"
-          className="absolute right-0 mt-2 w-84 sm:w-96 max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-850 shadow-xl z-50 text-xs overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
+          className="absolute -right-2 sm:right-0 mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-sm rounded-2xl border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-850 shadow-xl z-50 text-xs overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-750 bg-slate-50/70 dark:bg-slate-800/80">

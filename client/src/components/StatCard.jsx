@@ -62,17 +62,17 @@ export default function StatCard({
 }) {
   return (
     <div
-      className={`relative flex flex-col justify-between p-6 sm:p-7 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all duration-200 min-h-[180px] ${className}`}
+      className={`relative flex flex-col justify-between p-4.5 sm:p-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all duration-200 min-h-[170px] min-w-0 ${className}`}
     >
       <div>
         {/* Top Header Row: Red icon on pale red container */}
         <div className="flex items-center justify-between">
           {Icon ? (
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-rose-950/40 text-[#D91542] dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/50 shadow-2xs">
-              <Icon className="h-5.5 w-5.5" strokeWidth={2} />
+            <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-rose-950/40 text-[#D91542] dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/50 shadow-2xs shrink-0">
+              <Icon className="h-5 w-5 sm:h-5.5 sm:w-5.5" strokeWidth={2} />
             </div>
           ) : (
-            <div className="h-11" />
+            <div className="h-10 sm:h-11" />
           )}
 
           <button
@@ -85,15 +85,15 @@ export default function StatCard({
         </div>
 
         {/* Title */}
-        <div className="mt-3.5 min-w-0">
-          <span className="text-base sm:text-[18px] font-semibold text-slate-800 dark:text-slate-100 break-words block leading-snug">
+        <div className="mt-3 min-w-0">
+          <span className="text-sm sm:text-[17px] font-semibold text-slate-800 dark:text-slate-100 break-words block leading-snug">
             {title}
           </span>
         </div>
 
         {/* Main Stat & Sparkline Row */}
-        <div className="mt-1.5 flex items-baseline justify-between gap-3">
-          <span className="text-2xl sm:text-[28px] font-black tracking-tight text-slate-900 dark:text-slate-100 font-sans">
+        <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-2.5">
+          <span className="text-xl sm:text-[26px] font-black tracking-tight text-slate-900 dark:text-slate-100 font-sans break-words">
             {value}
           </span>
 

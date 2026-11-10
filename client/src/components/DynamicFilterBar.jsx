@@ -34,7 +34,7 @@ export default function DynamicFilterBar({
           onChange={(e) => onFilterChange('dateRange', e.target.value)}
           aria-label="Filter by Date Range"
           icon={Calendar}
-          className="min-w-[150px]"
+          className="w-full sm:w-auto min-w-[130px] sm:min-w-[150px]"
         >
           <option value="all">All Time</option>
           <option value="7d">Last 7 Days</option>
@@ -50,7 +50,7 @@ export default function DynamicFilterBar({
           onChange={(e) => onFilterChange(regionCol || 'region', e.target.value)}
           aria-label="Filter by Region"
           icon={MapPin}
-          className="min-w-[160px]"
+          className="w-full sm:w-auto min-w-[130px] sm:min-w-[160px]"
         >
           <option value="all">All Regions{regions.length > 0 ? ` (${regions.length})` : ''}</option>
           {regions.map((reg) => (
@@ -67,7 +67,7 @@ export default function DynamicFilterBar({
           onChange={(e) => onFilterChange(channelCol || 'channel', e.target.value)}
           aria-label="Filter by Channel"
           icon={Layers}
-          className="min-w-[160px]"
+          className="w-full sm:w-auto min-w-[130px] sm:min-w-[160px]"
         >
           <option value="all">All Channels{channels.length > 0 ? ` (${channels.length})` : ''}</option>
           {channels.map((chan) => (
@@ -84,7 +84,7 @@ export default function DynamicFilterBar({
           onChange={(e) => onFilterChange(categoryCol || 'category', e.target.value)}
           aria-label="Filter by Category"
           icon={ShoppingBag}
-          className="min-w-[170px]"
+          className="w-full sm:w-auto min-w-[130px] sm:min-w-[170px]"
         >
           <option value="all">All Categories{categories.length > 0 ? ` (${categories.length})` : ''}</option>
           {categories.map((cat) => (

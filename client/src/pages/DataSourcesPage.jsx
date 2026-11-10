@@ -614,7 +614,7 @@ export default function DataSourcesPage() {
           )}
 
           {/* Action Row below description: Add Data Sources on left, Refresh on right */}
-          <div className="flex items-center justify-between gap-4 pt-0.5">
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-0.5">
             <div>
               {!isViewer && (
                 <Button

@@ -80,7 +80,7 @@ export default function RootCauseDrawer({
   return (
     <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-sm transition-opacity">
       <div className="fixed inset-y-0 right-0 flex max-w-full pl-6 sm:pl-10">
-        <div className="w-screen max-w-3xl bg-white dark:bg-[#111827] border-l border-slate-200 dark:border-[#334155] shadow-2xl flex flex-col text-slate-900 dark:text-[#F8FAFC]">
+        <div className="w-full max-w-3xl bg-white dark:bg-[#111827] border-l border-slate-200 dark:border-[#334155] shadow-2xl flex flex-col text-slate-900 dark:text-[#F8FAFC]">
           
           {/* Header */}
           <div className="px-6 py-4.5 border-b border-slate-100 dark:border-[#334155] flex items-center justify-between bg-slate-50/70 dark:bg-[#0F172A] sticky top-0 z-10">

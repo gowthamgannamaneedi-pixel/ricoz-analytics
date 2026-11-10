@@ -95,7 +95,7 @@ export default function LandingHero({ onOpenDemo }) {
       <Hero3DCanvas />
 
       {/* Linear-Style Radial Ambient Spotlight Beam */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] sm:w-[900px] h-[360px] sm:h-[480px] bg-gradient-to-b from-red-600/15 via-rose-500/8 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[700px] sm:max-w-[900px] h-[360px] sm:h-[480px] bg-gradient-to-b from-red-600/15 via-rose-500/8 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
 
       {/* Architectural Grid */}
       <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
@@ -229,12 +229,12 @@ export default function LandingHero({ onOpenDemo }) {
               </div>
 
               {/* Address / Breadcrumb Bar */}
-              <div className="flex items-center gap-2 px-4 py-1 rounded-xl bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-xs font-mono text-slate-600 dark:text-slate-300 max-w-sm w-full justify-center shadow-2xs">
-                <Lock size={12} className="text-emerald-500" />
+              <div className="flex items-center gap-2 px-2.5 sm:px-4 py-1 rounded-xl bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-xs font-mono text-slate-600 dark:text-slate-300 max-w-sm flex-1 min-w-0 justify-center shadow-2xs">
+                <Lock size={12} className="text-emerald-500 shrink-0" />
                 <span className="truncate">ricoz.app/workspace/executive-cockpit</span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider hidden sm:inline">
                   DEMO WORKSPACE
@@ -243,21 +243,21 @@ export default function LandingHero({ onOpenDemo }) {
             </div>
 
             {/* Dashboard Sub-Header & Controls */}
-            <div className="px-5 py-3.5 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800/70 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="px-4 sm:px-5 py-3.5 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800/70 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
-                  <Building2 size={15} className="text-red-600 dark:text-red-500" />
-                  <span>Retail Network HQ (48 Hubs • Sample Data)</span>
+                  <Building2 size={15} className="text-red-600 dark:text-red-500 shrink-0" />
+                  <span className="break-words">Retail Network HQ (48 Hubs • Sample Data)</span>
                 </div>
-                <span className="text-slate-400">|</span>
+                <span className="text-slate-400 hidden sm:inline">|</span>
                 <span className="text-slate-500 dark:text-slate-400 font-mono hidden md:inline">Q3 FY2026</span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <button
                   type="button"
                   onClick={() => setActiveTab('executive')}
-                  className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-colors cursor-pointer ${
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-bold text-xs transition-colors cursor-pointer ${
                     activeTab === 'executive'
                       ? 'bg-red-600 text-white shadow-xs'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800/60'
@@ -268,7 +268,7 @@ export default function LandingHero({ onOpenDemo }) {
                 <button
                   type="button"
                   onClick={() => setActiveTab('trajectory')}
-                  className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-colors cursor-pointer ${
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-bold text-xs transition-colors cursor-pointer ${
                     activeTab === 'trajectory'
                       ? 'bg-red-600 text-white shadow-xs'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800/60'
@@ -279,7 +279,7 @@ export default function LandingHero({ onOpenDemo }) {
                 <button
                   type="button"
                   onClick={() => setActiveTab('anomaly')}
-                  className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-colors cursor-pointer ${
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-bold text-xs transition-colors cursor-pointer ${
                     activeTab === 'anomaly'
                       ? 'bg-red-600 text-white shadow-xs'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800/60'
@@ -291,9 +291,9 @@ export default function LandingHero({ onOpenDemo }) {
             </div>
 
             {/* Main Inside Dashboard View */}
-            <div className="p-5 sm:p-7 space-y-6">
+            <div className="p-4 sm:p-7 space-y-6">
               {/* 4 Realistic KPI Cards */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
                 {/* KPI 1: Invoiced Revenue */}
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 flex flex-col justify-between hover:border-red-400 transition-colors shadow-2xs">
                   <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-300 mb-1">

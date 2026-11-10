@@ -129,9 +129,9 @@ export default function DynamicDataTable({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
           {/* Search Input */}
-          <div className="relative w-52 sm:w-72">
+          <div className="relative flex-1 min-w-[140px] sm:w-72">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
             <input
               type="text"

@@ -826,7 +826,7 @@ export default function AIAnalyticsAssistant() {
 
         {/* Dataset Dropdown Menu */}
           {datasetDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#334155] shadow-xl py-2 z-50 animate-fade-in text-xs">
+            <div className="absolute right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#334155] shadow-xl py-2 z-50 animate-fade-in text-xs">
               <div className="px-4 py-1.5 text-[10px] font-bold text-slate-400 dark:text-[#94A3B8] uppercase tracking-wider border-b border-slate-100 dark:border-[#334155]">
                 Select Active Dataset
               </div>
@@ -1166,7 +1166,7 @@ export default function AIAnalyticsAssistant() {
                         </div>
                       )}
 
-                      <div className="space-y-1.5 max-w-[90%] sm:max-w-[85%]">
+                      <div className="space-y-1.5 min-w-0 max-w-[92%] sm:max-w-[85%]">
                         <div
                           className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${
                             isUser
@@ -1372,7 +1372,7 @@ export default function AIAnalyticsAssistant() {
                     <div className="h-8 w-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 animate-pulse mt-1">
                       <Bot className="h-4 w-4" />
                     </div>
-                    <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#1E293B] border border-slate-200/90 dark:border-[#334155] rounded-tl-xs text-xs text-slate-700 dark:text-[#E2E8F0] space-y-2 min-w-[280px] sm:min-w-[340px] shadow-2xs">
+                    <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#1E293B] border border-slate-200/90 dark:border-[#334155] rounded-tl-xs text-xs text-slate-700 dark:text-[#E2E8F0] space-y-2 w-full min-w-0 max-w-full sm:min-w-[340px] shadow-2xs">
                       <div className="flex items-center gap-2 font-medium">
                         <RefreshCw className="h-3.5 w-3.5 animate-spin text-rose-600" />
                         <span>{AGENT_STAGES[agentStep]}</span>

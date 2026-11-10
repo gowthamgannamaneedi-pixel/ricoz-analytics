@@ -234,16 +234,16 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
   const isActivePaid = subscription?.status === 'active';
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 sm:px-6 lg:px-8 shadow-2xs transition-colors duration-200">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 sm:px-6 lg:px-8 shadow-2xs transition-colors duration-200">
       {/* Left: Brand Logo & Navigation Toggle (Collapsed/Mobile) + Global Search Bar */}
-      <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0 mr-4">
+      <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 mr-2 sm:mr-4">
         {/* Brand & Toggle Container for Collapsed desktop & Mobile */}
-        <div className={`items-center gap-2.5 sm:gap-3 shrink-0 ${isSidebarCollapsed ? 'flex' : 'flex lg:hidden'}`}>
+        <div className={`items-center gap-2 sm:gap-3 shrink-0 ${isSidebarCollapsed ? 'flex' : 'flex lg:hidden'}`}>
           {/* Mobile Navigation Drawer Toggle */}
           <button
             type="button"
             onClick={onOpenSidebar}
-            className="lg:hidden flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition cursor-pointer shrink-0 shadow-2xs"
+            className="lg:hidden flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition cursor-pointer shrink-0 shadow-2xs"
             aria-label="Open navigation"
             title="Open navigation"
           >
@@ -263,9 +263,10 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
             </button>
           )}
 
-          {/* Brand Logo with Reserved Width & No Overlap */}
-          <div className="shrink-0 min-w-max flex items-center">
-            <Logo size="sm" linkTo="/dashboard" className="shrink-0" />
+          {/* Brand Logo with Reserved Width & No Overlap (Mark-only on mobile < 640px, full horizontal on >= sm) */}
+          <div className="shrink-0 flex items-center">
+            <Logo size="sm" variant="mark" linkTo="/dashboard" className="sm:hidden shrink-0" />
+            <Logo size="sm" variant="horizontal" linkTo="/dashboard" className="hidden sm:inline-flex shrink-0" />
           </div>
 
           {/* Subtle vertical divider keeping logo/toggle completely separate from search bar */}
@@ -273,27 +274,27 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
         </div>
 
         {/* Global Search Bar with Responsive Sizing */}
-        <div ref={searchContainerRef} className="relative flex-1 max-w-md min-w-[150px] sm:min-w-[200px]">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
+        <div ref={searchContainerRef} className="relative flex-1 max-w-md min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
           <input
             ref={searchRef}
             type="text"
-            placeholder="Search metrics, reports, datasets, or ask AI..."
+            placeholder="Search metrics, reports, datasets..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => {
               if (searchQuery.trim().length > 0) setSearchOpen(true);
             }}
             onKeyDown={handleSearchKeyDown}
-            className="w-full h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/80 pl-10 pr-16 text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/30 dark:hover:bg-rose-950/20 focus:border-rose-600 dark:focus:border-rose-500 focus:bg-white dark:focus:bg-slate-850 focus:outline-hidden focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/40 transition shadow-2xs"
+            className="w-full h-9 sm:h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/80 pl-9 pr-3 md:pr-16 text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/30 dark:hover:bg-rose-950/20 focus:border-rose-600 dark:focus:border-rose-500 focus:bg-white dark:focus:bg-slate-850 focus:outline-hidden focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/40 transition shadow-2xs"
           />
-          <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-750 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 shadow-2xs pointer-events-none select-none">
+          <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-750 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 shadow-2xs pointer-events-none select-none hidden md:inline-flex">
             Ctrl + K
           </kbd>
 
           {/* Search Suggestions Popover Dropdown */}
           {searchOpen && (
-            <div className="absolute left-0 right-0 top-full mt-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
+            <div className="absolute left-0 right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
               {isSearching ? (
                 <div className="p-4 flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                   <Loader2 className="h-4 w-4 animate-spin text-rose-600" />

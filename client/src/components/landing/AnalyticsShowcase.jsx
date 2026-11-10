@@ -242,7 +242,7 @@ export default function AnalyticsShowcase() {
                 </div>
 
                 {/* Sub-KPI Highlights */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 mt-6">
                   <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 hover:border-red-400/40 transition-colors">
                     <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Total Invoiced (H1)</div>
                     <div className="text-xl font-black text-slate-900 dark:text-white font-mono mt-0.5">₹8.43 Cr</div>

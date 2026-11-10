@@ -288,17 +288,17 @@ export default function ProductShowcase({ onOpenDemo }) {
           </div>
 
           {/* ─── INSIDE MODULE VIEWS ──────────────── */}
-          <div className="p-5 sm:p-7 min-h-[440px]">
+          <div className="p-4 sm:p-7 min-h-[440px]">
             
             {/* VIEW 1: EXECUTIVE COCKPIT */}
             {activeTab === 'cockpit' && (
               <div className="space-y-6 animate-fadeIn">
                 
                 {/* 4 KPI Cards with High Contrast & Correct Formula Labels */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
                   <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-2xs">
                     <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Net Revenue Invoiced</div>
-                    <div className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-1">₹{currentMetrics.revenue.toLocaleString('en-IN')}</div>
+                    <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono mt-1 break-words">₹{currentMetrics.revenue.toLocaleString('en-IN')}</div>
                     <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1.5">
                       <TrendingUp size={13} />
                       <span>{currentMetrics.surplusPct} vs Target Plan</span>
@@ -307,7 +307,7 @@ export default function ProductShowcase({ onOpenDemo }) {
 
                   <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-2xs">
                     <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Gross Margin (Illustrative)</div>
-                    <div className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-1">{currentMetrics.margin}</div>
+                    <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono mt-1 break-words">{currentMetrics.margin}</div>
                     <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1">
                       Gross Profit: ₹{(currentMetrics.grossProfit / 10000000).toFixed(2)} Cr
                     </div>
@@ -315,13 +315,13 @@ export default function ProductShowcase({ onOpenDemo }) {
 
                   <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-2xs">
                     <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active Nodes Monitored</div>
-                    <div className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-1">{currentMetrics.hubs}</div>
+                    <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono mt-1 break-words">{currentMetrics.hubs}</div>
                     <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1">Sample Network Scope</div>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-2xs">
                     <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Data Connection Status</div>
-                    <div className="text-xl font-bold text-slate-900 dark:text-white font-mono mt-1">{currentMetrics.syncStatus}</div>
+                    <div className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white font-mono mt-1 break-words">{currentMetrics.syncStatus}</div>
                     <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1">Active Schema Validation</div>
                   </div>
                 </div>

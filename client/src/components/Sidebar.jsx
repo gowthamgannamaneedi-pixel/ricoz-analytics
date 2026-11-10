@@ -110,10 +110,10 @@ export default function Sidebar({ isOpen, isCollapsed = false, onToggleCollapse,
 
       {/* Sidebar Shell */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200/80 dark:border-[#334155] bg-white dark:bg-[#111827] transition-transform duration-200 ease-in-out select-none shadow-xs ${
-          isCollapsed
-            ? '-translate-x-full'
-            : (isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0')
+        className={`fixed top-0 bottom-0 left-0 z-50 flex w-64 max-w-[85vw] flex-col border-r border-slate-200/80 dark:border-[#334155] bg-white dark:bg-[#111827] transition-transform duration-200 ease-in-out select-none shadow-xs ${
+          isOpen
+            ? 'translate-x-0'
+            : (isCollapsed ? '-translate-x-full' : '-translate-x-full lg:translate-x-0')
         }`}
       >
         {/* Top Brand Header */}

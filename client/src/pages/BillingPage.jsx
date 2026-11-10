@@ -590,7 +590,7 @@ export default function BillingPage() {
 
           {/* Reduced-size, Aligned Workspace Status Card (Req 01) */}
           <div data-testid="workspace-status-card" className="rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-3.5 sm:p-4 shadow-2xs w-full lg:w-[310px] shrink-0 space-y-2">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs text-slate-500 dark:text-[#94A3B8] font-medium">Workspace Status</span>
               {currentSub?.scheduledDowngradePlan ? (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 whitespace-nowrap shadow-2xs">

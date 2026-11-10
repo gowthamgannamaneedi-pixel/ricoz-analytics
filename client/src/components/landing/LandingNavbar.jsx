@@ -66,10 +66,10 @@ export default function LandingNavbar({ onOpenDemo }) {
           : 'bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800/80 py-3.5'
       }`}
     >
-      <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-4">
+      <div className="max-w-[1480px] mx-auto px-3.5 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
           {/* Official Brand Logo */}
-          <Logo size="lg" linkTo="/" />
+          <Logo size="md" linkTo="/" className="shrink-0" />
 
           {/* Desktop Navigation Links */}
           <nav className="hidden xl:flex items-center gap-5 2xl:gap-7 shrink-0">

@@ -53,7 +53,7 @@ export function Modal({
   const content = (
     <div
       data-testid="shared-modal-overlay"
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs overflow-y-auto"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-slate-950/75 dark:bg-black/85 backdrop-blur-xs overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby={title ? 'modal-title' : undefined}
@@ -65,26 +65,26 @@ export function Modal({
       }}
     >
       <div
-        className={`relative w-full ${maxWidth} rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] text-slate-900 dark:text-[#F8FAFC] shadow-2xl overflow-hidden flex flex-col my-auto animate-in fade-in zoom-in-95 duration-150 ${className}`}
+        className={`relative w-full max-w-[calc(100vw-1.5rem)] ${maxWidth} rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] text-slate-900 dark:text-[#F8FAFC] shadow-2xl overflow-hidden flex flex-col my-auto animate-in fade-in zoom-in-95 duration-150 ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 dark:border-[#334155] bg-white dark:bg-[#111827] shrink-0">
-            <div className="flex items-center gap-3 min-w-0 pr-2">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4.5 border-b border-slate-100 dark:border-[#334155] bg-white dark:bg-[#111827] shrink-0">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pr-2">
               {Icon && (
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-rose-900/60 shrink-0">
                   <Icon className="h-5 w-5" />
                 </div>
               )}
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 {title && (
-                  <h3 id="modal-title" className="text-base font-bold text-slate-900 dark:text-[#F8FAFC] truncate">
+                  <h3 id="modal-title" className="text-sm sm:text-base font-bold text-slate-900 dark:text-[#F8FAFC] break-words">
                     {title}
                   </h3>
                 )}
                 {description && (
-                  <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5 truncate">
+                  <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5 break-words">
                     {description}
                   </p>
                 )}
@@ -106,13 +106,13 @@ export function Modal({
         )}
 
         {/* Modal Body */}
-        <div className="px-6 py-5 overflow-y-auto max-h-[calc(90vh-140px)] space-y-4">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 overflow-y-auto max-h-[calc(90vh-130px)] space-y-4">
           {children}
         </div>
 
         {/* Modal Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-[#334155] bg-slate-50/70 dark:bg-[#0F172A] rounded-b-2xl shrink-0">
+          <div className="flex flex-wrap items-center justify-end gap-2.5 px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-100 dark:border-[#334155] bg-slate-50/70 dark:bg-[#0F172A] rounded-b-2xl shrink-0">
             {footer}
           </div>
         )}

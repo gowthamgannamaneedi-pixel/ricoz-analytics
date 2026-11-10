@@ -510,7 +510,7 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
                 return (
                   <div
                     key={card.id}
-                    className={`w-[calc(100vw-3rem)] max-w-[420px] sm:w-[380px] lg:w-[calc((100%-24px)/2)] xl:w-[calc((100%-48px)/3)] shrink-0 snap-center rounded-3xl rounded-2xl bg-white dark:bg-slate-900 p-5 sm:p-6 border transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-slate-900 dark:text-slate-100 shadow-lg ${
+                    className={`w-[calc(100vw-2.5rem)] max-w-[420px] sm:w-[380px] lg:w-[calc((100%-24px)/2)] xl:w-[calc((100%-48px)/3)] shrink-0 snap-center rounded-3xl bg-white dark:bg-slate-900 p-4 sm:p-6 border transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-slate-900 dark:text-slate-100 shadow-lg ${
                       isCurrent 
                         ? 'border-red-500/80 dark:border-red-500/70 shadow-red-500/10 scale-[1.005]' 
                         : 'border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
@@ -542,11 +542,11 @@ export default function HorizontalCardShowcase({ onOpenDemo }) {
                       {card.mockup}
 
                       {/* 3 Metric Pills */}
-                      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-3.5">
+                      <div className="grid grid-cols-3 gap-1 sm:gap-2 mb-3.5">
                         {card.stats.map((stat, sIdx) => (
-                          <div key={sIdx} className="p-2 rounded-lg bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 text-center">
-                            <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 break-words">{stat.label}</div>
-                            <div className="text-xs font-mono font-bold text-slate-900 dark:text-white mt-0.5 break-words">{stat.value}</div>
+                          <div key={sIdx} className="p-1.5 sm:p-2 rounded-lg bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 text-center min-w-0">
+                            <div className="text-[9px] sm:text-[10px] font-mono text-slate-500 dark:text-slate-400 break-words leading-tight">{stat.label}</div>
+                            <div className="text-[11px] sm:text-xs font-mono font-bold text-slate-900 dark:text-white mt-0.5 break-words leading-tight">{stat.value}</div>
                           </div>
                         ))}
                       </div>

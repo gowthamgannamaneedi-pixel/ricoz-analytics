@@ -127,7 +127,7 @@ export default function PricingSection({ onOpenDemo }) {
       className="py-20 lg:py-28 bg-slate-50/70 dark:bg-[#0B0F19] border-t border-slate-200/80 dark:border-slate-800 transition-colors duration-200 relative overflow-hidden"
     >
       {/* Background Decorative Glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-red-600/5 dark:bg-red-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[700px] h-[350px] bg-red-600/5 dark:bg-red-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
@@ -149,11 +149,11 @@ export default function PricingSection({ onOpenDemo }) {
           </p>
 
           {/* Dynamic Billing Cycle Switcher */}
-          <div className="mt-8 inline-flex items-center p-1.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="mt-8 inline-flex items-center p-1.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm max-w-full flex-wrap justify-center gap-1">
             <button
               type="button"
               onClick={() => setBillingCycle('monthly')}
-              className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
+              className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
                 billingCycle === 'monthly'
                   ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-md'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -164,7 +164,7 @@ export default function PricingSection({ onOpenDemo }) {
             <button
               type="button"
               onClick={() => setBillingCycle('annual')}
-              className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer ${
+              className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer ${
                 billingCycle === 'annual'
                   ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -236,13 +236,13 @@ export default function PricingSection({ onOpenDemo }) {
                       {plan.name}
                     </h3>
 
-                    {/* Plan Description — Standardized fixed height to guarantee price baseline alignment */}
-                    <p className="text-sm text-slate-600 dark:text-slate-300 h-12 leading-relaxed mb-6 font-normal line-clamp-2">
+                    {/* Plan Description — Responsive min-height without text clipping */}
+                    <p className="text-sm text-slate-600 dark:text-slate-300 min-h-[3rem] leading-relaxed mb-6 font-normal break-words">
                       {plan.description}
                     </p>
 
-                    {/* Price Block — Standardized fixed height to guarantee CTA baseline alignment */}
-                    <div className="mb-6 pb-6 border-b border-slate-100 dark:border-slate-800 h-28 flex flex-col justify-between">
+                    {/* Price Block — Responsive min-height */}
+                    <div className="mb-6 pb-6 border-b border-slate-100 dark:border-slate-800 min-h-[6.5rem] flex flex-col justify-between">
                       <div className="flex items-baseline gap-1.5 flex-wrap">
                         <span className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight font-mono">
                           {price}
@@ -251,7 +251,7 @@ export default function PricingSection({ onOpenDemo }) {
                           / month{plan.priceSuffix}
                         </span>
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium break-words leading-snug h-8 flex items-center">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium break-words leading-snug min-h-[2rem] flex items-center">
                         {billingSubtext}
                       </div>
                     </div>
