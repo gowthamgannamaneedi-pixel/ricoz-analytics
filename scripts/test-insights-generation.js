@@ -24,3 +24,4 @@ testInsights().catch(e => {
   console.error('Insight generation failed:', e);
   process.exit(1);
 });
+

@@ -308,7 +308,7 @@ export default function ReportViewerModal({
 
               <div className="rounded-xl border border-slate-200 dark:border-[#334155] overflow-hidden bg-white dark:bg-[#111827]">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-left text-xs min-w-[500px]">
                     <thead className="border-b border-slate-200 dark:border-[#334155] bg-slate-50/80 dark:bg-[#1E293B] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8]">
                       <tr>
                         <th className="px-4 py-2.5">Status</th>

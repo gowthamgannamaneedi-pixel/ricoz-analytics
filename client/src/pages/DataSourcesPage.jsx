@@ -1093,15 +1093,152 @@ export default function DataSourcesPage() {
           )}
         </div>
       ) : viewMode === 'table' ? (
-        /* TABLE VIEW */
+        /* TABLE / CARD VIEW */
         <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] overflow-hidden shadow-2xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs table-fixed">
+          {/* Mobile Card List (< 768px) */}
+          <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            {paginatedSources.map((source) => (
+              <div key={source.id} className="p-4 space-y-3 bg-white dark:bg-[#111827] hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                {/* Header: Icon + Name & Origin + Actions */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    <div className={`p-2.5 rounded-xl shrink-0 mt-0.5 ${getTypeBg(source.type)}`}>
+                      {getTypeIcon(source.type)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenDetails(source)}
+                        className="font-bold text-slate-900 dark:text-[#F8FAFC] hover:text-rose-600 dark:hover:text-[#FB7185] transition text-left break-words block text-sm cursor-pointer w-full leading-snug"
+                        title={source.name}
+                      >
+                        {source.name}
+                      </button>
+                      <span className="text-xs text-slate-500 dark:text-[#CBD5E1] font-normal block truncate mt-0.5">
+                        {getOriginSummary(source)}
+                      </span>
+                      <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] block truncate mt-0.5">
+                        {source.created_by_name ? `Uploaded by ${source.created_by_name}` : 'Added by Admin'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 3-dots Menu Button */}
+                  <div className="relative shrink-0">
+                    <button
+                      type="button"
+                      ref={(el) => { actionTriggerRefs.current[source.id] = el; }}
+                      id={`menu-source-${source.id}`}
+                      onClick={(e) => handleToggleActionMenu(source.id, e)}
+                      aria-haspopup="menu"
+                      aria-expanded={actionMenuId === source.id}
+                      className={`p-2 rounded-xl border transition shadow-2xs cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center ${
+                        actionMenuId === source.id
+                          ? 'border-rose-300 bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'
+                          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-rose-700 hover:bg-rose-50/80 hover:border-rose-300'
+                      }`}
+                      title="More options"
+                      aria-label={`Options for ${source.name}`}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Badge Strip */}
+                <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                  {getTypeBadge(source.type)}
+                  {getStatusBadge(source.status, source.last_synced_at || source.updated_at)}
+                </div>
+
+                {/* Metric Grid */}
+                <div className="grid grid-cols-2 gap-2.5 pt-1 text-xs">
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider block">
+                      Datasets Produced
+                    </span>
+                    <Link
+                      to="/datasets"
+                      className="font-bold text-slate-800 dark:text-[#F8FAFC] hover:text-rose-600 text-xs mt-0.5 inline-flex items-center gap-1"
+                    >
+                      <span>{source.dataset_count || 1} {source.dataset_count === 1 ? 'Dataset' : 'Datasets'}</span>
+                      <ExternalLink className="h-3 w-3 text-slate-400" />
+                    </Link>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider block">
+                      Ingested Records
+                    </span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-[#F8FAFC] text-xs mt-0.5 block">
+                      {typeof source.total_rows === 'number' ? `${source.total_rows.toLocaleString()} rows` : '0 rows'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Footer: Last Sync / Import + Action Buttons */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="text-[11px] text-slate-500 dark:text-[#CBD5E1]">
+                    {source.created_at ? (
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                        <span>
+                          Synced {new Date(source.created_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-400">— Never synced</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {/* Sync Button */}
+                    <button
+                      type="button"
+                      id={`sync-source-mobile-${source.id}`}
+                      onClick={() => handleSync(source.id, source.name)}
+                      disabled={syncingId === source.id || isViewer}
+                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-rose-600 hover:border-rose-300 transition shadow-2xs cursor-pointer min-h-[38px] disabled:opacity-40"
+                      title="Synchronize Data Source"
+                      aria-label={`Sync ${source.name}`}
+                    >
+                      {syncingId === source.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-rose-600" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4" />
+                      )}
+                      <span>Sync</span>
+                    </button>
+
+                    {/* View Details Button */}
+                    <button
+                      type="button"
+                      id={`details-source-mobile-${source.id}`}
+                      onClick={() => handleOpenDetails(source)}
+                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/40 text-xs font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-100 transition shadow-2xs cursor-pointer min-h-[38px]"
+                      title="View Source Details"
+                      aria-label={`Details for ${source.name}`}
+                    >
+                      <Eye className="h-4 w-4" />
+                      <span>Details</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop & Tablet Table (>= 768px) */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs min-w-[860px]">
               <thead>
                 <tr className="border-b border-slate-200/80 dark:border-[#334155] bg-slate-50/70 dark:bg-[#1E293B] text-slate-500 dark:text-[#CBD5E1] text-[10px] font-bold uppercase tracking-wider">
                   <th
                     onClick={() => handleSort('name')}
-                    className="py-3.5 pl-4 sm:pl-5 pr-3 w-[28%] cursor-pointer hover:text-slate-900 dark:hover:text-[#F8FAFC] select-none whitespace-nowrap min-w-0"
+                    className="py-3.5 pl-4 sm:pl-5 pr-3 min-w-[240px] cursor-pointer hover:text-slate-900 dark:hover:text-[#F8FAFC] select-none whitespace-nowrap"
                   >
                     <div className="flex items-center gap-1.5">
                       <span>NAME & DETAILS</span>
@@ -1109,13 +1246,13 @@ export default function DataSourcesPage() {
                     </div>
                   </th>
 
-                  <th className="py-3.5 px-3 w-[11%] whitespace-nowrap">TYPE</th>
+                  <th className="py-3.5 px-3 min-w-[110px] whitespace-nowrap">TYPE</th>
 
-                  <th className="py-3.5 px-3 w-[16%] whitespace-nowrap">CONNECTION STATUS</th>
+                  <th className="py-3.5 px-3 min-w-[150px] whitespace-nowrap">CONNECTION STATUS</th>
 
                   <th
                     onClick={() => handleSort('dataset_count')}
-                    className="py-3.5 px-3 w-[14%] cursor-pointer hover:text-slate-900 dark:hover:text-[#F8FAFC] select-none whitespace-nowrap"
+                    className="py-3.5 px-3 min-w-[140px] cursor-pointer hover:text-slate-900 dark:hover:text-[#F8FAFC] select-none whitespace-nowrap"
                   >
                     <div className="flex items-center gap-1.5">
                       <span>DATASETS PRODUCED</span>
@@ -1125,7 +1262,7 @@ export default function DataSourcesPage() {
 
                   <th
                     onClick={() => handleSort('total_rows')}
-                    className="py-3.5 px-3 w-[12%] cursor-pointer hover:text-slate-900 dark:hover:text-[#F8FAFC] select-none whitespace-nowrap"
+                    className="py-3.5 px-3 min-w-[130px] cursor-pointer hover:text-slate-900 dark:hover:text-[#F8FAFC] select-none whitespace-nowrap"
                   >
                     <div className="flex items-center gap-1.5">
                       <span>INGESTED RECORDS</span>
@@ -1135,7 +1272,7 @@ export default function DataSourcesPage() {
 
                   <th
                     onClick={() => handleSort('created_at')}
-                    className="py-3.5 px-3 w-[11%] cursor-pointer hover:text-slate-900 dark:hover:text-[#F8FAFC] select-none whitespace-nowrap"
+                    className="py-3.5 px-3 min-w-[130px] cursor-pointer hover:text-slate-900 dark:hover:text-[#F8FAFC] select-none whitespace-nowrap"
                   >
                     <div className="flex items-center gap-1.5">
                       <span>LAST SYNC / IMPORT</span>
@@ -1143,7 +1280,7 @@ export default function DataSourcesPage() {
                     </div>
                   </th>
 
-                  <th className="py-3.5 pr-4 pl-2 w-[8%] text-right whitespace-nowrap">ACTIONS</th>
+                  <th className="py-3.5 pr-4 pl-2 min-w-[110px] text-right whitespace-nowrap">ACTIONS</th>
                 </tr>
               </thead>
 
@@ -1151,7 +1288,7 @@ export default function DataSourcesPage() {
                 {paginatedSources.map((source, idx) => (
                   <tr key={source.id} className={`transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/60 group ${actionMenuId === source.id ? 'relative z-30' : ''}`}>
                     {/* Name & Details */}
-                    <td className="py-3.5 pl-4 sm:pl-5 pr-3 min-w-0">
+                    <td className="py-3.5 pl-4 sm:pl-5 pr-3 min-w-[240px]">
                       <div className="flex items-center gap-3">
                         <div className={`p-2.5 rounded-xl shrink-0 ${getTypeBg(source.type)}`}>
                           {getTypeIcon(source.type)}
@@ -1175,17 +1312,17 @@ export default function DataSourcesPage() {
                     </td>
 
                     {/* Type Badge */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
+                    <td className="py-3.5 px-4 whitespace-nowrap min-w-[110px]">
                       {getTypeBadge(source.type)}
                     </td>
 
                     {/* Connection Status */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
+                    <td className="py-3.5 px-4 whitespace-nowrap min-w-[150px]">
                       {getStatusBadge(source.status, source.last_synced_at || source.updated_at)}
                     </td>
 
                     {/* Datasets Produced */}
-                    <td className="py-3.5 px-3 whitespace-nowrap">
+                    <td className="py-3.5 px-3 whitespace-nowrap min-w-[140px]">
                       <Link
                         to="/datasets"
                         className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] hover:text-rose-600 dark:hover:text-[#FB7185] group/link transition"
@@ -1198,14 +1335,14 @@ export default function DataSourcesPage() {
                     </td>
 
                     {/* Ingested Records */}
-                    <td className="py-3.5 px-3 whitespace-nowrap font-mono font-bold text-slate-800 dark:text-[#F8FAFC]">
+                    <td className="py-3.5 px-3 whitespace-nowrap font-mono font-bold text-slate-800 dark:text-[#F8FAFC] min-w-[130px]">
                       {typeof source.total_rows === 'number'
                         ? `${source.total_rows.toLocaleString()} rows`
                         : '0 rows'}
                     </td>
 
                     {/* Last Sync / Import */}
-                    <td className="py-3.5 px-3 whitespace-nowrap text-slate-600 dark:text-[#CBD5E1] text-[11px]">
+                    <td className="py-3.5 px-3 whitespace-nowrap text-slate-600 dark:text-[#CBD5E1] text-[11px] min-w-[130px]">
                       {source.created_at ? (
                         <div className="flex items-center gap-1.5">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
@@ -1223,7 +1360,7 @@ export default function DataSourcesPage() {
                     </td>
 
                     {/* Actions */}
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap min-w-[110px]">
                       <div className="flex items-center justify-end gap-1 relative">
                         {/* Sync Button */}
                         <button
@@ -1268,7 +1405,7 @@ export default function DataSourcesPage() {
                               : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
                           }`}
                           title="More options"
-                          aria-label={`More options for ${source.name}`}
+                          aria-label={`Options for ${source.name}`}
                         >
                           <MoreVertical className="h-4 w-4" />
                         </button>

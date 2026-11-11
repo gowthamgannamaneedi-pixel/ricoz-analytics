@@ -1181,7 +1181,7 @@ export default function ExecutiveDashboard({
                   No product performance data available.
                 </div>
               ) : (
-                <table className="w-full text-left text-xs sm:text-sm">
+                <table className="w-full text-left text-xs sm:text-sm min-w-[340px]">
                   <thead>
                     <tr className="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                       <th className="pb-2.5">Product</th>

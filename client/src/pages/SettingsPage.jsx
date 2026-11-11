@@ -1452,7 +1452,7 @@ export default function SettingsPage() {
 
             {/* Members Table */}
             <div className="overflow-x-auto border border-slate-200 dark:border-[#334155] rounded-xl bg-white dark:bg-[#111827]">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="w-full text-left border-collapse text-xs min-w-[650px]">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-[#1E293B] border-b border-slate-200 dark:border-[#334155] text-slate-600 dark:text-[#CBD5E1] font-bold uppercase tracking-wider text-[11px]">
                     <th className="py-3 px-4">Member</th>
@@ -1613,7 +1613,7 @@ export default function SettingsPage() {
                   </h3>
                 </div>
                 <div className="overflow-x-auto border border-amber-200/80 dark:border-[#334155] rounded-xl bg-amber-50/20 dark:bg-[#111827]">
-                  <table className="w-full text-left border-collapse text-xs">
+                  <table className="w-full text-left border-collapse text-xs min-w-[580px]">
                     <thead>
                       <tr className="bg-amber-50/60 dark:bg-[#1E293B] border-b border-amber-200/60 dark:border-[#334155] text-amber-900 dark:text-[#CBD5E1] font-bold uppercase tracking-wider text-[10px]">
                         <th className="py-2.5 px-4">Invited Email</th>

@@ -510,7 +510,7 @@ export default function DataModelingPage() {
       {/* Relationship List Table */}
       <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] shadow-2xs overflow-hidden">
         <div className="rz-table-wrap">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[700px]">
             <thead>
               <tr className="border-b border-slate-200/90 dark:border-[#334155] bg-slate-50/75 dark:bg-[#1E293B] text-[11px] font-semibold text-slate-600 dark:text-[#CBD5E1] uppercase tracking-wider">
                 <th className="px-4 py-3">Source Dataset & Column</th>
@@ -955,9 +955,9 @@ export default function DataModelingPage() {
                   </span>
                 </div>
 
-                <div className="max-h-52 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 text-[11px] shadow-2xs">
+                <div className="max-h-52 overflow-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 text-[11px] shadow-2xs">
                   {testResults.rows && testResults.rows.length > 0 ? (
-                    <table className="w-full text-left">
+                    <table className="w-full text-left min-w-[400px]">
                       <thead className="bg-slate-200/70 dark:bg-slate-800 border-b border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300">
                         <tr>
                           {Object.keys(testResults.rows[0]).map((k) => (

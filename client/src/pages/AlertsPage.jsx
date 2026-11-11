@@ -743,7 +743,7 @@ export default function AlertsPage() {
           ) : (
             <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] shadow-xs">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
+                <table className="w-full text-left text-xs border-collapse min-w-[750px]">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-[#334155] bg-slate-50/80 dark:bg-[#1E293B] font-semibold text-slate-600 dark:text-[#CBD5E1]">
                       <th className="py-3 px-4">Status & Severity</th>

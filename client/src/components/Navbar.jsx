@@ -68,7 +68,9 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
   );
   const isPaid = Boolean((subscription?.isPaidActive === true || trialCountdown.isPaid) && !isExpired);
   const isSubscriptionLoading = authLoading || trialCountdown.status === 'loading';
-  const planName = trialCountdown.planName || subscription?.plan || user?.organization?.plan || 'Enterprise';
+  const rawPlanName = trialCountdown.planName || subscription?.plan || user?.organization?.plan || 'Enterprise';
+  const planName = rawPlanName.replace(/\s*—\s*.*$/, '').trim();
+  const displayExpiredText = `${planName} — Expired`;
 
   const [activePopover, setActivePopover] = useState(null); // 'notifications' | 'profile' | null
   const [searchQuery, setSearchQuery] = useState('');
@@ -385,7 +387,7 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
             title="Subscription expired — Click to choose plan"
           >
             <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
-            <span>{trialCountdown.displayPlanStatus && !trialCountdown.displayPlanStatus.toLowerCase().includes('active') ? trialCountdown.displayPlanStatus : `${planName} — Expired`}</span>
+            <span>{displayExpiredText}</span>
           </button>
         ) : isPaid ? (
           <button

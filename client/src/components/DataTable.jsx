@@ -83,7 +83,10 @@ export default function DataTable({
 
       {/* Table Content */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse text-xs">
+        <table
+          className="w-full text-left border-collapse text-xs"
+          style={{ minWidth: columns.length > 4 ? `${columns.length * 130}px` : '100%' }}
+        >
           <thead>
             <tr className="border-b border-slate-200 dark:border-[#334155] bg-slate-50/80 dark:bg-[#1E293B]">
               {columns.map((col) => {

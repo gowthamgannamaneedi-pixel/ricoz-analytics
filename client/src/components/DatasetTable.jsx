@@ -428,10 +428,10 @@ export default function DatasetTable({
           </span>
         </div>
 
-        {/* Right: Search + Status filter + Source filter (Horizontal desktop row) */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full lg:w-auto">
-          {/* Search bar (wider) */}
-          <div className="relative flex-1 sm:w-80 min-w-[200px]">
+        {/* Right: Search + Status filter + Source filter (Responsive toolbar) */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
+          {/* Search bar */}
+          <div className="relative w-full sm:w-72 md:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
             <input
               type="text"
@@ -459,49 +459,52 @@ export default function DatasetTable({
             )}
           </div>
 
-          {/* Status Dropdown (compact, equal width and height) */}
-          <Select
-            id="datasets-status-filter"
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-            aria-label="Filter datasets by status"
-            className="w-36 sm:w-40 shrink-0"
-            size="md"
-          >
-            <option value="all">All Statuses</option>
-            <option value="ready">Ready</option>
-            <option value="processing">Processing</option>
-            <option value="error">Error</option>
-            <option value="empty">Empty</option>
-          </Select>
+          {/* Filter Dropdowns */}
+          <div className="grid grid-cols-2 sm:flex items-center gap-2.5 w-full sm:w-auto">
+            {/* Status Dropdown */}
+            <Select
+              id="datasets-status-filter"
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              aria-label="Filter datasets by status"
+              className="w-full sm:w-36 md:w-40 shrink-0"
+              size="md"
+            >
+              <option value="all">All Statuses</option>
+              <option value="ready">Ready</option>
+              <option value="processing">Processing</option>
+              <option value="error">Error</option>
+              <option value="empty">Empty</option>
+            </Select>
 
-          {/* Source Dropdown (compact, equal width and height) */}
-          <Select
-            id="datasets-source-filter"
-            value={sourceFilter}
-            onChange={(e) => {
-              setSourceFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-            aria-label="Filter datasets by source type"
-            className="w-36 sm:w-40 shrink-0"
-            size="md"
-          >
-            <option value="all">All Sources</option>
-            <option value="csv">CSV File</option>
-            <option value="postgresql">PostgreSQL Database</option>
-            <option value="json">JSON File</option>
-            <option value="rest_api">REST API</option>
-          </Select>
+            {/* Source Dropdown */}
+            <Select
+              id="datasets-source-filter"
+              value={sourceFilter}
+              onChange={(e) => {
+                setSourceFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              aria-label="Filter datasets by source type"
+              className="w-full sm:w-36 md:w-40 shrink-0"
+              size="md"
+            >
+              <option value="all">All Sources</option>
+              <option value="csv">CSV File</option>
+              <option value="postgresql">PostgreSQL Database</option>
+              <option value="json">JSON File</option>
+              <option value="rest_api">REST API</option>
+            </Select>
+          </div>
 
           {hasActiveFilters && (
             <button
               onClick={resetFilters}
               id="reset-filters-btn"
-              className="h-10 inline-flex items-center text-xs font-semibold text-rose-600 dark:text-[#FB7185] hover:text-rose-700 dark:hover:text-rose-300 px-2.5 rounded-xl hover:bg-rose-50 dark:hover:bg-[#2A1422] transition shrink-0 cursor-pointer"
+              className="h-10 inline-flex items-center justify-center text-xs font-semibold text-rose-600 dark:text-[#FB7185] hover:text-rose-700 dark:hover:text-rose-300 px-3 rounded-xl hover:bg-rose-50 dark:hover:bg-[#2A1422] transition shrink-0 cursor-pointer"
             >
               Reset
             </button>
@@ -509,15 +512,160 @@ export default function DatasetTable({
         </div>
       </div>
 
-      {/* Main Table */}
-      <div className="w-full overflow-x-auto overflow-y-visible">
-        <table className="w-full text-left border-collapse text-xs table-fixed">
+      {/* ─── MOBILE CARD VIEW (< 768px) ─── */}
+      <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+        {currentPaginatedDatasets.length === 0 ? (
+          <div className="p-8 text-center text-xs text-slate-500 dark:text-slate-400">
+            {hasActiveFilters ? (
+              <div className="space-y-3 max-w-xs mx-auto">
+                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mx-auto">
+                  <Search className="h-5 w-5" />
+                </div>
+                <p className="font-semibold text-slate-800 dark:text-slate-200">No matching datasets found</p>
+                <p className="text-slate-500 dark:text-slate-400 text-[11px]">
+                  No datasets matched "{searchQuery}" with the selected filters.
+                </p>
+                <button
+                  onClick={resetFilters}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-semibold hover:bg-rose-100 dark:hover:bg-rose-900/60 transition"
+                >
+                  Reset filters
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3 max-w-xs mx-auto">
+                <div className="mx-auto w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/60 flex items-center justify-center text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900">
+                  <Table2 className="h-6 w-6" />
+                </div>
+                <p className="font-bold text-slate-900 dark:text-slate-100 text-sm">No datasets available yet</p>
+                <p className="text-slate-500 dark:text-slate-400 text-xs">
+                  Ingest a CSV or connect a database source to create your first analysis-ready table.
+                </p>
+                {onOpenUploadModal && !isViewer && (
+                  <button
+                    onClick={onOpenUploadModal}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700 transition shadow-xs cursor-pointer"
+                  >
+                    <Plus className="h-4 w-4 shrink-0" strokeWidth={2.5} />
+                    <span>Upload Dataset</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          currentPaginatedDatasets.map((dataset) => {
+            const status = getDatasetStatus(dataset);
+            const isMenuOpen = openActionMenuId === dataset.id;
+
+            return (
+              <div
+                key={dataset.id}
+                className="p-4 space-y-3 bg-white dark:bg-slate-900 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors"
+              >
+                {/* Header: Type icon + Full dataset name + Overflow menu button */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 shrink-0 mt-0.5">
+                      {getSourceIcon(dataset.data_source_type)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <button
+                        onClick={() => onPreview && onPreview(dataset.id)}
+                        className="text-left font-bold text-slate-900 dark:text-slate-100 hover:text-rose-600 dark:hover:text-rose-400 transition text-sm leading-snug break-words block cursor-pointer w-full"
+                        title={dataset.name}
+                      >
+                        {dataset.name}
+                      </button>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed break-words">
+                        {dataset.description || 'Enterprise analysis dataset'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Overflow Action Trigger */}
+                  <div className="relative shrink-0">
+                    <button
+                      ref={(el) => { triggerButtonRefs.current[dataset.id] = el; }}
+                      onClick={(e) => handleToggleMenu(dataset.id, e)}
+                      className={`p-2 rounded-xl border transition shadow-2xs cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center ${
+                        isMenuOpen
+                          ? 'border-rose-400 bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'
+                          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50/80 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800'
+                      }`}
+                      title="More actions"
+                      aria-label={`More actions for ${dataset.name}`}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Badge Strip: Source and Status in dedicated area */}
+                <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                  {renderSourceBadge(dataset.data_source_type)}
+                  {renderStatusBadge(status)}
+                </div>
+
+                {/* Stat Grid: Record Count and Column Count */}
+                <div className="grid grid-cols-2 gap-2.5 pt-1 text-xs">
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider block">
+                      Record Count
+                    </span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200 text-xs mt-0.5 block">
+                      {Number(dataset.row_count || 0).toLocaleString()} records
+                    </span>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider block">
+                      Fields / Schema
+                    </span>
+                    <span className="font-mono font-medium text-slate-700 dark:text-slate-300 text-xs mt-0.5 block">
+                      {dataset.column_count || 0} fields
+                    </span>
+                  </div>
+                </div>
+
+                {/* Footer: Last synced / Created date + Action buttons */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                    <span>Updated {formatRelativeTime(dataset.updated_at || dataset.created_at)}</span>
+                    <span className="block text-[10px] text-slate-400">Created {formatDate(dataset.created_at)}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => navigate(`/data-quality?datasetId=${dataset.id}`)}
+                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 hover:border-emerald-300 transition shadow-2xs cursor-pointer min-h-[38px]"
+                    >
+                      <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <span>Quality</span>
+                    </button>
+                    <button
+                      onClick={() => onPreview && onPreview(dataset.id)}
+                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/40 text-xs font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition shadow-2xs cursor-pointer min-h-[38px]"
+                    >
+                      <Eye className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                      <span>Preview</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* ─── DESKTOP & TABLET TABLE VIEW (>= 768px) ─── */}
+      <div className="hidden md:block w-full overflow-x-auto overflow-y-visible">
+        <table className="w-full text-left border-collapse text-xs min-w-[860px]">
           <thead>
             <tr className="border-b border-slate-200/80 dark:border-[#334155] bg-slate-50/60 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1]">
               {/* Dataset Name */}
               <th
                 onClick={() => handleSort('name')}
-                className="py-2.5 pl-4 sm:pl-5 pr-3 w-[30%] font-semibold cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 select-none group whitespace-nowrap min-w-0"
+                className="py-3 pl-4 sm:pl-5 pr-3 min-w-[240px] font-semibold cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 select-none group whitespace-nowrap"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Dataset Name</span>
@@ -526,19 +674,19 @@ export default function DatasetTable({
               </th>
 
               {/* Source Pipeline */}
-              <th className="py-2.5 px-2 w-[13%] font-semibold whitespace-nowrap">
+              <th className="py-3 px-3 min-w-[120px] font-semibold whitespace-nowrap">
                 Source Pipeline
               </th>
 
               {/* Status */}
-              <th className="py-2.5 px-2 w-[11%] font-semibold whitespace-nowrap">
+              <th className="py-3 px-3 min-w-[140px] font-semibold whitespace-nowrap">
                 Status
               </th>
 
               {/* Record Count */}
               <th
                 onClick={() => handleSort('row_count')}
-                className="py-2.5 px-2 w-[11%] font-semibold cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 select-none group whitespace-nowrap"
+                className="py-3 px-3 min-w-[110px] font-semibold cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 select-none group whitespace-nowrap"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Record Count</span>
@@ -549,7 +697,7 @@ export default function DatasetTable({
               {/* Fields */}
               <th
                 onClick={() => handleSort('column_count')}
-                className="py-2.5 px-2 w-[9%] font-semibold cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 select-none group whitespace-nowrap"
+                className="py-3 px-3 min-w-[90px] font-semibold cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 select-none group whitespace-nowrap"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Fields</span>
@@ -560,7 +708,7 @@ export default function DatasetTable({
               {/* Created / Updated */}
               <th
                 onClick={() => handleSort('created_at')}
-                className="py-2.5 px-2 w-[14%] font-semibold cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 select-none group whitespace-nowrap"
+                className="py-3 px-3 min-w-[140px] font-semibold cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 select-none group whitespace-nowrap"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Created / Updated</span>
@@ -569,7 +717,7 @@ export default function DatasetTable({
               </th>
 
               {/* Actions */}
-              <th className="py-2.5 px-2.5 w-[12%] font-semibold text-right whitespace-nowrap">
+              <th className="py-3 px-4 min-w-[120px] font-semibold text-right whitespace-nowrap">
                 Actions
               </th>
             </tr>
@@ -631,7 +779,7 @@ export default function DatasetTable({
                     }`}
                   >
                     {/* Dataset Name & Description */}
-                    <td className="py-3 pl-4 sm:pl-5 pr-3 min-w-[220px] sm:min-w-[280px]">
+                    <td className="py-3 pl-4 sm:pl-5 pr-3 min-w-[240px]">
                       <div className="flex items-start gap-2.5 min-w-0">
                         <div className="shrink-0 mt-0.5">
                           {getSourceIcon(dataset.data_source_type)}
@@ -652,27 +800,27 @@ export default function DatasetTable({
                     </td>
 
                     {/* Source Pipeline */}
-                    <td className="py-3 px-3 whitespace-nowrap">
+                    <td className="py-3 px-3 whitespace-nowrap min-w-[120px]">
                       {renderSourceBadge(dataset.data_source_type)}
                     </td>
 
                     {/* Status */}
-                    <td className="py-3 px-3 whitespace-nowrap">
+                    <td className="py-3 px-3 whitespace-nowrap min-w-[140px]">
                       {renderStatusBadge(status)}
                     </td>
 
                     {/* Record Count */}
-                    <td className="py-3 px-3 whitespace-nowrap font-mono text-xs font-semibold text-slate-800 dark:text-slate-200">
+                    <td className="py-3 px-3 whitespace-nowrap font-mono text-xs font-semibold text-slate-800 dark:text-slate-200 min-w-[110px]">
                       {Number(dataset.row_count || 0).toLocaleString()} records
                     </td>
 
                     {/* Fields */}
-                    <td className="py-3 px-3 whitespace-nowrap text-xs text-slate-600 dark:text-slate-400 font-mono">
+                    <td className="py-3 px-3 whitespace-nowrap text-xs text-slate-600 dark:text-slate-400 font-mono min-w-[90px]">
                       {dataset.column_count || 0} fields
                     </td>
 
                     {/* Created / Updated */}
-                    <td className="py-3 px-3 whitespace-nowrap min-w-0">
+                    <td className="py-3 px-3 whitespace-nowrap min-w-[140px]">
                       <span className="block text-xs font-medium text-slate-800 dark:text-slate-200">
                         {formatDate(dataset.created_at)}
                       </span>
@@ -682,7 +830,7 @@ export default function DatasetTable({
                     </td>
 
                     {/* Actions */}
-                    <td className="py-2.5 px-2.5 text-right whitespace-nowrap">
+                    <td className="py-2.5 px-4 text-right whitespace-nowrap min-w-[120px]">
                       <div className="flex items-center justify-end gap-1.5">
                         {/* Quality Action Button */}
                         <button
@@ -753,7 +901,7 @@ export default function DatasetTable({
         </div>
 
         {/* Right: Pagination buttons & page-size selector */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2.5 sm:gap-3 w-full sm:w-auto">
           {/* Page controls */}
           <div className="flex items-center gap-1">
             <button

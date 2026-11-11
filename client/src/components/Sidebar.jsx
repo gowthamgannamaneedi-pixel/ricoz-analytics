@@ -96,6 +96,9 @@ export default function Sidebar({ isOpen, isCollapsed = false, onToggleCollapse,
     subscription?.status === 'expired'
   );
   const isLoadingSubscription = authLoading || trialCountdown.status === 'loading';
+  const rawPlanName = trialCountdown.planName || subscription?.plan || user?.organization?.plan || 'Enterprise';
+  const planName = rawPlanName.replace(/\s*—\s*.*$/, '').trim();
+  const displayExpiredText = `${planName} — Expired`;
 
   return (
     <>
@@ -214,7 +217,7 @@ export default function Sidebar({ isOpen, isCollapsed = false, onToggleCollapse,
             <div className="p-3 rounded-xl border border-rose-200 dark:border-rose-900/80 bg-rose-50/80 dark:bg-[#2A1422] shadow-2xs space-y-2">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
-                <span className="text-xs font-bold text-rose-900 dark:text-[#FDA4AF]">{trialCountdown.displayPlanStatus && !trialCountdown.displayPlanStatus.toLowerCase().includes('active') ? trialCountdown.displayPlanStatus : `${trialCountdown.planName || 'Enterprise'} — Expired`}</span>
+                <span className="text-xs font-bold text-rose-900 dark:text-[#FDA4AF]">{displayExpiredText}</span>
               </div>
               <p className="text-[11px] text-rose-700 dark:text-[#FDA4AF] leading-snug">
                 Data safely preserved. Choose a plan to restore workspace analytics.

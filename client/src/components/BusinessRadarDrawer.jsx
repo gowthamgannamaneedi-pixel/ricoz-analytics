@@ -782,7 +782,7 @@ export default function BusinessRadarDrawer({
                           Detailed Movement Breakdown by Segment
                         </div>
                         <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-[#334155]">
-                          <table className="w-full text-left text-[11px]">
+                          <table className="w-full text-left text-[11px] min-w-[360px]">
                             <thead className="bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-[#94A3B8] uppercase">
                               <tr>
                                 <th className="p-2">Segment</th>

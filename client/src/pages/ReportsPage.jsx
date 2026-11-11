@@ -1327,17 +1327,18 @@ export default function ReportsPage() {
                     </p>
                   </div>
                 ) : (
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-100 dark:border-[#334155] text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#CBD5E1]">
-                        <th className="pb-3 font-semibold">Report Name</th>
-                        <th className="pb-3 font-semibold">Type</th>
-                        <th className="pb-3 font-semibold">Status</th>
-                        <th className="pb-3 font-semibold">Generated On</th>
-                        <th className="pb-3 font-semibold">Owner</th>
-                        <th className="pb-3 font-semibold text-right">Actions</th>
-                      </tr>
-                    </thead>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs min-w-[650px]">
+                      <thead>
+                        <tr className="border-b border-slate-100 dark:border-[#334155] text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#CBD5E1]">
+                          <th className="pb-3 font-semibold min-w-[180px]">Report Name</th>
+                          <th className="pb-3 font-semibold min-w-[80px]">Type</th>
+                          <th className="pb-3 font-semibold min-w-[110px]">Status</th>
+                          <th className="pb-3 font-semibold min-w-[140px]">Generated On</th>
+                          <th className="pb-3 font-semibold min-w-[80px]">Owner</th>
+                          <th className="pb-3 font-semibold text-right min-w-[90px]">Actions</th>
+                        </tr>
+                      </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-[#334155] font-sans">
                       {executions.slice(0, 5).map((exec) => (
                         <tr key={exec.id} className="hover:bg-slate-50/70 dark:hover:bg-[#1E293B]/70 transition">
@@ -1401,7 +1402,8 @@ export default function ReportsPage() {
                       ))}
                     </tbody>
                   </table>
-                )}
+                </div>
+              )}
               </div>
             </div>
 
@@ -1623,18 +1625,19 @@ export default function ReportsPage() {
                 </p>
               </div>
             ) : (
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-slate-200 dark:border-[#334155] bg-slate-50 dark:bg-[#1E293B] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#CBD5E1]">
-                    <th className="px-4 py-3">Report Name</th>
-                    <th className="px-4 py-3">Execution Status</th>
-                    <th className="px-4 py-3">Format</th>
-                    <th className="px-4 py-3">File Size</th>
-                    <th className="px-4 py-3">Triggered By</th>
-                    <th className="px-4 py-3">Timestamp</th>
-                    <th className="px-4 py-3 text-right">Artifact</th>
-                  </tr>
-                </thead>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs min-w-[760px]">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-[#334155] bg-slate-50 dark:bg-[#1E293B] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#CBD5E1]">
+                      <th className="px-4 py-3 min-w-[180px]">Report Name</th>
+                      <th className="px-4 py-3 min-w-[120px]">Execution Status</th>
+                      <th className="px-4 py-3 min-w-[80px]">Format</th>
+                      <th className="px-4 py-3 min-w-[90px]">File Size</th>
+                      <th className="px-4 py-3 min-w-[120px]">Triggered By</th>
+                      <th className="px-4 py-3 min-w-[130px]">Timestamp</th>
+                      <th className="px-4 py-3 text-right min-w-[90px]">Artifact</th>
+                    </tr>
+                  </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-[#334155] font-sans">
                   {executions.map((exec) => (
                     <tr key={exec.id} className="hover:bg-slate-50/80 dark:hover:bg-[#1E293B]/70 transition">
@@ -1694,7 +1697,8 @@ export default function ReportsPage() {
                   ))}
                 </tbody>
               </table>
-            )}
+            </div>
+          )}
           </div>
         </div>
       )}

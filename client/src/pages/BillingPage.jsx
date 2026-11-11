@@ -1137,7 +1137,7 @@ export default function BillingPage() {
           {isAuditOpen && (
             history && history.length > 0 ? (
               <div className="overflow-x-auto border-t border-slate-200 dark:border-[#334155]">
-                <table className="w-full text-left border-collapse text-xs">
+                <table className="w-full text-left border-collapse text-xs min-w-[650px]">
                   <thead>
                     <tr className="border-b border-slate-100 dark:border-[#334155] bg-slate-50/70 dark:bg-[#1E293B] text-slate-500 dark:text-[#CBD5E1] font-semibold uppercase tracking-wider text-[10px]">
                       <th className="py-2.5 px-5">Event</th>

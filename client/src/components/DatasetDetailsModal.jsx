@@ -212,7 +212,7 @@ export default function DatasetDetailsModal({
               </div>
             ) : (
               <div className="overflow-x-auto max-h-64">
-                <table className="w-full text-left border-collapse text-xs">
+                <table className="w-full text-left border-collapse text-xs min-w-[480px]">
                   <thead className="bg-slate-50 dark:bg-[#1E293B] border-b border-slate-200/80 dark:border-[#334155] sticky top-0">
                     <tr>
                       <th className="py-2.5 px-4 font-semibold text-slate-600 dark:text-[#CBD5E1]">#</th>

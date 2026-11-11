@@ -1264,7 +1264,7 @@ export default function AIInsightsPage() {
         /* TABLE VIEW */
         <div className="rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] overflow-hidden shadow-2xs">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full text-left border-collapse text-xs min-w-[850px]">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-[#334155] bg-slate-50/80 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1] font-semibold uppercase tracking-wider text-[10px]">
                   <th className="py-3 px-4">Insight Title &amp; Summary</th>

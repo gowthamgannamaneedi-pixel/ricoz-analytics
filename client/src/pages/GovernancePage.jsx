@@ -1123,7 +1123,7 @@ export default function GovernancePage() {
 
               {/* Members Table */}
               <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827]">
-                <table className="w-full text-left text-sm text-slate-600 dark:text-[#CBD5E1]">
+                <table className="w-full text-left text-sm text-slate-600 dark:text-[#CBD5E1] min-w-[700px]">
                   <thead className="bg-slate-50 dark:bg-[#1E293B] text-xs uppercase font-semibold text-slate-500 dark:text-[#CBD5E1] border-b border-slate-200 dark:border-[#334155]">
                     <tr>
                       <th className="px-4 py-3">Member</th>
@@ -1276,7 +1276,7 @@ export default function GovernancePage() {
                 </div>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827]">
-                  <table className="w-full text-left text-sm text-slate-600 dark:text-[#CBD5E1]">
+                  <table className="w-full text-left text-sm text-slate-600 dark:text-[#CBD5E1] min-w-[600px]">
                     <thead className="bg-slate-50 dark:bg-[#1E293B] text-xs uppercase font-semibold text-slate-500 dark:text-[#CBD5E1] border-b border-slate-200 dark:border-[#334155]">
                       <tr>
                         <th className="px-4 py-3">Invitee Email</th>
@@ -1411,7 +1411,7 @@ export default function GovernancePage() {
 
           {/* Audit Table */}
           <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827]">
-            <table className="w-full text-left text-sm text-slate-600 dark:text-[#CBD5E1]">
+            <table className="w-full text-left text-sm text-slate-600 dark:text-[#CBD5E1] min-w-[700px]">
               <thead className="bg-slate-50 dark:bg-[#1E293B] text-xs uppercase font-semibold text-slate-500 dark:text-[#CBD5E1] border-b border-slate-200 dark:border-[#334155]">
                 <tr>
                   <th className="px-4 py-3">Timestamp</th>
@@ -1520,7 +1520,7 @@ export default function GovernancePage() {
                     {category} Capabilities
                   </div>
                   <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827]">
-                    <table className="w-full text-left text-sm">
+                    <table className="w-full text-left text-sm min-w-[560px]">
                       <thead className="bg-slate-50 dark:bg-[#1E293B] text-xs font-semibold text-slate-500 dark:text-[#CBD5E1] border-b border-slate-200 dark:border-[#334155]">
                         <tr>
                           <th className="px-4 py-2.5">Capability / Permission</th>

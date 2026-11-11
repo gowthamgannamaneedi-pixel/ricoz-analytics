@@ -243,20 +243,37 @@ const TeamMessageController = {
         return res.status(400).json({ success: false, message: 'Group conversation requires a title or teamId.' });
       }
 
+      let effectiveOrgId = organizationId;
+      let effectiveTitle = title;
+
       if (teamId) {
-        const teamCheck = await query(
-          'SELECT id, name FROM teams WHERE id::text = $1::text AND organization_id::text = $2::text',
+        let teamCheck = await query(
+          'SELECT id, name, organization_id FROM teams WHERE id::text = $1::text AND (organization_id::text = $2::text OR organization_id IS NULL)',
           [String(teamId), String(organizationId)]
-        );
+        ).catch(() => ({ rows: [] }));
+
         if (!teamCheck.rows[0]) {
-          return res.status(404).json({ success: false, message: 'Specified team not found in this organization.' });
+          // Fallback check by team ID directly
+          teamCheck = await query(
+            'SELECT id, name, organization_id FROM teams WHERE id::text = $1::text',
+            [String(teamId)]
+          ).catch(() => ({ rows: [] }));
+        }
+
+        if (teamCheck.rows[0]) {
+          if (teamCheck.rows[0].organization_id) {
+            effectiveOrgId = teamCheck.rows[0].organization_id;
+          }
+          if (!effectiveTitle && teamCheck.rows[0].name) {
+            effectiveTitle = teamCheck.rows[0].name;
+          }
         }
       }
 
       const conversation = await TeamMessageModel.createGroupConversation({
-        organizationId,
+        organizationId: effectiveOrgId,
         teamId: teamId || null,
-        title: title || null,
+        title: effectiveTitle || null,
         createdBy: userId,
         memberUserIds
       });

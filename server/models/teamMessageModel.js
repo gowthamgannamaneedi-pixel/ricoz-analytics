@@ -187,7 +187,8 @@ const TeamMessageModel = {
             ).catch(() => null);
           }
         }
-        return this.getConversationDetails(existing.id, organizationId, createdBy);
+        const details = await this.getConversationDetails(existing.id, organizationId, createdBy);
+        return details || existing;
       }
     }
 
@@ -258,7 +259,8 @@ const TeamMessageModel = {
       }
     }
 
-    return this.getConversationDetails(conversation.id, organizationId, createdBy);
+    const details = await this.getConversationDetails(conversation.id, organizationId, createdBy);
+    return details || conversation;
   },
 
   /**

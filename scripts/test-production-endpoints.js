@@ -60,3 +60,4 @@ async function verifyProduction() {
 }
 
 verifyProduction().catch(console.error);
+

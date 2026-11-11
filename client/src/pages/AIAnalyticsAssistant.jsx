@@ -1218,7 +1218,7 @@ export default function AIAnalyticsAssistant() {
                           {/* Structured Table (when available) */}
                           {!isUser && (msg.table_data || msg.tableData) && (msg.table_data?.rows?.length > 0 || msg.tableData?.rows?.length > 0) && (
                             <div className="mt-3.5 overflow-x-auto rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827]">
-                              <table className="w-full text-left text-xs">
+                              <table className="w-full text-left text-xs min-w-[360px]">
                                 <thead className="bg-slate-50 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] font-semibold border-b border-slate-200 dark:border-[#334155]">
                                   <tr>
                                     {(msg.table_data?.headers || msg.tableData?.headers || []).map((h, hIdx) => (
