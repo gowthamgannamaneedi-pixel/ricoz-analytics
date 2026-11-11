@@ -188,6 +188,10 @@ class ReportService {
             const targetUnits = Math.round(totalUnits * 1.1);
             const targetAov = Math.round((rawKpis.averageOrderValue || 0) * 1.05);
 
+            const hasOrderId = Boolean(rawKpis.hasOrderIdentifier || dimensions.orderIdColumn);
+            const orderLabel = hasOrderId ? 'Total Orders' : (rawKpis.orderMetricLabel || 'Total Records');
+            const aovLabel = hasOrderId ? 'Average Order Value' : (rawKpis.averageMetricLabel || 'Average Sales per Record');
+
             const verifiedKpis = [
               {
                 id: 'kpi-revenue',
@@ -203,14 +207,14 @@ class ReportService {
               },
               {
                 id: 'kpi-orders',
-                name: 'Total Orders',
+                name: orderLabel,
                 value: rawKpis.totalOrders,
                 unit: '',
                 type: 'count',
                 target: targetOrders,
                 progress: targetOrders > 0 ? Math.round((rawKpis.totalOrders / targetOrders) * 100) : 100,
                 status: 'verified',
-                calculation: `COUNT(${dimensions.orderIdColumn || 'orders'})`,
+                calculation: hasOrderId ? `COUNT(${dimensions.orderIdColumn || 'orders'})` : 'COUNT(records)',
                 source: dataset.name
               },
               {
@@ -227,17 +231,32 @@ class ReportService {
               },
               {
                 id: 'kpi-aov',
-                name: 'Average Order Value',
-                value: Math.round(rawKpis.averageOrderValue || 0),
+                name: aovLabel,
+                value: Math.round(hasOrderId ? (rawKpis.averageOrderValue || 0) : (rawKpis.averageSalesPerRecord || (rawKpis.totalOrders > 0 ? rawKpis.totalSales / rawKpis.totalOrders : 0))),
                 unit: 'INR',
                 type: 'currency',
                 target: targetAov,
-                progress: targetAov > 0 ? Math.round(((rawKpis.averageOrderValue || 0) / targetAov) * 100) : 100,
+                progress: targetAov > 0 ? Math.round((((hasOrderId ? rawKpis.averageOrderValue : rawKpis.averageSalesPerRecord) || 0) / targetAov) * 100) : 100,
                 status: 'verified',
-                calculation: 'Total Revenue / Total Orders',
+                calculation: hasOrderId ? 'Total Revenue / Total Orders' : 'Total Revenue / Total Records',
                 source: dataset.name
               }
             ];
+
+            if (!hasOrderId && totalUnits > 0) {
+              verifiedKpis.push({
+                id: 'kpi-unit-rev',
+                name: 'Average Revenue per Unit',
+                value: rawKpis.averageSalesPerUnit || Math.round(rawKpis.totalSales / totalUnits),
+                unit: 'INR',
+                type: 'currency',
+                target: Math.round(((rawKpis.averageSalesPerUnit || (rawKpis.totalSales / totalUnits))) * 1.05),
+                progress: 95,
+                status: 'verified',
+                calculation: 'Total Revenue / Total Units Sold',
+                source: dataset.name
+              });
+            }
 
             kpis = verifiedKpis;
           }
@@ -341,6 +360,13 @@ class ReportService {
     // Mathematical reconciliation: Ensure Total Revenue KPI matches row total strictly
     const revenueKeys = ['sales_amount', 'sales', 'revenue', 'Revenue', 'amount', 'total_amount', 'total_sales'];
     const unitsKeys = ['units_sold', 'units', 'quantity', 'UnitsSold', 'quantity_sold', 'items_sold'];
+    const orderIdKeys = ['order_id', 'orderid', 'order_number', 'transaction_id'];
+
+    const foundOrderIdKey = sampleRows.length > 0 ? orderIdKeys.find(k => sampleRows[0][k] !== undefined) : null;
+    const hasOrderIdentifier = Boolean(foundOrderIdKey);
+    const uniqueOrdersCount = hasOrderIdentifier 
+      ? new Set(sampleRows.map(r => r[foundOrderIdKey]).filter(Boolean)).size 
+      : sampleRows.length;
 
     const totalRowRevenue = sampleRows.reduce((acc, r) => {
       let val = 0;
@@ -379,30 +405,56 @@ class ReportService {
           source: datasetName
         },
         {
-          id: 'kpi-units',
-          name: 'Units Sold',
-          value: totalUnitsSold,
+          id: 'kpi-records',
+          name: hasOrderIdentifier ? 'Total Orders' : 'Total Records',
+          value: uniqueOrdersCount,
           unit: '',
           type: 'count',
-          target: Math.round(totalUnitsSold * 1.1),
+          target: Math.round(uniqueOrdersCount * 1.1),
           progress: 91,
           status: 'verified',
-          calculation: 'SUM(Units Sold)',
+          calculation: hasOrderIdentifier ? `COUNT(DISTINCT ${foundOrderIdKey})` : 'COUNT(records)',
+          source: datasetName
+        },
+        {
+          id: 'kpi-units',
+          name: 'Units Sold',
+          value: totalUnitsSold > 0 ? totalUnitsSold : uniqueOrdersCount,
+          unit: '',
+          type: 'count',
+          target: Math.round((totalUnitsSold > 0 ? totalUnitsSold : uniqueOrdersCount) * 1.1),
+          progress: 91,
+          status: 'verified',
+          calculation: totalUnitsSold > 0 ? 'SUM(Units Sold)' : 'SUM(Units)',
           source: datasetName
         },
         {
           id: 'kpi-aov',
-          name: 'Average Order Value',
-          value: totalUnitsSold > 0 ? Math.round(totalRowRevenue / totalUnitsSold) : (sampleRows.length > 0 ? Math.round(totalRowRevenue / sampleRows.length) : 0),
+          name: hasOrderIdentifier ? 'Average Order Value' : 'Average Sales per Record',
+          value: uniqueOrdersCount > 0 ? Math.round(totalRowRevenue / uniqueOrdersCount) : 0,
           unit: 'INR',
           type: 'currency',
-          target: totalUnitsSold > 0 ? Math.round((totalRowRevenue / totalUnitsSold) * 1.05) : 0,
+          target: uniqueOrdersCount > 0 ? Math.round((totalRowRevenue / uniqueOrdersCount) * 1.05) : 0,
           progress: 95,
           status: 'verified',
-          calculation: 'Total Revenue / Units (or Transactions)',
+          calculation: hasOrderIdentifier ? 'Total Revenue / Total Orders' : 'Total Revenue / Total Records',
           source: datasetName
         }
       ];
+      if (!hasOrderIdentifier && totalUnitsSold > 0) {
+        kpis.push({
+          id: 'kpi-unit-rev',
+          name: 'Average Revenue per Unit',
+          value: Math.round(totalRowRevenue / totalUnitsSold),
+          unit: 'INR',
+          type: 'currency',
+          target: Math.round((totalRowRevenue / totalUnitsSold) * 1.05),
+          progress: 95,
+          status: 'verified',
+          calculation: 'Total Revenue / Total Units Sold',
+          source: datasetName
+        });
+      }
     }
 
     return {

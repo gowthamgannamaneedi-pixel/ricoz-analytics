@@ -571,7 +571,8 @@ function computeDatasetKpis(allRecords = [], filteredRecords = [], dimensions = 
 
   const avgPrimary = validPrimaryCount > 0 ? (sumPrimary / validPrimaryCount) : 0;
 
-  let totalOrders = totalRecordsCount;
+  const hasExplicitOrderId = Boolean(idCol);
+  let totalOrders = hasExplicitOrderId ? 0 : totalRecordsCount;
   if (idCol) {
     const uniqueIds = new Set(filteredRecords.map(r => r[idCol]).filter(v => v !== undefined && v !== null && String(v).trim() !== ''));
     if (uniqueIds.size > 0) {
@@ -591,7 +592,9 @@ function computeDatasetKpis(allRecords = [], filteredRecords = [], dimensions = 
     totalQuantity = totalOrders;
   }
 
-  const averageOrderValue = totalOrders > 0 ? (sumPrimary / totalOrders) : avgPrimary;
+  const averageOrderValue = hasExplicitOrderId && totalOrders > 0 ? (sumPrimary / totalOrders) : null;
+  const averageSalesPerRecord = avgPrimary;
+  const averageSalesPerUnit = qtyCol && totalQuantity > 0 ? (sumPrimary / totalQuantity) : null;
 
   let comparison = null;
   if (dateCol && filteredRecords.length >= 2) {
@@ -632,12 +635,26 @@ function computeDatasetKpis(allRecords = [], filteredRecords = [], dimensions = 
 
   return {
     totalSales: Number(sumPrimary.toFixed(2)),
-    totalOrders,
+    totalOrders: hasExplicitOrderId ? totalOrders : totalRecordsCount,
+    hasExplicitOrderId,
+    orderMetricLabel: hasExplicitOrderId ? 'Total Orders' : 'Total Records',
+    orderMetricFormula: hasExplicitOrderId ? `COUNT(DISTINCT ${idCol})` : 'COUNT(records)',
+    recordCount: totalRecordsCount,
     totalQuantity,
-    averageOrderValue: Number(averageOrderValue.toFixed(2)),
+    quantityMetricLabel: qtyCol ? 'Units Sold' : 'Total Units',
+    quantityMetricFormula: qtyCol ? `SUM(${qtyCol})` : 'SUM(units)',
+    averageOrderValue: averageOrderValue !== null ? Number(averageOrderValue.toFixed(2)) : null,
+    averageSalesPerRecord: Number(averageSalesPerRecord.toFixed(2)),
+    averageSalesPerUnit: averageSalesPerUnit !== null ? Number(averageSalesPerUnit.toFixed(2)) : null,
+    averageMetricLabel: hasExplicitOrderId ? 'Average Order Value' : 'Average Sales per Record',
+    averageMetricFormula: hasExplicitOrderId ? `SUM(${primaryCol}) / COUNT(DISTINCT ${idCol})` : `SUM(${primaryCol}) / COUNT(records)`,
+    isVerifiedAOV: hasExplicitOrderId,
+    recordGranularity: hasExplicitOrderId ? 'order_level' : 'telemetry_record_level',
+    businessAssumptions: hasExplicitOrderId
+      ? 'Order count computed from unique order identifiers.'
+      : 'Record count represents individual telemetry rows. No explicit order identifier is present in dataset.',
     minSales: Number(minPrimary.toFixed(2)),
     maxSales: Number(maxPrimary.toFixed(2)),
-    recordCount: totalRecordsCount,
     primaryMetricName: primaryCol,
     quantityMetricName: qtyCol || 'Units',
     comparison
@@ -919,7 +936,8 @@ async function queryDatasetKpis(dataset, filters = {}, user = null) {
   const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : (dataset.schema || []);
   const dimensions = detectDatasetDimensions(schema);
 
-  if (!dataset.file_path || Number(dataset.row_count) === 0) {
+  const hasDbRows = dataset.id ? await hasPostgresDatasetRows(dataset.id) : false;
+  if (!dataset.file_path && !hasDbRows && Number(dataset.row_count || 0) === 0) {
     return {
       kpis: {
         totalSales: 0,
@@ -938,19 +956,21 @@ async function queryDatasetKpis(dataset, filters = {}, user = null) {
     };
   }
 
-  // Fast path for small datasets (<= 5000 rows) to preserve legacy test parity and period comparisons
-  if (dataset.row_count && dataset.row_count <= 5000) {
+  // Fast path for small datasets (<= 5000 rows) or database rows to preserve legacy test parity and period comparisons
+  if (hasDbRows || (dataset.row_count && dataset.row_count <= 5000)) {
     const records = await loadDatasetRecords(dataset);
-    const filteredRecords = applyDatasetFilters(records, filters, dimensions);
-    const kpis = computeDatasetKpis(records, filteredRecords, dimensions);
-    return {
-      kpis,
-      dimensions,
-      filtersApplied: filters
-    };
+    if (records && records.length > 0) {
+      const filteredRecords = applyDatasetFilters(records, filters, dimensions);
+      const kpis = computeDatasetKpis(records, filteredRecords, dimensions);
+      return {
+        kpis,
+        dimensions,
+        filtersApplied: filters
+      };
+    }
   }
 
-  if (await hasPostgresDatasetRows(dataset.id)) {
+  if (hasDbRows) {
     return await queryPostgresKpis(dataset, dimensions, filters, user);
   }
 
@@ -976,17 +996,20 @@ async function queryDatasetTrends(dataset, filters = {}, user = null) {
   const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : (dataset.schema || []);
   const dimensions = detectDatasetDimensions(schema);
 
-  if (!dataset.file_path || Number(dataset.row_count) === 0) {
+  const hasDbRows = dataset.id ? await hasPostgresDatasetRows(dataset.id) : false;
+  if (!dataset.file_path && !hasDbRows && Number(dataset.row_count || 0) === 0) {
     return [];
   }
 
-  if (dataset.row_count && dataset.row_count <= 5000) {
+  if (hasDbRows || (dataset.row_count && dataset.row_count <= 5000)) {
     const records = await loadDatasetRecords(dataset);
-    const filteredRecords = applyDatasetFilters(records, filters, dimensions);
-    return computeDatasetTrends(filteredRecords, dimensions);
+    if (records && records.length > 0) {
+      const filteredRecords = applyDatasetFilters(records, filters, dimensions);
+      return computeDatasetTrends(filteredRecords, dimensions);
+    }
   }
 
-  if (await hasPostgresDatasetRows(dataset.id)) {
+  if (hasDbRows) {
     return await queryPostgresTrends(dataset, dimensions, filters, user);
   }
 
@@ -1008,17 +1031,20 @@ async function queryDatasetBreakdowns(dataset, groupByCol, filters = {}, user = 
   const dimensions = detectDatasetDimensions(schema);
   const targetCol = groupByCol || dimensions.regionColumn || dimensions.categoryColumn || dimensions.channelColumn;
 
-  if (!dataset.file_path || Number(dataset.row_count) === 0) {
+  const hasDbRows = dataset.id ? await hasPostgresDatasetRows(dataset.id) : false;
+  if (!dataset.file_path && !hasDbRows && Number(dataset.row_count || 0) === 0) {
     return [];
   }
 
-  if (dataset.row_count && dataset.row_count <= 5000) {
+  if (hasDbRows || (dataset.row_count && dataset.row_count <= 5000)) {
     const records = await loadDatasetRecords(dataset);
-    const filteredRecords = applyDatasetFilters(records, filters, dimensions);
-    return computeDatasetBreakdown(filteredRecords, targetCol, dimensions);
+    if (records && records.length > 0) {
+      const filteredRecords = applyDatasetFilters(records, filters, dimensions);
+      return computeDatasetBreakdown(filteredRecords, targetCol, dimensions);
+    }
   }
 
-  if (await hasPostgresDatasetRows(dataset.id)) {
+  if (hasDbRows) {
     return await queryPostgresBreakdowns(dataset, targetCol, dimensions, filters, user);
   }
 
@@ -1039,7 +1065,8 @@ async function queryDatasetRows(dataset, queryOptions = {}, user = null) {
   const schema = typeof dataset.schema === 'string' ? JSON.parse(dataset.schema) : (dataset.schema || []);
   const dimensions = detectDatasetDimensions(schema);
 
-  if (!dataset.file_path || Number(dataset.row_count) === 0) {
+  const hasDbRows = dataset.id ? await hasPostgresDatasetRows(dataset.id) : false;
+  if (!dataset.file_path && !hasDbRows && Number(dataset.row_count || 0) === 0) {
     const page = Math.max(1, Number(queryOptions.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(queryOptions.limit) || 20));
     return {
@@ -1051,13 +1078,15 @@ async function queryDatasetRows(dataset, queryOptions = {}, user = null) {
     };
   }
 
-  if (dataset.row_count && dataset.row_count <= 5000) {
+  if (hasDbRows || (dataset.row_count && dataset.row_count <= 5000)) {
     const records = await loadDatasetRecords(dataset);
-    const filteredRecords = applyDatasetFilters(records, queryOptions, dimensions);
-    return getPaginatedDatasetRows(filteredRecords, queryOptions);
+    if (records && records.length > 0) {
+      const filteredRecords = applyDatasetFilters(records, queryOptions, dimensions);
+      return getPaginatedDatasetRows(filteredRecords, queryOptions);
+    }
   }
 
-  if (await hasPostgresDatasetRows(dataset.id)) {
+  if (hasDbRows) {
     return await queryPostgresRows(dataset, queryOptions, dimensions, user);
   }
 
@@ -1181,15 +1210,24 @@ async function queryPostgresKpis(dataset, dimensions, filters, user) {
   const totalOrders = Number(row.total_orders || 0);
   const avgOrderValue = totalOrders > 0 ? Number((totalSales / totalOrders).toFixed(2)) : Number(parseFloat(row.avg_sales || 0).toFixed(2));
 
+  const hasExplicitOrderId = Boolean(idCol);
+  const totalQuantity = Number(row.total_quantity || totalOrders);
+  const averageSalesPerUnit = totalQuantity > 0 ? Number((totalSales / totalQuantity).toFixed(2)) : 0;
+
   return {
     kpis: {
       totalSales,
       totalOrders,
-      totalQuantity: Number(row.total_quantity || totalOrders),
+      totalQuantity,
       averageOrderValue: avgOrderValue,
       minSales: Number(parseFloat(row.min_sales || 0).toFixed(2)),
       maxSales: Number(parseFloat(row.max_sales || 0).toFixed(2)),
       recordCount: Number(row.total_records || 0),
+      hasExplicitOrderId,
+      hasOrderIdentifier: hasExplicitOrderId,
+      orderMetricLabel: hasExplicitOrderId ? 'Total Orders' : 'Total Records',
+      averageMetricLabel: hasExplicitOrderId ? 'Average Order Value' : 'Average Sales per Record',
+      averageSalesPerUnit,
       primaryMetricName: primaryCol,
       quantityMetricName: qtyCol || 'Units',
       comparison: null

@@ -727,21 +727,58 @@ class AIQueryPlannerService {
     // 1. KPI Query Intent
     if (plan.intent === 'kpi' || plan.intent === 'metric_explanation') {
       const kpis = analyticsService.computeDatasetKpis(records, records, effectiveDimensions);
-      const val = plan.aggregation === 'AVG' 
-        ? (kpis.averageOrderValue || 0) 
-        : (plan.aggregation === 'COUNT' ? kpis.totalOrders : kpis.totalSales);
+      const qLower = (question || plan.question || '').toLowerCase();
+      const isAvgQuery = plan.aggregation === 'AVG' || qLower.includes('average') || qLower.includes('avg') || qLower.includes('aov');
+      const isCountQuery = plan.aggregation === 'COUNT' || qLower.includes('how many') || qLower.includes('count of');
+
+      let val = kpis.totalSales;
+      let metricLabel = kpis.primaryMetricName;
+      let explicitAnswer = null;
+
+      if (isAvgQuery) {
+        if (qLower.includes('order value') || qLower.includes('aov')) {
+          if (kpis.hasExplicitOrderId) {
+            val = kpis.averageOrderValue;
+            metricLabel = 'Average Order Value';
+            explicitAnswer = `Based on **${dataset?.name || 'Dataset'}**, verified **Average Order Value** is **₹${val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** across ${kpis.totalOrders} unique orders (Formula: \`SUM(${kpis.primaryMetricName}) / COUNT(DISTINCT order_id)\`).`;
+          } else {
+            val = kpis.averageSalesPerRecord;
+            metricLabel = 'Average Sales per Record';
+            const unitPart = kpis.averageSalesPerUnit ? ` (and **₹${kpis.averageSalesPerUnit.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** average sales per unit sold across ${kpis.totalQuantity} units)` : '';
+            explicitAnswer = `The dataset **${dataset?.name || 'Dataset'}** does not contain an explicit \`order_id\` or transaction identifier column. Based on ${kpis.recordCount} recorded telemetry entries, the **Average Sales per Record** is **₹${val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}**${unitPart}. True Average Order Value (AOV) requires order-level identifiers.`;
+          }
+        } else if (qLower.includes('unit')) {
+          val = kpis.averageSalesPerUnit || kpis.averageSalesPerRecord;
+          metricLabel = 'Average Sales per Unit';
+          explicitAnswer = `Based on **${dataset?.name || 'Dataset'}**, average ${kpis.primaryMetricName} per unit sold is **₹${val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** across ${kpis.totalQuantity} total units.`;
+        } else {
+          val = kpis.averageSalesPerRecord;
+          metricLabel = `Average ${kpis.primaryMetricName}`;
+          explicitAnswer = `Based on **${dataset?.name || 'Dataset'}**, average **${metricLabel}** is **₹${val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** across ${kpis.recordCount} recorded entries.`;
+        }
+      } else if (isCountQuery) {
+        val = kpis.orderMetricValue;
+        metricLabel = kpis.orderMetricLabel;
+        explicitAnswer = `Based on **${dataset?.name || 'Dataset'}**, ${metricLabel} is **${val.toLocaleString()}** (${kpis.businessAssumptions}).`;
+      } else {
+        explicitAnswer = `Based on **${dataset?.name || 'Dataset'}**, total **${metricLabel.replace(/_/g, ' ')}** is **₹${val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** across ${kpis.recordCount} recorded entries.`;
+      }
 
       return {
         data: {
-          metric: plan.metric,
+          metric: metricLabel,
           aggregation: plan.aggregation,
           value: val,
-          count: kpis.totalOrders,
+          count: kpis.orderMetricValue,
+          has_explicit_order_id: kpis.hasExplicitOrderId,
+          is_verified_aov: kpis.isVerifiedAOV,
+          record_granularity: kpis.recordGranularity,
           stats: kpis
         },
+        answer: explicitAnswer,
         visualization: {
           type: 'kpi_card',
-          metric: plan.metric,
+          metric: metricLabel,
           value: val,
           unit: metric?.unit || '',
           comparison: kpis.comparison
@@ -944,6 +981,32 @@ class AIQueryPlannerService {
           };
         }
 
+        // 0. Resolve organization timezone for true calendar date evaluations
+        let orgTimezone = 'Asia/Kolkata';
+        if (organizationId) {
+          try {
+            const orgRes = await db.query('SELECT settings FROM organizations WHERE id::text = $1::text', [String(organizationId)]);
+            if (orgRes.rows[0]?.settings?.timezone) {
+              orgTimezone = orgRes.rows[0].settings.timezone;
+            }
+          } catch (_) {}
+        }
+
+        // Compute current and previous calendar months in org timezone
+        const now = new Date();
+        const calFmt = new Intl.DateTimeFormat('en-CA', { timeZone: orgTimezone, year: 'numeric', month: '2-digit' });
+        const calParts = calFmt.format(now).split('-');
+        const currCalMonthStr = `${calParts[0]}-${calParts[1]}`;
+        const prevCalDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const prevCalParts = calFmt.format(prevCalDate).split('-');
+        const prevCalMonthStr = `${prevCalParts[0]}-${prevCalParts[1]}`;
+
+        const currCalLabel = formatMonthLabel(currCalMonthStr);
+        const prevCalLabel = formatMonthLabel(prevCalMonthStr);
+
+        const asksExplicitLatest = qLower.includes('latest') || qLower.includes('most recent') || qLower.includes('last available') || qLower.includes('available recorded') || qLower.includes('recorded month');
+        const asksCalendarCurrent = qLower.includes('this month') || qLower.includes('current month') || (!asksExplicitLatest && (qLower.includes('compare this month with last month') || qLower.includes('month-over-month') || qLower.includes('mom')));
+
         const priorM = sortedMonths[sortedMonths.length - 2];
         const latestM = sortedMonths[sortedMonths.length - 1];
         const priorTotal = Number(monthlyAggs[priorM].total.toFixed(2));
@@ -984,16 +1047,58 @@ class AIQueryPlannerService {
           }
         }
 
-        const formattedAnswer = `### Month-over-Month ${metricCol.toUpperCase().replace(/_/g, ' ')} Comparison\n\n` +
-          `• **${latestLabel} (Latest Recorded Month):** ₹${latestTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} across ${monthlyAggs[latestM].count} records.\n` +
-          `• **${priorLabel} (Prior Recorded Month):** ₹${priorTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} across ${monthlyAggs[priorM].count} records.\n` +
-          `• **Period-over-Period Delta:** ${absDiff >= 0 ? '+' : ''}₹${absDiff.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pctChange >= 0 ? '+' : ''}${pctChange}%)${topDriverText}`;
+        let formattedAnswer = '';
+        let comparisonMode = 'latest_recorded_period';
+
+        if (asksCalendarCurrent) {
+          const hasCurrCalendarRecords = Boolean(monthlyAggs[currCalMonthStr]);
+          const hasPrevCalendarRecords = Boolean(monthlyAggs[prevCalMonthStr]);
+
+          if (!hasCurrCalendarRecords || !hasPrevCalendarRecords) {
+            comparisonMode = 'calendar_month_unrecorded_fallback_offered';
+            formattedAnswer = `### Current Calendar Month Comparison (${currCalLabel} vs ${prevCalLabel})\n\n` +
+              `The selected dataset **${dataset?.name || 'Dataset'}** contains no records for the current calendar month (**${currCalLabel}**: 0 records, ₹0.00) or previous calendar month (**${prevCalLabel}**: 0 records, ₹0.00) based on organization timezone \`${orgTimezone}\`.\n\n` +
+              `### Alternative: Latest Available Recorded Period (${latestLabel} vs ${priorLabel})\n\n` +
+              `As an alternative, here is the performance comparison across the latest available recorded monthly periods in this dataset:\n` +
+              `• **${latestLabel} (Latest Recorded Month):** ₹${latestTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} across ${monthlyAggs[latestM].count} records.\n` +
+              `• **${priorLabel} (Prior Recorded Month):** ₹${priorTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} across ${monthlyAggs[priorM].count} records.\n` +
+              `• **Period-over-Period Delta:** ${absDiff >= 0 ? '+' : ''}₹${absDiff.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pctChange >= 0 ? '+' : ''}${pctChange}%)${topDriverText}`;
+          } else {
+            comparisonMode = 'current_calendar_month';
+            const currTotal = Number(monthlyAggs[currCalMonthStr].total.toFixed(2));
+            const prevTotal = Number(monthlyAggs[prevCalMonthStr].total.toFixed(2));
+            const calDiff = Number((currTotal - prevTotal).toFixed(2));
+            const calPct = prevTotal > 0 ? Number(((calDiff / prevTotal) * 100).toFixed(1)) : 0;
+            formattedAnswer = `### Current Calendar Month Comparison (${currCalLabel} vs ${prevCalLabel})\n\n` +
+              `• **${currCalLabel} (Current Month):** ₹${currTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} across ${monthlyAggs[currCalMonthStr].count} records.\n` +
+              `• **${prevCalLabel} (Previous Month):** ₹${prevTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} across ${monthlyAggs[prevCalMonthStr].count} records.\n` +
+              `• **Period-over-Period Delta:** ${calDiff >= 0 ? '+' : ''}₹${calDiff.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${calPct >= 0 ? '+' : ''}${calPct}%)`;
+          }
+        } else {
+          comparisonMode = 'latest_recorded_period';
+          formattedAnswer = `### Latest Available Recorded Month-over-Month Comparison (${latestLabel} vs ${priorLabel})\n\n` +
+            `• **${latestLabel} (Latest Recorded Month):** ₹${latestTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} across ${monthlyAggs[latestM].count} records.\n` +
+            `• **${priorLabel} (Prior Recorded Month):** ₹${priorTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} across ${monthlyAggs[priorM].count} records.\n` +
+            `• **Period-over-Period Delta:** ${absDiff >= 0 ? '+' : ''}₹${absDiff.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pctChange >= 0 ? '+' : ''}${pctChange}%)${topDriverText}`;
+        }
 
         return {
           data: {
             comparison_type: 'month_over_month',
+            comparison_mode: comparisonMode,
             metric_column: metricCol,
             date_column: dateCol,
+            organization_timezone: orgTimezone,
+            calendar_period: {
+              current: { label: currCalLabel, total: Number((monthlyAggs[currCalMonthStr]?.total || 0).toFixed(2)), count: monthlyAggs[currCalMonthStr]?.count || 0 },
+              previous: { label: prevCalLabel, total: Number((monthlyAggs[prevCalMonthStr]?.total || 0).toFixed(2)), count: monthlyAggs[prevCalMonthStr]?.count || 0 }
+            },
+            latest_available_period: {
+              current: { label: latestLabel, total: latestTotal, count: monthlyAggs[latestM].count },
+              previous: { label: priorLabel, total: priorTotal, count: monthlyAggs[priorM].count },
+              delta: absDiff,
+              percentage_change: pctChange
+            },
             current_period: { label: latestLabel, total: latestTotal, count: monthlyAggs[latestM].count },
             previous_period: { label: priorLabel, total: priorTotal, count: monthlyAggs[priorM].count },
             absolute_difference: absDiff,
@@ -1005,7 +1110,7 @@ class AIQueryPlannerService {
             type: 'bar',
             xAxis: 'period',
             yAxis: 'value',
-            title: `Month-over-Month ${metricCol.replace(/_/g, ' ')} Comparison`,
+            title: `Month-over-Month ${metricCol.replace(/_/g, ' ')} Comparison (${latestLabel} vs ${priorLabel})`,
             data: chartData
           },
           sources

@@ -155,6 +155,11 @@ class LangGraphAssistantService {
         schemaCols = Object.keys(rows[0]).map(k => ({ name: k, type: 'string' }));
       }
 
+      const isDatePattern = (v) => {
+        const str = String(v || '').trim();
+        return (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(str) || /^\d{1,2}[-/]\d{1,2}[-/]\d{2,4}/.test(str) || /^\d{4}-\d{2}-\d{2}T/.test(str)) && !isNaN(Date.parse(str));
+      };
+
       // Refine types using actual row values
       schemaCols.forEach(col => {
         const sampleVals = rows.map(r => r[col.name]).filter(v => v !== null && v !== undefined && String(v).trim() !== '');
@@ -162,7 +167,7 @@ class LangGraphAssistantService {
         if (sampleVals.length > 0) {
           if (sampleVals.every(v => typeof v === 'number' || (!isNaN(Number(v)) && String(v).trim() !== ''))) {
             col.type = sampleVals.every(v => Number.isInteger(Number(v))) ? 'integer' : 'numeric';
-          } else if (sampleVals.every(v => !isNaN(Date.parse(v)) && (String(v).includes('-') || String(v).includes('/')))) {
+          } else if (sampleVals.every(v => isDatePattern(v))) {
             col.type = 'date';
           } else {
             col.type = 'string';
@@ -180,7 +185,7 @@ class LangGraphAssistantService {
         const dateCol = dateCols[0].name;
         const validDates = rows
           .map(r => r[dateCol])
-          .filter(v => v && !isNaN(Date.parse(v)))
+          .filter(v => v && isDatePattern(v))
           .map(v => new Date(v).toISOString().split('T')[0])
           .sort();
 

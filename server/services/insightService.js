@@ -167,12 +167,12 @@ class InsightService {
       // Reusable in-memory dataset records loader for this execution run
       const loadedDatasetRecordsMap = new Map();
       const getOrLoadRecords = async (ds) => {
-        if (!ds || !ds.file_path) return [];
+        if (!ds || (!ds.file_path && !ds.id)) return [];
         const dsKey = String(ds.id || ds.file_path);
         if (loadedDatasetRecordsMap.has(dsKey)) {
           return loadedDatasetRecordsMap.get(dsKey);
         }
-        const recs = await analyticsService.loadDatasetRecords(ds, 5000);
+        const recs = await analyticsService.loadDatasetRecords(ds, 5000).catch(() => []);
         loadedDatasetRecordsMap.set(dsKey, recs || []);
         return recs || [];
       };
@@ -214,7 +214,7 @@ class InsightService {
       // 2. Evaluate Datasets for Growth, Decline, Trends, and Breakdown Insights
       for (const ds of targetDatasets.slice(0, 5)) {
         try {
-          if (!ds.file_path) continue;
+          if (!ds.file_path && !ds.id) continue;
           const records = await getOrLoadRecords(ds);
           if (!records || records.length === 0) continue;
 
@@ -684,7 +684,7 @@ class InsightService {
         const srcDs = datasets.find(d => String(d.id) === String(rel.source_dataset_id) || d.name === rel.source_dataset_id);
         const tgtDs = datasets.find(d => String(d.id) === String(rel.target_dataset_id) || d.name === rel.target_dataset_id);
 
-        if (srcDs && tgtDs && srcDs.file_path && tgtDs.file_path) {
+        if (srcDs && tgtDs && (srcDs.file_path || srcDs.id) && (tgtDs.file_path || tgtDs.id)) {
           const srcRecords = await getOrLoadRecords(srcDs);
           const tgtRecords = await getOrLoadRecords(tgtDs);
 
@@ -752,7 +752,7 @@ class InsightService {
           let linkedRecords = [];
           let linkedDims = {};
 
-          if (linkedDs && linkedDs.file_path) {
+          if (linkedDs && (linkedDs.file_path || linkedDs.id)) {
             try {
               linkedRecords = await getOrLoadRecords(linkedDs);
               const schema = Array.isArray(linkedDs.schema) ? linkedDs.schema : [];
@@ -1199,11 +1199,11 @@ class InsightService {
           try {
             const tenantService = require('./tenantService');
             const isMember = await tenantService.isUserMemberOfOrg(user.id, candidate.organization_id);
-            if (isMember || user.role === 'admin' || user.role === 'superadmin') {
+            if (isMember || user.role === 'superadmin') {
               insight = candidate;
             }
           } catch (_) {
-            if (user.role === 'admin' || user.role === 'superadmin') {
+            if (user.role === 'superadmin') {
               insight = candidate;
             }
           }
