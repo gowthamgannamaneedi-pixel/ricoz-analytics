@@ -28,6 +28,14 @@ class IntentRouter:
     DATASET_EXPLORATION_PATTERNS = [
         r"\b(?:what|which)\s+(?:information|columns?|fields?|data|metrics?)\s+(?:is|are)?\s*(?:missing|lacking|untracked|not\s+tracked|available|present)\b",
         r"\bwhat\s+(?:does\s+this\s+dataset\s+contain|is\s+in\s+my\s+dataset|columns?\s+do\s+(?:we|i)\s+have)\b",
+        r"\b(?:what\s+are\s+the\s+column\s+names|list\s+(?:the\s+)?columns?|column\s+names?|columns?\s+in\s+this\s+(?:table|dataset))\b",
+        r"\bwhich\s+columns?\s+(?:contain|have)\s+numbers?\b",
+        r"\b(?:numeric|numerical)\s+columns?\b",
+        r"\bhow\s+many\s+columns?\s*(?:are\s+there|in\s+this\s+(?:table|dataset))?\b",
+        r"\bhow\s+many\s+rows?\s*(?:are\s+in\s+this\s+dataset|in\s+this\s+dataset|are\s+there)?\b",
+        r"\b(?:number|count)\s+of\s+(?:columns?|rows?|records?)\b",
+        r"\bwhich\s+date\s+range\s+does\s+this\s+dataset\s+cover\b",
+        r"\b(?:what\s+is\s+the\s+)?date\s+range\b",
         r"\b(?:dataset|schema)\s+(?:inspection|structure|overview|summary|coverage)\b"
     ]
 

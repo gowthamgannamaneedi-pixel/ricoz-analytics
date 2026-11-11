@@ -92,12 +92,16 @@ export default function NewConversationModal({
     try {
       setLoading(true);
       setError(null);
-      const recipientId = targetUser.id || targetUser.user_id || targetUser.userId;
-      if (!recipientId) {
-        setError('Valid recipientId is required.');
+      const recipientId = targetUser.id || targetUser.user_id || targetUser.userId || targetUser._id;
+      const recipientEmail = targetUser.email || targetUser.user_email;
+      if (!recipientId && !recipientEmail) {
+        setError('Please select a valid teammate to start a conversation.');
         return;
       }
-      const res = await createDirectConversationApi(recipientId);
+      const res = await createDirectConversationApi({
+        recipientId: recipientId || undefined,
+        recipientEmail: recipientEmail || undefined
+      });
       if (res?.data) {
         onConversationCreated(res.data);
         onClose();

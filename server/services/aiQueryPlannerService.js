@@ -680,15 +680,33 @@ class AIQueryPlannerService {
     // 0g. Scenario Simulation Intent
     if (plan.intent === 'scenario_simulation') {
       const kpis = analyticsService.computeDatasetKpis(records, records, effectiveDimensions);
-      const baseRev = kpis.totalSales || 0;
-      const simRev = Math.round(baseRev * 1.05);
-      const simMargin = 32.5;
+      const baseRev = Number((kpis.totalSales || 0).toFixed(2));
+      const hasCost = Boolean(effectiveDimensions.costColumn);
+      const baseCost = hasCost
+        ? records.reduce((s, r) => s + (Number(r[effectiveDimensions.costColumn]) || 0), 0)
+        : Number((baseRev * 0.65).toFixed(2));
+      const baseProfit = baseRev - baseCost;
+      const baseMarginPct = baseRev > 0 ? Number(((baseProfit / baseRev) * 100).toFixed(1)) : 0;
+
+      const priceDelta = Number(plan.levers?.priceChange || 5);
+      const costDelta = Number(plan.levers?.costChange || 0);
+      const volumeDelta = Number(plan.levers?.volumeChange || 0);
+
+      const simRev = Number((baseRev * (1 + (priceDelta + volumeDelta) / 100)).toFixed(2));
+      const simCost = Number((baseCost * (1 + (costDelta + volumeDelta) / 100)).toFixed(2));
+      const simProfit = simRev - simCost;
+      const simMargin = simRev > 0 ? Number(((simProfit / simRev) * 100).toFixed(1)) : 0;
 
       return {
         data: {
           scenario_simulation: true,
           baseline_revenue: baseRev,
+          baseline_cost: baseCost,
+          baseline_profit: baseProfit,
+          baseline_margin_pct: baseMarginPct,
           simulated_revenue: simRev,
+          simulated_cost: simCost,
+          simulated_profit: simProfit,
           simulated_margin_pct: simMargin,
           datasetName: dataset?.name || 'Dataset'
         },
@@ -699,7 +717,7 @@ class AIQueryPlannerService {
           title: 'Scenario Simulation vs Baseline',
           data: [
             { category: 'Baseline Revenue', value: baseRev },
-            { category: 'Simulated Revenue (+5%)', value: simRev }
+            { category: `Simulated Revenue (+${priceDelta + volumeDelta}%)`, value: simRev }
           ]
         },
         sources
@@ -887,80 +905,107 @@ class AIQueryPlannerService {
         }
 
         const metricCol = plan.metric || effectiveDimensions.primaryMetric || 'sales_amount';
-        let curTotal = 0, curCount = 0;
-        let prevTotal = 0, prevCount = 0;
 
-        for (const r of records) {
-          const dStr = String(r[dateCol] || '');
-          const val = Number(r[metricCol] || 0);
-          if (dStr >= '2026-11-01' && dStr <= '2026-11-08') {
-            curTotal += val;
-            curCount++;
-          } else if (dStr >= '2026-10-01' && dStr <= '2026-10-08') {
-            prevTotal += val;
-            prevCount++;
-          }
-        }
-
+        // 1. Group all records by month (YYYY-MM)
         const monthlyAggs = {};
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const formatMonthLabel = (mStr) => {
+          const parts = mStr.split('-');
+          if (parts.length === 2) {
+            const yr = parts[0];
+            const mo = parseInt(parts[1], 10);
+            if (mo >= 1 && mo <= 12) return `${monthNames[mo - 1]} ${yr}`;
+          }
+          return mStr;
+        };
+
         for (const r of records) {
           const dStr = String(r[dateCol] || '').slice(0, 7);
           if (dStr && dStr.match(/^\d{4}-\d{2}$/)) {
-            monthlyAggs[dStr] = monthlyAggs[dStr] || { count: 0, total: 0 };
+            monthlyAggs[dStr] = monthlyAggs[dStr] || { count: 0, total: 0, records: [] };
             monthlyAggs[dStr].total += Number(r[metricCol] || 0);
             monthlyAggs[dStr].count++;
+            monthlyAggs[dStr].records.push(r);
           }
         }
-        const sortedMonths = Object.keys(monthlyAggs).sort().reverse();
-        let historical = null;
-        if (sortedMonths.length >= 2) {
-          const latestM = sortedMonths[0];
-          const priorM = sortedMonths[1];
-          const hDiff = monthlyAggs[latestM].total - monthlyAggs[priorM].total;
-          const hPct = monthlyAggs[priorM].total > 0 ? ((hDiff / monthlyAggs[priorM].total) * 100) : 0;
-          historical = {
-            latestMonth: latestM,
-            latestTotal: monthlyAggs[latestM].total,
-            latestCount: monthlyAggs[latestM].count,
-            priorMonth: priorM,
-            priorTotal: monthlyAggs[priorM].total,
-            priorCount: monthlyAggs[priorM].count,
-            difference: hDiff,
-            pctChange: hPct
+
+        const sortedMonths = Object.keys(monthlyAggs).sort();
+
+        if (sortedMonths.length < 2) {
+          const singleMonth = sortedMonths[0] ? formatMonthLabel(sortedMonths[0]) : 'None';
+          return {
+            data: {
+              comparison_type: 'insufficient_periods',
+              available_months: sortedMonths
+            },
+            answer: `The selected dataset **${dataset?.name || 'Dataset'}** contains records for only one recorded monthly interval (${singleMonth}). A Month-over-Month comparison requires at least two distinct monthly periods.`,
+            visualization: null,
+            sources
           };
         }
 
-        const absDiff = curTotal - prevTotal;
-        const pctChange = prevTotal > 0 ? ((absDiff / prevTotal) * 100) : 0;
+        const priorM = sortedMonths[sortedMonths.length - 2];
+        const latestM = sortedMonths[sortedMonths.length - 1];
+        const priorTotal = Number(monthlyAggs[priorM].total.toFixed(2));
+        const latestTotal = Number(monthlyAggs[latestM].total.toFixed(2));
+        const absDiff = Number((latestTotal - priorTotal).toFixed(2));
+        const pctChange = priorTotal > 0 ? Number(((absDiff / priorTotal) * 100).toFixed(1)) : 0;
 
-        const chartData = (curCount > 0 || prevCount > 0) ? [
-          { period: 'October 1–8, 2026', value: prevTotal, records: prevCount },
-          { period: 'November 1–8, 2026', value: curTotal, records: curCount }
-        ] : historical ? [
-          { period: `${historical.priorMonth} (Prior Recorded)`, value: historical.priorTotal, records: historical.priorCount },
-          { period: `${historical.latestMonth} (Latest Recorded)`, value: historical.latestTotal, records: historical.latestCount }
-        ] : [
-          { period: 'October 1–8, 2026', value: 0, records: 0 },
-          { period: 'November 1–8, 2026', value: 0, records: 0 }
+        const priorLabel = formatMonthLabel(priorM);
+        const latestLabel = formatMonthLabel(latestM);
+
+        const chartData = [
+          { period: priorLabel, value: priorTotal, records: monthlyAggs[priorM].count },
+          { period: latestLabel, value: latestTotal, records: monthlyAggs[latestM].count }
         ];
+
+        // Identify primary category or segment detractor / contributor
+        let topDriverText = '';
+        const categoryCol = effectiveDimensions.categoryColumn || effectiveDimensions.productColumn || effectiveDimensions.regionColumn;
+        if (categoryCol) {
+          const catDiffs = {};
+          (monthlyAggs[priorM].records || []).forEach(r => {
+            const k = r[categoryCol] || 'Other';
+            catDiffs[k] = (catDiffs[k] || 0) - (Number(r[metricCol]) || 0);
+          });
+          (monthlyAggs[latestM].records || []).forEach(r => {
+            const k = r[categoryCol] || 'Other';
+            catDiffs[k] = (catDiffs[k] || 0) + (Number(r[metricCol]) || 0);
+          });
+          const sortedCats = Object.entries(catDiffs).sort((a, b) => a[1] - b[1]);
+          if (sortedCats.length > 0) {
+            const worst = sortedCats[0];
+            const best = sortedCats[sortedCats.length - 1];
+            if (absDiff < 0 && worst[1] < 0) {
+              topDriverText = `\n\nThe primary detractor was **${worst[0]}**, which changed by ${worst[1] < 0 ? '-' : '+'}₹${Math.abs(Math.round(worst[1])).toLocaleString()}.`;
+            } else if (absDiff >= 0 && best[1] > 0) {
+              topDriverText = `\n\nThe primary growth driver was **${best[0]}**, contributing +₹${Math.round(best[1]).toLocaleString()}.`;
+            }
+          }
+        }
+
+        const formattedAnswer = `### Month-over-Month ${metricCol.toUpperCase().replace(/_/g, ' ')} Comparison\n\n` +
+          `• **${latestLabel} (Latest Recorded Month):** ₹${latestTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} across ${monthlyAggs[latestM].count} records.\n` +
+          `• **${priorLabel} (Prior Recorded Month):** ₹${priorTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} across ${monthlyAggs[priorM].count} records.\n` +
+          `• **Period-over-Period Delta:** ${absDiff >= 0 ? '+' : ''}₹${absDiff.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pctChange >= 0 ? '+' : ''}${pctChange}%)${topDriverText}`;
 
         return {
           data: {
             comparison_type: 'month_over_month',
             metric_column: metricCol,
             date_column: dateCol,
-            current_period: { label: 'November 1–8, 2026', total: curTotal, count: curCount },
-            previous_period: { label: 'October 1–8, 2026', total: prevTotal, count: prevCount },
+            current_period: { label: latestLabel, total: latestTotal, count: monthlyAggs[latestM].count },
+            previous_period: { label: priorLabel, total: priorTotal, count: monthlyAggs[priorM].count },
             absolute_difference: absDiff,
             percentage_change: pctChange,
-            historical,
             chartData
           },
+          answer: formattedAnswer,
           visualization: {
             type: 'bar',
             xAxis: 'period',
             yAxis: 'value',
-            title: `Month-over-Month ${metricCol} Comparison`,
+            title: `Month-over-Month ${metricCol.replace(/_/g, ' ')} Comparison`,
             data: chartData
           },
           sources

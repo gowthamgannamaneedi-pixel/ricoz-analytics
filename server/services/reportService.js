@@ -339,8 +339,30 @@ class ReportService {
     }
 
     // Mathematical reconciliation: Ensure Total Revenue KPI matches row total strictly
-    const totalRowRevenue = sampleRows.reduce((acc, r) => acc + (Number(r.Revenue || r.revenue || r.sales || 0)), 0);
-    const totalUnitsSold = sampleRows.reduce((acc, r) => acc + (Number(r.UnitsSold || r.quantity || 0)), 0);
+    const revenueKeys = ['sales_amount', 'sales', 'revenue', 'Revenue', 'amount', 'total_amount', 'total_sales'];
+    const unitsKeys = ['units_sold', 'units', 'quantity', 'UnitsSold', 'quantity_sold', 'items_sold'];
+
+    const totalRowRevenue = sampleRows.reduce((acc, r) => {
+      let val = 0;
+      for (const k of revenueKeys) {
+        if (r[k] !== undefined && r[k] !== null && !isNaN(Number(r[k]))) {
+          val = Number(r[k]);
+          break;
+        }
+      }
+      return acc + val;
+    }, 0);
+
+    const totalUnitsSold = sampleRows.reduce((acc, r) => {
+      let val = 0;
+      for (const k of unitsKeys) {
+        if (r[k] !== undefined && r[k] !== null && !isNaN(Number(r[k]))) {
+          val = Number(r[k]);
+          break;
+        }
+      }
+      return acc + val;
+    }, 0);
 
     if (kpis.length === 0) {
       kpis = [
@@ -353,7 +375,7 @@ class ReportService {
           target: Math.round(totalRowRevenue * 1.1),
           progress: 91,
           status: 'verified',
-          calculation: 'SUM(Revenue)',
+          calculation: 'SUM(Revenue / Sales)',
           source: datasetName
         },
         {
@@ -365,19 +387,19 @@ class ReportService {
           target: Math.round(totalUnitsSold * 1.1),
           progress: 91,
           status: 'verified',
-          calculation: 'SUM(UnitsSold)',
+          calculation: 'SUM(Units Sold)',
           source: datasetName
         },
         {
           id: 'kpi-aov',
           name: 'Average Order Value',
-          value: totalUnitsSold > 0 ? Math.round(totalRowRevenue / totalUnitsSold) : 0,
+          value: totalUnitsSold > 0 ? Math.round(totalRowRevenue / totalUnitsSold) : (sampleRows.length > 0 ? Math.round(totalRowRevenue / sampleRows.length) : 0),
           unit: 'INR',
           type: 'currency',
           target: totalUnitsSold > 0 ? Math.round((totalRowRevenue / totalUnitsSold) * 1.05) : 0,
           progress: 95,
           status: 'verified',
-          calculation: 'Total Revenue / Units Sold',
+          calculation: 'Total Revenue / Units (or Transactions)',
           source: datasetName
         }
       ];

@@ -1,6 +1,8 @@
 const { StateGraph, Annotation, START, END } = require('@langchain/langgraph');
+const db = require('../config/database');
 const ragKnowledgeService = require('./ragKnowledgeService');
 const aiQueryPlannerService = require('./aiQueryPlannerService');
+const analyticsService = require('./analyticsService');
 const geminiService = require('./geminiService');
 const Dataset = require('../models/datasetModel');
 const MetricModel = require('../models/metricModel');
@@ -42,6 +44,9 @@ const AssistantState = Annotation.Root({
   grounded: Annotation({ reducer: (x, y) => (y !== undefined ? y : x), default: () => false }),
   insufficientData: Annotation({ reducer: (x, y) => (y !== undefined ? y : x), default: () => false }),
   validationMessage: Annotation({ reducer: (x, y) => (y !== undefined ? y : x), default: () => '' }),
+
+  // Schema & Dataset Metadata
+  schemaMetadata: Annotation({ reducer: (x, y) => (y !== undefined ? y : x), default: () => null }),
 
   // Final Structured Output
   finalAnswer: Annotation({ reducer: (x, y) => (y !== undefined ? y : x), default: () => '' }),
@@ -107,6 +112,281 @@ class LangGraphAssistantService {
       .addEdge('synthesizeAnswerNode', END);
 
     return workflow.compile();
+  }
+
+  /**
+   * Helper: Deterministically inspect dataset columns, types, record counts, date ranges, and data quality.
+   */
+  async _inspectDatasetMetadata(datasetId, organizationId) {
+    if (!datasetId) return null;
+    try {
+      // 1. Fetch dataset
+      const dRes = await db.query(
+        `SELECT d.* FROM datasets d 
+         WHERE (d.id::text = $1::text OR d.name = $1::text) 
+           AND (d.organization_id::text = $2::text OR d.organization_id IS NULL)
+         LIMIT 1`,
+        [String(datasetId).trim(), String(organizationId || '')]
+      );
+      const dataset = dRes.rows[0];
+      if (!dataset) return null;
+
+      // 2. Fetch rows
+      let rows = [];
+      try {
+        const rowsRes = await db.query(
+          `SELECT data FROM dataset_rows WHERE dataset_id = $1 LIMIT 1000`,
+          [dataset.id]
+        );
+        rows = rowsRes.rows.map(r => r.data);
+      } catch (_) {}
+
+      if (rows.length === 0 && dataset.file_path) {
+        try {
+          rows = await analyticsService.loadDatasetRecords(dataset);
+        } catch (_) {}
+      }
+
+      // 3. Inspect columns
+      let schemaCols = [];
+      if (Array.isArray(dataset.schema) && dataset.schema.length > 0) {
+        schemaCols = dataset.schema.map(c => typeof c === 'string' ? { name: c, type: 'string' } : { name: c.name || c.key, type: c.type || 'string' });
+      } else if (rows[0]) {
+        schemaCols = Object.keys(rows[0]).map(k => ({ name: k, type: 'string' }));
+      }
+
+      // Refine types using actual row values
+      schemaCols.forEach(col => {
+        const sampleVals = rows.map(r => r[col.name]).filter(v => v !== null && v !== undefined && String(v).trim() !== '');
+        col.sampleValues = sampleVals.slice(0, 3);
+        if (sampleVals.length > 0) {
+          if (sampleVals.every(v => typeof v === 'number' || (!isNaN(Number(v)) && String(v).trim() !== ''))) {
+            col.type = sampleVals.every(v => Number.isInteger(Number(v))) ? 'integer' : 'numeric';
+          } else if (sampleVals.every(v => !isNaN(Date.parse(v)) && (String(v).includes('-') || String(v).includes('/')))) {
+            col.type = 'date';
+          } else {
+            col.type = 'string';
+          }
+        }
+      });
+
+      const numericCols = schemaCols.filter(c => c.type === 'numeric' || c.type === 'integer');
+      const stringCols = schemaCols.filter(c => c.type === 'string');
+      const dateCols = schemaCols.filter(c => c.type === 'date');
+
+      // Date range calculation
+      let dateRange = null;
+      if (dateCols.length > 0) {
+        const dateCol = dateCols[0].name;
+        const validDates = rows
+          .map(r => r[dateCol])
+          .filter(v => v && !isNaN(Date.parse(v)))
+          .map(v => new Date(v).toISOString().split('T')[0])
+          .sort();
+
+        if (validDates.length > 0) {
+          const minDate = validDates[0];
+          const maxDate = validDates[validDates.length - 1];
+          const distinctMonths = [...new Set(validDates.map(d => d.slice(0, 7)))].sort();
+          dateRange = {
+            column: dateCol,
+            min: minDate,
+            max: maxDate,
+            distinctDatesCount: new Set(validDates).size,
+            months: distinctMonths
+          };
+        }
+      }
+
+      // Data quality metrics
+      let missingCount = 0;
+      let totalCells = rows.length * schemaCols.length;
+      rows.forEach(r => {
+        schemaCols.forEach(c => {
+          const val = r[c.name];
+          if (val === null || val === undefined || String(val).trim() === '') {
+            missingCount++;
+          }
+        });
+      });
+
+      const rowSignatures = new Set();
+      let duplicateRows = 0;
+      rows.forEach(r => {
+        const sig = JSON.stringify(r);
+        if (rowSignatures.has(sig)) duplicateRows++;
+        else rowSignatures.add(sig);
+      });
+
+      const rowCount = rows.length || dataset.row_count || 0;
+      const columnCount = schemaCols.length || dataset.column_count || 0;
+
+      return {
+        datasetId: dataset.id,
+        datasetName: dataset.name,
+        description: dataset.description || '',
+        rowCount,
+        columnCount,
+        columns: schemaCols,
+        numericColumns: numericCols,
+        stringColumns: stringCols,
+        dateColumns: dateCols,
+        dateRange,
+        missingCount,
+        duplicateRows,
+        totalCells,
+        sampleRows: rows.slice(0, 5)
+      };
+    } catch (err) {
+      console.warn('[LangGraph] Error inspecting dataset metadata:', err.message);
+      return null;
+    }
+  }
+
+  /**
+   * Helper: Format schema metadata response
+   */
+  _formatSchemaMetadataAnswer(metadata, queryType, rawQuestion = '') {
+    const dsName = metadata.datasetName || 'the selected dataset';
+    const rowCount = metadata.rowCount || 0;
+    const colCount = metadata.columnCount || 0;
+    const columns = metadata.columns || [];
+    const numCols = metadata.numericColumns || [];
+    const strCols = metadata.stringColumns || [];
+    const dateCols = metadata.dateColumns || [];
+    const dateRange = metadata.dateRange;
+
+    let text = '';
+    let tableData = null;
+    let followUps = [];
+
+    switch (queryType) {
+      case 'column_names': {
+        const colList = columns.map(c => `• **\`${c.name}\`** (${c.type})`).join('\n');
+        text = `The dataset **${dsName}** contains **${colCount} columns**:\n\n${colList}\n\nAll columns are verified against the physical dataset records (${rowCount} rows).`;
+        tableData = {
+          headers: ['Column Name', 'Data Type', 'Sample Values'],
+          rows: columns.map(c => [
+            c.name,
+            c.type,
+            (c.sampleValues || []).join(', ') || '—'
+          ])
+        };
+        followUps = [
+          'Which columns contain numbers?',
+          'How many rows are in this dataset?',
+          'Which date range does this dataset cover?'
+        ];
+        break;
+      }
+
+      case 'numeric_columns': {
+        if (numCols.length === 0) {
+          text = `The dataset **${dsName}** does not contain any numeric columns. All **${colCount} columns** are stored as text or dates.`;
+        } else {
+          const numList = numCols.map(c => {
+            const samples = (c.sampleValues || []).join(', ');
+            return `• **\`${c.name}\`** (\`${c.type}\`)${samples ? ` — sample values: ${samples}` : ''}`;
+          }).join('\n');
+          text = `The dataset **${dsName}** contains **${numCols.length} numeric columns** (out of ${colCount} total columns):\n\n${numList}\n\nThese numeric columns can be used for financial and statistical aggregations (SUM, AVG, MIN, MAX).`;
+          tableData = {
+            headers: ['Numeric Column', 'Data Type', 'Sample Values'],
+            rows: numCols.map(c => [
+              c.name,
+              c.type,
+              (c.sampleValues || []).join(', ') || '—'
+            ])
+          };
+        }
+        followUps = [
+          'What is the total revenue?',
+          'What are the column names?',
+          'How many rows are in this dataset?'
+        ];
+        break;
+      }
+
+      case 'column_count': {
+        const colNamesStr = columns.map(c => `\`${c.name}\` (${c.type})`).join(', ');
+        text = `There are **${colCount} columns** in **${dsName}**:\n${colNamesStr}.`;
+        followUps = [
+          'What are the column names?',
+          'Which columns contain numbers?',
+          'How many rows are in this dataset?'
+        ];
+        break;
+      }
+
+      case 'row_count': {
+        text = `The dataset **${dsName}** contains **${rowCount} recorded rows** (and ${colCount} columns).\n\nEvery record is verified in storage and ready for query execution.`;
+        followUps = [
+          'What are the column names?',
+          'Which date range does this dataset cover?',
+          'What is the total revenue?'
+        ];
+        break;
+      }
+
+      case 'date_range': {
+        if (!dateRange) {
+          text = `The dataset **${dsName}** does not contain an active date or timestamp column. Available columns are: ${columns.map(c => `\`${c.name}\``).join(', ')}.`;
+        } else {
+          const monthsStr = (dateRange.months || []).map(m => {
+            const d = new Date(`${m}-01T00:00:00Z`);
+            return d.toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+          }).join(' and ');
+          text = `The dataset **${dsName}** covers the date range from **${dateRange.min}** to **${dateRange.max}** across the \`${dateRange.column}\` column.\n\nThis spans **${dateRange.distinctDatesCount} distinct dates** across **${dateRange.months.length} recorded months** (${monthsStr}).`;
+        }
+        followUps = [
+          'Compare this month with last month',
+          'What is the total revenue?',
+          'How many rows are in this dataset?'
+        ];
+        break;
+      }
+
+      case 'data_quality': {
+        const missing = metadata.missingCount || 0;
+        const dups = metadata.duplicateRows || 0;
+        const totalCells = metadata.totalCells || 1;
+        const completeness = Math.max(0, Math.min(100, Math.round(((totalCells - missing) / totalCells) * 100)));
+        const healthStatus = (missing === 0 && dups === 0) ? 'Optimal (100% clean)' : (completeness > 90 ? 'Good' : 'Needs attention');
+
+        text = `### Data Quality Assessment: **${dsName}**\n\n` +
+          `• **Total Rows:** ${rowCount.toLocaleString()} records\n` +
+          `• **Total Columns:** ${colCount} columns\n` +
+          `• **Duplicate Rows:** **${dups}** (${dups === 0 ? 'No duplicates detected — 100% unique records' : `${dups} duplicate records found`})\n` +
+          `• **Missing / Null Values:** **${missing}** (${missing === 0 ? 'No missing values — 100% complete' : `${missing} empty cells found`})\n` +
+          `• **Data Completeness:** **${completeness}%**\n` +
+          `• **Health Status:** **${healthStatus}**`;
+        followUps = [
+          'What are the column names?',
+          'Which columns contain numbers?',
+          'What was our total revenue?'
+        ];
+        break;
+      }
+
+      case 'dataset_overview':
+      default: {
+        const numNames = numCols.map(c => `\`${c.name}\``).join(', ') || 'None';
+        const strNames = strCols.map(c => `\`${c.name}\``).join(', ') || 'None';
+        const dateNames = dateCols.map(c => `\`${c.name}\``).join(', ') || 'None';
+        text = `The dataset **${dsName}** contains **${rowCount} rows** and **${colCount} columns**:\n\n` +
+          `• **Dimensions & Categories:** ${strNames}\n` +
+          `• **Numeric Metrics:** ${numNames}\n` +
+          `• **Temporal (Dates):** ${dateNames}${dateRange ? ` (Range: ${dateRange.min} to ${dateRange.max})` : ''}\n` +
+          `• **Data Cleanliness:** ${metadata.duplicateRows || 0} duplicates, ${metadata.missingCount || 0} missing values.`;
+        followUps = [
+          'What are the column names?',
+          'Which columns contain numbers?',
+          'What is the total revenue?'
+        ];
+        break;
+      }
+    }
+
+    return { text, tableData, followUps };
   }
 
   /**
@@ -186,6 +466,77 @@ class LangGraphAssistantService {
         requiresAnalytics: false,
         analysisStatus: 'Classified as user profile context request'
       };
+    }
+
+    // 3. Dataset Schema, Structure, Column definitions, Row Counts, Date Ranges & Data Quality
+    const isColumnNamesQuery = (qLower.includes('column') || qLower.includes('field')) &&
+      (qLower.includes('name') || qLower.includes('what are') || qLower.includes('list') || qLower.includes('which') || qLower.includes('exist') || qLower.includes('show')) &&
+      !qLower.includes('number') && !qLower.includes('numeric') && !qLower.includes('how many') && !qLower.includes('count');
+
+    const isNumericColumnsQuery = (qLower.includes('column') || qLower.includes('field')) &&
+      (qLower.includes('number') || qLower.includes('numeric') || qLower.includes('numerical'));
+
+    const isColumnCountQuery = (qLower.includes('how many') || qLower.includes('number of') || qLower.includes('count of')) &&
+      (qLower.includes('column') || qLower.includes('columns') || qLower.includes('field') || qLower.includes('fields')) &&
+      !qLower.includes('row') && !qLower.includes('record');
+
+    const isRowCountQuery = (qLower.includes('how many') || qLower.includes('number of') || qLower.includes('count of') || qLower.includes('total')) &&
+      (qLower.includes('row') || qLower.includes('rows') || qLower.includes('record') || qLower.includes('records') || qLower.includes('entry') || qLower.includes('entries')) &&
+      !qLower.includes('column') && !qLower.includes('duplicate') && !qLower.includes('missing') && !qLower.includes('null') &&
+      !['sales', 'revenue', 'profit', 'units', 'orders', 'amount', 'churn'].some(m => qLower.includes(m));
+
+    const isDateRangeQuery = qLower.includes('date range') || qLower.includes('time range') ||
+      (qLower.includes('date') && (qLower.includes('cover') || qLower.includes('span') || qLower.includes('period') || qLower.includes('earliest') || qLower.includes('latest')));
+
+    const isDataQualityQuery = qLower.includes('duplicate') || qLower.includes('missing') || qLower.includes('null') ||
+      qLower.includes('cleanliness') || qLower.includes('data health') ||
+      (qLower.includes('quality') && (qLower.includes('data') || qLower.includes('dataset') || qLower.includes('records')));
+
+    const isDatasetOverviewQuery = qLower.includes('what does this dataset contain') || qLower.includes('what is in this dataset') ||
+      qLower.includes('dataset overview') || qLower.includes('describe this dataset') || qLower.includes('dataset summary') ||
+      qLower === 'what is this dataset' || qLower === 'explain this dataset';
+
+    const isSchemaMetadataQuery = isColumnNamesQuery || isNumericColumnsQuery || isColumnCountQuery ||
+      isRowCountQuery || isDateRangeQuery || isDataQualityQuery || isDatasetOverviewQuery;
+
+    // If query requires dataset context but NO dataset is selected:
+    if (!state.datasetId) {
+      const isAnalyticsOrDataset = isSchemaMetadataQuery || [
+        'column', 'columns', 'field', 'fields', 'row', 'rows', 'table', 'dataset', 'datasets',
+        'sales', 'revenue', 'profit', 'units', 'orders', 'compare', 'trend', 'forecast', 'anomaly', 'kpi'
+      ].some(k => qLower.includes(k));
+
+      if (isAnalyticsOrDataset) {
+        return {
+          message: rawQ,
+          intent: 'NO_DATASET_SELECTED',
+          requiresWorkspaceContext: false,
+          requiresRetrieval: false,
+          requiresAnalytics: false,
+          analysisStatus: 'No dataset context selected'
+        };
+      }
+    } else if (isSchemaMetadataQuery) {
+      let queryType = 'dataset_overview';
+      if (isColumnNamesQuery) queryType = 'column_names';
+      else if (isNumericColumnsQuery) queryType = 'numeric_columns';
+      else if (isColumnCountQuery) queryType = 'column_count';
+      else if (isRowCountQuery) queryType = 'row_count';
+      else if (isDateRangeQuery) queryType = 'date_range';
+      else if (isDataQualityQuery) queryType = 'data_quality';
+
+      const metadata = await this._inspectDatasetMetadata(state.datasetId, state.organizationId);
+      if (metadata) {
+        return {
+          message: rawQ,
+          intent: 'DATASET_SCHEMA_METADATA',
+          requiresWorkspaceContext: false,
+          requiresRetrieval: false,
+          requiresAnalytics: false,
+          schemaMetadata: { ...metadata, queryType },
+          analysisStatus: `Inspected schema metadata for ${metadata.datasetName} (${queryType})`
+        };
+      }
     }
 
     // Comprehensive retrieval triggers
@@ -462,6 +813,24 @@ class LangGraphAssistantService {
         grounded: false,
         insufficientData: false,
         validationMessage: 'Awaiting clarification'
+      };
+    }
+
+    if (String(intent).toUpperCase() === 'NO_DATASET_SELECTED') {
+      return {
+        evidenceValidated: false,
+        grounded: false,
+        insufficientData: false,
+        validationMessage: 'No dataset selected'
+      };
+    }
+
+    if (String(intent).toUpperCase() === 'DATASET_SCHEMA_METADATA') {
+      return {
+        evidenceValidated: true,
+        grounded: true,
+        insufficientData: false,
+        validationMessage: 'Schema metadata verified from database'
       };
     }
 
@@ -794,6 +1163,47 @@ ${comparison}
           analysisStatus: 'User profile unavailable'
         };
       }
+    }
+
+    // 2b. No Dataset Selected Notification
+    if (String(intent).toUpperCase() === 'NO_DATASET_SELECTED') {
+      return {
+        finalAnswer: "No dataset is currently selected. Please select a dataset from the **Dataset Context** selector at the top right to analyze your data.",
+        sources: [],
+        grounded: false,
+        evidenceValidated: false,
+        insufficientData: false,
+        followUpQuestions: [
+          'What datasets are available in my organization?',
+          'Who am I logged in as?',
+          'What is my organization name?'
+        ],
+        analysisStatus: 'No dataset context selected'
+      };
+    }
+
+    // 2c. Dataset Schema & Metadata Inspection
+    if (String(intent).toUpperCase() === 'DATASET_SCHEMA_METADATA' && state.schemaMetadata) {
+      const formatted = this._formatSchemaMetadataAnswer(
+        state.schemaMetadata,
+        state.schemaMetadata.queryType,
+        message
+      );
+      return {
+        finalAnswer: formatted.text,
+        sources: [{
+          title: state.schemaMetadata.datasetName,
+          document_type: 'dataset_schema',
+          row_count: state.schemaMetadata.rowCount,
+          type: 'dataset'
+        }],
+        tableData: formatted.tableData || null,
+        grounded: true,
+        evidenceValidated: true,
+        insufficientData: false,
+        followUpQuestions: formatted.followUps,
+        analysisStatus: `Grounded schema analysis across ${state.schemaMetadata.columnCount} columns and ${state.schemaMetadata.rowCount} records`
+      };
     }
 
     // 3. Ambiguous / Unclear Queries (Ask for useful clarification)

@@ -2345,10 +2345,13 @@ export async function getConversationsApi() {
   return apiRequest('/collaboration/conversations');
 }
 
-export async function createDirectConversationApi(recipientId) {
+export async function createDirectConversationApi(payloadOrId) {
+  const body = (payloadOrId && typeof payloadOrId === 'object')
+    ? payloadOrId
+    : { recipientId: payloadOrId };
   return apiRequest('/collaboration/conversations/direct', {
     method: 'POST',
-    body: JSON.stringify({ recipientId })
+    body: JSON.stringify(body)
   });
 }
 

@@ -317,20 +317,25 @@ export function AuthProvider({ children }) {
   };
 
   // Subscription & 14-Day Trial Helpers
+  const rawStatus = String(subscription?.status || subscription?.subscriptionStatus || subscription?.subscription_status || '').toLowerCase();
+  const rawPaymentStatus = String(subscription?.payment_status || subscription?.paymentStatus || '').toLowerCase();
+
   const isExplicitExpired = Boolean(
     subscription?.isExpired === true ||
     subscription?.canMutate === false ||
     subscription?.hasWorkspaceAccess === false ||
-    subscription?.status === 'trial_expired' ||
-    subscription?.status === 'expired'
+    rawStatus === 'trial_expired' ||
+    rawStatus === 'expired'
   );
 
   const isPaid = Boolean(
     !isExplicitExpired &&
-    (subscription?.isPaidActive === true || (subscription?.status === 'active' && subscription?.payment_status === 'paid'))
+    (subscription?.isPaidActive === true || subscription?.is_paid_active === true || (rawStatus === 'active' && rawPaymentStatus === 'paid'))
   );
 
-  const rawTrialEnd = subscription?.relevantEndDate || subscription?.trialEndsAt || subscription?.trial_ends_at;
+  const rawTrialEnd = isPaid
+    ? (subscription?.relevantEndDate || subscription?.relevant_end_date || subscription?.currentPeriodEnd || subscription?.current_period_end)
+    : (subscription?.relevantEndDate || subscription?.relevant_end_date || subscription?.trialEndsAt || subscription?.trial_ends_at);
   const isTimeElapsed = rawTrialEnd ? new Date(rawTrialEnd).getTime() <= Date.now() : false;
 
   const isTrialExpired = Boolean(

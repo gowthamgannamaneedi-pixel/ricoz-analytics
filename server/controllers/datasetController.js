@@ -577,9 +577,11 @@ const simulateDatasetWhatIf = async (req, res, next) => {
         baseUnits = records.length;
       }
     } else {
-      baseRev = 1000000;
-      baseCost = 650000;
-      baseUnits = Number(dataset.row_count) || 100;
+      return res.status(400).json({
+        success: false,
+        status: 'empty_dataset',
+        message: `Dataset '${dataset.name}' contains zero physical records for scenario simulation.`
+      });
     }
 
     baseRev = Number(baseRev.toFixed(2));

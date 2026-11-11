@@ -247,7 +247,7 @@ export default function CollaborationPage() {
       }
     } catch (err) {
       console.error('Failed to open team chat:', err);
-      showToast('Could not open team chat');
+      showToast(err.message || 'Could not open team chat');
       setActiveTab('messages');
     }
   };

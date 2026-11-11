@@ -116,10 +116,16 @@ const TeamMessageController = {
     try {
       const organizationId = getOrgId(req);
       const userId = req.user.id;
-      const rawRecipient = req.body.recipientId || req.body.userBId || req.body.userId;
+      const rawRecipient = (typeof req.body?.recipientId === 'object'
+        ? (req.body.recipientId?.id || req.body.recipientId?.user_id || req.body.recipientId?.userId || req.body.recipientId?.email)
+        : req.body?.recipientId)
+        || req.body?.recipientEmail
+        || req.body?.email
+        || req.body?.userBId
+        || req.body?.userId;
 
       if (!rawRecipient) {
-        return res.status(400).json({ success: false, message: 'Valid recipientId is required.' });
+        return res.status(400).json({ success: false, message: 'Valid recipientId or recipientEmail is required.' });
       }
 
       // Resolve recipient user cleanly across numeric integer ID, UUID, team_member ID, or email
@@ -129,7 +135,7 @@ const TeamMessageController = {
       if (typeof rawRecipient === 'string' && /^[0-9a-fA-F-]{36}$/.test(rawRecipient)) {
         // Direct match on users table
         const uCheck = await query(
-          'SELECT id, name, email FROM users WHERE id::text = $1 AND organization_id::text = $2::text',
+          'SELECT id, name, email FROM users WHERE id::text = $1 AND (organization_id::text = $2::text OR organization_id IS NULL)',
           [rawRecipient, organizationId]
         ).catch(() => ({ rows: [] }));
 
@@ -141,7 +147,7 @@ const TeamMessageController = {
             `SELECT u.id, u.name, u.email 
              FROM team_members tm 
              JOIN users u ON u.id::text = tm.user_id::text 
-             WHERE tm.id::text = $1 AND u.organization_id::text = $2::text`,
+             WHERE (tm.id::text = $1 OR tm.user_id::text = $1) AND (u.organization_id::text = $2::text OR tm.team_id IN (SELECT id FROM teams WHERE organization_id::text = $2::text))`,
             [rawRecipient, organizationId]
           ).catch(() => ({ rows: [] }));
           if (tmCheck.rows[0]) {
@@ -153,7 +159,7 @@ const TeamMessageController = {
       // 2. Check if rawRecipient is numeric ID
       if (!recipientUser && !isNaN(Number(rawRecipient)) && Number(rawRecipient) > 0) {
         const checkUser = await query(
-          'SELECT id, name, email FROM users WHERE id::text = $1 AND organization_id::text = $2::text',
+          'SELECT id, name, email FROM users WHERE id::text = $1 AND (organization_id::text = $2::text OR organization_id IS NULL)',
           [String(rawRecipient), organizationId]
         ).catch(() => ({ rows: [] }));
         if (checkUser.rows[0]) {
@@ -164,7 +170,7 @@ const TeamMessageController = {
       // 3. If rawRecipient is email
       if (!recipientUser && typeof rawRecipient === 'string' && rawRecipient.includes('@')) {
         const emailCheck = await query(
-          'SELECT id, name, email FROM users WHERE LOWER(email) = LOWER($1) AND organization_id::text = $2::text',
+          'SELECT id, name, email FROM users WHERE LOWER(email) = LOWER($1) AND (organization_id::text = $2::text OR organization_id IS NULL)',
           [rawRecipient.trim(), organizationId]
         ).catch(() => ({ rows: [] }));
         if (emailCheck.rows[0]) {
@@ -239,8 +245,8 @@ const TeamMessageController = {
 
       if (teamId) {
         const teamCheck = await query(
-          'SELECT id, name FROM teams WHERE id = $1 AND organization_id = $2',
-          [teamId, organizationId]
+          'SELECT id, name FROM teams WHERE id::text = $1::text AND organization_id::text = $2::text',
+          [String(teamId), String(organizationId)]
         );
         if (!teamCheck.rows[0]) {
           return res.status(404).json({ success: false, message: 'Specified team not found in this organization.' });
@@ -261,7 +267,7 @@ const TeamMessageController = {
       });
     } catch (err) {
       console.error('[TeamMessageController.createGroupConversation] Error:', err);
-      return res.status(500).json({ success: false, message: 'Failed to create group conversation.' });
+      return res.status(500).json({ success: false, message: err.message || 'Failed to create group conversation.' });
     }
   },
 

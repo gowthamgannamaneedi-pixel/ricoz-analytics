@@ -573,7 +573,7 @@ async function markAllNotificationsRead(req, res, next) {
 
 async function getOrganizationUsers(req, res, next) {
   try {
-    const organizationId = req.user.organization_id;
+    const organizationId = req.headers['x-organization-id'] || req.user.organization_id;
     const { search, teamId, excludeTeamId } = req.query;
 
     const users = await collaborationService.getOrganizationUsers({
