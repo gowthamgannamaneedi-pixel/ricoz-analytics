@@ -76,8 +76,8 @@ class AccountDeletionController {
           )
         `, [
           reqId,
-          matchedUser ? matchedUser.id : null,
-          matchedUser ? matchedUser.organization_id : null,
+          matchedUser ? String(matchedUser.id) : null,
+          matchedUser ? String(matchedUser.organization_id) : null,
           cleanEmail,
           name || (matchedUser ? matchedUser.name : 'User'),
           scope === 'full_workspace' ? 'full_workspace' : 'user_account',
@@ -461,7 +461,7 @@ class AccountDeletionController {
       await db.query('DELETE FROM organizations WHERE id = $1', [orgId]).catch(() => null);
     } else {
       // 3. User-only deletion: Delete the target user record
-      await db.query('DELETE FROM users WHERE id = $1 AND organization_id = $2', [userId, orgId]).catch(() => null);
+      await db.query('DELETE FROM users WHERE id = $1 OR LOWER(email) = LOWER($2)', [userId, userEmail]).catch(() => null);
     }
 
     console.log(`[AccountDeletion] ✅ Cascade deletion completed for user ${userId}`);

@@ -5312,8 +5312,8 @@ async function initDb() {
 
     CREATE TABLE IF NOT EXISTS account_deletion_requests (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-      organization_id UUID REFERENCES organizations(id) ON DELETE SET NULL,
+      user_id TEXT,
+      organization_id TEXT,
       email VARCHAR(255) NOT NULL,
       name VARCHAR(255),
       scope VARCHAR(50) DEFAULT 'user_account',
@@ -5334,6 +5334,18 @@ async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_account_deletion_email ON account_deletion_requests(email);
     CREATE INDEX IF NOT EXISTS idx_account_deletion_status ON account_deletion_requests(status);
     CREATE INDEX IF NOT EXISTS idx_account_deletion_token ON account_deletion_requests(verification_token);
+
+    -- Ensure schema flexibility for both UUID and integer IDs across environments
+    DO $$
+    BEGIN
+      BEGIN
+        ALTER TABLE account_deletion_requests DROP CONSTRAINT IF EXISTS account_deletion_requests_user_id_fkey;
+        ALTER TABLE account_deletion_requests DROP CONSTRAINT IF EXISTS account_deletion_requests_organization_id_fkey;
+        ALTER TABLE account_deletion_requests ALTER COLUMN user_id TYPE TEXT USING user_id::text;
+        ALTER TABLE account_deletion_requests ALTER COLUMN organization_id TYPE TEXT USING organization_id::text;
+      EXCEPTION WHEN OTHERS THEN NULL;
+      END;
+    END $$;
 
     CREATE TABLE IF NOT EXISTS invitations (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
