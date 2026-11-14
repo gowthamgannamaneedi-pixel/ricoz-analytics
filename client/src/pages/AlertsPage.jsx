@@ -380,18 +380,13 @@ export default function AlertsPage() {
           </span>
         </nav>
 
-        <div className="flex items-start gap-3.5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20 shrink-0 mt-0.5">
-            <Bell className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
-              Real-Time Alerts & Incident Center
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 font-normal">
-              Rule-based threshold evaluation, operational alerts, and incident resolution
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
+            Real-Time Alerts & Incident Center
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 font-normal">
+            Rule-based threshold evaluation, operational alerts, and incident resolution
+          </p>
         </div>
 
         {/* Action Row below description: Create Alert Rule on left, Refresh on right */}

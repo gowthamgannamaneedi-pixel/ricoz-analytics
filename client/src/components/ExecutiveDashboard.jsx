@@ -781,15 +781,15 @@ export default function ExecutiveDashboard({
       {/* 4. ROW 2: 2-COLUMN GRID (LEFT: REGIONAL & CHANNEL; RIGHT: TREND,   */}
       {/*    PRODUCTS & SIGNALS)                                             */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         {/* LEFT COLUMN: 5 COLS (Regional Performance & Sales by Channel) */}
-        <div className="lg:col-span-5 space-y-5">
+        <div className="lg:col-span-5 flex flex-col gap-5">
           {/* 1. Regional Performance Card */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between shrink-0">
             <div>
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#BE123C]">
                     <Globe className="h-4 w-4" />
                   </div>
                   <div>
@@ -804,7 +804,8 @@ export default function ExecutiveDashboard({
                 <button
                   type="button"
                   onClick={() => navigate('/reports')}
-                  className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 flex items-center gap-1 cursor-pointer"
+                  className="rz-btn-view-details"
+                  title="View regional reports"
                 >
                   <span>View Details</span>
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -860,12 +861,12 @@ export default function ExecutiveDashboard({
             </div>
           </div>
 
-          {/* 2. Sales by Channel Card */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          {/* 2. Sales by Channel Card (Extends to align bottom with Decision Signals) */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs flex-1 flex flex-col justify-between">
+            <div className="flex flex-col h-full">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#BE123C]">
                     <Network className="h-4 w-4" />
                   </div>
                   <div>
@@ -880,31 +881,32 @@ export default function ExecutiveDashboard({
                 <button
                   type="button"
                   onClick={() => navigate('/reports')}
-                  className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 flex items-center gap-1 cursor-pointer"
+                  className="rz-btn-view-details"
+                  title="View channel reports"
                 >
                   <span>View Details</span>
                   <ChevronRight className="h-3.5 w-3.5" />
                 </button>
               </div>
 
-              {/* Donut and Legend matching reference design */}
+              {/* Donut and Legend matching reference design (Enlarged proportionately) */}
               {channelData.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 dark:text-slate-500 text-sm">
+                <div className="py-12 flex-1 flex items-center justify-center text-center text-slate-400 dark:text-slate-500 text-sm">
                   No channel breakdown available for this dataset.
                 </div>
               ) : (
-                <div className="mt-4 flex flex-col items-center">
-                  {/* Concentric Donut Chart */}
-                  <div className="relative flex items-center justify-center h-44 w-44 shrink-0 mx-auto">
+                <div className="mt-4 flex-1 flex flex-col items-center justify-between">
+                  {/* Concentric Donut Chart - Enlarged proportionally */}
+                  <div className="relative flex items-center justify-center h-52 w-52 sm:h-56 sm:w-56 shrink-0 mx-auto my-3">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={channelData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={50}
-                          outerRadius={70}
-                          paddingAngle={2}
+                          innerRadius={62}
+                          outerRadius={88}
+                          paddingAngle={2.5}
                           dataKey="value"
                         >
                           {channelData.map((entry, index) => (
@@ -915,24 +917,24 @@ export default function ExecutiveDashboard({
                     </ResponsiveContainer>
                     {/* Center Text with Real Total Revenue */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-                      <span className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 font-sans tracking-tight">
+                      <span className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 font-sans tracking-tight">
                         {kpiData?.totalSales !== undefined && kpiData?.totalSales !== null
                           ? formatCurrency(kpiData.totalSales)
                           : '₹57.9L'}
                       </span>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Total Revenue</span>
+                      <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">Total Revenue</span>
                     </div>
                   </div>
 
                   {/* Channel Legend List matching reference design */}
-                  <div className="space-y-2 w-full pt-3">
+                  <div className="space-y-2.5 w-full pt-4 mt-auto">
                     {channelData.map(c => (
                       <div
                         key={c.name}
-                        className="flex items-center justify-between text-xs sm:text-sm py-0.5 border-b border-slate-50 dark:border-slate-800/40 last:border-b-0"
+                        className="flex items-center justify-between text-xs sm:text-sm py-1 border-b border-slate-50 dark:border-slate-800/40 last:border-b-0"
                       >
                         <div className="flex items-center gap-2 min-w-0 pr-2">
-                          <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
+                          <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
                           <span className="text-slate-700 dark:text-slate-300 font-medium truncate" title={c.name}>
                             {c.name}
                           </span>
@@ -1165,7 +1167,8 @@ export default function ExecutiveDashboard({
               <button
                 type="button"
                 onClick={() => navigate('/datasets')}
-                className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 flex items-center gap-1 cursor-pointer"
+                className="rz-btn-view-details"
+                title="View product performance in datasets"
               >
                 <span>View Details</span>
                 <ChevronRight className="h-3.5 w-3.5" />

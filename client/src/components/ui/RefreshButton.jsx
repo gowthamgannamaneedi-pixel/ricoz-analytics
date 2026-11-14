@@ -4,16 +4,21 @@ import { RefreshCw } from 'lucide-react';
 /**
  * Shared RefreshButton — RicozAnalytics Enterprise Design System
  *
- * Spec (Handoff Page 2, 7, 25):
- * - Standard 40px height (h-10) matching primary action buttons
+ * Spec (Handoff Page 2, 7, 9, 12):
+ * - Circular arrow icon: red/rose glyph (#D91542 / #FB7185)
+ * - Label: red text (#D91542 / #FB7185)
+ * - Border: crimson outline (border-rose-200 / #BE123C)
+ * - Background: dark burgundy / soft red (#FFF1F3 / #2B0B1B)
+ * - Height: standard 40px (h-10) matching adjacent controls
  * - Standard 8px radius (rounded-lg)
  * - Standard 16px horizontal padding (px-4)
  * - Label font 14px font-semibold (text-sm)
- * - Red spinning indicator on active refresh
+ * - Spinning indicator on active refresh
  *
  * Props:
  *   label     – button text (default "Refresh")
  *   loading   – shows spinning icon when true
+ *   isRefreshing – alias for loading
  *   size      – 'sm' | 'md' | 'lg' (default 'md')
  *   onClick
  *   className – extra classes
@@ -45,18 +50,19 @@ export function RefreshButton({
       disabled={isLoading}
       className={[
         'inline-flex items-center justify-center font-semibold select-none shrink-0',
-        'text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 shadow-2xs',
-        'hover:bg-[#FFF1F3]/50 hover:border-rose-300 hover:text-[#D91542] dark:hover:bg-rose-950/40 dark:hover:border-rose-800 dark:hover:text-rose-300',
-        'active:bg-rose-100/80 dark:active:bg-rose-900/80',
+        'border border-rose-200 dark:border-[#BE123C]',
+        'bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185]',
+        'hover:bg-rose-100/90 dark:hover:bg-[#3D1026] hover:border-rose-300 dark:hover:border-[#E11D48] hover:text-[#B91036] dark:hover:text-[#FDA4AF]',
+        'active:bg-rose-200/80 dark:active:bg-[#1F0713]',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2',
-        'transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer',
+        'transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-2xs',
         sizeClasses,
         className,
       ].join(' ')}
       {...rest}
     >
       <RefreshCw
-        className={`h-4 w-4 shrink-0 transition-transform ${isLoading ? 'animate-spin text-[#D91542]' : 'text-slate-500 dark:text-slate-400'}`}
+        className={`h-4 w-4 shrink-0 transition-transform text-[#D91542] dark:text-[#FB7185] ${isLoading ? 'animate-spin' : ''}`}
         strokeWidth={2}
       />
       <span>{label}</span>

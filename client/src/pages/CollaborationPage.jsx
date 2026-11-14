@@ -559,24 +559,18 @@ export default function CollaborationPage() {
         </nav>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20 shrink-0 mt-0.5">
-              <Users className="h-6 w-6 text-white" />
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
+                Collaboration
+              </h1>
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Admin'}
+              </span>
             </div>
-
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
-                  Collaboration
-                </h1>
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                  {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Admin'}
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal">
-                Share dashboards, reports, and AI insights securely across your organization. Control access, manage permissions, and work together.
-              </p>
-            </div>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 font-normal">
+              Share dashboards, reports, and AI insights securely across your organization. Control access, manage permissions, and work together.
+            </p>
           </div>
 
           <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">

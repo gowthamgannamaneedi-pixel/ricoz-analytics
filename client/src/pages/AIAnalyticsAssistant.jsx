@@ -789,10 +789,6 @@ export default function AIAnalyticsAssistant() {
             <Menu className="w-5 h-5" />
           </button>
 
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20 shrink-0 mt-0.5">
-            <Bot className="h-6 w-6 text-white" />
-          </div>
-
           <div className="min-w-0">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
               AI Analytics Assistant

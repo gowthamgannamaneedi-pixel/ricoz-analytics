@@ -35,7 +35,10 @@ import {
   Radio,
   FileText,
   UserPlus,
-  Plus
+  Plus,
+  Trash2,
+  Lock,
+  ShieldAlert
 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -70,9 +73,62 @@ import { Modal } from '../components/ui/Modal';
  * Organization configuration, team access, integrations, notifications, and platform preferences.
  */
 export default function SettingsPage() {
-  const { user, subscription, isTrialExpired } = useAuth();
+  const { user, subscription, isTrialExpired, logout } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Self-Service Account Deletion State (Google Play Requirement)
+  const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteScope, setDeleteScope] = useState('user_account');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteAccountError, setDeleteAccountError] = useState(null);
+
+  const handleConfirmDeleteAccount = async (e) => {
+    e.preventDefault();
+    setDeleteAccountError(null);
+    if (!deletePassword) {
+      setDeleteAccountError('Password is required to confirm account deletion.');
+      return;
+    }
+
+    try {
+      setIsDeletingAccount(true);
+      const token = localStorage.getItem('ricoz_auth_token');
+      const res = await fetch(`${API_BASE_URL}/auth/delete-my-account`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          password: deletePassword,
+          scope: deleteScope,
+          reason: 'In-app user settings self-deletion'
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to delete account. Incorrect password.');
+      }
+
+      // Successful deletion: clear state, logout, and redirect to login
+      if (typeof logout === 'function') {
+        await logout().catch(() => null);
+      }
+      localStorage.removeItem('ricoz_auth_token');
+      localStorage.removeItem('ricoz_active_org_id');
+      navigate('/login', {
+        replace: true,
+        state: { info: 'Your account and personal data have been permanently deleted.' }
+      });
+    } catch (err) {
+      setDeleteAccountError(err.message || 'An error occurred while deleting your account.');
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
 
   const isExpired = Boolean(
     isTrialExpired ||
@@ -601,23 +657,18 @@ export default function SettingsPage() {
           <span className="text-slate-900 font-bold">Settings</span>
         </nav>
 
-        <div className="flex items-start gap-3.5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20 shrink-0 mt-0.5">
-            <Settings className="h-6 w-6" />
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
+              Settings
+            </h1>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+              {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Admin'}
+            </span>
           </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
-                Settings
-              </h1>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Admin'}
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm text-slate-500 font-normal mt-1">
-              Manage organization settings, team access, integrations, notifications, and platform preferences.
-            </p>
-          </div>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] font-normal mt-1">
+            Manage organization settings, team access, integrations, notifications, and platform preferences.
+          </p>
         </div>
 
         {/* Action Row: Primary action on left, Refresh on right on same horizontal axis */}
@@ -2102,6 +2153,76 @@ export default function SettingsPage() {
                 <option value="standard_millions">International Standard (Millions & Billions — e.g. $1.76M)</option>
               </Select>
             </div>
+
+            {/* Compliance, Privacy & Account Governance (Google Play Developer Requirement) */}
+            <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                  <span>Compliance, Privacy &amp; Account Governance</span>
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Review data handling disclosures, verify multi-tenant boundaries, and manage account lifecycle in compliance with Google Play Developer Policies.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition flex items-center justify-between group"
+                >
+                  <div>
+                    <div className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <span>Privacy Policy</span>
+                      <ExternalLink className="h-3 w-3 text-slate-400 group-hover:text-rose-600 transition" />
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Inspect data handling, tenant boundaries, and TLS 1.3 / AES-256 encryption.
+                    </div>
+                  </div>
+                </a>
+
+                <a
+                  href="/delete-account"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition flex items-center justify-between group"
+                >
+                  <div>
+                    <div className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <span>Public Deletion Portal</span>
+                      <ExternalLink className="h-3 w-3 text-slate-400 group-hover:text-rose-600 transition" />
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Web form to request account and dataset deletion with OTP verification.
+                    </div>
+                  </div>
+                </a>
+              </div>
+
+              {/* Danger Zone: In-App Self-Service Account Deletion */}
+              <div className="p-4 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/40 dark:bg-rose-950/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <div className="font-bold text-rose-900 dark:text-rose-200 text-xs flex items-center gap-1.5">
+                    <AlertTriangle className="h-3.5 w-3.5 text-rose-600" />
+                    <span>Danger Zone: Account Deletion</span>
+                  </div>
+                  <div className="text-[11px] text-rose-700/80 dark:text-rose-400/80 mt-0.5">
+                    Permanently delete your user credentials, personal preferences, and analytical datasets.
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="danger"
+                  onClick={() => setIsDeleteAccountModalOpen(true)}
+                  className="bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shrink-0"
+                >
+                  Delete Account...
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -2109,6 +2230,90 @@ export default function SettingsPage() {
       {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* 9. MODALS                                                          */}
       {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+
+      {/* Self-Service Account Deletion Modal (Google Play Requirement) */}
+      <Modal
+        isOpen={isDeleteAccountModalOpen}
+        onClose={() => {
+          if (!isDeletingAccount) {
+            setIsDeleteAccountModalOpen(false);
+            setDeletePassword('');
+            setDeleteAccountError(null);
+          }
+        }}
+        title="Delete Account & Personal Data"
+        description="Permanently purge your account credentials, preferences, and workspace datasets."
+        icon={Trash2}
+        maxWidth="max-w-md"
+      >
+        <form onSubmit={handleConfirmDeleteAccount} className="space-y-4 text-xs">
+          {deleteAccountError && (
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-300">
+              {deleteAccountError}
+            </div>
+          )}
+
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 space-y-1">
+            <div className="font-bold text-slate-800 dark:text-slate-200">
+              Account to be deleted: {user?.email}
+            </div>
+            <div>
+              This action immediately terminates all active sessions, revokes access tokens, and permanently purges your personal profile.
+            </div>
+          </div>
+
+          {isAdmin && (
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-700 dark:text-slate-300">Deletion Scope</label>
+              <Select
+                value={deleteScope}
+                onChange={(e) => setDeleteScope(e.target.value)}
+              >
+                <option value="user_account">My Account Only (Workspace remains intact)</option>
+                <option value="full_workspace">Entire Workspace (Purge all datasets & all users)</option>
+              </Select>
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <label className="font-bold text-slate-700 dark:text-slate-300">
+              Enter Current Password to Confirm *
+            </label>
+            <input
+              type="password"
+              required
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              placeholder="Enter your account password..."
+              className="w-full h-10 px-3.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0F172A] text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-rose-500"
+            />
+          </div>
+
+          <div className="pt-3 flex items-center justify-end gap-2.5 border-t border-slate-100 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setIsDeleteAccountModalOpen(false);
+                setDeletePassword('');
+                setDeleteAccountError(null);
+              }}
+              disabled={isDeletingAccount}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="danger"
+              loading={isDeletingAccount}
+              disabled={isDeletingAccount || !deletePassword}
+              className="bg-rose-600 hover:bg-rose-700 text-white font-semibold"
+            >
+              Confirm Permanent Deletion
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Edit Organization Modal (Req 4) */}
       <Modal

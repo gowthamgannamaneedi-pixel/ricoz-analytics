@@ -41,6 +41,7 @@ import {
   Check,
   Copy,
   FileText,
+  FileSpreadsheet,
   PieChart,
   Bell,
   ArrowUpRight,
@@ -673,25 +674,18 @@ export default function AIInsightsPage() {
         </div>
 
         <div className="space-y-4">
-          <div className="flex items-start sm:items-center gap-3.5">
-            {/* Glowing Rose Sparkle Icon Badge */}
-            <div className="h-12 w-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-rose-500/20">
-              <Sparkles className="h-6 w-6 text-white" />
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
+                AI Insights
+              </h1>
+              <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Admin'}
+              </span>
             </div>
-
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-sans">
-                  AI Insights
-                </h1>
-                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                  {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Admin'}
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5 leading-relaxed font-normal">
-                Discover actionable insights from your business data. AI analyzes your data to identify trends, opportunities, anomalies, and risks.
-              </p>
-            </div>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 leading-relaxed font-normal">
+              Discover actionable insights from your business data. AI analyzes your data to identify trends, opportunities, anomalies, and risks.
+            </p>
           </div>
 
           {/* Action row below description: Generate Insights on left, Toolbar on right */}
@@ -724,40 +718,56 @@ export default function AIInsightsPage() {
                 ))}
               </Select>
 
-              {/* Export Dropdown */}
+              {/* Export Dropdown — Shared Enterprise Dropdown Standard (Handoff Page 10) */}
               <div className="relative" ref={exportMenuRef}>
                 <button
+                  type="button"
+                  id="ai-insights-export-btn"
                   onClick={() => setExportMenuOpen(prev => !prev)}
                   disabled={exporting}
-                  className="h-10 px-3.5 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-400 flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                  className="h-10 px-3.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-xs sm:text-sm font-semibold text-slate-700 dark:text-[#CBD5E1] shadow-2xs hover:bg-slate-50 dark:hover:bg-[#1E293B]/80 hover:border-slate-300 dark:hover:border-slate-600 hover:text-rose-600 dark:hover:text-[#FB7185] flex items-center gap-2 transition cursor-pointer disabled:opacity-50 select-none"
+                  aria-expanded={exportMenuOpen}
+                  aria-haspopup="true"
                 >
-                  <FileDown className="w-4 h-4 text-slate-600" />
+                  <FileDown className="w-4 h-4 text-slate-500 dark:text-[#94A3B8]" />
                   <span>Export</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 dark:text-[#94A3B8] transition-transform duration-150 ${exportMenuOpen ? 'rotate-180 text-rose-600 dark:text-[#FB7185]' : ''}`} />
                 </button>
 
                 {exportMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl z-50 text-xs animate-in fade-in duration-150">
+                  <div className="absolute right-0 mt-2 w-52 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] p-1.5 shadow-xl z-50 text-xs animate-in fade-in slide-in-from-top-2 duration-150 font-sans">
                     <button
+                      type="button"
                       onClick={() => handleExport('pdf')}
-                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 hover:bg-rose-50 hover:text-rose-700 font-medium transition cursor-pointer"
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 dark:text-[#CBD5E1] hover:bg-rose-50 dark:hover:bg-[#2B0B1B] hover:text-[#D91542] dark:hover:text-[#FB7185] font-medium transition cursor-pointer"
                     >
-                      <span>PDF</span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">PDF</span>
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-rose-500 dark:text-[#FB7185]" />
+                        <span>PDF Document</span>
+                      </div>
+                      <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1]">PDF</span>
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleExport('excel')}
-                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 hover:bg-rose-50 hover:text-rose-700 font-medium transition cursor-pointer"
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 dark:text-[#CBD5E1] hover:bg-rose-50 dark:hover:bg-[#2B0B1B] hover:text-[#D91542] dark:hover:text-[#FB7185] font-medium transition cursor-pointer"
                     >
-                      <span>Excel Sheet</span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">XLSX</span>
+                      <div className="flex items-center gap-2">
+                        <FileSpreadsheet className="h-4 w-4 text-rose-500 dark:text-[#FB7185]" />
+                        <span>Excel Sheet</span>
+                      </div>
+                      <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1]">XLSX</span>
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleExport('csv')}
-                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 hover:bg-rose-50 hover:text-rose-700 font-medium transition cursor-pointer"
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 dark:text-[#CBD5E1] hover:bg-rose-50 dark:hover:bg-[#2B0B1B] hover:text-[#D91542] dark:hover:text-[#FB7185] font-medium transition cursor-pointer"
                     >
-                      <span>CSV</span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">CSV</span>
+                      <div className="flex items-center gap-2">
+                        <FileDown className="h-4 w-4 text-rose-500 dark:text-[#FB7185]" />
+                        <span>CSV Export</span>
+                      </div>
+                      <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1]">CSV</span>
                     </button>
                   </div>
                 )}
@@ -1216,8 +1226,10 @@ export default function AIInsightsPage() {
                 <div className="px-5 pb-5 pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
                   {/* Button 1: View Details */}
                   <button
+                    type="button"
                     onClick={() => setSelectedInsightForDetails(ins)}
-                    className="h-8 px-2.5 rounded-lg border border-rose-200 bg-rose-50/60 text-rose-700 text-xs font-semibold hover:bg-rose-100 flex items-center gap-1 transition cursor-pointer"
+                    className="rz-btn-view-details"
+                    title="View insight details"
                   >
                     <span>View Details</span>
                     <ArrowRight className="w-3 h-3" />

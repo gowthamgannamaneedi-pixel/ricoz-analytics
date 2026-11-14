@@ -68,12 +68,13 @@ function createCorsHandler() {
 
     const isVercelDomain = origin && /^https:\/\/[a-zA-Z0-9_.-]+\.vercel\.app$/.test(origin);
     const isRicozDomain = origin && /^https:\/\/(?:[a-zA-Z0-9_.-]+\.)?ricoz\.(?:in|com)$/.test(origin);
+    const isCapacitorNative = origin && (origin === 'https://localhost' || origin === 'capacitor://localhost' || origin === 'http://localhost');
 
     let isAllowed = false;
     if (!origin) {
       // Same-origin or server-to-server request
       isAllowed = true;
-    } else if (allowedOrigins.includes(origin) || isVercelDomain || isRicozDomain) {
+    } else if (allowedOrigins.includes(origin) || isVercelDomain || isRicozDomain || isCapacitorNative) {
       isAllowed = true;
     } else if (isDevOrTest && (defaultDevOrigins.includes(origin) || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
       isAllowed = true;

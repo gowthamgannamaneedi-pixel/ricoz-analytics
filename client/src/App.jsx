@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './layouts/DashboardLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoadingSpinner from './components/LoadingSpinner';
+import NativeMobileBridge from './components/NativeMobileBridge';
 
 // Route-level code splitting with React.lazy
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -30,6 +31,8 @@ const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'));
 const AcceptInvitePage = lazy(() => import('./pages/AcceptInvitePage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
+const DeleteAccountPage = lazy(() => import('./pages/DeleteAccountPage'));
 
 /**
  * Main Application Routing Component with Authentication Guards & Error Boundary
@@ -40,7 +43,8 @@ export default function App() {
       <ThemeProvider>
         <AuthProvider>
           <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <Suspense fallback={<LoadingSpinner size="lg" text="Loading RicozAnalytics..." className="min-h-screen" />}>
+            <NativeMobileBridge />
+            <Suspense fallback={<LoadingSpinner size="lg" text="Loading RicozAnalytics..." className="min-h-screen" />}>
             <Routes>
               {/* Public Authentication Routes */}
               <Route path="/login" element={<LoginPage />} />
@@ -55,6 +59,11 @@ export default function App() {
               <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+              
+              {/* Public Compliance & Privacy Routes (Google Play Requirement) */}
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
+              <Route path="/delete-account" element={<DeleteAccountPage />} />
+
               <Route path="/" element={<LandingPage />} />
 
               {/* Protected Application Routes */}

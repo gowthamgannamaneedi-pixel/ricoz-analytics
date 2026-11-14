@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account Deletion Request | RicozAnalytics</title>
+  <meta name="description" content="Submit a formal request to permanently delete your RicozAnalytics account and associated workspace data in accordance with Google Play and GDPR policies." />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0B0F19;
+      --card-bg: #111827;
+      --border: #1E293B;
+      --text: #E2E8F0;
+      --text-muted: #94A3B8;
+      --heading: #FFFFFF;
+      --primary: #E11D48;
+      --primary-hover: #BE123C;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 800;
+      font-size: 1.15rem;
+    }
+    .logo-badge {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 0.5rem;
+      background: linear-gradient(135deg, #E11D48, #BE123C);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 900;
+    }
+    .header-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-left: 1.25rem;
+    }
+    .header-links a:hover { color: #fff; }
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 5rem 1.5rem;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      background: rgba(225, 29, 72, 0.15);
+      border: 1px solid rgba(225, 29, 72, 0.3);
+      color: #FB7185;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--heading);
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
+    }
+    .lead {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+    .notice-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      font-size: 0.85rem;
+    }
+    .notice-card h3 {
+      font-size: 0.95rem;
+      color: #fff;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .notice-card ul {
+      margin-left: 1.25rem;
+      color: var(--text-muted);
+    }
+    .notice-card li { margin-bottom: 0.35rem; }
+    .form-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 2rem;
+    }
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    label {
+      display: block;
+      font-size: 0.825rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+    input[type="text"], input[type="email"], select {
+      width: 100%;
+      height: 2.75rem;
+      padding: 0 0.875rem;
+      border-radius: 0.6rem;
+      border: 1px solid var(--border);
+      background: #0F172A;
+      color: #fff;
+      font-size: 0.875rem;
+      outline: none;
+      font-family: inherit;
+    }
+    input:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.2);
+    }
+    .scope-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .scope-opt {
+      padding: 0.75rem;
+      border-radius: 0.6rem;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .scope-opt.selected {
+      border-color: var(--primary);
+      background: rgba(225, 29, 72, 0.1);
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .checkbox-label input { margin-top: 0.2rem; }
+    .btn-submit {
+      width: 100%;
+      height: 2.75rem;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 0.6rem;
+      font-size: 0.875rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: background 0.15s ease;
+    }
+    .btn-submit:hover { background: var(--primary-hover); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .alert {
+      padding: 0.875rem;
+      border-radius: 0.6rem;
+      font-size: 0.825rem;
+      margin-bottom: 1.25rem;
+    }
+    .alert-error {
+      background: rgba(225, 29, 72, 0.15);
+      border: 1px solid rgba(225, 29, 72, 0.4);
+      color: #FB7185;
+    }
+    .alert-success {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34D399;
+    }
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 1.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    footer a { color: var(--text-muted); text-decoration: underline; }
+    footer a:hover { color: #fff; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="/" class="logo-container">
+      <div class="logo-badge">R</div>
+      <span>RicozAnalytics</span>
+    </a>
+    <div class="header-links">
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/login">Sign In</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="badge">Google Play & GDPR Compliance</div>
+    <h1>Account Deletion Portal</h1>
+    <p class="lead">
+      Submit a formal, verified request to permanently delete your RicozAnalytics user account, credentials, and uploaded datasets.
+    </p>
+
+    <div class="notice-card">
+      <h3>⏱️ Deletion Handling & Statutory Retention Notice</h3>
+      <ul>
+        <li><strong>Handling Time:</strong> Requests verified via email OTP are processed immediately or within 24–72 hours.</li>
+        <li><strong>What is Purged:</strong> Credentials, active sessions, preferences, team chats, and analytical datasets.</li>
+        <li><strong>Statutory Retention Exception:</strong> Financial invoices and transaction tax records are retained in anonymized format for statutory corporate compliance (up to 7 years) under applicable tax law before permanent destruction.</li>
+      </ul>
+    </div>
+
+    <div id="alertBox"></div>
+
+    <!-- Step 1 Container -->
+    <div id="step1" class="form-card">
+      <h2 style="font-size:1.05rem;font-weight:700;color:#fff;margin-bottom:1.25rem;">Step 1: Enter Verification Details</h2>
+      
+      <div class="form-group">
+        <label>Corporate Email Address *</label>
+        <input type="email" id="inputEmail" placeholder="e.g. user@company.com" required />
+      </div>
+
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" id="inputName" placeholder="e.g. Gowtham G" required />
+      </div>
+
+      <div class="form-group">
+        <label>Organization / Workspace Name (Optional)</label>
+        <input type="text" id="inputOrg" placeholder="e.g. Acme Corporation" />
+      </div>
+
+      <div class="form-group">
+        <label>Deletion Scope *</label>
+        <div class="scope-grid">
+          <div id="scopeUser" class="scope-opt selected" onclick="setScope('user_account')">
+            <strong>Individual Account Only</strong>
+            <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;">Purges your profile and personal preferences. Workspace datasets remain for teammates.</p>
+          </div>
+          <div id="scopeWorkspace" class="scope-opt" onclick="setScope('full_workspace')">
+            <strong>Full Workspace & Datasets</strong>
+            <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;">(Owner only) Permanently purges all connected datasets, reports, dashboards, and accounts.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Reason for Deletion (Optional)</label>
+        <select id="selectReason">
+          <option value="no_longer_needed">No longer require data intelligence services</option>
+          <option value="switching_platform">Migrating to alternative data warehouse/BI tool</option>
+          <option value="completed_trial">Completed evaluation / trial period</option>
+          <option value="privacy_preference">Company privacy & data minimization policy</option>
+          <option value="other">Other business reason</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="checkConfirm" />
+          <span>I understand that this action permanently deletes my credentials and datasets. Once confirmed via email OTP, this action cannot be undone.</span>
+        </label>
+      </div>
+
+      <button type="button" id="btnRequest" class="btn-submit" onclick="submitRequest()">
+        Send 6-Digit Verification Code
+      </button>
+    </div>
+
+    <!-- Step 2 Container -->
+    <div id="step2" class="form-card" style="display:none;">
+      <h2 style="font-size:1.05rem;font-weight:700;color:#fff;margin-bottom:1rem;">Step 2: Enter 6-Digit Verification Code</h2>
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.25rem;">
+        We dispatched a 6-digit confirmation code to <strong id="sentEmailLabel" style="color:#fff;"></strong>. Enter it below to authorize permanent deletion.
+      </p>
+
+      <div class="form-group">
+        <label>6-Digit Verification Code *</label>
+        <input type="text" id="inputOtp" maxlength="6" style="text-align:center;letter-spacing:6px;font-size:1.5rem;font-family:monospace;max-width:240px;" placeholder="123456" />
+      </div>
+
+      <button type="button" id="btnConfirm" class="btn-submit" onclick="submitConfirm()">
+        Confirm & Permanently Delete Account
+      </button>
+
+      <div style="margin-top:1rem;text-align:center;">
+        <a href="#" onclick="backToStep1()" style="color:var(--text-muted);font-size:0.8rem;text-decoration:underline;">← Edit email address</a>
+      </div>
+    </div>
+
+    <!-- Step 3 Container -->
+    <div id="step3" class="form-card" style="display:none;text-align:center;padding:3rem 2rem;">
+      <div style="font-size:3rem;margin-bottom:1rem;">✅</div>
+      <h2 style="font-size:1.5rem;color:#fff;margin-bottom:0.75rem;">Account Deletion Successfully Executed</h2>
+      <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:1.5rem;">
+        Your credentials and personal workspace data have been permanently purged. A compliance confirmation email has been dispatched.
+      </p>
+      <div style="background:#0F172A;border:1px solid var(--border);border-radius:0.5rem;padding:1rem;font-family:monospace;font-size:0.8rem;text-align:left;max-width:400px;margin:0 auto 1.5rem auto;">
+        <div>Reference: <span id="resRef" style="color:#fff;"></span></div>
+        <div>Completed: <span id="resTime" style="color:#fff;"></span></div>
+        <div style="color:#34D399;margin-top:0.5rem;">Status: PURGED / SESSION REVOKED</div>
+      </div>
+      <a href="/" style="display:inline-block;padding:0.6rem 1.5rem;background:#fff;color:#0F172A;text-decoration:none;border-radius:0.5rem;font-weight:700;font-size:0.85rem;">
+        Return to Homepage
+      </a>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2026 Ricoz Digital Innovations Pvt Ltd. · <a href="/privacy">Privacy Policy</a> · <a href="mailto:contact@ricoz.in">contact@ricoz.in</a></p>
+  </footer>
+
+  <script>
+    const API_URL = 'https://ricoz-analytics.onrender.com/api';
+    let currentScope = 'user_account';
+    let requestReferenceId = '';
+    let requestToken = '';
+
+    function setScope(scope) {
+      currentScope = scope;
+      document.getElementById('scopeUser').classList.toggle('selected', scope === 'user_account');
+      document.getElementById('scopeWorkspace').classList.toggle('selected', scope === 'full_workspace');
+    }
+
+    function showAlert(type, msg) {
+      const box = document.getElementById('alertBox');
+      box.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+    }
+
+    function clearAlert() {
+      document.getElementById('alertBox').innerHTML = '';
+    }
+
+    async function submitRequest() {
+      clearAlert();
+      const email = document.getElementById('inputEmail').value.trim();
+      const name = document.getElementById('inputName').value.trim();
+      const org = document.getElementById('inputOrg').value.trim();
+      const reason = document.getElementById('selectReason').value;
+      const confirmed = document.getElementById('checkConfirm').checked;
+
+      if (!email || !email.includes('@')) {
+        showAlert('error', 'Please provide a valid corporate email address.');
+        return;
+      }
+      if (!name) {
+        showAlert('error', 'Please provide your full name.');
+        return;
+      }
+      if (!confirmed) {
+        showAlert('error', 'Please confirm that you understand the permanent nature of account deletion.');
+        return;
+      }
+
+      const btn = document.getElementById('btnRequest');
+      btn.disabled = true;
+      btn.innerText = 'Dispatching Verification Code...';
+
+      try {
+        const res = await fetch(`${API_URL}/auth/request-deletion`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, name, organization: org, scope: currentScope, reason })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Failed to submit request.');
+        }
+
+        requestReferenceId = data.referenceId || '';
+        requestToken = data.token || '';
+        document.getElementById('sentEmailLabel').innerText = email;
+        document.getElementById('step1').style.display = 'none';
+        document.getElementById('step2').style.display = 'block';
+        showAlert('success', data.message || 'Verification code dispatched to your email.');
+      } catch (e) {
+        showAlert('error', e.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Send 6-Digit Verification Code';
+      }
+    }
+
+    async function submitConfirm() {
+      clearAlert();
+      const email = document.getElementById('inputEmail').value.trim();
+      const otp = document.getElementById('inputOtp').value.trim();
+
+      if (!otp || otp.length < 6) {
+        showAlert('error', 'Please enter the complete 6-digit verification code.');
+        return;
+      }
+
+      const btn = document.getElementById('btnConfirm');
+      btn.disabled = true;
+      btn.innerText = 'Verifying Deletion...';
+
+      try {
+        const res = await fetch(`${API_URL}/auth/confirm-deletion`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, otp, token: requestToken, referenceId: requestReferenceId })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Invalid or expired verification code.');
+        }
+
+        document.getElementById('resRef').innerText = data.referenceId || requestReferenceId || 'DEL-CONFIRMED';
+        document.getElementById('resTime').innerText = new Date().toUTCString();
+        document.getElementById('step2').style.display = 'none';
+        document.getElementById('step3').style.display = 'block';
+      } catch (e) {
+        showAlert('error', e.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Confirm & Permanently Delete Account';
+      }
+    }
+
+    function backToStep1() {
+      clearAlert();
+      document.getElementById('step2').style.display = 'none';
+      document.getElementById('step1').style.display = 'block';
+    }
+
+    // Check query params on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      const p = new URLSearchParams(window.location.search);
+      const qEmail = p.get('email');
+      const qOtp = p.get('otp');
+      const qToken = p.get('token');
+      if (qEmail) document.getElementById('inputEmail').value = qEmail;
+      if (qOtp || qToken) {
+        requestToken = qToken || '';
+        if (qOtp) document.getElementById('inputOtp').value = qOtp;
+        document.getElementById('sentEmailLabel').innerText = qEmail || 'your email';
+        document.getElementById('step1').style.display = 'none';
+        document.getElementById('step2').style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

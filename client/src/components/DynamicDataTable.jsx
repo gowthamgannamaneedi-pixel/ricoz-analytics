@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { downloadFileFromBlob } from '../utils/fileDownloader';
 import {
   ChevronUp,
   ChevronDown,
@@ -75,13 +76,7 @@ export default function DynamicDataTable({
     ];
 
     const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `${datasetName}_filtered_page_${page}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadFileFromBlob(blob, `${datasetName}_filtered_page_${page}.csv`);
   };
 
   const formatColumnName = (name) => {

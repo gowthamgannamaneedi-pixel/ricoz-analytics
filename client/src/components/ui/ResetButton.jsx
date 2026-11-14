@@ -39,10 +39,10 @@ export function ResetButton({
       title={title}
       className={[
         'inline-flex items-center justify-center font-semibold select-none',
-        'border border-rose-200 dark:border-rose-900/60',
-        'bg-[#FFF1F3] dark:bg-rose-950/40 text-[#D91542] dark:text-rose-300',
-        'hover:bg-rose-100/90 dark:hover:bg-rose-900/50 hover:border-rose-300 dark:hover:border-rose-700 hover:text-[#B91036]',
-        'active:bg-rose-200/80 dark:active:bg-rose-900/80',
+        'border border-rose-200 dark:border-[#BE123C]',
+        'bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185]',
+        'hover:bg-rose-100/90 dark:hover:bg-[#3D1026] hover:border-rose-300 dark:hover:border-[#E11D48] hover:text-[#B91036] dark:hover:text-[#FDA4AF]',
+        'active:bg-rose-200/80 dark:active:bg-[#1F0713]',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2',
         'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
         'transition-all duration-150 cursor-pointer shadow-2xs',

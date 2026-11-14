@@ -348,8 +348,8 @@ export default function DatasetsPage() {
             <span className="text-base sm:text-[17px] lg:text-lg font-semibold tracking-tight uppercase text-slate-900 dark:text-[#F8FAFC] block">
               Total Datasets
             </span>
-            <div className="p-2 rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
-              <Database className="h-4 w-4" />
+            <div className="p-2 rounded-xl bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#BE123C] shadow-2xs">
+              <Database className="h-4 w-4" strokeWidth={1.8} />
             </div>
           </div>
           <div className="mt-3">
@@ -368,8 +368,8 @@ export default function DatasetsPage() {
             <span className="text-base sm:text-[17px] lg:text-lg font-semibold tracking-tight uppercase text-slate-900 dark:text-[#F8FAFC] block">
               Total Record Volume
             </span>
-            <div className="p-2 rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
-              <CheckCircle2 className="h-4 w-4" />
+            <div className="p-2 rounded-xl bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#BE123C] shadow-2xs">
+              <CheckCircle2 className="h-4 w-4" strokeWidth={1.8} />
             </div>
           </div>
           <div className="mt-3">
@@ -388,8 +388,8 @@ export default function DatasetsPage() {
             <span className="text-base sm:text-[17px] lg:text-lg font-semibold tracking-tight uppercase text-slate-900 dark:text-[#F8FAFC] block">
               Tracked Columns
             </span>
-            <div className="p-2 rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
-              <LayoutGrid className="h-4 w-4" />
+            <div className="p-2 rounded-xl bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#BE123C] shadow-2xs">
+              <LayoutGrid className="h-4 w-4" strokeWidth={1.8} />
             </div>
           </div>
           <div className="mt-3">

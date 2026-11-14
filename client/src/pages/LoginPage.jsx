@@ -306,6 +306,17 @@ export default function LoginPage() {
         <p className="mt-6 text-center font-mono text-[11px] text-slate-400 dark:text-slate-500">
           TLS 1.3 End-to-End Encrypted Session · Standalone Production Auth
         </p>
+
+        {/* Compliance & Privacy Links (Google Play Requirement) */}
+        <div className="mt-4 flex items-center justify-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+          <Link to="/privacy" className="hover:text-rose-600 dark:hover:text-rose-400 transition underline underline-offset-2">
+            Privacy Policy
+          </Link>
+          <span>•</span>
+          <Link to="/delete-account" className="hover:text-rose-600 dark:hover:text-rose-400 transition underline underline-offset-2">
+            Account Deletion
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -15,6 +15,16 @@ coverage/
 *.cert
 *.pfx
 *.p12
+*.jks
+*.keystore
+
+# Android build outputs & release bundles
+*.apk
+*.aab
+
+# Test outputs & QA results
+test-output/
+stage4-qa-results.json
 
 # Logs
 logs
@@ -60,3 +70,6 @@ env/
 venv/
 ENV/
 .pytest_cache/
+
+# Database backups
+backups/

@@ -49,6 +49,7 @@ import {
   deleteDataQualityRule,
   exportDataQuality
 } from '../services/api';
+import { downloadFileFromBlob } from '../utils/fileDownloader';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
 import { ResetButton } from '../components/ui/ResetButton';
@@ -66,10 +67,11 @@ function QualityHealthGauge({ score = null, size = 130, strokeWidth = 11, evalua
   const clampedScore = isPending ? 0 : Math.max(0, Math.min(100, Number(score) || 0));
   const strokeDashoffset = circumference - (clampedScore / 100) * circumference;
 
-  let strokeColor = '#059669'; // emerald-600
+  let strokeColor = '#E11D48'; // rose-600 red-family
   if (isPending) strokeColor = '#cbd5e1';
-  else if (clampedScore < 70) strokeColor = '#e11d48'; // rose-600
-  else if (clampedScore < 85) strokeColor = '#d97706'; // amber-600
+  else if (clampedScore < 70) strokeColor = '#BE123C'; // deep red
+  else if (clampedScore < 85) strokeColor = '#E11D48'; // rose-600
+  else strokeColor = '#FB7185'; // bright red-family accent
 
   return (
     <div className="relative flex items-center justify-center shrink-0" style={{ width: size, height: size }}>
@@ -374,15 +376,8 @@ export default function DataQualityPage() {
     try {
       showToast(`Generating ${format.toUpperCase()} export...`);
       const { blob, filename } = await exportDataQuality(selectedDatasetId, format);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-      showToast(`Downloaded: ${filename}`);
+      await downloadFileFromBlob(blob, filename);
+      showToast(`Exported: ${filename}`);
     } catch (err) {
       console.error('Export failed:', err);
       alert(err.message || 'Failed to export data quality report');
@@ -575,7 +570,7 @@ export default function DataQualityPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans">
+    <div className="space-y-6 pb-12 font-sans">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-900 text-white text-xs shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
@@ -903,8 +898,8 @@ export default function DataQualityPage() {
               <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-400 dark:hover:border-rose-500 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
-                      <Droplet className="h-5 w-5" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#BE123C] shadow-2xs">
+                      <Droplet className="h-5 w-5" strokeWidth={1.8} />
                     </div>
                     <span className="text-[10px] font-semibold font-mono text-slate-500 dark:text-[#94A3B8]">Weight: 25%</span>
                   </div>
@@ -912,10 +907,10 @@ export default function DataQualityPage() {
                   <div className="text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] font-sans mt-1">
                     {evaluating && !dimensions.completeness ? '—' : (dimensions.completeness?.score != null ? `${dimensions.completeness.score}%` : '0%')}
                   </div>
-                  {/* Progress Bar */}
+                  {/* Progress Bar (Red-family palette) */}
                   <div className="w-full bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 mt-2.5 overflow-hidden">
                     <div
-                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.completeness ? 'bg-slate-300 dark:bg-slate-600 animate-pulse' : 'bg-blue-600'}`}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.completeness ? 'bg-slate-300 dark:bg-slate-600 animate-pulse' : 'bg-rose-600 dark:bg-[#E11D48]'}`}
                       style={{ width: evaluating && !dimensions.completeness ? '0%' : `${dimensions.completeness?.score ?? 0}%` }}
                     />
                   </div>
@@ -929,7 +924,7 @@ export default function DataQualityPage() {
               <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-400 dark:hover:border-rose-500 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#BE123C] shadow-2xs">
                       <Check className="h-5 w-5 stroke-[2.5]" />
                     </div>
                     <span className="text-[10px] font-semibold font-mono text-slate-500 dark:text-[#94A3B8]">Weight: 25%</span>
@@ -938,10 +933,10 @@ export default function DataQualityPage() {
                   <div className="text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] font-sans mt-1">
                     {evaluating && !dimensions.validity ? '—' : (dimensions.validity?.score != null ? `${dimensions.validity.score}%` : '0%')}
                   </div>
-                  {/* Progress Bar */}
+                  {/* Progress Bar (Red-family palette) */}
                   <div className="w-full bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 mt-2.5 overflow-hidden">
                     <div
-                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.validity ? 'bg-slate-300 dark:bg-slate-600 animate-pulse' : 'bg-emerald-500'}`}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.validity ? 'bg-slate-300 dark:bg-slate-600 animate-pulse' : 'bg-rose-600 dark:bg-[#E11D48]'}`}
                       style={{ width: evaluating && !dimensions.validity ? '0%' : `${dimensions.validity?.score ?? 0}%` }}
                     />
                   </div>
@@ -955,8 +950,8 @@ export default function DataQualityPage() {
               <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-400 dark:hover:border-rose-500 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
-                      <Layers className="h-5 w-5" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#BE123C] shadow-2xs">
+                      <Layers className="h-5 w-5" strokeWidth={1.8} />
                     </div>
                     <span className="text-[10px] font-semibold font-mono text-slate-500 dark:text-[#94A3B8]">Weight: 20%</span>
                   </div>
@@ -964,10 +959,10 @@ export default function DataQualityPage() {
                   <div className="text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] font-sans mt-1">
                     {evaluating && !dimensions.uniqueness ? '—' : (dimensions.uniqueness?.score != null ? `${dimensions.uniqueness.score}%` : '0%')}
                   </div>
-                  {/* Progress Bar */}
+                  {/* Progress Bar (Red-family palette) */}
                   <div className="w-full bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 mt-2.5 overflow-hidden">
                     <div
-                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.uniqueness ? 'bg-slate-300 dark:bg-slate-600 animate-pulse' : 'bg-purple-600'}`}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.uniqueness ? 'bg-slate-300 dark:bg-slate-600 animate-pulse' : 'bg-rose-600 dark:bg-[#E11D48]'}`}
                       style={{ width: evaluating && !dimensions.uniqueness ? '0%' : `${dimensions.uniqueness?.score ?? 0}%` }}
                     />
                   </div>
@@ -981,8 +976,8 @@ export default function DataQualityPage() {
               <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-400 dark:hover:border-rose-500 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
-                      <Link2 className="h-5 w-5" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#BE123C] shadow-2xs">
+                      <Link2 className="h-5 w-5" strokeWidth={1.8} />
                     </div>
                     <span className="text-[10px] font-semibold font-mono text-slate-500 dark:text-[#94A3B8]">Weight: 20%</span>
                   </div>
@@ -990,10 +985,10 @@ export default function DataQualityPage() {
                   <div className="text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] font-sans mt-1">
                     {evaluating && !dimensions.consistency ? '—' : (dimensions.consistency?.score != null ? `${dimensions.consistency.score}%` : '0%')}
                   </div>
-                  {/* Progress Bar */}
+                  {/* Progress Bar (Red-family palette) */}
                   <div className="w-full bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 mt-2.5 overflow-hidden">
                     <div
-                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.consistency ? 'bg-slate-300 dark:bg-slate-600 animate-pulse' : 'bg-teal-500'}`}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.consistency ? 'bg-slate-300 dark:bg-slate-600 animate-pulse' : 'bg-rose-600 dark:bg-[#E11D48]'}`}
                       style={{ width: evaluating && !dimensions.consistency ? '0%' : `${dimensions.consistency?.score ?? 0}%` }}
                     />
                   </div>
@@ -1011,8 +1006,8 @@ export default function DataQualityPage() {
               <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-400 dark:hover:border-rose-500 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
-                      <Clock className="h-5 w-5" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#BE123C] shadow-2xs">
+                      <Clock className="h-5 w-5" strokeWidth={1.8} />
                     </div>
                     <span className="text-[10px] font-semibold font-mono text-slate-500 dark:text-[#94A3B8]">Weight: 10%</span>
                   </div>
@@ -1020,10 +1015,10 @@ export default function DataQualityPage() {
                   <div className="text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] font-sans mt-1">
                     {evaluating && !dimensions.freshness ? '—' : (dimensions.freshness?.score != null ? `${dimensions.freshness.score}%` : '0%')}
                   </div>
-                  {/* Progress Bar */}
+                  {/* Progress Bar (Red-family palette) */}
                   <div className="w-full bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 mt-2.5 overflow-hidden">
                     <div
-                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.freshness ? 'bg-slate-300 dark:bg-slate-600 animate-pulse' : 'bg-amber-500'}`}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${evaluating && !dimensions.freshness ? 'bg-slate-300 dark:bg-slate-600 animate-pulse' : 'bg-rose-600 dark:bg-[#E11D48]'}`}
                       style={{ width: evaluating && !dimensions.freshness ? '0%' : `${dimensions.freshness?.score ?? 0}%` }}
                     />
                   </div>
@@ -1037,8 +1032,8 @@ export default function DataQualityPage() {
               <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 min-h-[160px] shadow-2xs hover:border-rose-400 dark:hover:border-rose-500 hover:shadow-xs transition-all flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
-                      <GitBranch className="h-5 w-5" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#BE123C] shadow-2xs">
+                      <GitBranch className="h-5 w-5" strokeWidth={1.8} />
                     </div>
                     <span className="text-[10px] font-bold font-mono text-slate-400 dark:text-[#94A3B8] uppercase">Volume</span>
                   </div>
@@ -1046,13 +1041,13 @@ export default function DataQualityPage() {
                   <div className="text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] font-sans mt-1">
                     {evaluating && !qualityProfile ? '—' : (qualityProfile?.column_count ?? columnMetrics?.length ?? 0)}
                   </div>
-                  {/* Progress Bar */}
+                  {/* Progress Bar (Red-family palette) */}
                   <div className="w-full bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 mt-2.5 overflow-hidden">
-                    <div className="bg-indigo-600 h-1.5 rounded-full" style={{ width: '100%' }} />
+                    <div className="bg-rose-600 dark:bg-[#E11D48] h-1.5 rounded-full" style={{ width: '100%' }} />
                   </div>
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-3 pt-2 border-t border-slate-50 dark:border-[#334155]/60">
-                  {qualityProfile.column_count || columnMetrics.length || 0} dimensions tracked
+                  {qualityProfile?.column_count || columnMetrics?.length || 0} dimensions tracked
                 </div>
               </div>
             </div>
@@ -1274,14 +1269,12 @@ export default function DataQualityPage() {
                             </td>
                             <td className="px-4 py-3.5">
                               <div className="flex items-center gap-2.5">
-                                <span className="font-mono font-bold text-slate-800 w-11">
+                                <span className="font-mono font-bold text-slate-800 dark:text-[#F8FAFC] w-11">
                                   {col.completeness_pct}%
                                 </span>
-                                <div className="w-20 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                <div className="w-20 bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 overflow-hidden">
                                   <div
-                                    className={`h-1.5 rounded-full ${
-                                      col.completeness_pct >= 95 ? 'bg-emerald-500' : 'bg-amber-500'
-                                    }`}
+                                    className="h-1.5 rounded-full bg-rose-600 dark:bg-[#E11D48] transition-all"
                                     style={{ width: `${col.completeness_pct}%` }}
                                   />
                                 </div>
@@ -1289,14 +1282,12 @@ export default function DataQualityPage() {
                             </td>
                             <td className="px-4 py-3.5">
                               <div className="flex items-center gap-2.5">
-                                <span className="font-mono font-bold text-slate-800 w-11">
+                                <span className="font-mono font-bold text-slate-800 dark:text-[#F8FAFC] w-11">
                                   {col.validity_pct}%
                                 </span>
-                                <div className="w-20 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                <div className="w-20 bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 overflow-hidden">
                                   <div
-                                    className={`h-1.5 rounded-full ${
-                                      col.validity_pct >= 95 ? 'bg-emerald-500' : 'bg-rose-500'
-                                    }`}
+                                    className="h-1.5 rounded-full bg-rose-600 dark:bg-[#E11D48] transition-all"
                                     style={{ width: `${col.validity_pct}%` }}
                                   />
                                 </div>
@@ -1304,12 +1295,12 @@ export default function DataQualityPage() {
                             </td>
                             <td className="px-4 py-3.5">
                               <div className="flex items-center gap-2.5">
-                                <span className="font-mono font-bold text-slate-800 w-11">
+                                <span className="font-mono font-bold text-slate-800 dark:text-[#F8FAFC] w-11">
                                   {col.uniqueness_pct}%
                                 </span>
-                                <div className="w-20 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                <div className="w-20 bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 overflow-hidden">
                                   <div
-                                    className="bg-purple-500 h-1.5 rounded-full"
+                                    className="h-1.5 rounded-full bg-rose-600 dark:bg-[#E11D48] transition-all"
                                     style={{ width: `${col.uniqueness_pct}%` }}
                                   />
                                 </div>
@@ -1317,12 +1308,12 @@ export default function DataQualityPage() {
                             </td>
                             <td className="px-4 py-3.5">
                               {col.is_candidate_pk ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200/90 text-[10px] font-bold">
-                                  <Key className="h-3 w-3 text-amber-500" />
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-[#2B0B1B] text-rose-700 dark:text-[#FB7185] border border-rose-200/90 dark:border-[#BE123C] text-[10px] font-bold">
+                                  <Key className="h-3 w-3 text-rose-600 dark:text-[#FB7185]" />
                                   <span>Primary Key</span>
                                 </span>
                               ) : (
-                                <span className="text-slate-300 font-mono">—</span>
+                                <span className="text-slate-300 dark:text-slate-600 font-mono">—</span>
                               )}
                             </td>
                             <td className="px-4 py-3.5 text-right relative">

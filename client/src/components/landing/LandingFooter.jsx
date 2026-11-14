@@ -167,6 +167,18 @@ export default function LandingFooter() {
                 <a href="#security" className="hover:text-white transition">Security Architecture</a>
               </li>
               <li>
+                <Link to="/privacy" className="hover:text-white transition flex items-center gap-1">
+                  <span>Privacy Policy</span>
+                  <ArrowRight size={11} />
+                </Link>
+              </li>
+              <li>
+                <Link to="/delete-account" className="hover:text-white transition flex items-center gap-1">
+                  <span>Account Deletion</span>
+                  <ArrowRight size={11} />
+                </Link>
+              </li>
+              <li>
                 <a 
                   href="https://ricoz.in/franchise" 
                   target="_blank" 
@@ -194,9 +206,20 @@ export default function LandingFooter() {
 
         {/* Bottom Sub-Footer Bar */}
         <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          {/* Copyright */}
-          <div>
-            © {new Date().getFullYear()} Ricoz Digital Innovations Pvt Ltd. All rights reserved.
+          {/* Copyright & Compliance Links */}
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+            <div>
+              © {new Date().getFullYear()} Ricoz Digital Innovations Pvt Ltd. All rights reserved.
+            </div>
+            <div className="flex items-center gap-3 text-slate-400">
+              <Link to="/privacy" className="hover:text-white transition">
+                Privacy Policy
+              </Link>
+              <span>•</span>
+              <Link to="/delete-account" className="hover:text-white transition">
+                Account Deletion
+              </Link>
+            </div>
           </div>
 
           {/* Operational Status Badge */}

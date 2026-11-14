@@ -2285,6 +2285,177 @@ class EmailService {
       };
     }
   }
+
+  /**
+   * Dispatch 6-digit verification code for Account Deletion Request (Google Play Compliance)
+   */
+  async sendAccountDeletionOtpEmail({ email, name, otp, token, reqUrl }) {
+    const fromEmail = process.env.SMTP_FROM || 'care@ricoz.in';
+    const defaultConfirmPath = `/delete-account?token=${encodeURIComponent(token || '')}&email=${encodeURIComponent(email)}&otp=${encodeURIComponent(otp)}`;
+    const confirmLink = this.sanitizeUrlForProduction(reqUrl, defaultConfirmPath);
+
+    const subject = 'Confirm Account Deletion Request — RicozAnalytics';
+    const htmlContent = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;">
+        <div style="margin-bottom: 24px;">
+          <span style="font-weight: 800; font-size: 20px; color: #0f172a; letter-spacing: -0.5px;">Ricoz<span style="color: #e11d48;">Analytics</span></span>
+          <span style="margin-left: 8px; font-size: 10px; font-weight: 700; background: #ffe4e6; color: #e11d48; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">Security &amp; Compliance</span>
+        </div>
+        <h2 style="color: #0f172a; font-size: 22px; font-weight: 700; margin: 0 0 12px 0;">Account Deletion Verification Code</h2>
+        <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+          Hi ${name || 'User'}, we received a request to permanently delete your RicozAnalytics account and associated workspace data.
+        </p>
+        <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
+          To verify that you initiated this request, please enter the 6-digit verification code below on the confirmation page:
+        </p>
+
+        <div style="text-align: center; margin: 28px 0;">
+          <div style="display: inline-block; background: #fff1f2; border: 2px dashed #e11d48; color: #be123c; font-weight: 800; font-size: 32px; letter-spacing: 6px; padding: 14px 28px; border-radius: 10px; font-family: monospace;">
+            ${otp}
+          </div>
+        </div>
+
+        <div style="text-align: center; margin: 20px 0;">
+          <a href="${confirmLink}" style="display: inline-block; background: #e11d48; color: #ffffff; font-weight: 600; font-size: 14px; padding: 10px 24px; border-radius: 8px; text-decoration: none;">
+            Confirm Deletion in Browser
+          </a>
+        </div>
+
+        <div style="background: #f8fafc; border-left: 4px solid #f59e0b; padding: 12px 16px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+          <p style="color: #b45309; font-size: 12px; margin: 0; line-height: 1.5;">
+            <strong>Important:</strong> This verification code expires in 15 minutes.<br>
+            If you did not request account deletion, please ignore this email or contact support immediately at contact@ricoz.in. No data will be deleted without verification.
+          </p>
+        </div>
+
+        <div style="border-top: 1px solid #f1f5f9; margin-top: 32px; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
+          © ${new Date().getFullYear()} Ricoz Digital Innovations Pvt Ltd · Hyderabad, India
+        </div>
+      </div>
+    `;
+
+    console.log(`[EmailService] ✉️ Account Deletion OTP generated for: ${email}`);
+
+    if (this.isTestOrPlaceholderRecipient(email)) {
+      console.log(`[EmailService] 🧪 Safe Mock: Skipping deletion OTP delivery for test address "${email}" (Code: ${otp})`);
+      return {
+        attempted: true,
+        mocked: true,
+        success: true,
+        recipient: email,
+        provider: 'MockTestService',
+        otp,
+        token
+      };
+    }
+
+    if (this.isBrevo()) {
+      try {
+        const brevoRes = await this._sendViaBrevo({
+          to: [{ email, name: name || 'User' }],
+          subject,
+          htmlContent
+        });
+        return {
+          attempted: true,
+          success: true,
+          provider: 'Brevo',
+          recipient: email,
+          messageId: brevoRes.messageId,
+          otp
+        };
+      } catch (err) {
+        console.warn(`[EmailService] Brevo deletion OTP delivery failed: ${err.message}`);
+      }
+    }
+
+    try {
+      const info = await this.transporter.sendMail({
+        from: `"RicozAnalytics Security" <${fromEmail}>`,
+        to: email,
+        subject,
+        html: htmlContent
+      });
+      return {
+        attempted: true,
+        success: true,
+        recipient: email,
+        messageId: info.messageId,
+        otp
+      };
+    } catch (err) {
+      console.warn(`[EmailService] SMTP deletion OTP delivery failed: ${err.message}`);
+      return {
+        attempted: true,
+        success: false,
+        recipient: email,
+        error: err.message,
+        otp
+      };
+    }
+  }
+
+  /**
+   * Dispatch Deletion Confirmation Notice with reference ID
+   */
+  async sendAccountDeletionConfirmedEmail({ email, name, referenceId, scope }) {
+    const fromEmail = process.env.SMTP_FROM || 'care@ricoz.in';
+    const subject = `Account Deletion Confirmed [${referenceId}] — RicozAnalytics`;
+    const htmlContent = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;">
+        <div style="margin-bottom: 24px;">
+          <span style="font-weight: 800; font-size: 20px; color: #0f172a; letter-spacing: -0.5px;">Ricoz<span style="color: #e11d48;">Analytics</span></span>
+          <span style="margin-left: 8px; font-size: 10px; font-weight: 700; background: #f1f5f9; color: #475569; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">Compliance Record</span>
+        </div>
+        <h2 style="color: #0f172a; font-size: 22px; font-weight: 700; margin: 0 0 12px 0;">Account Deletion Confirmed</h2>
+        <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+          Hi ${name || 'User'}, this confirms that your account deletion request (Reference: <strong style="font-family:monospace; color:#0f172a;">${referenceId}</strong>) has been verified and executed.
+        </p>
+
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0; font-size: 13px;">
+          <div style="margin-bottom: 8px;"><strong>Account:</strong> ${email}</div>
+          <div style="margin-bottom: 8px;"><strong>Deletion Scope:</strong> ${scope === 'full_workspace' ? 'Full Workspace & All Associated Datasets' : 'User Account & Profile Data'}</div>
+          <div style="margin-bottom: 8px;"><strong>Status:</strong> Completed / Purged</div>
+          <div><strong>Completed Timestamp:</strong> ${new Date().toUTCString()}</div>
+        </div>
+
+        <p style="color: #64748b; font-size: 12px; line-height: 1.6;">
+          Your login credentials, active sessions, and uploaded analytical datasets have been permanently purged from our active systems. Statutory financial records (invoices/tax audit trails) are retained in anonymized format for legal compliance periods as disclosed in our Privacy Policy.
+        </p>
+
+        <div style="border-top: 1px solid #f1f5f9; margin-top: 32px; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
+          © ${new Date().getFullYear()} Ricoz Digital Innovations Pvt Ltd · Hyderabad, India
+        </div>
+      </div>
+    `;
+
+    console.log(`[EmailService] ✉️ Account Deletion Confirmed Notice for: ${email} [${referenceId}]`);
+
+    if (this.isTestOrPlaceholderRecipient(email)) {
+      return { attempted: true, mocked: true, success: true, recipient: email, referenceId };
+    }
+
+    try {
+      if (this.isBrevo()) {
+        await this._sendViaBrevo({
+          to: [{ email, name: name || 'User' }],
+          subject,
+          htmlContent
+        });
+      } else {
+        await this.transporter.sendMail({
+          from: `"RicozAnalytics Compliance" <${fromEmail}>`,
+          to: email,
+          subject,
+          html: htmlContent
+        });
+      }
+      return { attempted: true, success: true, recipient: email, referenceId };
+    } catch (err) {
+      console.warn(`[EmailService] Confirmation email delivery warning: ${err.message}`);
+      return { attempted: true, success: false, recipient: email, error: err.message, referenceId };
+    }
+  }
 }
 
 module.exports = new EmailService();

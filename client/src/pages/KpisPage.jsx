@@ -645,30 +645,32 @@ export default function KpisPage() {
             />
           )}
 
-          {/* View Mode Toggle (Card View vs Table View) */}
+          {/* View Mode Toggle (Card View vs Table View) — Matching Shared Red Selected Pattern (Handoff Page 7) */}
           <div className="flex items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100/70 dark:bg-slate-800 p-1 ml-auto sm:ml-0">
             <button
+              type="button"
               onClick={() => setViewMode('card')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer select-none ${
                 viewMode === 'card'
-                  ? 'bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-400 shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-50/50 dark:hover:bg-rose-950/30'
+                  ? 'border border-rose-300 dark:border-[#BE123C] bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] font-bold shadow-2xs'
+                  : 'border border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
               title="Card View"
             >
-              <LayoutGrid className="h-3.5 w-3.5" />
+              <LayoutGrid className={`h-3.5 w-3.5 ${viewMode === 'card' ? 'text-[#D91542] dark:text-[#FB7185]' : 'text-slate-500 dark:text-slate-400'}`} strokeWidth={viewMode === 'card' ? 2 : 1.75} />
               <span className="hidden sm:inline">Card View</span>
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('table')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer select-none ${
                 viewMode === 'table'
-                  ? 'bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-400 shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-50/50 dark:hover:bg-rose-950/30'
+                  ? 'border border-rose-300 dark:border-[#BE123C] bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] font-bold shadow-2xs'
+                  : 'border border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
               title="Table View"
             >
-              <TableIcon className="h-3.5 w-3.5" />
+              <TableIcon className={`h-3.5 w-3.5 ${viewMode === 'table' ? 'text-[#D91542] dark:text-[#FB7185]' : 'text-slate-500 dark:text-slate-400'}`} strokeWidth={viewMode === 'table' ? 2 : 1.75} />
               <span className="hidden sm:inline">Table View</span>
             </button>
           </div>

@@ -1,0 +1,27 @@
+# Apache Rewrite Configuration for RicozAnalytics SPA & Compliance Endpoints
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Serve privacy.html directly for /privacy or /privacy/
+  RewriteRule ^privacy/?$ privacy.html [L]
+
+  # Serve delete-account.html directly for /delete-account or /delete-account/
+  RewriteRule ^delete-account/?$ delete-account.html [L]
+
+  # Existing files and directories serve as-is
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # SPA fallback to index.html
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# Security Headers
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set X-XSS-Protection "1; mode=block"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>

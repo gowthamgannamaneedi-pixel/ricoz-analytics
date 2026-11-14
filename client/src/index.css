@@ -169,20 +169,29 @@ html.dark *:focus-visible {
   /* Shared highlighted Reset button utility */
   .rz-btn-reset {
     @apply h-10 px-4 min-w-[104px] inline-flex items-center justify-center gap-2 rounded-lg
-           border border-rose-200 dark:border-[#334155]
-           bg-[#FFF1F3] dark:bg-[#1E293B] text-sm font-semibold text-[#D91542] dark:text-[#CBD5E1]
-           hover:bg-rose-100/90 dark:hover:bg-[#334155] hover:border-rose-300 dark:hover:border-[#334155] hover:text-[#B91036] dark:hover:text-[#F8FAFC]
-           active:bg-rose-200/80 dark:active:bg-[#111827]
+           border border-rose-200 dark:border-[#BE123C]
+           bg-[#FFF1F3] dark:bg-[#2B0B1B] text-sm font-semibold text-[#D91542] dark:text-[#FB7185]
+           hover:bg-rose-100/90 dark:hover:bg-[#3D1026] hover:border-rose-300 dark:hover:border-[#E11D48] hover:text-[#B91036] dark:hover:text-[#FDA4AF]
+           active:bg-rose-200/80 dark:active:bg-[#1F0713]
            focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2
            disabled:opacity-50 disabled:cursor-not-allowed select-none
            transition-all duration-150 cursor-pointer shadow-2xs;
   }
 
-  /* Shared red icon on pale red container */
+  /* Shared red icon on burgundy badge container */
   .rz-icon-container {
-    @apply inline-flex items-center justify-center rounded-lg
-           bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185]
-           border border-rose-200/80 dark:border-[#334155] shadow-2xs;
+    @apply inline-flex items-center justify-center rounded-xl
+           bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185]
+           border border-rose-200/80 dark:border-[#BE123C] shadow-2xs;
+  }
+
+  /* Shared outlined red View Details button (Handoff Page 2, 9) */
+  .rz-btn-view-details {
+    @apply h-7 sm:h-8 px-2.5 sm:px-3 rounded-lg
+           border border-rose-200 dark:border-[#BE123C]
+           bg-[#FFF1F3]/60 dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185]
+           hover:bg-rose-100 dark:hover:bg-[#3D1026] hover:border-rose-300 dark:hover:border-[#E11D48]
+           text-xs font-semibold inline-flex items-center gap-1 transition shadow-2xs cursor-pointer select-none;
   }
 
   /* Role badge chips */

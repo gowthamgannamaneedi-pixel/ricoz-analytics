@@ -192,44 +192,20 @@ export default function DatasetTable({
     return 'ready';
   };
 
-  // Source Icon
+  // Source Icon - Red outline icons inside burgundy badges with red borders (Handoff Page 5)
   const getSourceIcon = (type) => {
     const t = String(type || '').toLowerCase();
-    switch (t) {
-      case 'csv':
-        return (
-          <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 shrink-0">
-            <FileSpreadsheet className="h-4 w-4" />
-          </div>
-        );
-      case 'json':
-        return (
-          <div className="p-2 rounded-xl bg-amber-50 border border-amber-100 text-amber-600 shrink-0">
-            <FileCode className="h-4 w-4" />
-          </div>
-        );
-      case 'postgresql':
-      case 'postgres':
-      case 'mysql':
-        return (
-          <div className="p-2 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 shrink-0">
-            <Database className="h-4 w-4" />
-          </div>
-        );
-      case 'rest_api':
-      case 'api':
-        return (
-          <div className="p-2 rounded-xl bg-purple-50 border border-purple-100 text-purple-600 shrink-0">
-            <Server className="h-4 w-4" />
-          </div>
-        );
-      default:
-        return (
-          <div className="p-2 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 shrink-0">
-            <Database className="h-4 w-4" />
-          </div>
-        );
-    }
+    let IconComp = Database;
+    if (t === 'csv') IconComp = FileSpreadsheet;
+    else if (t === 'json') IconComp = FileCode;
+    else if (t === 'postgresql' || t === 'postgres' || t === 'mysql') IconComp = Database;
+    else if (t === 'rest_api' || t === 'api') IconComp = Server;
+
+    return (
+      <div className="p-2 rounded-xl bg-[#FFF1F3] dark:bg-[#2B0B1B] border border-rose-200 dark:border-[#BE123C] text-[#D91542] dark:text-[#FB7185] shrink-0">
+        <IconComp className="h-4 w-4" strokeWidth={1.8} />
+      </div>
+    );
   };
 
   // Source Badge Pill
@@ -637,16 +613,16 @@ export default function DatasetTable({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => navigate(`/data-quality?datasetId=${dataset.id}`)}
-                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 hover:border-emerald-300 transition shadow-2xs cursor-pointer min-h-[38px]"
+                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-rose-200 dark:border-[#BE123C] bg-[#FFF1F3]/50 dark:bg-[#2B0B1B] text-xs font-semibold text-[#D91542] dark:text-[#FB7185] hover:bg-rose-100 dark:hover:bg-[#3D1026] transition shadow-2xs cursor-pointer min-h-[38px]"
                     >
-                      <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <ShieldCheck className="h-4 w-4 text-[#D91542] dark:text-[#FB7185] shrink-0" strokeWidth={1.8} />
                       <span>Quality</span>
                     </button>
                     <button
                       onClick={() => onPreview && onPreview(dataset.id)}
-                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/40 text-xs font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition shadow-2xs cursor-pointer min-h-[38px]"
+                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-rose-200 dark:border-[#BE123C] bg-[#FFF1F3]/50 dark:bg-[#2B0B1B] text-xs font-semibold text-[#D91542] dark:text-[#FB7185] hover:bg-rose-100 dark:hover:bg-[#3D1026] transition shadow-2xs cursor-pointer min-h-[38px]"
                     >
-                      <Eye className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                      <Eye className="h-4 w-4 text-[#D91542] dark:text-[#FB7185] shrink-0" strokeWidth={1.8} />
                       <span>Preview</span>
                     </button>
                   </div>
@@ -836,10 +812,10 @@ export default function DatasetTable({
                         <button
                           onClick={() => navigate(`/data-quality?datasetId=${dataset.id}`)}
                           id={`quality-dataset-${dataset.id}`}
-                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-1.5 2xl:px-2 2xl:py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 hover:border-emerald-300 dark:hover:border-emerald-800 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/40 transition shadow-2xs shrink-0 cursor-pointer"
+                          className="inline-flex items-center gap-1 rounded-lg border border-rose-200 dark:border-[#BE123C] bg-[#FFF1F3]/50 dark:bg-[#2B0B1B] p-1.5 2xl:px-2.5 2xl:py-1 text-xs font-semibold text-[#D91542] dark:text-[#FB7185] hover:bg-rose-100 dark:hover:bg-[#3D1026] hover:border-rose-300 dark:hover:border-[#E11D48] transition shadow-2xs shrink-0 cursor-pointer"
                           title="View Data Quality profile"
                         >
-                          <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <ShieldCheck className="h-3.5 w-3.5 text-[#D91542] dark:text-[#FB7185]" strokeWidth={1.8} />
                           <span className="hidden 2xl:inline">Quality</span>
                         </button>
 
@@ -847,10 +823,10 @@ export default function DatasetTable({
                         <button
                           onClick={() => onPreview && onPreview(dataset.id)}
                           id={`preview-dataset-${dataset.id}`}
-                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-1.5 2xl:px-2 2xl:py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/50 dark:hover:bg-rose-950/40 transition shadow-2xs shrink-0 cursor-pointer"
+                          className="inline-flex items-center gap-1 rounded-lg border border-rose-200 dark:border-[#BE123C] bg-[#FFF1F3]/50 dark:bg-[#2B0B1B] p-1.5 2xl:px-2.5 2xl:py-1 text-xs font-semibold text-[#D91542] dark:text-[#FB7185] hover:bg-rose-100 dark:hover:bg-[#3D1026] hover:border-rose-300 dark:hover:border-[#E11D48] transition shadow-2xs shrink-0 cursor-pointer"
                           title="Preview records and schema"
                         >
-                          <Eye className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
+                          <Eye className="h-3.5 w-3.5 text-[#D91542] dark:text-[#FB7185]" strokeWidth={1.8} />
                           <span className="hidden 2xl:inline">Preview</span>
                         </button>
 

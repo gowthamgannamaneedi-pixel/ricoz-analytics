@@ -1,12 +1,20 @@
 // Centralized API utility with authentication token management
+import { Capacitor } from '@capacitor/core';
+import { downloadFileFromBlob } from '../utils/fileDownloader';
+
+export { downloadFileFromBlob };
+
 export const API_BASE_URL = (() => {
   const envUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '');
   const isBrowser = typeof window !== 'undefined';
+  const isNative = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform();
   const isRemoteHost = isBrowser && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 
-  // In remote/production environments, prevent accidental localhost fallback
-  if (isRemoteHost && (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
-    return 'https://ricoz-analytics.onrender.com/api';
+  // In native mobile app or remote/production environments, prevent localhost fallback
+  if (isNative || (isRemoteHost && (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')))) {
+    return envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')
+      ? envUrl
+      : 'https://ricoz-analytics.onrender.com/api';
   }
 
   return envUrl || '/api';
@@ -887,18 +895,7 @@ export async function downloadReportExecution(executionId, fallbackFilename = 'r
     }
   }
 
-  const downloadUrl = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = downloadUrl;
-  link.setAttribute('download', filename);
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-
-  // Delay revocation to ensure Chromium download manager fully flushes stream to disk
-  setTimeout(() => {
-    window.URL.revokeObjectURL(downloadUrl);
-  }, 60000);
+  return await downloadFileFromBlob(blob, filename);
 }
 
 /**
@@ -939,18 +936,7 @@ export async function exportDashboardDirect(exportData) {
     filename += `.${ext}`;
   }
 
-  const downloadUrl = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = downloadUrl;
-  link.setAttribute('download', filename);
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-
-  // Delay revocation to ensure browser finishes writing to disk
-  setTimeout(() => {
-    window.URL.revokeObjectURL(downloadUrl);
-  }, 60000);
+  return await downloadFileFromBlob(blob, filename);
 }
 
 // ============================================================================
@@ -1950,17 +1936,7 @@ export async function exportAIInsights(format = 'pdf') {
     filename = disposition.split('filename=')[1].replace(/["']/g, '').trim();
   }
 
-  const downloadUrl = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = downloadUrl;
-  link.setAttribute('download', filename);
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-
-  setTimeout(() => {
-    window.URL.revokeObjectURL(downloadUrl);
-  }, 60000);
+  return await downloadFileFromBlob(blob, filename);
 }
 
 // ============================================================================

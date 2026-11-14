@@ -450,6 +450,7 @@ let nextNotificationId = 1;
 
 const fallbackDemoRequests = [];
 let nextDemoRequestId = 1;
+const fallbackAccountDeletionRequests = [];
 
 const fallbackDemoEmailJobs = [];
 let nextDemoEmailJobId = 1;
@@ -4480,6 +4481,65 @@ function handleFallbackQuery(text, params = []) {
     return Promise.resolve({ rows: [], rowCount: 0 });
   }
 
+  // ----------------- ACCOUNT DELETION REQUESTS -----------------
+  if (normalizedSql.startsWith('insert into account_deletion_requests')) {
+    const [id, user_id, organization_id, email, name, scope, reason, status, otp, token, expires_at, ip, ua, ref_id, meta] = params;
+    const newReq = {
+      id: id || `req_${Date.now()}_${Math.random()}`,
+      user_id: user_id || null,
+      organization_id: organization_id || null,
+      email: String(email || '').toLowerCase(),
+      name: name || null,
+      scope: scope || 'user_account',
+      reason: reason || null,
+      status: status || 'pending_verification',
+      verification_otp: otp || null,
+      verification_token: token || null,
+      verification_expires_at: expires_at || null,
+      ip_address: ip || null,
+      user_agent: ua || null,
+      reference_id: ref_id || null,
+      metadata: typeof meta === 'string' ? JSON.parse(meta) : (meta || {}),
+      verified_at: status === 'completed' ? new Date() : null,
+      completed_at: status === 'completed' ? new Date() : null,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+    fallbackAccountDeletionRequests.push(newReq);
+    return Promise.resolve({ rows: [{ ...newReq }], rowCount: 1 });
+  }
+
+  if (normalizedSql.includes('from account_deletion_requests')) {
+    let results = [...fallbackAccountDeletionRequests];
+    if (normalizedSql.includes("status = 'pending_verification'")) {
+      results = results.filter(r => r.status === 'pending_verification');
+    }
+    if (normalizedSql.includes('verification_token = $')) {
+      const tok = params[params.length - 1] || params[0];
+      results = results.filter(r => r.verification_token === tok);
+    }
+    if (normalizedSql.includes('lower(email) = lower($1) and verification_otp = $2')) {
+      results = results.filter(r => r.email === String(params[0]).toLowerCase() && r.verification_otp === String(params[1]));
+    }
+    if (normalizedSql.includes('reference_id = $1 and verification_otp = $2')) {
+      results = results.filter(r => r.reference_id === String(params[0]) && r.verification_otp === String(params[1]));
+    }
+    return Promise.resolve({ rows: results.map(r => ({ ...r })), rowCount: results.length });
+  }
+
+  if (normalizedSql.startsWith('update account_deletion_requests')) {
+    const idParam = params[params.length - 1];
+    const reqItem = fallbackAccountDeletionRequests.find(r => String(r.id) === String(idParam));
+    if (reqItem) {
+      reqItem.status = 'completed';
+      reqItem.verified_at = new Date();
+      reqItem.completed_at = new Date();
+      reqItem.updated_at = new Date();
+      return Promise.resolve({ rows: [{ ...reqItem }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }
+
   // ----------------- RAZORPAY ORDERS -----------------
   if (normalizedSql.startsWith('insert into razorpay_orders')) {
     const [order_id, organization_id, user_id, plan_id, billing_interval = 'monthly', amount_paise, currency = 'INR', receipt = null, notes = '{}'] = params;
@@ -5249,6 +5309,31 @@ async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_demo_email_jobs_status_next ON demo_email_jobs(status, next_attempt_at);
     CREATE INDEX IF NOT EXISTS idx_demo_email_jobs_request ON demo_email_jobs(demo_request_id);
     CREATE INDEX IF NOT EXISTS idx_demo_email_jobs_delivery_status ON demo_email_jobs(internal_status, prospect_status);
+
+    CREATE TABLE IF NOT EXISTS account_deletion_requests (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      organization_id UUID REFERENCES organizations(id) ON DELETE SET NULL,
+      email VARCHAR(255) NOT NULL,
+      name VARCHAR(255),
+      scope VARCHAR(50) DEFAULT 'user_account',
+      reason TEXT,
+      status VARCHAR(50) DEFAULT 'pending_verification',
+      verification_otp VARCHAR(10),
+      verification_token VARCHAR(255),
+      verification_expires_at TIMESTAMPTZ,
+      verified_at TIMESTAMPTZ,
+      completed_at TIMESTAMPTZ,
+      ip_address VARCHAR(100),
+      user_agent TEXT,
+      reference_id VARCHAR(100),
+      metadata JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_account_deletion_email ON account_deletion_requests(email);
+    CREATE INDEX IF NOT EXISTS idx_account_deletion_status ON account_deletion_requests(status);
+    CREATE INDEX IF NOT EXISTS idx_account_deletion_token ON account_deletion_requests(verification_token);
 
     CREATE TABLE IF NOT EXISTS invitations (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -598,7 +598,7 @@ export default function ReportsPage() {
   const executionsCount = executions.length;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+    <div className="space-y-6 pb-10 font-sans">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-900 text-white text-xs shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
@@ -626,23 +626,18 @@ export default function ReportsPage() {
           </span>
         </nav>
 
-        <div className="flex items-start gap-3.5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20 shrink-0 mt-0.5">
-            <FileBarChart className="h-6 w-6" />
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
+              Reports
+            </h1>
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+              {isAdmin ? 'Admin' : user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Analyst'}
+            </span>
           </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
-                Reports
-              </h1>
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                {isAdmin ? 'Admin' : user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Analyst'}
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal">
-              Generate, schedule, and export business summaries across your organization's datasets and KPIs.
-            </p>
-          </div>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 font-normal">
+            Generate, schedule, and export business summaries across your organization's datasets and KPIs.
+          </p>
         </div>
 
         {/* Action Row below description: Create Report on left, Refresh on right */}
@@ -942,8 +937,8 @@ export default function ReportsPage() {
                 </button>
               </div>
 
-              {/* Cards Grid */}
-              <div className="mt-5">
+              {/* Cards Grid / Empty State — Centered horizontally and vertically below header (Handoff Page 8) */}
+              <div className="mt-5 flex-1 flex flex-col justify-center">
                 {loading ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {[1, 2].map((n) => (
@@ -956,9 +951,9 @@ export default function ReportsPage() {
                     ))}
                   </div>
                 ) : filteredReports.length === 0 ? (
-                  <div className="p-10 text-center text-slate-400 dark:text-[#94A3B8] space-y-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] mx-auto shadow-2xs">
-                      <FileBarChart className="h-6 w-6" />
+                  <div className="flex-1 flex flex-col items-center justify-center my-auto py-10 px-4 text-center text-slate-400 dark:text-[#94A3B8] space-y-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2B0B1B] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#BE123C] mx-auto shadow-2xs">
+                      <FileBarChart className="h-6 w-6" strokeWidth={1.8} />
                     </div>
                     <div>
                       <p className="text-sm font-bold text-slate-700 dark:text-[#F8FAFC]">No matching reports found</p>
@@ -1099,9 +1094,11 @@ export default function ReportsPage() {
                             <button
                               type="button"
                               onClick={() => handleOpenViewer(r)}
-                              className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer shadow-2xs"
+                              className="rz-btn-view-details"
+                              title="View report details"
                             >
-                              View Details
+                              <span>View Details</span>
+                              <ChevronRight className="h-3 w-3" />
                             </button>
 
                             {/* More Actions Menu */}

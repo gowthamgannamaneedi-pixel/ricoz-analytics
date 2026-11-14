@@ -69,4 +69,19 @@ router.post('/heartbeat', authenticateToken, heartbeat);
 // POST /api/auth/logout - Terminate session
 router.post('/logout', logout);
 
+// --------------------------------------------------------------------------
+// Account Deletion & Privacy Compliance Endpoints (Google Play Developer Policy)
+// --------------------------------------------------------------------------
+const accountDeletionController = require('../controllers/accountDeletionController');
+
+// POST /api/auth/request-deletion - Public request form for account deletion with email OTP
+router.post('/request-deletion', rateLimitAuth, (req, res) => accountDeletionController.requestDeletion(req, res));
+
+// POST & GET /api/auth/confirm-deletion - Verify OTP/token and complete/schedule account deletion
+router.post('/confirm-deletion', rateLimitAuth, (req, res) => accountDeletionController.confirmDeletion(req, res));
+router.get('/confirm-deletion', rateLimitAuth, (req, res) => accountDeletionController.confirmDeletion(req, res));
+
+// POST /api/auth/delete-my-account - Authenticated in-app self-service deletion with password verification
+router.post('/delete-my-account', authenticateToken, (req, res) => accountDeletionController.deleteMyAccount(req, res));
+
 module.exports = router;

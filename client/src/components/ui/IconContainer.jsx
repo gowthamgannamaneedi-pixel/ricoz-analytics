@@ -34,8 +34,8 @@ export function IconContainer({
     <div
       className={[
         'inline-flex items-center justify-center shrink-0 select-none',
-        'bg-[#FFF1F3] dark:bg-rose-950/40 text-[#D91542] dark:text-rose-400',
-        'border border-rose-200/80 dark:border-rose-900/50 shadow-2xs',
+        'bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185]',
+        'border border-rose-200/80 dark:border-[#BE123C] shadow-2xs',
         sizeMap[size] || sizeMap.md,
         className,
       ].join(' ')}

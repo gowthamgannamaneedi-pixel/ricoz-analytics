@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { downloadFileFromBlob } from '../utils/fileDownloader';
 import {
   X,
   Download,
@@ -117,13 +118,7 @@ export default function DatasetPreviewModal({ isOpen, onClose, datasetId, token 
 
     const csvContent = [headers.join(','), ...rows].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `${data.name || 'dataset'}_preview_50.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadFileFromBlob(blob, `${data.name || 'dataset'}_preview_50.csv`);
   };
 
   const getTypeBadge = (type) => {

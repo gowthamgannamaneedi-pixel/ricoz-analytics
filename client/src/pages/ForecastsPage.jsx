@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { downloadFileFromBlob } from '../utils/fileDownloader';
 import {
   TrendingUp,
   Sliders,
@@ -462,13 +463,7 @@ export default function ForecastsPage() {
     });
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `Ricoz_Forecast_${targetColumn}_${selectedModel}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadFileFromBlob(blob, `Ricoz_Forecast_${targetColumn}_${selectedModel}.csv`);
     showToast('Forecast data exported to CSV.');
   };
 
@@ -558,25 +553,20 @@ export default function ForecastsPage() {
 
         {/* Page Title & Actions Toolbar */}
         <div className="space-y-4">
-          <div className="flex items-start gap-3.5">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/20">
-              <TrendingUp className="h-6 w-6 stroke-[2.2]" />
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
+                Forecasts
+              </h1>
+              {user?.role && (
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700">
+                  {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                </span>
+              )}
             </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
-                  Forecasts
-                </h1>
-                {user?.role && (
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200/80">
-                    {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                  </span>
-                )}
-              </div>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal max-w-2xl leading-relaxed">
-                Predict future values using available forecasting models and detect anomalies in your data.
-              </p>
-            </div>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 font-normal max-w-2xl leading-relaxed">
+              Predict future values using available forecasting models and detect anomalies in your data.
+            </p>
           </div>
 
           {/* Action row below description: Generate Forecast on left, Refresh on right */}

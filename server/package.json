@@ -42,5 +42,8 @@
     "razorpay": "^2.9.8",
     "stripe": "^23.0.0",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "pdf-parse": "^2.4.5"
   }
 }
