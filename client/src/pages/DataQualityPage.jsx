@@ -582,9 +582,9 @@ export default function DataQualityPage() {
       {/* �      {/* ─────────────────────────────────────────────────────────────────── */}
       {/* 1. BREADCRUMB, HEADER & ACTIONS TOOLBAR                             */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="space-y-4">
-        {/* Breadcrumb Navigation matching Wireframe */}
-        <nav className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-[#94A3B8]">
+      <div className="space-y-3">
+        {/* Breadcrumb Navigation matching Wireframe (Desktop only) */}
+        <nav className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-[#94A3B8]">
           <span className="hover:text-slate-600 dark:hover:text-[#CBD5E1] transition cursor-pointer" onClick={() => navigate('/dashboard')}>
             Workspace
           </span>
@@ -601,7 +601,7 @@ export default function DataQualityPage() {
         {/* Heading & Description + Run Quality Audit Button below on left */}
         <div className="space-y-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
               Data Quality & Observability
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 font-normal leading-relaxed">
@@ -631,16 +631,16 @@ export default function DataQualityPage() {
           </div>
         </div>
 
-        {/* Action Controls Toolbar: Dataset selector & Scan mode aligned on left, Export Report & Refresh grouped on right */}
-        <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 p-3 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] shadow-2xs">
+        {/* Action Controls Toolbar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] shadow-2xs">
           {/* Left: Aligned Dataset Selector & Full Scan / Sampled Toggle */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
             <Select
               id="dataset-select"
               value={selectedDatasetId}
               onChange={(e) => setSelectedDatasetId(e.target.value)}
               icon={Database}
-              className="w-56 sm:w-64 shrink-0"
+              className="w-full sm:w-64"
               size="md"
             >
               {datasets.map((d) => (
@@ -651,7 +651,7 @@ export default function DataQualityPage() {
             </Select>
 
             {/* Scan Mode Pill Toggle */}
-            <div className="flex items-center h-10 rounded-xl bg-slate-100 dark:bg-[#0F172A] p-1 border border-slate-200 dark:border-[#334155] text-xs shrink-0">
+            <div className="flex items-center h-10 rounded-xl bg-slate-100 dark:bg-[#0F172A] p-1 border border-slate-200 dark:border-[#334155] text-xs self-start sm:self-auto shrink-0">
               <button
                 type="button"
                 onClick={() => setScanMode('full')}
@@ -678,7 +678,7 @@ export default function DataQualityPage() {
           </div>
 
           {/* Right: Export Report & Refresh Grouped */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-between sm:justify-end gap-2.5 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-[#334155]">
             <div className="relative" ref={exportRef}>
               <button
                 type="button"

@@ -545,17 +545,17 @@ export default function ForecastsPage() {
       {/* ───────────────────────────────────────────────────────────────── */}
       <div className="space-y-3">
         {/* Breadcrumb Navigation */}
-        <nav className="flex items-center gap-2 text-xs font-medium text-slate-500">
+        <nav className="hidden sm:flex items-center gap-2 text-xs font-medium text-slate-500">
           <span className="text-slate-400">RicozAnalytics</span>
           <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
           <span className="text-rose-600 font-semibold">Forecasts</span>
         </nav>
 
         {/* Page Title & Actions Toolbar */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
             <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
                 Forecasts
               </h1>
               {user?.role && (
@@ -858,8 +858,8 @@ export default function ForecastsPage() {
               </div>
             </div>
 
-            {/* 5. Horizon & Interval (Two columns) */}
-            <div className="grid grid-cols-2 gap-3.5 pt-1">
+            {/* 5. Horizon & Interval (Responsive columns) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
                   Forecast Horizon

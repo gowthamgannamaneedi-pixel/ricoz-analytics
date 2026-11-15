@@ -251,7 +251,7 @@ export function Select({
   const hasExplicitWidth = /\bw-[^\s]+/.test(className);
 
   return (
-    <div className={`relative inline-block ${hasExplicitWidth ? '' : 'w-full'} ${className}`}>
+    <div className={`relative inline-block min-w-0 ${hasExplicitWidth ? '' : 'w-full'} ${className}`}>
       {/* Hidden native select for form serialization / accessibility */}
       <select
         ref={hiddenSelectRef}
@@ -307,7 +307,7 @@ export function Select({
         )}
 
         {/* Selected Label Display */}
-        <span className="truncate pr-1 block font-semibold text-slate-800 dark:text-[#CBD5E1]">
+        <span className="truncate pr-1 block font-semibold text-slate-800 dark:text-[#CBD5E1] min-w-0">
           {selectedOption ? selectedOption.label : (
             <span className="text-slate-400 dark:text-[#94A3B8] font-normal">{placeholder}</span>
           )}

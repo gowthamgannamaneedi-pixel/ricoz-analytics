@@ -487,10 +487,10 @@ export default function GovernancePage() {
       {/* ------------------------------------------------------------- */}
       {/* 1. NATIVE HEADER: Light Enterprise Header matching application */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-200">
         <div>
-          {/* Breadcrumb Navigation */}
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400 mb-2">
+          {/* Breadcrumb Navigation (Desktop only) */}
+          <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400 mb-2">
             <button
               type="button"
               onClick={() => navigate('/dashboard')}
@@ -510,13 +510,13 @@ export default function GovernancePage() {
             <span className="text-slate-900 font-bold">Workspace Governance & Audit Logs</span>
           </nav>
 
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-[#334155] shadow-2xs shrink-0">
-              <Shield className="h-6 w-6" />
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-2xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-[#334155] shadow-2xs shrink-0">
+              <Shield className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight">
-                Workspace Governance & Audit Logs
+              <h1 className="text-lg sm:text-2xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight">
+                Governance &amp; Audit Logs
               </h1>
               <p className="text-xs text-slate-500 dark:text-[#CBD5E1] font-medium mt-0.5">
                 Manage team access controls, user permissions, and compliance audit logs.
@@ -581,22 +581,22 @@ export default function GovernancePage() {
       {/* 2. NAVIGATION TABS: Clean Light Line with Active Indicator    */}
       {/* ------------------------------------------------------------- */}
       <div className="border-b border-slate-200 dark:border-[#334155] w-full overflow-x-auto no-scrollbar">
-        <div className="flex items-center gap-6 sm:gap-8 min-w-max pb-px">
+        <div className="flex items-center gap-4 sm:gap-8 min-w-max pb-px">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`flex items-center gap-2 py-3 px-1 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+            className={`flex items-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-1 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'overview'
                 ? 'border-rose-600 dark:border-[#E11D48] text-rose-600 dark:text-[#FB7185] font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:border-slate-600'
             }`}
           >
             <BarChart3 className="w-4 h-4" />
-            Overview & Stats
+            Overview
           </button>
 
           <button
             onClick={() => setActiveTab('users')}
-            className={`flex items-center gap-2 py-3 px-1 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+            className={`flex items-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-1 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'users'
                 ? 'border-rose-600 dark:border-[#E11D48] text-rose-600 dark:text-[#FB7185] font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:border-slate-600'
@@ -608,7 +608,7 @@ export default function GovernancePage() {
 
           <button
             onClick={() => setActiveTab('audit')}
-            className={`flex items-center gap-2 py-3 px-1 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+            className={`flex items-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-1 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'audit'
                 ? 'border-rose-600 dark:border-[#E11D48] text-rose-600 dark:text-[#FB7185] font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 dark:text-[#94A3B8] dark:hover:text-[#CBD5E1] dark:hover:border-slate-600'

@@ -273,8 +273,8 @@ export default function AlertModal({
           </button>
         </div>
 
-        {/* Modal Body */}
-        <form onSubmit={handleSubmit} className="px-5 py-4 space-y-3.5 overflow-visible">
+        {/* Modal Body - Scrollable on mobile screens */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-3.5 overscroll-contain max-h-[75vh]">
           {error && (
             <div className="flex items-center gap-2 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/90 dark:bg-[#2A1422] px-3 py-2 text-xs text-rose-700 dark:text-[#FDA4AF]">
               <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />

@@ -365,8 +365,8 @@ export default function AlertsPage() {
 
       {/* Page Header */}
       <div className="space-y-3 border-b border-slate-200 dark:border-[#334155] pb-5">
-        {/* Breadcrumb Navigation matching Reference */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-[#94A3B8]">
+        {/* Breadcrumb Navigation matching Reference (Desktop only) */}
+        <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-[#94A3B8]">
           <span className="hover:text-slate-600 dark:hover:text-[#F8FAFC] transition cursor-pointer" onClick={() => navigate('/dashboard')}>
             Workspace
           </span>
@@ -381,7 +381,7 @@ export default function AlertsPage() {
         </nav>
 
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
             Real-Time Alerts & Incident Center
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 font-normal">

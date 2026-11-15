@@ -168,35 +168,35 @@ export default function NativeMobileBridge() {
 
   return (
     <>
-      {/* Offline Alert Banner */}
+      {/* Offline Alert Banner - Floating pill above bottom nav */}
       {isOffline && (
         <aside 
           aria-label="Offline status notification"
-          className="fixed top-0 left-0 right-0 z-50 bg-rose-600 text-white text-xs sm:text-sm font-medium px-4 py-2 flex items-center justify-between shadow-lg"
+          className="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-md z-50 bg-rose-600 text-white text-xs font-medium px-4 py-2.5 rounded-xl flex items-center justify-between shadow-xl pointer-events-none"
         >
           <div className="flex items-center space-x-2">
             <svg className="w-4 h-4 animate-pulse flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 4.243a9 9 0 01-2.829-2.829m0 0l2.829-2.829m-2.829 2.829L3 21m0 0l18-18" />
             </svg>
-            <span>You are currently offline. Live analytics sync is paused.</span>
+            <span>You are offline. Live analytics paused.</span>
           </div>
-          <span className="text-[10px] uppercase font-bold tracking-wider bg-rose-700/60 px-2 py-0.5 rounded">Offline</span>
+          <span className="text-[10px] uppercase font-bold tracking-wider bg-rose-700/80 px-2 py-0.5 rounded">Offline</span>
         </aside>
       )}
 
-      {/* Online Reconnected Alert Banner */}
+      {/* Online Reconnected Alert - Floating auto-dismissing pill */}
       {justReconnected && !isOffline && (
         <aside 
           aria-label="Connection restored notification"
-          className="fixed top-0 left-0 right-0 z-50 bg-emerald-600 text-white text-xs sm:text-sm font-medium px-4 py-2 flex items-center justify-between shadow-lg animate-fade-in"
+          className="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-md z-50 bg-emerald-600 text-white text-xs font-medium px-4 py-2.5 rounded-xl flex items-center justify-between shadow-xl animate-fade-in pointer-events-none"
         >
           <div className="flex items-center space-x-2">
             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            <span>Back online. Reconnecting to live analytics...</span>
+            <span>Connected to live analytics</span>
           </div>
-          <span className="text-[10px] uppercase font-bold tracking-wider bg-emerald-700/60 px-2 py-0.5 rounded">Connected</span>
+          <span className="text-[10px] uppercase font-bold tracking-wider bg-emerald-700/80 px-2 py-0.5 rounded">Live</span>
         </aside>
       )}
 

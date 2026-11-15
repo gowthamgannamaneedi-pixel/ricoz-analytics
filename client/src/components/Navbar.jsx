@@ -14,6 +14,8 @@ import {
   FileText,
   Server,
   ArrowRight,
+  ArrowLeft,
+  X,
   Loader2
 } from 'lucide-react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
@@ -73,6 +75,7 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
   const displayExpiredText = `${planName} — Expired`;
 
   const [activePopover, setActivePopover] = useState(null); // 'notifications' | 'profile' | null
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -243,8 +246,48 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
         minHeight: 'calc(3.75rem + env(safe-area-inset-top))'
       }}
     >
-      {/* Left: Brand Logo & Navigation Toggle (Collapsed/Mobile) + Global Search Bar */}
-      <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 mr-2 sm:mr-4">
+      {mobileSearchOpen ? (
+        <div className="flex sm:hidden items-center gap-2 w-full py-1.5">
+          <button
+            type="button"
+            onClick={() => {
+              setMobileSearchOpen(false);
+              setSearchOpen(false);
+            }}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shrink-0 cursor-pointer"
+            aria-label="Close search"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+            <input
+              autoFocus
+              type="text"
+              placeholder="Search metrics, reports, datasets..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => {
+                if (searchQuery.trim().length > 0) setSearchOpen(true);
+              }}
+              onKeyDown={handleSearchKeyDown}
+              className="w-full h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-9 pr-9 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 p-1 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Left: Brand Logo & Navigation Toggle (Collapsed/Mobile) + Global Search Bar */}
+          <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 mr-2 sm:mr-4">
         {/* Brand & Toggle Container for Collapsed desktop & Mobile */}
         <div className={`items-center gap-2 sm:gap-3 shrink-0 ${isSidebarCollapsed ? 'flex' : 'flex lg:hidden'}`}>
           {/* Mobile Navigation Drawer Toggle */}
@@ -281,8 +324,8 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
           <div className="h-5 w-px bg-slate-200 dark:bg-slate-750 shrink-0 hidden sm:block" />
         </div>
 
-        {/* Global Search Bar with Responsive Sizing */}
-        <div ref={searchContainerRef} className="relative flex-1 max-w-md min-w-0">
+        {/* Global Search Bar (Desktop only, responsive width) */}
+        <div ref={searchContainerRef} className="hidden sm:block relative flex-1 max-w-md min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
           <input
             ref={searchRef}
@@ -364,7 +407,21 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
       </div>
 
       {/* Right Controls: Organization Selector, Trial Status, Theme Toggle, Notifications, Profile */}
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        {/* Mobile Search Toggle Button */}
+        <button
+          type="button"
+          onClick={() => {
+            handleClosePopovers();
+            setMobileSearchOpen(true);
+          }}
+          className="sm:hidden flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer shrink-0 shadow-2xs"
+          aria-label="Search"
+          title="Search"
+        >
+          <Search className="h-4.5 w-4.5" />
+        </button>
+
         {/* Organization / Workspace Indicator (Navigates to Settings) */}
         <button
           type="button"
@@ -437,6 +494,8 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
           onClose={handleClosePopovers}
         />
       </div>
-    </header>
+    </>
+  )}
+</header>
   );
 }

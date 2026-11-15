@@ -611,8 +611,8 @@ export default function ReportsPage() {
       {/* 1. PAGE HEADER                                                      */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       <div className="space-y-3">
-        {/* Breadcrumb Navigation matching Reference */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+        {/* Breadcrumb Navigation matching Reference (Desktop only) */}
+        <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400">
           <span className="hover:text-slate-600 transition cursor-pointer" onClick={() => navigate('/dashboard')}>
             Workspace
           </span>
@@ -628,7 +628,7 @@ export default function ReportsPage() {
 
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
               Reports
             </h1>
             <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">

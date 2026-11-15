@@ -917,12 +917,12 @@ export default function AIInsightsPage() {
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 4. FILTER / SEARCH TOOLBAR & VIEW TOGGLE (Single Desktop Row)      */}
+      {/* 4. FILTER / SEARCH TOOLBAR & VIEW TOGGLE */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex flex-wrap lg:flex-nowrap items-center justify-between gap-3 p-3 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] shadow-2xs">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-3 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] shadow-2xs">
         {/* Left: Search & Filter Controls Aligned */}
-        <div className="flex flex-wrap lg:flex-nowrap items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
-          {/* Search Input (Reduced width per Req 8) */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
+          {/* Search Input */}
           <div className="relative w-full sm:w-44 md:w-48 lg:w-52 shrink-0">
             <Search className="w-4 h-4 text-slate-400 dark:text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
@@ -943,61 +943,64 @@ export default function AIInsightsPage() {
             )}
           </div>
 
-          {/* Type Filter */}
-          <Select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="w-full sm:w-32 lg:w-32 shrink-0"
-            size="md"
-          >
-            <option value="all">All Types</option>
-            <option value="growth">Growth</option>
-            <option value="decline">Decline</option>
-            <option value="trend">Trend</option>
-            <option value="anomaly">Anomaly</option>
-            <option value="operational">Operational</option>
-            <option value="forecast">Forecast</option>
-            <option value="data_quality">Data Quality</option>
-            <option value="relationship">Relationship</option>
-          </Select>
+          {/* Filter Dropdowns Grid */}
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full">
+            {/* Type Filter */}
+            <Select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="w-full sm:w-32"
+              size="md"
+            >
+              <option value="all">All Types</option>
+              <option value="growth">Growth</option>
+              <option value="decline">Decline</option>
+              <option value="trend">Trend</option>
+              <option value="anomaly">Anomaly</option>
+              <option value="operational">Operational</option>
+              <option value="forecast">Forecast</option>
+              <option value="data_quality">Data Quality</option>
+              <option value="relationship">Relationship</option>
+            </Select>
 
-          {/* Impact Level Filter */}
-          <Select
-            value={impactFilter}
-            onChange={(e) => setImpactFilter(e.target.value)}
-            className="w-full sm:w-44 lg:w-48 shrink-0"
-            size="md"
-          >
-            <option value="all">All Impact Levels</option>
-            <option value="critical">Critical</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </Select>
+            {/* Impact Level Filter */}
+            <Select
+              value={impactFilter}
+              onChange={(e) => setImpactFilter(e.target.value)}
+              className="w-full sm:w-40"
+              size="md"
+            >
+              <option value="all">All Impact Levels</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </Select>
 
-          {/* Status Filter */}
-          <Select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full sm:w-48 lg:w-52 shrink-0"
-            size="md"
-          >
-            <option value="active">All Insight Statuses</option>
-            <option value="dismissed">Dismissed</option>
-          </Select>
+            {/* Status Filter */}
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="col-span-2 sm:col-span-1 w-full sm:w-44"
+              size="md"
+            >
+              <option value="active">All Insight Statuses</option>
+              <option value="dismissed">Dismissed</option>
+            </Select>
 
-          {/* Reset Filters Action */}
-          {hasActiveFilters && (
-            <ResetButton
-              onClick={resetFilters}
-              size="default"
-              title="Reset Search and Filters"
-            />
-          )}
+            {/* Reset Filters Action */}
+            {hasActiveFilters && (
+              <ResetButton
+                onClick={resetFilters}
+                size="default"
+                title="Reset Search and Filters"
+              />
+            )}
+          </div>
         </div>
 
         {/* Right: Card View / Table View Toggle */}
-        <div className="flex items-center shrink-0">
+        <div className="flex items-center justify-between sm:justify-end shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100 dark:border-[#334155]">
           <div className="flex items-center gap-1 border border-slate-200 dark:border-[#334155] rounded-xl p-1 bg-slate-100/70 dark:bg-[#0F172A] shadow-2xs">
             <button
               onClick={() => setViewMode('card')}

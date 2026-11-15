@@ -755,8 +755,8 @@ export default function AIAnalyticsAssistant() {
       {/* TOP HEADER BAR                                                     */}
       {/* ------------------------------------------------------------------ */}
       <div className="space-y-3 border-b border-slate-200 dark:border-[#334155] pb-4 shrink-0">
-        {/* Breadcrumb Navigation matching Reference */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-[#94A3B8]">
+        {/* Breadcrumb Navigation matching Reference (Desktop only) */}
+        <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-[#94A3B8]">
           <button
             type="button"
             onClick={() => navigate('/dashboard')}

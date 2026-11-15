@@ -546,8 +546,8 @@ export default function BillingPage() {
 
       {/* Page Header */}
       <div className="space-y-4 border-b border-slate-200 dark:border-[#334155] pb-5">
-        {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
+        {/* Breadcrumb Navigation (Desktop only) */}
+        <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
           <button
             type="button"
             onClick={() => navigate('/dashboard')}
@@ -580,7 +580,7 @@ export default function BillingPage() {
         {/* Title, Description & Aligned Workspace Status Card */}
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 pt-1">
           <div className="max-w-xl">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
               Plans & Billing
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1.5 font-normal leading-relaxed">

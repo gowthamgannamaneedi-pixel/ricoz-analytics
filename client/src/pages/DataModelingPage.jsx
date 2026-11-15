@@ -329,8 +329,8 @@ export default function DataModelingPage() {
 
   return (
     <div className="space-y-6 pb-12 font-sans">
-      {/* 1. Breadcrumbs matching Universal Workspace Standard */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-medium">
+      {/* 1. Breadcrumbs (Desktop only) */}
+      <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-medium">
         <span className="hover:text-slate-600 dark:hover:text-slate-300 transition cursor-pointer" onClick={() => navigate('/dashboard')}>
           Workspace
         </span>
@@ -345,9 +345,9 @@ export default function DataModelingPage() {
       </nav>
 
       {/* 2. Page Header with Title, Actions, and Status Pill positioned directly opposite */}
-      <div className="space-y-4 pb-1">
+      <div className="space-y-3 pb-1">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 font-sans">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 font-sans">
             Data Modeling & Relationships
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-normal leading-relaxed">

@@ -393,8 +393,8 @@ export default function ExecutiveDashboard({
   if (!datasets || datasets.length === 0 || !activeDataset) {
     return (
       <div className="space-y-6 font-sans">
-        <section className="space-y-2 pb-1">
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-medium">
+        <section className="space-y-1.5 pb-1">
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-medium">
             <span className="hover:text-slate-600 dark:hover:text-slate-300 transition cursor-pointer" onClick={() => navigate('/dashboard')}>
               Workspace
             </span>
@@ -403,23 +403,23 @@ export default function ExecutiveDashboard({
               Executive Overview
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 font-sans">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 font-sans">
             Executive Overview
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-normal leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-normal leading-relaxed">
             Enterprise revenue telemetry, predictive forecasting models, and decision intelligence signals across connected datasets.
           </p>
         </section>
 
-        <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-12 text-center max-w-xl mx-auto my-8 space-y-4 shadow-2xs">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60">
-            <Database className="h-7 w-7" />
+        <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 sm:p-10 text-center max-w-xl mx-auto my-4 sm:my-8 space-y-3.5 shadow-2xs">
+          <div className="mx-auto flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60">
+            <Database className="h-6 w-6 sm:h-7 sm:w-7" />
           </div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">No Datasets Available</h3>
+          <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">No Datasets Available</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
             Upload your first CSV or JSON dataset, or connect a data source to view live executive telemetry and analytics.
           </p>
-          <div className="pt-2">
+          <div className="pt-1.5">
             <Button
               variant="primary"
               onClick={() => navigate('/datasets')}

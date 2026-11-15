@@ -561,8 +561,8 @@ export default function DataSourcesPage() {
       {/* 1. TOP HEADER                                                     */}
       {/* ───────────────────────────────────────────────────────────────── */}
       <div className="space-y-2.5">
-        {/* Breadcrumb Navigation matching Wireframe */}
-        <nav className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+        {/* Breadcrumb Navigation matching Wireframe (Desktop only) */}
+        <nav className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400">
           <span className="hover:text-slate-600 transition cursor-pointer" onClick={() => navigate('/dashboard')}>
             Workspace
           </span>
@@ -577,10 +577,10 @@ export default function DataSourcesPage() {
         </nav>
 
         {/* Page Title & Controls Toolbar */}
-        <div className="space-y-3.5 pt-1">
+        <div className="space-y-3 pt-1">
           <div>
             <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
                 Data Sources
               </h1>
               {currentRole && (
@@ -811,13 +811,13 @@ export default function DataSourcesPage() {
       </div>
 
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-[#334155] pb-3">
-        {/* Left Segmented Filter Tabs */}
-        <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+        {/* Left Segmented Filter Tabs (Horizontally scrollable on mobile) */}
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1 w-full lg:w-auto">
           <button
             type="button"
             id="tab-all-sources"
             onClick={() => { setActiveTab('all'); setCurrentPage(1); }}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer shrink-0 ${
               activeTab === 'all'
                 ? 'bg-rose-50 text-rose-700 dark:bg-[#2A1422] dark:text-[#FB7185] shadow-2xs border border-rose-200/80 dark:border-[#FB7185]/40 font-bold'
                 : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1E293B]'
@@ -834,7 +834,7 @@ export default function DataSourcesPage() {
             type="button"
             id="tab-csv"
             onClick={() => { setActiveTab('csv'); setCurrentPage(1); }}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer shrink-0 ${
               activeTab === 'csv'
                 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 shadow-2xs border border-emerald-200/80 dark:border-emerald-800/60 font-bold'
                 : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1E293B]'
@@ -851,7 +851,7 @@ export default function DataSourcesPage() {
             type="button"
             id="tab-json"
             onClick={() => { setActiveTab('json'); setCurrentPage(1); }}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer shrink-0 ${
               activeTab === 'json'
                 ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 shadow-2xs border border-amber-200/80 dark:border-amber-800/60 font-bold'
                 : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1E293B]'
@@ -868,7 +868,7 @@ export default function DataSourcesPage() {
             type="button"
             id="tab-postgresql"
             onClick={() => { setActiveTab('postgresql'); setCurrentPage(1); }}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer shrink-0 ${
               activeTab === 'postgresql'
                 ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 shadow-2xs border border-blue-200/80 dark:border-blue-800/60 font-bold'
                 : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1E293B]'
@@ -885,7 +885,7 @@ export default function DataSourcesPage() {
             type="button"
             id="tab-mongodb"
             onClick={() => { setActiveTab('mongodb'); setCurrentPage(1); }}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer shrink-0 ${
               activeTab === 'mongodb'
                 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 shadow-2xs border border-emerald-200/80 dark:border-emerald-800/60 font-bold'
                 : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1E293B]'
@@ -902,7 +902,7 @@ export default function DataSourcesPage() {
             type="button"
             id="tab-rest-api"
             onClick={() => { setActiveTab('rest_api'); setCurrentPage(1); }}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer shrink-0 ${
               activeTab === 'rest_api'
                 ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 shadow-2xs border border-purple-200/80 dark:border-purple-800/60 font-bold'
                 : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1E293B]'

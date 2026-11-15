@@ -636,8 +636,8 @@ export default function SettingsPage() {
       {/* 1. PAGE HEADER                                                     */}
       {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="space-y-4 pt-1">
-        {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+        {/* Breadcrumb Navigation (Desktop only) */}
+        <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400">
           <button
             type="button"
             onClick={() => navigate('/dashboard')}
@@ -659,7 +659,7 @@ export default function SettingsPage() {
 
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
               Settings
             </h1>
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
@@ -1333,11 +1333,12 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-[#334155]">
+            <div className="pt-4 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2.5 border-t border-slate-100 dark:border-[#334155]">
               <Button
                 type="button"
                 variant="secondary"
                 onClick={() => handleTabChange('overview')}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>
@@ -1345,6 +1346,7 @@ export default function SettingsPage() {
                 type="submit"
                 variant="primary"
                 loading={isSavingOrg}
+                className="w-full sm:w-auto"
               >
                 Save Organization Profile
               </Button>

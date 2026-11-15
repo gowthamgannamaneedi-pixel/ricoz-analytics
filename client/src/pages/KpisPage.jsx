@@ -339,8 +339,8 @@ export default function KpisPage() {
 
   return (
     <div className="space-y-6 font-sans">
-      {/* 1. Breadcrumbs matching Universal Workspace Standard */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-medium">
+      {/* 1. Breadcrumbs (Desktop only) */}
+      <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-medium">
         <span className="hover:text-slate-600 dark:hover:text-slate-300 transition cursor-pointer" onClick={() => navigate('/dashboard')}>
           Workspace
         </span>
@@ -355,10 +355,10 @@ export default function KpisPage() {
       </nav>
 
       {/* 2. Top Header with Title, Telemetry Context, Dataset Pill & Action Buttons */}
-      <div className="space-y-4 pb-1">
+      <div className="space-y-3 pb-1">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 font-sans">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 font-sans">
               Key Performance Indicators
             </h1>
             {currentRole && (
@@ -584,9 +584,9 @@ export default function KpisPage() {
         </div>
 
         {/* Dropdowns & View Mode */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full xl:w-auto">
           {/* Metric Type */}
-          <div className="w-40 sm:w-44">
+          <div className="w-full sm:w-44">
             <Select
               id="kpis-type-filter"
               value={typeFilter}
@@ -604,7 +604,7 @@ export default function KpisPage() {
           </div>
 
           {/* Status */}
-          <div className="w-36 sm:w-40">
+          <div className="w-full sm:w-40">
             <Select
               id="kpis-status-filter"
               value={statusFilter}
@@ -620,7 +620,7 @@ export default function KpisPage() {
           </div>
 
           {/* Dataset */}
-          <div className="w-44 sm:w-48">
+          <div className="col-span-2 sm:col-span-1 w-full sm:w-48">
             <Select
               id="kpis-dataset-filter"
               value={datasetFilter}

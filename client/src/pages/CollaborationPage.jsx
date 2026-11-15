@@ -552,7 +552,7 @@ export default function CollaborationPage() {
       {/* 1. TOP HEADER & BREADCRUMB                                         */}
       {/* ------------------------------------------------------------------ */}
       <div className="space-y-3">
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+        <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400">
           <span className="hover:text-slate-600 transition">RicozAnalytics</span>
           <ChevronRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />
           <span className="text-rose-600 font-semibold">Collaboration</span>
@@ -561,7 +561,7 @@ export default function CollaborationPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
                 Collaboration
               </h1>
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
@@ -915,15 +915,15 @@ export default function CollaborationPage() {
           <div className="rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#334155] p-5 shadow-2xs space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#334155]">
               <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-[#94A3B8]">
-                Workspace Groups &amp; Teams ({teams.length})
+                Groups &amp; Teams ({teams.length})
               </h3>
-              {(user?.role === 'admin' || user?.role === 'manager') && (
+              {(user?.role === 'admin' || user?.role === 'manager') && teams.length > 0 && (
                 <button
                   onClick={() => setShowCreateTeamModal(true)}
                   className="px-2.5 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:bg-[#1E293B] dark:border dark:border-[#334155] dark:text-[#CBD5E1] dark:hover:bg-[#334155] dark:hover:text-[#F8FAFC] font-semibold rounded-lg text-xs flex items-center gap-1 transition cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5 text-rose-600 dark:text-[#FB7185]" />
-                  <span>New Group</span>
+                  <span>New</span>
                 </button>
               )}
             </div>
@@ -968,8 +968,8 @@ export default function CollaborationPage() {
             )}
           </div>
 
-          {/* Selected Team Members (Right Column) */}
-          <div className="lg:col-span-2 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#334155] p-6 shadow-2xs">
+          {/* Selected Team Members (Right Column - hidden on mobile when no teams exist) */}
+          <div className={`lg:col-span-2 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#334155] p-6 shadow-2xs ${teams.length === 0 ? 'hidden lg:block' : ''}`}>
             {selectedTeam ? (
               <div className="space-y-5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-[#334155]">

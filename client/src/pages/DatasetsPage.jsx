@@ -218,8 +218,8 @@ export default function DatasetsPage() {
 
   return (
     <div className="space-y-6 font-sans">
-      {/* 1. Breadcrumbs matching Wireframe */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-[#94A3B8] font-medium">
+      {/* 1. Breadcrumbs (Desktop only) */}
+      <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 dark:text-[#94A3B8] font-medium">
         <span className="hover:text-slate-600 dark:hover:text-[#F8FAFC] transition cursor-pointer" onClick={() => navigate('/dashboard')}>
           Workspace
         </span>
@@ -234,10 +234,10 @@ export default function DatasetsPage() {
       </nav>
 
       {/* 2. Top Header with Title, Subtitle, Ingest Button, and Refresh */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[#F8FAFC] font-sans">
               Datasets
             </h1>
             {currentRole && (
