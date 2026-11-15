@@ -62,7 +62,7 @@ export default function StatCard({
 }) {
   return (
     <div
-      className={`relative flex flex-col justify-between p-4.5 sm:p-6 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all duration-200 min-h-[170px] min-w-0 ${className}`}
+      className={`relative flex flex-col justify-between p-4 sm:p-5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xs min-h-[150px] min-w-0 transition-colors ${className}`}
     >
       <div>
         {/* Top Header Row: Red icon on pale red container */}
@@ -77,7 +77,7 @@ export default function StatCard({
 
           <button
             type="button"
-            className="p-1.5 rounded-lg text-slate-300 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
+            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
             aria-label="More options"
           >
             <MoreVertical className="h-4 w-4" />

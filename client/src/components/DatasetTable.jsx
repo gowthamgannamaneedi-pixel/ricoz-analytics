@@ -537,7 +537,7 @@ export default function DatasetTable({
             return (
               <div
                 key={dataset.id}
-                className="p-4 space-y-3 bg-white dark:bg-slate-900 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors"
+                className="p-4 space-y-3 bg-white dark:bg-[#111827] rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
               >
                 {/* Header: Type icon + Full dataset name + Overflow menu button */}
                 <div className="flex items-start justify-between gap-3">
@@ -564,7 +564,7 @@ export default function DatasetTable({
                     <button
                       ref={(el) => { triggerButtonRefs.current[dataset.id] = el; }}
                       onClick={(e) => handleToggleMenu(dataset.id, e)}
-                      className={`p-2 rounded-xl border transition shadow-2xs cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center ${
+                      className={`p-2 rounded-xl border transition shadow-2xs cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center ${
                         isMenuOpen
                           ? 'border-rose-400 bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'
                           : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50/80 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800'
@@ -613,14 +613,14 @@ export default function DatasetTable({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => navigate(`/data-quality?datasetId=${dataset.id}`)}
-                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-rose-200 dark:border-[#BE123C] bg-[#FFF1F3]/50 dark:bg-[#2B0B1B] text-xs font-semibold text-[#D91542] dark:text-[#FB7185] hover:bg-rose-100 dark:hover:bg-[#3D1026] transition shadow-2xs cursor-pointer min-h-[38px]"
+                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-rose-200 dark:border-[#BE123C] bg-[#FFF1F3]/50 dark:bg-[#2B0B1B] text-xs font-semibold text-[#D91542] dark:text-[#FB7185] hover:bg-rose-100 dark:hover:bg-[#3D1026] transition shadow-2xs cursor-pointer min-h-[44px]"
                     >
                       <ShieldCheck className="h-4 w-4 text-[#D91542] dark:text-[#FB7185] shrink-0" strokeWidth={1.8} />
                       <span>Quality</span>
                     </button>
                     <button
                       onClick={() => onPreview && onPreview(dataset.id)}
-                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-rose-200 dark:border-[#BE123C] bg-[#FFF1F3]/50 dark:bg-[#2B0B1B] text-xs font-semibold text-[#D91542] dark:text-[#FB7185] hover:bg-rose-100 dark:hover:bg-[#3D1026] transition shadow-2xs cursor-pointer min-h-[38px]"
+                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-rose-200 dark:border-[#BE123C] bg-[#FFF1F3]/50 dark:bg-[#2B0B1B] text-xs font-semibold text-[#D91542] dark:text-[#FB7185] hover:bg-rose-100 dark:hover:bg-[#3D1026] transition shadow-2xs cursor-pointer min-h-[44px]"
                     >
                       <Eye className="h-4 w-4 text-[#D91542] dark:text-[#FB7185] shrink-0" strokeWidth={1.8} />
                       <span>Preview</span>

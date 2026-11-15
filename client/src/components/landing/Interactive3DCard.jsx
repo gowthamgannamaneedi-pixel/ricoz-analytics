@@ -1,9 +1,8 @@
 import React from 'react';
 
 /**
- * Interactive3DCard — Polished Enterprise Card Container
- * Eliminates unwanted mouse tilt, viewport edge clipping, and drifting.
- * Provides rock-solid card stability with subtle enterprise hover transitions.
+ * Interactive3DCard — Clean Material Card Container
+ * Eliminates all 3D tilt, glare, and hover float for a clean, flat enterprise feel.
  */
 export default function Interactive3DCard({
   children,
@@ -20,7 +19,7 @@ export default function Interactive3DCard({
   return (
     <div
       onClick={onClick}
-      className={`relative transition-all duration-200 ease-out hover:shadow-lg ${overflowHidden ? 'overflow-hidden' : 'overflow-visible'} ${className}`}
+      className={`relative rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs transition-colors duration-150 ${overflowHidden ? 'overflow-hidden' : 'overflow-visible'} ${className}`}
       style={{
         ...style,
       }}

@@ -295,7 +295,6 @@ export default function KeyFeaturesSection() {
     <section 
       id="features" 
       className="py-20 lg:py-28 bg-white dark:bg-[#0B0F19] transition-colors duration-200 border-t border-slate-200/80 dark:border-slate-800 relative"
-      style={{ perspective: '1200px' }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
@@ -317,21 +316,17 @@ export default function KeyFeaturesSection() {
           </p>
         </div>
 
-        {/* 6 Interactive 3D Feature Cards with Physics Mouse Tilt & Depth */}
+        {/* 6 Clean Feature Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feat) => (
-            <Interactive3DCard
+            <div
               key={feat.id}
-              maxTilt={12}
-              scale={1.03}
-              glare={true}
-              className="rounded-3xl p-7 bg-slate-50/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 hover:border-red-400 dark:hover:border-red-700 shadow-sm transition-colors group flex flex-col justify-between"
+              className="rounded-2xl p-7 bg-slate-50/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition-colors flex flex-col justify-between"
             >
               <div>
-                {/* Badge (Pop-out Layer +15px) */}
+                {/* Badge */}
                 <div 
                   className="inline-block text-[10px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60 px-2.5 py-1 rounded-md border border-red-200/80 dark:border-red-900/50 mb-3.5"
-                  style={{ transform: 'translateZ(15px)' }}
                 >
                   {feat.badge}
                 </div>
@@ -367,7 +362,7 @@ export default function KeyFeaturesSection() {
               </div>
 
               {/* Action Link (Pop-out Layer +20px) */}
-              <div className="pt-4 border-t border-slate-200/80 dark:border-slate-800" style={{ transform: 'translateZ(20px)' }}>
+              <div className="pt-4 border-t border-slate-200/80 dark:border-slate-800">
                 <a
                   href={feat.linkUrl}
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400 group-hover:text-red-700 dark:group-hover:text-red-300 hover:underline"
@@ -376,7 +371,7 @@ export default function KeyFeaturesSection() {
                   <ArrowRight size={13} className="group-hover:translate-x-1.5 transition-transform" />
                 </a>
               </div>
-            </Interactive3DCard>
+            </div>
           ))}
         </div>
       </div>

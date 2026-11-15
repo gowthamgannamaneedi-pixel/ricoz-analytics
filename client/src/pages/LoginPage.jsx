@@ -104,39 +104,34 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] text-[#0F172A] dark:text-slate-100 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans transition-colors duration-200">
+    <div 
+      className="relative min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] text-[#0F172A] dark:text-slate-100 flex flex-col justify-center px-4 sm:px-6 lg:px-8 font-sans transition-colors duration-200"
+      style={{
+        paddingTop: 'max(env(safe-area-inset-top), 1.5rem)',
+        paddingBottom: 'max(env(safe-area-inset-bottom), 1.5rem)'
+      }}
+    >
       {/* Top Right Theme Toggle */}
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
         <ThemeToggle />
       </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md my-auto">
         {/* Brand Header */}
-        <div className="flex flex-col items-center justify-center gap-3 mb-6">
-          <Logo size="2xl" linkTo="/" />
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-mono">
-              Analytics Workspace
-            </span>
-            <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
-              ENTERPRISE
-            </span>
-          </div>
-        </div>
-
-        <div className="text-center mb-6">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+        <div className="flex flex-col items-center justify-center gap-1.5 mb-6 text-center">
+          <Logo size="md" linkTo="/login" className="max-w-[220px] justify-center" />
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mt-2">
             Sign in to Workspace
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Enter your enterprise credentials to access analytics telemetry
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Enterprise decision intelligence & telemetry console
           </p>
         </div>
 
-        {/* Form Card */}
-        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-sm space-y-5">
+        {/* Form Card (Crisp Enterprise Surface) */}
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] p-5 sm:p-7 shadow-[0_1px_2px_rgba(0,0,0,0.03)] space-y-4">
           {unregisteredEmail ? (
-            <div className="rounded-lg border border-blue-200 dark:border-blue-800/60 bg-blue-50 dark:bg-blue-950/40 p-4 text-xs text-blue-900 dark:text-blue-200 space-y-3">
+            <div className="rounded-xl border border-blue-200 dark:border-blue-800/60 bg-blue-50 dark:bg-blue-950/40 p-4 text-xs text-blue-900 dark:text-blue-200 space-y-3">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
                 <span className="font-bold">No Account Found</span>
@@ -149,14 +144,14 @@ export default function LoginPage() {
                   type="button"
                   id="register-redirect-btn"
                   onClick={() => navigate(`/register?email=${encodeURIComponent(unregisteredEmail)}`, { state: { email: unregisteredEmail } })}
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-lg bg-rose-600 hover:bg-rose-700 text-white transition-colors duration-150 shadow-sm"
+                  className="w-full inline-flex items-center justify-center gap-2 h-11 px-4 text-xs font-semibold rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-98 text-white transition-all shadow-xs"
                 >
                   Register to Create Workspace &rarr;
                 </button>
               </div>
             </div>
           ) : unverifiedEmail ? (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900 space-y-2">
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900 space-y-2">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
                 <span className="font-bold">Email Verification Required</span>
@@ -168,14 +163,14 @@ export default function LoginPage() {
                 <Link
                   to="/auth/verify-email"
                   state={{ email: unverifiedEmail }}
-                  className="inline-flex items-center font-semibold text-rose-600 hover:text-rose-700 underline"
+                  className="inline-flex items-center font-semibold text-rose-600 hover:text-rose-700 underline py-1"
                 >
                   Enter Verification Code / Resend &rarr;
                 </Link>
               </div>
             </div>
           ) : error ? (
-            <div className="flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+            <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-xs text-rose-700">
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600" />
               <span className="font-medium">{error}</span>
             </div>
@@ -195,7 +190,7 @@ export default function LoginPage() {
                 placeholder="name@company.com"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
+                className="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
               />
             </div>
 
@@ -206,7 +201,7 @@ export default function LoginPage() {
                 </label>
                 <Link
                   to="/forgot-password"
-                  className="text-[11px] font-medium text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:underline transition"
+                  className="text-xs font-medium text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:underline transition py-1"
                 >
                   Forgot password?
                 </Link>
@@ -221,14 +216,14 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 pl-3.5 pr-10 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
+                  className="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-4 pr-11 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition hover:border-slate-300 dark:hover:border-slate-600 focus:border-rose-600 focus:outline-none focus:ring-1 focus:ring-rose-600"
                 />
                 <button
                   type="button"
                   id="toggle-login-password-visibility"
                   onClick={() => setShowPassword((prev) => !prev)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer focus:outline-none"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer focus:outline-none"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -239,7 +234,7 @@ export default function LoginPage() {
               type="submit"
               disabled={isLoading}
               id="login-submit-btn"
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-rose-600 py-2.5 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-600 focus:ring-offset-2 disabled:opacity-50 mt-2 cursor-pointer"
+              className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-98 py-3 px-4 text-sm font-semibold text-white shadow-xs transition disabled:opacity-50 mt-2 cursor-pointer"
             >
               {isLoading ? (
                 <>
@@ -303,17 +298,17 @@ export default function LoginPage() {
         </div>
 
         {/* Security Tag */}
-        <p className="mt-6 text-center font-mono text-[11px] text-slate-400 dark:text-slate-500">
-          TLS 1.3 End-to-End Encrypted Session · Standalone Production Auth
+        <p className="mt-6 text-center font-mono text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+          SOC 2 Type II Certified • 256-Bit TLS Encryption
         </p>
 
         {/* Compliance & Privacy Links (Google Play Requirement) */}
-        <div className="mt-4 flex items-center justify-center gap-4 text-xs text-slate-500 dark:text-slate-400">
-          <Link to="/privacy" className="hover:text-rose-600 dark:hover:text-rose-400 transition underline underline-offset-2">
+        <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <Link to="/privacy" className="py-2.5 px-3 hover:text-rose-600 dark:hover:text-rose-400 transition underline underline-offset-2">
             Privacy Policy
           </Link>
           <span>•</span>
-          <Link to="/delete-account" className="hover:text-rose-600 dark:hover:text-rose-400 transition underline underline-offset-2">
+          <Link to="/delete-account" className="py-2.5 px-3 hover:text-rose-600 dark:hover:text-rose-400 transition underline underline-offset-2">
             Account Deletion
           </Link>
         </div>

@@ -236,7 +236,13 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
   const isActivePaid = subscription?.status === 'active';
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 sm:px-6 lg:px-8 shadow-2xs transition-colors duration-200">
+    <header 
+      className="sticky top-0 z-30 flex shrink-0 items-center justify-between border-b border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 sm:px-6 lg:px-8 transition-colors duration-200"
+      style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        minHeight: 'calc(3.75rem + env(safe-area-inset-top))'
+      }}
+    >
       {/* Left: Brand Logo & Navigation Toggle (Collapsed/Mobile) + Global Search Bar */}
       <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 mr-2 sm:mr-4">
         {/* Brand & Toggle Container for Collapsed desktop & Mobile */}
@@ -245,7 +251,7 @@ export default function Navbar({ onOpenSidebar, isSidebarCollapsed = false, onTo
           <button
             type="button"
             onClick={onOpenSidebar}
-            className="lg:hidden flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition cursor-pointer shrink-0 shadow-2xs"
+            className="lg:hidden flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 active:scale-95 transition cursor-pointer shrink-0 shadow-2xs"
             aria-label="Open navigation"
             title="Open navigation"
           >

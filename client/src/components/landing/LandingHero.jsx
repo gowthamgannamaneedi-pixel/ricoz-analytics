@@ -182,62 +182,22 @@ export default function LandingHero({ onOpenDemo }) {
         </div>
 
         {/* ─── ENTERPRISE DASHBOARD COCKPIT CONTAINER ─────────────── */}
-        <div 
-          className="relative mt-8 sm:mt-12 max-w-6xl mx-auto will-change-transform"
-          style={{ perspective: '1400px' }}
-        >
-          {/* Floating Status Badge 1: Top Right */}
-          <div className="hidden lg:flex items-center gap-2.5 absolute -top-4 right-4 z-40 px-4 py-2 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-lg text-xs font-medium text-slate-800 dark:text-slate-200">
-            <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 flex items-center justify-center shrink-0">
-              <Sparkles size={15} />
-            </div>
-            <div>
-              <div className="font-bold text-[11px] text-slate-900 dark:text-white flex items-center gap-1">
-                <span>Threshold Sentinel</span>
-                <span className="text-emerald-500 font-mono">0 Breaches</span>
-              </div>
-              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Multi-metric monitoring active</div>
-            </div>
-          </div>
-
-          {/* Floating Status Badge 2: Bottom Left */}
-          <div className="hidden lg:flex items-center gap-2.5 absolute -bottom-4 left-4 z-40 px-4 py-2 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-lg text-xs text-slate-800 dark:text-slate-200">
-            <div className="w-7 h-7 rounded-lg bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400 flex items-center justify-center shrink-0">
-              <Activity size={15} />
-            </div>
-            <div>
-              <div className="font-bold text-[11px] text-slate-900 dark:text-white">Data Connection Active</div>
-              <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">PostgreSQL &amp; MongoDB Verified</div>
-            </div>
-          </div>
-
-          {/* Main Dashboard Chassis with 3D Tilt */}
-          <div 
-            style={{
-              transform: `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`,
-              transformStyle: 'preserve-3d',
-              transition: 'transform 0.15s ease-out'
-            }}
-            className="rounded-3xl bg-white dark:bg-slate-950 border border-slate-200/90 dark:border-slate-800 shadow-2xl overflow-hidden transition-colors relative group"
-          >
-            {/* Window Browser Titlebar */}
-            <div className="px-4 py-3 bg-slate-100 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-4">
+        <div className="relative mt-8 sm:mt-12 max-w-6xl mx-auto">
+          {/* Main Dashboard Chassis (Flat Clean Material Container) */}
+          <div className="rounded-2xl bg-white dark:bg-slate-950 border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden transition-colors relative">
+            {/* Native Application App Bar */}
+            <div className="px-4 py-3 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-[#FF5F56]" />
-                <span className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
-                <span className="w-3 h-3 rounded-full bg-[#27C93F]" />
-              </div>
-
-              {/* Address / Breadcrumb Bar */}
-              <div className="flex items-center gap-2 px-2.5 sm:px-4 py-1 rounded-xl bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-xs font-mono text-slate-600 dark:text-slate-300 max-w-sm flex-1 min-w-0 justify-center shadow-2xs">
-                <Lock size={12} className="text-emerald-500 shrink-0" />
-                <span className="truncate">ricoz.app/workspace/executive-cockpit</span>
+                <span className="h-2.5 w-2.5 rounded-full bg-rose-600" />
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+                  RicozAnalytics Enterprise Cockpit
+                </span>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider hidden sm:inline">
-                  DEMO WORKSPACE
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                  Telemetry Active
                 </span>
               </div>
             </div>

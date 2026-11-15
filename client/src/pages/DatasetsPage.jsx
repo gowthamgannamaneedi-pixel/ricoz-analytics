@@ -340,64 +340,64 @@ export default function DatasetsPage() {
         </div>
       )}
 
-      {/* 3. Three Summary Cards matching Wireframe Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      {/* 3. Three Summary Cards (Compact 3-col on mobile, full on desktop) */}
+      <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
         {/* Card 1: Total Datasets */}
-        <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 shadow-2xs">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] p-3 sm:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-base sm:text-[17px] lg:text-lg font-semibold tracking-tight uppercase text-slate-900 dark:text-[#F8FAFC] block">
-              Total Datasets
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono truncate">
+              Datasets
             </span>
-            <div className="p-2 rounded-xl bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#BE123C] shadow-2xs">
-              <Database className="h-4 w-4" strokeWidth={1.8} />
+            <div className="p-1 sm:p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
+              <Database className="h-3.5 w-3.5" strokeWidth={2} />
             </div>
           </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold font-mono tracking-tight text-slate-900 dark:text-[#F8FAFC] block">
+          <div className="mt-2">
+            <span className="text-lg sm:text-2xl font-bold font-mono tracking-tight text-slate-900 dark:text-slate-50 block rz-tabular">
               {totalDatasets}
             </span>
-            <p className="mt-1.5 text-xs text-slate-400 dark:text-[#94A3B8]">
-              Imported from uploaded files and connected databases
+            <p className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500 hidden sm:block truncate">
+              Connected tables
             </p>
           </div>
         </div>
 
         {/* Card 2: Total Record Volume */}
-        <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 shadow-2xs">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] p-3 sm:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-base sm:text-[17px] lg:text-lg font-semibold tracking-tight uppercase text-slate-900 dark:text-[#F8FAFC] block">
-              Total Record Volume
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono truncate">
+              Total Rows
             </span>
-            <div className="p-2 rounded-xl bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#BE123C] shadow-2xs">
-              <CheckCircle2 className="h-4 w-4" strokeWidth={1.8} />
+            <div className="p-1 sm:p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
+              <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2} />
             </div>
           </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold font-mono tracking-tight text-slate-900 dark:text-[#F8FAFC] block">
+          <div className="mt-2">
+            <span className="text-lg sm:text-2xl font-bold font-mono tracking-tight text-slate-900 dark:text-slate-50 block rz-tabular">
               {formatNumberAbbreviated(totalRows)}
             </span>
-            <p className="mt-1.5 text-xs text-slate-400 dark:text-[#94A3B8]">
-              Total rows imported across all connected tables
+            <p className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500 hidden sm:block truncate">
+              Across all tables
             </p>
           </div>
         </div>
 
-        {/* Card 3: Inferred Dimensions */}
-        <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] p-6 shadow-2xs">
+        {/* Card 3: Tracked Columns */}
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] p-3 sm:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-base sm:text-[17px] lg:text-lg font-semibold tracking-tight uppercase text-slate-900 dark:text-[#F8FAFC] block">
-              Tracked Columns
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono truncate">
+              Columns
             </span>
-            <div className="p-2 rounded-xl bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#BE123C] shadow-2xs">
-              <LayoutGrid className="h-4 w-4" strokeWidth={1.8} />
+            <div className="p-1 sm:p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
+              <LayoutGrid className="h-3.5 w-3.5" strokeWidth={2} />
             </div>
           </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold font-mono tracking-tight text-slate-900 dark:text-[#F8FAFC] block">
+          <div className="mt-2">
+            <span className="text-lg sm:text-2xl font-bold font-mono tracking-tight text-slate-900 dark:text-slate-50 block rz-tabular">
               {totalDimensions}
             </span>
-            <p className="mt-1.5 text-xs text-slate-400 dark:text-[#94A3B8]">
-              Attributes ready for reporting and AI analysis
+            <p className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500 hidden sm:block truncate">
+              Analyzed fields
             </p>
           </div>
         </div>

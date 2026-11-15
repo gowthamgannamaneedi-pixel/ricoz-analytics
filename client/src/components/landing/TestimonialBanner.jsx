@@ -51,8 +51,8 @@ export default function TestimonialBanner() {
               </div>
             </div>
 
-            {/* Right Badge Card with subtle floating depth */}
-            <div className="w-full md:w-68 bg-slate-800/90 backdrop-blur-md p-6 rounded-2xl border border-slate-700/80 flex flex-col items-center text-center space-y-3.5 shadow-xl rz-float">
+            {/* Right Badge Card with subtle Material surface */}
+            <div className="w-full md:w-68 bg-slate-800/90 p-6 rounded-2xl border border-slate-700/80 flex flex-col items-center text-center space-y-3.5 shadow-2xs">
               <div className="w-12 h-12 rounded-xl bg-red-600/20 text-red-400 flex items-center justify-center shadow-xs">
                 <Award size={26} />
               </div>

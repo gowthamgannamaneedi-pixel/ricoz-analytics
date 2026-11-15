@@ -874,7 +874,7 @@ export default function AIAnalyticsAssistant() {
         <div
           className={`${
             mobileHistoryOpen ? 'flex absolute inset-0 z-40 bg-white dark:bg-[#111827]' : 'hidden'
-          } lg:flex flex-col w-72 shrink-0 rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] shadow-2xs overflow-hidden`}
+          } lg:flex flex-col w-72 shrink-0 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden`}
         >
           {/* Header & Primary New Chat Button */}
           <div className="p-3 border-b border-slate-100 dark:border-[#334155] space-y-2.5 bg-slate-50/50 dark:bg-[#0F172A]">
@@ -1022,127 +1022,100 @@ export default function AIAnalyticsAssistant() {
         </div>
 
         {/* RIGHT PANEL: Main AI Conversation Area */}
-        <div className="flex-1 flex flex-col rounded-2xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827] shadow-2xs overflow-hidden">
+        <div className="flex-1 flex flex-col rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden">
           {/* Scrollable Message & Canvas Area */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-4">
             {messages.length === 0 ? (
               /* EMPTY / HERO STATE */
-              <div className="space-y-6 max-w-4xl mx-auto">
-                {/* Hero Banner: "Ask your data anything" (Issue 16) */}
-                <div className="rounded-2xl border border-slate-200/90 dark:border-[#334155] bg-gradient-to-r from-rose-50/70 via-amber-50/30 to-white dark:bg-none dark:bg-[#111827] p-6 sm:p-8 relative overflow-hidden shadow-2xs">
-                  <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                    <div className="space-y-2.5 max-w-xl">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-100/90 dark:bg-[#2A1422] text-rose-800 dark:text-[#FDA4AF] text-[10px] font-bold tracking-wider uppercase font-mono border border-rose-200 dark:border-rose-900/40">
-                        <Sparkles className="w-3 h-3 text-rose-600 dark:text-[#FB7185]" />
-                        <span>AI Analytics Assistant</span>
+              <div className="space-y-4 max-w-4xl mx-auto">
+                {/* Enterprise Copilot Briefing Card */}
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 p-4 sm:p-6 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1.5">
+                      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 text-[10px] font-bold tracking-wider uppercase font-mono border border-rose-200 dark:border-rose-900/60">
+                        <Sparkles className="w-3 h-3 text-rose-600 dark:text-rose-400" />
+                        <span>Decision Intelligence Copilot</span>
                       </div>
-
-                      <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight">
-                        Ask your data <span className="text-rose-600 dark:text-[#FB7185]">anything</span>
+                      <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-50 tracking-tight">
+                        Conversational BI Copilot
                       </h2>
-
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-[#CBD5E1] leading-relaxed font-normal">
-                        Get answers, discover insights, visualize trends, and make better business decisions using natural language.
-                      </p>
-
-                      {/* Capabilities Pills */}
-                      <div className="flex flex-wrap items-center gap-2 pt-1.5">
-                        <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#334155] text-[11px] font-semibold text-slate-700 dark:text-[#CBD5E1] shadow-2xs">
-                          📈 Trends &amp; Analysis
-                        </span>
-                        <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#334155] text-[11px] font-semibold text-slate-700 dark:text-[#CBD5E1] shadow-2xs">
-                          💬 Comparisons
-                        </span>
-                        <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#334155] text-[11px] font-semibold text-slate-700 dark:text-[#CBD5E1] shadow-2xs">
-                          ⚠️ Anomalies
-                        </span>
-                        <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#334155] text-[11px] font-semibold text-slate-700 dark:text-[#CBD5E1] shadow-2xs">
-                          🔮 Forecasts
-                        </span>
-                        <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-[#334155] text-[11px] font-semibold text-slate-700 dark:text-[#CBD5E1] shadow-2xs">
-                          📊 Visual Charts
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Decorative Visual Illustration Preview */}
-                    <div className="hidden sm:block shrink-0">
-                      <div className="rounded-xl border border-slate-200 dark:border-[#334155] bg-white/95 dark:bg-[#0F172A] p-3.5 shadow-md w-56 space-y-2">
-                        <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-800 dark:text-[#CBD5E1] bg-slate-50 dark:bg-[#1E293B] px-2 py-1 rounded-md">
-                          <Bot className="w-3.5 h-3.5 text-rose-600 dark:text-[#FB7185]" />
-                          <span>Show me revenue trend</span>
-                        </div>
-                        <div className="h-16 flex items-end gap-1.5 px-2 pt-2 bg-gradient-to-t from-rose-50/50 dark:from-rose-950/20 to-transparent rounded">
-                          {[30, 45, 35, 60, 50, 75, 90].map((h, i) => (
-                            <div
-                              key={i}
-                              className="flex-1 bg-rose-600 dark:bg-[#E11D48] rounded-t-xs"
-                              style={{ height: `${h}%`, opacity: 0.4 + (i / 7) * 0.6 }}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* "Try asking these questions" Section */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Try asking these questions</h3>
-                      <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
-                        Click a question to get started. These are examples of what you can ask.
+                      <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl leading-relaxed">
+                        Query active datasets with natural language. Generate instant KPI breakdowns, trend projections, and risk alerts.
                       </p>
                     </div>
+
+                    {currentDataset && (
+                      <div className="shrink-0 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] text-left">
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 dark:text-slate-500 block font-bold">
+                          Context
+                        </span>
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block truncate max-w-[160px]">
+                          {currentDataset.name}
+                        </span>
+                        <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 block">
+                          {Number(currentDataset.row_count || 0).toLocaleString()} rows active
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* 4 Categorized Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                    {QUESTION_CATEGORIES.map((cat, idx) => {
-                      const Icon = cat.icon;
+                  {/* Quick Action Chips */}
+                  <div className="mt-4 pt-3 border-t border-slate-200/70 dark:border-slate-800 flex flex-wrap items-center gap-1.5">
+                    {[
+                      { icon: TrendingUp, text: 'Total revenue and trend' },
+                      { icon: ShoppingBag, text: 'Top 5 products by revenue' },
+                      { icon: MapPin, text: 'Regional sales distribution' },
+                      { icon: AlertTriangle, text: 'Detect anomalies and variance' }
+                    ].map((item, idx) => {
+                      const ItemIcon = item.icon;
                       return (
-                        <div
+                        <button
                           key={idx}
-                          className={`rounded-2xl border ${cat.borderColor} dark:border-[#334155] bg-white dark:bg-[#111827] p-4 shadow-2xs transition space-y-3`}
+                          type="button"
+                          onClick={() => handleSendQuery(item.text)}
+                          className="min-h-[44px] px-3 py-2 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] hover:border-rose-300 dark:hover:border-rose-900 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-rose-600 dark:hover:text-rose-400 transition flex items-center gap-2 cursor-pointer shadow-2xs"
                         >
-                          <div className="flex items-center gap-2">
-                            <div className={`p-1.5 rounded-lg ${cat.iconBg} dark:bg-[#1E293B]`}>
-                              <Icon className="w-4 h-4" />
-                            </div>
-                            <span className={`text-xs font-bold ${cat.headerColor}`}>
-                              {cat.category}
-                            </span>
-                          </div>
-
-                          <div className="space-y-2">
-                            {cat.questions.map((q, qIdx) => (
-                              <button
-                                key={qIdx}
-                                onClick={() => handleSendQuery(q)}
-                                className="w-full text-left p-2.5 rounded-xl border border-slate-200/80 dark:border-[#334155] bg-slate-50/70 dark:bg-[#0F172A] hover:bg-rose-50/60 dark:hover:bg-[#1E293B] hover:border-rose-200 dark:hover:border-rose-900/60 hover:text-rose-700 dark:hover:text-[#FB7185] active:scale-[0.98] text-[11px] font-medium transition-all flex items-center gap-2 group cursor-pointer shadow-2xs hover:shadow-xs"
-                              >
-                                <ChevronRight className="w-3.5 h-3.5 text-rose-500 dark:text-[#FB7185] shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                                <span className="leading-snug flex-1 text-slate-700 dark:text-[#CBD5E1] group-hover:text-rose-700 dark:group-hover:text-[#FB7185]">{q}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                          <ItemIcon className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
+                          <span>{item.text}</span>
+                        </button>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* "Start a conversation" divider/hint */}
-                <div className="text-center pt-2 pb-1 space-y-1">
-                  <div className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-[#CBD5E1]">
-                    <Bot className="w-4 h-4 text-rose-600 dark:text-[#FB7185]" />
-                    <span>Start a conversation</span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 dark:text-[#94A3B8]">
-                    Select a suggested question or type your own question below.
-                  </p>
-                  <ChevronDown className="w-4 h-4 text-slate-300 dark:text-slate-600 mx-auto animate-bounce mt-1" />
+                {/* Structured Query Categories */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                  {QUESTION_CATEGORIES.map((cat, idx) => {
+                    const Icon = cat.icon;
+                    return (
+                      <div
+                        key={idx}
+                        className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111827] p-3 sm:p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] space-y-2.5"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="p-1 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
+                            <Icon className="w-3.5 h-3.5" />
+                          </div>
+                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                            {cat.category}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          {cat.questions.map((q, qIdx) => (
+                            <button
+                              key={qIdx}
+                              onClick={() => handleSendQuery(q)}
+                              className="w-full text-left min-h-[44px] px-2.5 py-2 rounded-lg border border-slate-100 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-900/60 hover:bg-rose-50/50 dark:hover:bg-rose-950/30 hover:border-rose-200 dark:hover:border-rose-900/50 hover:text-rose-700 dark:hover:text-rose-300 text-[11px] font-medium transition-all flex items-center gap-1.5 cursor-pointer text-slate-700 dark:text-slate-300"
+                            >
+                              <ChevronRight className="w-3 h-3 text-rose-500 shrink-0" />
+                              <span className="leading-snug flex-1 line-clamp-2">{q}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ) : (

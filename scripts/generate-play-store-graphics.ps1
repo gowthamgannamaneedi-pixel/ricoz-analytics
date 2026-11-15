@@ -1,4 +1,4 @@
-﻿Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName System.Drawing
 
 $outDir = "C:\Users\gowth\Downloads\Ricoz_analysis_project\play_store_assets"
 if (-not (Test-Path $outDir)) {

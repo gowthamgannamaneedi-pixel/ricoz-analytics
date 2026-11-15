@@ -39,9 +39,9 @@ const variantMap = {
 };
 
 const sizeMap = {
-  sm: 'h-8 px-3 text-xs gap-1.5 rounded-lg',
-  md: 'h-10 px-4 text-sm font-semibold gap-2 rounded-lg',
-  lg: 'h-11 px-5 text-base font-semibold gap-2.5 rounded-xl',
+  sm: 'h-8 sm:h-8 min-h-[36px] sm:min-h-0 px-3 text-xs gap-1.5 rounded-lg',
+  md: 'h-10 sm:h-10 min-h-[42px] sm:min-h-0 px-4 text-sm font-semibold gap-2 rounded-xl',
+  lg: 'h-11 sm:h-11 min-h-[46px] sm:min-h-0 px-5 text-base font-semibold gap-2.5 rounded-xl',
 };
 
 export function Button({
@@ -56,7 +56,7 @@ export function Button({
 }) {
   const base = [
     'inline-flex items-center justify-center select-none font-semibold',
-    'transition-all duration-150 cursor-pointer',
+    'transition-all duration-150 cursor-pointer active:scale-[0.98]',
     'focus:outline-none',
     'disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:pointer-events-none',
     variantMap[variant] || variantMap.primary,

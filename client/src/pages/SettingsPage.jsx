@@ -732,7 +732,7 @@ export default function SettingsPage() {
                 key={tab.id}
                 type="button"
                 onClick={() => handleTabChange(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-t-lg border-b-2 whitespace-nowrap transition cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-3 min-h-[44px] text-xs sm:text-sm font-semibold rounded-t-lg border-b-2 whitespace-nowrap transition cursor-pointer active:scale-95 ${
                   isActive
                     ? 'border-rose-600 text-rose-700 bg-rose-50/50 dark:border-b-2 dark:border-[#E11D48] dark:text-[#FB7185] dark:bg-transparent'
                     : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] dark:hover:bg-transparent'
@@ -759,96 +759,114 @@ export default function SettingsPage() {
       {activeTab === 'overview' && (
         <div className="space-y-6">
           {/* Top 4 KPI Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
             {/* Card 1: Total Users */}
             <div
               onClick={() => handleTabChange('users')}
-              className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-500 transition-all cursor-pointer flex items-center justify-between"
+              className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 sm:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:border-rose-300 dark:hover:border-rose-900 transition-all cursor-pointer flex flex-col justify-between min-h-[92px]"
             >
-              <div className="flex items-center gap-3.5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0">
-                  <Users className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-base sm:text-[17px] font-semibold text-slate-800 dark:text-slate-100 break-words block leading-snug">Total Users</span>
-                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight mt-1">
-                    {stats.membersCount}
-                  </div>
-                  <span className="text-[11px] text-slate-400 dark:text-[#94A3B8] font-medium">
-                    {stats.activeMembersCount} active accounts
-                  </span>
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono truncate">
+                  Total Users
+                </span>
+                <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.2 rounded font-mono">
+                  {stats.activeMembersCount} Active
+                </span>
+              </div>
+              <div className="mt-1 flex items-baseline justify-between gap-1">
+                <span className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 font-sans rz-tabular">
+                  {stats.membersCount}
+                </span>
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0">
+                  <Users className="h-3.5 w-3.5" />
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B]" />
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+                Team accounts
+              </span>
             </div>
 
             {/* Card 2: Connected Datasets */}
             <div
               onClick={() => navigate('/datasets')}
-              className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-500 transition-all cursor-pointer flex items-center justify-between"
+              className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 sm:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:border-rose-300 dark:hover:border-rose-900 transition-all cursor-pointer flex flex-col justify-between min-h-[92px]"
             >
-              <div className="flex items-center gap-3.5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0">
-                  <Database className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-base sm:text-[17px] font-semibold text-slate-800 dark:text-slate-100 break-words block leading-snug">Connected Datasets</span>
-                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight mt-1">
-                    {stats.datasetsCount}
-                  </div>
-                  <span className="text-[11px] text-slate-400 dark:text-[#94A3B8] font-medium">Enterprise data sources</span>
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono truncate">
+                  Datasets
+                </span>
+                <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.2 rounded font-mono">
+                  Live
+                </span>
+              </div>
+              <div className="mt-1 flex items-baseline justify-between gap-1">
+                <span className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 font-sans rz-tabular">
+                  {stats.datasetsCount}
+                </span>
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0">
+                  <Database className="h-3.5 w-3.5" />
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B]" />
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+                Connected tables
+              </span>
             </div>
 
             {/* Card 3: Dashboards & Reports */}
             <div
               onClick={() => navigate('/dashboard')}
-              className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-500 transition-all cursor-pointer flex items-center justify-between"
+              className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 sm:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:border-rose-300 dark:hover:border-rose-900 transition-all cursor-pointer flex flex-col justify-between min-h-[92px]"
             >
-              <div className="flex items-center gap-3.5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0">
-                  <Layers className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-base sm:text-[17px] font-semibold text-slate-800 dark:text-slate-100 break-words block leading-snug">Dashboards & Reports</span>
-                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight mt-1">
-                    {stats.dashboardsCount + stats.reportsCount}
-                  </div>
-                  <span className="text-[11px] text-slate-400 dark:text-[#94A3B8] font-medium">
-                    {stats.dashboardsCount} dashboards • {stats.reportsCount} reports
-                  </span>
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono truncate">
+                  Dashboards & Reports
+                </span>
+                <span className="text-[10px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-1.5 py-0.2 rounded font-mono">
+                  {stats.reportsCount} rep
+                </span>
+              </div>
+              <div className="mt-1 flex items-baseline justify-between gap-1">
+                <span className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 font-sans rz-tabular">
+                  {stats.dashboardsCount + stats.reportsCount}
+                </span>
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0">
+                  <Layers className="h-3.5 w-3.5" />
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B]" />
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+                {stats.dashboardsCount} dash • {stats.reportsCount} reports
+              </span>
             </div>
 
             {/* Card 4: Security Status */}
             <div
               onClick={() => navigate('/governance')}
-              className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-500 transition-all cursor-pointer flex items-center justify-between"
+              className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 sm:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:border-rose-300 dark:hover:border-rose-900 transition-all cursor-pointer flex flex-col justify-between min-h-[92px]"
             >
-              <div className="flex items-center gap-3.5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0">
-                  <ShieldCheck className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-base sm:text-[17px] font-semibold text-slate-800 dark:text-slate-100 break-words block leading-snug">Security Status</span>
-                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight mt-1">
-                    {healthStatus}
-                  </div>
-                  <span className="text-[11px] text-slate-400 dark:text-[#94A3B8] font-medium">
-                    {stats.alertsCount} active alert{stats.alertsCount !== 1 ? 's' : ''}
-                  </span>
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono truncate">
+                  Security
+                </span>
+                <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.2 rounded font-mono">
+                  SOC 2
+                </span>
+              </div>
+              <div className="mt-1 flex items-baseline justify-between gap-1">
+                <span className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-50 font-sans truncate">
+                  {healthStatus}
+                </span>
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185] shrink-0">
+                  <ShieldCheck className="h-3.5 w-3.5" />
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B]" />
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+                {stats.alertsCount} active alert{stats.alertsCount !== 1 ? 's' : ''}
+              </span>
             </div>
           </div>{/* ── end 4-card grid ── */}
 
           {/* System Configuration Panel - Full Available Width (Req 10) */}
-          <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4 w-full">
+          <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] space-y-4 w-full">
             <div className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#1E293B] text-rose-600 dark:text-[#FB7185]">
                 <Settings className="h-4 w-4" />
@@ -992,7 +1010,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Quick Actions Panel - Full Available Width (Req 10) */}
-          <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-3.5 w-full">
+          <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] space-y-3.5 w-full">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
               <span className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] uppercase tracking-wider">Quick Actions</span>
@@ -1042,7 +1060,7 @@ export default function SettingsPage() {
           {/* Three-Column Overview Grid: Org Info + Recent Activity + Support */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
             {/* Organization Information Card */}
-            <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+            <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#334155]">
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-rose-600 dark:text-[#FB7185]" />

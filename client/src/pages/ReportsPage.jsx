@@ -677,101 +677,89 @@ export default function ReportsPage() {
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* 2. SUMMARY METRICS AREA (4 Professional Real-Data KPI Cards)        */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Card 1: Total Reports */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[156px]">
-          <div>
-            <div className="flex items-center gap-3 text-slate-600 dark:text-[#CBD5E1]">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] shrink-0 shadow-2xs">
-                <FileBarChart className="h-5 w-5" />
-              </div>
-              <span className="text-xs font-bold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider">Total Reports</span>
-            </div>
-            <div className="mt-3.5 flex items-baseline justify-between">
-              <span className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight font-sans">
-                {loading ? '—' : totalReportsCount}
-              </span>
-              <MiniSparklineBars count={totalReportsCount} color="#e11d48" />
-            </div>
-          </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-[#334155] flex items-center gap-1.5 text-xs">
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
-              <ArrowUpRight className="h-3.5 w-3.5" />
-              {totalReportsCount > 0 ? `${reports.filter(r => r.status === 'active').length} active` : '0 active'}
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 sm:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[92px]">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono truncate">
+              Total Reports
             </span>
-            <span className="text-slate-400 dark:text-[#94A3B8] font-normal">in library</span>
+            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.2 rounded font-mono">
+              {totalReportsCount > 0 ? `${reports.filter(r => r.status === 'active').length} Active` : '0 Active'}
+            </span>
           </div>
+          <div className="mt-1 flex items-baseline justify-between gap-1">
+            <span className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 font-sans rz-tabular">
+              {loading ? '—' : totalReportsCount}
+            </span>
+            <MiniSparklineBars count={totalReportsCount} color="#e11d48" />
+          </div>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+            In system library
+          </span>
         </div>
 
         {/* Card 2: Active Schedules */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[156px]">
-          <div>
-            <div className="flex items-center gap-3 text-slate-600 dark:text-[#CBD5E1]">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] shrink-0 shadow-2xs">
-                <Calendar className="h-5 w-5" />
-              </div>
-              <span className="text-xs font-bold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider">Active Schedules</span>
-            </div>
-            <div className="mt-3.5 flex items-baseline justify-between">
-              <span className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight font-sans">
-                {loading ? '—' : activeSchedulesCount}
-              </span>
-              <MiniSparklineBars count={activeSchedulesCount} color="#059669" />
-            </div>
-          </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-[#334155] flex items-center gap-1.5 text-xs">
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
-              <ArrowUpRight className="h-3.5 w-3.5" />
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 sm:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[92px]">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono truncate">
+              Active Schedules
+            </span>
+            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.2 rounded font-mono">
               {totalReportsCount > 0 ? `${Math.round((activeSchedulesCount / totalReportsCount) * 100)}%` : '0%'}
             </span>
-            <span className="text-slate-400 dark:text-[#94A3B8] font-normal">automated recurring</span>
           </div>
+          <div className="mt-1 flex items-baseline justify-between gap-1">
+            <span className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 font-sans rz-tabular">
+              {loading ? '—' : activeSchedulesCount}
+            </span>
+            <MiniSparklineBars count={activeSchedulesCount} color="#059669" />
+          </div>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+            Automated delivery
+          </span>
         </div>
 
         {/* Card 3: Draft Reports */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[156px]">
-          <div>
-            <div className="flex items-center gap-3 text-slate-600 dark:text-[#CBD5E1]">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] shrink-0 shadow-2xs">
-                <Edit3 className="h-5 w-5" />
-              </div>
-              <span className="text-xs font-bold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider">Draft Reports</span>
-            </div>
-            <div className="mt-3.5 flex items-baseline justify-between">
-              <span className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight font-sans">
-                {loading ? '—' : draftReportsCount}
-              </span>
-              <MiniSparklineBars count={draftReportsCount} color="#7c3aed" />
-            </div>
-          </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-[#334155] flex items-center gap-1.5 text-xs">
-            <span className="font-semibold text-slate-600 dark:text-[#CBD5E1]">
-              {draftReportsCount > 0 ? `${draftReportsCount} pending publish` : 'All reports configured'}
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 sm:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[92px]">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono truncate">
+              Draft Reports
+            </span>
+            <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded font-mono">
+              Draft
             </span>
           </div>
+          <div className="mt-1 flex items-baseline justify-between gap-1">
+            <span className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 font-sans rz-tabular">
+              {loading ? '—' : draftReportsCount}
+            </span>
+            <MiniSparklineBars count={draftReportsCount} color="#7c3aed" />
+          </div>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+            Pending publication
+          </span>
         </div>
 
         {/* Card 4: Executions Logged */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between min-h-[156px]">
-          <div>
-            <div className="flex items-center gap-3 text-slate-600 dark:text-[#CBD5E1]">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] shrink-0 shadow-2xs">
-                <Clock className="h-5 w-5" />
-              </div>
-              <span className="text-xs font-bold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider">Executions Logged</span>
-            </div>
-            <div className="mt-3.5 flex items-baseline justify-between">
-              <span className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight font-sans">
-                {loading ? '—' : executionsCount}
-              </span>
-              <MiniSparklineBars count={executionsCount} color="#d97706" />
-            </div>
-          </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-[#334155] flex items-center gap-1.5 text-xs">
-            <span className="font-semibold text-rose-600 dark:text-[#FB7185]">
-              {executionsCount > 0 ? `${executions.filter(e => e.status === 'completed').length} completed` : 'Audit log ready'}
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 sm:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[92px]">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono truncate">
+              Executions
+            </span>
+            <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-1.5 py-0.2 rounded font-mono">
+              Logged
             </span>
           </div>
+          <div className="mt-1 flex items-baseline justify-between gap-1">
+            <span className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 font-sans rz-tabular">
+              {loading ? '—' : executionsCount}
+            </span>
+            <MiniSparklineBars count={executionsCount} color="#d97706" />
+          </div>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+            Run executions
+          </span>
         </div>
       </div>
 
@@ -907,7 +895,7 @@ export default function ReportsPage() {
           {/* Upper Section: Featured Reports (8 cols) + Report Templates (4 cols) */}
           <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
             {/* Left 8 Cols: Featured Reports */}
-            <div className="xl:col-span-8 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between h-full">
+            <div className="xl:col-span-8 bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-between h-full">
               <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-[#334155]">
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] shadow-2xs">
@@ -1212,7 +1200,7 @@ export default function ReportsPage() {
             </div>
 
             {/* Right 4 Cols: Report Templates (Pre-built blueprints) */}
-            <div className="xl:col-span-4 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between h-full">
+            <div className="xl:col-span-4 bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-between h-full">
               <div>
                 <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-[#334155]">
                   <div className="flex items-center gap-2.5">
@@ -1324,34 +1312,27 @@ export default function ReportsPage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs min-w-[650px]">
-                      <thead>
-                        <tr className="border-b border-slate-100 dark:border-[#334155] text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#CBD5E1]">
-                          <th className="pb-3 font-semibold min-w-[180px]">Report Name</th>
-                          <th className="pb-3 font-semibold min-w-[80px]">Type</th>
-                          <th className="pb-3 font-semibold min-w-[110px]">Status</th>
-                          <th className="pb-3 font-semibold min-w-[140px]">Generated On</th>
-                          <th className="pb-3 font-semibold min-w-[80px]">Owner</th>
-                          <th className="pb-3 font-semibold text-right min-w-[90px]">Actions</th>
-                        </tr>
-                      </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-[#334155] font-sans">
+                  <div>
+                    {/* Mobile Card View (< md) */}
+                    <div className="md:hidden divide-y divide-slate-100 dark:divide-[#334155]">
                       {executions.slice(0, 5).map((exec) => (
-                        <tr key={exec.id} className="hover:bg-slate-50/70 dark:hover:bg-[#1E293B]/70 transition">
-                          <td className="py-3 font-bold text-slate-900 dark:text-[#F8FAFC]">
-                            {exec.report_title || 'Analytics Digest'}
-                          </td>
-                          <td className="py-3">
+                        <div key={exec.id} className="py-3.5 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold text-sm text-slate-900 dark:text-[#F8FAFC] truncate">
+                              {exec.report_title || 'Analytics Digest'}
+                            </span>
                             {getFormatBadge(exec.format)}
-                          </td>
-                          <td className="py-3">
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-[#94A3B8]">
+                            <span>
+                              {new Date(exec.created_at).toLocaleDateString()} {new Date(exec.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
                             {exec.status === 'completed' ? (
                               <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                                 <Check className="h-3 w-3" /> Completed
                               </span>
                             ) : exec.status === 'failed' ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200" title={exec.error_message}>
+                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
                                 <AlertCircle className="h-3 w-3" /> Failed
                               </span>
                             ) : (
@@ -1359,46 +1340,103 @@ export default function ReportsPage() {
                                 <Loader2 className="h-3 w-3 animate-spin" /> Running
                               </span>
                             )}
-                          </td>
-                          <td className="py-3 text-slate-500 font-mono text-[11px]">
-                            {new Date(exec.created_at).toLocaleDateString()} {new Date(exec.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </td>
-                          <td className="py-3">
-                            <div className="h-6 w-6 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center">
-                              {getInitials(exec.executed_by_name || user?.name || 'Admin')}
-                            </div>
-                          </td>
-                          <td className="py-3 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
-                              {exec.status === 'completed' && exec.file_path && (
+                          </div>
+                          {exec.status === 'completed' && exec.file_path && (
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadExecution(exec)}
+                              disabled={downloadingExecutionId === exec.id}
+                              className="w-full h-10 mt-1 inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50/60 dark:bg-rose-950/40 text-xs font-semibold text-rose-700 dark:text-rose-300 active:scale-98 transition"
+                            >
+                              {downloadingExecutionId === exec.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin text-rose-600" />
+                              ) : (
+                                <Download className="h-4 w-4" />
+                              )}
+                              <span>Download Artifact</span>
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Desktop Table (>= md) */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-left text-xs min-w-[650px]">
+                        <thead>
+                          <tr className="border-b border-slate-100 dark:border-[#334155] text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#CBD5E1]">
+                            <th className="pb-3 font-semibold min-w-[180px]">Report Name</th>
+                            <th className="pb-3 font-semibold min-w-[80px]">Type</th>
+                            <th className="pb-3 font-semibold min-w-[110px]">Status</th>
+                            <th className="pb-3 font-semibold min-w-[140px]">Generated On</th>
+                            <th className="pb-3 font-semibold min-w-[80px]">Owner</th>
+                            <th className="pb-3 font-semibold text-right min-w-[90px]">Actions</th>
+                          </tr>
+                        </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-[#334155] font-sans">
+                        {executions.slice(0, 5).map((exec) => (
+                          <tr key={exec.id} className="hover:bg-slate-50/70 dark:hover:bg-[#1E293B]/70 transition">
+                            <td className="py-3 font-bold text-slate-900 dark:text-[#F8FAFC]">
+                              {exec.report_title || 'Analytics Digest'}
+                            </td>
+                            <td className="py-3">
+                              {getFormatBadge(exec.format)}
+                            </td>
+                            <td className="py-3">
+                              {exec.status === 'completed' ? (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                  <Check className="h-3 w-3" /> Completed
+                                </span>
+                              ) : exec.status === 'failed' ? (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200" title={exec.error_message}>
+                                  <AlertCircle className="h-3 w-3" /> Failed
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                                  <Loader2 className="h-3 w-3 animate-spin" /> Running
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 text-slate-500 font-mono text-[11px]">
+                              {new Date(exec.created_at).toLocaleDateString()} {new Date(exec.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </td>
+                            <td className="py-3">
+                              <div className="h-6 w-6 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center">
+                                {getInitials(exec.executed_by_name || user?.name || 'Admin')}
+                              </div>
+                            </td>
+                            <td className="py-3 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                {exec.status === 'completed' && exec.file_path && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDownloadExecution(exec)}
+                                    disabled={downloadingExecutionId === exec.id}
+                                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                    title="Download Artifact"
+                                  >
+                                    {downloadingExecutionId === exec.id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin text-rose-600" />
+                                    ) : (
+                                      <Download className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                )}
                                 <button
                                   type="button"
-                                  onClick={() => handleDownloadExecution(exec)}
-                                  disabled={downloadingExecutionId === exec.id}
-                                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                                  title="Download Artifact"
+                                  onClick={() => setShareModalConfig({ isOpen: true, reportId: exec.report_id, title: exec.report_title })}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                                  title="Share"
                                 >
-                                  {downloadingExecutionId === exec.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin text-rose-600" />
-                                  ) : (
-                                    <Download className="h-4 w-4" />
-                                  )}
+                                  <Share2 className="h-4 w-4" />
                                 </button>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => setShareModalConfig({ isOpen: true, reportId: exec.report_id, title: exec.report_title })}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
-                                title="Share"
-                              >
-                                <Share2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
               </div>
@@ -1622,26 +1660,27 @@ export default function ReportsPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs min-w-[760px]">
-                  <thead>
-                    <tr className="border-b border-slate-200 dark:border-[#334155] bg-slate-50 dark:bg-[#1E293B] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#CBD5E1]">
-                      <th className="px-4 py-3 min-w-[180px]">Report Name</th>
-                      <th className="px-4 py-3 min-w-[120px]">Execution Status</th>
-                      <th className="px-4 py-3 min-w-[80px]">Format</th>
-                      <th className="px-4 py-3 min-w-[90px]">File Size</th>
-                      <th className="px-4 py-3 min-w-[120px]">Triggered By</th>
-                      <th className="px-4 py-3 min-w-[130px]">Timestamp</th>
-                      <th className="px-4 py-3 text-right min-w-[90px]">Artifact</th>
-                    </tr>
-                  </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-[#334155] font-sans">
+              <div>
+                {/* Mobile Execution Cards (< md) */}
+                <div className="md:hidden divide-y divide-slate-100 dark:divide-[#334155]">
                   {executions.map((exec) => (
-                    <tr key={exec.id} className="hover:bg-slate-50/80 dark:hover:bg-[#1E293B]/70 transition">
-                      <td className="px-4 py-3 font-bold text-slate-900 dark:text-[#F8FAFC]">
-                        {exec.report_title || 'Analytics Digest'}
-                      </td>
-                      <td className="px-4 py-3">
+                    <div key={exec.id} className="py-3.5 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-sm text-slate-900 dark:text-[#F8FAFC] truncate">
+                          {exec.report_title || 'Analytics Digest'}
+                        </span>
+                        {getFormatBadge(exec.format)}
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-[#94A3B8]">
+                        <span>{new Date(exec.created_at).toLocaleString()}</span>
+                        <span className="font-mono text-[11px]">
+                          {exec.file_size ? `${Math.round(exec.file_size / 1024)} KB` : '-'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-500 text-[11px]">
+                          By: {exec.executed_by_name || 'System / Scheduler'}
+                        </span>
                         {exec.status === 'completed' ? (
                           <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                             <Check className="h-3 w-3" /> Completed
@@ -1655,45 +1694,102 @@ export default function ReportsPage() {
                             <Loader2 className="h-3 w-3 animate-spin" /> {exec.status}
                           </span>
                         )}
-                      </td>
-                      <td className="px-4 py-3">{getFormatBadge(exec.format)}</td>
-                      <td className="px-4 py-3 font-mono text-[11px] text-slate-600">
-                        {exec.file_size ? `${Math.round(exec.file_size / 1024)} KB` : '-'}
-                      </td>
-                      <td className="px-4 py-3 text-slate-600 text-[11px]">
-                        {exec.executed_by_name || 'System / Scheduler'}
-                      </td>
-                      <td className="px-4 py-3 text-slate-500 font-mono text-[11px]">
-                        {new Date(exec.created_at).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        {exec.status === 'completed' && exec.file_path ? (
+                      </div>
+                      {exec.status === 'completed' && exec.file_path && (
+                        <div className="pt-1">
                           <button
                             type="button"
                             onClick={() => handleDownloadExecution(exec)}
                             disabled={downloadingExecutionId === exec.id}
-                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-800 disabled:opacity-50 transition cursor-pointer"
+                            className="w-full h-10 inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50/60 dark:bg-rose-950/40 text-xs font-semibold text-rose-700 dark:text-rose-300 active:scale-98 transition cursor-pointer"
                           >
                             {downloadingExecutionId === exec.id ? (
-                              <>
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                <span>Downloading...</span>
-                              </>
+                              <Loader2 className="h-4 w-4 animate-spin text-rose-600" />
                             ) : (
-                              <>
-                                <Download className="h-3.5 w-3.5" />
-                                <span>Download</span>
-                              </>
+                              <Download className="h-4 w-4" />
                             )}
+                            <span>Download Artifact</span>
                           </button>
-                        ) : (
-                          <span className="text-slate-400 text-[11px]">-</span>
-                        )}
-                      </td>
-                    </tr>
+                        </div>
+                      )}
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+
+                {/* Desktop Table View (>= md) */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left text-xs min-w-[760px]">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-[#334155] bg-slate-50 dark:bg-[#1E293B] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#CBD5E1]">
+                        <th className="px-4 py-3 min-w-[180px]">Report Name</th>
+                        <th className="px-4 py-3 min-w-[120px]">Execution Status</th>
+                        <th className="px-4 py-3 min-w-[80px]">Format</th>
+                        <th className="px-4 py-3 min-w-[90px]">File Size</th>
+                        <th className="px-4 py-3 min-w-[120px]">Triggered By</th>
+                        <th className="px-4 py-3 min-w-[130px]">Timestamp</th>
+                        <th className="px-4 py-3 text-right min-w-[90px]">Artifact</th>
+                      </tr>
+                    </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-[#334155] font-sans">
+                    {executions.map((exec) => (
+                      <tr key={exec.id} className="hover:bg-slate-50/80 dark:hover:bg-[#1E293B]/70 transition">
+                        <td className="px-4 py-3 font-bold text-slate-900 dark:text-[#F8FAFC]">
+                          {exec.report_title || 'Analytics Digest'}
+                        </td>
+                        <td className="px-4 py-3">
+                          {exec.status === 'completed' ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              <Check className="h-3 w-3" /> Completed
+                            </span>
+                          ) : exec.status === 'failed' ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200" title={exec.error_message}>
+                              <AlertCircle className="h-3 w-3" /> Failed
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                              <Loader2 className="h-3 w-3 animate-spin" /> {exec.status}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">{getFormatBadge(exec.format)}</td>
+                        <td className="px-4 py-3 font-mono text-[11px] text-slate-600">
+                          {exec.file_size ? `${Math.round(exec.file_size / 1024)} KB` : '-'}
+                        </td>
+                        <td className="px-4 py-3 text-slate-600 text-[11px]">
+                          {exec.executed_by_name || 'System / Scheduler'}
+                        </td>
+                        <td className="px-4 py-3 text-slate-500 font-mono text-[11px]">
+                          {new Date(exec.created_at).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {exec.status === 'completed' && exec.file_path ? (
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadExecution(exec)}
+                              disabled={downloadingExecutionId === exec.id}
+                              className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-800 disabled:opacity-50 transition cursor-pointer"
+                            >
+                              {downloadingExecutionId === exec.id ? (
+                                <>
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  <span>Downloading...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Download className="h-3.5 w-3.5" />
+                                  <span>Download</span>
+                                </>
+                              )}
+                            </button>
+                          ) : (
+                            <span className="text-slate-400 text-[11px]">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
           </div>

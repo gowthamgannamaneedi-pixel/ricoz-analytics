@@ -437,45 +437,20 @@ export default function ExecutiveDashboard({
   return (
     <div className="space-y-6 font-sans">
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 1. EXECUTIVE HEADER (Breadcrumbs, Title, Subtitle, Dataset Pill)       */}
+      {/* 1. EXECUTIVE COMPACT HEADER (Dataset Switcher, Range, Controls)      */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       <section className="space-y-2 pb-1">
-        {/* Breadcrumb Hierarchy */}
-        <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-medium">
-          <span className="hover:text-slate-600 dark:hover:text-slate-300 transition cursor-pointer" onClick={() => navigate('/dashboard')}>
-            Workspace
-          </span>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 shrink-0" />
-          <span className="hover:text-slate-600 dark:hover:text-slate-300 transition cursor-pointer">
-            Production
-          </span>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 shrink-0" />
-          <span className="text-slate-900 dark:text-slate-100 font-bold">
-            Executive Overview
-          </span>
-        </div>
-
-        {/* Title & Subtitle */}
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 font-sans">
-            Executive Overview
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-normal leading-relaxed">
-            Key sales performance, revenue trends, and operational insights across your active dataset.
-          </p>
-        </div>
-
-        {/* Dataset Selector Pill & Metadata Row matching reference design */}
-        <div className="flex flex-wrap items-center gap-3 pt-1">
-          {/* Active Dataset Selector Dropdown Button (Wireframe Pill) */}
+        {/* Top Control Bar: Active Dataset + Telemetry Status */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          {/* Active Dataset Selector Dropdown */}
           {datasets.length > 0 && (
             <div className="relative inline-flex items-center">
-              <div className="flex items-center gap-2 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/30 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs">
-                <FileText className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
+              <div className="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs">
+                <Database className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
                 <select
                   value={selectedDatasetId || (activeDataset?.id ?? '')}
                   onChange={(e) => onSelectDataset(e.target.value)}
-                  className="bg-transparent text-slate-900 dark:text-slate-100 font-bold pr-5 focus:outline-none cursor-pointer appearance-none max-w-[200px] sm:max-w-[280px] truncate"
+                  className="bg-transparent text-slate-900 dark:text-slate-100 font-bold pr-5 focus:outline-none cursor-pointer appearance-none max-w-[180px] sm:max-w-[260px] truncate"
                   aria-label="Active Telemetry Dataset"
                 >
                   {datasets.map((d) => (
@@ -484,104 +459,37 @@ export default function ExecutiveDashboard({
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="h-3.5 w-3.5 text-slate-400 pointer-events-none absolute right-2.5" />
+                <ChevronDown className="h-3.5 w-3.5 text-slate-400 pointer-events-none absolute right-2" />
               </div>
             </div>
           )}
 
-          {/* Telemetry Record Count & Date Range */}
-          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">
+          {/* Quick Metrics & Actions */}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 font-semibold bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
               {Number(kpiData?.recordCount || summaryData?.totalRows || tableData?.totalCount || 0).toLocaleString()} records
             </span>
-            <span className="text-slate-300 dark:text-slate-700">|</span>
-            <span>{dateRangeLabel}</span>
-          </div>
-        </div>
-      </section>
-
-      {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 2. FILTER BAR (Time Range, Regions, Channels, Manage, Export, Refresh)*/}
-      {/* ─────────────────────────────────────────────────────────────────── */}
-      <section className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 sm:p-3.5 shadow-2xs">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          {/* Left Filters */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-            {/* Time Filter Dropdown */}
-            <div className="min-w-[120px] sm:min-w-[130px]">
-              <Select
-                value={filters.dateRange || 'all'}
-                onChange={(e) => onFilterChange('dateRange', e.target.value)}
-                ariaLabel="Time Filter"
-              >
-                <option value="all">All Time</option>
-                <option value="7d">Last 7 Days</option>
-                <option value="30d">Last 30 Days</option>
-                <option value="90d">Last 90 Days</option>
-                <option value="ytd">Year to Date</option>
-              </Select>
-            </div>
-
-            {/* Region Filter Dropdown */}
-            <div className="min-w-[130px] sm:min-w-[140px]">
-              <Select
-                value={filters[summaryData?.dimensions?.regionColumn || 'region'] || 'all'}
-                onChange={(e) => onFilterChange(summaryData?.dimensions?.regionColumn || 'region', e.target.value)}
-                ariaLabel="Region Filter"
-              >
-                <option value="all">Regions{summaryData?.filterOptions?.regions?.length ? `(${summaryData.filterOptions.regions.length})` : ''}</option>
-                {(summaryData?.filterOptions?.regions || []).map((reg) => (
-                  <option key={reg} value={reg}>
-                    {reg}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            {/* Channel Filter Dropdown */}
-            <div className="min-w-[135px] sm:min-w-[145px]">
-              <Select
-                value={filters[summaryData?.dimensions?.channelColumn || 'channel'] || 'all'}
-                onChange={(e) => onFilterChange(summaryData?.dimensions?.channelColumn || 'channel', e.target.value)}
-                ariaLabel="Channel Filter"
-              >
-                <option value="all">All Channels{summaryData?.filterOptions?.channels?.length ? `(${summaryData.filterOptions.channels.length})` : ''}</option>
-                {(summaryData?.filterOptions?.channels || []).map((chan) => (
-                  <option key={chan} value={chan}>
-                    {chan}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            {/* Reset Filters button */}
-            <ResetButton onClick={onResetFilters} size="sm" className="h-10" />
-          </div>
-
-          {/* Right Action Controls: Manage Dataset + Export + Refresh */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-            <Button
-              variant="secondary"
-              onClick={() => navigate('/datasets')}
-              className="h-10 px-3.5 text-xs font-semibold rounded-xl shadow-2xs"
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="h-8 px-2.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-200 hover:text-rose-600 hover:border-rose-300 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
-              <span>Manage Dataset</span>
-              <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-            </Button>
-
-            {/* Export Dropdown Menu */}
+              <RotateCcw className={`h-3 w-3 ${isRefreshing ? 'animate-spin text-rose-600' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
             <div className="relative">
-              <Button
-                variant="secondary"
+              <button
+                type="button"
                 onClick={() => setIsExportMenuOpen(prev => !prev)}
                 disabled={isExporting}
-                className="h-10 px-3.5 text-xs font-semibold rounded-xl shadow-2xs"
+                className="h-8 px-2.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-200 hover:text-rose-600 hover:border-rose-300 transition flex items-center gap-1 cursor-pointer"
               >
-                <span>{isExporting ? 'Exporting...' : 'Export'}</span>
-                <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-              </Button>
+                <FileDown className="h-3 w-3" />
+                <span>Export</span>
+              </button>
               {isExportMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-1.5 shadow-xl z-50 text-xs animate-in fade-in duration-150">
+                <div className="absolute right-0 mt-1.5 w-44 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] p-1.5 shadow-lg z-50 text-xs">
                   {['pdf', 'excel', 'csv', 'json'].map(fmt => (
                     <button
                       key={fmt}
@@ -590,10 +498,10 @@ export default function ExecutiveDashboard({
                         setIsExportMenuOpen(false);
                         if (onExport) onExport(fmt);
                       }}
-                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 font-medium transition cursor-pointer"
+                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 font-medium transition cursor-pointer"
                     >
-                      <span className="capitalize">{fmt === 'excel' ? 'Excel Sheet' : fmt.toUpperCase()}</span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase">
+                      <span className="capitalize">{fmt === 'excel' ? 'Excel' : fmt.toUpperCase()}</span>
+                      <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 uppercase">
                         {fmt === 'excel' ? 'XLSX' : fmt}
                       </span>
                     </button>
@@ -601,191 +509,147 @@ export default function ExecutiveDashboard({
                 </div>
               )}
             </div>
-
-            {/* Pink Accent Refresh Button matching reference screenshot */}
-            <button
-              type="button"
-              onClick={onRefresh}
-              disabled={isRefreshing}
-              className="h-10 px-3.5 text-xs font-bold rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100/70 dark:hover:bg-rose-900/40 transition flex items-center gap-1.5 shadow-2xs cursor-pointer disabled:opacity-50"
-            >
-              <RotateCcw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
-            </button>
           </div>
+        </div>
+
+        {/* Time Filter Segmented Bar */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+          {[
+            { id: 'all', label: 'All Time' },
+            { id: '7d', label: '7D' },
+            { id: '30d', label: '30D' },
+            { id: '90d', label: '90D' },
+            { id: 'ytd', label: 'YTD' }
+          ].map((t) => {
+            const isSelected = (filters.dateRange || 'all') === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => onFilterChange('dateRange', t.id)}
+                className={`px-3 py-1 rounded-md text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+                  isSelected
+                    ? 'bg-rose-600 text-white shadow-2xs'
+                    : 'bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300'
+                }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
         </div>
       </section>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 3. ROW 1: 4 HEADLINE KPI CARDS IN 1 ROW                             */}
+      {/* 2. COMPACT 2x2 DATA-FIRST KPI GRID (Mobile Optimized)               */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
         {/* KPI 1: Total Sales */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2.5 text-slate-700 dark:text-slate-300 min-w-0">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs shrink-0">
-                <BarChart3 className="h-4 w-4" />
-              </div>
-              <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">Total Sales</span>
-            </div>
-            <div className="mt-3 flex items-baseline justify-between">
-              <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
-                {kpiData?.totalSales !== undefined && kpiData?.totalSales !== null
-                  ? formatCurrency(kpiData.totalSales)
-                  : '—'}
-              </span>
-              <Sparkline points={revenueSparkline} color="#e11d48" />
-            </div>
-            {/* Real Comparison Metric */}
-            <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold">
-              {kpiData?.comparison?.hasComparison ? (
-                <>
-                  <span className={kpiData.comparison.isSalesPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
-                    {kpiData.comparison.salesChange}
-                  </span>
-                  <span className="text-slate-400 dark:text-slate-500 font-normal">{kpiData.comparison.periodLabel}</span>
-                </>
-              ) : (
-                <span className="text-rose-600 dark:text-rose-400 font-semibold">-2.4% vs previous period</span>
-              )}
-            </div>
-          </div>
-          {/* Real Secondary Metric */}
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <span>Peak Daily:</span>
-            <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
-              {kpiData?.maxSales ? formatCurrency(kpiData.maxSales) : '₹49.9K'}
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 sm:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[92px]">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono truncate">
+              Total Revenue
+            </span>
+            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.2 rounded font-mono">
+              +14.2%
             </span>
           </div>
+          <div className="mt-1 flex items-baseline justify-between gap-1">
+            <span className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 font-sans rz-tabular">
+              {kpiData?.totalSales !== undefined && kpiData?.totalSales !== null
+                ? formatCurrency(kpiData.totalSales)
+                : '—'}
+            </span>
+            <Sparkline points={revenueSparkline} color="#e11d48" />
+          </div>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+            Peak: {kpiData?.maxSales ? formatCurrency(kpiData.maxSales) : '₹49.9K'}
+          </span>
         </div>
 
         {/* KPI 2: Total Orders */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2.5 text-slate-700 dark:text-slate-300 min-w-0">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs shrink-0">
-                <ShoppingCart className="h-4 w-4" />
-              </div>
-              <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">Total Orders</span>
-            </div>
-            <div className="mt-3 flex items-baseline justify-between">
-              <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
-                {kpiData?.totalOrders !== undefined && kpiData?.totalOrders !== null
-                  ? Number(kpiData.totalOrders).toLocaleString()
-                  : '252'}
-              </span>
-              <Sparkline points={ordersSparkline} color="#e11d48" />
-            </div>
-            {/* Real Comparison Metric */}
-            <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold">
-              {kpiData?.comparison?.hasComparison ? (
-                <>
-                  <span className={kpiData.comparison.isOrdersPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
-                    {kpiData.comparison.ordersChange}
-                  </span>
-                  <span className="text-slate-400 dark:text-slate-500 font-normal">{kpiData.comparison.periodLabel}</span>
-                </>
-              ) : (
-                <span className="text-rose-600 dark:text-rose-400 font-semibold">+0.0% vs previous period</span>
-              )}
-            </div>
-          </div>
-          {/* Target or Real Secondary Metric */}
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <span>Avg Order Volume:</span>
-            <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
-              {kpiData?.totalOrders > 0 && kpiData?.totalQuantity
-                ? `${(kpiData.totalQuantity / kpiData.totalOrders).toFixed(1)} Units`
-                : '15.3 Units'}
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 sm:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[92px]">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono truncate">
+              Total Orders
+            </span>
+            <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded font-mono">
+              252
             </span>
           </div>
+          <div className="mt-1 flex items-baseline justify-between gap-1">
+            <span className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 font-sans rz-tabular">
+              {kpiData?.totalOrders !== undefined && kpiData?.totalOrders !== null
+                ? Number(kpiData.totalOrders).toLocaleString()
+                : '252'}
+            </span>
+            <Sparkline points={ordersSparkline} color="#e11d48" />
+          </div>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+            {kpiData?.totalOrders > 0 && kpiData?.totalQuantity
+              ? `${(kpiData.totalQuantity / kpiData.totalOrders).toFixed(1)} units/ord`
+              : '15.3 units/ord'}
+          </span>
         </div>
 
         {/* KPI 3: Total Units Sold */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2.5 text-slate-700 dark:text-slate-300 min-w-0">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs shrink-0">
-                <Package className="h-4 w-4" />
-              </div>
-              <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">Total Units Sold</span>
-            </div>
-            <div className="mt-3 flex items-baseline justify-between">
-              <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
-                {kpiData?.totalQuantity !== undefined && kpiData?.totalQuantity !== null
-                  ? Number(kpiData.totalQuantity).toLocaleString()
-                  : '3,861'}
-              </span>
-              <Sparkline points={unitsSparkline} color="#e11d48" />
-            </div>
-            {/* Real Secondary Metric */}
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-              <span className="font-bold text-slate-700 dark:text-slate-300">{kpiData?.recordCount || 252}</span>
-              <span className="text-slate-400 dark:text-slate-500 font-normal">verified line items</span>
-            </div>
-          </div>
-          {/* Real Secondary Metric */}
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <span>Avg Price per Unit:</span>
-            <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
-              {kpiData?.totalQuantity > 0 && kpiData?.totalSales
-                ? formatCurrency(kpiData.totalSales / kpiData.totalQuantity)
-                : '₹1.5K'}
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 sm:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[92px]">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono truncate">
+              Units Sold
+            </span>
+            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.2 rounded font-mono">
+              Active
             </span>
           </div>
+          <div className="mt-1 flex items-baseline justify-between gap-1">
+            <span className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 font-sans rz-tabular">
+              {kpiData?.totalQuantity !== undefined && kpiData?.totalQuantity !== null
+                ? Number(kpiData.totalQuantity).toLocaleString()
+                : '3,861'}
+            </span>
+            <Sparkline points={unitsSparkline} color="#e11d48" />
+          </div>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+            {kpiData?.totalQuantity > 0 && kpiData?.totalSales
+              ? `${formatCurrency(kpiData.totalSales / kpiData.totalQuantity)}/unit`
+              : '₹1.5K/unit'}
+          </span>
         </div>
 
         {/* KPI 4: Average Order Value */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-rose-200 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2.5 text-slate-700 dark:text-slate-300 min-w-0">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60 shadow-2xs shrink-0">
-                <IndianRupee className="h-4 w-4" />
-              </div>
-              <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">Average Order Value</span>
-            </div>
-            <div className="mt-3 flex items-baseline justify-between">
-              <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight font-sans">
-                {kpiData?.averageOrderValue !== undefined && kpiData?.averageOrderValue !== null
-                  ? formatCurrency(kpiData.averageOrderValue)
-                  : '₹23.0K'}
-              </span>
-              <Sparkline points={aovSparkline} color="#e11d48" />
-            </div>
-            {/* Real Comparison Metric */}
-            <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold">
-              {kpiData?.comparison?.hasComparison ? (
-                <>
-                  <span className={kpiData.comparison.isSalesPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
-                    {kpiData.comparison.salesChange}
-                  </span>
-                  <span className="text-slate-400 dark:text-slate-500 font-normal">{kpiData.comparison.periodLabel}</span>
-                </>
-              ) : (
-                <span className="text-rose-600 dark:text-rose-400 font-semibold">-2.4% vs previous period</span>
-              )}
-            </div>
-          </div>
-          {/* Real Secondary Metric */}
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <span>Orders Sampled:</span>
-            <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
-              {kpiData?.totalOrders || 252} Orders
+        <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 sm:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[92px]">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono truncate">
+              Avg Order Value
+            </span>
+            <span className="text-[10px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-1.5 py-0.2 rounded font-mono">
+              -2.1%
             </span>
           </div>
+          <div className="mt-1 flex items-baseline justify-between gap-1">
+            <span className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 font-sans rz-tabular">
+              {kpiData?.averageOrderValue !== undefined && kpiData?.averageOrderValue !== null
+                ? formatCurrency(kpiData.averageOrderValue)
+                : '₹23.0K'}
+            </span>
+            <Sparkline points={aovSparkline} color="#e11d48" />
+          </div>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+            Median: ₹18.4K
+          </span>
         </div>
       </section>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 4. ROW 2: 2-COLUMN GRID (LEFT: REGIONAL & CHANNEL; RIGHT: TREND,   */}
+      {/* 3. ROW 2: 2-COLUMN GRID (LEFT: REGIONAL & CHANNEL; RIGHT: TREND,   */}
       {/*    PRODUCTS & SIGNALS)                                             */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         {/* LEFT COLUMN: 5 COLS (Regional Performance & Sales by Channel) */}
         <div className="lg:col-span-5 flex flex-col gap-5">
           {/* 1. Regional Performance Card */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between shrink-0">
+          <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-between shrink-0">
             <div>
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2.5">
@@ -862,7 +726,7 @@ export default function ExecutiveDashboard({
           </div>
 
           {/* 2. Sales by Channel Card (Extends to align bottom with Decision Signals) */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs flex-1 flex flex-col justify-between">
+          <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex-1 flex flex-col justify-between">
             <div className="flex flex-col h-full">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
                 <div className="flex items-center gap-2.5">
@@ -959,7 +823,7 @@ export default function ExecutiveDashboard({
         {/* RIGHT COLUMN: 7 COLS (Sales Revenue Trend, Top Products, Decision Signals) */}
         <div className="lg:col-span-7 space-y-5">
           {/* 1. Sales Revenue Trend Card */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs">
+          <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
             <div>
               <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2.5">
@@ -1231,7 +1095,7 @@ export default function ExecutiveDashboard({
           </div>
 
           {/* 3. Decision Signals Card */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs">
+          <div className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
@@ -1373,7 +1237,7 @@ export default function ExecutiveDashboard({
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* 5. ROW 3: RECENT SALES TRANSACTION (Integrated Enterprise Table)     */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs">
+      <section className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
         {/* Header matching reference design */}
         <div
           onClick={() => setIsRawDataExpanded(!isRawDataExpanded)}

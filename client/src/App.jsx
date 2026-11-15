@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -64,7 +65,18 @@ export default function App() {
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
               <Route path="/delete-account" element={<DeleteAccountPage />} />
 
-              <Route path="/" element={<LandingPage />} />
+              {/* In Native Mobile App (Capacitor Android/iOS), default directly to /dashboard (which redirects to /login if unauthenticated) */}
+              <Route 
+                path="/" 
+                element={
+                  Capacitor.isNativePlatform() ? (
+                    <Navigate to="/dashboard" replace />
+                  ) : (
+                    <LandingPage />
+                  )
+                } 
+              />
+              <Route path="/overview" element={<LandingPage />} />
 
               {/* Protected Application Routes */}
               <Route element={<ProtectedRoute />}>

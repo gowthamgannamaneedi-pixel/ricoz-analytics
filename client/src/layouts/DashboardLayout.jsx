@@ -2,9 +2,15 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
+import BottomNavBar from '../components/BottomNavBar';
 
 /**
  * Enterprise Dashboard Layout Shell
+ * Mobile-First Native Android Material 3 Architecture:
+ * - Dedicated thumb-accessible Bottom Navigation Bar on mobile screens
+ * - Top App Bar with safe-area spacing
+ * - Desktop sidebar preserved for wide screens
+ * - Elimination of desktop footer on mobile viewports
  */
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -38,7 +44,7 @@ export default function DashboardLayout() {
 
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#F8FAFC] dark:bg-[#0B1120] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col font-sans transition-colors duration-200">
-      {/* Sidebar Navigation */}
+      {/* Sidebar Navigation (Desktop Fixed / Mobile Drawer) */}
       <Sidebar
         isOpen={sidebarOpen}
         isCollapsed={isCollapsed}
@@ -51,20 +57,20 @@ export default function DashboardLayout() {
       <div className={`flex-1 flex flex-col min-w-0 w-full max-w-full overflow-x-hidden transition-[padding] duration-200 ease-in-out ${
         isCollapsed ? 'lg:pl-0' : 'lg:pl-64'
       }`}>
-        {/* Top Navbar */}
+        {/* Top Navbar / Android App Bar */}
         <Navbar
           isSidebarCollapsed={isCollapsed}
           onToggleSidebar={handleToggleCollapse}
           onOpenSidebar={handleOpenMobileSidebar}
         />
 
-        {/* Dynamic Route Container */}
-        <main className="flex-1 min-w-0 w-full max-w-[1536px] p-3.5 sm:p-6 lg:px-8 lg:py-7 space-y-5 sm:space-y-6 mx-auto overflow-x-hidden">
+        {/* Dynamic Route Container — includes pb-24 on mobile for Bottom Navigation Bar */}
+        <main className="flex-1 min-w-0 w-full max-w-[1536px] p-3.5 sm:p-6 lg:px-8 lg:py-7 pb-24 sm:pb-28 lg:pb-8 space-y-5 sm:space-y-6 mx-auto overflow-x-hidden">
           <Outlet />
         </main>
 
-        {/* Minimal Enterprise Footer */}
-        <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3.5 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 transition-colors">
+        {/* Minimal Enterprise Footer (Desktop Only — Hidden on Mobile for Native App Feel) */}
+        <footer className="hidden lg:flex border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3.5 items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 transition-colors">
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-[#D91542]" />
@@ -81,6 +87,9 @@ export default function DashboardLayout() {
             </span>
           </div>
         </footer>
+
+        {/* Native Android Bottom Navigation Bar for Mobile */}
+        <BottomNavBar onOpenMore={handleOpenMobileSidebar} />
       </div>
     </div>
   );
