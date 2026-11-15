@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 Write-Host "================================================================"
 Write-Host "   RICOZANALYTICS PRODUCTION RELEASE APK BUILD & SIGNING"
@@ -44,32 +44,50 @@ $sha256Line = ($certDetails | Select-String "SHA256:").Line
 Write-Host "✅ Keystore verified: $env:RICOZ_KEY_ALIAS"
 Write-Host "Certificate Fingerprint: $sha256Line"
 
-# 3. Synchronize Capacitor Android Assets
-Write-Host "`n⏳ 3. Synchronizing Capacitor Android Assets..."
+# 3. Compile Production Frontend Assets (Vite)
+Write-Host "`n⏳ 3. Compiling Production Frontend Assets (npm run build)..."
 Push-Location "$repoRoot\client"
 try {
-    npx cap copy android
+    npm run build
+    if ($LASTEXITCODE -ne 0) {
+        throw "Frontend build failed with exit code $LASTEXITCODE"
+    }
 } finally {
     Pop-Location
 }
 
-# 4. Build Production Signed Android APK (assembleRelease)
-Write-Host "`n⏳ 4. Assembling Production Signed Android APK (assembleRelease)..."
+# 4. Synchronize Capacitor Android Assets (Sync Web & Native Plugins)
+Write-Host "`n⏳ 4. Synchronizing Capacitor Android Assets (npx cap sync android)..."
+Push-Location "$repoRoot\client"
+try {
+    npx cap sync android
+    if ($LASTEXITCODE -ne 0) {
+        throw "Capacitor sync failed with exit code $LASTEXITCODE"
+    }
+} finally {
+    Pop-Location
+}
+
+# 5. Build Production Signed Android APK (assembleRelease)
+Write-Host "`n⏳ 5. Assembling Production Signed Android APK (clean assembleRelease)..."
 Push-Location "$repoRoot\client\android"
 try {
-    .\gradlew.bat assembleRelease --stacktrace
+    .\gradlew.bat clean assembleRelease --stacktrace
+    if ($LASTEXITCODE -ne 0) {
+        throw "Gradle assembleRelease failed with exit code $LASTEXITCODE"
+    }
 } finally {
     Pop-Location
 }
 
-# 5. Verify Generated APK Artifact
+# 6. Verify Generated APK Artifact
 $apkPath = "$repoRoot\client\android\app\build\outputs\apk\release\app-release.apk"
 if (-not (Test-Path $apkPath)) {
     throw "Release APK was not generated at: $apkPath"
 }
 
-# 6. Verify Signature with jarsigner
-Write-Host "`n⏳ 5. Cryptographically verifying APK signature..."
+# 7. Verify Signature with jarsigner
+Write-Host "`n⏳ 6. Cryptographically verifying APK signature..."
 $jarsigner = "$env:JAVA_HOME\bin\jarsigner.exe"
 $verifyOutput = & $jarsigner -verify -verbose -certs $apkPath 2>&1
 if ($LASTEXITCODE -ne 0) {
@@ -77,14 +95,20 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "✅ APK Signature Verified: jar verified. (Exit code 0)"
 
-# 7. Copy to easily accessible downloads and assets folders
+# 8. Copy to easily accessible downloads and assets folders
 $destDir = "$repoRoot\play_store_assets"
 if (-not (Test-Path $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
-$destApk = Join-Path $destDir "RicozAnalytics-v1.0.0-release.apk"
+$destApk = Join-Path $destDir "RicozAnalytics-v1.0.1-release.apk"
 Copy-Item -Path $apkPath -Destination $destApk -Force
 
-$downloadsApk = "C:\Users\gowth\Downloads\RicozAnalytics-v1.0.0-release.apk"
+$downloadsApk = "C:\Users\gowth\Downloads\RicozAnalytics-v1.0.1-release.apk"
 Copy-Item -Path $apkPath -Destination $downloadsApk -Force
+
+# Also maintain legacy filename for direct backward-compatibility
+$destApkLegacy = Join-Path $destDir "RicozAnalytics-v1.0.0-release.apk"
+Copy-Item -Path $apkPath -Destination $destApkLegacy -Force
+$downloadsApkLegacy = "C:\Users\gowth\Downloads\RicozAnalytics-v1.0.0-release.apk"
+Copy-Item -Path $apkPath -Destination $downloadsApkLegacy -Force
 
 $apkItem = Get-Item $apkPath
 $apkHash = (Get-FileHash -Path $apkPath -Algorithm SHA256).Hash
@@ -99,6 +123,6 @@ Write-Host "APK File Size:   $($apkItem.Length) bytes ($([Math]::Round($apkItem.
 Write-Host "SHA-256 Hash:    $apkHash"
 Write-Host "Created At:      $($apkItem.LastWriteTime)"
 Write-Host "Application ID:  com.ricoz.analytics"
-Write-Host "Version Code:    3"
-Write-Host "Version Name:    1.0.0"
+Write-Host "Version Code:    4"
+Write-Host "Version Name:    1.0.1"
 Write-Host "================================================================`n"
