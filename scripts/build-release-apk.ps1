@@ -98,13 +98,19 @@ Write-Host "✅ APK Signature Verified: jar verified. (Exit code 0)"
 # 8. Copy to easily accessible downloads and assets folders
 $destDir = "$repoRoot\play_store_assets"
 if (-not (Test-Path $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
-$destApk = Join-Path $destDir "RicozAnalytics-v1.0.1-release.apk"
+$destApk = Join-Path $destDir "RicozAnalytics-v1.0.2-release.apk"
 Copy-Item -Path $apkPath -Destination $destApk -Force
 
-$downloadsApk = "C:\Users\gowth\Downloads\RicozAnalytics-v1.0.1-release.apk"
+$downloadsApk = "C:\Users\gowth\Downloads\RicozAnalytics-v1.0.2-release.apk"
 Copy-Item -Path $apkPath -Destination $downloadsApk -Force
 
-# Also maintain legacy filename for direct backward-compatibility
+# Artifacts directory copy for instant web/IDE access
+$brainDir = "C:\Users\gowth\.gemini\antigravity\brain\87331f27-4a58-47c0-b277-a30e971bc1c1"
+if (Test-Path $brainDir) {
+    Copy-Item -Path $apkPath -Destination (Join-Path $brainDir "RicozAnalytics-v1.0.2-release.apk") -Force
+}
+
+# Also maintain legacy filenames for direct backward-compatibility
 $destApkLegacy = Join-Path $destDir "RicozAnalytics-v1.0.0-release.apk"
 Copy-Item -Path $apkPath -Destination $destApkLegacy -Force
 $downloadsApkLegacy = "C:\Users\gowth\Downloads\RicozAnalytics-v1.0.0-release.apk"
@@ -123,6 +129,6 @@ Write-Host "APK File Size:   $($apkItem.Length) bytes ($([Math]::Round($apkItem.
 Write-Host "SHA-256 Hash:    $apkHash"
 Write-Host "Created At:      $($apkItem.LastWriteTime)"
 Write-Host "Application ID:  com.ricoz.analytics"
-Write-Host "Version Code:    4"
-Write-Host "Version Name:    1.0.1"
+Write-Host "Version Code:    5"
+Write-Host "Version Name:    1.0.2"
 Write-Host "================================================================`n"

@@ -289,11 +289,19 @@ export default function LoginPage() {
             </div>
           )}
 
-          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
-            Need an enterprise account?{' '}
-            <Link to="/register" className="font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition">
-              Register here
-            </Link>
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1.5">
+            <div>
+              New to RicozAnalytics?{' '}
+              <Link to="/onboarding" className="font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition">
+                Explore Onboarding & Features
+              </Link>
+            </div>
+            <div>
+              Need an enterprise account?{' '}
+              <Link to="/onboarding?mode=register" className="font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition">
+                Create Workspace
+              </Link>
+            </div>
           </div>
         </div>
 

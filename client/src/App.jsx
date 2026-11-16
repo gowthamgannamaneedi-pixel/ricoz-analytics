@@ -28,6 +28,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const BillingPage = lazy(() => import('./pages/BillingPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage'));
 const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'));
 const AcceptInvitePage = lazy(() => import('./pages/AcceptInvitePage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
@@ -47,7 +48,9 @@ export default function App() {
             <NativeMobileBridge />
             <Suspense fallback={<LoadingSpinner size="lg" text="Loading RicozAnalytics..." className="min-h-screen" />}>
             <Routes>
-              {/* Public Authentication Routes */}
+              {/* Public Authentication & Onboarding Routes */}
+              <Route path="/onboarding" element={<OnboardingPage />} />
+              <Route path="/welcome" element={<OnboardingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/auth/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
@@ -65,12 +68,16 @@ export default function App() {
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
               <Route path="/delete-account" element={<DeleteAccountPage />} />
 
-              {/* In Native Mobile App (Capacitor Android/iOS), default directly to /dashboard (which redirects to /login if unauthenticated) */}
+              {/* In Native Mobile App (Capacitor Android/iOS), default to /onboarding for first-time or /dashboard */}
               <Route 
                 path="/" 
                 element={
                   Capacitor.isNativePlatform() ? (
-                    <Navigate to="/dashboard" replace />
+                    localStorage.getItem('ricoz_has_onboarded') ? (
+                      <Navigate to="/dashboard" replace />
+                    ) : (
+                      <Navigate to="/onboarding" replace />
+                    )
                   ) : (
                     <LandingPage />
                   )
