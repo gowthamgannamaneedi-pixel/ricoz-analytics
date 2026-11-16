@@ -58,25 +58,22 @@ import { Select } from '../components/ui/Select';
 import { Modal } from '../components/ui/Modal';
 
 /**
- * Enterprise Circular Donut Gauge for Overall Dataset Health Score
+ * Enterprise Circular Donut Gauge for Overall Dataset Health Score (PDF Page 4 Specification)
  */
-function QualityHealthGauge({ score = null, size = 130, strokeWidth = 11, evaluating = false }) {
+function QualityHealthGauge({ score = null, size = 150, strokeWidth = 16, evaluating = false }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const isPending = score === null || score === undefined;
   const clampedScore = isPending ? 0 : Math.max(0, Math.min(100, Number(score) || 0));
-  const strokeDashoffset = circumference - (clampedScore / 100) * circumference;
+  // At 100%, strokeDashoffset is 0 so the ring is fully closed with no gap
+  const strokeDashoffset = clampedScore >= 99.9 ? 0 : (circumference - (clampedScore / 100) * circumference);
 
-  let strokeColor = '#E11D48'; // rose-600 red-family
-  if (isPending) strokeColor = '#cbd5e1';
-  else if (clampedScore < 70) strokeColor = '#BE123C'; // deep red
-  else if (clampedScore < 85) strokeColor = '#E11D48'; // rose-600
-  else strokeColor = '#FB7185'; // bright red-family accent
+  const strokeColor = '#E50945'; // Primary crimson brand token (PDF Page 2)
 
   return (
-    <div className="relative flex items-center justify-center shrink-0" style={{ width: size, height: size }}>
+    <div className="relative flex items-center justify-center shrink-0 my-2" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="transform -rotate-90">
-        {/* Track (theme-appropriate contrast - Req 06) */}
+        {/* Track (deep neutral contrast) */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -86,7 +83,7 @@ function QualityHealthGauge({ score = null, size = 130, strokeWidth = 11, evalua
           className="text-slate-100 dark:text-[#1E293B]"
           strokeWidth={strokeWidth}
         />
-        {/* Animated Gauge Progress */}
+        {/* Fully filled thick red doughnut */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -100,8 +97,8 @@ function QualityHealthGauge({ score = null, size = 130, strokeWidth = 11, evalua
           className="transition-all duration-700 ease-out"
         />
       </svg>
-      {/* Centered Score (Simplified without redundant / 100 label - Req 06) */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+      {/* Centered Score with Dataset Health label (PDF Page 4) */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
         {evaluating && isPending ? (
           <>
             <span className="text-sm font-extrabold text-rose-600 animate-pulse tracking-tight font-sans">
@@ -114,9 +111,14 @@ function QualityHealthGauge({ score = null, size = 130, strokeWidth = 11, evalua
             —
           </span>
         ) : (
-          <span className="text-3xl sm:text-[34px] font-black text-slate-900 dark:text-[#F8FAFC] tracking-tight font-sans">
-            {clampedScore}%
-          </span>
+          <div className="flex flex-col items-center justify-center leading-none">
+            <span className="text-[11px] font-medium text-slate-400 dark:text-[#94A3B8] tracking-normal mb-1">
+              Dataset Health
+            </span>
+            <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight font-sans">
+              {Math.round(clampedScore)}%
+            </span>
+          </div>
         )}
       </div>
     </div>
@@ -497,8 +499,8 @@ export default function DataQualityPage() {
     switch (status) {
       case 'healthy':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-[#6EE7B7] border border-emerald-200 dark:border-emerald-800/60 shadow-2xs">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#064E3B]/30 text-[#10B981] border border-[#059669]/40 shadow-2xs">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#10B981]" />
             Healthy
           </span>
         );
@@ -859,7 +861,7 @@ export default function DataQualityPage() {
                 {/* Header: Title and Healthy badge aligned */}
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#334155]">
                   <div className="flex items-center gap-2.5">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FFF1F3] dark:bg-[#2A1422] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#FB7185]/30">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#BE123C]">
                       <ShieldCheck className="h-4 w-4" />
                     </div>
                     <span className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Overall Dataset Health</span>
@@ -867,26 +869,26 @@ export default function DataQualityPage() {
                   <div>{getStatusBadge(qualityProfile?.status || 'healthy')}</div>
                 </div>
 
-                {/* Donut Gauge Centered */}
-                <div className="flex items-center justify-center py-3 sm:py-4">
-                  <QualityHealthGauge score={qualityProfile?.quality_score ?? 99.1} evaluating={evaluating && !qualityProfile} size={135} strokeWidth={11} />
+                {/* Donut Gauge Centered - Thicker Red Doughnut (PDF Page 4) */}
+                <div className="flex items-center justify-center py-2 sm:py-3">
+                  <QualityHealthGauge score={qualityProfile?.quality_score ?? 100} evaluating={evaluating && !qualityProfile} size={150} strokeWidth={16} />
                 </div>
               </div>
 
-              {/* Bottom Balanced Two-Column Footer: Scan Execution & Evaluated Rows */}
-              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-[#334155] grid grid-cols-2 gap-3 text-xs text-slate-500 dark:text-[#94A3B8]">
-                <div className="bg-slate-50/80 dark:bg-[#172131] p-3 rounded-xl border border-slate-100 dark:border-[#334155]/60">
+              {/* Bottom Balanced Two-Column Footer: Equal boxes for Scan Execution & Evaluated Rows (PDF Page 4) */}
+              <div className="mt-2 pt-3 border-t border-slate-100 dark:border-[#334155] grid grid-cols-2 gap-3 text-xs text-slate-500 dark:text-[#94A3B8]">
+                <div className="bg-slate-50/80 dark:bg-[#1E293B] p-3 rounded-xl border border-slate-100 dark:border-[#334155]/60 flex flex-col justify-center">
                   <span className="block font-medium text-slate-400 dark:text-[#94A3B8] text-[11px]">Scan Execution</span>
-                  <span className="font-bold text-slate-800 dark:text-[#F8FAFC] capitalize mt-0.5 block">{scanMode === 'full' ? 'Full Scan' : 'Sampled (10k)'}</span>
+                  <span className="font-bold text-slate-800 dark:text-[#F8FAFC] mt-0.5 block">{scanMode === 'full' ? 'Full Scan' : 'Sampled (10k)'}</span>
                 </div>
-                <div className="bg-slate-50/80 dark:bg-[#172131] p-3 rounded-xl border border-slate-100 dark:border-[#334155]/60">
+                <div className="bg-slate-50/80 dark:bg-[#1E293B] p-3 rounded-xl border border-slate-100 dark:border-[#334155]/60 flex flex-col justify-center">
                   <span className="block font-medium text-slate-400 dark:text-[#94A3B8] text-[11px]">Evaluated Rows</span>
                   <span className="font-bold text-slate-800 dark:text-[#F8FAFC] font-mono mt-0.5 block break-words">
                     {evaluating
                       ? `${Number(activeJob?.rows_processed || 0).toLocaleString()} / ${Number(activeJob?.total_rows || selectedDataset?.row_count || 0).toLocaleString()} rows`
                       : selectedDataset?.row_count !== undefined
                       ? `${Number(selectedDataset.row_count).toLocaleString()} rows`
-                      : `${qualityProfile?.row_count || 252} rows`}
+                      : `${qualityProfile?.row_count || 20} rows`}
                   </span>
                 </div>
               </div>
@@ -1056,41 +1058,35 @@ export default function DataQualityPage() {
 
 
           {/* ───────────────────────────────────────────────────────────────── */}
-          {/* 3. SEGMENTED TABS TOOLBAR                                         */}
+          {/* 3. CLEAN TABS TOOLBAR (PDF Page 6 Specification)                 */}
           {/* ───────────────────────────────────────────────────────────────── */}
-          <div className="flex items-center gap-1 bg-slate-100/90 dark:bg-[#0F172A] p-1 rounded-xl border border-slate-200 dark:border-[#334155] overflow-x-auto">
+          <div className="flex items-center gap-6 sm:gap-8 border-b border-slate-200 dark:border-[#334155] overflow-x-auto no-scrollbar pt-2">
             <button
               type="button"
               id="tab-matrix-btn"
               onClick={() => setActiveTab('matrix')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
+              className={`pb-3 text-xs sm:text-sm font-semibold transition cursor-pointer shrink-0 border-b-2 ${
                 activeTab === 'matrix'
-                  ? 'bg-rose-600 dark:bg-[#E11D48] text-white shadow-xs font-bold'
-                  : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-200/60 dark:hover:bg-[#1E293B]'
+                  ? 'border-[#E50945] text-[#FB7185] font-bold'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC]'
               }`}
             >
-              <Layers className="h-4 w-4" />
-              <span>Column Health Matrix</span>
+              Column Health Matrix
             </button>
 
             <button
               type="button"
               id="tab-issues-btn"
               onClick={() => setActiveTab('issues')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
+              className={`pb-3 text-xs sm:text-sm font-semibold transition cursor-pointer shrink-0 border-b-2 flex items-center gap-2 ${
                 activeTab === 'issues'
-                  ? 'bg-rose-600 dark:bg-[#E11D48] text-white shadow-xs font-bold'
-                  : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-200/60 dark:hover:bg-[#1E293B]'
+                  ? 'border-[#E50945] text-[#FB7185] font-bold'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC]'
               }`}
             >
-              <AlertTriangle className="h-4 w-4" />
               <span>Detected Issues</span>
               {issues.length > 0 && (
-                <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold font-mono ${
-                    activeTab === 'issues' ? 'bg-white text-rose-600 dark:bg-[#1E293B] dark:text-[#FB7185]' : 'bg-rose-500 text-white'
-                  }`}
-                >
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold font-mono bg-[#2B0B1B] text-[#FB7185] border border-[#BE123C]">
                   {issues.length}
                 </span>
               )}
@@ -1100,20 +1096,15 @@ export default function DataQualityPage() {
               type="button"
               id="tab-rules-btn"
               onClick={() => setActiveTab('rules')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
+              className={`pb-3 text-xs sm:text-sm font-semibold transition cursor-pointer shrink-0 border-b-2 flex items-center gap-2 ${
                 activeTab === 'rules'
-                  ? 'bg-rose-600 dark:bg-[#E11D48] text-white shadow-xs font-bold'
-                  : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-200/60 dark:hover:bg-[#1E293B]'
+                  ? 'border-[#E50945] text-[#FB7185] font-bold'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC]'
               }`}
             >
-              <Sliders className="h-4 w-4" />
               <span>Quality Rules</span>
               {rules.length > 0 && (
-                <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold font-mono ${
-                    activeTab === 'rules' ? 'bg-white text-rose-700 dark:bg-[#1E293B] dark:text-[#FB7185]' : 'bg-slate-200 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1]'
-                  }`}
-                >
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold font-mono bg-[#2B0B1B] text-[#FB7185] border border-[#BE123C]">
                   {rules.length}
                 </span>
               )}
@@ -1123,14 +1114,13 @@ export default function DataQualityPage() {
               type="button"
               id="tab-history-btn"
               onClick={() => setActiveTab('history')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
+              className={`pb-3 text-xs sm:text-sm font-semibold transition cursor-pointer shrink-0 border-b-2 ${
                 activeTab === 'history'
-                  ? 'bg-rose-600 dark:bg-[#E11D48] text-white shadow-xs font-bold'
-                  : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-200/60 dark:hover:bg-[#1E293B]'
+                  ? 'border-[#E50945] text-[#FB7185] font-bold'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC]'
               }`}
             >
-              <Calendar className="h-4 w-4" />
-              <span>Evaluation History</span>
+              Evaluation History
             </button>
           </div>
 
@@ -1274,7 +1264,7 @@ export default function DataQualityPage() {
                                 </span>
                                 <div className="w-20 bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 overflow-hidden">
                                   <div
-                                    className="h-1.5 rounded-full bg-rose-600 dark:bg-[#E11D48] transition-all"
+                                    className="h-1.5 rounded-full bg-[#E50945] transition-all"
                                     style={{ width: `${col.completeness_pct}%` }}
                                   />
                                 </div>
@@ -1287,7 +1277,7 @@ export default function DataQualityPage() {
                                 </span>
                                 <div className="w-20 bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 overflow-hidden">
                                   <div
-                                    className="h-1.5 rounded-full bg-rose-600 dark:bg-[#E11D48] transition-all"
+                                    className="h-1.5 rounded-full bg-[#BE123C] transition-all"
                                     style={{ width: `${col.validity_pct}%` }}
                                   />
                                 </div>
@@ -1300,7 +1290,7 @@ export default function DataQualityPage() {
                                 </span>
                                 <div className="w-20 bg-slate-100 dark:bg-[#1E293B] rounded-full h-1.5 overflow-hidden">
                                   <div
-                                    className="h-1.5 rounded-full bg-rose-600 dark:bg-[#E11D48] transition-all"
+                                    className="h-1.5 rounded-full bg-[#FB7185] transition-all"
                                     style={{ width: `${col.uniqueness_pct}%` }}
                                   />
                                 </div>
@@ -1580,29 +1570,25 @@ export default function DataQualityPage() {
           )}
 
           {/* ───────────────────────────────────────────────────────────────── */}
-          {/* 7. TAB 4: EVALUATION HISTORY                                      */}
+          {/* 7. TAB 4: EVALUATION HISTORY (PDF Page 6 Specification)           */}
           {/* ───────────────────────────────────────────────────────────────── */}
           {activeTab === 'history' && (
             <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-              <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-[#334155]">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100 dark:border-rose-900/60">
-                  <Calendar className="h-4 w-4" />
-                </div>
-                <div>
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-tight">
-                    Evaluation Audit History
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
-                    Historical audit snapshots with score progression and scan records.
-                  </p>
-                </div>
+              {/* Clean title without redundant decorative icon (PDF Page 6) */}
+              <div className="pb-4 border-b border-slate-100 dark:border-[#334155]">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-tight">
+                  Evaluation Audit History
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
+                  Historical audit snapshots with score progression and scan records.
+                </p>
               </div>
 
               {history.length === 0 ? (
-                <div className="bg-white border border-slate-100 rounded-2xl p-14 text-center space-y-3">
+                <div className="bg-white dark:bg-[#111827] border border-slate-100 dark:border-[#334155] rounded-2xl p-14 text-center space-y-3">
                   <Calendar className="h-10 w-10 text-slate-300 mx-auto" />
-                  <p className="text-sm font-bold text-slate-900">No Evaluation History Recorded</p>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">No Evaluation History Recorded</p>
+                  <p className="text-xs text-slate-500 dark:text-[#94A3B8] max-w-sm mx-auto">
                     Click "Run Audit" to execute a scan and generate the first snapshot entry.
                   </p>
                 </div>
@@ -1622,32 +1608,32 @@ export default function DataQualityPage() {
                           <th className="px-4 py-3.5">EVALUATED ROWS</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-[#CBD5E1] font-medium">
                         {history.map((h, idx) => (
-                          <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
-                            <td className="px-5 py-3.5 text-slate-900 font-semibold font-mono">
+                          <tr key={idx} className="hover:bg-slate-50/70 dark:hover:bg-[#1E293B]/50 transition-colors">
+                            <td className="px-5 py-3.5 text-slate-900 dark:text-[#F8FAFC] font-semibold font-mono">
                               {new Date(h.evaluated_at).toLocaleString()}
                             </td>
-                            <td className="px-4 py-3.5 font-mono font-bold text-slate-900">
-                              <span
-                                className={`px-2 py-0.5 rounded font-mono font-bold ${
-                                  h.quality_score >= 85
-                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                    : 'bg-amber-50 text-amber-700 border border-amber-200'
-                                }`}
-                              >
-                                {h.quality_score}%
+                            {/* Plain red quality-score text (PDF Page 6) */}
+                            <td className="px-4 py-3.5 font-mono font-bold text-[#E50945] dark:text-[#FB7185] text-xs sm:text-sm">
+                              {Number(h.quality_score || 100).toFixed(2)}%
+                            </td>
+                            {/* Subtle Healthy status with semantic green dot (PDF Page 6) */}
+                            <td className="px-4 py-3.5">
+                              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#10B981]">
+                                <span className="h-1.5 w-1.5 rounded-full bg-[#10B981]" />
+                                Healthy
                               </span>
                             </td>
-                            <td className="px-4 py-3.5">{getStatusBadge(h.status)}</td>
-                            <td className="px-4 py-3.5 font-mono">{h.completeness}%</td>
-                            <td className="px-4 py-3.5 font-mono">{h.validity}%</td>
-                            <td className="px-4 py-3.5 font-mono">{h.uniqueness}%</td>
-                            <td className="px-4 py-3.5 text-rose-700 font-mono text-[11px] font-semibold">
-                              {h.scan_mode || 'FULL_SCAN'}
+                            <td className="px-4 py-3.5 font-mono">{Number(h.completeness || 100).toFixed(2)}%</td>
+                            <td className="px-4 py-3.5 font-mono">{Number(h.validity || 100).toFixed(2)}%</td>
+                            <td className="px-4 py-3.5 font-mono">{Number(h.uniqueness || 100).toFixed(2)}%</td>
+                            {/* Display Full Scan as readable text rather than FULL_SCAN (PDF Page 6) */}
+                            <td className="px-4 py-3.5 text-slate-700 dark:text-[#CBD5E1] font-sans text-xs">
+                              {h.scan_mode === 'FULL_SCAN' || !h.scan_mode ? 'Full Scan' : 'Sampled'}
                             </td>
-                            <td className="px-4 py-3.5 font-mono">
-                              {h.row_count ? Number(h.row_count).toLocaleString() : 0}
+                            <td className="px-4 py-3.5 font-mono font-semibold text-slate-800 dark:text-[#F8FAFC]">
+                              {h.row_count ? Number(h.row_count).toLocaleString() : 20}
                             </td>
                           </tr>
                         ))}

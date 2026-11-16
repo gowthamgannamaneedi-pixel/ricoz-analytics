@@ -129,8 +129,8 @@ function Sparkline({ points = [], color = '#e11d48' }) {
   );
 }
 
-// Clean Ricoz Red/Rose palette for dynamic channel donut chart
-const RED_DONUT_PALETTE = ['#BE123C', '#E11D48', '#F43F5E', '#FB7185', '#FECDD3', '#9F1239', '#CBD5E1'];
+// Clean Ricoz Red/Rose palette for dynamic channel donut chart (PDF Page 12 & 16: #E50945, #BE123C, #FB7185)
+const RED_DONUT_PALETTE = ['#E50945', '#BE123C', '#FB7185', '#E11D48', '#F43F5E', '#9F1239'];
 
 export default function ExecutiveDashboard({
   datasets = [],
@@ -759,9 +759,9 @@ export default function ExecutiveDashboard({
                   No channel breakdown available for this dataset.
                 </div>
               ) : (
-                <div className="mt-4 flex-1 flex flex-col items-center justify-between">
+                <div className="mt-4 flex flex-col items-center">
                   {/* Concentric Donut Chart - Enlarged proportionally */}
-                  <div className="relative flex items-center justify-center h-52 w-52 sm:h-56 sm:w-56 shrink-0 mx-auto my-3">
+                  <div className="relative flex items-center justify-center h-52 w-52 sm:h-56 sm:w-56 shrink-0 mx-auto my-1">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -790,8 +790,8 @@ export default function ExecutiveDashboard({
                     </div>
                   </div>
 
-                  {/* Channel Legend List matching reference design */}
-                  <div className="space-y-2.5 w-full pt-4 mt-auto">
+                  {/* Channel Legend List matching reference design (24px spacing, no stretched mt-auto gap) */}
+                  <div className="space-y-2.5 w-full mt-6">
                     {channelData.map(c => (
                       <div
                         key={c.name}

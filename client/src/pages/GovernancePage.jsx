@@ -445,21 +445,14 @@ export default function GovernancePage() {
     }
   };
 
+  // Action badge matching enterprise burgundy/crimson palette (PDF Page 11)
   const getActionBadge = (action) => {
     const act = (action || '').toUpperCase();
-    if (act.includes('LOGIN') || act.includes('LOGOUT') || act.includes('REGISTER')) {
-      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">{act}</span>;
-    }
-    if (act.includes('DELETE') || act.includes('DEACTIVAT')) {
-      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">{act}</span>;
-    }
-    if (act.includes('CREATE') || act.includes('RESOLV')) {
-      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">{act}</span>;
-    }
-    if (act.includes('UPDATE') || act.includes('ROLE') || act.includes('STATUS')) {
-      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">{act}</span>;
-    }
-    return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">{act}</span>;
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200 dark:border-[#BE123C] whitespace-nowrap">
+        {act}
+      </span>
+    );
   };
 
   const roleDistribution = statsData?.roleDistribution || { admin: 1, manager: 0, analyst: 0, viewer: 0 };
@@ -772,26 +765,26 @@ export default function GovernancePage() {
                 Visual breakdown of privileges assigned across members in this workspace
               </p>
 
-              {/* Multi-segment Progress Bar */}
+              {/* Multi-segment Progress Bar (PDF Page 9: Brand red #E50945 replaces purple) */}
               <div className="h-3.5 w-full bg-slate-100 dark:bg-[#1E293B] rounded-full overflow-hidden flex mt-6 gap-0.5">
                 <div
                   style={{ width: `${Math.max(adminPct, roleDistribution.admin ? 4 : 0)}%` }}
-                  className="bg-[#8b5cf6] transition-all duration-300"
+                  className="bg-[#E50945] transition-all duration-300"
                   title={`Administrators: ${roleDistribution.admin || 0} (${adminPct}%)`}
                 />
                 <div
                   style={{ width: `${Math.max(managerPct, roleDistribution.manager ? 4 : 0)}%` }}
-                  className="bg-[#3b82f6] transition-all duration-300"
+                  className="bg-[#BE123C] transition-all duration-300"
                   title={`Managers: ${roleDistribution.manager || 0} (${managerPct}%)`}
                 />
                 <div
                   style={{ width: `${Math.max(analystPct, roleDistribution.analyst ? 4 : 0)}%` }}
-                  className="bg-[#f59e0b] transition-all duration-300"
+                  className="bg-[#FB7185] transition-all duration-300"
                   title={`Analysts: ${roleDistribution.analyst || 0} (${analystPct}%)`}
                 />
                 <div
                   style={{ width: `${Math.max(viewerPct, roleDistribution.viewer ? 4 : 0)}%` }}
-                  className="bg-[#cbd5e1] dark:bg-[#475569] transition-all duration-300"
+                  className="bg-[#475569] transition-all duration-300"
                   title={`Viewers: ${roleDistribution.viewer || 0} (${viewerPct}%)`}
                 />
               </div>
@@ -1342,24 +1335,24 @@ export default function GovernancePage() {
       })()}
 
       {/* ========================================================================= */}
-      {/* TAB 3: AUDIT TRAILS                                                       */}
+      {/* TAB 3: AUDIT TRAILS (PDF Page 11: Burgundy/crimson action badges & equal toolbar) */}
       {/* ========================================================================= */}
       {activeTab === 'audit' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs space-y-4 p-6">
+        <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-[#334155] shadow-xs space-y-4 p-6">
           {/* Audit Filters */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <div className="relative sm:col-span-2">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#94A3B8]" />
               <input
                 type="text"
                 value={auditSearch}
                 onChange={(e) => { setAuditSearch(e.target.value); setAuditPage(1); }}
                 placeholder="Search action or description..."
-                className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
+                className="w-full pl-9 pr-3 h-10 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50 dark:bg-[#1E293B] text-slate-900 dark:text-[#F8FAFC] focus:bg-white dark:focus:bg-[#1E293B] focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
               />
             </div>
 
-            <div className="w-44 sm:w-48">
+            <div className="w-full">
               <Select
                 value={auditActionFilter}
                 onChange={(e) => { setAuditActionFilter(e.target.value); setAuditPage(1); }}
@@ -1382,7 +1375,7 @@ export default function GovernancePage() {
               </Select>
             </div>
 
-            <div className="w-40 sm:w-44">
+            <div className="w-full">
               <Select
                 value={auditResourceFilter}
                 onChange={(e) => { setAuditResourceFilter(e.target.value); setAuditPage(1); }}
@@ -1402,10 +1395,10 @@ export default function GovernancePage() {
 
             <button
               onClick={loadAuditLogs}
-              className="px-3 py-2 text-sm font-medium rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center justify-center gap-2 transition-colors"
+              className="h-10 px-4 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-[#CBD5E1] flex items-center justify-center gap-2 transition-colors cursor-pointer"
             >
-              <RefreshCw className={`w-4 h-4 ${auditLoading ? 'animate-spin' : ''}`} />
-              Refresh
+              <RefreshCw className={`w-3.5 h-3.5 text-slate-500 dark:text-[#94A3B8] ${auditLoading ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
             </button>
           </div>
 
@@ -1422,17 +1415,17 @@ export default function GovernancePage() {
                   <th className="px-4 py-3 text-right">Details</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-mono text-xs">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-xs">
                 {auditLogs.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-400 font-sans">
+                    <td colSpan={6} className="px-4 py-8 text-center text-slate-400 dark:text-[#64748B] font-sans">
                       No audit events recorded for current filter criteria.
                     </td>
                   </tr>
                 ) : (
                   auditLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap font-sans text-xs">
+                    <tr key={log.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="px-4 py-3 text-slate-500 dark:text-[#94A3B8] whitespace-nowrap font-sans text-xs">
                         {new Date(log.created_at).toLocaleString()}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
@@ -1441,25 +1434,25 @@ export default function GovernancePage() {
                       <td className="px-4 py-3 font-sans whitespace-nowrap">
                         {log.user_email ? (
                           <div>
-                            <span className="font-semibold text-slate-900">{log.user_name || log.user_email}</span>
-                            <span className="text-slate-400 text-xs block">{log.user_email}</span>
+                            <span className="font-semibold text-slate-900 dark:text-[#F8FAFC]">{log.user_name || log.user_email}</span>
+                            <span className="text-slate-400 dark:text-[#64748B] text-xs block">{log.user_email}</span>
                           </div>
                         ) : (
-                          <span className="text-slate-400 italic">System Actor</span>
+                          <span className="text-slate-400 dark:text-[#64748B] italic">System Actor</span>
                         )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 text-[11px] uppercase font-sans font-medium">
+                        <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] border border-slate-200 dark:border-[#334155] text-[11px] uppercase font-sans font-medium">
                           {log.resource_type}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-sans max-w-xs sm:max-w-md truncate text-slate-700">
+                      <td className="px-4 py-3 font-sans max-w-xs sm:max-w-md truncate text-slate-700 dark:text-[#CBD5E1]">
                         {log.description}
                       </td>
                       <td className="px-4 py-3 text-right font-sans">
                         <button
                           onClick={() => setInspectMetadata(log)}
-                          className="px-2.5 py-1 text-xs font-semibold text-rose-600 hover:text-rose-800 hover:underline"
+                          className="px-2.5 py-1 text-xs font-semibold text-rose-600 dark:text-[#FB7185] hover:text-rose-800 dark:hover:text-rose-400 hover:underline cursor-pointer"
                         >
                           View Meta
                         </button>
@@ -1498,16 +1491,16 @@ export default function GovernancePage() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 4: RBAC PERMISSION MATRIX                                             */}
+      {/* TAB 4: RBAC PERMISSION MATRIX (PDF Page 10: Teal Allowed / Burgundy Denied) */}
       {/* ========================================================================= */}
       {activeTab === 'permissions' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-6">
+        <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-[#334155] shadow-xs p-6 space-y-6">
           <div>
-            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Key className="w-5 h-5 text-rose-600" />
+            <h3 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC] flex items-center gap-2">
+              <Key className="w-5 h-5 text-rose-600 dark:text-[#FB7185]" />
               Enterprise Role-Based Access Control (RBAC) Matrix
             </h3>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1">
               Centralized capability mapping defining operational boundaries across all roles in RicozAnalytics.
             </p>
           </div>
@@ -1516,7 +1509,7 @@ export default function GovernancePage() {
             <div className="space-y-6">
               {Object.entries(permissionMatrix).map(([category, perms]) => (
                 <div key={category} className="space-y-2">
-                  <div className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">
+                  <div className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-[#94A3B8] border-b border-slate-100 dark:border-[#334155] pb-1.5">
                     {category} Capabilities
                   </div>
                   <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#111827]">
@@ -1530,56 +1523,56 @@ export default function GovernancePage() {
                           <th className="px-4 py-2.5 text-center w-28">Viewer</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                         {perms.map((p) => {
                           const hasCallerPerm = userPermissions.includes(p.key);
                           return (
-                            <tr key={p.key} className={`hover:bg-slate-50/70 transition-colors ${hasCallerPerm ? 'bg-rose-50/20' : ''}`}>
+                            <tr key={p.key} className={`hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors ${hasCallerPerm ? 'bg-rose-50/20 dark:bg-[#2B0B1B]/40' : ''}`}>
                               <td className="px-4 py-2.5">
-                                <div className="font-semibold text-slate-900 text-xs">{p.label}</div>
-                                <div className="text-[11px] font-mono text-slate-400">{p.key}</div>
+                                <div className="font-semibold text-slate-900 dark:text-[#F8FAFC] text-xs">{p.label}</div>
+                                <div className="text-[11px] font-mono text-slate-400 dark:text-[#94A3B8]">{p.key}</div>
                               </td>
                               <td className="px-4 py-2.5 text-center">
                                 {p.roles.admin ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    <Check className="w-3 h-3 text-emerald-600" /> Allowed
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-[#064E3B]/40 text-emerald-700 dark:text-[#10B981] border border-emerald-200 dark:border-[#059669]/50">
+                                    <Check className="w-3 h-3 text-emerald-600 dark:text-[#10B981]" /> Allowed
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
-                                    <X className="w-3 h-3 text-rose-600" /> Denied
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-[#2B0B1B] text-rose-700 dark:text-[#FB7185] border border-rose-200 dark:border-[#BE123C]">
+                                    <X className="w-3 h-3 text-rose-600 dark:text-[#FB7185]" /> Denied
                                   </span>
                                 )}
                               </td>
                               <td className="px-4 py-2.5 text-center">
                                 {p.roles.manager ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    <Check className="w-3 h-3 text-emerald-600" /> Allowed
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-[#064E3B]/40 text-emerald-700 dark:text-[#10B981] border border-emerald-200 dark:border-[#059669]/50">
+                                    <Check className="w-3 h-3 text-emerald-600 dark:text-[#10B981]" /> Allowed
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
-                                    <X className="w-3 h-3 text-rose-600" /> Denied
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-[#2B0B1B] text-rose-700 dark:text-[#FB7185] border border-rose-200 dark:border-[#BE123C]">
+                                    <X className="w-3 h-3 text-rose-600 dark:text-[#FB7185]" /> Denied
                                   </span>
                                 )}
                               </td>
                               <td className="px-4 py-2.5 text-center">
                                 {p.roles.analyst ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    <Check className="w-3 h-3 text-emerald-600" /> Allowed
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-[#064E3B]/40 text-emerald-700 dark:text-[#10B981] border border-emerald-200 dark:border-[#059669]/50">
+                                    <Check className="w-3 h-3 text-emerald-600 dark:text-[#10B981]" /> Allowed
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
-                                    <X className="w-3 h-3 text-rose-600" /> Denied
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-[#2B0B1B] text-rose-700 dark:text-[#FB7185] border border-rose-200 dark:border-[#BE123C]">
+                                    <X className="w-3 h-3 text-rose-600 dark:text-[#FB7185]" /> Denied
                                   </span>
                                 )}
                               </td>
                               <td className="px-4 py-2.5 text-center">
                                 {p.roles.viewer ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    <Check className="w-3 h-3 text-emerald-600" /> Allowed
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-[#064E3B]/40 text-emerald-700 dark:text-[#10B981] border border-emerald-200 dark:border-[#059669]/50">
+                                    <Check className="w-3 h-3 text-emerald-600 dark:text-[#10B981]" /> Allowed
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
-                                    <X className="w-3 h-3 text-rose-600" /> Denied
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-[#2B0B1B] text-rose-700 dark:text-[#FB7185] border border-rose-200 dark:border-[#BE123C]">
+                                    <X className="w-3 h-3 text-rose-600 dark:text-[#FB7185]" /> Denied
                                   </span>
                                 )}
                               </td>
@@ -1593,7 +1586,7 @@ export default function GovernancePage() {
               ))}
             </div>
           ) : (
-            <div className="py-8 text-center text-slate-400">Loading permission schema...</div>
+            <div className="py-8 text-center text-slate-400 dark:text-[#94A3B8]">Loading permission schema...</div>
           )}
         </div>
       )}

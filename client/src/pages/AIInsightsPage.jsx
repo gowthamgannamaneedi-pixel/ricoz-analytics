@@ -1225,13 +1225,13 @@ export default function AIInsightsPage() {
                   </div>
                 </div>
 
-                {/* 3 Bottom Structured Action Buttons */}
-                <div className="px-5 pb-5 pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                {/* 3 Bottom Structured Action Buttons (PDF Page 7 & 23: consistent heights, 12px gap, 24px padding, red/burgundy styling) */}
+                <div className="px-6 pb-6 pt-3 border-t border-slate-100 dark:border-[#1E293B] flex items-center justify-between gap-3">
                   {/* Button 1: View Details */}
                   <button
                     type="button"
                     onClick={() => setSelectedInsightForDetails(ins)}
-                    className="rz-btn-view-details"
+                    className="rz-btn-view-details h-9 px-3 whitespace-nowrap"
                     title="View insight details"
                   >
                     <span>View Details</span>
@@ -1240,32 +1240,34 @@ export default function AIInsightsPage() {
 
                   {/* Button 2: Contextual Middle Action - Business Radar */}
                   <button
+                    type="button"
                     onClick={() => handleMiddleAction(ins)}
                     id={`investigate-radar-btn-${ins.id}`}
-                    className="h-8 px-2.5 rounded-lg border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] text-xs font-semibold hover:bg-slate-50 dark:hover:bg-[#334155] flex items-center gap-1 transition cursor-pointer"
+                    className="h-9 px-3 rounded-lg border border-rose-200 dark:border-[#BE123C] bg-[#FFF1F3]/60 dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] hover:bg-rose-100 dark:hover:bg-[#3D1026] text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap"
                   >
-                    <Radio className="w-3 h-3 text-rose-600 dark:text-[#FB7185]" />
+                    <Radio className="w-3.5 h-3.5 text-[#D91542] dark:text-[#FB7185]" />
                     <span>Business Radar</span>
                   </button>
 
                   {/* Button 3: Contextual Right Action */}
                   <button
+                    type="button"
                     onClick={() => handleRightAction(ins)}
-                    className="h-8 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 flex items-center gap-1 transition cursor-pointer"
+                    className="h-9 px-3 rounded-lg border border-rose-200 dark:border-[#BE123C] bg-[#FFF1F3]/60 dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] hover:bg-rose-100 dark:hover:bg-[#3D1026] text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap"
                   >
                     {ins.severity === 'critical' || ins.type === 'operational' ? (
                       <>
-                        <Bell className="w-3 h-3 text-rose-600" />
+                        <Bell className="w-3.5 h-3.5 text-[#D91542] dark:text-[#FB7185]" />
                         <span>Create Alert</span>
                       </>
                     ) : ins.type === 'growth' || ins.type === 'trend' ? (
                       <>
-                        <Plus className="w-3 h-3 text-emerald-600" />
+                        <Plus className="w-3.5 h-3.5 text-[#D91542] dark:text-[#FB7185]" />
                         <span>Create KPI</span>
                       </>
                     ) : (
                       <>
-                        <FileText className="w-3 h-3 text-rose-600" />
+                        <FileText className="w-3.5 h-3.5 text-[#D91542] dark:text-[#FB7185]" />
                         <span>Add to Report</span>
                       </>
                     )}

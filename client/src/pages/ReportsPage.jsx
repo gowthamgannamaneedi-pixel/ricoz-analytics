@@ -898,7 +898,7 @@ export default function ReportsPage() {
             <div className="xl:col-span-8 bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-between h-full">
               <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-[#334155]">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] shadow-2xs">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200 dark:border-[#BE123C] shadow-2xs">
                     <FileBarChart className="h-4 w-4" />
                   </div>
                   <div>
@@ -940,7 +940,7 @@ export default function ReportsPage() {
                   </div>
                 ) : filteredReports.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center my-auto py-10 px-4 text-center text-slate-400 dark:text-[#94A3B8] space-y-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 dark:bg-[#2B0B1B] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#BE123C] mx-auto shadow-2xs">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200 dark:border-[#BE123C] mx-auto shadow-2xs">
                       <FileBarChart className="h-6 w-6" strokeWidth={1.8} />
                     </div>
                     <div>
@@ -1276,7 +1276,7 @@ export default function ReportsPage() {
             <div className="xl:col-span-8 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col justify-between h-full">
               <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-[#334155]">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 dark:bg-[#2A1422] text-rose-600 dark:text-[#FB7185] border border-rose-100/80 dark:border-[#334155] shadow-2xs">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200 dark:border-[#BE123C] shadow-2xs">
                     <FileBarChart className="h-4 w-4" />
                   </div>
                   <div>

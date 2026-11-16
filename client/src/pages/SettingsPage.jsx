@@ -1069,14 +1069,14 @@ export default function SettingsPage() {
                   </h3>
                 </div>
                 {isAdmin && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
+                  <button
+                    type="button"
                     onClick={() => setIsEditOrgModalOpen(true)}
-                    className="h-7 px-2.5 text-[11px]"
+                    className="rz-btn-view-details h-7 px-2.5 text-[11px]"
+                    title="Edit Organization Details"
                   >
-                    Edit
-                  </Button>
+                    <span>Edit</span>
+                  </button>
                 )}
               </div>
 
@@ -1154,7 +1154,7 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => navigate('/governance?tab=audit')}
-                  className="text-[11px] font-semibold text-rose-600 dark:text-[#FB7185] hover:text-rose-800 dark:hover:text-rose-400 transition cursor-pointer"
+                  className="text-[11px] font-semibold text-[#D91542] dark:text-[#FB7185] hover:underline transition cursor-pointer"
                 >
                   View All
                 </button>
@@ -1168,15 +1168,15 @@ export default function SettingsPage() {
                 <div className="space-y-3">
                   {recentLogs.slice(0, 5).map((log, idx) => (
                     <div key={log.id || idx} className="flex items-start gap-3 text-xs">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1] shrink-0 mt-0.5">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200/80 dark:border-[#BE123C] shrink-0 mt-0.5">
                         {log.action?.includes('LOGIN') ? (
-                          <Users className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <Users className="h-3.5 w-3.5 text-[#D91542] dark:text-[#FB7185]" />
                         ) : log.action?.includes('DATASET') ? (
-                          <Database className="h-3.5 w-3.5 text-rose-600 dark:text-[#FB7185]" />
+                          <Database className="h-3.5 w-3.5 text-[#D91542] dark:text-[#FB7185]" />
                         ) : log.action?.includes('REPORT') ? (
-                          <FileText className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+                          <FileText className="h-3.5 w-3.5 text-[#D91542] dark:text-[#FB7185]" />
                         ) : (
-                          <Settings className="h-3.5 w-3.5 text-slate-600 dark:text-[#94A3B8]" />
+                          <Settings className="h-3.5 w-3.5 text-[#D91542] dark:text-[#FB7185]" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -1196,7 +1196,7 @@ export default function SettingsPage() {
               )}
             </div>
 
-            {/* Help & Support Card */}
+            {/* Help & Support Card (PDF Page 8: 3 full-width horizontal rows with chevron) */}
             <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-5 shadow-2xs space-y-3">
               <div className="flex items-center gap-2">
                 <HelpCircle className="h-4 w-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
@@ -1206,32 +1206,47 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+              <div className="space-y-2 pt-1">
                 <button
                   type="button"
                   onClick={() => setIsDocsModalOpen(true)}
-                  className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/50 dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-[#CBD5E1] text-[11px] font-semibold transition cursor-pointer"
+                  className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/50 dark:bg-[#1E293B] hover:bg-rose-50/50 dark:hover:bg-[#2B0B1B] text-slate-700 dark:text-[#CBD5E1] hover:text-[#D91542] dark:hover:text-[#FB7185] text-xs font-semibold transition cursor-pointer group"
                 >
-                  <FileText className="h-4 w-4 text-rose-600 dark:text-[#FB7185]" />
-                  <span>Documentation</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200 dark:border-[#BE123C] shrink-0">
+                      <FileText className="h-3.5 w-3.5" />
+                    </div>
+                    <span>Documentation</span>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-[#D91542] dark:group-hover:text-[#FB7185] transition" />
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setIsSupportModalOpen(true)}
-                  className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/50 dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-[#CBD5E1] text-[11px] font-semibold transition cursor-pointer"
+                  className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/50 dark:bg-[#1E293B] hover:bg-rose-50/50 dark:hover:bg-[#2B0B1B] text-slate-700 dark:text-[#CBD5E1] hover:text-[#D91542] dark:hover:text-[#FB7185] text-xs font-semibold transition cursor-pointer group"
                 >
-                  <Mail className="h-4 w-4 text-rose-600 dark:text-[#FB7185]" />
-                  <span>Contact Support</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#D91542] dark:text-[#FB7185] border border-rose-200 dark:border-[#BE123C] shrink-0">
+                      <Mail className="h-3.5 w-3.5" />
+                    </div>
+                    <span>Contact Support</span>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-[#D91542] dark:group-hover:text-[#FB7185] transition" />
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setIsStatusModalOpen(true)}
-                  className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/50 dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-[#CBD5E1] text-[11px] font-semibold transition cursor-pointer"
+                  className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/50 dark:bg-[#1E293B] hover:bg-rose-50/50 dark:hover:bg-[#2B0B1B] text-slate-700 dark:text-[#CBD5E1] hover:text-[#D91542] dark:hover:text-[#FB7185] text-xs font-semibold transition cursor-pointer group"
                 >
-                  <Radio className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  <span>System Status</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 shrink-0">
+                      <Radio className="h-3.5 w-3.5" />
+                    </div>
+                    <span>System Status</span>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-slate-400 dark:text-[#64748B] group-hover:text-[#D91542] dark:group-hover:text-[#FB7185] transition" />
                 </button>
               </div>
             </div>

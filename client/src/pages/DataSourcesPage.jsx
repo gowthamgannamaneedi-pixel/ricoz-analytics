@@ -429,40 +429,40 @@ export default function DataSourcesPage() {
     );
   };
 
-  // Helper icons and styles
+  // Helper icons and styles (PDF Page 5 & 18: CSV badges in crimson red on burgundy)
   const getTypeIcon = (type) => {
     switch (type) {
       case 'csv':
-        return <FileSpreadsheet className="h-5 w-5 text-emerald-600" />;
+        return <FileSpreadsheet className="h-5 w-5 text-[#E50945] dark:text-[#FB7185]" />;
       case 'json':
-        return <FileCode className="h-5 w-5 text-amber-600" />;
+        return <FileCode className="h-5 w-5 text-amber-600 dark:text-amber-400" />;
       case 'postgresql':
-        return <Database className="h-5 w-5 text-blue-600" />;
+        return <Database className="h-5 w-5 text-blue-600 dark:text-blue-400" />;
       case 'mongodb':
-        return <Database className="h-5 w-5 text-emerald-600" />;
+        return <Database className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />;
       case 'rest_api':
       case 'api':
-        return <Share2 className="h-5 w-5 text-purple-600" />;
+        return <Share2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />;
       default:
-        return <Layers className="h-5 w-5 text-slate-600" />;
+        return <Layers className="h-5 w-5 text-slate-600 dark:text-slate-400" />;
     }
   };
 
   const getTypeBg = (type) => {
     switch (type) {
       case 'csv':
-        return 'bg-emerald-50 text-emerald-600 border border-emerald-100';
+        return 'bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#E50945] dark:text-[#FB7185] border border-rose-200 dark:border-[#BE123C]';
       case 'json':
-        return 'bg-amber-50 text-amber-600 border border-amber-100';
+        return 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/60';
       case 'postgresql':
-        return 'bg-blue-50 text-blue-600 border border-blue-100';
+        return 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/60';
       case 'mongodb':
-        return 'bg-emerald-50 text-emerald-600 border border-emerald-100';
+        return 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/60';
       case 'rest_api':
       case 'api':
-        return 'bg-purple-50 text-purple-600 border border-purple-100';
+        return 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/60';
       default:
-        return 'bg-slate-50 text-slate-600 border border-slate-200';
+        return 'bg-slate-50 dark:bg-[#1E293B] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-[#334155]';
     }
   };
 
@@ -470,38 +470,38 @@ export default function DataSourcesPage() {
     switch (type) {
       case 'csv':
         return (
-          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/90 font-mono whitespace-nowrap shrink-0">
+          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#E50945] dark:text-[#FB7185] border border-rose-200 dark:border-[#BE123C] font-mono whitespace-nowrap shrink-0">
             CSV File
           </span>
         );
       case 'json':
         return (
-          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-amber-50 text-amber-700 border border-amber-200/90 font-mono whitespace-nowrap shrink-0">
+          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/90 dark:border-amber-800/80 font-mono whitespace-nowrap shrink-0">
             JSON File
           </span>
         );
       case 'postgresql':
         return (
-          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200/90 font-mono whitespace-nowrap shrink-0">
+          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/90 dark:border-blue-800/80 font-mono whitespace-nowrap shrink-0">
             PostgreSQL
           </span>
         );
       case 'mongodb':
         return (
-          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/90 font-mono whitespace-nowrap shrink-0">
+          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/90 dark:border-emerald-800/80 font-mono whitespace-nowrap shrink-0">
             MongoDB
           </span>
         );
       case 'rest_api':
       case 'api':
         return (
-          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-purple-50 text-purple-700 border border-purple-200/90 font-mono whitespace-nowrap shrink-0">
+          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200/90 dark:border-purple-800/80 font-mono whitespace-nowrap shrink-0">
             REST API
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-mono whitespace-nowrap shrink-0">
+          <span className="inline-flex items-center justify-center h-6 px-2.5 text-[11px] font-semibold rounded-full bg-slate-100 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] border border-slate-200 dark:border-[#334155] font-mono whitespace-nowrap shrink-0">
             {(type || 'SOURCE').toUpperCase()}
           </span>
         );
@@ -714,12 +714,12 @@ export default function DataSourcesPage() {
           </div>
         </div>
 
-        {/* Card 2: CSV Uploads */}
+        {/* Card 2: CSV Uploads (PDF Page 5 & 18: Red glyph/text on burgundy background) */}
         <div
           onClick={() => setActiveTab('csv')}
           className={`rounded-2xl border p-6 sm:p-7 min-h-[148px] transition-all text-left cursor-pointer shadow-2xs flex flex-col justify-between ${
             activeTab === 'csv'
-              ? 'border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/40 ring-1 ring-emerald-500/25 shadow-xs'
+              ? 'border-[#BE123C] bg-[#FFF1F3]/50 dark:bg-[#2B0B1B]/80 ring-1 ring-[#E50945]/30 shadow-xs'
               : 'border-slate-200/90 dark:border-[#334155] bg-white dark:bg-[#111827] hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/40 dark:hover:bg-[#1E293B]'
           }`}
         >
@@ -727,7 +727,7 @@ export default function DataSourcesPage() {
             <p className="text-base sm:text-[17px] font-semibold text-slate-900 dark:text-[#F8FAFC] tracking-tight uppercase">
               CSV Uploads
             </p>
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/60 shrink-0">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FFF1F3] dark:bg-[#2B0B1B] text-[#E50945] dark:text-[#FB7185] border border-rose-200 dark:border-[#BE123C] shrink-0">
               <FileSpreadsheet className="h-5 w-5" />
             </div>
           </div>
@@ -836,7 +836,7 @@ export default function DataSourcesPage() {
             onClick={() => { setActiveTab('csv'); setCurrentPage(1); }}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer shrink-0 ${
               activeTab === 'csv'
-                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 shadow-2xs border border-emerald-200/80 dark:border-emerald-800/60 font-bold'
+                ? 'bg-[#FFF1F3] text-[#D91542] dark:bg-[#2B0B1B] dark:text-[#FB7185] shadow-2xs border border-rose-200/80 dark:border-[#BE123C] font-bold'
                 : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1E293B]'
             }`}
           >

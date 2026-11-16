@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Stop"
 
 Write-Host "================================================================"
 Write-Host "   RICOZANALYTICS PRODUCTION RELEASE APK BUILD & SIGNING"
