@@ -463,10 +463,10 @@ export default function GovernancePage() {
     (roleDistribution.viewer || 0)
   ) || 1;
 
-  const adminPct = Math.round(((roleDistribution.admin || 0) / totalMembers) * 100);
-  const managerPct = Math.round(((roleDistribution.manager || 0) / totalMembers) * 100);
-  const analystPct = Math.round(((roleDistribution.analyst || 0) / totalMembers) * 100);
-  const viewerPct = Math.max(0, 100 - adminPct - managerPct - analystPct);
+  const adminPct = roleDistribution.admin ? Math.round(((roleDistribution.admin || 0) / totalMembers) * 100) : 0;
+  const managerPct = roleDistribution.manager ? Math.round(((roleDistribution.manager || 0) / totalMembers) * 100) : 0;
+  const analystPct = roleDistribution.analyst ? Math.round(((roleDistribution.analyst || 0) / totalMembers) * 100) : 0;
+  const viewerPct = roleDistribution.viewer ? Math.round(((roleDistribution.viewer || 0) / totalMembers) * 100) : 0;
 
   const handleRefresh = useCallback(() => {
     loadOverview();
@@ -754,103 +754,105 @@ export default function GovernancePage() {
           {/* Lower Two-Column Section: Role Distribution (8 cols) & Security & Isolation (4 cols) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Column: Role Distribution & Team Access */}
-            <div className="lg:col-span-8 bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-[#334155] p-6 sm:p-7 shadow-xs">
-              <div className="flex items-center gap-2.5">
-                <Users className="w-5 h-5 text-rose-600 dark:text-[#FB7185]" />
-                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC]">
-                  Role Distribution & Team Access
-                </h2>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1">
-                Visual breakdown of privileges assigned across members in this workspace
-              </p>
+            <div className="lg:col-span-8 bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-[#334155] p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <Users className="w-5 h-5 text-rose-600 dark:text-[#FB7185]" />
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC]">
+                    Role Distribution & Team Access
+                  </h2>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1">
+                  Visual breakdown of privileges assigned across members in this workspace
+                </p>
 
-              {/* Multi-segment Progress Bar (PDF Page 9: Brand red #E50945 replaces purple) */}
-              <div className="h-3.5 w-full bg-slate-100 dark:bg-[#1E293B] rounded-full overflow-hidden flex mt-6 gap-0.5">
-                <div
-                  style={{ width: `${Math.max(adminPct, roleDistribution.admin ? 4 : 0)}%` }}
-                  className="bg-[#E50945] transition-all duration-300"
-                  title={`Administrators: ${roleDistribution.admin || 0} (${adminPct}%)`}
-                />
-                <div
-                  style={{ width: `${Math.max(managerPct, roleDistribution.manager ? 4 : 0)}%` }}
-                  className="bg-[#BE123C] transition-all duration-300"
-                  title={`Managers: ${roleDistribution.manager || 0} (${managerPct}%)`}
-                />
-                <div
-                  style={{ width: `${Math.max(analystPct, roleDistribution.analyst ? 4 : 0)}%` }}
-                  className="bg-[#FB7185] transition-all duration-300"
-                  title={`Analysts: ${roleDistribution.analyst || 0} (${analystPct}%)`}
-                />
-                <div
-                  style={{ width: `${Math.max(viewerPct, roleDistribution.viewer ? 4 : 0)}%` }}
-                  className="bg-[#475569] transition-all duration-300"
-                  title={`Viewers: ${roleDistribution.viewer || 0} (${viewerPct}%)`}
-                />
-              </div>
-
-              {/* 4 Role Sub-Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 sm:gap-6 mt-6">
-                {/* Administrators */}
-                <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 dark:hover:border-rose-500 transition">
-                  <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700 dark:text-[#FB7185]">
-                    <Crown className="w-4.5 h-4.5 text-rose-600 dark:text-[#FB7185] shrink-0" />
-                    <span className="uppercase tracking-wider">Administrators</span>
-                  </div>
-                  <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight my-2">
-                    {roleDistribution.admin || 0}
-                  </div>
-                  <div className="text-xs text-slate-400 dark:text-[#94A3B8] font-medium">
-                    {adminPct}% of team
-                  </div>
+                {/* Multi-segment Progress Bar (PDF Page 9: Brand red #E50945 replaces purple) */}
+                <div className="h-3 w-full bg-slate-100 dark:bg-[#1E293B] rounded-full overflow-hidden flex mt-5 gap-0.5">
+                  <div
+                    style={{ width: `${Math.max(adminPct, roleDistribution.admin ? 4 : 0)}%` }}
+                    className="bg-[#E50945] transition-all duration-300"
+                    title={`Administrators: ${roleDistribution.admin || 0} (${adminPct}%)`}
+                  />
+                  <div
+                    style={{ width: `${Math.max(managerPct, roleDistribution.manager ? 4 : 0)}%` }}
+                    className="bg-[#BE123C] transition-all duration-300"
+                    title={`Managers: ${roleDistribution.manager || 0} (${managerPct}%)`}
+                  />
+                  <div
+                    style={{ width: `${Math.max(analystPct, roleDistribution.analyst ? 4 : 0)}%` }}
+                    className="bg-[#FB7185] transition-all duration-300"
+                    title={`Analysts: ${roleDistribution.analyst || 0} (${analystPct}%)`}
+                  />
+                  <div
+                    style={{ width: `${Math.max(viewerPct, roleDistribution.viewer ? 4 : 0)}%` }}
+                    className="bg-[#475569] transition-all duration-300"
+                    title={`Viewers: ${roleDistribution.viewer || 0} (${viewerPct}%)`}
+                  />
                 </div>
 
-                {/* Managers */}
-                <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 dark:hover:border-rose-500 transition">
-                  <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700 dark:text-[#FB7185]">
-                    <Users className="w-4.5 h-4.5 text-rose-600 dark:text-[#FB7185] shrink-0" />
-                    <span className="uppercase tracking-wider">Managers</span>
+                {/* 4 Role Sub-Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 sm:gap-4 mt-5">
+                  {/* Administrators */}
+                  <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-xl p-4 sm:p-5 flex flex-col justify-between shadow-2xs hover:border-rose-200 dark:hover:border-rose-500 transition">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-rose-700 dark:text-[#FB7185]">
+                      <Crown className="w-4 h-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
+                      <span className="text-[11px] font-bold uppercase tracking-wider truncate">Administrators</span>
+                    </div>
+                    <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight my-1.5">
+                      {roleDistribution.admin || 0}
+                    </div>
+                    <div className="text-xs text-slate-400 dark:text-[#94A3B8] font-medium">
+                      {adminPct}% of team
+                    </div>
                   </div>
-                  <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight my-2">
-                    {roleDistribution.manager || 0}
-                  </div>
-                  <div className="text-xs text-slate-400 dark:text-[#94A3B8] font-medium">
-                    {managerPct}% of team
-                  </div>
-                </div>
 
-                {/* Analysts */}
-                <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 dark:hover:border-rose-500 transition">
-                  <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700 dark:text-[#FB7185]">
-                    <TrendingUp className="w-4.5 h-4.5 text-rose-600 dark:text-[#FB7185] shrink-0" />
-                    <span className="uppercase tracking-wider">Analysts</span>
+                  {/* Managers */}
+                  <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-xl p-4 sm:p-5 flex flex-col justify-between shadow-2xs hover:border-rose-200 dark:hover:border-rose-500 transition">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-rose-700 dark:text-[#FB7185]">
+                      <Users className="w-4 h-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
+                      <span className="text-[11px] font-bold uppercase tracking-wider truncate">Managers</span>
+                    </div>
+                    <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight my-1.5">
+                      {roleDistribution.manager || 0}
+                    </div>
+                    <div className="text-xs text-slate-400 dark:text-[#94A3B8] font-medium">
+                      {managerPct}% of team
+                    </div>
                   </div>
-                  <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight my-2">
-                    {roleDistribution.analyst || 0}
-                  </div>
-                  <div className="text-xs text-slate-400 dark:text-[#94A3B8] font-medium">
-                    {analystPct}% of team
-                  </div>
-                </div>
 
-                {/* Viewers */}
-                <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-2xl p-6 sm:p-7 min-h-[148px] flex flex-col justify-between shadow-2xs hover:border-rose-200 dark:hover:border-rose-500 transition">
-                  <div className="flex items-center gap-2.5 text-xs font-semibold text-rose-700 dark:text-[#FB7185]">
-                    <Eye className="w-4.5 h-4.5 text-rose-600 dark:text-[#FB7185] shrink-0" />
-                    <span className="uppercase tracking-wider">Viewers</span>
+                  {/* Analysts */}
+                  <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-xl p-4 sm:p-5 flex flex-col justify-between shadow-2xs hover:border-rose-200 dark:hover:border-rose-500 transition">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-rose-700 dark:text-[#FB7185]">
+                      <TrendingUp className="w-4 h-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
+                      <span className="text-[11px] font-bold uppercase tracking-wider truncate">Analysts</span>
+                    </div>
+                    <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight my-1.5">
+                      {roleDistribution.analyst || 0}
+                    </div>
+                    <div className="text-xs text-slate-400 dark:text-[#94A3B8] font-medium">
+                      {analystPct}% of team
+                    </div>
                   </div>
-                  <div className="text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight my-2">
-                    {roleDistribution.viewer || 0}
-                  </div>
-                  <div className="text-xs text-slate-400 dark:text-[#94A3B8] font-medium">
-                    {viewerPct}% of team
+
+                  {/* Viewers */}
+                  <div className="bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-[#334155] rounded-xl p-4 sm:p-5 flex flex-col justify-between shadow-2xs hover:border-rose-200 dark:hover:border-rose-500 transition">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-rose-700 dark:text-[#FB7185]">
+                      <Eye className="w-4 h-4 text-rose-600 dark:text-[#FB7185] shrink-0" />
+                      <span className="text-[11px] font-bold uppercase tracking-wider truncate">Viewers</span>
+                    </div>
+                    <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight my-1.5">
+                      {roleDistribution.viewer || 0}
+                    </div>
+                    <div className="text-xs text-slate-400 dark:text-[#94A3B8] font-medium">
+                      {viewerPct}% of team
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Right Column: Security & Isolation */}
-            <div className="lg:col-span-4 bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-[#334155] p-6 sm:p-7 shadow-xs flex flex-col justify-between">
+            <div className="lg:col-span-4 bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-[#334155] p-5 sm:p-6 shadow-xs flex flex-col justify-between">
               <div>
                 <div className="flex items-center gap-2.5">
                   <Shield className="w-5 h-5 text-rose-600 dark:text-[#FB7185]" />
